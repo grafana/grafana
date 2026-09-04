@@ -1,0 +1,9 @@
+{
+  "id": "grafana-example-app",
+  "type": "app",
+  "name": "Example",
+  "info": {
+    "description": "An example app plugin",
+    "version": "4.5.6"
+  }
+}

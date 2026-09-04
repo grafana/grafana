@@ -1,0 +1,35 @@
+{
+  "apiVersion": "apps.grafana.app/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": { "name": "routerexample-app" },
+  "spec": {
+    "appName": "routerexample-app",
+    "group": "routerexample.ext.grafana.app",
+    "preferredVersion": "v1alpha1",
+    "versions": [
+      {
+        "name": "v1alpha1",
+        "served": true,
+        "kinds": [
+          {
+            "kind": "TestKind",
+            "plural": "TestKinds",
+            "scope": "Namespaced",
+            "schemas": {
+              "TestKind": {
+                "properties": { "spec": { "$ref": "#/components/schemas/spec" } },
+                "required": ["spec"]
+              },
+              "spec": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "testField": { "type": "string" } },
+                "required": ["testField"]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

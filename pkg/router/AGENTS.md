@@ -2,26 +2,29 @@
 
 Guidance for AI agents working on the Grafana Router. This is a generic internal reverse-proxy
 router: microservice (m2m) and user-facing API traffic can be routed through it. Routes are supplied
-by a `RoutesLoader` (the concrete loader lives in the enterprise package) as `[]*RouteConfig`, and
-change infrequently (roughly weekly) as plugins/apps are introduced via GitOps, plus new versions
-over time.
+by a `RoutesLoader` as `[]Backend`, and change infrequently (roughly weekly) as plugins/apps are
+introduced via GitOps, plus new versions over time.
 
 ## Package layout (OSS vs enterprise split)
 
-The generic router lives here in OSS; only the loader (which knows the deployment-specific kinds) is
-enterprise.
+The generic router lives here in OSS; a loader (which knows the deployment-specific kinds) lives
+outside it. There are two, and neither is in this package: the enterprise one below, and
+`pkg/services/pluginrouter` in OSS, which serves locally installed app plugins.
 
 - **this package (`pkg/router`, OSS)** — the generic machinery: `GrafanaRouter` (`router.go`: the
   reconcile engine — `Run` drives the reconcile loop only; `HandleFunc` is the serving handler),
   `forwardBackend` (the per-group `Backend`), and the `RoutesLoader` / `Router` / `Backend`
-  contracts (`types.go`). It is a pure reverse proxy to the backing API servers. **Serving (the
-  `http.Server`, listener TLS, graceful shutdown) is NOT here** — it is a factory concern in the
-  enterprise `router` command; see Lifecycle below.
+  contracts (`types.go`). Forward mode, the mode implemented here, is a pure reverse proxy to the
+  backing API servers; what a `Backend` does behind the interface is its own business (Plugin mode
+  serves in process — see Path model). **Serving (the `http.Server`, listener TLS, graceful
+  shutdown) is NOT here** — it belongs to whoever runs the engine; see Lifecycle below.
 - **`.../appmanifest/pkg/app/router` (enterprise)** — only `Loader` (`routes_loader.go`): the
-  `RoutesLoader` implementation that produces `[]*RouteConfig` from the control plane. How it
+  `RoutesLoader` implementation that produces backends from the control plane. How it
   sources and watches the underlying custom resources is its own concern (see that package's
   AGENTS.md). There is no separate router implementation in enterprise; the loader is the
   enterprise-specific piece.
+- **`pkg/services/pluginrouter` (OSS)** — the other `RoutesLoader`, plus the listener and the
+  `plugin-router` dskit target that runs both. It is development-only; see its README.
 
 This doc stays generic: it must not encode which custom resources the loader watches or how it
 triggers — the router only knows the `RoutesLoader` contract. File references below are in this
@@ -42,8 +45,9 @@ dropped `Router` while unifying the serving types — the interface was future-f
 - **HTTP/1.1 is sufficient.** No upgrade/websocket/SPDY handling required. `httputil.ReverseProxy`
   is an adequate proxy primitive; the `UpgradeAwareHandler` machinery from kube-aggregator is
   deliberately *not* pulled in.
-- **Forward mode implemented; Operator/Plugin modes are TODO** (`buildBackendConfig` returns a
-  `buildErr` for non-forward modes for now).
+- **Forward and Plugin modes implemented; Operator mode is TODO.** Forward mode lives here
+  (`forward.go`); Plugin mode does not, because it needs the app plugin machinery this
+  package deliberately does not depend on — see the Plugin section below.
 - If Watch or upgrades are ever added, revisit: reverse proxy flushing, upgrade-aware handling,
   and per-request timeouts all change.
 
@@ -53,11 +57,13 @@ dropped `Router` while unifying the serving types — the interface was future-f
 (fire-and-forget goroutine + a `routerState` machine behind `Ready`/`Alive`), and `HandleFunc(w, r,
 next)` is the single serving handler. **There is no `http.Server` in this package.**
 
-The HTTP listener is owned by the enterprise `router` command (`pkg/extensions/router`, `cli.go`),
-which builds the `http.Server`, terminates listener TLS, does bounded graceful shutdown, and mounts
-`gr.HandleFunc` (plus `/livez`/`/readyz` backed by `Ready`/`Alive`). It serves on **its own port**,
-deliberately **outside** any kubernetes handler chain (no authn, authz, audit, or
-priority-and-fairness).
+The HTTP listener belongs to whoever runs the engine. In the enterprise `router` command
+(`pkg/extensions/router`, `cli.go`) that is an `http.Server` it builds itself, on **its own port**,
+terminating listener TLS and doing bounded graceful shutdown. In the OSS `plugin-router` target it
+is the instrumentation server that target already runs, which `pkg/services/pluginrouter` mounts
+onto rather than opening a second port. Either way `gr.HandleFunc` is what gets mounted (plus
+`/livez`/`/readyz` backed by `Ready`/`Alive`), and either way it serves deliberately **outside** any
+kubernetes handler chain (no authn, authz, audit, or priority-and-fairness).
 
 `HandleFunc` is the one serving entry point: it covers `/apis` (by group) **and** `/openapi/v3`
 (there is no exported OpenAPI handler — `serveOpenAPIV3` is private, reached only through
@@ -144,7 +150,21 @@ TBD. Possibly inspect OpenAPI. Lift admission, mutation and validation hooks her
 
 ### Backend Mode: Plugin
 
-TBD. Possibly inspect a manifest. Use a gRPC client to translate http calls via plugin v2 gRPC contract.
+Implemented, in `pkg/registry/apis/appplugin/pluginroute` — **not here**. The `Backend`
+contract is an interface, so an implementation can live wherever its dependencies do, and
+this one needs the app plugin API builder, the kind store and the apiserver machinery that
+`pkg/router` keeps out (see Package layout above). Only the interface stays in this package.
+
+It is not a proxy. Forward mode reverse proxies a group to an API server that already
+exists; in plugin mode there is none, so the group is assembled from the plugin's app-sdk
+manifest — kinds, custom routes, admission — into a `GenericAPIServer` whose handler
+`Load` returns. Requests are served in process; the plugin's own backend is reached over
+the plugin protocol v3 gRPC contract for admission, conversion and the manifest's custom
+routes, not for the resource paths, which are served from unified storage.
+
+`pkg/services/pluginrouter` is the `RoutesLoader` that builds one of these per locally
+installed app plugin, plus the listener, and is what the `plugin-router` dskit target runs.
+Both packages have their own README.
 
 ## Discovery endpoints
 

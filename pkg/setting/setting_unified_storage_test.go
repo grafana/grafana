@@ -537,8 +537,9 @@ func TestVectorAllowedCollections(t *testing.T) {
 
 func TestStorageServicesEnabled(t *testing.T) {
 	for _, tc := range []struct {
-		target []string
-		want   bool
+		target      []string
+		storageType string
+		want        bool
 	}{
 		{target: nil, want: true},
 		{target: []string{"all"}, want: true},
@@ -546,10 +547,21 @@ func TestStorageServicesEnabled(t *testing.T) {
 		{target: []string{"core", "storage-server"}, want: true},
 		{target: []string{"core"}, want: false},
 		{target: []string{"search-server"}, want: false},
+
+		// The plugin router serves its groups' objects through a resource
+		// server over this process's own backend, so it owns that backend --
+		// unless it is pointed at a storage server, which owns its own.
+		{target: []string{"plugin-router"}, want: true},
+		{target: []string{"plugin-router"}, storageType: "unified", want: true},
+		{target: []string{"plugin-router"}, storageType: "unified-grpc", want: false},
 	} {
-		t.Run(strings.Join(tc.target, ","), func(t *testing.T) {
+		t.Run(strings.Join(append(tc.target, tc.storageType), ","), func(t *testing.T) {
 			cfg := NewCfg()
 			cfg.Target = tc.target
+			if tc.storageType != "" {
+				_, err := cfg.Raw.Section("grafana-apiserver").NewKey("storage_type", tc.storageType)
+				assert.NoError(t, err)
+			}
 
 			assert.Equal(t, tc.want, cfg.StorageServicesEnabled())
 		})
