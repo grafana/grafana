@@ -13,6 +13,7 @@ import {
 } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
+import { shouldUseNewRuleExportFormats } from '../../../featureToggles';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../../rule-editor/formDefaults';
@@ -221,7 +222,11 @@ const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaR
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
 
-  const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
+  // JSON/YAML export for new (unsaved) rules is gated behind a feature flag; existing rules always support all formats
+  const formatProviders =
+    exportingNewRule && !shouldUseNewRuleExportFormats()
+      ? [HclExportProvider]
+      : Object.values(allGrafanaExportProviders);
 
   return (
     <GrafanaExportDrawer

@@ -28,3 +28,6 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
+
+export const shouldUseNewRuleExportFormats = () =>
+  config.featureToggles.alertingNewRuleExportEnableAllFormats ?? false;
