@@ -274,19 +274,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   frameEditing: css({
     paddingLeft: theme.spacing(4),
     marginLeft: theme.spacing(-4),
+    paddingTop: theme.spacing(3),
     [theme.breakpoints.up('md')]: {
       paddingLeft: theme.spacing(7),
       marginLeft: theme.spacing(-7),
     },
-    // The reveal, and only the reveal: the hidden state stays in each affordance's own single-class
-    // rule. A rule here setting opacity: 0 would out-specify the divider's `revealed` class and make
-    // the divider vanish under its own open menu. `>` keeps it to this frame's own affordances.
     [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       opacity: 1,
-      // Paired with the actions bar's own `pointer-events: none`: that bar sits outside this frame's box
-      // and above the previous cell's divider, so while hidden it must not answer the hit test there.
-      // Reaching it from inside the frame still works — the frame is already hovered, so the bar is
-      // already interactive by the time the pointer arrives on it.
       pointerEvents: 'auto',
     },
   }),
@@ -302,15 +296,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   handle: css({
     position: 'absolute',
-    // frameEditing's padding-left now reserves exactly this gutter, so the handle sits flush at the
-    // padding box's own edge — no more reaching outside it with a negative offset.
     left: 0,
     width: theme.spacing(3),
     height: theme.spacing(3),
-    // Top-aligned rather than centred: spacing(1) lines up with the first line of a narrative cell and
-    // with a panel's chrome title, whatever the cell's height. Centring would put the handle 150px
-    // down a panel cell.
-    top: theme.spacing(1),
+    top: theme.spacing(4),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -358,7 +347,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   actionsHoverBridge: css({
     position: 'absolute',
-    bottom: '100%',
+    // Sits inside this frame's own reserved top padding (frameEditing's paddingTop), never above the
+    // frame's own top edge — that edge is the previous cell's box, and reaching past it here is
+    // exactly what used to let a short previous cell's own content get hovered as if it were this
+    // bridge instead.
+    top: 0,
     // Starts at the frame's own left edge, covering the gutter/handle column above it too — not just
     // the span the actions bar itself occupies. Without that, the top-left corner of the widened hit-box
     // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the

@@ -41,6 +41,7 @@ import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
+import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
 import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
@@ -578,7 +579,7 @@ export class NotebookLayoutManager
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
+    // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
     // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
@@ -907,13 +908,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                 {...dropProvided.droppableProps}
               >
                 {cells.map((cell, index) => (
-                  // Each frame is one Draggable and owns the divider below it, so a reorder moves a cell
-                  // together with its insertion point and nothing has to be re-indexed. The trailing
-                  // slot's own placeholder/"/" menu (see NotebookCellRenderer) key off whether a cell's
-                  // own content is empty, not its position — the invariant above just guarantees the
-                  // last cell always qualifies, with the same drag handle, hover actions, and
-                  // "Add block" divider spacing every other cell already has, since it's a real cell
-                  // rendered through the exact same path.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
@@ -929,8 +923,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
-                    // Bound here rather than resolved inside the frame: the cells list belongs to the
-                    // manager, so the frame never needs to reach back up for its own position.
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
@@ -958,6 +950,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
             )}
           </Droppable>
         </DragDropContext>
+
+        {isEditing && <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length)} />}
       </div>
     </div>
   );
@@ -1045,7 +1039,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
-  // Wraps the leading insertion point and the droppable list; the per-cell rhythm belongs to the list.
+  // Wraps the droppable cell list and the footer add-row; the per-cell rhythm belongs to the list.
   column: css({
     display: 'flex',
     flexDirection: 'column',

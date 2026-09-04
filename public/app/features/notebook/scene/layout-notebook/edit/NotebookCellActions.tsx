@@ -34,7 +34,7 @@ export function NotebookCellActions({ onDuplicate, onDelete, className }: Props)
 const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     position: 'absolute',
-    bottom: '100%',
+    top: theme.spacing(0.5),
     left: theme.spacing(4),
     [theme.breakpoints.up('md')]: {
       left: theme.spacing(7),
@@ -49,10 +49,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z2,
     opacity: 0,
-    // bottom: 100% puts this outside the frame's box, on top of the previous cell's insertion divider.
-    // Invisible is not enough there — it would still win the hit test and turn a click meant for
-    // "Add block" into a duplicate or delete of this cell. The frame's reveal rule restores
-    // pointer-events along with the opacity.
     pointerEvents: 'none',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),

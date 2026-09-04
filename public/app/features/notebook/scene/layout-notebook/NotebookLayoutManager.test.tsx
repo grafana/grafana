@@ -239,6 +239,33 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('footer add row', () => {
+    it('does not render outside edit mode', () => {
+      renderNotebook();
+
+      expect(screen.queryByRole('button', { name: 'Heading' })).not.toBeInTheDocument();
+    });
+
+    it('always renders its four labeled buttons in edit mode', () => {
+      renderNotebook(true);
+
+      expect(screen.getByRole('button', { name: 'Heading' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paragraph' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Code' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Visualization' })).toBeInTheDocument();
+    });
+
+    // No menu — each footer button is already a single fixed type, so it inserts directly.
+    it('appends the picked type at the end with no menu', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await user.click(screen.getByRole('button', { name: 'Code' }));
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(cellNames(manager)).toEqual(['a', 'b', 'code-1', 'paragraph-1']);
+    });
+  });
+
   // The "always one more empty block ready" invariant: unlike the old dedicated prompt component,
   // there is no separate affordance any more — the trailing cell in `cells` itself is always an empty,
   // placeholder-showing markdown editor, and offers the same "/" menu any empty markdown cell does
