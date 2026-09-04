@@ -1,5 +1,8 @@
 import 'jquery';
 
+// eslint-disable-next-line @grafana/zod-import-namespace
+import 'zod/compile';
+
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
