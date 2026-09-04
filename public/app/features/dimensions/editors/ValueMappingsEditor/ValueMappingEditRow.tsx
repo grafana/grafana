@@ -12,14 +12,15 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number | string | null;
-  to?: number | string | null;
+  from?: number | null;
+  to?: number | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -101,15 +102,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
     });
   };
 
-  const onChangeFrom = (event: React.FormEvent<HTMLInputElement>) => {
+  const onChangeFrom = (number: number | undefined) => {
     update((mapping) => {
-      mapping.from = event.currentTarget.value;
+      mapping.from = number;
     });
   };
 
-  const onChangeTo = (event: React.FormEvent<HTMLInputElement>) => {
+  const onChangeTo = (number: number | undefined) => {
     update((mapping) => {
-      mapping.to = event.currentTarget.value;
+      mapping.to = number;
     });
   };
 
@@ -210,17 +211,13 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
             {mapping.type === MappingType.RangeToText && (
               <div className={styles.rangeInputWrapper}>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={mapping.from ?? ''}
+                <NumberInput
+                  value={mapping.from ?? undefined}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
                 />
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={mapping.to ?? ''}
+                <NumberInput
+                  value={mapping.to ?? undefined}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}
                 />
