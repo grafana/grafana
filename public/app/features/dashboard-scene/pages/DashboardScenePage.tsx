@@ -157,7 +157,28 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
+      <DashboardPreviewBanner
+        queryParams={queryParams}
+        route={route.routeName}
+        slug={slug}
+        path={path}
+        onSaveToNewBranch={() => {
+          // Keep the in-memory draft: enter edit mode on the current scene and open the save drawer
+          // defaulted to a fresh branch, since the branch this preview was on is gone. Only enter edit
+          // mode if not already editing — re-entering re-snapshots the baseline and clears isDirty.
+          if (!dashboard.state.isEditing) {
+            dashboard.onEnterEditMode();
+          }
+          dashboard.openSaveDrawer({ forceNewBranch: true });
+        }}
+        onDiscardChanges={() => {
+          // Abandon the draft and clear the dirty state so DashboardPrompt doesn't intercept the
+          // navigation away with a second unsaved-changes modal.
+          if (dashboard.state.isEditing) {
+            dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+          }
+        }}
+      />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />

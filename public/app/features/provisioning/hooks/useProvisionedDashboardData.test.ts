@@ -328,4 +328,42 @@ describe('useProvisionedDashboardData', () => {
       expect(result.current.defaultValues?.workflow).toBe('write');
     });
   });
+
+  describe('forceNewBranch', () => {
+    it('defaults to the branch workflow with a freshly generated branch name', async () => {
+      server.use(
+        http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result } = renderHook(() => useProvisionedDashboardData(dashboard, false, true), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      expect(result.current.defaultValues?.workflow).toBe('branch');
+      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
+    });
+
+    it('keeps the generated branch stable across rerenders', async () => {
+      server.use(
+        http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result, rerender } = renderHook(() => useProvisionedDashboardData(dashboard, false, true), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      const initialRef = result.current.defaultValues?.ref;
+      expect(initialRef).toMatch(/^dashboard\//);
+
+      rerender();
+      // A rerender (e.g. from toggling a save option) must not regenerate the branch name.
+      expect(result.current.defaultValues?.ref).toBe(initialRef);
+    });
+  });
 });

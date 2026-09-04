@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { type ResourceObjects } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
@@ -11,6 +11,7 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isGitProvider } from '../../utils/repositoryTypes';
+import { getBranchUrl } from '../utils/url';
 
 import { BranchDisplay } from './BranchDisplay';
 
@@ -29,6 +30,16 @@ interface Props {
   action?: ResourceObjects['action'];
   /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
+  /**
+   * Intercepts the pull request button instead of following its link directly. The button opens a
+   * tab synchronously (within the click gesture, so it isn't blocked as a popup) and hands the caller
+   * `open`/`cancel` to drive it after an async check — e.g. `open()` once a pre-flight branch check
+   * passes, or `cancel()` plus a different path when the branch is gone. When set, the button becomes
+   * a click handler rather than a plain link.
+   */
+  onOpenPullRequest?: (actions: PullRequestOpenActions) => void;
+  /** Renders the pull request button in a "checking…" state while an async pre-flight runs. */
+  isCheckingBranch?: boolean;
 }
 
 export type PreviewBranchInfo = {
@@ -36,6 +47,13 @@ export type PreviewBranchInfo = {
   configuredBranch?: string;
   repoBaseUrl?: string;
 };
+
+export interface PullRequestOpenActions {
+  /** Navigate the pre-opened tab to the pull request URL. */
+  open: () => void;
+  /** Close the pre-opened tab (when the URL won't be opened after all). */
+  cancel: () => void;
+}
 
 const commonAlertProps = {
   severity: 'info' as const,
@@ -45,7 +63,17 @@ const commonAlertProps = {
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action, originalUrl }: Props) {
+export function PreviewBannerViewPR({
+  prURL,
+  isNewPr,
+  behindBranch,
+  repoUrl,
+  branchInfo,
+  action,
+  originalUrl,
+  onOpenPullRequest,
+  isCheckingBranch,
+}: Props) {
   const styles = useStyles2(getStyles);
   const { repoType, action: paramAction, prTitle } = usePullRequestParam();
 
@@ -53,7 +81,13 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
-  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
+  // When the PR/compare link is unavailable (e.g. the branch was removed after the PR was closed),
+  // fall back to the branch itself rather than the repo root, which is disorienting.
+  const branchLink =
+    branchInfo?.repoBaseUrl && branchInfo?.targetBranch
+      ? getBranchUrl(branchInfo.repoBaseUrl, branchInfo.targetBranch, repoType)
+      : '';
+  const linkUrl = prLink || branchLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const bannerAction = action ?? paramAction;
   const actionText = getBannerText(bannerAction, isNewPr, capitalizedRepoType);
@@ -103,11 +137,52 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
               {t('provisioned-resource-preview-banner.preview-banner.view-saved-version', 'View saved version')}
             </LinkButton>
           )}
-          {linkUrl && (
-            <LinkButton href={linkUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
-              {actionText.button}
-            </LinkButton>
-          )}
+          {linkUrl &&
+            // When a caller needs to pre-flight before opening (e.g. verify the branch still exists),
+            // the primary action is a click handler; otherwise it stays a plain link so it opens in a
+            // new tab and cmd/middle-click work.
+            (onOpenPullRequest ? (
+              <Button
+                variant="primary"
+                icon="external-link-alt"
+                onClick={() => {
+                  // Open the tab synchronously within the click gesture so a slow pre-flight can't get
+                  // the eventual navigation blocked as a popup; the caller then drives or closes it.
+                  const pendingTab = window.open('about:blank', '_blank');
+                  // Sever the opener so the PR page can't reach back via window.opener (reverse
+                  // tabnabbing). We can't pass 'noopener' to window.open here — it returns null, and we
+                  // need the handle to navigate the tab after the async check.
+                  if (pendingTab) {
+                    pendingTab.opener = null;
+                  }
+                  onOpenPullRequest({
+                    open: () => {
+                      const href = textUtil.sanitizeUrl(linkUrl);
+                      if (pendingTab) {
+                        pendingTab.location.href = href;
+                      } else {
+                        window.open(href, '_blank', 'noopener,noreferrer');
+                      }
+                    },
+                    cancel: () => pendingTab?.close(),
+                  });
+                }}
+              >
+                {isCheckingBranch
+                  ? t('provisioned-resource-preview-banner.preview-banner.checking-branch', 'Checking branch…')
+                  : actionText.button}
+              </Button>
+            ) : (
+              <LinkButton
+                href={linkUrl}
+                target="_blank"
+                variant="primary"
+                icon="external-link-alt"
+                iconPlacement="right"
+              >
+                {actionText.button}
+              </LinkButton>
+            ))}
         </Stack>
       }
     >
