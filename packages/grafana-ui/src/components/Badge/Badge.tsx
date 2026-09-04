@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
@@ -20,10 +20,16 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   color: BadgeColor;
   icon?: IconName;
   tooltip?: PopoverContent;
+  /** When set, truncates `text` with an ellipsis instead of wrapping.
+   * Only applies when the visual design refresh is enabled.
+   **/
+  maxWidth?: number;
 }
 
-const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(getStyles, color);
+const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, maxWidth, className, ...otherProps }) => {
+  const theme = useTheme2();
+  const shouldTruncate = Boolean(maxWidth) && theme.flags.visualDesignRefresh;
+  const styles = useStyles2(getStyles, color, shouldTruncate ? maxWidth : undefined);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && (
@@ -31,7 +37,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
           <Icon name={icon} size="sm" />
         </span>
       )}
-      {text}
+      {shouldTruncate ? <span className={styles.truncatedText}>{text}</span> : text}
     </div>
   );
 
@@ -64,7 +70,7 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
+const getStyles = (theme: GrafanaTheme2, color: BadgeColor, maxWidth?: number) => {
   let sourceColor = theme.visualization.getColorByName(color);
   let borderColor = '';
   let bgColor = '';
@@ -99,6 +105,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'flex-start',
+      maxWidth,
 
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.accent.main}`,
@@ -109,6 +116,13 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       display: 'inline-flex',
       alignItems: 'center',
       height: '1lh',
+      flexShrink: 0,
+    }),
+    truncatedText: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      minWidth: 0,
     }),
   };
 };
