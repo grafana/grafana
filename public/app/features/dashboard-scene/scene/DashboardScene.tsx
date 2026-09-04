@@ -882,6 +882,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public copyPanel(vizPanel: VizPanel) {
+    // A placeholder pasted into a real dashboard is just a panel with no query. Duplicating within
+    // the plan is fine and stays allowed; carrying one out of it is not.
+    if (!this.isPlanningActionAllowed('copy-panel')) {
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       const gridItem = vizPanel.parent;
 

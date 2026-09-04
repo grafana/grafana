@@ -150,6 +150,11 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     layout.duplicatePanel?.(this.panel);
   }
 
+  /** Whether this panel may be copied out of the dashboard it is on. */
+  public isCopyAllowed(): boolean {
+    return getDashboardSceneFor(this.panel).isPlanningActionAllowed('copy-panel');
+  }
+
   public onCopy(source: PanelActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
     const dashboard = getDashboardSceneFor(this.panel);

@@ -11,6 +11,7 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 import { DashboardInteractions } from '../utils/interactions';
 
 import { type DashboardSidebar } from './DashboardSidebar';
+import { VizPanelEditableElement } from './VizPanelEditableElement';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -23,7 +24,11 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
 
   // TODO this type check here is hacky and should be replaced with a more generic solid solution
   const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
-  const onCopy = element.onCopy?.bind(element);
+  // Copying is withheld from a plan preview (see planningPolicy), so the button goes with it rather
+  // than sitting there inert. Checked here because this header derives its buttons from which
+  // methods an element happens to expose, and the element cannot un-expose one per dashboard state.
+  const canCopy = element instanceof VizPanelEditableElement ? element.isCopyAllowed() : true;
+  const onCopy = canCopy ? element.onCopy?.bind(element) : undefined;
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
   const onConfirmDelete = element.onConfirmDelete?.bind(element);
