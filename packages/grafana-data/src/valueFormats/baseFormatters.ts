@@ -20,6 +20,13 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     decimals = getDecimalsForValue(value);
   }
 
+  // Number.prototype.toFixed throws a RangeError outside 0 to 100, and the zero
+  // padding below builds a string of that length, so a count from field config
+  // is bounded before either sees it. The auto path never lands outside this
+  // range; an explicit `decimals` can, because nothing validates it on the way
+  // in from dashboard JSON.
+  decimals = clamp(decimals, 0, 100);
+
   if (value === 0) {
     return value.toFixed(decimals);
   }
@@ -35,7 +42,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
   if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
+    // `String(factor)` was used as the source of these zeros, which holds only
+    // while the factor stays out of exponential notation: String(10 ** 21) is
+    // '1e+21', so slicing it appended the exponent to the value instead.
+    return (precision ? formatted : formatted + '.') + '0'.repeat(decimals - precision);
   }
 
   return formatted;
