@@ -98,7 +98,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		// These are parsed as ColName with the @@ prefix in Name.val.
 		// Also reject @@global.hostname where @@ is in the Qualifier.
 		name := v.Name.String()
-		if strings.HasPrefix(name, "@@") || strings.HasPrefix(name, "@") {
+		if strings.HasPrefix(name, "@@") {
 			return false
 		}
 		if qual := v.Qualifier.Name.String(); strings.HasPrefix(qual, "@@") {
