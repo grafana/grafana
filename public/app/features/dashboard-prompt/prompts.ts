@@ -1,4 +1,4 @@
-import { type PromptDatasource } from './types';
+import { type PromptDashboardRef, type PromptDatasource } from './types';
 
 /** Origin reported to the assistant for all dashboard-prompt interactions. */
 export const PROMPT_ORIGIN = 'grafana/dashboard-prompt';
@@ -19,4 +19,8 @@ export function formatDatasources(datasources: PromptDatasource[]): string {
     lines.push(`- …and ${datasources.length - MAX_LISTED_DATASOURCES} more not shown here`);
   }
   return lines.length > 0 ? lines.join('\n') : '(no datasources available)';
+}
+
+export function formatDashboardRefs(refs: PromptDashboardRef[]): string {
+  return refs.map((ref) => `- ${ref.title} (uid: ${ref.uid})`).join('\n');
 }

@@ -64,7 +64,7 @@ export default function CreateNewButton({
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
-  const renderGenerateDashboardAction = useDashboardGenerationAvailable();
+  const { isAvailable: renderGenerateDashboardAction } = useDashboardGenerationAvailable();
 
   const theme = useTheme2();
 

@@ -13,13 +13,17 @@ jest.mock('@grafana/assistant', () => ({
 const mockUseAssistant = jest.mocked(useAssistant);
 
 function Probe() {
-  return <span>{useDashboardGenerationAvailable() ? 'available' : 'unavailable'}</span>;
+  const { isAvailable, isLoading } = useDashboardGenerationAvailable();
+  if (isLoading) {
+    return <span>loading</span>;
+  }
+  return <span>{isAvailable ? 'available' : 'unavailable'}</span>;
 }
 
 /** `render` from test-utils supplies the OpenFeatureProvider the flag hook needs. */
-function setup({ flag, assistant }: { flag: boolean; assistant: boolean }) {
+function setup({ flag, assistant, loading = false }: { flag: boolean; assistant: boolean; loading?: boolean }) {
   setTestFlags({ 'assistant.dashboardPlanning': flag });
-  mockUseAssistant.mockReturnValue({ isAvailable: assistant } as ReturnType<typeof useAssistant>);
+  mockUseAssistant.mockReturnValue({ isAvailable: assistant, isLoading: loading } as ReturnType<typeof useAssistant>);
   render(<Probe />);
 }
 
@@ -36,6 +40,16 @@ describe('useDashboardGenerationAvailable', () => {
 
   it('is unavailable when the assistant is missing, even with the flag on', () => {
     setup({ flag: true, assistant: false });
+    expect(screen.getByText('unavailable')).toBeInTheDocument();
+  });
+
+  it('is loading when the flag is on and the assistant has not resolved yet', () => {
+    setup({ flag: true, assistant: false, loading: true });
+    expect(screen.getByText('loading')).toBeInTheDocument();
+  });
+
+  it('is not loading when the flag is off, even if the assistant is still resolving', () => {
+    setup({ flag: false, assistant: false, loading: true });
     expect(screen.getByText('unavailable')).toBeInTheDocument();
   });
 });
