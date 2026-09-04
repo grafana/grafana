@@ -66,17 +66,15 @@ describe('Cascader', () => {
 
       await user.click(screen.getByPlaceholderText(placeholder));
 
-      expect(screen.getByText('Initial state option')).toBeInTheDocument();
+      expect(await screen.findByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
       act(() => {
         jest.runAllTimers();
       });
 
-      await user.click(screen.getByPlaceholderText(placeholder));
-
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
-      expect(screen.getByText('First')).toBeInTheDocument();
+      expect(await screen.findByText('First')).toBeInTheDocument();
     });
 
     it('filters updated results when searching', async () => {
@@ -85,10 +83,12 @@ describe('Cascader', () => {
       act(() => {
         jest.runAllTimers();
       });
+      // The floating menu positions itself asynchronously, which triggers act() warnings under fake timers.
+      jest.useRealTimers();
 
-      await user.type(screen.getByPlaceholderText(placeholder), 'Third');
+      await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
-      expect(screen.getByText('First / Third')).toBeInTheDocument();
+      expect(await screen.findByText('First / Third')).toBeInTheDocument();
     });
   });
 
@@ -98,7 +98,7 @@ describe('Cascader', () => {
     await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
 
     expect(screen.queryByText('Second')).not.toBeInTheDocument();
-    expect(screen.getByText('First / Third')).toBeInTheDocument();
+    expect(await screen.findByText('First / Third')).toBeInTheDocument();
   });
 
   it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', async () => {
@@ -107,7 +107,7 @@ describe('Cascader', () => {
     );
 
     await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
-    await userEvent.click(screen.getByText('First / Third'));
+    await userEvent.click(await screen.findByText('First / Third'));
 
     expect(screen.getByDisplayValue('First / Third')).toBeInTheDocument();
   });
@@ -120,8 +120,8 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue('First / Second')).toBeInTheDocument();
   });
@@ -142,8 +142,8 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
   });
@@ -154,8 +154,8 @@ describe('Cascader', () => {
     );
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
@@ -164,8 +164,8 @@ describe('Cascader', () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
@@ -177,11 +177,44 @@ describe('Cascader', () => {
       </Field>
     );
 
-    expect(screen.getByRole('textbox', { name: 'Cascader label' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Cascader label' })).toBeInTheDocument();
   });
 
   it('applies data-testid to the root element', () => {
     render(<Cascader options={options} onSelect={jest.fn()} data-testid="custom-cascader" />);
     expect(screen.getByTestId('custom-cascader')).toBeInTheDocument();
+  });
+
+  it('expands and collapses branches before selecting a leaf', async () => {
+    const onSelect = jest.fn();
+    render(<Cascader placeholder={placeholder} options={options} onSelect={onSelect} />);
+
+    await userEvent.click(screen.getByRole('combobox'));
+    const branch = await screen.findByRole('treeitem', { name: 'First' });
+    await userEvent.click(branch);
+    expect(await screen.findByRole('treeitem', { name: 'Second' })).toBeInTheDocument();
+
+    await userEvent.click(branch);
+    expect(screen.queryByRole('treeitem', { name: 'Second' })).not.toBeInTheDocument();
+
+    await userEvent.click(branch);
+    await userEvent.click(await screen.findByRole('treeitem', { name: 'Second' }));
+    expect(onSelect).toHaveBeenLastCalledWith('2');
+  });
+
+  it('formats the custom-value description', async () => {
+    render(
+      <Cascader
+        options={options}
+        allowCustomValue
+        formatCreateLabel={(value) => `Custom unit: ${value}`}
+        onSelect={jest.fn()}
+      />
+    );
+
+    await userEvent.type(screen.getByRole('combobox'), 'custom');
+
+    expect(await screen.findByRole('treeitem', { name: 'custom' })).toBeInTheDocument();
+    expect(screen.getByText('Custom unit: custom')).toBeInTheDocument();
   });
 });

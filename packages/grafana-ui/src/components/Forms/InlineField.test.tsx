@@ -379,7 +379,7 @@ describe('InlineField', () => {
         </InlineField>
       );
 
-      expect(screen.getByRole('textbox', { name: 'My label' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'My label' })).toBeInTheDocument();
     });
 
     it('associates with the field error correctly when no id is set', () => {
@@ -389,7 +389,7 @@ describe('InlineField', () => {
         </InlineField>
       );
 
-      expect(screen.getByRole('textbox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'My label', description: 'My error' })).toBeInTheDocument();
     });
   });
 
