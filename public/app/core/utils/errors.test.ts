@@ -1,5 +1,10 @@
 import { type FetchError } from '@grafana/runtime';
-import { getMessageFromError, isIgnorableFetchAbort } from 'app/core/utils/errors';
+import {
+  clearExpectedNavigationAbort,
+  getMessageFromError,
+  isIgnorableFetchAbort,
+  markExpectedNavigationAbort,
+} from 'app/core/utils/errors';
 import { type LoadError } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 describe('errors functions', () => {
@@ -71,12 +76,25 @@ describe('errors functions', () => {
 });
 
 describe('isIgnorableFetchAbort', () => {
-  it('returns true for Firefox navigation abort', () => {
-    expect(isIgnorableFetchAbort(new TypeError('NetworkError when attempting to fetch resource.'))).toBe(true);
+  afterEach(() => {
+    clearExpectedNavigationAbort();
   });
 
-  it('returns true for Safari navigation abort', () => {
+  it('returns false for Firefox and Safari fetch failures unless a navigation abort is expected', () => {
+    expect(isIgnorableFetchAbort(new TypeError('NetworkError when attempting to fetch resource.'))).toBe(false);
+    expect(isIgnorableFetchAbort(new TypeError('Load failed'))).toBe(false);
+    expect(
+      isIgnorableFetchAbort({ message: 'NetworkError when attempting to fetch resource.', status: undefined })
+    ).toBe(false);
+  });
+
+  it('returns true for Firefox and Safari fetch failures while a navigation abort is expected', () => {
+    markExpectedNavigationAbort();
+    expect(isIgnorableFetchAbort(new TypeError('NetworkError when attempting to fetch resource.'))).toBe(true);
     expect(isIgnorableFetchAbort(new TypeError('Load failed'))).toBe(true);
+    expect(
+      isIgnorableFetchAbort({ message: 'NetworkError when attempting to fetch resource.', status: undefined })
+    ).toBe(true);
   });
 
   it('returns true for AbortError and cancelled fetch errors', () => {
@@ -86,13 +104,8 @@ describe('isIgnorableFetchAbort', () => {
     expect(isIgnorableFetchAbort({ cancelled: true, status: -1, statusText: 'Request was aborted' })).toBe(true);
   });
 
-  it('returns true for dashboard loadError built from a Firefox abort', () => {
-    expect(
-      isIgnorableFetchAbort({ message: 'NetworkError when attempting to fetch resource.', status: undefined })
-    ).toBe(true);
-  });
-
-  it('returns false for real request failures', () => {
+  it('returns false for real request failures even during navigation', () => {
+    markExpectedNavigationAbort();
     expect(isIgnorableFetchAbort(new TypeError('Failed to fetch'))).toBe(false);
     expect(isIgnorableFetchAbort({ data: { message: 'Dashboard not found' }, status: 404 } as FetchError)).toBe(false);
     expect(isIgnorableFetchAbort(new Error('boom'))).toBe(false);

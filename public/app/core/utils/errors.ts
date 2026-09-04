@@ -1,5 +1,15 @@
 import { type FetchError, isFetchError } from '@grafana/runtime';
 
+let expectedNavigationAbort = false;
+
+export function markExpectedNavigationAbort() {
+  expectedNavigationAbort = true;
+}
+
+export function clearExpectedNavigationAbort() {
+  expectedNavigationAbort = false;
+}
+
 function readErrorMessage(err: unknown): string {
   if (typeof err === 'string') {
     return err;
@@ -22,8 +32,9 @@ function readErrorMessage(err: unknown): string {
   return '';
 }
 
-// Firefox/Safari report a TypeError when a full-page navigation aborts in-flight fetch()
-// calls. Chrome uses AbortError. None of these are user-visible failures.
+// Explicit cancels are always ignorable. Firefox/Safari also use generic fetch
+// TypeError messages for offline/CORS failures, so those strings are only
+// ignored while a full-page navigation (org switch) is in progress.
 export function isIgnorableFetchAbort(err: unknown): boolean {
   if (err == null) {
     return false;
@@ -43,6 +54,10 @@ export function isIgnorableFetchAbort(err: unknown): boolean {
     if (value.status === -1 && value.statusText === 'Request was aborted') {
       return true;
     }
+  }
+
+  if (!expectedNavigationAbort) {
+    return false;
   }
 
   const message = readErrorMessage(err);

@@ -5,6 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
+import { clearExpectedNavigationAbort, isIgnorableFetchAbort } from 'app/core/utils/errors';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { type StoreState } from 'app/types/store';
 
@@ -62,6 +63,7 @@ describe('OrganisationSwitcher', () => {
   });
 
   afterEach(() => {
+    clearExpectedNavigationAbort();
     Object.defineProperty(window, 'location', {
       configurable: true,
       writable: true,
@@ -151,6 +153,7 @@ describe('OrganisationSwitcher', () => {
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
     expect(cancelAllInFlightRequests).toHaveBeenCalledTimes(1);
     expect(assignMock).toHaveBeenCalledWith('/grafana/');
+    expect(isIgnorableFetchAbort(new TypeError('NetworkError when attempting to fetch resource.'))).toBe(true);
   });
 
   it('does not navigate when setUserOrganization rejects', async () => {
@@ -174,5 +177,6 @@ describe('OrganisationSwitcher', () => {
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
     expect(cancelAllInFlightRequests).not.toHaveBeenCalled();
     expect(assignMock).not.toHaveBeenCalled();
+    expect(isIgnorableFetchAbort(new TypeError('NetworkError when attempting to fetch resource.'))).toBe(false);
   });
 });
