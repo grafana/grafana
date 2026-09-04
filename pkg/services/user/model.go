@@ -201,6 +201,8 @@ type GetSignedInUserQuery struct {
 	Login  string
 	Email  string
 	OrgID  int64 `xorm:"org_id"`
+	// SkipTeamLookup returns identity fields without populating TeamIDs or TeamUIDs.
+	SkipTeamLookup bool
 }
 
 type AnalyticsSettings struct {

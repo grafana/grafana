@@ -179,6 +179,7 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 		commands       []accesscontrol.SetResourcePermissionCommand
 		expected       []iamv0.ResourcePermissionspecPermission
 		expectedMethod string
+		userSvc        user.Service
 	}{
 		{
 			name:     "preserves unmentioned permissions on upsert",
@@ -294,10 +295,13 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 
 			a := &api{
 				restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
-				service: &Service{options: Options{
-					Resource: "dashboards",
-					APIGroup: dashboardv1.APIGroup,
-				}},
+				service: &Service{
+					userService: tt.userSvc,
+					options: Options{
+						Resource: "dashboards",
+						APIGroup: dashboardv1.APIGroup,
+					},
+				},
 			}
 
 			err := a.setResourcePermissionsToK8s(makeReqCtx(), "org-1", "1", tt.commands)
@@ -314,6 +318,46 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetUserPermissionToK8sUsesServiceAccountKind(t *testing.T) {
+	var created iamv0.ResourcePermission
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			w.WriteHeader(http.StatusNotFound)
+			require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusNotFound,
+				Reason: metav1.StatusReasonNotFound,
+			}))
+		case http.MethodPost:
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&created))
+			require.NoError(t, json.NewEncoder(w).Encode(&created))
+		default:
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	a := &api{
+		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+		service: &Service{
+			userService: &usertest.FakeUserService{
+				GetSignedInUserFn: func(_ context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					require.Equal(t, &user.GetSignedInUserQuery{OrgID: 1, UserID: 42, SkipTeamLookup: true}, query)
+					return &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true}, nil
+				},
+			},
+			options: Options{Resource: "dashboards", APIGroup: dashboardv1.APIGroup},
+		},
+	}
+
+	err := a.setUserPermissionToK8s(makeReqCtx(), "org-1", "1", 42, "Edit")
+	require.NoError(t, err)
+	require.Len(t, created.Spec.Permissions, 1)
+	assert.Equal(t, iamv0.ResourcePermissionSpecPermissionKindServiceAccount, created.Spec.Permissions[0].Kind)
 }
 
 func TestSetResourcePermissionsToK8sRetriesConflicts(t *testing.T) {

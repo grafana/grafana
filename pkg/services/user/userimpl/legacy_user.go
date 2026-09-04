@@ -381,7 +381,7 @@ func (s *LegacyService) GetSignedInUser(ctx context.Context, query *user.GetSign
 		return nil, err
 	}
 
-	if s.cacheService != nil {
+	if s.cacheService != nil && !query.SkipTeamLookup {
 		cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
 		s.cacheService.Set(cacheKey, *result, time.Second*5)
 	}
@@ -405,13 +405,15 @@ func (s *LegacyService) getSignedInUser(ctx context.Context, query *user.GetSign
 		return nil, err
 	}
 
-	// nolint:staticcheck
-	usr.TeamIDs, usr.TeamUIDs, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
-		OrgID:  usr.OrgID,
-		UserID: usr.UserID,
-	})
-	if err != nil {
-		return nil, err
+	if !query.SkipTeamLookup {
+		// nolint:staticcheck
+		usr.TeamIDs, usr.TeamUIDs, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
+			OrgID:  usr.OrgID,
+			UserID: usr.UserID,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return usr, err
