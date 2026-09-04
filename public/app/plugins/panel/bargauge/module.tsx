@@ -85,6 +85,16 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
         showIf: (options) => options.orientation === VizOrientation.Vertical,
       })
       .addBooleanSwitch({
+        path: 'showNameForSingleSeries',
+        name: t('bargauge.name-show-name-for-single-series', 'Show name for single series'),
+        description: t(
+          'bargauge.description-show-name-for-single-series',
+          'Show the series name even when there is only one bar'
+        ),
+        category,
+        defaultValue: defaultOptions.showNameForSingleSeries,
+      })
+      .addBooleanSwitch({
         path: 'showUnfilled',
         name: t('bargauge.name-show-unfilled-area', 'Show unfilled area'),
         category,
