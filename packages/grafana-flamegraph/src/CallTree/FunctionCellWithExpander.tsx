@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type Row, type UseExpandedRowProps } from 'react-table';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 
 import { type CallTreeNode } from './utils';
 
@@ -126,12 +126,30 @@ export function FunctionCellWithExpander({
   };
 
   const connector = buildTreeConnector();
+  // Use Boolean(...) so the attribute is rendered as "true" or "false" instead of
+  // being removed when the row is collapsed. React Table leaves row.isExpanded
+  // as undefined for collapsed rows, which would otherwise drop aria-expanded.
+  const isRowExpanded = Boolean(row.isExpanded);
 
   return (
     <div className={styles.functionCellContainer}>
       {connector && <span className={styles.treeConnector}>{connector} </span>}
       <span className={styles.functionNameWrapper}>
-        <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
+        <Button
+          fill="text"
+          size="sm"
+          onClick={handleClick}
+          className={cx(styles.functionButton, hasChildren && styles.functionButtonWithExpander)}
+          aria-expanded={hasChildren ? isRowExpanded : undefined}
+        >
+          {hasChildren && (
+            <Icon
+              name={isRowExpanded ? 'angle-down' : 'angle-right'}
+              size="sm"
+              data-testid="call-tree-row-expander"
+              className={styles.expander}
+            />
+          )}
           {value}
         </Button>
         {!compact && row.original.children && row.original.children.length > 0 && (
@@ -166,6 +184,18 @@ function getStyles(theme: GrafanaTheme2) {
       verticalAlign: 'middle',
       flexShrink: 0,
     }),
+    expander: css({
+      label: 'expander',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '14px',
+      height: '14px',
+      padding: 0,
+      marginRight: '4px',
+      color: theme.colors.text.secondary,
+      flexShrink: 0,
+    }),
     functionNameWrapper: css({
       display: 'inline-flex',
       alignItems: 'center',
@@ -181,6 +211,11 @@ function getStyles(theme: GrafanaTheme2) {
       whiteSpace: 'nowrap',
       minWidth: 0,
       flexShrink: 1,
+    }),
+    functionButtonWithExpander: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
     }),
     nodeBadge: css({
       marginLeft: theme.spacing(0.5),
