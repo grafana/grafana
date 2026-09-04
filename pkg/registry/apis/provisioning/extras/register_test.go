@@ -7,7 +7,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +40,7 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 				extras = append(extras, extra)
 			}
 
-			factory, err := ProvideConnectionFactoryFromConfig(&setting.Cfg{ProvisioningConnectionTypes: tt.types}, tracing.NewNoopTracerService(), extras)
+			factory, err := ProvideConnectionFactoryFromConfig(&setting.Cfg{ProvisioningConnectionTypes: tt.types}, extras)
 			require.NoError(t, err)
 			require.ElementsMatch(t, tt.expected, factory.Types())
 		})

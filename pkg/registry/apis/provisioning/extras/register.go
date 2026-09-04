@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -75,7 +74,7 @@ func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []job
 	return []jobs.Worker{pullRequestWorker}
 }
 
-func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []repository.Extra) (repository.Factory, error) {
+func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repository.Factory, error) {
 	types := cfg.ProvisioningRepositoryTypes
 	if len(types) == 0 {
 		// Enforcing default repository values if settings are not set
@@ -86,7 +85,7 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []
 		enabledTypes[apisprovisioning.RepositoryType(e)] = struct{}{}
 	}
 
-	return repository.ProvideFactory(enabledTypes, extras, tracer)
+	return repository.ProvideFactory(enabledTypes, extras)
 }
 
 func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
@@ -96,12 +95,12 @@ func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
 	})
 }
 
-func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []connection.Extra) (connection.Factory, error) {
+func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
 	types := cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
 		// Enforcing default connection values if settings are not set
 		types = []string{string(apisprovisioning.GithubConnectionType)}
 	}
 
-	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
+	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
 }

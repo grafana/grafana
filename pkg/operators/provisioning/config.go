@@ -511,12 +511,7 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, err
-	}
-
-	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras, tracer)
+	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras)
 	if err != nil {
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}
@@ -541,12 +536,7 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		types = defaultConnectionTypes(extras)
 	}
 
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, err
-	}
-
-	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
+	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
 	if err != nil {
 		return nil, fmt.Errorf("create connection factory: %w", err)
 	}

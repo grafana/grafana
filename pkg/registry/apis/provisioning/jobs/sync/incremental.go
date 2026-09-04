@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"go.opentelemetry.io/otel/attribute"
@@ -21,12 +21,12 @@ import (
 )
 
 // Convert git changes into resource file changes
-func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
+func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
 	syncStart := time.Now()
 	if previousRef == currentRef {
 		// We still need to detect missing folder metadata if the flag is enabled
 		if folderMetadataEnabled {
-			if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer); err != nil {
+			if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress); err != nil {
 				return err
 			}
 		}
@@ -34,19 +34,19 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		return nil
 	}
 
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental")
+	ctx, span := apptracing.Start(ctx, "provisioning.sync.incremental")
 	defer span.End()
 	defer func() {
 		metrics.RecordSyncDuration(jobs.SyncTypeIncremental, time.Since(syncStart))
 	}()
 
 	compareStart := time.Now()
-	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.incremental.compare_files")
+	compareCtx, compareSpan := apptracing.Start(ctx, "provisioning.sync.incremental.compare_files")
 	diff, err := repo.CompareFiles(compareCtx, previousRef, currentRef)
 	if err != nil {
 		compareSpan.RecordError(err)
 		compareSpan.End()
-		return tracing.Error(span, fmt.Errorf("compare files error: %w", err))
+		return apptracing.Error(span, fmt.Errorf("compare files error: %w", err))
 	}
 	compareSpan.End()
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
@@ -68,12 +68,12 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
-			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
+			return apptracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
 		}
 
 		target, err := repositoryResources.List(ctx)
 		if err != nil {
-			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+			return apptracing.Error(span, fmt.Errorf("list managed resources: %w", err))
 		}
 
 		for i := range target.Items {
@@ -85,7 +85,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
 		diff, relocations, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
-			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
+			return apptracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
 
 		logger := logging.FromContext(ctx)
@@ -113,7 +113,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	cleanupStart := time.Now()
-	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, tracer)
+	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders)
 
 	for _, r := range replaced {
 		if progress.HasDirPathFailedCreation(r.Path) {
@@ -137,14 +137,14 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
-	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
+	deleteFolders(ctx, foldersToDelete, repositoryResources, progress)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 
 	// Run after deleteFolders so its informational warnings (e.g. missing
 	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
 	if folderMetadataEnabled {
 		recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
-		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
+		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress); err != nil {
 			return err
 		}
 	}
@@ -158,7 +158,6 @@ func applyIncrementalChanges(
 	diff []repository.VersionedFileChange,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
-	tracer tracing.Tracer,
 	span trace.Span,
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
@@ -178,14 +177,14 @@ func applyIncrementalChanges(
 			return nil, ctx.Err()
 		}
 		if err := progress.TooManyErrors(); err != nil {
-			return nil, tracing.Error(span, err)
+			return nil, apptracing.Error(span, err)
 		}
 
 		// Check if this resource is nested under a failed folder creation
 		// This only applies to creation/update/rename operations, not deletions
 		if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
 			// Skip this resource since its parent folder failed to be created
-			skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.incremental.skip_nested_resource")
+			skipCtx, skipSpan := apptracing.Start(ctx, "provisioning.sync.incremental.skip_nested_resource")
 			progress.Record(skipCtx, jobs.NewPathOnlyResult(change.Path).
 				WithError(fmt.Errorf("resource was not processed because the parent folder could not be created")).
 				AsSkipped().
@@ -195,7 +194,7 @@ func applyIncrementalChanges(
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
-			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
+			ensureFolderCtx, ensureFolderSpan := apptracing.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
 			safeSegment := safepath.SafeSegment(change.Path)
 			if !safepath.IsDir(safeSegment) {
@@ -242,7 +241,7 @@ func applyIncrementalChanges(
 		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
 			if change.Action == repository.FileActionUpdated {
 				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
-				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
+				folderCtx, folderSpan := apptracing.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
 				ensureOpts := []resources.EnsurePathOption{resources.WithForceWalk()}
 				if uids, ok := relocations[change.Path]; ok {
 					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(uids...))
@@ -271,7 +270,7 @@ func applyIncrementalChanges(
 
 		switch change.Action {
 		case repository.FileActionCreated:
-			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+			writeCtx, writeSpan := apptracing.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
 				writeSpan.RecordError(err)
@@ -283,7 +282,7 @@ func applyIncrementalChanges(
 			if change.PreviousRef != "" {
 				// ReplaceResourceFromFileByRef reads both old and new files internally
 				// and automatically skips strict validation when their hashes match.
-				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.replace_resource_from_file")
+				writeCtx, writeSpan := apptracing.Start(ctx, "provisioning.sync.incremental.replace_resource_from_file")
 				name, gvk, size, err := repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
 				if err != nil {
 					writeSpan.RecordError(err)
@@ -295,7 +294,7 @@ func applyIncrementalChanges(
 				// Synthetic updates emitted for re-parenting (no PreviousRef).
 				// Pass the existing content hash so WriteResourceFromFile can skip
 				// strict validation when the content is unchanged.
-				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+				writeCtx, writeSpan := apptracing.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 				var writeOpts []resources.WriteResourceOption
 				if h, ok := existingHashes[change.Path]; ok {
 					writeOpts = append(writeOpts, resources.WithExistingHash(h))
@@ -309,7 +308,7 @@ func applyIncrementalChanges(
 				writeSpan.End()
 			}
 		case repository.FileActionDeleted:
-			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
+			removeCtx, removeSpan := apptracing.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
 			name, folderName, gvk, size, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
 			if err != nil {
 				removeSpan.RecordError(err)
@@ -327,7 +326,7 @@ func applyIncrementalChanges(
 		case repository.FileActionRenamed:
 			resultBuilder.WithPreviousPath(change.PreviousPath)
 			if safepath.IsDir(change.Path) {
-				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
+				renameFolderCtx, renameFolderSpan := apptracing.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
 				var folderRenameOpts []resources.EnsurePathOption
 				for dir := safepath.Dir(change.Path); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
@@ -344,7 +343,7 @@ func applyIncrementalChanges(
 				}
 				renameFolderSpan.End()
 			} else {
-				renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
+				renameCtx, renameSpan := apptracing.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
 				var renameOpts []resources.EnsurePathOption
 				for dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path)); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
@@ -431,9 +430,8 @@ func findOrphanedFolders(
 	repo repository.Versioned,
 	currentRef string,
 	affectedFolders map[string]string,
-	tracer tracing.Tracer,
 ) []folderDeletion {
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
+	ctx, span := apptracing.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
 	defer span.End()
 
 	readerRepo, ok := repo.(repository.Reader)
@@ -472,13 +470,12 @@ func deleteFolders(
 	foldersToDelete []folderDeletion,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
-	tracer tracing.Tracer,
 ) {
 	if len(foldersToDelete) == 0 {
 		return
 	}
 
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.delete_folders")
+	ctx, span := apptracing.Start(ctx, "provisioning.sync.incremental.delete_folders")
 	defer span.End()
 
 	safepath.SortByDepth(foldersToDelete, func(d folderDeletion) string { return d.Path }, false)
@@ -524,8 +521,8 @@ func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resourc
 
 // detectMissingFolderMetadata reads the full file tree and records warnings for folders
 // that do not have a folder metadata file.
-func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned, currentRef string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.detect_missing_folder_metadata")
+func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned, currentRef string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder) error {
+	ctx, span := apptracing.Start(ctx, "provisioning.sync.incremental.detect_missing_folder_metadata")
 	defer span.End()
 
 	readerRepo, ok := repo.(repository.Reader)

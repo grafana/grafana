@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,14 +34,12 @@ type Factory interface {
 type factory struct {
 	extras  map[provisioning.RepositoryType]Extra
 	enabled map[provisioning.RepositoryType]struct{}
-	tracer  trace.Tracer
 }
 
-func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra, tracer trace.Tracer) (Factory, error) {
+func ProvideFactory(enabled map[provisioning.RepositoryType]struct{}, extras []Extra) (Factory, error) {
 	f := &factory{
 		enabled: enabled,
 		extras:  make(map[provisioning.RepositoryType]Extra, len(extras)),
-		tracer:  tracer,
 	}
 
 	for _, e := range extras {
@@ -74,7 +73,9 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 	// repo's secrets (token, commit-signing-key, webhook secret) are decrypted via
 	// the secrets service. Tracing it here — rather than per caller — gives those
 	// decrypt calls a descriptive parent regardless of who triggered the build.
-	ctx, span := f.tracer.Start(ctx, "provisioning.repository.build",
+	// The tracer is read from the context (injected at the entrypoints), so the
+	// factory does not need one threaded through its constructor.
+	ctx, span := tracing.Start(ctx, "provisioning.repository.build",
 		trace.WithAttributes(
 			attribute.String("repository.name", r.GetName()),
 			attribute.String("repository.namespace", r.GetNamespace()),

@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -77,7 +78,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx).With("options", job.Spec.Pull)
 	ctx = logging.Context(ctx, logger)
-	ctx, span := r.tracer.Start(ctx, "provisioning.sync.process",
+	// Inject the tracer so the whole sync call chain below (syncer, full/
+	// incremental sync, repository build, git reads) resolves it from the
+	// context instead of receiving it as a parameter.
+	ctx = apptracing.WithTracer(ctx, r.tracer)
+	ctx, span := apptracing.Start(ctx, "provisioning.sync.process",
 		trace.WithAttributes(
 			attribute.String("job.name", job.GetName()),
 			attribute.String("job.namespace", job.GetNamespace()),
@@ -142,7 +147,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	progress.SetMessage(ctx, "update sync status at start")
-	statusCtx, statusSpan := r.tracer.Start(ctx, "provisioning.sync.update_start_status")
+	statusCtx, statusSpan := apptracing.Start(ctx, "provisioning.sync.update_start_status")
 	if err := r.patchStatus(statusCtx, cfg, patchOperations...); err != nil {
 		statusSpan.End()
 		logger.Error("failed to update the repository status at the start of the sync job", "error", err)
@@ -151,7 +156,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	statusSpan.End()
 
-	setupCtx, setupSpan := r.tracer.Start(ctx, "provisioning.sync.setup_clients")
+	setupCtx, setupSpan := apptracing.Start(ctx, "provisioning.sync.setup_clients")
 	beforeCreateOptions := resources.WithFolderManagerOptions(resources.WithBeforeCreate(func(ctx context.Context, folder resources.Folder) error {
 		if !quotaTracker.TryAcquire() {
 			return quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded while creating folder %s", folder.Path))
@@ -176,7 +181,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	setupSpan.End()
 
-	syncCtx, syncSpan := r.tracer.Start(ctx, "provisioning.sync.execute")
+	syncCtx, syncSpan := apptracing.Start(ctx, "provisioning.sync.execute")
 	progress.SetMessage(ctx, "execute sync job")
 	progress.StrictMaxErrors(20) // make it stop after 20 errors
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
@@ -214,7 +219,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		},
 	}
 
-	finalCtx, finalSpan := r.tracer.Start(ctx, "provisioning.sync.update_final_status")
+	finalCtx, finalSpan := apptracing.Start(ctx, "provisioning.sync.update_final_status")
 
 	// Only add stats patch if stats are not nil
 	stats, err := repositoryResources.Stats(finalCtx)

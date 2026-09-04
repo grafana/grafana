@@ -29,6 +29,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -369,7 +370,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.handle_delete", repoSpanAttrs(obj))
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.handle_delete", repoSpanAttrs(obj))
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
@@ -515,7 +516,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	isBlocked bool,
 	healthStatus provisioning.HealthStatus,
 ) *provisioning.SyncJobOptions {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.determine_sync_strategy", repoSpanAttrs(obj))
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.determine_sync_strategy", repoSpanAttrs(obj))
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
@@ -609,7 +610,7 @@ func shouldUseIncrementalSync(
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.add_sync_job", repoSpanAttrs(obj))
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.add_sync_job", repoSpanAttrs(obj))
 	defer span.End()
 
 	span.SetAttributes(
@@ -700,9 +701,13 @@ func (rc *RepositoryController) process(key string) (err error) {
 		return err
 	}
 
-	// process runs from a background context, so this opens a fresh trace per
-	// reconcile whose children show where the reconcile spends its time.
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.reconcile",
+	// process runs from a background context with no tracer, so inject one here;
+	// the reconcile and every span nested under it then resolve it from the
+	// context instead of receiving it as a parameter.
+	ctx = apptracing.WithTracer(ctx, rc.tracer)
+	// This opens a fresh trace per reconcile whose children show where the
+	// reconcile spends its time.
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.reconcile",
 		trace.WithAttributes(
 			attribute.String("repository.namespace", namespace),
 			attribute.String("repository.name", name),
@@ -761,7 +766,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to get quota status: %w", err)
 	}
-	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
+	quotaCtx, quotaSpan := apptracing.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
 	quotaSpan.End()
 	if err != nil {
@@ -785,7 +790,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		}
 		ops := patchOperations
 		patchOperations = nil
-		patchCtx, patchSpan := rc.tracer.Start(ctx, "provisioning.controller.apply_status",
+		patchCtx, patchSpan := apptracing.Start(ctx, "provisioning.controller.apply_status",
 			repoSpanAttrs(obj),
 			trace.WithAttributes(attribute.Int("patch.operations", len(ops))),
 		)
@@ -888,7 +893,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		obj.Secure.Token.Create = token
 	}
 
-	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
+	buildCtx, buildSpan := apptracing.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
 	repo, err := rc.repoFactory.Build(buildCtx, obj)
 	buildSpan.End()
 	if err != nil {
@@ -940,7 +945,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		if branchHandler.GetCurrentBranch() == "" {
 			logger.Info("given repository branch is empty, getting default branch")
 
-			branchCtx, branchSpan := rc.tracer.Start(ctx, "provisioning.controller.get_default_branch", repoSpanAttrs(obj))
+			branchCtx, branchSpan := apptracing.Start(ctx, "provisioning.controller.get_default_branch", repoSpanAttrs(obj))
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
 			if err != nil {
@@ -982,7 +987,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	}
 
 	// Run before processHooks to avoid attempting to hit webhooks if repo is already known to be unhealthy
-	healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
+	healthCtx, healthSpan := apptracing.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 	healthSpan.End()
 	if err != nil {
@@ -1107,7 +1112,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoHealthy bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
 		repository.GetID(obj.Status.Webhook).IsEmpty()
@@ -1142,7 +1147,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	// skipped during the hook-failure cooldown too: repoHealthy alone doesn't
 	// catch this window, since a skipped health check reads as reachable.
 	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoHealthy && !rc.healthChecker.inHookFailureCooldown(obj) {
-		rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
+		rotateCtx, rotateSpan := apptracing.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
 		rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
 		rotateSpan.End()
 		if rotateErr != nil {
@@ -1266,7 +1271,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
 ) (_ common.RawSecureValue, _ []map[string]any, err error) {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.generate_token", repoSpanAttrs(obj))
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.generate_token", repoSpanAttrs(obj))
 	defer span.End()
 	defer func() {
 		if err != nil {
