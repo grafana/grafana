@@ -306,7 +306,7 @@ Wiring follows the standalone-apiserver factory pattern:
   (addr/TLS/timeouts) is a factory concern, not part of `pkg/router`.
 - **binding** — `server.InitializeRouterFactory()` (wire) returns the no-op in OSS
   (`wire_gen.go`) and the enterprise factory in enterprise/pro (`enterprise_wire_gen.go`);
-  `cmd/grafana/main.go` appends the command when non-nil. Keep the wire source
+  `pkg/cmd/grafana/main.go` appends the command when non-nil. Keep the wire source
   (`wire.go` + `wireexts_{oss,enterprise}.go`, set `wireExtsRouterFactorySet`) in sync with the
   generated files so `make gen-go` reproduces them.
 
