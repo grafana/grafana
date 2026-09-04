@@ -2734,6 +2734,23 @@
     },
     {
       "metadata": {
+        "name": "features.legacyOverrideLookupBypass",
+        "resourceVersion": "1788267408703",
+        "creationTimestamp": "2026-09-01T11:10:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-01 12:56:48.703621 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Skips checking for flag overrides.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-12-02T17:08:15Z",

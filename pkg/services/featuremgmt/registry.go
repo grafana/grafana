@@ -3179,6 +3179,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "features.legacyOverrideLookupBypass",
+			Description:  "Skips checking for flag overrides.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "grafana.multiTenantNavTree",
 			Description:  "Builds the navigation tree client-side instead of reading it from /bootdata",
 			Stage:        FeatureStageExperimental,
