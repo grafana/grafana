@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -262,18 +264,30 @@ func (s *ResourcePermSqlBackend) createAndAssignManagedRole(ctx context.Context,
 		return 0, err
 	}
 
-	_, err = tx.Exec(ctx, insertRoleQuery, args...)
+	result, err := tx.Exec(ctx, insertRoleQuery, args...)
 	if err != nil {
 		s.logger.Error("could not insert new role", "orgID", orgID, "roleName", assignment.RoleName, "error", err.Error())
 		return 0, fmt.Errorf("could not insert new role: %w", err)
 	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("could not determine whether managed role was inserted: %w", err)
+	}
+	inserted := rows == 1
 
 	var roleID int64
 	idQuery := fmt.Sprintf("SELECT id FROM %s WHERE org_id = ? AND name = ?", dbHelper.Table("role"))
+	if dbHelper.DB.GetDialect().DriverName() != migrator.SQLite {
+		idQuery += " FOR UPDATE"
+	}
 	err = tx.Get(ctx, &roleID, idQuery, orgID, assignment.RoleName)
 	if err != nil {
 		s.logger.Error("could not retrieve id of created role", "orgID", orgID, "roleName", assignment.RoleName, "error", err.Error())
 		return 0, fmt.Errorf("could not retrieve id of created role: %w", err)
+	}
+
+	if !inserted {
+		return roleID, nil
 	}
 
 	assignQuery, args, err := buildInsertAssignmentQuery(dbHelper, orgID, roleID, assignment)
@@ -413,6 +427,9 @@ func (s *ResourcePermSqlBackend) buildRbacAssignments(ctx context.Context, ns ty
 			return nil, fmt.Errorf("unknown permission kind: %q: %w", perm.Kind, errInvalidSpec)
 		}
 	}
+	slices.SortStableFunc(assignments, func(a, b rbacAssignmentCreate) int {
+		return strings.Compare(a.RoleName, b.RoleName)
+	})
 
 	return assignments, nil
 }
