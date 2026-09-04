@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -76,6 +77,7 @@ func ProvideService(
 	correlationsService correlations.Service,
 	dashboardService dashboardservice.DashboardService,
 	folderService folder.Service,
+	libraryPanelService librarypanels.Service,
 	pluginSettings pluginsettings.Service,
 	quotaService quota.Service,
 	secrectService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -112,6 +114,7 @@ func ProvideService(
 		orgService:                   orgService,
 		userService:                  userService,
 		folderService:                folderService,
+		libraryPanelService:          libraryPanelService,
 		resourcePermissions:          resourcePermissions,
 		tracer:                       tracer,
 		migratePrometheusType:        promTypeMigrationProvider.Run,
@@ -251,7 +254,7 @@ func (ps *ProvisioningServiceImpl) running(ctx context.Context) error {
 
 func (ps *ProvisioningServiceImpl) setDashboardProvisioner() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.Cfg, ps.orgService, ps.dashboardService, ps.folderService, ps.serverLock)
+	dashProvisioner, err := ps.newDashboardProvisioner(context.Background(), dashboardPath, ps.dashboardProvisioningService, ps.Cfg, ps.orgService, ps.dashboardService, ps.folderService, ps.serverLock, ps.libraryPanelService)
 	if err != nil {
 		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
 	}
@@ -327,6 +330,7 @@ type ProvisioningServiceImpl struct {
 	quotaService                 quota.Service
 	secretService                secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	folderService                folder.Service
+	libraryPanelService          librarypanels.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	routesPermissions            accesscontrol.RoutePermissionsService
 	tracer                       tracing.Tracer

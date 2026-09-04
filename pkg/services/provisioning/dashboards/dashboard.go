@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,7 +29,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, *serverlock.ServerLockService) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, *serverlock.ServerLockService, librarypanels.Service) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -46,7 +47,7 @@ func (provider *Provisioner) HasDashboardSources() bool {
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, cfg *setting.Cfg, orgService org.Service, dashboardStore utils.DashboardStore, folderService folder.Service, serverLockService *serverlock.ServerLockService) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, cfg *setting.Cfg, orgService org.Service, dashboardStore utils.DashboardStore, folderService folder.Service, serverLockService *serverlock.ServerLockService, libraryPanelService librarypanels.Service) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger, orgExists: utils.NewOrgExistsChecker(orgService)}
 	configs, err := cfgReader.readConfig(ctx)
@@ -54,7 +55,7 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, provisioner, dashboardStore, folderService, cfg)
+	fileReaders, err := getFileReaders(configs, logger, provisioner, dashboardStore, folderService, cfg, libraryPanelService)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to initialize file readers", err)
 	}
@@ -182,6 +183,7 @@ func getFileReaders(
 	store utils.DashboardStore,
 	folderService folder.Service,
 	cfg *setting.Cfg,
+	libraryPanelService librarypanels.Service,
 ) ([]*FileReader, error) {
 	var readers []*FileReader
 
@@ -195,6 +197,7 @@ func getFileReaders(
 				store,
 				folderService,
 				cfg,
+				libraryPanelService,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create file reader for config %v: %w", config.Name, err)
