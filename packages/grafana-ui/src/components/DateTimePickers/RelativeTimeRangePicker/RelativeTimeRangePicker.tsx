@@ -33,6 +33,8 @@ import {
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
+  customQuickOptions?: TimeOption[];
+  isRelativeToNow?: boolean;
 }
 
 type InputState = {
@@ -45,19 +47,26 @@ type InputState = {
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
-  const { timeRange, onChange } = props;
+  const { timeRange, onChange, customQuickOptions, isRelativeToNow = true } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
-  const timeOption = mapRelativeTimeRangeToOption(timeRange);
-  const [from, setFrom] = useState<InputState>({ value: timeOption.from, validation: isRangeValid(timeOption.from) });
-  const [to, setTo] = useState<InputState>({ value: timeOption.to, validation: isRangeValid(timeOption.to) });
+  const timeOption = mapRelativeTimeRangeToOption(timeRange, isRelativeToNow);
+  const [from, setFrom] = useState<InputState>({
+    value: timeOption.from,
+    validation: isRangeValid(timeOption.from, undefined, isRelativeToNow),
+  });
+  const [to, setTo] = useState<InputState>({
+    value: timeOption.to,
+    validation: isRangeValid(timeOption.to, undefined, isRelativeToNow),
+  });
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
     { onClose: () => setIsOpen(false), isDismissable: true, isOpen },
     ref
   );
   const { dialogProps } = useDialog({}, ref);
-  const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
+  // custom options may use something besides 'now' as a base time
+  const validOptions = customQuickOptions ?? getQuickOptions().filter((o) => isRelativeFormat(o.from, isRelativeToNow));
   const placement = 'bottom-start';
 
   // the order of middleware is important!
@@ -81,7 +90,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const styles = useStyles2(getStyles(from.validation.errorMessage, to.validation.errorMessage));
 
   const onChangeTimeOption = (option: TimeOption) => {
-    const relativeTimeRange = mapOptionToRelativeTimeRange(option);
+    const relativeTimeRange = mapOptionToRelativeTimeRange(option, isRelativeToNow);
     if (!relativeTimeRange) {
       return;
     }
@@ -174,7 +183,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                     >
                       <Input
                         onClick={(event) => event.stopPropagation()}
-                        onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
+                        onBlur={() =>
+                          setFrom({ ...from, validation: isRangeValid(from.value, undefined, isRelativeToNow) })
+                        }
                         onChange={(event) => setFrom({ ...from, value: event.currentTarget.value })}
                         value={from.value}
                       />
@@ -186,7 +197,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                     >
                       <Input
                         onClick={(event) => event.stopPropagation()}
-                        onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
+                        onBlur={() => setTo({ ...to, validation: isRangeValid(to.value, undefined, isRelativeToNow) })}
                         onChange={(event) => setTo({ ...to, value: event.currentTarget.value })}
                         value={to.value}
                       />

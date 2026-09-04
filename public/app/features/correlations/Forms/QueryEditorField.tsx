@@ -29,6 +29,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
 
   return (
     <Field
+      noMargin={false}
       label={t('correlations.query-editor.query-label', 'Query')}
       description={
         <span>
