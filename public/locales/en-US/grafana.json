@@ -1600,7 +1600,8 @@
       "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
       "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
       "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
-      "synthetic-monitoring-card-title": "Synthetic Monitoring"
+      "synthetic-monitoring-card-title": "Synthetic Monitoring",
+      "text-loading": "Loading..."
     },
     "import-to-gma": {
       "action-button": "Import",
