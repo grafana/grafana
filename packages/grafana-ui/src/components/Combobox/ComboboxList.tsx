@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import type { UseComboboxPropGetters } from 'downshift';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
@@ -56,6 +56,17 @@ export const ComboboxList = <T extends string | number>({
   noOptionsMessage,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
+  const groupStartIndices = useMemo(() => {
+    const indices = new Map<string, number>();
+
+    options.forEach((option, index) => {
+      if (option.group && isNewGroup(option, options[index - 1])) {
+        indices.set(option.group, index);
+      }
+    });
+
+    return indices;
+  }, [options]);
 
   const estimateSize = useCallback(
     (index: number) => {
@@ -75,18 +86,56 @@ export const ComboboxList = <T extends string | number>({
     [options]
   );
 
+  const getItemKey = useCallback((index: number) => options[index]?.value ?? index, [options]);
+
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const startIndex = Math.max(0, range.startIndex - range.overscan);
+      const endIndex = Math.min(options.length - 1, range.endIndex + range.overscan);
+      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, index) => startIndex + index);
+      const firstDisplayedOption = options[rangeToReturn[0]];
+
+      if (firstDisplayedOption?.group) {
+        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
+        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
+          rangeToReturn.unshift(groupStartIndex);
+        }
+      }
+
+      return rangeToReturn;
+    },
+    [groupStartIndices, options]
+  );
+
   const rowVirtualizer = useVirtualizer({
     count: options.length,
     getScrollElement: () => scrollRef.current,
     estimateSize,
-    getItemKey: (index: number) => options[index]?.value ?? index,
+    getItemKey,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
+    rangeExtractor,
     // Vertical padding belongs to the virtualizer rather than CSS so that row offsets, the total
     // size and scrollToIndex all account for it. Padding it in CSS instead would shift every row
     // down without the virtualizer knowing, and scrolling would stop short of the focus ring.
     paddingStart: MENU_PADDING,
     paddingEnd: MENU_PADDING,
   });
+  const { scrollToIndex } = rowVirtualizer;
+  const previousHighlightedIndex = useRef<number | null>(highlightedIndex === null || highlightedIndex <= 0 ? 0 : null);
+
+  useEffect(() => {
+    if (highlightedIndex === null || highlightedIndex < 0) {
+      return;
+    }
+
+    if (highlightedIndex === previousHighlightedIndex.current) {
+      return;
+    }
+
+    previousHighlightedIndex.current = highlightedIndex;
+
+    scrollToIndex(highlightedIndex, { align: 'auto' });
+  }, [highlightedIndex, scrollToIndex]);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
@@ -119,7 +168,7 @@ export const ComboboxList = <T extends string | number>({
             // Wrapping div should have no styling other than virtual list positioning.
             // It's children (header and option) should appear as flat list items.
             <div
-              key={item.value}
+              key={virtualRow.key}
               className={styles.listItem}
               style={{
                 height: virtualRow.size,
