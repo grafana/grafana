@@ -227,6 +227,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "apiserverPreserveTraceContext",
+			Description:     "Continue the incoming client trace on /apis requests instead of starting a new root span for non-privileged callers",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
 			Stage:           FeatureStageGeneralAvailability,

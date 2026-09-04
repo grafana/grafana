@@ -1033,6 +1033,20 @@
     },
     {
       "metadata": {
+        "name": "apiserverPreserveTraceContext",
+        "resourceVersion": "1787846936186",
+        "creationTimestamp": "2026-08-27T16:08:56Z"
+      },
+      "spec": {
+        "description": "Continue the incoming client trace on /apis requests instead of starting a new root span for non-privileged callers",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-14T10:47:18Z"
