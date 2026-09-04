@@ -51,6 +51,7 @@ export const MegaMenu = memo(
       onResetToDefault,
       onReorderPinned,
       onReorderSection,
+      onGiveFeedback,
       isSaving,
     } = useNavCustomization();
 
@@ -261,6 +262,7 @@ export const MegaMenu = memo(
                 onResetToDefault={onResetToDefault}
                 onCancelEdit={onCancelEdit}
                 onSaveEdit={onSaveEdit}
+                onGiveFeedback={onGiveFeedback}
                 saving={isSaving}
               />
             )}
