@@ -84,12 +84,14 @@ const queryB: TestQuery = { refId: 'B', legendFormat: 'series-b' };
 
 function renderRenderer(
   selectedQuery: DataQuery | null,
-  uiStateOverrides: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['uiStateOverrides'] = {}
+  uiStateOverrides: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['uiStateOverrides'] = {},
+  dsState: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['dsState'] = {}
 ) {
   return renderWithQueryEditorProvider(<QueryEditorRenderer />, {
     queries: [queryA, queryB],
     selectedQuery,
     uiStateOverrides: { selectedQueryDsData, ...uiStateOverrides },
+    dsState,
   });
 }
 
@@ -124,6 +126,11 @@ describe('QueryEditorRenderer', () => {
     renderRenderer(queryA, { selectedQueryDsData: null });
     expect(screen.getByText(/failed to load datasource for this query/i)).toBeInTheDocument();
     expect(screen.getByText(/select a datasource for this query/i)).toBeInTheDocument();
+  });
+
+  it('shows an error when a datasource change fails', () => {
+    renderRenderer(queryA, {}, { dsError: new Error('Failed to load datasource: Prometheus') });
+    expect(screen.getByText(/failed to load datasource: prometheus/i)).toBeInTheDocument();
   });
 
   it('renders the query editor for the selected query', () => {

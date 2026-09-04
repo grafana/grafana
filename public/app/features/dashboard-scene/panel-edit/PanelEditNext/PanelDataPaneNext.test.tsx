@@ -1411,6 +1411,23 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
 
+    it('should clear dsError after a subsequent successful datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValueOnce(undefined);
+
+      await testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.changeDataSource({ uid: 'prom-uid-2', type: 'prometheus' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeUndefined();
+    });
+
     it('should set dsError and not update queries when get() fails during a type-change DS switch', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
@@ -1671,6 +1688,23 @@ describe('PanelDataPaneNext', () => {
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+    });
+
+    it('clears dsError after a subsequent successful bulk datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValueOnce(undefined);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'nonexistent', type: 'unknown' });
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      expect(testDataPane.state.dsError).toBeUndefined();
     });
 
     it('runs queries after a successful datasource change', async () => {
