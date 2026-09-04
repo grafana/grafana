@@ -20,8 +20,8 @@ import {
   toDataQueryError,
 } from '@grafana/runtime';
 
-import { StreamingResponseDataType } from '../data/utils';
 import { createLiveMathTransform } from '../../expressions/liveMath';
+import { StreamingResponseDataType } from '../data/utils';
 
 import { type DataStreamSubscriptionKey, type StreamingDataQueryResponse } from './service';
 
