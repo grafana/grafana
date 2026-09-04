@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -101,63 +102,54 @@ func TestComputeFullPath(t *testing.T) {
 	}
 }
 
-func TestToFolderLegacyCounts(t *testing.T) {
-	counts := func(stats ...map[string]interface{}) *unstructured.Unstructured {
-		items := make([]interface{}, 0, len(stats))
-		for _, s := range stats {
-			items = append(items, s)
-		}
-		return &unstructured.Unstructured{Object: map[string]interface{}{"counts": items}}
-	}
-	stat := func(group, res string, count int64) map[string]interface{} {
-		return map[string]interface{}{"group": group, "resource": res, "count": count}
+func TestMergeDescendantCounts(t *testing.T) {
+	stat := func(group, res string, count int64) *resourcepb.ResourceStatsResponse_Stats {
+		return &resourcepb.ResourceStatsResponse_Stats{Group: group, Resource: res, Count: count}
 	}
 
 	testCases := []struct {
 		name  string
-		input *unstructured.Unstructured
+		input []*resourcepb.ResourceStatsResponse_Stats
 		want  folder.DescendantCounts
 	}{
 		{
 			name: "resources still living in the single-tenant tables are counted",
-			input: counts(
+			input: []*resourcepb.ResourceStatsResponse_Stats{
 				stat("rules.alerting.grafana.app", "alertrules", 0),
 				stat("sql-fallback", "alertrules", 3),
-			),
+			},
 			want: folder.DescendantCounts{"alertrules": 3},
 		},
 		{
 			name: "unified storage counts win over the single-tenant tables",
-			input: counts(
+			input: []*resourcepb.ResourceStatsResponse_Stats{
 				stat("rules.alerting.grafana.app", "alertrules", 5),
 				stat("sql-fallback", "alertrules", 3),
-			),
+			},
 			want: folder.DescendantCounts{"alertrules": 5},
 		},
 		{
 			name: "order of the entries does not matter",
-			input: counts(
+			input: []*resourcepb.ResourceStatsResponse_Stats{
 				stat("sql-fallback", "alertrules", 3),
 				stat("rules.alerting.grafana.app", "alertrules", 0),
-			),
+			},
 			want: folder.DescendantCounts{"alertrules": 3},
 		},
 		{
 			name: "empty folder stays empty",
-			input: counts(
+			input: []*resourcepb.ResourceStatsResponse_Stats{
 				stat("dashboard.grafana.app", "dashboards", 0),
 				stat("rules.alerting.grafana.app", "alertrules", 0),
 				stat("sql-fallback", "alertrules", 0),
-			),
+			},
 			want: folder.DescendantCounts{"dashboards": 0, "alertrules": 0},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := toFolderLegacyCounts(tc.input)
-			require.NoError(t, err)
-			require.Equal(t, tc.want, *got)
+			require.Equal(t, tc.want, mergeDescendantCounts(tc.input))
 		})
 	}
 }
@@ -1664,5 +1656,90 @@ func TestGetFoldersMetadata(t *testing.T) {
 		// Ancestors A and B aren't in the result set but are still resolved for the path.
 		require.Equal(t, "A/B/C", got[0].Fullpath)
 		mockCli.AssertExpectations(t)
+	})
+}
+
+func TestCountFolderContent(t *testing.T) {
+	tracer := noop.NewTracerProvider().Tracer("TestCountFolderContent")
+	orgID := int64(1)
+	ctx := context.Background()
+
+	folderKey := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+		Name:      "parent",
+	}
+
+	newStore := func(t *testing.T) (*FolderUnifiedStoreImpl, *client.MockK8sHandler, *resource.MockResourceClient) {
+		mockCli := new(client.MockK8sHandler)
+		mockCli.On("GetNamespace", orgID).Return("default")
+		resourceClient := resource.NewMockResourceClient(t)
+		return &FolderUnifiedStoreImpl{
+			k8sclient:      mockCli,
+			resourceClient: resourceClient,
+			userService:    usertest.NewUserServiceFake(),
+			tracer:         tracer,
+		}, mockCli, resourceClient
+	}
+
+	t.Run("merges unified storage and sql-fallback counts", func(t *testing.T) {
+		store, _, resourceClient := newStore(t)
+
+		resourceClient.On("Read", mock.Anything, &resourcepb.ReadRequest{Key: folderKey}).
+			Return(&resourcepb.ReadResponse{ResourceVersion: 1}, nil).Once()
+
+		resourceClient.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{
+			Namespace: "default",
+			Kinds:     internalfolders.CountedKinds,
+			Folder:    []string{"parent"},
+		}).Return(&resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{
+				{Group: "folder.grafana.app", Resource: "folders", Count: 2},
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+				{Group: "rules.alerting.grafana.app", Resource: "alertrules", Count: 0},
+				{Group: "sql-fallback", Resource: "alertrules", Count: 7},
+				{Group: "sql-fallback", Resource: "library_elements", Count: 4},
+			},
+		}, nil).Once()
+
+		counts, err := store.CountFolderContent(ctx, orgID, "parent")
+		require.NoError(t, err)
+		require.Equal(t, folder.DescendantCounts{
+			"folders":          2,
+			"dashboards":       3,
+			"alertrules":       7,
+			"library_elements": 4,
+		}, counts)
+	})
+
+	t.Run("returns ErrFolderNotFound without counting when the folder does not exist", func(t *testing.T) {
+		store, _, resourceClient := newStore(t)
+
+		resourceClient.On("Read", mock.Anything, &resourcepb.ReadRequest{Key: folderKey}).
+			Return(&resourcepb.ReadResponse{Error: resource.NewNotFoundError(folderKey)}, nil).Once()
+
+		counts, err := store.CountFolderContent(ctx, orgID, "parent")
+		require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+		require.Nil(t, counts)
+		resourceClient.AssertNotCalled(t, "GetStats", mock.Anything, mock.Anything)
+	})
+
+	t.Run("surfaces a stats error", func(t *testing.T) {
+		store, _, resourceClient := newStore(t)
+
+		resourceClient.On("Read", mock.Anything, &resourcepb.ReadRequest{Key: folderKey}).
+			Return(&resourcepb.ReadResponse{ResourceVersion: 1}, nil).Once()
+
+		resourceClient.On("GetStats", mock.Anything, mock.Anything).
+			Return(&resourcepb.ResourceStatsResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "boom",
+			}}, nil).Once()
+
+		counts, err := store.CountFolderContent(ctx, orgID, "parent")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "boom")
+		require.Nil(t, counts)
 	})
 }
