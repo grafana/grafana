@@ -18,6 +18,7 @@ Grafana allows you to query, visualize, alert on and understand your metrics no 
 
 - [Get Grafana](https://grafana.com/get)
 - [Installation guides](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)
+- [![Deploy with Zenith](https://cdn.zenith.hosting/buttons/deploy-with-zenith.svg)](https://zenith.hosting/host/grafana) one-click managed Grafana, no server to run
 
 Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
 
