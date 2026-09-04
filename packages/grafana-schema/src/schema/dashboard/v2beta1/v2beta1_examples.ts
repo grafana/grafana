@@ -6,6 +6,7 @@ export const handyTestingSchema: Spec = {
   cursorSync: 'Off',
   liveNow: false,
   preload: false,
+  stickyControls: true,
   editable: true,
   tags: ['tag1', 'tag2'],
   timeSettings: {

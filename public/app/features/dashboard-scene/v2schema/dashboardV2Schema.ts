@@ -679,6 +679,7 @@ export const dashboardV2SpecSchema = z.object({
   liveNow: z.boolean().optional(),
   preload: z.boolean().optional().default(false),
   revision: z.number().optional(),
+  stickyControls: z.boolean().optional().default(true),
   tags: nullableArray(z.string()),
   timeSettings: timeSettingsSpecSchema,
   title: z.string(),

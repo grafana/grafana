@@ -181,6 +181,30 @@ describe('transformSaveModelToScene', () => {
       expect(sceneOn.state.preload).toBe(true);
     });
 
+    it('should leave stickyControls undefined when the dashboard JSON omits it', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test',
+        uid: 'test-uid',
+      };
+      const oldModel = new DashboardModel(dash);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+
+      // Unset stickyControls must stay undefined (= sticky) so a later save does not pin an
+      // explicit value onto a dashboard that never expressed a preference.
+      expect(scene.state.stickyControls).toBeUndefined();
+    });
+
+    it('should preserve an explicit stickyControls value from the dashboard JSON', () => {
+      const dashOff = { ...defaultDashboard, title: 'off', uid: 'off', stickyControls: false };
+      const sceneOff = createDashboardSceneFromDashboardModel(new DashboardModel(dashOff), dashOff);
+      expect(sceneOff.state.stickyControls).toBe(false);
+
+      const dashOn = { ...defaultDashboard, title: 'on', uid: 'on', stickyControls: true };
+      const sceneOn = createDashboardSceneFromDashboardModel(new DashboardModel(dashOn), dashOn);
+      expect(sceneOn.state.stickyControls).toBe(true);
+    });
+
     it('should initialize the Dashboard Scene with empty template variables', () => {
       const dash = {
         ...defaultDashboard,
