@@ -139,6 +139,7 @@ func Changes(
 
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
+	var unsupported []resources.UnsupportedPath
 
 	for _, file := range source {
 		// TODO: why do we have to do this here?
@@ -196,6 +197,12 @@ func Changes(
 			}
 
 			continue
+		}
+
+		// README.md and .keep/.gitignore are normal, not unsupported.
+		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
+			!errors.Is(pathErr, resources.ErrUnsupportedFileExtension) && !errors.Is(pathErr, safepath.ErrHiddenPath) {
+			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
@@ -314,6 +321,10 @@ func Changes(
 				Existing: v,
 			})
 		}
+	}
+
+	if len(unsupported) > 0 {
+		return nil, &resources.UnsupportedPathError{Paths: unsupported}
 	}
 
 	// Deepest first (stable sort order)

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"strings"
 
@@ -13,6 +14,38 @@ var (
 	ErrUnsupportedFileExtension = errors.New("unsupported file extension")
 	ErrNotRelative              = errors.New("path must be relative to the root")
 )
+
+// UnsupportedPath pairs a repository path with the reason it failed path
+// validation. Never produced for a plain extension mismatch (e.g. README.md).
+type UnsupportedPath struct {
+	Path string
+	Err  error
+}
+
+// UnsupportedPathError aggregates every UnsupportedPath found in one sync pass.
+type UnsupportedPathError struct {
+	Paths []UnsupportedPath
+}
+
+func (e *UnsupportedPathError) Error() string {
+	if len(e.Paths) == 1 {
+		return fmt.Sprintf("path %q cannot be synced: %v", e.Paths[0].Path, e.Paths[0].Err)
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "%d paths cannot be synced:", len(e.Paths))
+	for _, p := range e.Paths {
+		fmt.Fprintf(&b, "\n  %q: %v", p.Path, p.Err)
+	}
+	return b.String()
+}
+
+func (e *UnsupportedPathError) Unwrap() []error {
+	errs := make([]error, len(e.Paths))
+	for i, p := range e.Paths {
+		errs[i] = p.Err
+	}
+	return errs
+}
 
 const maxPathDepth = 8
 
