@@ -1845,11 +1845,6 @@
       "count": 1
     }
   },
-  "public/app/features/datasources/components/DataSourcePluginState.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 3
-    }
-  },
   "public/app/features/datasources/hooks.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
