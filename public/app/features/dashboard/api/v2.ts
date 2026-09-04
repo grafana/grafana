@@ -218,9 +218,13 @@ export class K8sDashboardV2API
     let continueToken: string | undefined;
 
     do {
-      // using high limit to attempt finding the versions in one request
-      // if not found, pagination will kick in
-      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      // Use the per-page fetch limit (same as the version history UI) instead of a
+      // large 1000. K8sDashboardV2API.listDashboardHistory runs a fill-to-limit loop
+      // that drains toward the requested limit by following k8s continue tokens, so
+      // a high-limit call defeats the "found it on the first page" early-exit and
+      // over-fetches the entire history before returning. With a small per-page
+      // limit, the outer loop here stops as soon as every requested version is found.
+      const history = await this.listDashboardHistory(uid, { limit: VERSIONS_FETCH_LIMIT, continueToken });
       for (const item of history.items) {
         if (versionsToFind.has(item.metadata.generation ?? 0)) {
           results.push(item);

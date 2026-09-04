@@ -488,6 +488,34 @@ describe('v2 dashboard API', () => {
     });
   });
 
+  describe('getDashboardHistoryVersions', () => {
+    it('should not request a large page size that would drain the fill-to-limit loop', async () => {
+      // Regression test for #131820 (bug 2). Previously this method called
+      // listDashboardHistory(uid, { limit: 1000 }) to "attempt finding the versions
+      // in one request". K8sDashboardV2API.listDashboardHistory runs a fill-to-limit
+      // loop that drains toward the requested limit by following k8s continue
+      // tokens, so a 1000-limit call defeated the early-exit and over-fetched the
+      // entire history. The fix uses VERSIONS_FETCH_LIMIT (10) per page so the
+      // outer do-while stops as soon as the requested versions are found.
+      const v2Item = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 7 } };
+      const v2Item2 = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 5 } };
+      const historyPage = {
+        metadata: { resourceVersion: '1' },
+        items: [v2Item, v2Item2],
+      };
+      mockGet.mockResolvedValueOnce(historyPage);
+
+      const api = new K8sDashboardV2API();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [7, 5]);
+
+      expect(result).toHaveLength(2);
+      expect(result.map((r) => r.metadata.generation)).toEqual([7, 5]);
+      expect(mockGet).toHaveBeenCalledTimes(1);
+      const listOpts = mockGet.mock.calls[0][1] as { limit: number };
+      expect(listOpts.limit).toBe(10);
+    });
+  });
+
   describe('listDeletedDashboards', () => {
     it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
