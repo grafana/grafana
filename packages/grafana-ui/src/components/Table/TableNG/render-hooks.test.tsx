@@ -29,6 +29,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getHeaderCellStyles } from './styles';
 import {
   type FilterType,
   type NestedRowEntry,
@@ -468,6 +469,30 @@ describe('useColumnBuilderFromFields', () => {
     const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
     expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome);
     expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  describe('header alignment', () => {
+    // Field B is numeric, so it right-aligns by default. table.refresh left-aligns every header
+    // regardless, giving the column menu a stable trailing edge to sit against.
+    function headerClassForNumericField(tableRefreshEnabled: boolean) {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, tableRefreshEnabled }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      return { theme, headerCellClass: result.columns[1].headerCellClass };
+    }
+
+    it('right-aligns a numeric column header by default', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(false);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-end'));
+    });
+
+    it('left-aligns a numeric column header when table.refresh is on', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(true);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-start'));
+    });
   });
 
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {

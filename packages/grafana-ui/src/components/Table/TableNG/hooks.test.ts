@@ -258,12 +258,13 @@ describe('TableNG hooks', () => {
     });
 
     it('should handle pagination correctly', () => {
-      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total:
+      // (70 - PAGINATION_CHROME_HEIGHT 48) / rowHeight 10 = 2.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 60,
+          height: 70,
           width: 800,
           rowHeight: 10,
           headerHeight: 0,
@@ -294,7 +295,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 140,
+          height: 150,
           width: 800,
           rowHeight: 10,
           headerHeight: TABLE.HEADER_HEIGHT,
@@ -340,7 +341,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 140,
+          height: 150,
           width: 800,
           rowHeight: 10,
           headerHeight: TABLE.HEADER_HEIGHT,
@@ -418,12 +419,13 @@ describe('TableNG hooks', () => {
     });
 
     it('should fall back to the height-derived page size when pageSize is not a positive number', () => {
-      // (60 - 38) / 10 = 2 rows per page from height; pageSize: 0 must not override that.
+      // (70 - PAGINATION_CHROME_HEIGHT 48) / 10 = 2 rows per page from height; pageSize: 0 must not
+      // override that.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 60,
+          height: 70,
           width: 800,
           rowHeight: 10,
           headerHeight: 0,

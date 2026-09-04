@@ -62,6 +62,7 @@ import {
   getDisplayName,
   getStableRowKey,
   getVisibleFields,
+  markEdgeColumns,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -90,11 +91,13 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const uniqueId = useId();
@@ -237,6 +240,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx,
     showTypeIcons,
     getActions: getCellActions,
+    tableRefreshEnabled,
+    filter,
   });
 
   const [widths] = useColWidths(preparedFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
@@ -315,7 +320,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   });
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent);
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -405,6 +410,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     }),
     [
       disableKeyboardEvents,
@@ -421,6 +427,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       showTypeIcons,
       theme,
       timeRange,
+      tableRefreshEnabled,
     ]
   );
 
@@ -549,6 +556,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
           nestedRows[row.__index].raw,
           nestedRows[row.__index].final
         );
+        // Each nested table is its own grid with its own header row, so it needs its own edge
+        // markers — the outer table's markers sit on the outer columns, the first of which is the
+        // expander that this nested grid is rendered inside.
+        markEdgeColumns(result[row.__index]);
       }
     }
     return result;
@@ -558,6 +569,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
     if (!firstRowNestedData) {
+      markEdgeColumns(result);
       return result;
     }
 
@@ -579,6 +591,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       )
     );
 
+    // after the expander column is in place, so it (not the first field) is tagged as the edge.
+    markEdgeColumns(result);
     return result;
   }, [
     buildNestedTableExpanderColumn,
@@ -636,6 +650,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}
