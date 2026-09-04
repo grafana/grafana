@@ -69,6 +69,11 @@ type DeleteServiceAccountTokenCommand struct {
 	ServiceAccountID int64
 }
 
+type deleteServiceAccountTokensCommand struct {
+	OrgID            int64
+	ServiceAccountID int64
+}
+
 // CreateServiceAccountTokenWithHashCommand stores a pre-generated hashed token in the legacy api_key table.
 type CreateServiceAccountTokenWithHashCommand struct {
 	TokenName         string // token name used as api_key.name
@@ -169,6 +174,32 @@ func (q deleteServiceAccountTokenQuery) Validate() error {
 
 func newDeleteServiceAccountToken(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteServiceAccountTokenCommand) deleteServiceAccountTokenQuery {
 	return deleteServiceAccountTokenQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TokenTable:  sql.Table("api_key"),
+		Command:     cmd,
+	}
+}
+
+var sqlDeleteServiceAccountTokensTemplate = mustTemplate("delete_service_account_tokens.sql")
+
+type deleteServiceAccountTokensQuery struct {
+	sqltemplate.SQLTemplate
+	TokenTable string
+	Command    *deleteServiceAccountTokensCommand
+}
+
+func (q deleteServiceAccountTokensQuery) Validate() error {
+	if q.Command.OrgID == 0 {
+		return fmt.Errorf("expected non zero org id")
+	}
+	if q.Command.ServiceAccountID == 0 {
+		return fmt.Errorf("expected non zero service account id")
+	}
+	return nil
+}
+
+func newDeleteServiceAccountTokens(sql *legacysql.LegacyDatabaseHelper, cmd *deleteServiceAccountTokensCommand) deleteServiceAccountTokensQuery {
+	return deleteServiceAccountTokensQuery{
 		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
 		TokenTable:  sql.Table("api_key"),
 		Command:     cmd,
