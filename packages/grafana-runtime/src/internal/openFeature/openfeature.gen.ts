@@ -43,6 +43,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query service, use the new name */
+  DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
@@ -362,6 +364,17 @@ export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvalua
  */
 export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Data source query service, use the new name
+ *
+ * **Details:**
+ * - flag key: `datasources.querier.newName`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.querier.newName", false, options).value;
 };
 
 /**

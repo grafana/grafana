@@ -99,6 +99,7 @@ declare module "@openfeature/core" {
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
+    | "datasources.querier.newName"
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault";
