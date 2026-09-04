@@ -1,0 +1,36 @@
+name: Fix live math hidden source
+
+on:
+  push:
+    branches: [feat/live-math-expressions-131854-final]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor == 'devanshpandey-08'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply hidden-source fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('packages/grafana-runtime/src/utils/DataSourceWithBackend.ts')
+          s = p.read_text()
+          old = "if (sourceRefId && !sourceQuery?.hide) {\n      liveSourceRefIds.add(sourceRefId);"
+          new = "if (sourceRefId) {\n      liveSourceRefIds.add(sourceRefId);"
+          if old not in s:
+              raise SystemExit('target text not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git diff --check
+      - name: Commit fix and remove temporary workflow
+        run: |
+          rm .github/workflows/fix-live-math-hidden-source.yml
+          git config user.name 'devanshpandey-08'
+          git config user.email '231b094@juetguna.in'
+          git add packages/grafana-runtime/src/utils/DataSourceWithBackend.ts .github/workflows/fix-live-math-hidden-source.yml
+          git commit -m 'fix(live): suppress hidden-source math duplicates'
+          git push origin feat/live-math-expressions-131854-final
