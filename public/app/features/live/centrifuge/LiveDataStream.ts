@@ -20,6 +20,7 @@ import {
   toDataQueryError,
 } from '@grafana/runtime';
 
+import { createLiveMathTransform } from '../../expressions/liveMath';
 import { StreamingResponseDataType } from '../data/utils';
 
 import { type DataStreamSubscriptionKey, type StreamingDataQueryResponse } from './service';
@@ -237,6 +238,16 @@ export class LiveDataStream<T = unknown> {
     this.prepareInternalStreamForNewSubscription(options);
 
     const shouldSendLastPacketOnly = options?.buffer?.action === StreamingFrameAction.Replace;
+
+    const mathTransform = options.mathExpression
+      ? createLiveMathTransform(
+          options.mathExpression,
+          this.frameBuffer.fields
+            .map((field, index) => (field.type === 'number' ? index : -1))
+            .filter((index) => index >= 0)
+        )
+      : undefined;
+
     const fieldsNamesFilter = options.filter?.fields;
     const dataNeedsFiltering = fieldsNamesFilter?.length;
     const fieldFilterPredicate = dataNeedsFiltering ? ({ name }: Field) => fieldsNamesFilter.includes(name) : undefined;
@@ -257,7 +268,10 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer),
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer);
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
             },
           ],
           error,
@@ -320,6 +334,7 @@ export class LiveDataStream<T = unknown> {
           : reduceNewValuesSameSchemaMessages(messages).values;
 
       const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
+      const transformedValues = mathTransform?.values(filteredValues) ?? filteredValues;
 
       return {
         key: subKey,
@@ -327,7 +342,7 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.NewValuesSameSchema,
-            values: filteredValues,
+            values: transformedValues,
           },
         ],
       };
