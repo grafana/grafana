@@ -329,10 +329,10 @@ class DataSourceWithBackend<
               }
               return of(rsp);
             }),
-            // Scoped to the fetch chain on purpose: toDataQueryResponse can only map fetch-shaped
-            // errors, and would turn a plain thrown Error (e.g. the unknown-datasource throw in
-            // createBackendRequest) into a silent empty success. Those errors are left to reach the
-            // subscriber, where runRequest turns them into a query error.
+            // Scoped to the fetch chain on purpose: errors thrown while preparing the request (e.g. the
+            // unknown-datasource throw in createBackendRequest) are left to reach the subscriber, where
+            // runRequest turns them into a query error. Errors from the fetch itself, including a
+            // response body the browser could not parse, are mapped to an error response here.
             catchError((err) => {
               return of(toDataQueryResponse(err));
             })
