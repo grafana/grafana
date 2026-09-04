@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer, type Range } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
 
@@ -187,7 +187,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const {
     options: filteredOptions,
-    groupStartIndices,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -246,29 +245,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [onIsOpenChangeProp, updateOptions, resetSearch]
   );
 
-  // Injects the group header for the first rendered item into the range to render.
-  // Accepts the range that useVirtualizer wants to render, and then returns indexes
-  // to actually render.
-  const rangeExtractor = useCallback(
-    (range: Range) => {
-      const startIndex = Math.max(0, range.startIndex - range.overscan);
-      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
-      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
-
-      // If the first item doesn't have a group, no need to find a header for it
-      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
-      if (firstDisplayedOption?.group) {
-        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
-        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
-          rangeToReturn.unshift(groupStartIndex);
-        }
-      }
-
-      return rangeToReturn;
-    },
-    [filteredOptions, groupStartIndices]
-  );
-
   const rowVirtualizer = useVirtualizer({
     count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
@@ -288,7 +264,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
-    rangeExtractor,
     paddingStart: MENU_PADDING,
     paddingEnd: MENU_PADDING,
   });
