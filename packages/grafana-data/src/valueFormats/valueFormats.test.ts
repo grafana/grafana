@@ -151,6 +151,23 @@ describe('valueFormats', () => {
       const str = toFixed(186.123, -2);
       expect(str).toBe('186');
     });
+
+    it('should treat as zero decimals when value is 0', () => {
+      expect(toFixed(0, -2)).toBe('0');
+    });
+  });
+
+  describe('toFixed with out-of-range decimals', () => {
+    it('should pad with zeros instead of leaking the scaling factor exponent above 20 decimals', () => {
+      expect(toFixed(1.5, 21)).toBe('1.500000000000000000000');
+      expect(toFixed(5, 21)).toBe('5.000000000000000000000');
+    });
+
+    it('should clamp decimals above 100 instead of throwing', () => {
+      expect(() => toFixed(0, 101)).not.toThrow();
+      expect(toFixed(0, 101)).toBe(toFixed(0, 100));
+      expect(() => toFixed(1.5, 150)).not.toThrow();
+    });
   });
 
   describe('Resolve old units', () => {
