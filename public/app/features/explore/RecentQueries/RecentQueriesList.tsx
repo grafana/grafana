@@ -16,7 +16,8 @@ type Props = {
   queries: RichHistoryQuery[];
   isLoading: boolean;
   sortOrder: SortOrder;
-  onSelectQuery: (query: RichHistoryQuery) => void;
+  /** When omitted, rows don't offer a Select action (see RecentQueriesLayout). */
+  onSelectQuery?: (query: RichHistoryQuery) => void;
   onStarQuery: (id: string, starred: boolean) => void;
   onSaveQuery?: (query: RichHistoryQuery) => void;
 };
