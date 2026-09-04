@@ -94,7 +94,8 @@ const createMockExtension = (
 const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
   hideHeaderDetails = false,
-  logsLinkModel?: LinkModel
+  logsLinkModel?: LinkModel,
+  traceOverride = trace
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -105,7 +106,7 @@ const setup = (
   const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
     app: CoreApp.Unknown,
-    trace,
+    trace: traceOverride,
     timeZone: '',
     search: DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
@@ -148,6 +149,76 @@ describe('TracePageHeader test', () => {
     expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
     expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
     expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
+  });
+
+  it('renders the root service name and operation name separately next to method and status badges', () => {
+    setup();
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('lb HTTP Client');
+    expect(heading).not.toHaveTextContent('lb: HTTP Client');
+    expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+  });
+
+  it('shows a green check when the root request has a 2xx status', () => {
+    setup();
+
+    expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
+    expect(screen.getByText('200')).toBeInTheDocument();
+  });
+
+  it('shows an error indicator when the root request has a 5xx status', () => {
+    const errorTraceId = 'error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '500' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.getByText('POST')).toBeInTheDocument();
+    expect(screen.getByText('500')).toBeInTheDocument();
+    expect(screen.queryByText('200')).not.toBeInTheDocument();
+  });
+
+  it('shows an orange warning indicator when the root request has a 4xx status', () => {
+    const warningTraceId = 'warning-trace-id';
+    const warningTrace = {
+      ...trace,
+      traceID: warningTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: warningTraceId,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '404' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, warningTrace);
+
+    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.getByText('404')).toBeInTheDocument();
   });
 
   it('should render the trace-level logs link when provided', () => {
