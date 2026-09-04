@@ -317,7 +317,7 @@ This transformation has the following options:
   - **Time** - attempts to parse the values as time
     - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
     - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
-      You must multiply your input by 1000 if it's in seconds.
+      If you set **Input format** to `X` (seconds), Grafana multiplies by 1000 for you — do not pre-multiply. Without a format, multiply seconds by 1000 yourself.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
     - The **Timezone** option determines how Grafana interprets input strings without timezone information. If not set, Grafana uses the browser timezone or your configured default timezone.
   - **Boolean** - will make the values booleans
