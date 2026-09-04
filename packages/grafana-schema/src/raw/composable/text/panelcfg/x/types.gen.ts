@@ -62,6 +62,10 @@ export interface Options {
    * Index of the selected frame, when the query returns more than one
    */
   frameIndex?: number;
+  /**
+   * How many rows of query data the content template may render. Unset renders every row.
+   */
+  maxRows?: number;
   mode: TextMode;
   renderMode?: RenderMode;
 }
