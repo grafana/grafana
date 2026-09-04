@@ -11,6 +11,7 @@ import {
   type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
+  formattedValueToString,
 } from '@grafana/data';
 import {
   IconButton,
@@ -27,6 +28,8 @@ import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
+
+const OTHER_LABEL = 'other';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -55,6 +58,7 @@ const FlameGraphTopTableContainer = memo(
     colorScheme,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const { other, tableWithoutOther } = useMemo(() => separateOther(table), [table]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -63,46 +67,140 @@ const FlameGraphTopTableContainer = memo(
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%' }}>
-          {({ width, height }) => {
-            if (width < 3 || height < 3) {
-              return null;
-            }
+        <div className={styles.tableContainer}>
+          <AutoSizer style={{ width: '100%' }}>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
 
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              search,
-              sandwichItem
-            );
-            return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
-            );
-          }}
-        </AutoSizer>
+              const frame = buildTableDataFrame(
+                data,
+                tableWithoutOther,
+                width,
+                onSymbolClick,
+                onSearch,
+                onSandwich,
+                theme,
+                colorScheme,
+                search,
+                sandwichItem
+              );
+              return (
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={height}
+                />
+              );
+            }}
+          </AutoSizer>
+        </div>
+        {other && (
+          <OtherSummary
+            data={data}
+            other={other}
+            minimumIncludedTotal={getMinimumTotal(tableWithoutOther)}
+            search={search}
+            sandwichItem={sandwichItem}
+            onSearch={onSearch}
+            onSandwich={onSandwich}
+          />
+        )}
       </div>
     );
   }
 );
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
+
+function separateOther(table: Record<string, TableData>) {
+  const { [OTHER_LABEL]: other, ...tableWithoutOther } = table;
+  return { other, tableWithoutOther };
+}
+
+function getMinimumTotal(table: Record<string, TableData>) {
+  const totals = Object.values(table).map(({ total }) => total);
+  return totals.length > 0 ? Math.min(...totals) : undefined;
+}
+
+type OtherSummaryProps = {
+  data: FlameGraphDataContainer;
+  other: TableData;
+  minimumIncludedTotal?: number;
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (str: string) => void;
+  onSandwich: (str?: string) => void;
+};
+
+function OtherSummary({
+  data,
+  other,
+  minimumIncludedTotal,
+  search,
+  sandwichItem,
+  onSearch,
+  onSandwich,
+}: OtherSummaryProps) {
+  const styles = useStyles2(getOtherSummaryStyles);
+  const isDiffFlamegraph = data.isDiffFlamegraph();
+  const otherValue = formattedValueToString(data.valueDisplayProcessor(other.total));
+  const comparisonValue = isDiffFlamegraph
+    ? formattedValueToString(data.valueDisplayProcessor(other.totalRight))
+    : undefined;
+  const diffValue = isDiffFlamegraph
+    ? formattedValueToString(data.valueDisplayProcessor(other.totalRight - other.total))
+    : undefined;
+  const minimumValue =
+    minimumIncludedTotal === undefined
+      ? undefined
+      : formattedValueToString(data.valueDisplayProcessor(minimumIncludedTotal));
+  const isSearched = search === `^${escapeStringForRegex(OTHER_LABEL)}$`;
+  const isSandwiched = sandwichItem === OTHER_LABEL;
+
+  return (
+    <div className={styles.container} data-testid="topTableOtherSummary">
+      <span>
+        {isDiffFlamegraph ? (
+          <>
+            Truncated totals represented by <strong>other</strong> in the flame graph: baseline {otherValue}, comparison{' '}
+            {comparisonValue}, difference {diffValue}.
+          </>
+        ) : (
+          <>
+            A total of {otherValue} was truncated and is represented by <strong>other</strong> in the flame graph.
+          </>
+        )}
+        {minimumValue &&
+          ` The smallest included stack trace has a ${isDiffFlamegraph ? 'baseline ' : ''}total resource consumption of ${minimumValue}.`}
+      </span>
+      <div className={styles.actions}>
+        <IconButton
+          name="search"
+          variant={isSearched ? 'primary' : 'secondary'}
+          tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+          aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
+          onClick={() => onSearch(isSearched ? '' : OTHER_LABEL)}
+        />
+        <IconButton
+          name="gf-show-context"
+          variant={isSandwiched ? 'primary' : 'secondary'}
+          tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+          aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+          onClick={() => onSandwich(isSandwiched ? undefined : OTHER_LABEL)}
+        />
+      </div>
+    </div>
+  );
+}
 
 function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
   // Group the data by label, we show only one row per label and sum the values
@@ -367,12 +465,38 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
+      display: 'flex',
+      flexDirection: 'column',
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
     }),
+    tableContainer: css({
+      label: 'tableContainer',
+      flexGrow: 1,
+      minHeight: 0,
+    }),
   };
 };
+
+const getOtherSummaryStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    label: 'otherSummary',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+    paddingTop: theme.spacing(1),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  actions: css({
+    label: 'otherSummaryActions',
+    display: 'flex',
+    flexShrink: 0,
+  }),
+});
 
 const getStylesActionCell = () => {
   return {
