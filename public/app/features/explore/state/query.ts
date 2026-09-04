@@ -289,11 +289,28 @@ export function cancelQueries(exploreId: string): ThunkResult<void> {
   };
 }
 
-const addDatasourceToQueries = (datasource: DataSourceApi, queries: DataQuery[]) => {
+export const addDatasourceToQueries = (datasource: DataSourceApi, queries: DataQuery[]) => {
   const dataSourceRef = datasource.getRef();
   return queries.map((query: DataQuery) => {
     return { ...query, datasource: dataSourceRef };
   });
+};
+
+/**
+ * Ensures every query in the pane uses the given datasource ref.
+ * Needed because runQueries prefers query.datasource over the pane-level instance.
+ */
+export const alignQueriesToDatasource = (exploreId: string, datasource: DataSourceApi): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const queries = getState().explore.panes[exploreId]?.queries;
+    if (!queries?.length || datasource.meta?.mixed) {
+      return;
+    }
+    if (queries.every((query) => query.datasource?.uid === datasource.uid)) {
+      return;
+    }
+    dispatch(queriesImportedAction({ exploreId, queries: addDatasourceToQueries(datasource, queries) }));
+  };
 };
 
 const getImportableQueries = async (
@@ -381,8 +398,8 @@ export const importQueries = (
 ): ThunkResult<Promise<DataQuery[] | void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
-      // explore not initialized
-      dispatch(queriesImportedAction({ exploreId, queries }));
+      // explore not initialized — still stamp the target datasource on queries
+      dispatch(queriesImportedAction({ exploreId, queries: addDatasourceToQueries(targetDataSource, queries) }));
       return;
     }
 
