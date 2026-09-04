@@ -740,6 +740,72 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	assert.Equal(t, numEvents, keysAfter-keysBefore, "every event should be read exactly once")
 }
 
+// TestKvStorageBackend_ListModifiedSince_BatchesValueReads verifies that the
+// event-store branch of ListModifiedSince resolves resource values with one
+// data-section read per chunk rather than one per resource.
+func TestKvStorageBackend_ListModifiedSince_BatchesValueReads(t *testing.T) {
+	const numResources = 2 * dataBatchSize // spans more than one chunk
+
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore), func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
+	ctx := context.Background()
+
+	// Record a recent resource version to list since, so ListModifiedSince takes
+	// the (recent) event-store branch rather than the data-store scan.
+	sinceRV := snowflakeFromTime(time.Now())
+
+	writtenNames := make(map[string]struct{}, numResources)
+	for i := range numResources {
+		name := fmt.Sprintf("modified-%03d", i)
+		writtenNames[name] = struct{}{}
+		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		_, err = backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		})
+		require.NoError(t, err)
+	}
+
+	tripsBefore, keysBefore := kvStore.stats()
+
+	_, seq := backend.ListModifiedSince(ctx, appsNamespace, sinceRV, nil)
+	got := 0
+	var lastRV int64
+	for mr, err := range seq {
+		require.NoError(t, err)
+		_, ok := writtenNames[mr.Key.Name]
+		require.True(t, ok, "ListModifiedSince yielded unexpected resource: %s", mr.Key.String())
+		require.NotEmpty(t, mr.Value, "resolved resource must carry its value")
+		if lastRV != 0 {
+			require.Less(t, mr.ResourceVersion, lastRV, "event-store branch yields in descending resource version order")
+		}
+		lastRV = mr.ResourceVersion
+		got++
+	}
+	require.Equal(t, numResources, got, "every modified resource should be returned exactly once")
+
+	// The data store chunks at dataBatchSize, so the scan costs one read per
+	// chunk. Resolving one resource at a time would cost numResources reads.
+	tripsAfter, keysAfter := kvStore.stats()
+	assert.Equal(t, numResources/dataBatchSize, tripsAfter-tripsBefore, "values should be resolved with one read per chunk")
+	assert.Equal(t, numResources, keysAfter-keysBefore, "every resource value should be read exactly once")
+}
+
 // failingBatchGetKV wraps a KV and fails every batched read of the data section,
 // standing in for a storage outage.
 type failingBatchGetKV struct {
