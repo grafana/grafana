@@ -160,7 +160,7 @@ function createFlatTree(
       openFolders,
       level + 1,
       excludeKinds,
-      excludeUIDs
+      [...excludeUIDs, item.uid]
     );
 
     const isOpen = Boolean(openFolders[item.uid]);
