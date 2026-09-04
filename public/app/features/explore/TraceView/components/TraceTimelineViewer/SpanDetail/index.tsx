@@ -53,6 +53,7 @@ import type DetailState from './DetailState';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 import { useAttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
+import { shouldPinEventsFirst } from './spanDetailSectionOrder';
 
 const useResourceAttributesExtensionLinks = ({
   process,
@@ -471,6 +472,19 @@ export default function SpanDetail(props: SpanDetailProps) {
   const promoGetter = useAttributePluginPromoGetter(promoAttributeKeys);
 
   const listOfContentCards = [];
+  const pinEventsFirst = shouldPinEventsFirst(span);
+  const eventsCard =
+    logs && logs.length > 0 ? (
+      <AccordionLogs
+        key="events"
+        logs={logs}
+        isOpen={logsState.isOpen}
+        openedItems={logsState.openedItems}
+        onToggle={() => logsToggle(spanID)}
+        onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
+        timestamp={traceStartTime}
+      />
+    ) : null;
 
   if (isSummarySpan && aggregationTags.length > 0) {
     listOfContentCards.push(
@@ -484,6 +498,10 @@ export default function SpanDetail(props: SpanDetailProps) {
         datasourceType={datasourceType}
       />
     );
+  }
+
+  if (pinEventsFirst && eventsCard) {
+    listOfContentCards.push(eventsCard);
   }
 
   listOfContentCards.push(
@@ -523,17 +541,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     />
   );
 
-  if (logs && logs.length > 0) {
-    listOfContentCards.push(
-      <AccordionLogs
-        logs={logs}
-        isOpen={logsState.isOpen}
-        openedItems={logsState.openedItems}
-        onToggle={() => logsToggle(spanID)}
-        onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
-        timestamp={traceStartTime}
-      />
-    );
+  if (!pinEventsFirst && eventsCard) {
+    listOfContentCards.push(eventsCard);
   }
 
   if (warnings && warnings.length > 0) {
