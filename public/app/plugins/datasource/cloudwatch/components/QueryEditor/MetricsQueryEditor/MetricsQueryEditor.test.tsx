@@ -1,4 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
+import * as React from 'react';
 import selectEvent from 'react-select-event';
 
 import { type CustomVariableModel, type DataSourceInstanceSettings } from '@grafana/data';
@@ -19,6 +22,14 @@ jest.mock('@grafana/ui', () => ({
   CodeEditor: function CodeEditor({ value }: { value: string }) {
     return <pre>{value}</pre>;
   },
+}));
+
+jest.mock('./PromQLCodeEditor', () => ({
+  PromQLCodeEditor: () => <div data-testid="promql-code-editor" />,
+}));
+
+jest.mock('./PromQLBuilderEditor', () => ({
+  PromQLBuilderEditor: () => <div data-testid="promql-builder-editor" />,
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -159,6 +170,91 @@ describe('QueryEditor', () => {
         ...props.query,
         accountId: undefined,
       });
+    });
+  });
+
+  describe('PromQL mode header', () => {
+    function HeaderHarness(props: Props) {
+      const [left, setLeft] = useState<React.JSX.Element | undefined>();
+      const [right, setRight] = useState<React.JSX.Element | undefined>();
+      return (
+        <>
+          <MetricsQueryEditor {...props} extraHeaderElementLeft={setLeft} extraHeaderElementRight={setRight} />
+          {left}
+          {right}
+        </>
+      );
+    }
+
+    it('renders the Explain switch only when the query is PromQL', () => {
+      const searchProps = setup({ metricQueryType: MetricQueryType.Search });
+      const { unmount } = render(<HeaderHarness {...searchProps} />);
+      expect(screen.queryByLabelText('Explain')).toBeNull();
+      unmount();
+
+      const promQLProps = setup({ metricQueryType: MetricQueryType.PromQL, promqlExpression: 'CPUUtilization' });
+      render(<HeaderHarness {...promQLProps} />);
+      expect(screen.getByLabelText('Explain')).toBeInTheDocument();
+    });
+
+    it('renders the Builder/Code toggle for PromQL queries', () => {
+      const props = setup({
+        metricQueryType: MetricQueryType.PromQL,
+        metricEditorMode: MetricEditorMode.Builder,
+        promqlExpression: 'CPUUtilization',
+      });
+      render(<HeaderHarness {...props} />);
+      expect(screen.getByRole('radio', { name: 'Builder' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Code' })).toBeInTheDocument();
+    });
+
+    it('switches modes without prompting when the expression parses cleanly', async () => {
+      const props = setup({
+        metricQueryType: MetricQueryType.PromQL,
+        metricEditorMode: MetricEditorMode.Code,
+        promqlExpression: 'CPUUtilization',
+      });
+      render(<HeaderHarness {...props} />);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Builder' }));
+
+      expect(props.onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ metricEditorMode: MetricEditorMode.Builder })
+      );
+      expect(screen.queryByText(/Parsing error/)).toBeNull();
+    });
+
+    it('shows the parse-error confirm modal when switching Code -> Builder with an unparseable expression', async () => {
+      const props = setup({
+        metricQueryType: MetricQueryType.PromQL,
+        metricEditorMode: MetricEditorMode.Code,
+        // Vector matching on a scalar isn't representable in the visual builder.
+        promqlExpression: '(sum(rate(foo[$__rate_interval]))) / on() group_left vector(2)',
+      });
+      render(<HeaderHarness {...props} />);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Builder' }));
+
+      expect(await screen.findByText(/Parsing error: Switch to builder mode\?/)).toBeInTheDocument();
+      expect(props.onChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({ metricEditorMode: MetricEditorMode.Builder })
+      );
+    });
+
+    it('switches mode after the user confirms the parse-error modal', async () => {
+      const props = setup({
+        metricQueryType: MetricQueryType.PromQL,
+        metricEditorMode: MetricEditorMode.Code,
+        promqlExpression: '(sum(rate(foo[$__rate_interval]))) / on() group_left vector(2)',
+      });
+      render(<HeaderHarness {...props} />);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Builder' }));
+      await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+
+      expect(props.onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ metricEditorMode: MetricEditorMode.Builder })
+      );
     });
   });
 });

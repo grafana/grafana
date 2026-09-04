@@ -8,6 +8,7 @@
     "@grafana/aws-sdk": "^0.12.0",
     "@grafana/data": "13.3.0-pre",
     "@grafana/plugin-ui": "^0.17.3",
+    "@grafana/prometheus": "13.1.12",
     "@grafana/runtime": "13.3.0-pre",
     "@grafana/scenes": "8.13.6",
     "@grafana/schema": "13.3.0-pre",
