@@ -12,25 +12,19 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
+const dataKeysTable = "data_keys"
+
 type SecretsStoreImpl struct {
-	sql   legacysql.LegacyDatabaseProvider
-	log   log.Logger
-	table string
+	sql legacysql.LegacyDatabaseProvider
+	log log.Logger
 }
 
 func ProvideSecretsStore(sql legacysql.LegacyDatabaseProvider) *SecretsStoreImpl {
 	store := &SecretsStoreImpl{
-		sql:   sql,
-		log:   log.New("secrets.store"),
-		table: "data_keys",
+		sql: sql,
+		log: log.New("secrets.store"),
 	}
 
-	return store
-}
-
-func NewSecretsStoreForTable(sql legacysql.LegacyDatabaseProvider, table string) *SecretsStoreImpl {
-	store := ProvideSecretsStore(sql)
-	store.table = table
 	return store
 }
 
@@ -45,7 +39,7 @@ func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		exists, err = sess.Table(dbHelper.Table(ss.table)).
+		exists, err = sess.Table(dbHelper.Table(dataKeysTable)).
 			Where("name = ?", id).
 			Get(dataKey)
 		return err
@@ -73,7 +67,7 @@ func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, label string)
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		exists, err = sess.Table(dbHelper.Table(ss.table)).
+		exists, err = sess.Table(dbHelper.Table(dataKeysTable)).
 			Where("label = ? AND active = ?", label, dbHelper.DB.GetDialect().BooleanValue(true)).
 			Get(dataKey)
 		return err
@@ -98,7 +92,7 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.Data
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.Table(dbHelper.Table(ss.table)).Find(&result)
+		err := sess.Table(dbHelper.Table(dataKeysTable)).Find(&result)
 		return err
 	})
 	return result, err
@@ -118,7 +112,7 @@ func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(dbHelper.Table(ss.table)).Insert(dataKey)
+		_, err := sess.Table(dbHelper.Table(dataKeysTable)).Insert(dataKey)
 		if err != nil {
 			return err
 		}
@@ -134,7 +128,7 @@ func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(dbHelper.Table(ss.table)).
+		_, err := sess.Table(dbHelper.Table(dataKeysTable)).
 			Where("active = ?", dbHelper.DB.GetDialect().BooleanValue(true)).
 			UseBool("active").Update(&secrets.DataKey{Active: false})
 		return err
@@ -152,7 +146,7 @@ func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, id string) error 
 	}
 
 	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(dbHelper.Table(ss.table)).Delete(&secrets.DataKey{Id: id})
+		_, err := sess.Table(dbHelper.Table(dataKeysTable)).Delete(&secrets.DataKey{Id: id})
 
 		return err
 	})
@@ -170,7 +164,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 
 	keys := make([]*secrets.DataKey, 0)
 	if err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table(dbHelper.Table(ss.table)).Find(&keys)
+		return sess.Table(dbHelper.Table(dataKeysTable)).Find(&keys)
 	}); err != nil {
 		return err
 	}
@@ -217,7 +211,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 				return nil
 			}
 
-			if _, err := sess.Table(dbHelper.Table(ss.table)).Where("name = ?", k.Id).Update(k); err != nil {
+			if _, err := sess.Table(dbHelper.Table(dataKeysTable)).Where("name = ?", k.Id).Update(k); err != nil {
 				ss.log.Warn(
 					"Error while re-encrypting data encryption key",
 					"id", k.Id,
