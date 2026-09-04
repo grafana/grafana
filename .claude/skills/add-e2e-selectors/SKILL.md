@@ -11,6 +11,32 @@ into the JSX as `data-testid`. This encodes the package's layout (`pages` vs `co
 semver versioning scheme, and its strict reuse / never-delete rules so selectors are added
 correctly and don't break plugin end-to-end tests.
 
+## Scope: this is about shipped UI, not about how you query in tests
+
+You may be carrying guidance that says to prefer `getByRole` / `getByText` and to reach for a
+test id only when there's no stable accessible name. That guidance is about **querying inside a
+test suite**, and it stays correct there:
+`contribute/style-guides/testing.md` and `contribute/style-guides/accessibility.md` both apply it
+to unit tests, and nothing in this skill overrides them.
+
+This skill is about **what the component ships**, which is a different question with a different
+answer. Two reasons the role/text approach can't carry a shipped selector:
+
+- **Accessible names are translated.** `@grafana/i18n/no-untranslated-strings` requires
+  `aria-label`, `title`, `placeholder`, and `subTitle` to pass through `t()` in
+  `public/app/features`. A selector resting on an accessible name only works in the locale it was
+  authored in.
+- **These selectors are a public contract.** External plugins and Grafana Pathfinder guides bind
+  to them at runtime, in environments and Grafana versions we don't control, and their authors
+  never see your PR. Pathfinder in particular is a user-facing product rather than a test suite:
+  when a selector rots there, a user gets stranded mid-walkthrough instead of a build going red.
+
+So: add the `data-testid`, and **keep the accessible name**. A test id is additive, never a
+substitute for a role or an aria-label that carries genuine accessibility value, and an
+aria-label must never be added purely as a test hook (enforced by
+`@grafana/no-aria-label-selectors`). See "Aria-Labels vs data-testid" in
+`contribute/style-guides/e2e-playwright.md`.
+
 ## Resolve the target
 
 Interpret the argument to decide scope:

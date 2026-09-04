@@ -167,6 +167,42 @@ test(
 );
 ```
 
+### Aria-Labels vs data-testid
+
+Our selectors are set up to work with both aria-labels and data-testid attributes. Aria-labels help assistive technologies such as screen readers identify interactive elements of a page for our users.
+
+A good example of a time to use an aria-label might be if you have a button with an X to close:
+
+```jsx
+<button aria-label="Close">X</button>
+```
+
+It might be clear visually that the X closes the modal, but audibly it would not be.
+
+However, adding aria-labels to elements that are already clearly labeled, or that are not interactive, is confusing and redundant for users of assistive technologies. This example might read aloud as "Close, Close":
+
+```jsx
+<button aria-label="Close">Close</button>
+```
+
+In such cases, rather than adding an unnecessary aria-label so the element becomes selectable, use a data attribute that is not read aloud by assistive technology:
+
+```jsx
+<button data-testid="modal-close-button">Close</button>
+```
+
+Adding an aria-label purely as a test hook is enforced against by the `@grafana/no-aria-label-selectors` ESLint rule. Prefix a selector value with `data-testid` to tell the framework to match the `data-testid` attribute rather than the aria-label.
+
+#### Why we don't select on accessible names
+
+The wider testing literature recommends locating elements by role and text, on the grounds that this is how users find things on a page. That advice is sound for a suite whose environment you control, and you are free to follow it when querying inside your own tests. It does not work as the basis for a shipped selector, for two reasons.
+
+**Accessible names are translated.** The `@grafana/i18n/no-untranslated-strings` rule requires `aria-label`, `title`, `placeholder`, and `subTitle` to pass through `t()` in `public/app/features`. Anything selecting on an accessible name is therefore locale-dependent by construction, and only works in the locale it was authored in. A `data-testid` is the only anchor that survives translation.
+
+**Selectors in this package are a public contract.** External plugins and Grafana Pathfinder's interactive guides bind to them at runtime, in environments we don't control, on Grafana versions we didn't pick. Those consumers never see your PR, which is why the versioning rules in `@grafana/e2e-selectors` never delete an old selector version.
+
+A `data-testid` is additive, never a substitute. Keep the accessible name where it carries genuine accessibility value and add the test id alongside it.
+
 ### Advanced example
 
 Let's take a look at an example that uses the same selector for multiple items in a list for instance. In this example app, there's a list of data sources that we want to click on during an E2E test.
