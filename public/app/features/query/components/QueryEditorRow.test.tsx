@@ -1,8 +1,17 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
-import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceApi,
+  dateTime,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
@@ -49,9 +58,10 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn(),
 }));
 
-const mockGet = jest.fn(() => Promise.resolve(mockDS));
-const mockGetInstanceSettings = jest.fn(() => mockDS);
+const mockGet = jest.fn((..._args: unknown[]) => Promise.resolve(mockDS));
+const mockGetInstanceSettings = jest.fn((..._args: unknown[]) => mockDS);
 const mockReportInteraction = jest.fn();
+const mockReplace = jest.fn((target?: string) => target ?? '');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -60,7 +70,19 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => {},
     getInstanceSettings: mockGetInstanceSettings,
   }),
+  getTemplateSrv: () => ({
+    replace: (target?: string) => mockReplace(target),
+    getVariables: () => [],
+    containsTemplate: () => false,
+    updateTimeRange: () => {},
+  }),
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn((...args: unknown[]) => mockGet(...args)),
+  getDataSourceInstanceSettings: jest.fn((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args))),
 }));
 
 // Draggable fails to render in tests, so we mock it out
@@ -399,7 +421,7 @@ describe('QueryEditorRow', () => {
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
   it('forwards scopedVars when resolving a query datasource variable', async () => {
-    mockGetInstanceSettings.mockClear();
+    jest.mocked(getDataSourceInstanceSettings).mockClear();
     const data = {
       state: LoadingState.Done,
       series: [],
@@ -412,7 +434,7 @@ describe('QueryEditorRow', () => {
     render(<QueryEditorRow {...props(data)} query={query} scopedVars={scopedVars} />);
 
     await waitFor(() => {
-      expect(mockGetInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
+      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
     });
   });
   it('should display error message in corresponding panel', async () => {
@@ -471,10 +493,9 @@ describe('QueryEditorRow', () => {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     });
 
-    it('scrolls the row into view once it renders (after the datasource loads)', async () => {
+    it('scrolls the row into view once it renders', async () => {
       render(<QueryEditorRow {...props(data)} scrollIntoView />);
 
-      // The row renders nothing until its datasource resolves, so the scroll must wait for that.
       // The jest-setup ResizeObserver mock may fire an extra re-pin, so assert on the first
       // (deliberate) call rather than the total count.
       await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
@@ -539,6 +560,174 @@ describe('QueryEditorRow', () => {
       await waitFor(() => expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument());
 
       expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('plugin editor while datasource changes', () => {
+    let editorQueryIds: string[];
+
+    function FakeQueryEditor({ query }: { query: DataQuery }) {
+      editorQueryIds.push(query.datasource?.uid ?? 'none');
+      return <div data-testid="fake-query-editor">{query.datasource?.uid ?? 'none'}</div>;
+    }
+
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    beforeEach(() => {
+      editorQueryIds = [];
+      mockGet.mockImplementation((..._args: unknown[]) =>
+        Promise.resolve({
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        })
+      );
+    });
+
+    afterEach(() => {
+      mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
+      mockReplace.mockImplementation((target?: string) => target ?? '');
+      jest
+        .mocked(getDataSourceInstance)
+        .mockImplementation((...args: unknown[]) => mockGet(...args) as unknown as Promise<DataSourceApi>);
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockImplementation((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args)));
+    });
+
+    it('hides the plugin editor immediately when the query datasource changes', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('none');
+      const rendersBeforeChange = editorQueryIds.length;
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'other-ds', type: 'loki' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'other-ds', type: 'loki' } }]}
+        />
+      );
+
+      // The previous plugin editor must not paint against the new query while the next
+      // datasource is still loading. `queryByTestId` can miss that paint if a later
+      // setState unmounts it in the same RTL flush.
+      expect(editorQueryIds.slice(rendersBeforeChange)).toEqual([]);
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('other-ds');
+    });
+
+    it('hides the plugin editor immediately when a datasource variable interpolates to a new uid', async () => {
+      let interpolatedUid = 'prom-uid';
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? interpolatedUid : (target ?? '')));
+
+      const query = { refId: 'B', datasource: { uid: '${ds}', type: 'prometheus' } };
+      const initialProps = { ...props(data), query, queries: [query] };
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+      const rendersBeforeChange = editorQueryIds.length;
+
+      interpolatedUid = 'loki-uid';
+      rerender(<QueryEditorRow {...initialProps} data={{ ...data }} />);
+
+      expect(editorQueryIds.slice(rendersBeforeChange)).toEqual([]);
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+    });
+
+    it('does not keep the previous plugin editor mounted when both instance lookups fail', async () => {
+      const onDataSourceLoaded = jest.fn();
+      jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'gone' ? undefined : mockDS;
+      });
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid) => {
+        if (uid === 'gone' || uid == null) {
+          throw new Error('unavailable');
+        }
+        return {
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        } as unknown as DataSourceApi;
+      });
+
+      const initialProps = { ...props(data), onDataSourceLoaded };
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }]}
+        />
+      );
+
+      // Wait until the default-instance fallback has also rejected. The loading
+      // gate hides the editor during the attempt; after both lookups fail the
+      // previous plugin must stay unmounted, but the row (header/actions) stays.
+      await waitFor(() => {
+        expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries loading after both instance lookups fail when the query datasource changes', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'gone' ? undefined : mockDS;
+      });
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid) => {
+        if (uid == null) {
+          throw new Error('unavailable');
+        }
+        return {
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        } as unknown as DataSourceApi;
+      });
+
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} query={{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }} />
+      );
+
+      await waitFor(() => {
+        expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      // The row stays mounted after both lookups fail so the header picker remains
+      // a recovery path and dnd indices stay contiguous.
+      expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'recovered-ds', type: 'prometheus' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'recovered-ds', type: 'prometheus' } }]}
+        />
+      );
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
     });
   });
 

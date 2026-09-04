@@ -21,7 +21,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -45,6 +46,7 @@ import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
 import { pinScrollIntoView } from './pinScrollIntoView';
+import { getQueryDataSourceIdentity } from './queryDataSourceIdentity';
 
 export interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -88,9 +90,7 @@ export interface Props<TQuery extends DataQuery> {
    */
   scopedVars?: ScopedVars;
   /**
-   * When true, scrolls the row into view once it first renders. The row renders nothing until its
-   * datasource loads, so the scroll fires whenever the DOM node actually appears rather than after
-   * a fixed delay.
+   * When true, scrolls the row into view once it first renders.
    */
   scrollIntoView?: boolean;
   /** Called after the scroll happens so the owner can clear the flag. */
@@ -105,26 +105,31 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
+  isDatasourceLoading: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
-  dataSourceSrv = getDataSourceSrv();
-  id = '';
+  // Assigned here so the first paint (before the datasource instance loads) still has a
+  // non-empty Draggable id. Waiting until `componentDidMount` left it `''`.
+  id = uniqueId(this.props.id + '_');
   editorRef = createRef<HTMLDivElement>();
   private hasStartedScrollIntoView = false;
   private cancelScrollPin?: () => void;
+  private dsLoadInFlight = false;
+  /** Last identity `loadDatasource` tried. Sync so `componentDidUpdate` does not re-enter after a failed load. */
+  private lastAttemptedIdentifier?: string | null;
 
   state: State<TQuery> = {
     datasource: null,
     data: undefined,
     isOpen: true,
     showingHelp: false,
+    isDatasourceLoading: false,
   };
 
   componentDidMount() {
-    const { data, query, id } = this.props;
+    const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
-    this.id = uniqueId(id + '_');
     this.setState({ data: dataFilteredByRefId });
 
     this.loadDatasource();
@@ -152,41 +157,59 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    * DataSourceSettings.uid can also be this variable expression.
    * This function always returns the current interpolated datasource uid.
    */
-  getInterpolatedDataSourceUID(): string | undefined {
+  async getInterpolatedDataSourceUID(): Promise<string | undefined> {
     if (this.props.query.datasource) {
-      const instanceSettings = this.dataSourceSrv.getInstanceSettings(
-        this.props.query.datasource,
-        this.props.scopedVars
-      );
+      const instanceSettings = await getDataSourceInstanceSettings(this.props.query.datasource, this.props.scopedVars);
       return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
     }
 
     return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
   }
 
+  /**
+   * Sync identity for the datasource this row should show. Used during render so a datasource
+   * (or variable) change can hide the plugin editor on this paint — `getDataSourceInstanceSettings`
+   * is async, so waiting for `componentDidUpdate` to finish that lookup would keep the previous
+   * editor mounted against the new query.
+   */
+  getDataSourceIdentifier(): string | undefined {
+    return getQueryDataSourceIdentity(this.props.query.datasource, this.props.scopedVars, this.props.dataSource);
+  }
+
   async loadDatasource() {
-    let datasource: DataSourceApi;
-    const interpolatedUID = this.getInterpolatedDataSourceUID();
+    const identifier = this.getDataSourceIdentifier();
+    this.lastAttemptedIdentifier = identifier;
+    this.dsLoadInFlight = true;
+    this.setState({ isDatasourceLoading: true });
 
     try {
-      datasource = await this.dataSourceSrv.get(interpolatedUID);
-    } catch (error) {
-      // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
-      datasource = await this.dataSourceSrv.get();
-    }
+      let datasource: DataSourceApi;
+      const interpolatedUID = await this.getInterpolatedDataSourceUID();
 
-    if (typeof this.props.onDataSourceLoaded === 'function') {
-      this.props.onDataSourceLoaded(datasource);
-    }
+      try {
+        datasource = await getDataSourceInstance(interpolatedUID);
+      } catch {
+        // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
+        datasource = await getDataSourceInstance();
+      }
 
-    this.setState({
-      datasource: datasource as unknown as DataSourceApi<TQuery>,
-      queriedDataSourceIdentifier: interpolatedUID,
-    });
+      this.props.onDataSourceLoaded?.(datasource);
+      this.setState({
+        datasource: datasource as unknown as DataSourceApi<TQuery>,
+        queriedDataSourceIdentifier: identifier,
+      });
+    } catch {
+      // Both the targeted and default lookups failed. Drop the stale instance so the
+      // previous plugin's editor isn't mounted against the new query; `lastAttemptedIdentifier`
+      // already stops us re-trying the same identity.
+      this.setState({ datasource: null, queriedDataSourceIdentifier: identifier });
+    } finally {
+      this.dsLoadInFlight = false;
+      this.setState({ isDatasourceLoading: false });
+    }
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
-    const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (prevProps.id !== this.props.id) {
@@ -210,10 +233,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     this.scrollIntoViewIfNeeded();
 
-    // check if we need to load another datasource
-    if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
-      this.loadDatasource();
+    if (this.dsLoadInFlight) {
       return;
+    }
+
+    // Reload when the query's datasource identity changes. Compare against the
+    // last attempted identity (sync) rather than state — a failed lookup leaves
+    // `queriedDataSourceIdentifier` stale until setState flushes, which would
+    // otherwise re-enter loadDatasource in a loop.
+    if (this.lastAttemptedIdentifier !== this.getDataSourceIdentifier()) {
+      this.loadDatasource();
     }
   }
 
@@ -238,41 +267,40 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   isWaitingForDatasourceToLoad(): boolean {
-    // if we not yet have loaded the datasource in state the
-    // ds in props and the ds in state will have different values.
-    return this.getInterpolatedDataSourceUID() !== this.state.queriedDataSourceIdentifier;
+    // Hide as soon as the query's datasource identity no longer matches the loaded
+    // instance. `isDatasourceLoading` is only set after `loadDatasource` starts, which
+    // is too late for the first render after a datasource or variable change.
+    return this.state.isDatasourceLoading || this.getDataSourceIdentifier() !== this.state.queriedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
-    if (this.isWaitingForDatasourceToLoad()) {
+    if (this.isWaitingForDatasourceToLoad() || !datasource) {
       return null;
     }
 
-    if (datasource) {
-      let QueryEditor = this.getQueryEditor(datasource);
+    let QueryEditor = this.getQueryEditor(datasource);
 
-      if (QueryEditor) {
-        return (
-          <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
-            <QueryEditor
-              key={datasource?.name}
-              query={query}
-              datasource={datasource}
-              onChange={onChange}
-              onRunQuery={onRunQuery}
-              onAddQuery={onAddQuery}
-              data={data}
-              range={range}
-              queries={queries}
-              app={app}
-              history={history}
-            />
-          </DataSourcePluginContextProvider>
-        );
-      }
+    if (QueryEditor) {
+      return (
+        <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
+          <QueryEditor
+            key={datasource?.name}
+            query={query}
+            datasource={datasource}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            onAddQuery={onAddQuery}
+            data={data}
+            range={range}
+            queries={queries}
+            app={app}
+            history={history}
+          />
+        </DataSourcePluginContextProvider>
+      );
     }
 
     return (
@@ -600,12 +628,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'gf-form-disabled': isHidden,
     });
 
-    if (!datasource) {
-      return null;
-    }
-
+    // Always mount the operation row. Returning null here when `datasource` is missing
+    // unmounted the header picker and skipped a `@hello-pangea/dnd` index; the plugin
+    // editor is already hidden until a matching instance loads.
     const editor = this.renderPluginEditor();
-    const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
+    const DatasourceCheatsheet = datasource?.components?.QueryEditorHelp;
+    const pluginId = datasource?.type ?? this.props.dataSource.type;
 
     const queryOperationRow = (
       <QueryOperationRow
@@ -622,11 +650,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <div
           className={rowClasses}
           id={this.id}
-          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
-          data-plugin-id={datasource.type}
+          data-testid={selectors.components.Plugins.queryEditorRow(pluginId, query.refId)}
+          data-plugin-id={pluginId}
         >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
-            {showingHelp && DatasourceCheatsheet && (
+            {showingHelp && datasource && DatasourceCheatsheet && (
               <OperationRowHelp>
                 <DatasourceCheatsheet
                   onClickExample={(query) => this.onClickExample(query)}

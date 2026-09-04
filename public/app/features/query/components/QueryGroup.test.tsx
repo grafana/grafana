@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { isExpressionReference } from '@grafana/runtime';
+import { type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -20,20 +22,43 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
+const mixedMockDS = {
+  ...mockDS,
+  meta: {
+    ...mockDS.meta,
+    alerting: true,
+    mixed: true,
+  },
+};
+
+const expressionDS = mockDataSource({
+  name: 'Expression',
+  uid: '__expr__',
+  type: '__expr__',
+});
+
+const mockGetInstanceSettings = jest.fn((ref?: DataSourceRef | string | null) => {
+  if (isExpressionReference(ref)) {
+    return expressionDS;
+  }
+  return mixedMockDS;
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
     getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-    getInstanceSettings: () => ({
-      ...mockDS,
-      meta: {
-        ...mockDS.meta,
-        alerting: true,
-        mixed: true,
-      },
-    }),
+    getInstanceSettings: (ref?: DataSourceRef | string | null) => mockGetInstanceSettings(ref),
   }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(() => Promise.resolve({ ...mockDS, getRef: () => {} })),
+  getDataSourceInstanceSettings: jest.fn((ref?: DataSourceRef | string | null) =>
+    Promise.resolve(mockGetInstanceSettings(ref))
+  ),
 }));
 
 describe('QueryGroup', () => {

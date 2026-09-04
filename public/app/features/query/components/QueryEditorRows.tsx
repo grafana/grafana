@@ -1,5 +1,6 @@
 import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { PureComponent, type ReactNode } from 'react';
+import { PureComponent, type ComponentProps, type ReactNode } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   CoreApp,
@@ -13,7 +14,7 @@ import {
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -21,6 +22,7 @@ import { trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditN
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
+import { getQueryDataSourceIdentity } from './queryDataSourceIdentity';
 
 export interface Props {
   // The query configuration
@@ -173,7 +175,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         const dataSourceRef = getDataSourceRef(dataSource);
 
         if (item.datasource) {
-          const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
+          const previous = await getDataSourceInstanceSettings(item.datasource);
 
           if (previous?.type === dataSource.type) {
             return {
@@ -183,7 +185,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           }
         }
 
-        const ds = await getDataSourceSrv().get(dataSourceRef);
+        const ds = await getDataSourceInstance(dataSourceRef);
 
         return { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...item, datasource: dataSourceRef };
       })
@@ -256,19 +258,18 @@ export class QueryEditorRows extends PureComponent<Props> {
             return (
               <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
-                  const dataSourceSettings = getDataSourceSettings(query, dsSettings, scopedVars);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
                     : undefined;
 
                   const queryEditorRow = (
-                    <QueryEditorRow
+                    <QueryEditorRowWithResolvedDataSource
                       id={query.refId}
                       index={index}
                       key={query.refId}
                       data={data}
                       query={query}
-                      dataSource={dataSourceSettings}
+                      groupSettings={dsSettings}
                       scopedVars={scopedVars}
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
@@ -309,14 +310,154 @@ export class QueryEditorRows extends PureComponent<Props> {
   }
 }
 
-const getDataSourceSettings = (
-  query: DataQuery,
+type QueryEditorRowWithResolvedDataSourceProps = Omit<
+  ComponentProps<typeof QueryEditorRow>,
+  'dataSource' | 'query' | 'scopedVars'
+> & {
+  query: DataQuery;
+  groupSettings: DataSourceInstanceSettings;
+  scopedVars?: ScopedVars;
+};
+
+function QueryEditorRowWithResolvedDataSource({
+  query,
+  groupSettings,
+  scopedVars,
+  ...rowProps
+}: QueryEditorRowWithResolvedDataSourceProps) {
+  // Compare by value: `scopedVars` is a new `{ __sceneObject }` wrapper on every
+  // QueryEditorRows render, and `query.datasource` is often an inline object.
+  // `interpolatedUid` is required too — `${ds}` and the scene key stay the same when
+  // the variable's value changes, but instance settings (type, meta, jsonData) do not.
+  const interpolatedUid = getQueryDataSourceIdentity(query.datasource, scopedVars);
+  const datasourceKey = stableKey(query.datasource);
+  const varsKey = scopedVarsKey(scopedVars);
+  // Stamp the interpolated identity onto the fetch so a variable change cannot reuse
+  // the previous settings for one render (`useAsync` keeps the old value until the
+  // effect runs). Comparing settings fields is not enough: interpolation can yield a
+  // datasource name while `rawRef` stores the concrete uid.
+  const { value } = useAsync(
+    async () => {
+      if (!query.datasource) {
+        return undefined;
+      }
+      const settings = await getDataSourceInstanceSettings(query.datasource, scopedVars);
+      return { settings, interpolatedUid };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [datasourceKey, varsKey, interpolatedUid]
+  );
+
+  const fetchMatches = Boolean(value && value.interpolatedUid === interpolatedUid);
+  const currentQuerySettings = fetchMatches ? value?.settings : undefined;
+  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings, {
+    lookupFailed: fetchMatches && currentQuerySettings === undefined,
+  });
+
+  // Always render the row so `@hello-pangea/dnd` indices stay contiguous. Returning null
+  // here skips a Draggable and also hides deleted-datasource queries with no recovery path.
+  return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
+}
+
+export function resolveRowDataSourceSettings(
+  queryDatasource: DataQuery['datasource'],
+  querySettings: DataSourceInstanceSettings | undefined,
   groupSettings: DataSourceInstanceSettings,
-  scopedVars?: ScopedVars
-): DataSourceInstanceSettings => {
-  if (!query.datasource) {
+  options?: { lookupFailed?: boolean }
+): DataSourceInstanceSettings {
+  if (!queryDatasource) {
     return groupSettings;
   }
-  const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource, scopedVars);
-  return querySettings || groupSettings;
-};
+  if (querySettings) {
+    return querySettings;
+  }
+  if (!groupSettings.meta.mixed) {
+    return groupSettings;
+  }
+  if (isMixedQueryDatasource(queryDatasource, groupSettings) || !queryDatasourceUid(queryDatasource)) {
+    return groupSettings;
+  }
+  if (!options?.lookupFailed) {
+    return groupSettings;
+  }
+  // An interpolated uid that still contains `$` is "can't tell yet", not "definitely missing".
+  if (queryDatasourceUid(queryDatasource)?.includes('$')) {
+    return groupSettings;
+  }
+  return notFoundSettings(queryDatasource, groupSettings);
+}
+
+function queryDatasourceUid(queryDatasource: DataQuery['datasource'] | string): string | undefined {
+  return typeof queryDatasource === 'string' ? queryDatasource : queryDatasource?.uid;
+}
+
+function isMixedQueryDatasource(
+  queryDatasource: DataQuery['datasource'] | string,
+  groupSettings: DataSourceInstanceSettings
+): boolean {
+  const uid = queryDatasourceUid(queryDatasource);
+  if (uid && (uid === MIXED_DATASOURCE_NAME || uid === groupSettings.uid)) {
+    return true;
+  }
+  const type = typeof queryDatasource === 'string' ? undefined : queryDatasource?.type;
+  return type === 'mixed';
+}
+
+/**
+ * Stand-in settings for a mixed-panel query whose datasource could not be resolved.
+ * Name is the raw uid — `DataSourcePicker` already labels an unresolvable current
+ * ref as `<uid> - not found`, so we must not append that suffix here.
+ */
+function notFoundSettings(
+  queryDatasource: DataQuery['datasource'],
+  groupSettings: DataSourceInstanceSettings
+): DataSourceInstanceSettings {
+  const uid = typeof queryDatasource === 'string' ? queryDatasource : (queryDatasource?.uid ?? '');
+  const type = typeof queryDatasource === 'string' ? undefined : queryDatasource?.type;
+
+  return {
+    ...groupSettings,
+    uid,
+    name: uid,
+    type: type || groupSettings.type,
+    meta: {
+      ...groupSettings.meta,
+      mixed: false,
+    },
+    rawRef: undefined,
+  };
+}
+
+function stableKey(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
+function scopedVarsKey(scopedVars?: ScopedVars): string {
+  if (!scopedVars) {
+    return '';
+  }
+
+  const sceneVar = scopedVars.__sceneObject;
+  if (!sceneVar) {
+    return stableKey(scopedVars);
+  }
+
+  // SafeSerializableSceneObject is circular under JSON.stringify (`value` returns this).
+  // Key by the underlying scene object so a new wrapper each render does not refetch.
+  const sceneObject = typeof sceneVar.valueOf === 'function' ? sceneVar.valueOf() : sceneVar;
+  const key = sceneObjectKey(sceneObject);
+  return key != null ? `scene:${key}` : 'scene';
+}
+
+function sceneObjectKey(sceneObject: unknown): string | undefined {
+  if (sceneObject == null || typeof sceneObject !== 'object' || !('state' in sceneObject)) {
+    return undefined;
+  }
+
+  const state = sceneObject.state;
+  if (state == null || typeof state !== 'object' || !('key' in state) || state.key == null) {
+    return undefined;
+  }
+
+  return String(state.key);
+}
