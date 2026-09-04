@@ -543,7 +543,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
 
     const sourceRefId = f.refId ?? '';
     const sourceQuery = req.targets.find((q) => q.refId === sourceRefId);
-    if (sourceRefId && !sourceQuery?.hide) {
+    if (sourceRefId) {
       liveSourceRefIds.add(sourceRefId);
     }
   }
