@@ -1,4 +1,7 @@
-import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent } from '@grafana/data';
+import { createBrowserHistory } from 'history';
+
+import { type GrafanaConfig, LegacyGraphHoverClearEvent, locationUtil, SetPanelAttentionEvent } from '@grafana/data';
+import { HistoryWrapper, setLocationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -6,12 +9,14 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -280,6 +285,80 @@ describe('setupKeyboardShortcuts', () => {
     it('should setup dashboard settings shortcut (d s) when can edit', () => {
       const dsBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd s');
       expect(dsBinding).toBeDefined();
+    });
+  });
+
+  describe('panel edit shortcut (e) when Grafana is served under a subpath', () => {
+    const getBinding = (key: string) =>
+      mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === key)?.[0];
+
+    function focusPanel(pathId: string) {
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: pathId }));
+    }
+
+    // The router basename is the subpath, so any path handed to locationService must be
+    // basename-relative — otherwise the subpath is prepended a second time.
+    function serveUnderSubpath(url: string) {
+      window.history.replaceState({}, '', url);
+      setLocationService(new HistoryWrapper(createBrowserHistory({ basename: '/grafana' })));
+    }
+
+    let panel: VizPanel;
+    let scene: DashboardScene;
+
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+
+      // The panel needs to sit in the scene graph: the shortcut only acts when the focused
+      // panel's root is a DashboardScene, and buildPanelEditScene requires a layout item parent.
+      panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+      scene = new DashboardScene({
+        title: 'Test Dashboard',
+        uid: 'test-uid',
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
+      jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    });
+
+    afterEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+      setLocationService(new HistoryWrapper());
+    });
+
+    it('keeps the subpath intact when opening panel edit', () => {
+      serveUnderSubpath('/grafana/d/test-uid/test-dashboard');
+      setupKeyboardShortcuts(scene);
+      focusPanel('panel-1');
+
+      getBinding('e')!.onTrigger();
+
+      expect(window.location.pathname).toBe('/grafana/d/test-uid/test-dashboard');
+      expect(window.location.search).toContain('editPanel=1');
+    });
+
+    it('keeps the subpath intact when closing panel edit', () => {
+      serveUnderSubpath('/grafana/d/test-uid/test-dashboard?editPanel=1');
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+      setupKeyboardShortcuts(scene);
+      focusPanel('panel-1');
+
+      getBinding('e')!.onTrigger();
+
+      expect(window.location.pathname).toBe('/grafana/d/test-uid/test-dashboard');
+      expect(window.location.search).not.toContain('editPanel');
     });
   });
 
