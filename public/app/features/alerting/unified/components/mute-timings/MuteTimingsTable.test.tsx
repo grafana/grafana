@@ -1,6 +1,8 @@
-import { render, screen, userEvent, within } from 'test/test-utils';
+import { HttpResponse, http } from 'msw';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { base64UrlEncode } from '@grafana/alerting';
+import server from '@grafana/test-utils/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   setDeleteTimeIntervalError,
@@ -9,6 +11,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/configure';
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../../mocks';
@@ -23,7 +26,8 @@ const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
       <TimeIntervalsTable />
-    </AlertmanagerProvider>
+    </AlertmanagerProvider>,
+    { withModalRoot: true }
   );
 };
 
@@ -132,6 +136,31 @@ describe('MuteTimingsTable', () => {
 
       expect(await screen.findByRole('dialog', { name: /something went wrong/i })).toBeInTheDocument();
       expect(screen.getByText(/still used by one or more notification policies or alert rules/i)).toBeInTheDocument();
+    });
+
+    it('prevents dismissal while deletion is in progress', async () => {
+      let resolveDelete!: () => void;
+      server.use(
+        http.delete(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`, async () => {
+          await new Promise<void>((resolve) => {
+            resolveDelete = resolve;
+          });
+          return HttpResponse.json({}, { status: 500 });
+        })
+      );
+      const { user } = renderWithProvider();
+
+      await user.click((await screen.findAllByText(/delete/i))[0]);
+      await user.click(await screen.findByRole('button', { name: /delete/i }));
+      await waitFor(() => expect(resolveDelete).toBeDefined());
+
+      expect(screen.getByRole('button', { name: /deleting/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
+      expect(screen.getByRole('dialog', { name: /delete mute timing/i })).toBeInTheDocument();
+
+      resolveDelete();
+
+      expect(await screen.findByRole('dialog', { name: /something went wrong/i })).toBeInTheDocument();
     });
 
     it('shows empty state when no mute timings are configured', async () => {
