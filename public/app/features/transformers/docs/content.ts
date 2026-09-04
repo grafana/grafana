@@ -961,6 +961,47 @@ The result after applying the outer join transformation looks like the following
 | 5         | NULL     | NULL             | HIST101  | B     |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
+
+#### Joining on more than one field
+
+A join drops any query that doesn't contain the selected field. That means you can't simply add a second **Join by field** transformation to join on a different field, because the query you wanted to join second has already been discarded.
+
+Use the **Keep unjoined** option to forward those queries instead of dropping them, so that a later **Join by field** transformation can join them on a different field. Enable it on every join except the last one.
+
+For example, one query returns measurements with two IDs, and one query per ID returns that ID's name:
+
+**Query A:**
+
+| GroupID | ProductID | Value |
+| ------- | --------- | ----- |
+| g1      | p1        | 1     |
+
+**Query B:**
+
+| GroupID | GroupName |
+| ------- | --------- |
+| g1      | Alpha     |
+
+**Query C:**
+
+| ProductID | ProductName |
+| --------- | ----------- |
+| p1        | Widget      |
+
+Add two transformations:
+
+1. **Join by field** on \`GroupID\`, with **Keep unjoined** enabled. Query C has no \`GroupID\`, so it's passed through rather than dropped.
+1. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
+
+The result looks like the following:
+
+| ProductID | GroupID | Value | GroupName | ProductName |
+| --------- | ------- | ----- | --------- | ----------- |
+| p1        | g1      | 1     | Alpha     | Widget      |
+
+The field being joined on moves to the first column, so the column order changes at each step. Add an **Organize fields by name** transformation afterwards if you need a specific order.
+
+Leave **Keep unjoined** disabled unless you're chaining joins. When it's disabled, a query that's missing the selected field is treated as a failed input to the join, which is what makes an inner join correctly return no rows when a query comes back without the field.
   `;
     },
   },
