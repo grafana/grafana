@@ -510,81 +510,102 @@ func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 	require.Equal(t, int64(100), missing["maxDataPoints"])
 }
 
-func TestIntegrationLibraryPanelMode5EnforcesWritePermissions(t *testing.T) {
+func TestIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T) {
 	// Regression guard for the authorization bypass reproduced on the combined
 	// hosted POC: https://github.com/grafana/grafana/pull/130108#issuecomment-5189622165
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode5},
-		},
-	})
-	ctx := createTestContext(t, helper, helper.Org1)
-	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
-	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getLibraryElementGVR())
-	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getLibraryElementGVR())
-	// Hosted storage-boundary regression: https://github.com/grafana/grafana/pull/130108#issuecomment-5192500857
-	viewerServiceAccountClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.ViewerServiceAccountToken, ctx.OrgID, getLibraryElementGVR())
+	tests := []struct {
+		name string
+		mode grafanarest.DualWriterMode
+	}{
+		{name: "legacy", mode: grafanarest.Mode0},
+		{name: "dual write", mode: grafanarest.Mode1},
+		{name: "unified", mode: grafanarest.Mode5},
+	}
 
-	panel := &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
-		"kind":       "LibraryPanel",
-		"metadata": map[string]interface{}{
-			"name": "viewer-write-probe",
-		},
-		"spec": map[string]interface{}{
-			"type":        "text",
-			"title":       "Viewer write probe",
-			"panelTitle":  "Viewer write probe",
-			"options":     map[string]interface{}{},
-			"fieldConfig": map[string]interface{}{},
-		},
-	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"librarypanels.dashboard.grafana.app": {DualWriterMode: tt.mode},
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1)
+			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
+			editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getLibraryElementGVR())
+			viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getLibraryElementGVR())
+			// Hosted storage-boundary regression: https://github.com/grafana/grafana/pull/130108#issuecomment-5192500857
+			viewerServiceAccountClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.ViewerServiceAccountToken, ctx.OrgID, getLibraryElementGVR())
 
-	created, err := adminClient.Resource.Create(context.Background(), panel, v1.CreateOptions{})
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_ = adminClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
-	})
-	_, err = viewerClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
-	require.NoError(t, err, "Viewer should retain read access")
+			panel := &unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
+				"kind":       "LibraryPanel",
+				"metadata": map[string]interface{}{
+					"name": fmt.Sprintf("viewer-write-probe-%d", tt.mode),
+				},
+				"spec": map[string]interface{}{
+					"type":        "text",
+					"title":       "Viewer write probe",
+					"panelTitle":  "Viewer write probe",
+					"options":     map[string]interface{}{},
+					"fieldConfig": map[string]interface{}{},
+				},
+			}}
 
-	viewerUpdate := created.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(viewerUpdate.Object, "Viewer must not update this", "spec", "description"))
-	_, err = viewerClient.Resource.Update(context.Background(), viewerUpdate, v1.UpdateOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer update must be forbidden, got %v", err)
+			created, err := adminClient.Resource.Create(context.Background(), panel, v1.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = adminClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+			})
+			_, err = viewerClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.NoError(t, err, "Viewer should retain read access")
 
-	err = viewerClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer delete must be forbidden, got %v", err)
+			viewerUpdate := created.DeepCopy()
+			require.NoError(t, unstructured.SetNestedField(viewerUpdate.Object, "Viewer must not update this", "spec", "description"))
+			_, err = viewerClient.Resource.Update(context.Background(), viewerUpdate, v1.UpdateOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer update must be forbidden, got %v", err)
 
-	serviceAccountUpdate := created.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(serviceAccountUpdate.Object, "Viewer service account must not update this", "spec", "description"))
-	_, err = viewerServiceAccountClient.Resource.Update(context.Background(), serviceAccountUpdate, v1.UpdateOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer service account update must be forbidden, got %v", err)
+			err = viewerClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer delete must be forbidden, got %v", err)
 
-	err = viewerServiceAccountClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer service account delete must be forbidden, got %v", err)
+			serviceAccountUpdate := created.DeepCopy()
+			require.NoError(t, unstructured.SetNestedField(serviceAccountUpdate.Object, "Viewer service account must not update this", "spec", "description"))
+			_, err = viewerServiceAccountClient.Resource.Update(context.Background(), serviceAccountUpdate, v1.UpdateOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer service account update must be forbidden, got %v", err)
 
-	unchanged, err := adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
-	require.NoError(t, err)
-	_, found, err := unstructured.NestedString(unchanged.Object, "spec", "description")
-	require.NoError(t, err)
-	require.False(t, found, "Viewer update unexpectedly persisted")
+			err = viewerServiceAccountClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer service account delete must be forbidden, got %v", err)
 
-	editorUpdate := unchanged.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(editorUpdate.Object, "Editor may update this", "spec", "description"))
-	updated, err := editorClient.Resource.Update(context.Background(), editorUpdate, v1.UpdateOptions{})
-	require.NoError(t, err)
-	description, found, err := unstructured.NestedString(updated.Object, "spec", "description")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "Editor may update this", description)
+			unchanged, err := adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.NoError(t, err)
+			_, found, err := unstructured.NestedString(unchanged.Object, "spec", "description")
+			require.NoError(t, err)
+			require.False(t, found, "Viewer update unexpectedly persisted")
 
-	require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{}))
-	_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
-	require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
+			editorUpdate := unchanged.DeepCopy()
+			require.NoError(t, unstructured.SetNestedField(editorUpdate.Object, "Editor may update this", "spec", "description"))
+			updated, err := editorClient.Resource.Update(context.Background(), editorUpdate, v1.UpdateOptions{})
+			require.NoError(t, err)
+			description, found, err := unstructured.NestedString(updated.Object, "spec", "description")
+			require.NoError(t, err)
+			require.True(t, found)
+			require.Equal(t, "Editor may update this", description)
+
+			// The legacy store does not implement dry-run, and dual-write dry-run
+			// delegates only to unified storage. Verify dry-run where it is supported.
+			if tt.mode == grafanarest.Mode5 {
+				require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{DryRun: []string{v1.DryRunAll}}))
+				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+				require.NoError(t, err, "dry-run delete removed the panel")
+			}
+
+			require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{}))
+			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
+		})
+	}
 }
 
 func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
