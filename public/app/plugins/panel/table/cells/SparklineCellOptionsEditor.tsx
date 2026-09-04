@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 
 import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs } from '@grafana/data';
-import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
-import { Field, useStyles2 } from '@grafana/ui';
-import { defaultSparklineCellConfig } from '@grafana/ui/internal';
+import { t } from '@grafana/i18n';
+import { type GraphFieldConfig, TableSparklineColorMode, type TableSparklineCellOptions } from '@grafana/schema';
+import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { defaultSparklineCellConfig, FieldNamePicker } from '@grafana/ui/internal';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
 import { type TableCellEditorProps } from '../TableCellOptionEditor';
@@ -40,7 +41,7 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
 }
 
 export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSparklineCellOptions>) => {
-  const { cellOptions, onChange } = props;
+  const { cellOptions, context, onChange } = props;
 
   const registry = useMemo(() => {
     const config = getChartCellConfig(defaultSparklineCellConfig);
@@ -50,11 +51,57 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
   const style = useStyles2(getStyles);
 
   const values = { ...defaultSparklineCellConfig, ...cellOptions };
+  const editorContext = context ?? { data: [] };
+  const selectedFrame =
+    editorContext.options?.frameIndex != null ? editorContext.data[editorContext.options.frameIndex] : undefined;
+  const fieldPickerContext = selectedFrame ? { ...editorContext, data: [selectedFrame] } : editorContext;
 
   const htmlIdBase = useId();
 
   return (
     <>
+      <Field
+        noMargin
+        label={t('table.sparkline-cell-options.color-mode-label', 'Sparkline color mode')}
+        className={style.field}
+      >
+        <RadioButtonGroup
+          id={`${htmlIdBase}sparklineColorMode`}
+          options={[
+            {
+              label: t('table.sparkline-cell-options.color-mode-field', 'Field color'),
+              value: TableSparklineColorMode.Field,
+            },
+            {
+              label: t('table.sparkline-cell-options.color-mode-by-field-value', 'By field value'),
+              value: TableSparklineColorMode.ByFieldValue,
+            },
+          ]}
+          value={values.sparklineColorMode ?? TableSparklineColorMode.Field}
+          onChange={(value) => onChange({ ...cellOptions, sparklineColorMode: value })}
+        />
+      </Field>
+      {(values.sparklineColorMode ?? TableSparklineColorMode.Field) === TableSparklineColorMode.ByFieldValue && (
+        <Field
+          noMargin
+          label={t('table.sparkline-cell-options.color-field-label', 'Sparkline color field')}
+          className={style.field}
+        >
+          <FieldNamePicker
+            id={`${htmlIdBase}sparklineColorField`}
+            value={values.sparklineColorField ?? ''}
+            onChange={(value) => onChange({ ...cellOptions, sparklineColorField: value ?? '' })}
+            context={fieldPickerContext}
+            item={{
+              id: 'sparklineColorField',
+              name: t('table.sparkline-cell-options.color-field-label', 'Sparkline color field'),
+              settings: {
+                isClearable: true,
+              },
+            }}
+          />
+        </Field>
+      )}
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
         if (item.showIf && !item.showIf(values)) {
           return null;

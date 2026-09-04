@@ -59,10 +59,14 @@ TableBarGaugeCellOptions: {
 } @cuetsy(kind="interface")
 
 // Sparkline cell options
+TableSparklineColorMode: "field" | "byFieldValue" @cuetsy(kind="enum",memberNames="Field|ByFieldValue")
+
 TableSparklineCellOptions: {
 	GraphFieldConfig
-	type:       TableCellDisplayMode & "sparkline"
-	hideValue?: bool
+	type:                 TableCellDisplayMode & "sparkline"
+	hideValue?:           bool
+	sparklineColorMode?:  TableSparklineColorMode
+	sparklineColorField?: string
 } @cuetsy(kind="interface")
 
 // Colored background cell options
