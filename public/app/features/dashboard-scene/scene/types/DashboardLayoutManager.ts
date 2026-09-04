@@ -44,8 +44,11 @@ export interface DashboardLayoutManager<S = {}, TLayout = DashboardV2Spec['layou
   /**
    * Remove an element / panel
    * @param panel
+   * @param options.skipFocus Skip moving keyboard focus to an adjacent panel. Used by callers
+   * (e.g. moving a panel to a different layout) that remove and immediately re-add the panel
+   * elsewhere, where focus should not jump to a neighboring panel in between.
    */
-  removePanel?(panel: VizPanel): void;
+  removePanel?(panel: VizPanel, options?: { skipFocus?: boolean }): void;
 
   /**
    * Creates a copy of an existing element and adds it to the layout
