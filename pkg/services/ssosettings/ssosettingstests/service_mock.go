@@ -210,8 +210,21 @@ func (_m *MockService) RegisterReloadable(provider string, reloadable ssosetting
 }
 
 // Reload provides a mock function with given fields: ctx, provider
-func (_m *MockService) Reload(ctx context.Context, provider string) {
-	_m.Called(ctx, provider)
+func (_m *MockService) Reload(ctx context.Context, provider string) error {
+	ret := _m.Called(ctx, provider)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Reload")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, provider)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Upsert provides a mock function with given fields: ctx, settings, requester
