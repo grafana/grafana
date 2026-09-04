@@ -1,3 +1,4 @@
+import mermaid from 'mermaid';
 import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
@@ -15,6 +16,13 @@ import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
 
+// mermaid is a heavy browser-only library; mock the module so tests can assert the
+// rendered diagram wiring without pulling in its full runtime.
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: { initialize: jest.fn(), render: jest.fn() },
+}));
+
 setupProvisioningMswServer();
 
 // The resource listing is fetched lazily on link click; stub the endpoint per test.
@@ -23,6 +31,7 @@ function setResources(items: ResourceListItem[]) {
 }
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
+const mockMermaidRender = mermaid.render as jest.MockedFunction<typeof mermaid.render>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
@@ -70,6 +79,7 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
+    mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>' } as never);
   });
 
   afterEach(() => {
@@ -390,5 +400,63 @@ describe('FolderReadmePanel', () => {
     // DOMPurify strips the dangerous elements
     expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
     expect(markdownDiv!.innerHTML).not.toContain('onerror');
+  });
+
+  describe('mermaid diagrams', () => {
+    it('renders a ```mermaid fenced block as a diagram', async () => {
+      setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
+
+      const { container } = setup();
+
+      expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
+      // The source code block is replaced by the rendered diagram.
+      expect(container.querySelector('code.language-mermaid')).toBeNull();
+    });
+
+    it('renders multiple mermaid diagrams in the same README', async () => {
+      setReadmeResult({
+        markdownContent: [
+          '## One',
+          '',
+          '```mermaid',
+          'graph TD; A-->B;',
+          '```',
+          '',
+          '## Two',
+          '',
+          '```mermaid',
+          'graph LR; C-->D;',
+          '```',
+        ].join('\n'),
+      });
+
+      const { container } = setup();
+
+      // Both fenced blocks are turned into diagrams. (Render call count isn't asserted:
+      // React StrictMode double-invokes the effect, so it can exceed the diagram count.)
+      await waitFor(() => expect(container.querySelectorAll('.markdown-mermaid')).toHaveLength(2));
+    });
+
+    it('keeps the source and flags the block when a diagram fails to render', async () => {
+      mockMermaidRender.mockRejectedValue(new Error('parse error'));
+      setReadmeResult({ markdownContent: '## Broken\n\n```mermaid\nnot a real diagram\n```' });
+
+      const { container } = setup();
+
+      await waitFor(() => expect(container.querySelector('.markdown-mermaid-error')).not.toBeNull());
+      // A broken diagram leaves its source visible instead of hiding the README.
+      expect(screen.getByText(/not a real diagram/)).toBeInTheDocument();
+      expect(screen.getByText('Broken')).toBeInTheDocument();
+    });
+
+    it('does not render diagrams for READMEs without mermaid blocks', async () => {
+      setReadmeResult({ markdownContent: '# Hello\n\nNo diagrams here.' });
+
+      const { container } = setup();
+
+      await screen.findByText('Hello');
+      expect(mockMermaidRender).not.toHaveBeenCalled();
+      expect(container.querySelector('.markdown-mermaid')).toBeNull();
+    });
   });
 });
