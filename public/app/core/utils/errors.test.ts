@@ -1,5 +1,6 @@
 import { type FetchError } from '@grafana/runtime';
 import {
+  armExpectedNavigationAbort,
   clearExpectedNavigationAbort,
   getMessageFromError,
   isIgnorableFetchAbort,
@@ -109,5 +110,36 @@ describe('isIgnorableFetchAbort', () => {
     expect(isIgnorableFetchAbort(new TypeError('Failed to fetch'))).toBe(false);
     expect(isIgnorableFetchAbort({ data: { message: 'Dashboard not found' }, status: 404 } as FetchError)).toBe(false);
     expect(isIgnorableFetchAbort(new Error('boom'))).toBe(false);
+  });
+
+  describe('armExpectedNavigationAbort', () => {
+    const firefoxAbort = new TypeError('NetworkError when attempting to fetch resource.');
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    });
+
+    it('clears the flag if the page is still here after navigation is cancelled', () => {
+      armExpectedNavigationAbort();
+      expect(isIgnorableFetchAbort(firefoxAbort)).toBe(true);
+
+      jest.advanceTimersByTime(1000);
+
+      expect(isIgnorableFetchAbort(firefoxAbort)).toBe(false);
+    });
+
+    it('keeps the flag if pagehide fires because the document is unloading', () => {
+      armExpectedNavigationAbort();
+      window.dispatchEvent(new Event('pagehide'));
+
+      jest.advanceTimersByTime(1000);
+
+      expect(isIgnorableFetchAbort(firefoxAbort)).toBe(true);
+    });
   });
 });

@@ -10,6 +10,26 @@ export function clearExpectedNavigationAbort() {
   expectedNavigationAbort = false;
 }
 
+const CLEAR_IF_NAVIGATION_CANCELLED_MS = 1000;
+
+// Dirty dashboards can cancel location.assign via beforeunload. If the user stays,
+// clear the flag so later Firefox/Safari fetch failures are not hidden.
+export function armExpectedNavigationAbort(win: Window = window) {
+  markExpectedNavigationAbort();
+
+  const timeoutId = win.setTimeout(() => {
+    clearExpectedNavigationAbort();
+  }, CLEAR_IF_NAVIGATION_CANCELLED_MS);
+
+  win.addEventListener(
+    'pagehide',
+    () => {
+      win.clearTimeout(timeoutId);
+    },
+    { once: true }
+  );
+}
+
 function readErrorMessage(err: unknown): string {
   if (typeof err === 'string') {
     return err;

@@ -4,7 +4,7 @@ import type { SelectableValue } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Box } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { markExpectedNavigationAbort } from 'app/core/utils/errors';
+import { armExpectedNavigationAbort } from 'app/core/utils/errors';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
 import { type UserOrg } from 'app/types/user';
@@ -30,8 +30,9 @@ export function OrganizationSwitcher({ children, undocked }: { children?: React.
     // Drop in-flight dashboard/API fetches before navigating. Firefox reports those
     // aborts as TypeError: NetworkError when attempting to fetch resource, which
     // otherwise surfaces as "Failed to load dashboard". Ambiguous Firefox/Safari
-    // fetch messages are only ignored while this navigation is expected.
-    markExpectedNavigationAbort();
+    // fetch messages are only ignored while this navigation is expected. If a
+    // dirty-dashboard beforeunload cancels the assign, the flag clears shortly after.
+    armExpectedNavigationAbort();
     getBackendSrv().cancelAllInFlightRequests();
     window.location.assign(`${config.appSubUrl}/`);
   };
