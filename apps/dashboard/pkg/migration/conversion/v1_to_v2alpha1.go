@@ -864,6 +864,9 @@ func getRepeatOptionsFromPanel(panelMap map[string]any) *dashv2alpha1.DashboardR
 			direction := dashv2alpha1.DashboardRepeatOptionsDirectionV
 			repeatOptions.Direction = &direction
 		}
+	} else {
+		direction := dashv2alpha1.DashboardRepeatOptionsDirectionH
+		repeatOptions.Direction = &direction
 	}
 
 	if maxPerRow := getIntField(panelMap, "maxPerRow", 0); maxPerRow > 0 {
