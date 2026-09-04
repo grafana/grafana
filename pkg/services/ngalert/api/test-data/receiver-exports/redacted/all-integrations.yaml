@@ -751,6 +751,7 @@ contactPoints:
             chatid: "12345678"
             disable_notifications: true
             disable_web_page_preview: true
+            send_message_as_caption: true
             http_config:
                 oauth2:
                     client_id: test-client-id
