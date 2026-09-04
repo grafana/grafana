@@ -340,6 +340,70 @@ describe('Streaming JSON', () => {
     });
   });
 
+  it('should mark frame as changed when metadata changes without schema changes', () => {
+    const frame = StreamingDataFrame.fromDataFrameJSON(
+      {
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [[100], [42]],
+        },
+      },
+      {
+        maxLength: 5,
+        maxDelta: 300,
+      }
+    );
+
+    const packet = frame.push({
+      schema: {
+        meta: {
+          notices: [
+            {
+              severity: 'warning',
+              text: 'Parameter is expired',
+              inspect: 'meta',
+            },
+          ],
+        },
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [[200], [43]],
+      },
+    });
+
+    expect(packet.schemaChanged).toBe(false);
+    expect(packet.frameChanged).toBe(true);
+    expect(frame.meta.notices).toHaveLength(1);
+
+    const cleared = frame.push({
+      schema: {
+        meta: {
+          notices: [],
+        },
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [[300], [44]],
+      },
+    });
+
+    expect(cleared.schemaChanged).toBe(false);
+    expect(cleared.frameChanged).toBe(true);
+    expect(frame.meta.notices).toEqual([]);
+  });
+
   describe('serialization', function () {
     const json: DataFrameJSON = {
       schema: {
