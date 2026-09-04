@@ -1050,6 +1050,11 @@
       "title-search-panel": "Search panel",
       "title-select-dashboard-and-panel": "Select dashboard and panel"
     },
+    "data-source-load-error": {
+      "remove-query": "Remove query",
+      "retry": "Retry",
+      "title": "Could not load datasource"
+    },
     "datasource-not-found": {
       "card-description": "The datasource for this query was not found, it was either removed or is not installed correctly.",
       "remove-query": "Remove query",
