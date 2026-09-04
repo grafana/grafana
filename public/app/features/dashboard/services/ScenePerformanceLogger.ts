@@ -37,11 +37,10 @@ export class ScenePerformanceLogger implements performanceUtils.ScenePerformance
 
   onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     const dashboardEndMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_END(data.operationId);
-    const dashboardStartMark = PERFORMANCE_MARKS.DASHBOARD_INTERACTION_START(data.operationId);
     const dashboardMeasureName = PERFORMANCE_MEASURES.DASHBOARD_INTERACTION(data.operationId);
 
     createPerformanceMark(dashboardEndMark, data.timestamp);
-    createPerformanceMeasure(dashboardMeasureName, dashboardStartMark, dashboardEndMark);
+    createPerformanceMeasure(dashboardMeasureName, data.timestamp, data.duration);
 
     this.panelGroupsOpen.clear();
   };
@@ -80,11 +79,10 @@ export class ScenePerformanceLogger implements performanceUtils.ScenePerformance
 
   onQueryComplete = (data: performanceUtils.QueryPerformanceData): void => {
     const queryEndMark = PERFORMANCE_MARKS.QUERY_END(data.origin, data.queryId);
-    const queryStartMark = PERFORMANCE_MARKS.QUERY_START(data.origin, data.queryId);
     const queryMeasureName = PERFORMANCE_MEASURES.QUERY(data.origin, data.queryId);
 
     createPerformanceMark(queryEndMark, data.timestamp);
-    createPerformanceMeasure(queryMeasureName, queryStartMark, queryEndMark);
+    createPerformanceMeasure(queryMeasureName, data.timestamp, data.duration);
 
     const duration = (data.duration || 0).toFixed(1);
     const slowWarning = (data.duration || 0) > SLOW_OPERATION_THRESHOLD_MS ? ' ⚠️ SLOW' : '';
@@ -155,44 +153,29 @@ export class ScenePerformanceLogger implements performanceUtils.ScenePerformance
 
     switch (operation) {
       case 'query':
-        const startMark = PERFORMANCE_MARKS.PANEL_QUERY_START(panelKey, operationId);
-        const endMark = PERFORMANCE_MARKS.PANEL_QUERY_END(panelKey, operationId);
         const measureName = PERFORMANCE_MEASURES.PANEL_QUERY(panelKey, operationId);
-        createPerformanceMeasure(measureName, startMark, endMark);
+        createPerformanceMeasure(measureName, data.timestamp, data.duration);
         break;
 
       case 'plugin-load':
-        const pluginStartMark = PERFORMANCE_MARKS.PANEL_PLUGIN_LOAD_START(panelKey, operationId);
-        const pluginEndMark = PERFORMANCE_MARKS.PANEL_PLUGIN_LOAD_END(panelKey, operationId);
         const pluginMeasureName = PERFORMANCE_MEASURES.PANEL_PLUGIN_LOAD(panelKey, operationId);
-        createPerformanceMeasure(pluginMeasureName, pluginStartMark, pluginEndMark);
+        createPerformanceMeasure(pluginMeasureName, data.timestamp, data.duration);
         break;
 
       case 'fieldConfig':
-        const fieldConfigStartMark = PERFORMANCE_MARKS.PANEL_FIELD_CONFIG_START(panelKey, operationId);
-        const fieldConfigEndMark = PERFORMANCE_MARKS.PANEL_FIELD_CONFIG_END(panelKey, operationId);
         const fieldConfigMeasureName = PERFORMANCE_MEASURES.PANEL_FIELD_CONFIG(panelKey, operationId);
-        createPerformanceMeasure(fieldConfigMeasureName, fieldConfigStartMark, fieldConfigEndMark);
+        createPerformanceMeasure(fieldConfigMeasureName, data.timestamp, data.duration);
         break;
 
       case 'render':
-        const renderStartMark = PERFORMANCE_MARKS.PANEL_RENDER_START(panelKey, operationId);
-        const renderEndMark = PERFORMANCE_MARKS.PANEL_RENDER_END(panelKey, operationId);
         const renderMeasureName = PERFORMANCE_MEASURES.PANEL_RENDER(panelKey, operationId);
-        createPerformanceMeasure(renderMeasureName, renderStartMark, renderEndMark);
+        createPerformanceMeasure(renderMeasureName, data.timestamp, data.duration);
         break;
 
       case 'transform':
         const transformationId = data.metadata.transformationId;
-        const transformStartMark = PERFORMANCE_MARKS.PANEL_TRANSFORM_START(panelKey, transformationId, operationId);
-
-        const isError = data.metadata.error || data.metadata.success === false;
-        const transformEndMark = isError
-          ? PERFORMANCE_MARKS.PANEL_TRANSFORM_ERROR(panelKey, transformationId, operationId)
-          : PERFORMANCE_MARKS.PANEL_TRANSFORM_END(panelKey, transformationId, operationId);
-
         const transformMeasureName = PERFORMANCE_MEASURES.PANEL_TRANSFORM(panelKey, transformationId, operationId);
-        createPerformanceMeasure(transformMeasureName, transformStartMark, transformEndMark);
+        createPerformanceMeasure(transformMeasureName, data.timestamp, data.duration);
         break;
 
       default:

@@ -6,6 +6,7 @@ import { SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
 import {
   registerPerformanceObserver,
   getPerformanceMemory,
+  getTimeSinceBoot,
   writePerformanceGroupStart,
   writePerformanceGroupLog,
   writePerformanceGroupEnd,
@@ -260,7 +261,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
       networkDuration: data.networkDuration || 0,
       startTs: data.timestamp,
       endTs: data.timestamp + (data.duration || 0),
-      timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+      timeSinceBoot: getTimeSinceBoot(),
       longFramesCount: data.longFramesCount,
       longFramesTotalTime: data.longFramesTotalTime,
       // Omitted entirely when unknown (e.g. cached scene, no matching fetch recorded) rather than reported as 0.
