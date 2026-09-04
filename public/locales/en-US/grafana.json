@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
-      "label": "Scalar",
+      "label-field": "Field",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -16773,6 +16773,8 @@
       "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
+      "description-dash-pattern": "Comma or space separated lengths. Example: 10, 20",
+      "label-dash-pattern": "Dash pattern",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Dash",
