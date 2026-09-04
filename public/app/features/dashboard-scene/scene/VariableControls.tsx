@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,7 +20,6 @@ import { useElementSelection, useStyles2 } from '@grafana/ui';
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
-import { VariableEditorModal } from '../settings/variables/editors/VariableEditorModal';
 import { isVariableEditable } from '../settings/variables/utils';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -30,6 +29,14 @@ import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
 import { VariableEditActions } from './edit-actions-popover/VariableEditActions';
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
+
+// The editor modal only renders after an explicit edit action, so keep the large
+// variable editors tree out of the initial dashboard bundle.
+const VariableEditorModal = lazy(() =>
+  import(/* webpackChunkName: "variable-editor-modal" */ '../settings/variables/editors/VariableEditorModal').then(
+    (m) => ({ default: m.VariableEditorModal })
+  )
+);
 
 export function VariableControls({
   dashboard,
@@ -113,7 +120,9 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   );
 
   const editorModal = isEditorOpen ? (
-    <VariableEditorModal variable={variable} onClose={() => setIsEditorOpen(false)} />
+    <Suspense fallback={null}>
+      <VariableEditorModal variable={variable} onClose={() => setIsEditorOpen(false)} />
+    </Suspense>
   ) : null;
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly

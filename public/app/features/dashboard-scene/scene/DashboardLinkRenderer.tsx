@@ -12,7 +12,7 @@ import {
 } from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/links/LinkAddEditableElement';
+import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/links/LinkEdit';
 import { linkEditActions } from '../settings/links/actions';
 import { LINK_ICON_MAP } from '../settings/links/utils';
 

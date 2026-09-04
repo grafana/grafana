@@ -68,7 +68,7 @@ const ui = {
 describe('SaveDashboardDrawer', () => {
   describe('Given an already saved dashboard', () => {
     it('should render save drawer with only message textarea', async () => {
-      setup().openAndRender();
+      await setup().openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).not.toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('When there are no changes', async () => {
-      setup().openAndRender();
+      await setup().openAndRender();
       expect(screen.getByText('No changes to save')).toBeInTheDocument();
     });
 
@@ -86,7 +86,7 @@ describe('SaveDashboardDrawer', () => {
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('SaveDashboardDrawer', () => {
         .getVariables(dashboard)
         .setState({ variables: [new ConstantVariable({ name: 'constant', type: 'constant', value: 'new value' })] });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(ui.saveVariablesCheckbox.get()).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('SaveDashboardDrawer', () => {
         ],
       });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(ui.saveVariablesCheckbox.get()).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('SaveDashboardDrawer', () => {
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('SaveDashboardDrawer', () => {
         refreshPicker.setState({ refresh: '5s' });
       }
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe('SaveDashboardDrawer', () => {
         refreshPicker.setState({ refresh: '5s' });
       }
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.getByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
@@ -212,7 +212,7 @@ describe('SaveDashboardDrawer', () => {
 
       dashboard.setState({ title: 'New title' });
 
-      openAndRender();
+      await openAndRender();
 
       await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
@@ -224,7 +224,7 @@ describe('SaveDashboardDrawer', () => {
 
       dashboard.setState({ title: 'New title' });
 
-      openAndRender();
+      await openAndRender();
 
       mockSaveDashboard();
 
@@ -242,7 +242,7 @@ describe('SaveDashboardDrawer', () => {
 
       dashboard.setState({ title: 'New title' });
 
-      openAndRender();
+      await openAndRender();
 
       mockSaveDashboard({ saveError: 'version-mismatch' });
 
@@ -282,7 +282,7 @@ describe('SaveDashboardDrawer', () => {
       // just changing the title here, in real case scenario changes are reflected through migrations
       // eg. panel version - same for other manager tests below
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(screen.queryByRole('tab', { name: /Changes/ })).toBeInTheDocument();
     });
@@ -293,7 +293,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
@@ -319,7 +319,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
@@ -329,7 +329,7 @@ describe('SaveDashboardDrawer', () => {
   describe('Save as copy', () => {
     it('Should show save as form', async () => {
       const { openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
 
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
@@ -348,7 +348,7 @@ describe('SaveDashboardDrawer', () => {
       });
       const initialFolderUid = dashboard.getInitialState()?.meta.folderUid;
 
-      const drawer = openAndRender({ saveAsCopy: true });
+      const drawer = await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       act(() => {
@@ -386,7 +386,7 @@ describe('SaveDashboardDrawer', () => {
         },
       });
 
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       mockSaveDashboard();
@@ -469,7 +469,7 @@ describe('SaveDashboardDrawer', () => {
       registerSaveAsTemplateForm(StubForm);
 
       const { openAndRender } = setup();
-      openAndRender({ saveAsDashboardTemplate: true });
+      await openAndRender({ saveAsDashboardTemplate: true });
 
       expect(await screen.findByTestId('stub-save-as-template-form')).toBeInTheDocument();
       expect(await screen.findByText('Save as template')).toBeInTheDocument();
@@ -483,7 +483,7 @@ describe('SaveDashboardDrawer', () => {
       registerSaveDashboardTemplateForm(StubForm);
 
       const { openAndRender } = setup();
-      openAndRender({ saveDashboardTemplate: true });
+      await openAndRender({ saveDashboardTemplate: true });
 
       expect(await screen.findByTestId('stub-update-template-form')).toBeInTheDocument();
       expect(await screen.findByText('Save template')).toBeInTheDocument();
@@ -492,7 +492,7 @@ describe('SaveDashboardDrawer', () => {
 
     it('falls back to the standard save form when saveAsDashboardTemplate is true but no form is registered', async () => {
       const { openAndRender } = setup();
-      openAndRender({ saveAsDashboardTemplate: true });
+      await openAndRender({ saveAsDashboardTemplate: true });
 
       // No crash, drawer still mounts with the save-as-template title even without the extension form
       expect(await screen.findByText('Save as template')).toBeInTheDocument();
@@ -565,10 +565,10 @@ function setup(overrides?: Partial<DashboardSceneState>) {
 
   dashboard.onEnterEditMode();
 
-  const openAndRender = (
+  const openAndRender = async (
     opts: { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean } = {}
   ) => {
-    dashboard.openSaveDrawer(opts);
+    await dashboard.openSaveDrawer(opts);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;
     render(
       <TestProvider>

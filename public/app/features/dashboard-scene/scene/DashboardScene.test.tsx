@@ -1983,11 +1983,11 @@ describe('DashboardScene', () => {
   });
 
   describe('openSaveDrawer with template flags', () => {
-    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -1995,11 +1995,11 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
     });
 
-    it('opens the drawer in saveDashboardTemplate mode', () => {
+    it('opens the drawer in saveDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -2007,10 +2007,10 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
     });
 
-    it('does nothing when the scene is not in edit mode', () => {
+    it('does nothing when the scene is not in edit mode', async () => {
       const scene = buildTestScene();
       // Not entering edit mode
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
       expect(scene.state.overlay).toBeUndefined();
     });
   });

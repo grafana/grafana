@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +11,7 @@ import { Button } from '../../Button/Button';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 
 export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
   type: 'link' | 'action';
@@ -35,6 +36,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   children,
   'data-testid': testId,
 }: DataLinksInlineEditorBaseProps<T>) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 

@@ -1,11 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  DragDropContext,
-  Draggable,
-  type DraggableProvidedDragHandleProps,
-  Droppable,
-  type DropResult,
-} from '@hello-pangea/dnd';
+import { type DraggableProvidedDragHandleProps, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 import {
   type StaticOptionsOrderType,
   type StaticOptionsType,
@@ -235,6 +230,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
 }
 
 export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
   const {
     properties,
@@ -413,6 +409,7 @@ function SpreadsheetRowCells({
 }
 
 function SpreadsheetRow(props: SpreadsheetRowProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
   const { option, index } = props;
 

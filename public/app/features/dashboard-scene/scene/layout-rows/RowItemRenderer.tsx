@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -15,6 +14,7 @@ import {
   usePointerDistance,
   useStyles2,
 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -69,6 +69,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
+  const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isHidden) {
     return null;

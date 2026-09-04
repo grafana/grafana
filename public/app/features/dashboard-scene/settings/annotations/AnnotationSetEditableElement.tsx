@@ -6,7 +6,7 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-import { partitionAnnotationsByDisplay } from '../../sidebar/dashboard/DashboardAnnotationsList';
+import { partitionAnnotationsByDisplay } from './partitionAnnotations';
 
 export class AnnotationSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;

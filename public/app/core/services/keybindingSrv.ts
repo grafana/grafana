@@ -4,8 +4,6 @@ import { type LocationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
-import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
@@ -20,7 +18,6 @@ import {
   PasteTimeEvent,
 } from '../../types/events';
 import { type AppChromeService } from '../components/AppChrome/AppChromeService';
-import { HelpModal } from '../components/help/HelpModal';
 import { type RouteDescriptor } from '../navigation/types';
 import { contextSrv } from '../services/context_srv';
 
@@ -120,7 +117,8 @@ export class KeybindingSrv {
     this.locationService.push('/explore');
   }
 
-  private showHelpModal() {
+  private async showHelpModal() {
+    const { HelpModal } = await import(/* webpackChunkName: "help-modal" */ '../components/help/HelpModal');
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   }
 
@@ -271,8 +269,11 @@ export class KeybindingSrv {
       dashboard.startRefresh();
     });
 
-    this.bind('mod+s', () => {
+    this.bind('mod+s', async () => {
       if (dashboard.meta.canSave) {
+        const { SaveDashboardDrawer } = await import(
+          /* webpackChunkName: "save-dashboard-drawer" */ 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer'
+        );
         appEvents.publish(
           new ShowModalReactEvent({
             component: SaveDashboardDrawer,
@@ -350,8 +351,11 @@ export class KeybindingSrv {
     });
 
     // share panel
-    this.bindWithPanelId('p s', (panelId) => {
+    this.bindWithPanelId('p s', async (panelId) => {
       const panelInfo = dashboard.getPanelInfoById(panelId);
+      const { ShareModal } = await import(
+        /* webpackChunkName: "share-modal" */ 'app/features/dashboard/components/ShareModal/ShareModal'
+      );
 
       appEvents.publish(
         new ShowModalReactEvent({

@@ -1,16 +1,16 @@
-import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
 import { DashboardInteractions } from '../../utils/interactions';
 import { openAddFilterForm } from '../add-new/AddFilters';
 
-import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
 import { selectSidebarObject, toDraggableListItemActions } from './helpers';
@@ -27,6 +27,7 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 };
 
 export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariableSet }) {
+  const { DragDropContext } = useDragAndDrop();
   const { variables } = variableSet.useState();
   const filters = useMemo(() => variables.filter(sceneUtils.isAdHocVariable), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);

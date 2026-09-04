@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
+import { type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -29,6 +30,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
   const isMultiSelection = useIsMultiSelection();
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;

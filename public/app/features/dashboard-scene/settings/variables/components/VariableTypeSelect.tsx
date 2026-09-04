@@ -5,7 +5,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
 
-import { type EditableVariableType, getVariableTypeSelectOptions } from '../utils';
+import { getVariableTypeSelectOptions } from '../editableVariablesMetadata';
+import { type EditableVariableType } from '../utils';
 
 interface Props {
   onChange: (option: SelectableValue<EditableVariableType>) => void;

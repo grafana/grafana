@@ -76,6 +76,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { registerPanelInteractionsReporter } from '../scene/registerPanelInteractionsReporter';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
@@ -86,7 +87,6 @@ import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { buildSceneTimeRange } from './shared/timeSettings';
-import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
   transformSortVariableToEnumV1,

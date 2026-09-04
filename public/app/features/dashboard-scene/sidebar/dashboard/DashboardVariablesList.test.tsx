@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -16,14 +16,14 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
+import {
+  partitionVariablesByDisplay,
+  partitionVariablesByEditability,
+} from '../../settings/variables/partitionVariables';
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import {
-  DashboardVariablesList,
-  partitionVariablesByDisplay,
-  partitionVariablesByEditability,
-} from './DashboardVariablesList';
+import { DashboardVariablesList } from './DashboardVariablesList';
 
 jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
   openAddVariablePane: jest.fn(),
@@ -182,6 +182,9 @@ describe('<DashboardVariablesList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();

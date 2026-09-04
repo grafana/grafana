@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
+import { type DropResult, type DragStart } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -34,6 +35,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
 
   const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 

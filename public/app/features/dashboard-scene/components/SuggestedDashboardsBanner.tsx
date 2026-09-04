@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ComponentProps, lazy, Suspense, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
@@ -9,10 +9,26 @@ import {
   SOURCE_ENTRY_POINTS,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
-import { SuggestedDashboardsLoader } from 'app/features/datasources/components/SuggestedDashboardsLoader';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+
+// Loaded on demand: the banner only renders for template-dashboard routes with the
+// suggestedDashboardBanner query param, so the dashboard-library UI stays out of the
+// dashboard page chunk.
+const LazySuggestedDashboardsLoader = lazy(() =>
+  import(/* webpackChunkName: "dashboard-library" */ 'app/features/datasources/components/SuggestedDashboardsLoader').then(
+    (m) => ({ default: m.SuggestedDashboardsLoader })
+  )
+);
+
+function SuggestedDashboardsLoader(props: ComponentProps<typeof LazySuggestedDashboardsLoader>) {
+  return (
+    <Suspense fallback={null}>
+      <LazySuggestedDashboardsLoader {...props} />
+    </Suspense>
+  );
+}
 
 interface Props {
   route?: string;

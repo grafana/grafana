@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DraggableProvided, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useId } from 'react';
 
@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -54,6 +55,7 @@ export const MegaMenu = memo(
       onReorderSection,
       isSaving,
     } = useNavCustomization();
+    const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);

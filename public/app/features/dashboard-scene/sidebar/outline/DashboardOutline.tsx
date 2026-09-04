@@ -1,6 +1,22 @@
-import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+import { lazy, Suspense } from 'react';
 
-import { DashboardOutlineRenderer } from './DashboardOutlineRenderer';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+
+// The outline renderer pulls in DashboardOutlineNode, which reaches getEditableElementFor
+// and every editable element class, so it is loaded on demand when the pane first renders.
+const DashboardOutlineRenderer = lazy(() =>
+  import(/* webpackChunkName: "dashboard-edit-actions" */ './DashboardOutlineRenderer').then((m) => ({
+    default: m.DashboardOutlineRenderer,
+  }))
+);
+
+function LazyDashboardOutlineRenderer(props: SceneComponentProps<DashboardOutline>) {
+  return (
+    <Suspense fallback={null}>
+      <DashboardOutlineRenderer {...props} />
+    </Suspense>
+  );
+}
 
 interface DashboardOutlineState extends SceneObjectState {
   collapsedState: Map<string, boolean>;
@@ -8,7 +24,7 @@ interface DashboardOutlineState extends SceneObjectState {
 }
 
 export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
-  public static Component = DashboardOutlineRenderer;
+  public static Component = LazyDashboardOutlineRenderer;
 
   constructor(state?: Partial<DashboardOutlineState>) {
     super({

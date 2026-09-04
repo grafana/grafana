@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
@@ -33,6 +33,7 @@ export class AddNewPane extends SceneObjectBase {
 }
 
 function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
+  const { DragDropContext, Draggable, Droppable } = useDragAndDrop();
   const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);

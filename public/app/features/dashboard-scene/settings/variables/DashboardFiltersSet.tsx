@@ -15,7 +15,7 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
+import { partitionVariablesByDisplay } from './partitionVariables';
 
 export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;

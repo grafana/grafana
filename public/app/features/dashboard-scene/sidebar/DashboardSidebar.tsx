@@ -10,7 +10,6 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -311,8 +310,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this.state.openPane?.getId() === 'element' && this.state.selectionContext.selected.length === 1) {
       const selectedObj = this.getSelectedObject();
       if (selectedObj) {
-        const element = getEditableElementFor(selectedObj);
-        element?.scrollIntoView?.();
+        void import(
+          /* webpackChunkName: "dashboard-edit-actions" */ '../actions/utils/getEditableElementFor'
+        ).then(({ getEditableElementFor }) => {
+          const element = getEditableElementFor(selectedObj);
+          element?.scrollIntoView?.();
+        });
       }
     }
   }

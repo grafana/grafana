@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
@@ -12,6 +11,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
@@ -38,6 +38,7 @@ interface Props {
 }
 
 export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
+  const { Draggable } = useDragAndDrop();
   const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);

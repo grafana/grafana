@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 interface DraggableListItemProps {
   draggableId: string;
@@ -13,6 +13,7 @@ interface DraggableListItemProps {
 }
 
 export function DraggableListItem({ draggableId, index, children, actions }: DraggableListItemProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
 
   return (

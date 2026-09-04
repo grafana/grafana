@@ -19,6 +19,12 @@ import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plug
 
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 
+import {
+  EDITABLE_VARIABLES_SELECT_ORDER,
+  getVariableTypeLabel,
+  getVariableTypeSelectOptions,
+} from './editableVariablesMetadata';
+import { getEditableVariables, getVariableEditor } from './editableVariablesRegistry';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
@@ -29,11 +35,6 @@ import { QueryVariableEditor } from './editors/QueryVariableEditor/QueryVariable
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
-  EDITABLE_VARIABLES_SELECT_ORDER,
-  getEditableVariables,
-  getVariableTypeLabel,
-  getVariableTypeSelectOptions,
-  getVariableEditor,
   getVariableScene,
   hasVariableOptions,
   type EditableVariableType,

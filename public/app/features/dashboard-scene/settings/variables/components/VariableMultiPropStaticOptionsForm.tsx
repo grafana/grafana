@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, generateUUID } from '@grafana/data';
@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
 
@@ -111,6 +112,7 @@ const useVariableMultiPropStaticOptionsForm = ({
 };
 
 export const VariableMultiPropStaticOptionsForm = (props: VariableMultiPropStaticOptionsFormProps) => {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles, props.properties.length);
   const { properties, options, autoFocusId, onAddNewOption, onRemoveOption, onOptionsReordered, onValueChange } =
     useVariableMultiPropStaticOptionsForm(props);
@@ -186,6 +188,7 @@ function OptionRow({
   onRemoveOption,
   onValueChange,
 }: OptionRowProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles, properties.length);
 
   const onKeyDown = onAddNewOption

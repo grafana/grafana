@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { Droppable } from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Counter, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 interface DroppableCategoryProps {
@@ -14,6 +14,7 @@ interface DroppableCategoryProps {
 }
 
 export function DroppableCategory({ droppableId, title, children, itemsCount }: DroppableCategoryProps) {
+  const { Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
 
   return (

@@ -13,7 +13,8 @@ import { SceneGridRowEditableElement } from '../../scene/layout-default/SceneGri
 import { type EditableDashboardElement, isEditableDashboardElement } from '../../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../../settings/annotations/AnnotationSetEditableElement';
-import { LinkEdit, LinkEditEditableElement } from '../../settings/links/LinkAddEditableElement';
+import { LinkEditEditableElement } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit } from '../../settings/links/LinkEdit';
 import { LocalVariableEditableElement } from '../../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../../settings/variables/VariableSetEditableElement';

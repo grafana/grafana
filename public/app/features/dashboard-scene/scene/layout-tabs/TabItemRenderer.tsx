@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -42,6 +43,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
+  const { Draggable } = useDragAndDrop(isDraggable);
   const showLayoutIndicator = isEditing && isActive;
   const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
 
