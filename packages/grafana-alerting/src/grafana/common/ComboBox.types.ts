@@ -21,6 +21,9 @@ type AutoSizeConditionals =
       maxWidth?: number;
     }
   | {
+      minWidth: number;
+    }
+  | {
       width?: number;
       minWidth?: never;
       maxWidth?: never;
