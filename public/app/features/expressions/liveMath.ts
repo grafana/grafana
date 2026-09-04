@@ -78,8 +78,22 @@ class Parser {
   private take(value: string) { if (this.peek(value)) { this.index++; return true; } return false; }
   private number(v: unknown) { return v == null ? NaN : Number(v); }
   private truthy(v: unknown) { return v != null && v !== false && Number(v) !== 0 && !Number.isNaN(Number(v)); }
-  private logicalOr() { let v = this.logicalAnd(); while (this.take('||')) {v = this.truthy(v) || this.truthy(this.logicalAnd()) ? 1 : 0;} return v; }
-  private logicalAnd() { let v = this.equality(); while (this.take('&&')) {v = this.truthy(v) && this.truthy(this.equality()) ? 1 : 0;} return v; }
+  private logicalOr() {
+    let v = this.logicalAnd();
+    while (this.take('||')) {
+      const r = this.logicalAnd();
+      v = this.truthy(v) || this.truthy(r) ? 1 : 0;
+    }
+    return v;
+  }
+  private logicalAnd() {
+    let v = this.equality();
+    while (this.take('&&')) {
+      const r = this.equality();
+      v = this.truthy(v) && this.truthy(r) ? 1 : 0;
+    }
+    return v;
+  }
   private equality() { let v = this.relational(); while (this.peek('==') || this.peek('!=')) { const op = this.tokens[this.index++].value; const r = this.relational(); v = op === '==' ? (v === r ? 1 : 0) : (v !== r ? 1 : 0); } return v; }
   private relational() { let v = this.additive(); while (this.peek('<') || this.peek('>') || this.peek('<=') || this.peek('>=')) { const op = this.tokens[this.index++].value; const a = this.number(v), b = this.number(this.additive()); v = op === '<' ? (a < b ? 1 : 0) : op === '>' ? (a > b ? 1 : 0) : op === '<=' ? (a <= b ? 1 : 0) : (a >= b ? 1 : 0); } return v; }
   private additive() { let v = this.multiplicative(); while (this.peek('+') || this.peek('-')) { const op = this.tokens[this.index++].value; const r = this.number(this.multiplicative()); v = op === '+' ? this.number(v) + r : this.number(v) - r; } return v; }
