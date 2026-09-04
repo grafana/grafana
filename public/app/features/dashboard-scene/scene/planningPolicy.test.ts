@@ -37,7 +37,14 @@ describe('the planning policy', () => {
 
   it('withholds carrying a placeholder out of the plan, but allows duplicating within it', () => {
     expect(isActionAllowedWhilePlanning('copy-panel')).toBe(false);
+    expect(isActionAllowedWhilePlanning('paste-panel')).toBe(false);
     expect(isActionAllowedWhilePlanning('add-library-panel')).toBe(false);
     expect(isActionAllowedWhilePlanning('duplicate-panel')).toBe(true);
+  });
+
+  it('withholds sharing a panel that does not exist yet', () => {
+    // A snapshot is the sharpest case: it would bake the preview's synthetic sample into the shared
+    // artifact, which is the only route by which that sample could leave the preview.
+    expect(isActionAllowedWhilePlanning('share-panel')).toBe(false);
   });
 });

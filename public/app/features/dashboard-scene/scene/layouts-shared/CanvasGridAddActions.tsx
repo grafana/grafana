@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel } from '../../utils/utils';
+import { findDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
@@ -27,6 +27,8 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { disableGrouping, disableTabs, disableTabsReason } = useNestingRestrictions(layoutManager);
   const isMultiSelection = useIsMultiSelection();
+  // The clipboard can still hold a panel copied before the plan was previewed.
+  const canPastePanel = findDashboardSceneFor(layoutManager)?.isPlanningActionAllowed('paste-panel') ?? true;
 
   return (
     <div
@@ -92,7 +94,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
       </Dropdown>
-      {hasCopiedPanel && layoutManager.pastePanel && (
+      {hasCopiedPanel && canPastePanel && layoutManager.pastePanel && (
         <Button
           data-testid={selectors.components.CanvasGridAddActions.pastePanel}
           variant="secondary"

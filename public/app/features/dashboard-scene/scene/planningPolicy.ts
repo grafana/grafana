@@ -32,6 +32,8 @@ export type PlanningAction =
   // Actions that assume a real, saved dashboard or a panel with a query behind it.
   | 'edit-panel'
   | 'copy-panel'
+  | 'paste-panel'
+  | 'share-panel'
   | 'add-library-panel'
   | 'create-alert-rule'
   | 'explore-panel'
@@ -56,9 +58,17 @@ const DENIED_WHILE_PLANNING: ReadonlySet<PlanningAction> = new Set<PlanningActio
   'explore-panel',
   'inspect-panel',
 
-  // Would carry a placeholder out of the plan: a query-less panel pasted into a real dashboard is
-  // just a broken panel. Duplicating within the plan is fine and stays allowed.
+  // Would carry a placeholder out of the plan, or something real into it: a query-less panel pasted
+  // elsewhere is just a broken panel, and a copied real panel pasted into a plan arrives with a live
+  // query. Duplicating within the plan is fine and stays allowed.
   'copy-panel',
+  'paste-panel',
+
+  // Sharing a panel — link, embed, or snapshot — hands someone a view of a panel that does not
+  // exist yet. A snapshot is the sharpest case: it bakes the panel's current data into the shared
+  // artifact, which for a placeholder means shipping the preview's synthetic sample as though it
+  // were measured. It is the only route by which that sample could leave the preview.
+  'share-panel',
 
   // A library panel brings its own queries, so it cannot be added in placeholder form.
   'add-library-panel',

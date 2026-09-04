@@ -28,6 +28,7 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { type PlanningAction } from './planningPolicy';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -41,6 +42,25 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       vizPanelPathId = event.payload.panelId;
     }
   });
+
+  /**
+   * Like {@link withFocusedPanel}, but silent when planning withholds the action.
+   *
+   * Keyboard shortcuts route around every menu and button, so an action hidden from the UI is still
+   * one keystroke away without this. See planningPolicy.
+   */
+  function withFocusedPanelWhenAllowed(
+    scene: DashboardScene,
+    action: PlanningAction,
+    fn: (vizPanel: VizPanel) => void
+  ) {
+    return withFocusedPanel(scene, (vizPanel) => {
+      if (!scene.isPlanningActionAllowed(action)) {
+        return;
+      }
+      fn(vizPanel);
+    });
+  }
 
   function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
     return () => {
@@ -73,13 +93,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Panel share link (copy to clipboard)
   keybindings.addBinding({
     key: 'p u',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanelWhenAllowed(scene, 'share-panel', async (vizPanel: VizPanel) => {
       await buildShareUrl(scene, vizPanel);
     }),
   });
   keybindings.addBinding({
     key: 'p e',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanelWhenAllowed(scene, 'share-panel', async (vizPanel: VizPanel) => {
       const drawer = new ShareDrawer({
         shareView: shareDashboardType.embed,
         panelRef: vizPanel.getRef(),
@@ -96,7 +116,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   ) {
     keybindings.addBinding({
       key: 'p s',
-      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      onTrigger: withFocusedPanelWhenAllowed(scene, 'share-panel', async (vizPanel: VizPanel) => {
         const drawer = new ShareDrawer({
           shareView: shareDashboardType.snapshot,
           panelRef: vizPanel.getRef(),
@@ -110,7 +130,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Panel inspect
   keybindings.addBinding({
     key: 'i',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanelWhenAllowed(scene, 'inspect-panel', (vizPanel: VizPanel) => {
       scene.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.Data }));
     }),
   });
@@ -118,7 +138,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Got to Explore for panel
   keybindings.addBinding({
     key: 'p x',
-    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanelWhenAllowed(scene, 'explore-panel', async (vizPanel: VizPanel) => {
       const url = await tryGetExploreUrlForPanel(vizPanel);
       if (url) {
         locationService.push(url);
@@ -288,6 +308,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p v',
       onTrigger: () => {
+        if (!scene.isPlanningActionAllowed('paste-panel')) {
+          return;
+        }
+
         if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
           const sidebar = scene.state.sidebar;
           const selectedObj = sidebar.getSelectedObject();
