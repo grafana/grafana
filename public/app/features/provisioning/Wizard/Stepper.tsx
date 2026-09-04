@@ -13,7 +13,6 @@ export interface Step<T> {
 
 export interface Props<T extends string | number> {
   activeStep?: T;
-  reportId?: string;
   visitedSteps?: T[];
   steps: Array<Step<T>>;
 }

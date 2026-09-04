@@ -32,7 +32,6 @@ interface PanelInspectDrawerState extends SceneObjectState {
   currentTab: InspectTab;
   panelRef: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
-  canEdit?: boolean;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
