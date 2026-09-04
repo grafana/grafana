@@ -38,6 +38,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: 'inherit',
       display: 'flex',
       alignItems: 'center',
+      background: autoColor(theme, '#f0f0f0'),
+      padding: theme.spacing(0.5, 1),
     }),
     AccordionLogsContent: css({
       label: 'AccordionLogsContent',
