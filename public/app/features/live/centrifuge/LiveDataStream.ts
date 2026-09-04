@@ -261,6 +261,11 @@ export class LiveDataStream<T = unknown> {
         mathTransform = createLiveMathTransform(options.mathExpression, transformedFieldIndexes);
       }
 
+      const serializeFrame = (trimValues?: { maxLength?: number }) => {
+        const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, trimValues);
+        return mathTransform?.frame(serialized) ?? serialized;
+      };
+
       if (!shouldSendLastPacketOnly) {
         return {
           key: subKey,
@@ -268,10 +273,7 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: (() => {
-                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer);
-                return mathTransform?.frame(serialized) ?? serialized;
-              })(),
+              frame: serializeFrame(),
             },
           ],
           error,
@@ -286,7 +288,7 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
+              frame: serializeFrame({ maxLength: 0 }),
             },
           ],
           error,
@@ -302,7 +304,7 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
+              frame: serializeFrame({ maxLength: 0 }),
             },
           ],
           error,
@@ -315,7 +317,7 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.FullFrame,
-            frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, {
+            frame: serializeFrame({
               maxLength: this.frameBuffer.packetInfo.length,
             }),
           },
@@ -333,8 +335,8 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const transformedValues = mathTransform?.values(values) ?? values;
-      const filteredValues = matchingFieldIndexes ? transformedValues.filter((v, i) => matchingFieldIndexes?.includes(i)) : transformedValues;
+      const filteredValues = matchingFieldIndexes ? values.filter((_, i) => matchingFieldIndexes!.includes(i)) : values;
+      const transformedValues = mathTransform?.values(filteredValues) ?? filteredValues;
 
       return {
         key: subKey,
@@ -342,7 +344,7 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.NewValuesSameSchema,
-            values: filteredValues,
+            values: transformedValues,
           },
         ],
       };
