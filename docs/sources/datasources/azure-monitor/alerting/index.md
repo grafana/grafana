@@ -18,7 +18,7 @@ labels:
 menuTitle: Alerting
 title: Azure Monitor alerting
 weight: 500
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Azure Monitor alerting
