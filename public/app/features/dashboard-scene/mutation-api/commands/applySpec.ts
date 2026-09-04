@@ -180,6 +180,11 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
 
       scene.setState({ ...newState, editPanel: undefined });
 
+      // applies isDraggable state since the dashboard is in edit mode now
+      if (scene.state.isEditing) {
+        scene.state.body.editModeChanged?.(true);
+      }
+
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
       // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path

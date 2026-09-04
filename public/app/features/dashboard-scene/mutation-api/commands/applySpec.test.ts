@@ -17,6 +17,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { findVizPanelByKey, getLibraryPanelBehavior } from '../../utils/utils';
 
@@ -240,5 +241,23 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
 
     expect(editedPanelKey(scene)).toBeUndefined();
+  });
+});
+
+describe('APPLY_SPEC entering edit mode from view mode', () => {
+  it('makes the rebuilt grid draggable and resizable', async () => {
+    const scene = buildScene(makeSpec());
+    expect(scene.state.isEditing).toBeFalsy();
+
+    expect((await applySpec(scene, makeSpec())).success).toBe(true);
+
+    // Read scene.state.body only now, post-rebuild. The reason is that entering edit mode also fires editModeChanged,
+    // but on the pre-rebuild body, which applySpec's internal swap will discard
+    expect(scene.state.isEditing).toBe(true);
+    const layout = scene.state.body as unknown as DefaultGridLayoutManager;
+    await waitFor(() => {
+      expect(layout.state.grid.state.isDraggable).toBe(true);
+      expect(layout.state.grid.state.isResizable).toBe(true);
+    });
   });
 });
