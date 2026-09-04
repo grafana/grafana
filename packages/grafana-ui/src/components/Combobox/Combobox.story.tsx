@@ -2,6 +2,7 @@ import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack
 import { action } from 'storybook/actions';
 import { useArgs, useState, useEffect } from 'storybook/preview-api';
 
+import { Badge } from '../Badge/Badge';
 import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 
@@ -109,6 +110,34 @@ export const OptionIcons: Story = {
       { label: 'Three', value: 'three', group: 'Group 2', icon: 'keyboard' },
       { label: 'Four', value: 'four', group: 'Group 2', icon: 'keyboard' },
     ],
+  },
+  render: BaseCombobox,
+};
+
+export const CustomOptionRendering: Story = {
+  args: {
+    width: 40,
+    value: undefined,
+    options: Array.from({ length: 40 }, (_, index) => ({
+      label: `Service ${index + 1}`,
+      value: `service-${index + 1}`,
+      group: index < 20 ? 'Core services' : 'Supporting services',
+    })),
+    renderOption: (option) => {
+      const optionNumber = Number(option.value.split('-').at(-1));
+
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <span>
+            <span>{option.label}</span>
+            {optionNumber % 2 === 0 && (
+              <span style={{ display: 'block', fontWeight: 400 }}>Receives traffic from multiple environments</span>
+            )}
+          </span>
+          <Badge text="Available" color="green" />
+        </div>
+      );
+    },
   },
   render: BaseCombobox,
 };
