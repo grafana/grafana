@@ -238,7 +238,6 @@ func (s *ModuleServer) Run() error {
 		return err
 	}
 
-	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
 
 	m := modules.New(s.log, s.cfg.Target)
@@ -317,7 +316,24 @@ func (s *ModuleServer) Run() error {
 	// Register modules provided by other builds (e.g. enterprise).
 	s.moduleRegisterer.RegisterModules(m)
 
-	return m.Run(s.context)
+	// Start all modules and wait until they are running before notifying
+	// systemd: READY=1 tells systemd that startup succeeded, so a module
+	// failing during startup must abort the start instead of being
+	// acknowledged first.
+	//
+	// StartAsync uses s.context so Shutdown cancellation propagates to module startup.
+	// The lifecycle waits use a WithoutCancel-wrapped context so that a Shutdown
+	// cancel does not make Run return and close shutdownFinished while modules
+	// are still stopping (see hairyhenderson review on PR #131352).
+	waitCtx := context.WithoutCancel(s.context)
+	if err := m.StartAsync(s.context); err != nil {
+		return err
+	}
+	if err := m.AwaitRunning(waitCtx); err != nil {
+		return err
+	}
+	s.notifySystemd("READY=1")
+	return m.AwaitTerminated(waitCtx)
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {
