@@ -93,6 +93,13 @@ func (ds *DataSource) executeLogActions(ctx context.Context, req *backend.QueryD
 				return nil
 			}
 
+			if dataframe == nil {
+				resultChan <- backend.Responses{
+					query.RefID: backend.DataResponse{Frames: data.Frames{}},
+				}
+				return nil
+			}
+
 			groupedFrames, err := groupResponseFrame(dataframe, logsQuery.StatsGroups)
 			if err != nil {
 				return err
@@ -143,6 +150,8 @@ func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.Log
 		frame, err = ds.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
 	case "GetLogEvents":
 		frame, err = ds.handleGetLogEvents(ctx, logsClient, logsQuery)
+	default:
+		return nil, backend.DownstreamError(fmt.Errorf("unrecognized log action subtype: %q", logsQuery.Subtype))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.Subtype, err)
@@ -779,6 +788,10 @@ func (ds *DataSource) handleGetQueryResults(ctx context.Context, logsClient mode
 }
 
 func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, error) {
+	if frame == nil {
+		return data.Frames{}, nil
+	}
+
 	var dataFrames data.Frames
 
 	// When a query of the form "stats ... by ..." is made, we want to return
