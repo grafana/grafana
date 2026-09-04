@@ -126,6 +126,11 @@ describe('valueFormats', () => {
       expect(toFixed(0, 1)).toBe('0.0');
       expect(toFixed(0, 2)).toBe('0.00');
     });
+
+    it('toFixed should handle scientific notation and clamp large decimal counts', () => {
+      expect(toFixed(1.5, 21)).toBe('1.500000000000000000000');
+      expect(toFixed(1.5, 101)).toBe(`1.${'5'.padEnd(100, '0')}`);
+    });
   });
 
   describe('format edge cases', () => {
