@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import copy from 'rollup-plugin-copy';
 import svg from 'rollup-plugin-svg-import';
 
-import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.parts';
+import { cjsOutput, esmOutput, plugins } from '../rollup.config.parts';
 
 const rq = createRequire(import.meta.url);
 const icons = rq('../../public/app/core/icons/cached.json');
@@ -15,7 +15,7 @@ const iconSrcPaths = icons.map((iconSubPath) => {
 
 export default [
   {
-    input: entryPoint,
+    input: 'src/index.plugin.ts',
     plugins: [
       ...plugins,
       svg({ stringify: true }),
