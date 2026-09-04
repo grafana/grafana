@@ -35,7 +35,10 @@ export const TransformationFilter = ({ index, annotations, config, onChange, dat
 
   return (
     <div className={styles.wrapper} data-testid={selectors.components.Transforms.filterEditor.container}>
-      <Field label={t('dashboard.transformation-filter.label-apply-transformation-to', 'Apply transformation to')}>
+      <Field
+        noMargin
+        label={t('dashboard.transformation-filter.label-apply-transformation-to', 'Apply transformation to')}
+      >
         <>
           {opts.showTopic && (
             <Select
