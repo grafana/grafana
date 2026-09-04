@@ -92,6 +92,10 @@ module.exports = {
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   testPathIgnorePatterns: [
     '/node_modules/',
+    // This package is ESM-only (import.meta, @rspack/core), which Jest's
+    // CommonJS runtime cannot load. Its tests run under vitest instead —
+    // see `yarn test:rspack`.
+    '<rootDir>/packages/grafana-plugin-configs/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/cloudwatch',
