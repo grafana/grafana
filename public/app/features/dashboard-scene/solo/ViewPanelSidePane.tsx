@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type PanelData } from '@grafana/data';
+import { type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -20,11 +21,17 @@ import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 
+import { ViewPanelColumnOptions } from './ViewPanelColumnOptions';
 import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
+
+export interface AdhocTransformsState {
+  organize: OrganizeFieldsTransformerOptions;
+}
 
 export interface ViewPanelSidePaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   fanoutMode?: string;
+  adhocTransforms?: AdhocTransformsState;
 }
 
 export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
@@ -39,6 +46,10 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   public onSetMode(value: string | undefined) {
     this.setState({ fanoutMode: value });
     DashboardInteractions.viewPanelAction({ action: 'set_fanout_mode', value: value ?? '' });
+  }
+
+  public onChangeOrganizeOptions(organize: OrganizeFieldsTransformerOptions) {
+    this.setState({ adhocTransforms: { ...this.state.adhocTransforms, organize } });
   }
 
   public getUrlState() {
@@ -99,6 +110,7 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
           </Box>
           {viewPanelOptions?.quickToggles && <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />}
           {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
+          <ViewPanelColumnOptions panel={panel} pane={model} />
         </Box>
       </ScrollContainer>
     </Box>
