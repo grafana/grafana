@@ -115,7 +115,21 @@ Each Ref IDs, such as `$values.A`, has the following properties
 | Property | Type            | Description                                                  |
 | -------- | --------------- | ------------------------------------------------------------ |
 | `Value`  | Float           | The value returned by the instant query or expression.       |
-| `Labels` | Key/value pairs | The labels associated with the instance query or expression. |
+| `Labels` | Key/value pairs | The labels associated with the instant query or expression. |
+
+To print labels from a specific query or expression, use its Ref ID and the `Labels` property:
+
+```
+{{ $values.A.Labels.instance }}
+```
+
+`$values` is indexed by Ref ID (`A`, `B`, `C`), not by the alert name.
+
+For most alert messages, use [`$labels`](#labels) instead. `$labels` contains the query labels for the alert instance, so you don't need the Ref ID:
+
+```
+{{ $labels.instance }}
+```
 
 Here's the previous example printing now the value of the instant query with Ref ID `A`:
 
