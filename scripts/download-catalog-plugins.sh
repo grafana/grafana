@@ -104,7 +104,7 @@ fetch_resolved_meta() {
   os_arch_key="$(echo "${os}" | tr '[:upper:]' '[:lower:]')-${arch}"
 
   local url="${GRAFANA_CATALOG_API}/${plugin_id}/versions"
-  local hdrs=(-fSL)
+  local hdrs=(-fSL --no-progress-meter)
   if [[ -n "${grafana_ver}" ]]; then
     hdrs+=(-H "grafana-version: ${grafana_ver}" -H "User-Agent: grafana ${grafana_ver}")
   fi
@@ -145,7 +145,7 @@ download_plugin_archive() {
 
   local dl_url="${GRAFANA_CATALOG_API}/${plugin_id}/versions/${resolved_version}/download"
   # pkg/build/daggerbuild/plugins.DownloadPlugins curl (zip fetch), not repo.Client User-Agent.
-  local hdrs=(-fSL -H "User-Agent: grafana-build")
+  local hdrs=(-fSL --no-progress-meter -H "User-Agent: grafana-build")
   if [[ -n "${grafana_ver}" ]]; then
     hdrs+=(-H "grafana-version: ${grafana_ver}")
   fi
@@ -269,37 +269,52 @@ main() {
   rm -rf "${out}"
   mkdir -p "${out}"
 
-  local line plugin_id plan_ver spec_checksum meta resolved_ver sha tmp_zip
+  local line pids=() pid rc=0
   while IFS= read -r line; do
     [[ -z "${line}" ]] && continue
-    IFS='|' read -r plugin_id plan_ver spec_checksum <<<"${line}"
+    while (( $(jobs -rp | wc -l) >= 6 )); do
+      wait -n || rc=1
+    done
+    download_one "${line}" "${grafana_version}" "${os_str}" "${arch_str}" "${out}" &
+    pids+=("$!")
+  done < <(merge_specs_lines <"${specs_tmp}")
 
-    if [[ -n "${plan_ver}" ]]; then
-      # pkg/build/daggerbuild/plugins.ResolvePluginVersions (pinned): no versions API call;
-      # URL from BuildPluginDownloadURL; checksum only from spec (optional).
-      resolved_ver="${plan_ver}"
-      sha="${spec_checksum}"
-      if [[ -n "${sha}" ]]; then
-        sha="${sha#sha256:}"
-      fi
-    else
-      meta="$(fetch_resolved_meta "${plugin_id}" "${grafana_version}" "${os_str}" "${arch_str}")"
-      resolved_ver="$(jq -r '.version' <<<"${meta}")"
-      sha="$(jq -r '.sha256 // empty' <<<"${meta}")"
+  for pid in "${pids[@]+"${pids[@]}"}"; do
+    wait "${pid}" || rc=1
+  done
+  return "${rc}"
+}
+
+download_one() {
+  local line="$1" grafana_version="$2" os_str="$3" arch_str="$4" out="$5"
+  local plugin_id plan_ver spec_checksum meta resolved_ver sha tmp_zip
+  IFS='|' read -r plugin_id plan_ver spec_checksum <<<"${line}"
+
+  if [[ -n "${plan_ver}" ]]; then
+    # pkg/build/daggerbuild/plugins.ResolvePluginVersions (pinned): no versions API call;
+    # URL from BuildPluginDownloadURL; checksum only from spec (optional).
+    resolved_ver="${plan_ver}"
+    sha="${spec_checksum}"
+    if [[ -n "${sha}" ]]; then
+      sha="${sha#sha256:}"
+    fi
+  else
+    meta="$(fetch_resolved_meta "${plugin_id}" "${grafana_version}" "${os_str}" "${arch_str}")"
+    resolved_ver="$(jq -r '.version' <<<"${meta}")"
+    sha="$(jq -r '.sha256 // empty' <<<"${meta}")"
+    if [[ -n "${spec_checksum}" ]]; then
+      spec_checksum="${spec_checksum#sha256:}"
       if [[ -n "${spec_checksum}" ]]; then
-        spec_checksum="${spec_checksum#sha256:}"
-        if [[ -n "${spec_checksum}" ]]; then
-          sha="${spec_checksum}"
-        fi
+        sha="${spec_checksum}"
       fi
     fi
+  fi
 
-    tmp_zip="$(mktemp)"
+  tmp_zip="$(mktemp)"
+  trap 'rm -f "${tmp_zip}"' EXIT
 
-    download_plugin_archive "${plugin_id}" "${resolved_ver}" "${sha}" "${grafana_version}" "${os_str}" "${arch_str}" "${tmp_zip}"
-    extract_plugin_zip "${tmp_zip}" "${out}/${plugin_id}"
-    rm -f "${tmp_zip}"
-  done < <(merge_specs_lines <"${specs_tmp}")
+  download_plugin_archive "${plugin_id}" "${resolved_ver}" "${sha}" "${grafana_version}" "${os_str}" "${arch_str}" "${tmp_zip}"
+  extract_plugin_zip "${tmp_zip}" "${out}/${plugin_id}"
 }
 
 main "$@"
