@@ -223,6 +223,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagAnnotationDefaultRetention
+	// Applies a default 395-day retention TTL to legacy-sql annotation cleanup on instances that had zero annotations the first time this was checked
+	FlagAnnotationDefaultRetention = "annotationDefaultRetention"
+
 	// FlagDashboardNotebooks
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
