@@ -232,15 +232,7 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 		return err
 	})
 	if err != nil {
-		// Keep session authentication available if an optional join cannot be
-		// evaluated during rollout. The caller will use the established AuthInfo
-		// and OAuth-token paths when only the token is returned.
-		s.log.FromContext(ctx).Warn("Optimized session lookup failed; falling back to token lookup", "err", err)
-		token, fallbackErr := s.LookupToken(ctx, unhashedToken)
-		if fallbackErr != nil {
-			return nil, fallbackErr
-		}
-		return &auth.SessionTokenAuthnInfo{Token: token}, nil
+		return nil, err
 	}
 	if !exists {
 		return nil, auth.ErrUserTokenNotFound
