@@ -6175,7 +6175,7 @@
       "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
       "file-path": "<strong>文件路径：</strong>{{filePath}}",
       "save-json-to-file": "将 JSON 保存到文件",
-      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
+      "see-docs": "有关预配的更多信息，请参阅<2>文档</2>。"
     },
     "schema-editor": {
       "identifier-change-unsupported": "",
@@ -7486,7 +7486,7 @@
       "cannot-be-deleted": "此数据面板由 Grafana 配置管理，无法删除。从配置文件中移除数据面板以将其删除。",
       "file-path": "文件路径：{{dashboardId}}",
       "ok": "好",
-      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。",
+      "see-docs": "有关预配的更多信息，请参阅<2>文档</2>。",
       "title-cannot-delete-provisioned-dashboard": "无法删除已配置的数据面板"
     },
     "query-editor": {
@@ -7668,7 +7668,7 @@
       "save": "保存",
       "save-json-to-file": "将 JSON 保存到文件",
       "saving": "正在保存...",
-      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。",
+      "see-docs": "有关预配的更多信息，请参阅<2>文档</2>。",
       "title-required": "数据面板标题为必填项",
       "title-same-as-folder": "数据面板名称不能与文件夹名称相同",
       "title-validation-failed": "数据面板标题验证失败。"

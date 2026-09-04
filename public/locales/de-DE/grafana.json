@@ -15509,7 +15509,7 @@
   },
   "reduce": {
     "strictMode": {
-      "description": "Wenn <1>Strengen Modus reduzieren</1> verwendet wird, resultiert die Funktion <3>fill(null)</3> (InfluxQL) in <6>NaN</6>. <9>Weitere Details finden Sie in der Dokumentation.</ 9>",
+      "description": "Wenn <1>Strengen Modus reduzieren</1> verwendet wird, resultiert die Funktion <3>fill(null)</3> (InfluxQL) in <6>NaN</6>. <9>Weitere Details finden Sie in der Dokumentation.</9>",
       "title": "Verhalten im strengen Modus"
     }
   },
