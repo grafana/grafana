@@ -4,10 +4,12 @@ import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes/createTheme';
 import { ReducerID } from '../transformations/fieldReducer';
 import { FieldType } from '../types/dataFrame';
+import { FieldColorModeId } from '../types/fieldColor';
 import { type FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { MappingType, SpecialValueMatch, type ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor } from './displayProcessor';
+import { fieldColorModeRegistry, getColorByStringHash } from './fieldColor';
 import {
   type FieldSparkline,
   fixCellTemplateExpressions,
@@ -547,6 +549,94 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
   }
   return options;
 }
+
+describe('color by row label (Classic palette by series name, values: true)', () => {
+  const theme = createTheme();
+  // The exact palette the by-name mode hashes against — assert against this so a
+  // failure points at the wiring (which string is hashed), not palette drift.
+  const byNameColors = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassicByName).getColors!(theme);
+  const expectedColorFor = (label: string) => getColorByStringHash(byNameColors, label);
+
+  // The color mode lives on the field's own config: getFieldDisplayValues reads
+  // field.config directly, so fieldConfig.defaults would never reach it without a
+  // separate applyFieldOverrides pass (see panel-testing-strategy Gotcha — field config).
+  function optionsForRows(
+    labels: string[],
+    values: number[],
+    mode: FieldColorModeId = FieldColorModeId.PaletteClassicByName,
+    extend: Partial<GetFieldDisplayValuesOptions> = {}
+  ) {
+    return createDisplayOptions(
+      merge(
+        {
+          reduceOptions: { values: true, calcs: [] },
+          fieldConfig: { overrides: [], defaults: {} },
+          data: [
+            toDataFrame({
+              fields: [
+                { name: 'label', type: FieldType.string, values: labels },
+                { name: 'count', type: FieldType.number, values, config: { color: { mode } } },
+              ],
+            }),
+          ],
+        },
+        extend
+      )
+    );
+  }
+
+  it('colors each row by hashing its own label, not the shared field name', () => {
+    const result = getFieldDisplayValues(optionsForRows(['us-east', 'us-west', 'eu-central'], [10, 5, 20]));
+
+    // Every slice comes from the single `count` field; before this the by-name
+    // mode hashed that one field name and painted all three identically.
+    expect(result.map((r) => r.display.color)).toEqual([
+      expectedColorFor('us-east'),
+      expectedColorFor('us-west'),
+      expectedColorFor('eu-central'),
+    ]);
+  });
+
+  it('keeps a label’s color stable when rows are reordered', () => {
+    const original = getFieldDisplayValues(optionsForRows(['us-east', 'us-west', 'eu-central'], [10, 5, 20]));
+    // Same labels, different row order (and values) — color must follow the label.
+    const reordered = getFieldDisplayValues(optionsForRows(['eu-central', 'us-east', 'us-west'], [1, 99, 2]));
+
+    const colorByLabel = (r: ReturnType<typeof getFieldDisplayValues>) =>
+      Object.fromEntries(r.map((v) => [v.display.title, v.display.color]));
+
+    expect(colorByLabel(reordered)).toEqual(colorByLabel(original));
+  });
+
+  it('lets a per-label field color override win over the hashed color', () => {
+    const result = getFieldDisplayValues(
+      optionsForRows(['us-east', 'us-west'], [10, 5], FieldColorModeId.PaletteClassicByName, {
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'us-west' },
+              properties: [{ id: 'color', value: { fixedColor: 'red' } }],
+            },
+          ],
+        },
+      })
+    );
+
+    expect(result[0].display.color).toBe(expectedColorFor('us-east'));
+    expect(result[1].display.color).toBe(theme.visualization.getColorByName('red'));
+  });
+
+  it('leaves the default Classic palette coloring by row index untouched', () => {
+    const classicColors = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(theme);
+    const result = getFieldDisplayValues(
+      optionsForRows(['us-east', 'us-west', 'eu-central'], [10, 5, 20], FieldColorModeId.PaletteClassic)
+    );
+
+    // Rows 0,1,2 → palette index 0,1,2 (position-based), not label-hashed.
+    expect(result.map((r) => r.display.color)).toEqual([classicColors[0], classicColors[1], classicColors[2]]);
+  });
+});
 
 describe('fixCellTemplateExpressions', () => {
   it('Should replace __cell_x correctly', () => {
