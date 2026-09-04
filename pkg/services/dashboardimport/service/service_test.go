@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -157,6 +158,155 @@ func TestImportDashboardService(t *testing.T) {
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
+	})
+
+	t.Run("When importing a DashboardV2 plugin dashboard should preserve API version and resource folder", func(t *testing.T) {
+		pluginDashboardService := &pluginDashboardServiceMock{
+			loadPluginDashboardFunc: func(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error) {
+				return &plugindashboards.LoadPluginDashboardResponse{
+					Dashboard: dashboards.NewDashboardFromJson(dashboardV2Resource("team-folder")),
+				}, nil
+			},
+		}
+
+		var importDashboardArg *dashboards.SaveDashboardDTO
+		dashboardService := dashboardServiceCapturingImport(&importDashboardArg)
+		folderService := foldertest.NewFakeService()
+		folderService.AddFolder(&folder.Folder{ID: 12, UID: "team-folder", OrgID: 3})
+
+		s := &ImportDashboardService{
+			pluginDashboardService: pluginDashboardService,
+			dashboardService:       dashboardService,
+			libraryPanelService:    &libraryPanelServiceMock{},
+			folderService:          folderService,
+			features:               featuremgmt.WithFeatures(),
+		}
+
+		req := &dashboardimport.ImportDashboardRequest{
+			PluginId:  "grafana-test-plugin",
+			Path:      "dashboards/dashboard-v2.json",
+			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
+			Overwrite: true,
+		}
+		resp, err := s.ImportDashboard(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		require.NotNil(t, importDashboardArg)
+		require.Equal(t, "dashboard.grafana.app/v2", importDashboardArg.Dashboard.APIVersion)
+		require.Equal(t, "plugin-v2-dashboard", importDashboardArg.Dashboard.UID)
+		require.Equal(t, "team-folder", importDashboardArg.Dashboard.FolderUID)
+	})
+
+	t.Run("When importing a DashboardV2 plugin dashboard should prefer an explicit request folder", func(t *testing.T) {
+		pluginDashboardService := &pluginDashboardServiceMock{
+			loadPluginDashboardFunc: func(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error) {
+				return &plugindashboards.LoadPluginDashboardResponse{
+					Dashboard: dashboards.NewDashboardFromJson(dashboardV2Resource("resource-folder")),
+				}, nil
+			},
+		}
+
+		var importDashboardArg *dashboards.SaveDashboardDTO
+		dashboardService := dashboardServiceCapturingImport(&importDashboardArg)
+		folderService := foldertest.NewFakeService()
+		folderService.AddFolder(&folder.Folder{ID: 12, UID: "resource-folder", OrgID: 3})
+		folderService.AddFolder(&folder.Folder{ID: 13, UID: "explicit-folder", OrgID: 3})
+
+		s := &ImportDashboardService{
+			pluginDashboardService: pluginDashboardService,
+			dashboardService:       dashboardService,
+			libraryPanelService:    &libraryPanelServiceMock{},
+			folderService:          folderService,
+			features:               featuremgmt.WithFeatures(),
+		}
+
+		req := &dashboardimport.ImportDashboardRequest{
+			PluginId:  "grafana-test-plugin",
+			Path:      "dashboards/dashboard-v2.json",
+			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
+			FolderUid: "explicit-folder",
+			Overwrite: true,
+		}
+		resp, err := s.ImportDashboard(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		require.NotNil(t, importDashboardArg)
+		require.Equal(t, "dashboard.grafana.app/v2", importDashboardArg.Dashboard.APIVersion)
+		require.Equal(t, "explicit-folder", importDashboardArg.Dashboard.FolderUID)
+	})
+
+	t.Run("When importing DashboardV2 JSON directly should preserve API version and resource folder", func(t *testing.T) {
+		var importDashboardArg *dashboards.SaveDashboardDTO
+		dashboardService := dashboardServiceCapturingImport(&importDashboardArg)
+		folderService := foldertest.NewFakeService()
+		folderService.AddFolder(&folder.Folder{ID: 12, UID: "team-folder", OrgID: 3})
+
+		s := &ImportDashboardService{
+			dashboardService:    dashboardService,
+			libraryPanelService: &libraryPanelServiceMock{},
+			folderService:       folderService,
+			features:            featuremgmt.WithFeatures(),
+		}
+
+		req := &dashboardimport.ImportDashboardRequest{
+			Dashboard: dashboardV2Resource("team-folder"),
+			User:      &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
+			Overwrite: true,
+			FolderUid: "",
+			FolderId:  0,
+		}
+		resp, err := s.ImportDashboard(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		require.NotNil(t, importDashboardArg)
+		require.Equal(t, "dashboard.grafana.app/v2", importDashboardArg.Dashboard.APIVersion)
+		require.Equal(t, "plugin-v2-dashboard", importDashboardArg.Dashboard.UID)
+		require.Equal(t, "team-folder", importDashboardArg.Dashboard.FolderUID)
+	})
+
+	t.Run("When importing DashboardV2 JSON directly should allow explicit root folder override", func(t *testing.T) {
+		var importDashboardArg *dashboards.SaveDashboardDTO
+		dashboardService := dashboardServiceCapturingImport(&importDashboardArg)
+		var folderQuery *folder.GetFolderQuery
+		folderService := &folderServiceMock{
+			getFunc: func(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+				folderQuery = q
+				return &folder.Folder{OrgID: 3}, nil
+			},
+		}
+
+		s := &ImportDashboardService{
+			dashboardService:    dashboardService,
+			libraryPanelService: &libraryPanelServiceMock{},
+			folderService:       folderService,
+			features:            featuremgmt.WithFeatures(),
+		}
+
+		dashboardJSON, err := dashboardV2Resource("team-folder").Encode()
+		require.NoError(t, err)
+		body := append([]byte(`{"dashboard":`), dashboardJSON...)
+		body = append(body, []byte(`,"overwrite":true,"folderUid":"","folderId":12}`)...)
+
+		var req dashboardimport.ImportDashboardRequest
+		require.NoError(t, json.Unmarshal(body, &req))
+		req.User = &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3}
+
+		resp, err := s.ImportDashboard(context.Background(), &req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		require.NotNil(t, importDashboardArg)
+		require.Equal(t, "dashboard.grafana.app/v2", importDashboardArg.Dashboard.APIVersion)
+		require.Equal(t, "plugin-v2-dashboard", importDashboardArg.Dashboard.UID)
+		require.Empty(t, importDashboardArg.Dashboard.FolderUID)
+		require.NotNil(t, folderQuery)
+		folderQueryID := folderQuery.ID //nolint:staticcheck
+		require.NotNil(t, folderQueryID)
+		require.Equal(t, int64(0), *folderQueryID)
+		require.Nil(t, folderQuery.UID)
 	})
 }
 
@@ -331,6 +481,49 @@ func loadTestDashboard(ctx context.Context, req *plugindashboards.LoadPluginDash
 	}, nil
 }
 
+func dashboardV2Resource(folderUID string) *simplejson.Json {
+	return simplejson.NewFromAny(map[string]any{
+		"apiVersion": "dashboard.grafana.app/v2",
+		"kind":       "Dashboard",
+		"metadata": map[string]any{
+			"name": "plugin-v2-dashboard",
+			"annotations": map[string]any{
+				"grafana.app/folder": folderUID,
+			},
+		},
+		"spec": map[string]any{
+			"title":    "Plugin V2 Dashboard",
+			"elements": map[string]any{},
+			"layout": map[string]any{
+				"kind": "GridLayout",
+				"spec": map[string]any{
+					"items": []any{},
+				},
+			},
+		},
+	})
+}
+
+func dashboardServiceCapturingImport(importDashboardArg **dashboards.SaveDashboardDTO) *dashboardServiceMock {
+	return &dashboardServiceMock{
+		importDashboardFunc: func(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
+			*importDashboardArg = dto
+			return &dashboards.Dashboard{
+				ID:         4,
+				UID:        dto.Dashboard.UID,
+				Slug:       dto.Dashboard.Slug,
+				OrgID:      dto.OrgID,
+				Version:    dto.Dashboard.Version,
+				APIVersion: dto.Dashboard.APIVersion,
+				PluginID:   dto.Dashboard.PluginID,
+				FolderUID:  dto.Dashboard.FolderUID,
+				Title:      dto.Dashboard.Title,
+				Data:       dto.Dashboard.Data,
+			}, nil
+		},
+	}
+}
+
 type pluginDashboardServiceMock struct {
 	plugindashboards.Service
 	loadPluginDashboardFunc func(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error)
@@ -352,6 +545,19 @@ type dashboardServiceMock struct {
 func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
 	if s.importDashboardFunc != nil {
 		return s.importDashboardFunc(ctx, dto)
+	}
+
+	return nil, nil
+}
+
+type folderServiceMock struct {
+	folder.Service
+	getFunc func(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error)
+}
+
+func (s *folderServiceMock) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	if s.getFunc != nil {
+		return s.getFunc(ctx, q)
 	}
 
 	return nil, nil
