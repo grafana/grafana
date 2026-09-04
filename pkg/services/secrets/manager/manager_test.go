@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -34,7 +35,7 @@ func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(testDB)
+	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
@@ -96,7 +97,7 @@ func TestIntegrationSecretsService_DataKeys(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(testDB)
+	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
 	ctx := context.Background()
 
 	dataKey := &secrets.DataKey{
@@ -177,7 +178,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
+		svc := SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB)))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
@@ -205,7 +206,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, cfg, features))
 		testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		secretStore := database.ProvideSecretsStore(testDB)
+		secretStore := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
 
 		secretsService, err := ProvideSecretsService(
 			tracing.InitializeTracerForTest(),
@@ -284,7 +285,7 @@ func TestIntegrationSecretsService_Run(t *testing.T) {
 
 	ctx := context.Background()
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(testDB)
+	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
 	svc := SetupTestService(t, store)
 
 	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
@@ -336,7 +337,7 @@ func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
 
 	ctx := context.Background()
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(testDB)
+	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
 	svc := SetupTestService(t, store)
 
 	// Encrypt to generate data encryption key
@@ -385,7 +386,7 @@ func TestIntegrationSecretsService_Decrypt(t *testing.T) {
 
 	ctx := context.Background()
 	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	store := database.ProvideSecretsStore(testDB)
+	store := database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB))
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := SetupTestService(t, store)
@@ -501,7 +502,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-			svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
+			svc := SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(testDB)))
 
 			// Here's what actually matters and varies on each test: look at the test case name.
 			//
