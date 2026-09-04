@@ -196,4 +196,99 @@ describe('OutsideRangePlugin', () => {
       expect(container).toBeEmptyDOMElement();
     });
   });
+
+  describe('null timestamps', () => {
+    // Regression for #130379. A row whose time column is null (e.g. an
+    // outer-join miss in a SQL datasource) used to slip past the boundary
+    // scan because allValuesNullAtIndex only inspects the value series, and
+    // then `first` ended up as null. Clicking "Zoom to data" would call
+    // onChangeTimeRange({ from: null, to: ... }), and PanelQueryRunner's
+    // timeRange.from.valueOf() would throw "Cannot read properties of
+    // undefined (reading 'valueOf')" — the original panel crash.
+    //
+    // uPlot types its AlignedData xValues as number[], so the test fixture
+    // must cast through `unknown` to express the real production case (the
+    // time field is allowed to contain null at the panel-render layer).
+    function withNullTimes(fixture: unknown[]): uPlot['data'] {
+      return fixture as uPlot['data'];
+    }
+
+    it('skips a leading null timestamp and zooms to the first valid time', async () => {
+      const onChangeTimeRange = jest.fn();
+      const { getByText } = renderPlugin(onChangeTimeRange);
+
+      applyScale(
+        withNullTimes([
+          [null, 1000, 1500, 2000, 2500, 3000],
+          [1, 2, 3, 4, 5, 6],
+        ]),
+        { x: { time: true, min: 4000, max: 5000 } }
+      );
+
+      const button = getByText('Zoom to data');
+      await userEvent.click(button);
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 1000, to: 3000 });
+    });
+
+    it('skips a trailing null timestamp and zooms to the last valid time', async () => {
+      const onChangeTimeRange = jest.fn();
+      const { getByText } = renderPlugin(onChangeTimeRange);
+
+      applyScale(
+        withNullTimes([
+          [1000, 1500, 2000, 2500, 3000, null],
+          [1, 2, 3, 4, 5, 6],
+        ]),
+        { x: { time: true, min: 4000, max: 5000 } }
+      );
+
+      const button = getByText('Zoom to data');
+      await userEvent.click(button);
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 1000, to: 3000 });
+    });
+
+    it('does not render the zoom button when every timestamp is null', () => {
+      const onChangeTimeRange = jest.fn();
+      const { container } = renderPlugin(onChangeTimeRange);
+
+      applyScale(
+        withNullTimes([
+          [null, null, null, null],
+          [1, 2, 3, 4],
+        ]),
+        { x: { time: true, min: 4000, max: 5000 } }
+      );
+
+      expect(container).toBeEmptyDOMElement();
+      expect(onChangeTimeRange).not.toHaveBeenCalled();
+    });
+
+    it('passes a non-null `from` even when the first non-null time is mid-array', async () => {
+      // Catches the original crash directly: the first two rows have a null
+      // time, the third has a valid time, and the rest are all-null values.
+      // Without the null-time skip, the loop stops at i=0 (value column is
+      // null in the all-null-value case but the time value at i=0 is null in
+      // the all-null-time case), `first` becomes null, and the click
+      // propagates that null into the time range service.
+      const onChangeTimeRange = jest.fn();
+      const { getByText } = renderPlugin(onChangeTimeRange);
+
+      applyScale(
+        withNullTimes([
+          [null, null, 1500, 2000, 2500, null],
+          [1, 2, 3, 4, 5, 6],
+        ]),
+        { x: { time: true, min: 4000, max: 5000 } }
+      );
+
+      const button = getByText('Zoom to data');
+      await userEvent.click(button);
+      // `from` is the first non-null timestamp (1500), `to` is the last
+      // non-null timestamp (2500) — both guaranteed non-null.
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 1500, to: 2500 });
+      const lastCall = onChangeTimeRange.mock.calls[onChangeTimeRange.mock.calls.length - 1][0];
+      expect(lastCall.from).not.toBeNull();
+      expect(lastCall.to).not.toBeNull();
+    });
+  });
 });
