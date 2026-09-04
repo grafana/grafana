@@ -363,6 +363,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
       const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
 
+      // Downshift resets the highlight to defaultHighlightedIndex, which points at the selected item and is
+      // meaningless once the list is filtered by a search. Highlight the best match for the search instead.
+      if (actionAndChanges.type === useCombobox.stateChangeTypes.InputChange) {
+        changes = {
+          ...changes,
+          highlightedIndex: 0,
+        };
+      }
+
       // Reset the input value when the menu is opened. If the menu is opened due to an input change
       // then make sure we keep that.
       // This will trigger onInputValueChange to load async options

@@ -100,6 +100,50 @@ describe('useOptions', () => {
     expect(result.current.options).toEqual([{ label: 'Carrot', value: 'carrot' }]);
   });
 
+  it('should move an exact match to the front of synchronous options', () => {
+    const options = [
+      { label: 'go_memstats_alloc_bytes_total', value: '1' },
+      { label: 'go_memstats_alloc_bytes', value: '2' },
+    ];
+    const { result } = renderHook(() => useOptions(options, false));
+
+    act(() => {
+      result.current.updateOptions('go_memstats_alloc_bytes');
+    });
+
+    expect(result.current.options[0]).toEqual({ label: 'go_memstats_alloc_bytes', value: '2' });
+  });
+
+  it('should move an exact match to the front of asynchronous options', async () => {
+    const asyncOptions = jest.fn().mockResolvedValue([
+      { label: 'go_memstats_alloc_bytes_total', value: '1' },
+      { label: 'go_memstats_alloc_bytes', value: '2' },
+    ]);
+    const { result } = renderHook(() => useOptions(asyncOptions, false));
+
+    act(() => {
+      result.current.updateOptions('go_memstats_alloc_bytes');
+    });
+
+    await waitFor(() => expect(result.current.asyncLoading).toBe(false));
+
+    expect(result.current.options[0]).toEqual({ label: 'go_memstats_alloc_bytes', value: '2' });
+  });
+
+  it('should keep the order of the options when there is no exact match', () => {
+    const options = [
+      { label: 'go_memstats_alloc_bytes_total', value: '1' },
+      { label: 'go_memstats_alloc_bytes_sum', value: '2' },
+    ];
+    const { result } = renderHook(() => useOptions(options, false));
+
+    act(() => {
+      result.current.updateOptions('go_memstats_alloc_bytes');
+    });
+
+    expect(result.current.options).toEqual(options);
+  });
+
   it('should handle errors in asynchronous options', async () => {
     jest.spyOn(console, 'error').mockImplementation();
 
