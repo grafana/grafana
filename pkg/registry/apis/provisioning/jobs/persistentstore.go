@@ -53,6 +53,23 @@ var ErrLeaseLost = errors.New("job lease lost: claimed by another worker")
 // abandoned claims are recovered by the cleanup controller, not by re-claiming.
 var ErrAlreadyClaimed = errors.New("job is already claimed by another worker")
 
+// AlreadyClaimedError is ErrAlreadyClaimed carrying the resource version the
+// claim's read observed the claimed job at. Under the NATS informer a job name
+// can be reused (a predecessor completes and is deleted, a new incarnation is
+// created), and a lagging read path can serve the still-claimed predecessor —
+// the observed version lets the caller compare against the announced freshness
+// floor and retry instead of dropping the new incarnation's event.
+// errors.Is(err, ErrAlreadyClaimed) matches through it.
+type AlreadyClaimedError struct {
+	ObservedResourceVersion int64
+}
+
+func (e *AlreadyClaimedError) Error() string {
+	return fmt.Sprintf("%s (observed at resource version %d)", ErrAlreadyClaimed.Error(), e.ObservedResourceVersion)
+}
+
+func (e *AlreadyClaimedError) Unwrap() error { return ErrAlreadyClaimed }
+
 // claimConflictRetries bounds how many times Claim re-reads a job after an
 // update conflict. A conflict means the job changed between our Get and
 // Update: usually another worker claimed it, but a concurrent non-claim write
@@ -116,7 +133,9 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 // Claim attempts to claim the job namespace/name for this worker.
 //
 // Returns ErrAlreadyClaimed if another worker holds the claim, and a NotFound
-// API error if the job no longer exists (completed and deleted).
+// API error if the job is not readable: completed and deleted, or its announced
+// create not yet visible to this read path (the caller disambiguates via the
+// freshness floor).
 //
 // If err is not nil, the job and rollback values are always nil.
 func (s *persistentStore) Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error) {
@@ -136,6 +155,11 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
+	// lastObservedRV is the resource version of the most recent read the claim
+	// acted on, carried on the conflict-exhausted error below so the caller can
+	// tell whether every attempt was fighting over a stale predecessor of a
+	// reused name rather than the announced incarnation.
+	var lastObservedRV int64
 	for attempt := 0; attempt < claimConflictRetries; attempt++ {
 		current, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
@@ -145,10 +169,11 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 			}
 			return nil, nil, apifmt.Errorf("failed to get job '%s' in '%s' for claiming: %w", name, namespace, err)
 		}
+		lastObservedRV, _ = strconv.ParseInt(current.ResourceVersion, 10, 64)
 		if current.Labels[LabelJobClaim] != "" {
 			// Another worker already holds the claim — the common contention outcome.
 			s.queueMetrics.RecordClaimRoundContended(driverID)
-			return nil, nil, ErrAlreadyClaimed
+			return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: lastObservedRV}
 		}
 
 		claimed := current.DeepCopy()
@@ -244,7 +269,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 	// claim_conflicts_total.
 	s.queueMetrics.RecordClaimRoundContended(driverID)
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
-	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
+	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w",
+		name, namespace, claimConflictRetries, &AlreadyClaimedError{ObservedResourceVersion: lastObservedRV})
 }
 
 // Update saves the job back to the store.
