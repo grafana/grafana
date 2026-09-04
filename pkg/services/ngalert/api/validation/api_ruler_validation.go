@@ -85,7 +85,7 @@ func ValidateRuleNode(
 
 	if ruleNode.ApiRuleNode != nil {
 		newAlertRule.Annotations = ruleNode.Annotations
-		err = validateLabels(ruleNode.Labels)
+		err = validateReservedLabels(ruleNode.Labels)
 		if err != nil {
 			return nil, err
 		}
@@ -190,13 +190,29 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	return newRule, nil
 }
 
-func validateLabels(l map[string]string) error {
+// validateReservedLabels rejects labels whose key is one of the system-reserved
+// keys that users must not set on a rule. It does not check for empty keys:
+// legacy rules can carry an empty label key in storage and we must keep
+// accepting those writes, so the empty-key check lives in
+// validateEmptyLabelKeyInDelta and is applied only to rules in the change delta.
+func validateReservedLabels(l map[string]string) error {
 	for key := range l {
-		if key == "" {
-			return fmt.Errorf("label key cannot be empty")
-		}
 		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
 			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
+		}
+	}
+	return nil
+}
+
+// ValidateEmptyLabelKey returns an error if the labels map has an empty key.
+// Called from validateEmptyLabelKeyInDelta for rules that the caller is
+// actually creating or modifying; rules that are unchanged in the request
+// payload (and may already carry a legacy empty-key label in storage) are
+// skipped, so editing one rule in a group does not block every other rule.
+func ValidateEmptyLabelKey(rule *ngmodels.AlertRule) error {
+	for key := range rule.Labels {
+		if key == "" {
+			return fmt.Errorf("%w: rule '%s' (UID: %s) has a label with an empty key", ngmodels.ErrAlertRuleFailedValidation, rule.Title, rule.UID)
 		}
 	}
 	return nil
