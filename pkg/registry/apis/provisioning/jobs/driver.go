@@ -9,6 +9,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -503,6 +505,22 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			logger.Info("repository namespace is pending deletion - skip job")
 			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository namespace is pending deletion - job skipped")).Build())
 			return nil
+		}
+
+		// Every worker talks to the repository, so a repository known to be
+		// unreachable (revoked credentials, expired token) only produces a
+		// failed job the user can't act on from the job itself.
+		if health := r.Status.Health; health.Checked > 0 && !health.Healthy && health.Error == provisioning.HealthFailureHealth {
+			if ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady); ready != nil &&
+				ready.Status == metav1.ConditionFalse && ready.Reason == provisioning.ReasonAuthenticationFailed &&
+				ready.ObservedGeneration == r.Generation {
+				logger.Info("repository is unreachable - skip job",
+					"health_error", health.Error,
+					"ready_reason", ready.Reason,
+				)
+				recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository is unreachable - job skipped")).Build())
+				return nil
+			}
 		}
 
 		err = worker.Process(ctx, repo, *job, recorder)
