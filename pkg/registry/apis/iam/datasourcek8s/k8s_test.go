@@ -23,6 +23,31 @@ func TestLegacyVerbToK8sAction(t *testing.T) {
 	assert.Equal(t, "datasources:custom", LegacyVerbToK8sAction("loki", "custom"))
 }
 
+func TestLegacyActionRequiresK8sForm(t *testing.T) {
+	tests := []struct {
+		action string
+		want   bool
+	}{
+		{action: "datasources:read", want: true},
+		{action: "datasources:write", want: true},
+		{action: "datasources:delete", want: true},
+		{action: "datasources.permissions:read", want: true},
+		{action: "datasources.permissions:write", want: true},
+		{action: "datasources.caching:read"},
+		{action: "datasources.caching:write"},
+		{action: "datasources.insights:read"},
+		{action: "datasources:create"},
+		{action: "datasources:explore"},
+		{action: "datasources:query"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.action, func(t *testing.T) {
+			assert.Equal(t, tt.want, LegacyActionRequiresK8sForm(tt.action))
+		})
+	}
+}
+
 func TestPluginTypeFromDatasourceAPIGroup(t *testing.T) {
 	assert.Equal(t, "loki", DSTypeFromDatasourceAPIGroup("loki.datasource.grafana.app"))
 	assert.Equal(t, "", DSTypeFromDatasourceAPIGroup("*.datasource.grafana.app"))
