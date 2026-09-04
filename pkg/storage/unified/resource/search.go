@@ -98,6 +98,10 @@ type BulkIndexItem struct {
 type BulkIndexRequest struct {
 	Items           []*BulkIndexItem
 	ResourceVersion int64
+	// Path names the loop these items came from (build, update, trash), so what
+	// the index records for them lines up with what the caller records. Empty
+	// when the caller does not measure.
+	Path string
 }
 
 type IndexBuildInfo struct {
@@ -1947,10 +1951,13 @@ type bulkIndexBatcher struct {
 	span  trace.Span
 	items []*BulkIndexItem
 	total int
+	// Flushed with each batch, so counters move during a long build rather than
+	// only at the end.
+	phases *buildPhaseRecorder
 }
 
-func newBulkIndexBatcher(index ResourceIndex, span trace.Span) *bulkIndexBatcher {
-	return &bulkIndexBatcher{index: index, span: span, items: make([]*BulkIndexItem, 0, maxBatchSize)}
+func newBulkIndexBatcher(index ResourceIndex, span trace.Span, phases *buildPhaseRecorder) *bulkIndexBatcher {
+	return &bulkIndexBatcher{index: index, span: span, items: make([]*BulkIndexItem, 0, maxBatchSize), phases: phases}
 }
 
 func (b *bulkIndexBatcher) add(item *BulkIndexItem) error {
@@ -1966,10 +1973,12 @@ func (b *bulkIndexBatcher) flush() error {
 		return nil
 	}
 	b.span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(b.items))))
-	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items}); err != nil {
+	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items, Path: b.phases.pathLabel()}); err != nil {
 		return err
 	}
 	b.total += len(b.items)
+	b.phases.recordIndexed(len(b.items))
+	b.phases.flush()
 	b.items = b.items[:0]
 	return nil
 }
@@ -2009,9 +2018,17 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				},
 			},
 		}, func(iter ListIterator) error {
-			batch := newBulkIndexBatcher(index, span)
+			phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathBuild, nsr)
+			batch := newBulkIndexBatcher(index, span, phases)
 
-			for iter.Next() {
+			for {
+				fetchStart := time.Now()
+				hasNext := iter.Next()
+				fetchElapsed := time.Since(fetchStart)
+				if !hasNext {
+					phases.recordFetchWithNoValue(fetchElapsed)
+					break
+				}
 				if err = iter.Error(); err != nil {
 					return err
 				}
@@ -2024,9 +2041,14 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					Name:      iter.Name(),
 				}
 
+				value := iter.Value()
+				phases.recordFetch(fetchElapsed, len(value))
+
 				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", iter.Name())))
 				// Convert it to an indexable document
-				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
+				convertStart := time.Now()
+				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), value)
+				phases.recordConvert(time.Since(convertStart), err == nil)
 				if err != nil {
 					span.RecordError(err)
 					logger.Error("error building search document", "key", SearchID(key), "err", err)
@@ -2041,6 +2063,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			if err = batch.flush(); err != nil {
 				return err
 			}
+			phases.flush()
 			return iter.Error()
 		})
 		if err != nil {
@@ -2102,8 +2125,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		items := make([]*BulkIndexItem, 0, maxBatchSize)
 		pendingKeys := make([]string, 0, maxBatchSize)
 
+		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathUpdate, nsr)
+
 		docs := 0
-		for res, err := range it {
+		for res, err := range phases.timeModifiedResources(it) {
 			// Finish quickly if context is done.
 			if ctx.Err() != nil {
 				return 0, 0, ctx.Err()
@@ -2131,7 +2156,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
 				// Convert it to an indexable document
+				convertStart := time.Now()
 				doc, err := builder.BuildDocument(ctx, key, res.ResourceVersion, res.Value)
+				phases.recordConvert(time.Since(convertStart), err == nil)
 				if err != nil {
 					span.RecordError(err)
 					logger.Error("error building search document", "key", SearchID(key), "err", err)
@@ -2178,11 +2205,13 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// When we reach the batch size, perform bulk index and reset the batch.
 			if len(items) >= maxBatchSize {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = index.BulkIndex(&BulkIndexRequest{Items: items, Path: IndexPathUpdate}); err != nil {
 					return 0, 0, err
 				}
 
 				addToDedupCache(pendingKeys)
+				phases.recordIndexed(len(items))
+				phases.flush()
 				items = items[:0]
 				pendingKeys = pendingKeys[:0]
 			}
@@ -2191,12 +2220,14 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		// Index any remaining items in the final batch.
 		if len(items) > 0 {
 			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+			if err = index.BulkIndex(&BulkIndexRequest{Items: items, Path: IndexPathUpdate}); err != nil {
 				return 0, 0, err
 			}
 
 			addToDedupCache(pendingKeys)
+			phases.recordIndexed(len(items))
 		}
+		phases.flush()
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
 		// time this function is called.
@@ -2287,9 +2318,17 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 		},
 	}
 
-	batch := newBulkIndexBatcher(index, span)
+	phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathTrash, nsr)
+	batch := newBulkIndexBatcher(index, span, phases)
 	_, err := s.storage.ListHistory(ctx, req, func(iter ListIterator) error {
-		for iter.Next() {
+		for {
+			fetchStart := time.Now()
+			hasNext := iter.Next()
+			fetchElapsed := time.Since(fetchStart)
+			if !hasNext {
+				phases.recordFetchWithNoValue(fetchElapsed)
+				break
+			}
 			if err := iter.Error(); err != nil {
 				return err
 			}
@@ -2301,7 +2340,12 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 				Name:      iter.Name(),
 			}
 
-			doc, err := buildDeletedDocument(key, iter.ResourceVersion(), iter.Value())
+			value := iter.Value()
+			phases.recordFetch(fetchElapsed, len(value))
+
+			convertStart := time.Now()
+			doc, err := buildDeletedDocument(key, iter.ResourceVersion(), value)
+			phases.recordConvert(time.Since(convertStart), err == nil)
 			if err != nil {
 				span.RecordError(err)
 				logger.Error("error building search document for deleted resource", "key", SearchID(key), "err", err)
@@ -2316,6 +2360,7 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 		if err := batch.flush(); err != nil {
 			return err
 		}
+		phases.flush()
 		return iter.Error()
 	})
 	if errors.Is(err, errUnimplemented) {
