@@ -6,6 +6,8 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 For general spec-authoring principles (assert real behavior, avoiding AI-slop tests, anti-flake rules) that apply to any Grafana frontend test, also invoke the `frontend-testing-strategy` skill with the Skill tool — this guide covers what's specific to this suite's page-object pattern on top of that.
 
+When adding or extending specs here, invoke the **`add-e2e-tests`** skill — it points agents at this `AGENTS.md`, page objects, and `--repeat-each=3` verification.
+
 ## Page Objects Reference
 
 All page objects live in `page-objects/`. Specs never construct them: the top-level ones (`Controls`, `Sidebar`, `Panels`, `Rows`, `Tabs`, `Canvas`) are exposed as **Playwright fixtures** by `fixtures.ts` — destructure them from the test arguments (`async ({ controls, sidebar }) => ...`). Import page-object classes in a spec only when a helper signature needs the type (`import { type Sidebar } from './page-objects'`). Sidebar panes (`Toolbar`, `AddOptions`, `DashboardOptions`, `PanelOptions`, `RowOptions`, `TabOptions`, `GroupOptions`, `VariableOptions`, `ContentOutline`) and shared sub-options (`ConditionalRenderingOptions`, `GridLayoutOptions`, `RepeatOptions` under `sidebar/shared/`) are reached via `sidebar.*` (e.g. `sidebar.toolbar`, `sidebar.panelOptions.repeatOptions`). Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `getByGrafanaSelector`, `selectors`, and `components` dependencies as `protected` fields.

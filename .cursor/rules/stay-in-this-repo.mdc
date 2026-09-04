@@ -1,0 +1,9 @@
+---
+description: Stay in this Grafana checkout; do not chase other repositories
+alwaysApply: true
+---
+This workspace is one Grafana monorepo. Implement tickets here (`packages/grafana-sql`, SQL Expressions, and other in-repo paths).
+
+Do not clone or switch to another repository unless the user explicitly asks.
+
+If a ticket cannot be implemented in this tree, say so in one sentence and open a findings PR here. Do not spend the session hunting a missing plugin folder.

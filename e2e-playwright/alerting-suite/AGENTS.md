@@ -7,6 +7,10 @@ tests, anti-flake rules) that apply to any Grafana frontend test, also invoke th
 `frontend-testing-strategy` skill with the Skill tool — this guide covers what's specific to
 this suite on top of that.
 
+When adding or extending specs here, invoke the **`add-e2e-tests`** skill — it
+points agents at this `AGENTS.md`, POM conventions, isolation rules, and verify
+commands.
+
 ## Test isolation and parallelism
 
 Playwright's global config sets `fullyParallel: true`, which distributes individual
