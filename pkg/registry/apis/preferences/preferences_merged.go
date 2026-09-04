@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -147,8 +148,15 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		sources = append(sources, item.Name)
 	}
 
+	// An explicit "global home" choice stops the user > team > org fallback and
+	// resolves to the instance default home (the switch below).
+	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID == pref.GlobalHomeDashboardUID {
+		p.Spec.HomeDashboardUID = nil
+	}
+
 	// Home precedence, highest first (matches legacy GetHomeDashboard):
-	//  1. HomeDashboardUID from preferences (user > team > org)
+	//  1. HomeDashboardUID from preferences (user > team > org), unless it is
+	//     the reserved "global home" sentinel normalized away above
 	//  2. home_page from settings
 	//  3. custom home dashboard JSON from settings (home.DASHBOARD_NAME)
 	preferenceHome := p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != ""
