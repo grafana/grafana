@@ -188,6 +188,13 @@ export class PanelPlugin<
    * whether to offer "fit content" for this panel.
    */
   supportsFitContent?: boolean;
+  /**
+   * Indicates that the panel does not want the "non-applicable filters" pill row
+   * (ad-hoc filter / group-by keys that don't apply to this panel's queries) shown in
+   * its header, even when the feature is enabled and the datasource reports
+   * inapplicable filters. Declared via {@link setHideNonApplicableFilters}.
+   */
+  hideNonApplicableFilters?: boolean;
   noPadding?: boolean;
   /** @internal - set via {@link setScreenshotImage}, read by the panel screenshot service. */
   onScreenshot?: PanelScreenshotHandler;
@@ -312,6 +319,16 @@ export class PanelPlugin<
    */
   setFitContentSupport(supports = true) {
     this.supportsFitContent = supports;
+    return this;
+  }
+
+  /**
+   * Opts this panel out of the "non-applicable filters" pill row that dashboards
+   * can show above a panel's header, listing ad-hoc filter / group-by keys that don't
+   * apply to the panel's queries.
+   */
+  setHideNonApplicableFilters(hide = true) {
+    this.hideNonApplicableFilters = hide;
     return this;
   }
 
