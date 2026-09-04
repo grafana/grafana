@@ -495,6 +495,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "datasourceConnectionsAPI",
+			Description:     "Register a cross-type datasource connections route on /apis/datasource.grafana.app/",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: true, // Adds a route at startup
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "useNewAPIsForDatasourceCRUD",
 			Description:     "Use the new datasource API groups for datasource CRUD requests",
 			Stage:           FeatureStageExperimental,

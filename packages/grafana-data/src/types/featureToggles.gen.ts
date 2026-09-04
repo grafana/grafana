@@ -204,6 +204,11 @@ export interface FeatureToggles {
   */
   queryServiceWithConnections?: boolean;
   /**
+  * Register a cross-type datasource connections route on /apis/datasource.grafana.app/
+  * @default false
+  */
+  datasourceConnectionsAPI?: boolean;
+  /**
   * Use the new datasource API groups for datasource CRUD requests
   * @default false
   */

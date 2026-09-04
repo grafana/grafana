@@ -669,6 +669,23 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+			// The connections route filters its result per datasource, so the
+			// store compiles a checker against this resource.
+			"datasources": newDatasourceQueryTranslation(),
+			// Cross-type connection list. The route lists every datasource in
+			// the namespace, so the scope check happens per item in the store.
+			"connections": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:  "datasources:read",
+					utils.VerbList: "datasources:read",
+				},
+				folderSupport: false,
+				skipScopeOnVerb: map[string]bool{
+					utils.VerbList: true,
+				},
+			},
 		},
 		"*.datasource.grafana.app": {
 			"datasources": newDatasourceQueryTranslation(),

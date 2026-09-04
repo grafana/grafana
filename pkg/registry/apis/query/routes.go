@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/connections"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -106,6 +107,13 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 				Handler: b.GetSQLSchemas,
 			},
 		},
+	}
+
+	// Reads connections from the database. Only wired where the flag-gated route
+	// below is off, so the two never claim the same path.
+	if b.databaseConnections != nil {
+		routes.Namespace = append(routes.Namespace, connections.Routes(b.databaseConnections, defs)...)
+		return routes
 	}
 
 	// Get a list of all datasource instances

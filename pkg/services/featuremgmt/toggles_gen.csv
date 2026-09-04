@@ -55,6 +55,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,datasourceLegacyIdApi,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryService,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2025-08-28,queryServiceWithConnections,experimental,@grafana/grafana-datasources-core-services,false,true,false
+2026-08-27,datasourceConnectionsAPI,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2026-05-22,useNewAPIsForDatasourceCRUD,experimental,@grafana/grafana-datasources-core-services,false,true,true
 2024-04-19,queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true

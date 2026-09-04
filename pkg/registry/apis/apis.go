@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	datasourceroot "github.com/grafana/grafana/pkg/registry/apis/datasource/root"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
@@ -21,6 +22,7 @@ type Service struct{}
 func ProvideRegistryServiceSink(
 	_ *dashboardinternal.DashboardsAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,
+	_ *datasourceroot.RootAPIBuilder,
 	_ *folders.FolderAPIBuilder,
 	_ *iam.IdentityAccessManagementAPIBuilder,
 	_ *query.QueryAPIBuilder,

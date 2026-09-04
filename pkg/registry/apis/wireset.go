@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	datasourceroot "github.com/grafana/grafana/pkg/registry/apis/datasource/root"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -78,6 +79,7 @@ var WireSet = wire.NewSet(
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
 	datasource.RegisterAPIService,
+	datasourceroot.RegisterAPIService,
 	cleaner.ProvideFolderContentsDeleter,
 	wire.Bind(new(folders.FolderContentsDeleter), new(*cleaner.ContentsCleaner)),
 	folders.RegisterAPIService,

@@ -43,6 +43,14 @@ func ProvideDefaultBuildHandlerChainFuncFromBuilders() BuildHandlerChainFuncFrom
 	return GetDefaultBuildHandlerChainFunc
 }
 
+// Anchored so only API paths match. Unanchored it also matches the group's
+// OpenAPI path, /openapi/v3/apis/datasource.grafana.app/v0alpha1, and rewrites
+// it to a plain discovery URL -- which hides the group's spec.
+const (
+	datasourceGroup        = "datasource.grafana.app"
+	datasourceGroupPattern = `^/apis/datasource.grafana.app/v0alpha1(.*$)`
+)
+
 // PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
 var PathRewriters = []filters.PathRewriter{
 	{
@@ -51,16 +59,7 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
-	{ // Migrate datasource.grafana.app to query.grafana.app
-		Pattern: regexp.MustCompile(`/apis/datasource.grafana.app/v0alpha1(.*$)`),
-		ReplaceFunc: func(matches []string) string {
-			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
-			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
-				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
-			}
-			return result
-		},
-	},
+	datasourceToQueryRewriter(false),
 	{
 		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)query/name$`),
 		ReplaceFunc: func(matches []string) string {
@@ -82,6 +81,52 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+}
+
+// datasourceToQueryRewriter migrates datasource.grafana.app to query.grafana.app.
+// keepConnections leaves the connections route alone, for servers where a
+// builder registers datasource.grafana.app and serves that route itself.
+func datasourceToQueryRewriter(keepConnections bool) filters.PathRewriter {
+	return filters.PathRewriter{
+		Pattern: regexp.MustCompile(datasourceGroupPattern),
+		ReplaceFunc: func(matches []string) string {
+			if keepConnections && strings.HasSuffix(matches[1], "/connections") {
+				return matches[0]
+			}
+			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
+			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
+				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
+			}
+			return result
+		},
+	}
+}
+
+// pathRewritersForBuilders adapts PathRewriters to what is actually served.
+// Without this the datasource.grafana.app rewrite above would send the group's
+// own connections route to query.grafana.app, where it does not exist.
+func pathRewritersForBuilders(builders []APIGroupBuilder) []filters.PathRewriter {
+	servesDatasourceGroup := false
+	for _, b := range builders {
+		for _, gv := range GetGroupVersions(b) {
+			if gv.Group == datasourceGroup {
+				servesDatasourceGroup = true
+				break
+			}
+		}
+	}
+	if !servesDatasourceGroup {
+		return PathRewriters
+	}
+
+	rewriters := make([]filters.PathRewriter, len(PathRewriters))
+	copy(rewriters, PathRewriters)
+	for i, r := range rewriters {
+		if r.Pattern.String() == datasourceGroupPattern {
+			rewriters[i] = datasourceToQueryRewriter(true)
+		}
+	}
+	return rewriters
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
@@ -113,7 +158,7 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		handler = filters.WithCanceledRequestStatus(handler)
 
 		handler = filters.WithAcceptHeader(handler)
-		handler = filters.WithPathRewriters(handler, PathRewriters)
+		handler = filters.WithPathRewriters(handler, pathRewritersForBuilders(builders))
 		// Skip the top-level "KubernetesAPI" span for watch requests: their span
 		// would stay open for the whole long-running connection. See
 		// filters.WithWatchInstrumentation for the upstream request span.
