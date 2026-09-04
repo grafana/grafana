@@ -80,17 +80,27 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
     textColor = tinycolor(sourceColor).darken(25).toString();
   }
 
+  if (theme.flags.visualDesignRefresh && color !== 'brand') {
+    const tokens = theme.components.badge[color];
+    bgColor = tokens?.background ?? bgColor;
+    borderColor = tokens?.border ?? borderColor;
+    textColor = tokens?.text ?? textColor;
+  }
+
   if (color === 'brand') {
     bgColor = theme.colors.gradients.brandHorizontal;
-    borderColor = 'transparent';
-    textColor = theme.colors.primary.contrastText;
+    borderColor = theme.flags.visualDesignRefresh ? theme.colors.accent.contrastText : 'transparent';
+    textColor =
+      theme.flags.visualDesignRefresh && theme.isLight
+        ? theme.components.badge.textColor
+        : theme.colors.primary.contrastText;
   }
 
   return {
     wrapper: css({
       display: 'inline-flex',
-      padding: '1px 4px',
-      borderRadius: theme.shape.radius.sm,
+      padding: theme.flags.visualDesignRefresh ? '1px 6px' : '1px 4px',
+      borderRadius: theme.flags.visualDesignRefresh ? theme.shape.radius.pill : theme.shape.radius.sm,
       background: bgColor,
       border: `1px solid ${borderColor}`,
       color: textColor,
@@ -99,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'flex-start',
+      height: theme.flags.visualDesignRefresh ? theme.spacing(3) : undefined,
 
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.accent.main}`,

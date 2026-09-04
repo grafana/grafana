@@ -1291,6 +1291,105 @@
             }
           },
           "additionalProperties": false
+        },
+        "badge": {
+          "type": "object",
+          "properties": {
+            "blue": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "red": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "green": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "orange": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "purple": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "darkgrey": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "textColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
