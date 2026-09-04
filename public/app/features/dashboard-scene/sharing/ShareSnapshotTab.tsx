@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, type SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
@@ -26,6 +26,7 @@ import {
   trimDashboardForSnapshot as trimDashboardForSnapshotV2,
 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardInteractions } from '../utils/interactions';
+import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { type SceneShareTabState, type ShareView } from './types';
 
@@ -142,19 +143,37 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     updateSnapshotShareConfiguration({ expirationTime: option });
   };
 
-  private prepareSnapshot() {
+  private async prepareSnapshot() {
     const timeRange = sceneGraph.getTimeRange(this);
     const { dashboardRef, panelRef } = this.state;
+    const dashboard = dashboardRef.resolve();
 
     let saveModel: Dashboard | DashboardV2SpecWithUid;
 
-    const apiVersion = dashboardRef.resolve().serializer.apiVersion;
+    const apiVersion = dashboard.serializer.apiVersion;
 
     const isV2Dashboard = apiVersion?.startsWith('dashboard.grafana.app/v2') ?? false;
 
     if (isV2Dashboard) {
-      saveModel = transformSceneToSaveModelSchemaV2(dashboardRef.resolve(), true);
-      saveModel.uid = dashboardRef.resolve().serializer.getK8SMetadata()?.name;
+      // V2 dashboards can place panels in hidden tabs and collapsed rows, which are never mounted
+      // and so never run their queries. Snapshot serialization only captures the data already held
+      // by each panel, so force those panels to load first — otherwise they serialize as "No data".
+      const { timedOutPanels } = await loadSnapshotData(dashboard);
+      if (timedOutPanels > 0) {
+        dispatch(
+          notifyApp(
+            createWarningNotification(
+              t(
+                'snapshot.share.load-timeout-warning',
+                'Some panels did not finish loading and may show no data in the snapshot'
+              )
+            )
+          )
+        );
+      }
+
+      saveModel = transformSceneToSaveModelSchemaV2(dashboard, true);
+      saveModel.uid = dashboard.serializer.getK8SMetadata()?.name;
       return trimDashboardForSnapshotV2(
         this.state.snapshotName.trim() || '',
         timeRange.state.value,
@@ -163,7 +182,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
       );
     }
 
-    saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
+    saveModel = transformSceneToSaveModel(dashboard, true);
 
     return trimDashboardForSnapshot(
       this.state.snapshotName.trim() || '',
@@ -175,7 +194,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
 
   public onSnapshotCreate = async (external = false) => {
     const { selectedExpireOption } = this.state;
-    const snapshot = this.prepareSnapshot();
+    const snapshot = await this.prepareSnapshot();
     const cmdData = {
       dashboard: snapshot,
       name: snapshot.title,
