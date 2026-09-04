@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -211,4 +212,58 @@ func TestSession_Authenticate(t *testing.T) {
 			require.EqualValues(t, tt.wantID, got)
 		})
 	}
+}
+
+type optimizedSessionTokenService struct {
+	auth.UserTokenService
+	result *auth.SessionTokenAuthnInfo
+	calls  int
+}
+
+func (s *optimizedSessionTokenService) LookupTokenForAuthn(context.Context, string) (*auth.SessionTokenAuthnInfo, error) {
+	s.calls++
+	return s.result, nil
+}
+
+func TestSession_AuthenticateUsesOAuthPassthroughLookup(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = "grafana_session"
+	cfg.TokenRotationIntervalMinutes = 10
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+
+	sessionToken := &auth.UserToken{
+		Id:            1,
+		UserId:        7,
+		AuthTokenSeen: true,
+		RotatedAt:     time.Now().Unix(),
+	}
+	oauthToken := &oauth2.Token{AccessToken: "access-token", Expiry: time.Now().Add(time.Hour)}
+	optimized := &optimizedSessionTokenService{
+		UserTokenService: &authtest.FakeUserAuthTokenService{},
+		result: &auth.SessionTokenAuthnInfo{
+			Token:       sessionToken,
+			AuthID:      "subject",
+			AuthModule:  login.AzureADAuthModule,
+			OAuthToken:  oauthToken,
+			HasAuthInfo: true,
+		},
+	}
+	authInfo := &authinfotest.FakeService{}
+	client := ProvideSession(cfgProvider, optimized, authInfo, tracing.InitializeTracerForTest())
+
+	httpReq := &http.Request{Header: make(http.Header)}
+	httpReq.AddCookie(&http.Cookie{Name: cfg.LoginCookieName, Value: "raw-token"})
+	req := &authn.Request{HTTPRequest: httpReq}
+	req.SetMeta(authn.MetaKeyOAuthPassthrough, "true")
+
+	ident, err := client.Authenticate(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, ident)
+	assert.Equal(t, 1, optimized.calls)
+	assert.Zero(t, authInfo.LatestUserID, "the optimized result should avoid the AuthInfo lookup")
+	assert.Same(t, sessionToken, ident.SessionToken)
+	assert.Same(t, oauthToken, ident.OAuthToken)
+	assert.Equal(t, "subject", ident.AuthID)
+	assert.Equal(t, login.AzureADAuthModule, ident.AuthenticatedBy)
 }

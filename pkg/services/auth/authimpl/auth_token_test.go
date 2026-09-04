@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -912,6 +913,60 @@ func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
 	})
 }
 
+func TestIntegrationLookupTokenForAuthn(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testCtx := createTestContext(t)
+	now := time.Date(2026, 9, 3, 12, 0, 0, 0, time.UTC)
+	getTime = func() time.Time { return now }
+	t.Cleanup(func() { getTime = time.Now })
+
+	authInfo := &login.UserAuth{
+		UserId:     10,
+		AuthModule: login.AzureADAuthModule,
+		AuthId:     "azure-subject",
+		Created:    now,
+	}
+	err := testCtx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Table("user_auth").Insert(authInfo)
+		return err
+	})
+	require.NoError(t, err)
+	require.NotZero(t, authInfo.Id)
+
+	expiresAt := now.Add(time.Hour)
+	created, err := testCtx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+		User:      &user.User{ID: 10},
+		ClientIP:  net.ParseIP("192.0.2.10"),
+		UserAgent: "authn-test",
+		ExternalSession: &auth.ExternalSession{
+			UserID:       10,
+			UserAuthID:   authInfo.Id,
+			AuthModule:   login.AzureADAuthModule,
+			AccessToken:  "access-token",
+			RefreshToken: "refresh-token",
+			IDToken:      "id-token",
+			ExpiresAt:    expiresAt,
+		},
+	})
+	require.NoError(t, err)
+
+	actual, err := testCtx.tokenService.LookupTokenForAuthn(context.Background(), created.UnhashedToken)
+	require.NoError(t, err)
+	require.NotNil(t, actual)
+	require.NotNil(t, actual.Token)
+	assert.Equal(t, created.Id, actual.Token.Id)
+	assert.True(t, actual.Token.AuthTokenSeen)
+	assert.Equal(t, authInfo.AuthId, actual.AuthID)
+	assert.Equal(t, authInfo.AuthModule, actual.AuthModule)
+	assert.True(t, actual.HasAuthInfo)
+	require.NotNil(t, actual.OAuthToken)
+	assert.Equal(t, "access-token", actual.OAuthToken.AccessToken)
+	assert.Equal(t, "refresh-token", actual.OAuthToken.RefreshToken)
+	assert.Equal(t, expiresAt, actual.OAuthToken.Expiry)
+	assert.Equal(t, "id-token", actual.OAuthToken.Extra("id_token"))
+}
+
 func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
@@ -937,22 +992,21 @@ func createTestContext(t *testing.T) *testContext {
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),
 		externalSessionStore: extSessionStore,
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling),
 		tracer:               tracer,
 	}
 
 	return &testContext{
-		sqlstore:        sqlstore,
-		cfg:             cfg,
-		tokenService:    tokenService,
-		extSessionStore: &extSessionStore,
+		sqlstore:     sqlstore,
+		cfg:          cfg,
+		tokenService: tokenService,
 	}
 }
 
 type testContext struct {
-	sqlstore        db.DB
-	cfg             *setting.Cfg
-	tokenService    *UserAuthTokenService
-	extSessionStore *auth.ExternalSessionStore
+	sqlstore     db.DB
+	cfg          *setting.Cfg
+	tokenService *UserAuthTokenService
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {

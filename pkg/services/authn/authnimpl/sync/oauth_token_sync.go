@@ -83,12 +83,25 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		cacheKey = fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
 	}
 
-	if _, ok := s.cache.Get(cacheKey); ok {
-		ctxLogger.Debug("Expiration check has been cached, no need to refresh")
+	// The session authentication fast path already loaded this exact external
+	// session row. A current token needs neither another query nor the refresh
+	// lock; cache it using the same expiry-bounded TTL as a refresh result.
+	if oauthtoken.IsOAuthTokenCurrent(ctx, id.OAuthToken) {
+		s.cache.Set(cacheKey, true, getOAuthTokenCacheTTL(id.OAuthToken))
 		return nil
 	}
 
-	_, err, _ = s.singleflightGroup.Do(cacheKey, func() (interface{}, error) {
+	if _, ok := s.cache.Get(cacheKey); ok {
+		// Preserve the existing cache behavior for callers without a prefetched
+		// token. A prefetched-but-stale token must go through the locked refresh.
+		if id.OAuthToken == nil {
+			ctxLogger.Debug("Expiration check has been cached, no need to refresh")
+			return nil
+		}
+		s.cache.Delete(cacheKey)
+	}
+
+	value, err, _ := s.singleflightGroup.Do(cacheKey, func() (interface{}, error) {
 		ctxLogger.Debug("Singleflight request for OAuth token sync")
 
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
@@ -121,11 +134,18 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		}
 
 		s.cache.Set(cacheKey, true, getOAuthTokenCacheTTL(token))
-		return nil, nil
+		return token, nil
 	})
 
 	if err != nil {
 		return authn.ErrExpiredAccessToken.Errorf("OAuth access token could not be refreshed: %w", err)
+	}
+	if token, ok := value.(*oauth2.Token); ok && token != nil {
+		id.OAuthToken = token
+	} else if id.OAuthToken != nil {
+		// TryTokenRefresh can intentionally return nil when provider settings are
+		// unavailable. Do not forward the stale prefetched credential in that case.
+		id.OAuthToken = nil
 	}
 
 	return nil

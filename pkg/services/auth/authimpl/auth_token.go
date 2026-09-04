@@ -3,15 +3,18 @@ package authimpl
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"errors"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -28,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 var (
@@ -39,6 +43,7 @@ var (
 const SkipRotationTime = 5 * time.Second
 
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
+var _ auth.SessionTokenAuthnService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
 	serverLockService *serverlock.ServerLockService,
@@ -193,6 +198,105 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		return nil, auth.ErrUserTokenNotFound
 	}
 
+	return s.validateToken(ctx, cfg, dbHelper, &model, hashedToken, unhashedToken)
+}
+
+// LookupTokenForAuthn resolves the session token, its exact auth provider, and
+// the OAuth credentials associated with that session in a single query. It is
+// intentionally separate from LookupToken so non-authentication callers do not
+// pay for joins or secret decryption they do not need.
+func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*auth.SessionTokenAuthnInfo, error) {
+	ctx, span := s.tracer.Start(ctx, "authtoken.LookupTokenForAuthn")
+	defer span.End()
+
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	hashedToken := hashToken(cfg.SecretKey, unhashedToken)
+	var row sessionTokenAuthnRow
+	var exists bool
+	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
+		exists, err = dbSession.Table(dbHelper.Table("user_auth_token")).Alias("uat").
+			Select(strings.Join(sessionTokenAuthnColumns, ", ")).
+			Join("LEFT", []string{dbHelper.Table("user_external_session"), "ues"}, "uat.external_session_id = ues.id").
+			Join("LEFT", []string{dbHelper.Table("user_auth"), "ua"}, "ues.user_auth_id = ua.id").
+			Where("(uat.auth_token = ? OR uat.prev_auth_token = ?)", hashedToken, hashedToken).
+			Get(&row)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, auth.ErrUserTokenNotFound
+	}
+
+	model := row.userAuthToken()
+	token, err := s.validateToken(ctx, cfg, dbHelper, model, hashedToken, unhashedToken)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &auth.SessionTokenAuthnInfo{
+		Token:       token,
+		AuthID:      row.AuthID.String,
+		AuthModule:  row.AuthModule.String,
+		HasAuthInfo: row.AuthInfoID.Valid,
+	}
+	// External-session credentials are authoritative only when improved external
+	// session handling is enabled. The legacy path keeps reading OAuth fields
+	// from user_auth.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	useExternalSession := s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling)
+	if !useExternalSession || !row.ExternalSessionID.Valid || !strings.HasPrefix(result.AuthModule, "oauth") {
+		return result, nil
+	}
+
+	externalSession := &auth.ExternalSession{
+		ID:           row.ExternalSessionID.Int64,
+		AuthModule:   result.AuthModule,
+		AccessToken:  row.AccessToken.String,
+		RefreshToken: row.RefreshToken.String,
+		IDToken:      row.IDToken.String,
+		ExpiresAt:    time.Time(row.ExpiresAt),
+	}
+	secretDecoder, ok := s.externalSessionStore.(oauthSessionSecretDecoder)
+	if !ok {
+		s.log.FromContext(ctx).Warn("OAuth session prefetch is unavailable; falling back to OAuth token service")
+		return result, nil
+	}
+	if err := secretDecoder.decryptOAuthSecrets(externalSession); err != nil {
+		s.log.FromContext(ctx).Warn("Failed to decrypt prefetched OAuth session; falling back to OAuth token service", "err", err)
+		return result, nil
+	}
+
+	result.OAuthToken = &oauth2.Token{
+		AccessToken:  externalSession.AccessToken,
+		RefreshToken: externalSession.RefreshToken,
+		Expiry:       externalSession.ExpiresAt,
+	}
+	if externalSession.IDToken != "" {
+		result.OAuthToken = result.OAuthToken.WithExtra(map[string]any{"id_token": externalSession.IDToken})
+	}
+
+	return result, nil
+}
+
+type oauthSessionSecretDecoder interface {
+	decryptOAuthSecrets(*auth.ExternalSession) error
+}
+
+func (s *UserAuthTokenService) validateToken(ctx context.Context, cfg *setting.Cfg, dbHelper *legacysql.LegacyDatabaseHelper,
+	model *userAuthToken, hashedToken, unhashedToken string,
+) (*auth.UserToken, error) {
+	var err error
 	ctxLogger := s.log.FromContext(ctx)
 
 	if model.RevokedAt > 0 {
@@ -226,7 +330,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 					model.Id,
 					model.PrevAuthToken,
 					model.RotatedAt).
-				AllCols().Update(&model)
+				AllCols().Update(model)
 
 			return err
 		})
@@ -262,7 +366,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 				Where("id = ? AND auth_token = ?",
 					model.Id,
 					model.AuthToken).
-				AllCols().Update(&model)
+				AllCols().Update(model)
 
 			return err
 		})
@@ -283,6 +387,72 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	err = model.toUserToken(&userToken)
 
 	return &userToken, err
+}
+
+var sessionTokenAuthnColumns = []string{
+	"uat.id AS token_id",
+	"uat.user_id AS token_user_id",
+	"uat.auth_token AS token_auth_token",
+	"uat.prev_auth_token AS token_prev_auth_token",
+	"uat.user_agent AS token_user_agent",
+	"uat.client_ip AS token_client_ip",
+	"uat.auth_token_seen AS token_auth_token_seen",
+	"uat.seen_at AS token_seen_at",
+	"uat.rotated_at AS token_rotated_at",
+	"uat.created_at AS token_created_at",
+	"uat.updated_at AS token_updated_at",
+	"uat.revoked_at AS token_revoked_at",
+	"uat.external_session_id AS token_external_session_id",
+	"ues.id AS external_session_id",
+	"ues.auth_module AS auth_module",
+	"ues.access_token AS access_token",
+	"ues.refresh_token AS refresh_token",
+	"ues.id_token AS id_token",
+	"ues.expires_at AS expires_at",
+	"ua.id AS auth_info_id",
+	"ua.auth_id AS auth_id",
+}
+
+type sessionTokenAuthnRow struct {
+	TokenID                int64          `xorm:"token_id"`
+	TokenUserID            int64          `xorm:"token_user_id"`
+	TokenAuthToken         string         `xorm:"token_auth_token"`
+	TokenPrevAuthToken     string         `xorm:"token_prev_auth_token"`
+	TokenUserAgent         string         `xorm:"token_user_agent"`
+	TokenClientIP          string         `xorm:"token_client_ip"`
+	TokenAuthTokenSeen     bool           `xorm:"token_auth_token_seen"`
+	TokenSeenAt            int64          `xorm:"token_seen_at"`
+	TokenRotatedAt         int64          `xorm:"token_rotated_at"`
+	TokenCreatedAt         int64          `xorm:"token_created_at"`
+	TokenUpdatedAt         int64          `xorm:"token_updated_at"`
+	TokenRevokedAt         int64          `xorm:"token_revoked_at"`
+	TokenExternalSessionID int64          `xorm:"token_external_session_id"`
+	ExternalSessionID      sql.NullInt64  `xorm:"external_session_id"`
+	AuthModule             sql.NullString `xorm:"auth_module"`
+	AuthInfoID             sql.NullInt64  `xorm:"auth_info_id"`
+	AuthID                 sql.NullString `xorm:"auth_id"`
+	AccessToken            sql.NullString `xorm:"access_token"`
+	RefreshToken           sql.NullString `xorm:"refresh_token"`
+	IDToken                sql.NullString `xorm:"id_token"`
+	ExpiresAt              core.NullTime  `xorm:"expires_at"`
+}
+
+func (r *sessionTokenAuthnRow) userAuthToken() *userAuthToken {
+	return &userAuthToken{
+		Id:                r.TokenID,
+		UserId:            r.TokenUserID,
+		AuthToken:         r.TokenAuthToken,
+		PrevAuthToken:     r.TokenPrevAuthToken,
+		UserAgent:         r.TokenUserAgent,
+		ClientIp:          r.TokenClientIP,
+		AuthTokenSeen:     r.TokenAuthTokenSeen,
+		SeenAt:            r.TokenSeenAt,
+		RotatedAt:         r.TokenRotatedAt,
+		CreatedAt:         r.TokenCreatedAt,
+		UpdatedAt:         r.TokenUpdatedAt,
+		RevokedAt:         r.TokenRevokedAt,
+		ExternalSessionId: r.TokenExternalSessionID,
+	}
 }
 
 func (s *UserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {
