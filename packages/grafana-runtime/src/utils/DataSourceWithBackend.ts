@@ -534,12 +534,46 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
     return of(rsp); // add warning?
   }
 
+  const liveSourceRefIds = new Set<string>();
+  for (const f of rsp.data) {
+    const addr = parseLiveChannelAddress(f.meta?.channel);
+    if (!addr) {
+      continue;
+    }
+
+    const sourceRefId = f.refId ?? '';
+    const sourceQuery = req.targets.find((q) => q.refId === sourceRefId);
+    if (sourceRefId && !sourceQuery?.hide) {
+      liveSourceRefIds.add(sourceRefId);
+    }
+  }
+
+  const liveMathResultRefIds = new Set<string>();
+  for (const target of req.targets) {
+    if (
+      target.hide ||
+      !target.refId ||
+      !target.expression ||
+      target.type !== 'math' ||
+      !isExpressionReference(target.datasource)
+    ) {
+      continue;
+    }
+
+    const refs = liveMathReferenceIds(target.expression);
+    if (refs.length === 1 && liveSourceRefIds.has(refs[0])) {
+      liveMathResultRefIds.add(target.refId);
+    }
+  }
+
   const staticdata: DataFrame[] = [];
   const streams: Array<Observable<DataQueryResponse>> = [];
   for (const f of rsp.data) {
     const addr = parseLiveChannelAddress(f.meta?.channel);
     if (!addr) {
-      staticdata.push(f);
+      if (!liveMathResultRefIds.has(f.refId ?? '')) {
+        staticdata.push(f);
+      }
       continue;
     }
 
@@ -551,7 +585,6 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
     if (!sourceQuery?.hide) {
       streams.push(
         live.getDataStream({
-          key: `${req.requestId}.${sourceRefId || 'live'}`,
           addr,
           buffer: getter(req, frame),
           frame: dataFrameToJSON(f),
@@ -580,7 +613,6 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
 
       streams.push(
         live.getDataStream({
-          key: `${req.requestId}.${target.refId}`,
           addr,
           buffer: getter(req, frame),
           frame: dataFrameToJSON(f),
