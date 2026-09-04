@@ -44,6 +44,7 @@ import { type DashboardDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ShowModalReactEvent } from '../../types/events';
+import { isIgnorableFetchAbort } from '../utils/errors';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 
@@ -434,6 +435,14 @@ export class BackendSrv implements BackendService {
    * @see DataQueryError.data
    */
   processRequestError(options: BackendSrvRequest, err: FetchError): FetchError<{ message: string; error?: string }> {
+    if (isIgnorableFetchAbort(err)) {
+      err.isHandled = true;
+      err.cancelled = true;
+      err.data = err.data ?? { message: 'Request was aborted' };
+      err.config = err.config ?? options;
+      return err;
+    }
+
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {

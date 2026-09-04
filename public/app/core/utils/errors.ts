@@ -1,5 +1,59 @@
 import { type FetchError, isFetchError } from '@grafana/runtime';
 
+function readErrorMessage(err: unknown): string {
+  if (typeof err === 'string') {
+    return err;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (err && typeof err === 'object') {
+    const value = err as { message?: unknown; data?: { message?: unknown }; statusText?: unknown };
+    if (typeof value.message === 'string' && value.message) {
+      return value.message;
+    }
+    if (typeof value.data?.message === 'string') {
+      return value.data.message;
+    }
+    if (typeof value.statusText === 'string') {
+      return value.statusText;
+    }
+  }
+  return '';
+}
+
+// Firefox/Safari report a TypeError when a full-page navigation aborts in-flight fetch()
+// calls. Chrome uses AbortError. None of these are user-visible failures.
+export function isIgnorableFetchAbort(err: unknown): boolean {
+  if (err == null) {
+    return false;
+  }
+
+  if (typeof err === 'object') {
+    const value = err as { name?: string; cancelled?: boolean; type?: unknown; status?: number; statusText?: string };
+    if (value.cancelled === true) {
+      return true;
+    }
+    if (value.name === 'AbortError') {
+      return true;
+    }
+    if (value.type === 'cancelled') {
+      return true;
+    }
+    if (value.status === -1 && value.statusText === 'Request was aborted') {
+      return true;
+    }
+  }
+
+  const message = readErrorMessage(err);
+  return (
+    message === 'NetworkError when attempting to fetch resource.' ||
+    message === 'Load failed' ||
+    message === 'The operation was aborted.' ||
+    message === 'The operation was aborted'
+  );
+}
+
 export function getMessageFromError(err: unknown): string {
   if (typeof err === 'string') {
     return err;

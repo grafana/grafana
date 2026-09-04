@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { Alert, Box, EmptyState, Text, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
+import { getMessageFromError, getStatusFromError, isIgnorableFetchAbort } from 'app/core/utils/errors';
 
 interface DashboardPageErrorProps {
   error: unknown;
@@ -13,6 +13,12 @@ interface DashboardPageErrorProps {
 
 export function DashboardPageError({ error, type, isProvisioned }: DashboardPageErrorProps) {
   const message = getMessageFromError(error);
+
+  // Org switch (and other full-page navigations) abort in-flight dashboard fetches.
+  // Firefox/Safari surface that as a load error; hide it instead of flashing the alert.
+  if (isIgnorableFetchAbort(error) || isIgnorableFetchAbort(message)) {
+    return null;
+  }
 
   if (isProvisioned) {
     return (

@@ -11,6 +11,12 @@ import { type StoreState } from 'app/types/store';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
 
 const mockDispatch = jest.fn();
+const cancelAllInFlightRequests = jest.fn();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ cancelAllInFlightRequests }),
+}));
 
 jest.mock('app/features/org/state/actions', () => ({
   ...jest.requireActual('app/features/org/state/actions'),
@@ -37,6 +43,7 @@ describe('OrganisationSwitcher', () => {
 
   beforeEach(() => {
     mockDispatch.mockReset();
+    cancelAllInFlightRequests.mockReset();
     jest.spyOn(window, 'matchMedia').mockImplementation(
       () =>
         ({
@@ -142,6 +149,7 @@ describe('OrganisationSwitcher', () => {
 
     expect(setUserOrganization).toHaveBeenCalledWith(2);
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
+    expect(cancelAllInFlightRequests).toHaveBeenCalledTimes(1);
     expect(assignMock).toHaveBeenCalledWith('/grafana/');
   });
 
@@ -164,6 +172,7 @@ describe('OrganisationSwitcher', () => {
     await selectOptionInTest(screen.getByRole('combobox', { name: 'Change organization' }), 'test2');
 
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
+    expect(cancelAllInFlightRequests).not.toHaveBeenCalled();
     expect(assignMock).not.toHaveBeenCalled();
   });
 });
