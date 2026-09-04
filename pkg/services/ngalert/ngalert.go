@@ -600,8 +600,10 @@ func (ng *AlertNG) init() error {
 
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
-	// the user-driven proxy). It only runs when the operator has set the
-	// external_ruler_uid setting (the enable signal; no separate feature flag).
+	// the user-driven proxy). Runs operator-wide via the external_ruler_uid
+	// setting and/or per-org via the rules Config resource; neither path needs
+	// a feature flag — setting the ini value or the resource's
+	// spec.externalRulerSync.datasourceUid is itself the enable signal.
 	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
 		&ng.Cfg.UnifiedAlerting,
 		log.New("ngalert.rulesync"),
@@ -612,6 +614,8 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.store,
 		ng.FolderResourcePermissions,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
 	)
 
 	ng.Api = &api.API{

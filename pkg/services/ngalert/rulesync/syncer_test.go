@@ -2,12 +2,14 @@ package rulesync
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -40,13 +42,17 @@ func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConf
 }
 
 type fakeRuleService struct {
-	replaced []*models.AlertRuleGroup
-	existing []models.AlertRuleGroupWithFolderFullpath
-	deleted  []provisioning.FilterOptions
+	replaced        []*models.AlertRuleGroup
+	replacedManager utils.ManagerProperties
+	replacedVersion string
+	existing        []models.AlertRuleGroupWithFolderFullpath
+	deleted         []provisioning.FilterOptions
 }
 
-func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, _ utils.ManagerProperties, _ string) error {
+func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, manager utils.ManagerProperties, versionMessage string) error {
 	f.replaced = groups
+	f.replacedManager = manager
+	f.replacedVersion = versionMessage
 	return nil
 }
 func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error {
@@ -85,6 +91,10 @@ type fakeNamespaceStore struct {
 	// created is the "newly created" flag GetOrCreateNamespaceByTitle returns,
 	// which drives the admin-only permission set on the sync root folder.
 	created bool
+	// err, when set, is returned by GetNamespaceByTitle unconditionally, in
+	// place of the byTitle/ErrFolderNotFound lookup — simulates a genuine
+	// (non-not-found) lookup failure, e.g. a datastore error.
+	err error
 }
 
 func (f fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, bool, error) {
@@ -92,6 +102,9 @@ func (f fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title
 }
 
 func (f fakeNamespaceStore) GetNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
 	if fr, ok := f.byTitle[title]; ok {
 		return fr, nil
 	}
@@ -103,10 +116,14 @@ func (f fakeNamespaceStore) GetNamespaceChildren(_ context.Context, _ string, _ 
 }
 
 type fakeDatasourceGetter struct {
-	ds *datasources.DataSource
+	ds        *datasources.DataSource
+	requested *[]string // optional: records every requested UID, in order
 }
 
 func (f fakeDatasourceGetter) GetDataSource(_ context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if f.requested != nil {
+		*f.requested = append(*f.requested, q.UID)
+	}
 	// Return a datasource carrying the requested UID.
 	return &datasources.DataSource{UID: q.UID, OrgID: q.OrgID, Type: f.ds.Type, URL: f.ds.URL}, nil
 }
@@ -138,8 +155,21 @@ func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *Exter
 		ruleService:       rs,
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
-		lastSyncHash:      make(map[int64]uint64),
+		lastSyncKey:       make(map[int64]string),
+		lastAttemptAt:     make(map[int64]time.Time),
+		lastPollInterval:  make(map[int64]time.Duration),
 	}
+}
+
+// newTestSyncerWithConfigClient is newTestSyncer plus a wired Config
+// k8s-client (and namespace mapper), so the API path (resolveExternalRulerConfig's
+// Config branch, writeStatus, recordNotConfigured) is reachable in tests.
+func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
+	t.Helper()
+	s := newTestSyncer(t, fetch, rs)
+	s.clientGenerator = cs
+	s.namespaceMapper = cs.nsMapper
+	return s
 }
 
 func upstreamGroup(name, alert string) RulerConfig {
@@ -189,6 +219,12 @@ func TestSyncOrg_Dedup(t *testing.T) {
 	rs := &fakeRuleService{}
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}, rs)
 	s.settings.ExternalRulerUID = "ds1"
+	// The root folder must exist (by the title apply() would resolve) for dedup
+	// to engage at all — a missing root folder always forces a re-apply. See
+	// TestSyncOrg_ForcesReapplyWhenRootFolderMissing for that case.
+	s.namespaceStore = fakeNamespaceStore{byTitle: map[string]*folder.FolderReference{
+		RootFolderTitle("ds1"): {UID: "folder-" + RootFolderTitle("ds1"), Title: RootFolderTitle("ds1")},
+	}}
 
 	s.SyncOrg(context.Background(), 1)
 	require.Len(t, rs.replaced, 1)
@@ -265,7 +301,7 @@ func TestSyncOrg_RecoversPanic(t *testing.T) {
 
 func TestIsManagedFolder(t *testing.T) {
 	ctx := context.Background()
-	root := &folder.FolderReference{UID: "root-uid", Title: rootFolderTitle("ds1")}
+	root := &folder.FolderReference{UID: "root-uid", Title: RootFolderTitle("ds1")}
 	child := &folder.FolderReference{UID: "child-uid", Title: "ns1", ParentUID: "root-uid"}
 
 	newSyncer := func(ns fakeNamespaceStore, uid string) *ExternalRulerSyncer {
@@ -276,7 +312,7 @@ func TestIsManagedFolder(t *testing.T) {
 		}
 	}
 	rootResolvable := fakeNamespaceStore{
-		byTitle:  map[string]*folder.FolderReference{rootFolderTitle("ds1"): root},
+		byTitle:  map[string]*folder.FolderReference{RootFolderTitle("ds1"): root},
 		children: []*folder.FolderReference{child},
 	}
 
@@ -311,20 +347,95 @@ func TestIsManagedFolder(t *testing.T) {
 	})
 }
 
-func TestRun_NoOpWhenUnconfigured(t *testing.T) {
-	// external_ruler_uid unset is the disable signal: Run must not start the poll
-	// loop (there is no separate feature flag).
+func TestRun_StopsOnContextCancel(t *testing.T) {
+	// Run always starts the poll loop now: sync can be enabled per-org via the
+	// rules Config resource even when external_ruler_uid is unset, and only a
+	// per-org tick (resolveExternalRulerConfig) can tell which. Run itself
+	// must still exit cleanly on cancellation regardless. Run's ticker uses the
+	// fixed baselineCheckInterval (10s), so ctx.Done() always wins the select
+	// first — no settings knob to configure here anymore.
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
-	s.settings.AdminConfigPollInterval = time.Minute // avoid a ticker panic if the gate regresses
 
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- s.Run(context.Background()) }()
+	go func() { done <- s.Run(ctx) }()
+	cancel()
 	select {
 	case err := <-done:
 		require.NoError(t, err)
 	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return; missing gate on external_ruler_uid")
+		t.Fatal("Run did not return after context cancellation")
 	}
+}
+
+type fakeOrgStore struct {
+	ids []int64
+}
+
+func (f *fakeOrgStore) FetchOrgIds(context.Context) ([]int64, error) {
+	return f.ids, nil
+}
+
+func TestDueForSync(t *testing.T) {
+	s := newTestSyncer(t, &fakeFetcher{}, &fakeRuleService{})
+
+	assert.True(t, s.dueForSync(1), "an org never attempted is always due")
+
+	s.recordAttempt(1, time.Hour)
+	assert.False(t, s.dueForSync(1), "an org attempted within its own interval is not due yet")
+
+	s.lastAttemptAt[1] = time.Now().Add(-2 * time.Hour)
+	assert.True(t, s.dueForSync(1), "an org past its own interval is due again")
+
+	// An invalid/zero cached interval falls back to defaultRulerSyncPollInterval
+	// rather than treating the org as permanently due or never due.
+	s.recordAttempt(2, 0)
+	s.lastAttemptAt[2] = time.Now().Add(-30 * time.Second)
+	assert.False(t, s.dueForSync(2), "zero interval falls back to the default (1m), not yet elapsed")
+	s.lastAttemptAt[2] = time.Now().Add(-2 * time.Minute)
+	assert.True(t, s.dueForSync(2), "zero interval falls back to the default (1m), which has now elapsed")
+}
+
+func TestSyncAllOrgs_SkipsOrgsNotYetDue(t *testing.T) {
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	s := newTestSyncer(t, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.orgStore = &fakeOrgStore{ids: []int64{1, 2}}
+
+	// Org 1 was already synced well within its (default) interval; org 2 has
+	// never been attempted, so only org 2 should be worked this tick.
+	s.recordAttempt(1, time.Hour)
+
+	s.syncAllOrgs(context.Background())
+
+	assert.Equal(t, 1, fetch.calls, "only the due org should have been fetched")
+}
+
+func TestSyncAllOrgs_SyncsAllDueOrgs(t *testing.T) {
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	s := newTestSyncer(t, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.orgStore = &fakeOrgStore{ids: []int64{1, 2}}
+
+	s.syncAllOrgs(context.Background())
+
+	assert.Equal(t, 2, fetch.calls, "both never-attempted orgs are due")
+}
+
+func TestSyncOrg_NoOpWhenUnconfigured(t *testing.T) {
+	// Neither external_ruler_uid nor the Config-resource API path (no client
+	// generator wired, matching the test fixtures) is configured: SyncOrg must
+	// do nothing — no datasource lookup, no fetch, no rule changes.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	require.Empty(t, s.settings.ExternalRulerUID)
+	require.Nil(t, s.clientGenerator)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "fetcher must not be called when sync isn't configured for the org")
+	assert.Nil(t, rs.replaced, "no rule groups should be replaced when sync isn't configured for the org")
 }
 
 func TestSyncOrg_RestrictsNewFolderToAdmins(t *testing.T) {
@@ -336,7 +447,7 @@ func TestSyncOrg_RestrictsNewFolderToAdmins(t *testing.T) {
 
 	s.SyncOrg(context.Background(), 1)
 
-	root := "folder-" + rootFolderTitle("ds1")
+	root := "folder-" + RootFolderTitle("ds1")
 	require.Contains(t, perms.got, root, "permissions set on the newly-created sync root folder")
 	byRole := map[string]string{}
 	for _, c := range perms.got[root] {
@@ -357,4 +468,341 @@ func TestSyncOrg_DoesNotResetPermissionsOnExistingFolder(t *testing.T) {
 	s.SyncOrg(context.Background(), 1)
 
 	assert.Empty(t, perms.got, "permissions are only set when the folder is first created")
+}
+
+func TestSyncOrg_FromConfigAPI(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1, "sync applies when the API path resolves a datasource UID")
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "sync outcome is written to the Config resource")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionTypeExternalRulerSynced, st.Conditions[0].Type)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonSyncSucceeded, st.Conditions[0].Reason)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginApi, *st.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_IniOverridesConfigAPI(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "from-config", "")
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Equal(t, "from-ini", *st.ExternalRulerSync.DatasourceUid, "the ini override wins over the Config spec value")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginIni, *st.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_NotConfiguredSeedsSingleton(t *testing.T) {
+	cs := newFakeConfigClient() // no spec seeded for org 1
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "no ruler fetch when nothing is configured")
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "the singleton is seeded so it reliably exists")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusUnknown, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_TargetDatasourceFromConfig(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "tds1")
+	rs := &fakeRuleService{}
+	var requested []string
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	assert.ElementsMatch(t, []string{"ds1", "tds1"}, requested, "both the query and the distinct target datasource are resolved")
+}
+
+func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "") // no targetDatasourceUid
+	rs := &fakeRuleService{}
+	var requested []string
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, []string{"ds1"}, requested, "target defaults to the query datasource: only one lookup")
+}
+
+func TestSyncOrg_Promote(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "ds1", "", true)
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{
+			ownedGroup("folder-ns1", "g1"),
+		},
+	}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{
+		byTitle:  map[string]*folder.FolderReference{RootFolderTitle("ds1"): {UID: "folder-" + RootFolderTitle("ds1"), Title: RootFolderTitle("ds1")}},
+		children: []*folder.FolderReference{{UID: "folder-ns1", Title: "ns1"}},
+	}
+
+	s.SyncOrg(context.Background(), 1)
+
+	// Promotion rewrites the owned group with no manager, and does NOT fetch
+	// upstream or prune.
+	assert.Zero(t, fetch.calls, "promotion skips the upstream fetch")
+	assert.Empty(t, rs.deleted, "promotion does not prune")
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, utils.ManagerProperties{}, rs.replacedManager, "rewritten with no manager: unmanaged/native")
+
+	// Terminal PromotionCommitted status (condition stays True).
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonPromoted, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_PromoteIdempotentWhenNothingOwned(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "ds1", "", true)
+	rs := &fakeRuleService{} // no owned rules: already promoted, or never synced
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{
+		byTitle: map[string]*folder.FolderReference{RootFolderTitle("ds1"): {UID: "folder-" + RootFolderTitle("ds1"), Title: RootFolderTitle("ds1")}},
+	}
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing to promote")
+	assert.Zero(t, fetch.calls, "still no fetch once promote is set")
+	// Terminal status is still (re-)asserted each tick.
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionReasonPromoted, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_PromoteNoOpWhenNeverSynced(t *testing.T) {
+	// The sync root folder was never created (sync never actually ran for this
+	// org): promote must be a clean no-op, not an error.
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "ds1", "", true)
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{} // GetNamespaceByTitle -> ErrFolderNotFound
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced)
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	assert.Equal(t, conditionReasonPromoted, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_IniPathNeverPromotes(t *testing.T) {
+	// The ini path has no promote override (resolveExternalRulerConfig always
+	// returns promote: false for it), even if the Config resource somehow has
+	// promote set — the operator ini override takes precedence for the whole
+	// resolved config, not just the datasource UID.
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "from-config", "", true)
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{ownedGroup("folder-ns1", "g1")},
+	}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, 1, fetch.calls, "ini path syncs normally, never promotes")
+	assert.NotEqual(t, utils.ManagerProperties{}, rs.replacedManager, "rules are still sync-managed, not promoted")
+}
+
+func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	// The root folder persists across the simulated restart below (only the
+	// in-memory cache resets) — must exist for dedup to engage at all.
+	rootFolder := fakeNamespaceStore{byTitle: map[string]*folder.FolderReference{
+		RootFolderTitle("ds1"): {UID: "folder-" + RootFolderTitle("ds1"), Title: RootFolderTitle("ds1")},
+	}}
+	s.namespaceStore = rootFolder
+
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1, "first tick applies")
+
+	// Simulate a restart: a fresh syncer with an empty in-memory cache, reading
+	// the same (now-persisted) Config status.
+	rs2 := &fakeRuleService{}
+	fetch2 := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s2 := newTestSyncerWithConfigClient(t, cs, fetch2, rs2)
+	s2.namespaceStore = rootFolder
+	require.Empty(t, s2.lastSyncKey, "fresh syncer has no in-memory cache")
+
+	s2.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, 1, fetch2.calls, "still fetches to compare the hash")
+	assert.Nil(t, rs2.replaced, "unchanged upstream is not re-applied, thanks to the persisted hash")
+}
+
+func TestSyncOrg_TargetUIDChangeForcesReapply(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "") // targetUID defaults to ds1
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{byTitle: map[string]*folder.FolderReference{
+		RootFolderTitle("ds1"): {UID: "folder-" + RootFolderTitle("ds1"), Title: RootFolderTitle("ds1")},
+	}}
+
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1, "first tick applies")
+
+	// Change only targetDatasourceUid; upstream content (and its hash) is
+	// unchanged. Hash-only dedup would miss this entirely.
+	cs.setSpec(1, "ds1", "tds1")
+	rs.replaced = nil
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1, "a targetUID-only spec change forces a re-apply even though upstream is unchanged")
+
+	// Re-affirming the same targetUID is deduped again.
+	rs.replaced = nil
+	s.SyncOrg(context.Background(), 1)
+	assert.Nil(t, rs.replaced, "unchanged hash and targetUID is deduped")
+}
+
+func TestSyncOrg_ForcesReapplyWhenRootFolderMissing(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	// No byTitle entry: the root folder the syncer expects doesn't exist —
+	// e.g. renamed by an admin, or orphaned by a title-format change on
+	// upgrade. Dedup must not skip apply() in this state even though the
+	// persisted/in-memory key will match once it's been applied once.
+	s.namespaceStore = fakeNamespaceStore{}
+
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1, "first tick applies")
+
+	rs.replaced = nil
+	s.SyncOrg(context.Background(), 1)
+	assert.Len(t, rs.replaced, 1, "a missing root folder forces re-apply every tick, regardless of an otherwise-matching dedup key")
+}
+
+func TestSyncOrg_RootFolderLookupErrorRecordsFailure(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	// A genuine (non-ErrFolderNotFound) lookup error must be recorded as a real
+	// sync failure, not silently skipped or treated as a missing folder that
+	// forces an apply.
+	s.namespaceStore = fakeNamespaceStore{err: errors.New("datastore unavailable")}
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "must not apply on an inconclusive folder check")
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, st.Conditions[0].Status)
+}
+
+func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 7}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "7:ds1", *st.ExternalRulerSync.LastAppliedHash)
+
+	// A later failed tick (e.g. a transient fetch error) must not clobber the
+	// persisted hash, so a subsequent recovery still dedups correctly.
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	fetch.err = nil
+
+	st = cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "7:ds1", *st.ExternalRulerSync.LastAppliedHash, "failure must not clear the persisted dedup hash")
+}
+
+func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "") // existing object: writeStatus takes the Update path
+	cs.failNextUpdates(1, 2)
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+
+	assert.GreaterOrEqual(t, cs.updateCallCount(1), 3, "RetryOnConflict re-entered after the forced conflicts (2 failures + 1 success)")
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.NotNil(t, st.ExternalRulerSync)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "hash-1", *st.ExternalRulerSync.LastAppliedHash, "the write recovered and persisted despite the conflicts")
+}
+
+func TestWriteStatus_ExhaustingRetryBudgetLogsAndReturns(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	cs.failNextUpdates(1, 100) // far more than retry.DefaultRetry's 5 steps
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	// writeStatus is best-effort: it must not panic or block forever once the
+	// retry budget is exhausted, and the status must simply remain unwritten.
+	require.NotPanics(t, func() {
+		s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+	})
+	st := cs.statusFor(1)
+	require.NotNil(t, st) // the seeded object itself still exists
+	assert.Nil(t, st.ExternalRulerSync, "the failed write never persisted any status")
+}
+
+func TestWriteStatus_RetriesOnCreateConflict(t *testing.T) {
+	cs := newFakeConfigClient() // no object seeded: writeStatus takes the Create path
+	cs.failNextCreates(1, 1)
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	s.recordNotConfigured(context.Background(), 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "the retry recovered from AlreadyExists (a racing creator) and the object now exists")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
 }

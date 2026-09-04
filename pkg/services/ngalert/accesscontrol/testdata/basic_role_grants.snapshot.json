@@ -10,6 +10,7 @@
       "fixed:alerting.provisioning:writer",
       "fixed:alerting.routes:reader",
       "fixed:alerting.routes:writer",
+      "fixed:alerting.rules.config:writer",
       "fixed:alerting:admin"
     ],
     "permissions": [
@@ -247,6 +248,14 @@
       {
         "action": "receivers.permissions:write",
         "scope": "receivers:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:get",
+        "scope": "rules-configs:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:update",
+        "scope": "rules-configs:*"
       }
     ]
   },
@@ -403,6 +412,7 @@
       "fixed:alerting.notifications.config:reader",
       "fixed:alerting.notifications.external:reader",
       "fixed:alerting.receivers:reader",
+      "fixed:alerting.rules.config:reader",
       "fixed:alerting.rules:reader",
       "fixed:alerting.templates:reader",
       "fixed:alerting.time-intervals:reader"
@@ -451,6 +461,10 @@
       {
         "action": "notifications.alerting.grafana.app/configs:get",
         "scope": "configs:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:get",
+        "scope": "rules-configs:*"
       }
     ]
   }

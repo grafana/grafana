@@ -1,0 +1,60 @@
+package v0alpha1
+
+// externalRulerSync configures syncing alert rules from a Mimir/Cortex
+// Prometheus (ruler) datasource into the current org. The worker periodically
+// fetches the upstream rule groups and imports them into Grafana as
+// converted-Prometheus rules.
+ConfigSpec: {
+	externalRulerSync?: {
+		// datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to
+		// sync alert rules from. Empty means no sync is configured for the current
+		// org. The operator ini setting `unified_alerting.external_ruler_uid`
+		// overrides this when set; see status.externalRulerSync.origin.
+		datasourceUid?: string
+
+		// targetDatasourceUid is the UID of the datasource that converted recording
+		// rules write their results to. Empty defaults to datasourceUid (the query
+		// datasource). Only used when the upstream ruler contains recording rules.
+		// Has no effect on the operator ini path, which always targets the query
+		// datasource.
+		targetDatasourceUid?: string
+
+		// promote, when true, converts the rules already synced from datasourceUid
+		// into native Grafana rules the org owns (their management is cleared so
+		// they become freely editable) and stops syncing them. This is a one-way
+		// action: once promoted the worker no longer manages these rules. Ignored
+		// while the operator ini override `unified_alerting.external_ruler_uid` is
+		// set.
+		promote?: bool
+
+		// pollInterval sets how often this org's rules are re-synced from
+		// datasourceUid. Empty defaults to 1m. The worker checks orgs against a
+		// short internal baseline and only does real work for an org once its own
+		// pollInterval has elapsed, so this is a lower bound, not a guarantee —
+		// an org's actual sync can lag slightly past its configured interval. Has
+		// no effect on the operator ini path, which always uses the 1m default.
+		pollInterval?: string & #PromDuration
+	}
+}
+
+// externalRulerSync mirrors spec with runtime observation.
+ConfigStatus: {
+	externalRulerSync?: {
+		// datasourceUid is the UID actually used on the last sync attempt; may lag
+		// spec until the next tick. When origin=ini, this is the ini override value.
+		datasourceUid?: string
+
+		// origin records which source supplied datasourceUid on the last run. "ini"
+		// (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
+		// (spec.externalRulerSync.datasourceUid).
+		origin?: "api" | "ini"
+
+		// lastAppliedHash is the dedup key (upstream config hash combined with
+		// the resolved targetDatasourceUid) from the last successful sync via
+		// this resource. The worker reads it back (API path only) to skip an
+		// unchanged re-apply across restarts and replicas, where an
+		// in-memory-only dedup cache would otherwise start empty. Internal
+		// bookkeeping; not user-facing.
+		lastAppliedHash?: string
+	}
+}
