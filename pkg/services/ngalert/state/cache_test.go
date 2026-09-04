@@ -571,3 +571,32 @@ func randomState(ruleKey models.AlertRuleKey) *State {
 		EvaluationDuration:   time.Duration(6000),
 	}
 }
+
+func Test_expandAnnotationsAndLabels(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+
+	t.Run("annotations should use expanded labels to avoid circular dependencies", func(t *testing.T) {
+		rule := &models.AlertRule{
+			Title: "Test Rule",
+			Labels: map[string]string{
+				"templated_label": "{{ index $labels \"instance\" }}",
+			},
+			Annotations: map[string]string{
+				"description": "The server is {{ index $labels \"templated_label\" }}",
+			},
+		}
+
+		result := eval.Result{
+			Instance: data.Labels{
+				"instance": "server1",
+			},
+			EvaluatedAt: time.Now(),
+		}
+
+		labels, annotations := expandAnnotationsAndLabels(ctx, logger, rule, result, nil, nil)
+		
+		require.Equal(t, "server1", labels["templated_label"])
+		require.Equal(t, "The server is server1", annotations["description"])
+	})
+}
