@@ -190,10 +190,13 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   // we ignore xMax (time field) and sum all counts together for each found bucket
   if (frame.meta?.type === DataFrameType.HeatmapCells) {
     // we assume uniform bucket size for now
-    // we assume xMax, yMin, yMax fields
-    let yMinField = frame.fields.find((f) => f.name === 'yMin')!;
-    let yMaxField = frame.fields.find((f) => f.name === 'yMax')!;
-    let countField = frame.fields.find((f) => f.name === 'count')!;
+    const yMinField = frame.fields.find((f) => f.name === 'yMin');
+    const yMaxField = frame.fields.find((f) => f.name === 'yMax');
+    const countField = frame.fields.find((f) => f.name === 'count');
+
+    if (!yMinField || !yMaxField || !countField) {
+      return undefined;
+    }
 
     let uniqueMaxs = [...new Set(yMaxField.values)].sort((a, b) => a - b);
     let uniqueMins = [...new Set(yMinField.values)].sort((a, b) => a - b);
