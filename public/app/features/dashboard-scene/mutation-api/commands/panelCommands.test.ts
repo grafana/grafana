@@ -98,6 +98,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     state,
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => state.planning !== undefined),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -130,6 +131,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     state,
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => state.planning !== undefined),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -588,6 +590,35 @@ describe('Panel mutation commands', () => {
       const body = scene.state.body as unknown as DefaultGridLayoutManager;
       expect(body.getVizPanels()).toHaveLength(1);
       expect(body.getVizPanels()[0].state.title).toBe('New Panel');
+    });
+
+    it('attaches a query runner by default, even when the spec carries no queries', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      await client.execute({ type: 'ADD_PANEL', payload: { panel: makePanelPayload('Queryless') } });
+
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      // An empty query list is not "no queries": a default one is substituted so a newly added
+      // panel arrives ready to edit. This is the behaviour planning has to opt out of.
+      expect(body.getVizPanels()[0].state.$data).toBeDefined();
+    });
+
+    it('builds the panel without a query runner while a plan is being previewed', async () => {
+      const scene = buildPanelScene();
+      scene.setState({
+        planning: { planTitle: 'Kafka overview', panelCount: 1, onBuild: jest.fn(), onDismiss: jest.fn() },
+      });
+      const client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'ADD_PANEL',
+        payload: { panel: makePanelPayload('Placeholder') },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      expect(body.getVizPanels()[0].state.$data).toBeUndefined();
     });
 
     it('returns element and layoutItem with element reference', async () => {

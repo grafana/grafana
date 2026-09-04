@@ -55,7 +55,23 @@ import { normalizeTransformation } from '../transformationCompat';
  * buildVizPanel layers the dashboard-only chrome on top (menu, header actions, sub header, panel
  * context — all of which reach the root via getDashboardSceneFor and would throw elsewhere).
  */
-export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState {
+export interface BuildVizPanelOptions {
+  /**
+   * Build the panel with no query runner at all.
+   *
+   * Without this a panel whose spec carries no queries still gets one: the data provider substitutes
+   * a default query so a newly added panel arrives ready to edit. That is the right default almost
+   * everywhere, and exactly wrong for a dashboard plan preview, where the panels are placeholders
+   * standing in for queries that have not been written yet and must not hit a datasource.
+   */
+  withoutQueries?: boolean;
+}
+
+export function buildVizPanelState(
+  panel: PanelKind,
+  id?: number,
+  buildOptions: BuildVizPanelOptions = {}
+): VizPanelState {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -100,7 +116,7 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     seriesLimit: config.panelSeriesLimit,
-    $data: createPanelDataProvider(panel),
+    $data: buildOptions.withoutQueries ? undefined : createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
@@ -124,8 +140,8 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
   return vizPanelState;
 }
 
-export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
-  const vizPanelState = buildVizPanelState(panel, id);
+export function buildVizPanel(panel: PanelKind, id?: number, buildOptions: BuildVizPanelOptions = {}): VizPanel {
+  const vizPanelState = buildVizPanelState(panel, id, buildOptions);
 
   addDashboardPanelChrome(vizPanelState);
 
