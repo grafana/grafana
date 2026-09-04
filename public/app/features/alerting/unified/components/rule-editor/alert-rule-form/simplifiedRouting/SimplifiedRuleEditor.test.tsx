@@ -46,7 +46,8 @@ const dataSources = {
 };
 
 const selectFolderAndGroup = async (user: UserEvent) => {
-  const folderPicker = ui.inputs.folder.get();
+  // Form mounts asynchronously now — .find() waits for it, unlike .get().
+  const folderPicker = await ui.inputs.folder.find();
   const folderButton = await within(folderPicker).findByRole('button', { name: /select folder/i });
   await user.click(folderButton);
 
@@ -251,9 +252,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
       const { user } = renderRuleEditor();
 
+      // Wait for the async form mount before the .get() calls below.
+      await ui.inputs.name.find();
+
       await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get()); // switch to query step advanced mode
       await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).get()); // switch to notifications step advanced mode
-      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await user.type(ui.inputs.name.get(), 'my great new rule');
 
       await selectFolderAndGroup(user);
 

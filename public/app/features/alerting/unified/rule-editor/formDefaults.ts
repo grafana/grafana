@@ -2,7 +2,7 @@ import { clamp } from 'lodash';
 import * as z from 'zod';
 
 import { store } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -12,7 +12,7 @@ import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, isValidRecordingRulesTarget } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid, isValidRecordingRulesTarget } from '../utils/datasource';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -47,7 +47,9 @@ function getValidDefaultTargetDatasourceUid(): string | undefined {
   }
 
   try {
-    const datasource = getDataSourceSrv().getInstanceSettings(configuredDefaultUid);
+    // Sync on purpose, unlike other datasource lookups in this migration: getDefaultFormValues()
+    // is used as a synchronous useForm({ defaultValues }) elsewhere and must stay that way.
+    const datasource = getDataSourceByUid(configuredDefaultUid);
     if (datasource && isValidRecordingRulesTarget(datasource)) {
       return configuredDefaultUid;
     }
@@ -132,7 +134,7 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
   };
 }
 
-export function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): RuleFormValues {
+export async function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): Promise<RuleFormValues> {
   let ruleFromQueryParams: Partial<RuleFormValues>;
 
   try {
@@ -140,7 +142,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
   } catch (err) {
     return {
       ...getDefaultFormValues(type),
-      queries: getDefaultQueries(),
+      queries: await getDefaultQueries(),
     };
   }
 
@@ -150,7 +152,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
         ...getDefaultFormValues(type),
         ...ruleFromQueryParams,
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-        queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+        queries: ruleFromQueryParams.queries ?? (await getDefaultQueries()),
         type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
         evaluateEvery: ruleFromQueryParams.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
@@ -239,7 +241,7 @@ const cloudRuleFormValuesSchema = z.looseObject({
   missingSeriesEvalsToResolve: z.number().optional(),
 });
 
-export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
+export async function formValuesFromPrefill(rule: Partial<RuleFormValues>): Promise<RuleFormValues> {
   let parsedRule: z.infer<typeof alertingAlertRuleFormSchema> | z.infer<typeof cloudRuleFormValuesSchema>;
   // differencitate between cloud and grafana prefill
   if (rule.type === RuleFormType.cloudAlerting) {
@@ -259,15 +261,15 @@ export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormVa
   );
 }
 
-export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
-  return revealHiddenQueries(rulerRuleToFormValues(rule));
+export async function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>): Promise<RuleFormValues> {
+  return revealHiddenQueries(await rulerRuleToFormValues(rule));
 }
 
-export function defaultFormValuesForRuleType(ruleType: RuleFormType): RuleFormValues {
+export async function defaultFormValuesForRuleType(ruleType: RuleFormType): Promise<RuleFormValues> {
   return {
     ...getDefaultFormValues(ruleType),
     condition: 'C',
-    queries: getDefaultQueries(isGrafanaRecordingRuleByType(ruleType)),
+    queries: await getDefaultQueries(isGrafanaRecordingRuleByType(ruleType)),
     type: ruleType,
     evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
   };

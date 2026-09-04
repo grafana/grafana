@@ -1184,6 +1184,7 @@
       "title-new-evaluation-group": "New evaluation group"
     },
     "existing-rule-editor": {
+      "loading-clone": "Loading rule...",
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
       "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
       "title-cannot-edit-rule": "Cannot edit rule",
@@ -2120,7 +2121,8 @@
     "modify-export-rule-form": {
       "action-buttons": {
         "export": "Export"
-      }
+      },
+      "text-loading": "Loading..."
     },
     "more-button": {
       "aria-label": "More",

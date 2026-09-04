@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -38,8 +39,16 @@ function GrafanaModifyExport() {
 
 function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
   const { loading, error, result: rulerRule } = useRuleWithLocation({ ruleIdentifier: ruleIdentifier });
+  const isGrafanaManagedRule = Boolean(rulerRule && rulerRuleType.grafana.rule(rulerRule.rule));
 
-  if (loading) {
+  const { value: ruleForm, loading: loadingRuleForm } = useAsync(async () => {
+    if (!rulerRule || !isGrafanaManagedRule) {
+      return undefined;
+    }
+    return formValuesFromExistingRule(rulerRule);
+  }, [rulerRule, isGrafanaManagedRule]);
+
+  if (loading || loadingRuleForm) {
     return <LoadingPlaceholder text={t('alerting.rule-modify-export.text-loading-the-rule', 'Loading the rule...')} />;
   }
 
@@ -79,13 +88,8 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
     );
   }
 
-  if (rulerRule && rulerRuleType.grafana.rule(rulerRule.rule)) {
-    return (
-      <ModifyExportRuleForm
-        ruleForm={formValuesFromExistingRule(rulerRule)}
-        alertUid={rulerRule.rule.grafana_alert.uid}
-      />
-    );
+  if (rulerRule && rulerRuleType.grafana.rule(rulerRule.rule) && ruleForm) {
+    return <ModifyExportRuleForm ruleForm={ruleForm} alertUid={rulerRule.rule.grafana_alert.uid} />;
   }
 
   return <Alert title={t('alerting.rule-modify-export.title-unknown-error', 'Unknown error')} />;

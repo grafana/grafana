@@ -11,7 +11,7 @@ import { defaultAnnotations } from '../utils/constants';
 import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
 
-export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
+export async function setQueryEditorSettings(values: RuleFormValues): Promise<RuleFormValues> {
   // data queries only
   const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
 
@@ -42,7 +42,7 @@ export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
       condition: conditionRefStillValid ? values.condition : (expressionQueries[0]?.refId ?? ''),
       editorSettings: {
         simplifiedQueryEditor: hasValidExpressions
-          ? areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
+          ? await areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
           : true,
         simplifiedNotificationEditor: true,
       },
@@ -61,7 +61,7 @@ export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
     };
   }
 
-  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
+  const queryParamsAreTransformable = await areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
   return {
     ...values,
     editorSettings: {
@@ -104,10 +104,10 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
  *   2.2 a threshold expression pointing to a (instant) data query
  * ⚠️ do not assert on refIds or indexes of the queries
  */
-export function areQueriesTransformableToSimpleCondition(
+export async function areQueriesTransformableToSimpleCondition(
   dataQueries: Array<AlertQuery<AlertDataQuery>>,
   expressionQueries: Array<AlertQuery<ExpressionQuery>>
-) {
+): Promise<boolean> {
   // 1. check if we only have a _single_ data query
   if (dataQueries.length !== 1) {
     return false;
@@ -144,7 +144,7 @@ export function areQueriesTransformableToSimpleCondition(
   }
 
   // 2.2 check for a single threshold expression pointing to an "instant" data query
-  const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
+  const isInstantDataQuery = dataQuery ? await getInstantFromDataQuery(dataQuery) : false;
   const hasSingleThresholdExpression = expressionQueries.length === 1 && thresholdExpression;
   const thresholdPointingToDataQuery = thresholdExpression?.model.expression === dataQuery?.refId;
 

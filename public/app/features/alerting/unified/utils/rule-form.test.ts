@@ -179,7 +179,7 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
 });
 
 describe('rulerRuleToFormValues', () => {
-  it('should convert grafana recording rule to form values', () => {
+  it('should convert grafana recording rule to form values', async () => {
     const mockRecordingRule = mockRulerGrafanaRecordingRule({
       grafana_alert: {
         uid: 'recording-rule-uid',
@@ -222,7 +222,7 @@ describe('rulerRuleToFormValues', () => {
       },
     });
 
-    const result = rulerRuleToFormValues(ruleWithLocation);
+    const result = await rulerRuleToFormValues(ruleWithLocation);
 
     expect(result).toMatchObject({
       name: 'My Recording Rule',
@@ -445,7 +445,7 @@ describe('getNotificationSettingsForDTO with selectedPolicy', () => {
 });
 
 describe('rulerRuleToFormValues with policy routing', () => {
-  it('should set selectedPolicy and manualRouting=false when notification_settings.policy is defined', () => {
+  it('should set selectedPolicy and manualRouting=false when notification_settings.policy is defined', async () => {
     const rule: RulerGrafanaRuleDTO = {
       for: '1m',
       grafana_alert: {
@@ -469,7 +469,7 @@ describe('rulerRuleToFormValues with policy routing', () => {
       group: { name: 'group1', interval: '1m', rules: [rule] },
       rule,
     };
-    const result = rulerRuleToFormValues(ruleWithLocation);
+    const result = await rulerRuleToFormValues(ruleWithLocation);
     expect(result.selectedPolicy).toBe('TestPolicy');
     expect(result.manualRouting).toBe(false);
     expect(result.contactPoints).toBeUndefined();
@@ -502,23 +502,23 @@ describe('rulerRuleToFormValues with legacy label migration', () => {
     };
   };
 
-  it('should migrate legacy label to selectedPolicy when FF is ON', () => {
+  it('should migrate legacy label to selectedPolicy when FF is ON', async () => {
     jest.replaceProperty(config, 'featureToggles', {
       ...config.featureToggles,
       alertingPolicyRoutingSettings: true,
     });
-    const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
+    const result = await rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
     expect(result.selectedPolicy).toBe('TestPolicy');
     expect(result.manualRouting).toBe(false);
     jest.restoreAllMocks();
   });
 
-  it('should NOT migrate legacy label when FF is OFF', () => {
+  it('should NOT migrate legacy label when FF is OFF', async () => {
     jest.replaceProperty(config, 'featureToggles', {
       ...config.featureToggles,
       alertingPolicyRoutingSettings: false,
     });
-    const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
+    const result = await rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
     expect(result.selectedPolicy).toBeUndefined();
     jest.restoreAllMocks();
   });
@@ -621,40 +621,44 @@ describe('getInstantFromDataQuery', () => {
     },
   };
 
-  it('should return undefined if datasource UID is undefined', () => {
+  it('should return undefined if datasource UID is undefined', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'Mimir-cloud', uid: 'mimir-1' }));
-    const result = getInstantFromDataQuery({ ...query });
+    const result = await getInstantFromDataQuery({ ...query });
     expect(result).toBeUndefined();
   });
 
-  it('should return undefined if datasource type is not Prometheus or Loki', () => {
+  it('should return undefined if datasource type is not Prometheus or Loki', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Alertmanager, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    const result = await getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
     expect(result).toBeUndefined();
   });
 
-  it('should return true if datasource is Prometheus and instant is not defined', () => {
+  it('should return true if datasource is Prometheus and instant is not defined', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    const result = await getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
 
     expect(result).toBe(true);
   });
 
-  it('should return the value of instant if datasource is Prometheus and instant is defined', () => {
+  it('should return the value of instant if datasource is Prometheus and instant is defined', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa', model: { refId: 'f', instant: false } });
+    const result = await getInstantFromDataQuery({
+      ...query,
+      datasourceUid: 'aa',
+      model: { refId: 'f', instant: false },
+    });
     expect(result).toBe(false);
   });
 
-  it('should return true if datasource is Loki and queryType is not defined', () => {
+  it('should return true if datasource is Loki and queryType is not defined', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    const result = await getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
     expect(result).toBe(true);
   });
 
-  it('should return true if datasource is Loki and queryType is instant', () => {
+  it('should return true if datasource is Loki and queryType is instant', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({
+    const result = await getInstantFromDataQuery({
       ...query,
       datasourceUid: 'aa',
       model: { refId: 'f', queryType: 'instant' },
@@ -663,9 +667,9 @@ describe('getInstantFromDataQuery', () => {
     expect(result).toBe(true);
   });
 
-  it('should return false if datasource is Loki and queryType is not instant', () => {
+  it('should return false if datasource is Loki and queryType is not instant', async () => {
     setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({
+    const result = await getInstantFromDataQuery({
       ...query,
       datasourceUid: 'aa',
       model: { refId: 'f', queryType: 'range' },
