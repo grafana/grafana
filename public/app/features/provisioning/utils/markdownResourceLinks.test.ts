@@ -133,4 +133,53 @@ describe('createGrafanaLinkResolver', () => {
     expect(resolve('grafana/team-a/cpu.json')).toBe('/d/abc');
     expect(resolve('team-a/cpu.json')).toBeUndefined();
   });
+
+  describe('markdown docs', () => {
+    it('resolves a markdown doc to its containing folder page with a docTab param', () => {
+      const resolve = createGrafanaLinkResolver(
+        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+        undefined
+      );
+
+      expect(resolve('team-a/CONTRIBUTING.md')).toBe('/dashboards/f/fold1?docTab=CONTRIBUTING.md');
+    });
+
+    it('resolves a README in the repository root to the root folder page', () => {
+      const resolve = createGrafanaLinkResolver(
+        [resource({ resource: 'folders', name: 'root-folder', path: '' })],
+        undefined
+      );
+
+      expect(resolve('README.md')).toBe('/dashboards/f/root-folder?docTab=README.md');
+    });
+
+    it('encodes a doc file name with spaces in the docTab param', () => {
+      const resolve = createGrafanaLinkResolver(
+        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+        undefined
+      );
+
+      expect(resolve('team-a/Release Notes.md')).toBe('/dashboards/f/fold1?docTab=Release%20Notes.md');
+    });
+
+    it('joins the configured repository path when resolving a doc folder', () => {
+      const resolve = createGrafanaLinkResolver(
+        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
+        'grafana'
+      );
+
+      expect(resolve('grafana/team-a/SECURITY.md')).toBe('/dashboards/f/fold1?docTab=SECURITY.md');
+    });
+
+    it('returns undefined when the doc folder is not a synced folder', () => {
+      // Only a dashboard is synced here; the doc's directory has no folder resource,
+      // so the caller falls back to the host link.
+      const resolve = createGrafanaLinkResolver(
+        [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
+        undefined
+      );
+
+      expect(resolve('team-a/NOTES.md')).toBeUndefined();
+    });
+  });
 });

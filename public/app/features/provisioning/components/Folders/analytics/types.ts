@@ -35,3 +35,10 @@ export interface ReadmeRetryClickedProperties extends EventProperty {
   /** Host repository type for the folder whose README load is being retried. */
   repositoryType: RepoType;
 }
+
+export interface ReadmeTabSelectedProperties extends EventProperty {
+  /** Host repository type for the folder whose doc tab was selected. */
+  repositoryType: RepoType;
+  /** Convention key of the opened doc (`readme`, `contributing`, `security`), or `other` for any other markdown file. */
+  doc: string;
+}

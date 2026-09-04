@@ -2,16 +2,19 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { FOLDER_METADATA_FILE } from '../constants';
 
-import { getKindInfoByResource } from './resourceKinds';
+import { FOLDER_DOC_TAB_PARAM, isMarkdownFile } from './folderDocConventions';
+import { getKindInfoByResource, resourceKindInfos } from './resourceKinds';
 
 /**
  * Builds a resolver that maps a repo file/directory path to the in-app Grafana
  * route of the resource synced from it (dashboard, folder, playlist, ...), or
  * `undefined` when the path has no synced resource or the kind has no per-item
- * view route (e.g. library panels). Callers fall back to the host repository
- * link in that case, so a README reads as file links on GitHub and as Grafana
- * pages when browsed in Grafana. The route is app-relative (e.g. `/d/uid`) for
- * SPA navigation via `locationService`.
+ * view route (e.g. library panels). Markdown docs resolve to their containing
+ * folder's page with a `docTab` param (they render as tabs there rather than
+ * being resources of their own). Callers fall back to the host repository link
+ * in that case, so a README reads as file links on GitHub and as Grafana pages
+ * when browsed in Grafana. The route is app-relative (e.g. `/d/uid`) for SPA
+ * navigation via `locationService`.
  *
  * `repositoryPath` is the repository's configured root. Resource paths from the
  * API are relative to it, whereas the paths passed to the resolver are full
@@ -35,6 +38,14 @@ export function createGrafanaLinkResolver(
   return (repoPath) => {
     const normalized = trimSlashes(repoPath);
 
+    // Markdown docs aren't resources of their own — they're rendered as tabs on
+    // their containing folder's page. Resolve to that folder's route plus a
+    // `docTab` param so the link opens the doc in-app, exactly like a folder or
+    // dashboard link; a doc whose folder isn't synced falls back to the host.
+    if (isMarkdownFile(normalized)) {
+      return resolveMarkdownDocRoute(byPath, normalized);
+    }
+
     // A link may point straight at a folder's _folder.json, but the folder
     // resource is keyed by its directory (empty for the repo root) — fall back to
     // it. Returns undefined for non-metadata paths so an unrelated file can't
@@ -49,6 +60,25 @@ export function createGrafanaLinkResolver(
 
     return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
   };
+}
+
+/**
+ * In-app route for a markdown doc: its containing folder's page with a `docTab`
+ * param selecting the doc. Only a folder resource is keyed by a bare directory,
+ * so a lookup miss (or a non-folder hit) means the doc's folder isn't synced and
+ * the caller falls back to the host link.
+ */
+function resolveMarkdownDocRoute(byPath: Map<string, ResourceListItem>, path: string): string | undefined {
+  const lastSlash = path.lastIndexOf('/');
+  const dir = lastSlash >= 0 ? path.slice(0, lastSlash) : '';
+  const fileName = path.slice(lastSlash + 1);
+
+  const folder = byPath.get(dir);
+  if (folder?.resource !== resourceKindInfos.folder.resource || !folder.name) {
+    return undefined;
+  }
+
+  return `${resourceKindInfos.folder.getRoute(folder.name)}?${FOLDER_DOC_TAB_PARAM}=${encodeURIComponent(fileName)}`;
 }
 
 function joinRepoPath(prefix: string | undefined, path: string): string {
