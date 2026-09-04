@@ -2,6 +2,7 @@ import { type SelectableValue } from '@grafana/data';
 
 import { ResultFormat } from '../../dataquery.gen';
 import { type AzureMonitorQuery } from '../../types/query';
+import { type LogTier } from './utils';
 
 export function setKustoQuery(query: AzureMonitorQuery, kustoQuery: string): AzureMonitorQuery {
   return {
@@ -43,12 +44,13 @@ export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): Azu
   };
 }
 
-export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: boolean): AzureMonitorQuery {
+export function setLogTier(query: AzureMonitorQuery, logTier: LogTier | undefined): AzureMonitorQuery {
   return {
     ...query,
     azureLogAnalytics: {
       ...query.azureLogAnalytics,
-      basicLogsQuery,
+      basicLogsQuery: logTier !== undefined,
+      logTier,
     },
   };
 }
