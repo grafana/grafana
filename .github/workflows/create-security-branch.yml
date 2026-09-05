@@ -87,7 +87,7 @@ jobs:
           permission_set: ${{ steps.app-config.outputs.permission_set }}
 
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
           repository: ${{ inputs.repository }}

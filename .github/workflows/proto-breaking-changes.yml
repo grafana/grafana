@@ -28,7 +28,7 @@ jobs:
           # lives in each module's buf.yaml under `breaking.use`.
           - pkg/registry/apps/annotation/proto
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0 # buf compares against history, so the full log is required

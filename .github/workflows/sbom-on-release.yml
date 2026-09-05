@@ -55,7 +55,7 @@ jobs:
       # Socket scans the dependency manifests (package.json/yarn.lock, go.mod/go.sum, etc.) in the
       # checkout, so it needs the release branch's tree at release time, not the runner's default ref.
       - name: "Checkout release branch"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.version.outputs.release_branch }}
 

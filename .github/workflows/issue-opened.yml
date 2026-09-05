@@ -78,7 +78,7 @@ jobs:
             ACTOR: ${{ github.actor }}
       - name: Checkout
         if: steps.check-if-grafana-org-member.outputs.is_grafana_org_member != 'true' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -199,7 +199,7 @@ jobs:
           permission_set: auto-triage
 
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: |

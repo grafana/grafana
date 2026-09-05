@@ -11,7 +11,7 @@ jobs:
       contents: write
       pull-requests: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: grafana/shared-workflows/actions/cleanup-branches@cleanup-branches/v0.2.1
         with:
           dry-run: false

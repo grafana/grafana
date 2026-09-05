@@ -46,7 +46,7 @@ jobs:
       # Checkout the default branch (not the PR merge ref) so the local
       # actions used by this job always run trusted code
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
@@ -119,7 +119,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout PR code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.check.outputs.head-sha }}
           persist-credentials: false

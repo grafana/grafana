@@ -24,7 +24,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       devenv-changed: ${{ steps.detect-changes.outputs.devenv }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-x64-small
     name: Generate golden files
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: Setup Go
@@ -83,7 +83,7 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         total: [16]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: Download golden files
@@ -118,7 +118,7 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         total: [16]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: Get GitHub App token
@@ -154,7 +154,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -172,7 +172,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -190,7 +190,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -221,7 +221,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Check test suites
@@ -241,7 +241,7 @@ jobs:
   #   permissions:
   #     contents: read
   #   steps:
-  #   - uses: actions/checkout@v5
+  #   - uses: actions/checkout@v7
   #     with:
   #       persist-credentials: false
   #   - name: Setup Docker
