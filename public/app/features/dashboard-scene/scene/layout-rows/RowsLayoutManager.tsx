@@ -98,7 +98,12 @@ export class RowsLayoutManager
   public readonly descriptor = RowsLayoutManager.descriptor;
 
   public addPanel(vizPanel: VizPanel) {
-    this.state.rows[0]?.getLayout().addPanel(vizPanel);
+    // A rows layout with no rows has nowhere to put a panel. This used to be an optional chain,
+    // which silently discarded it: the caller — including the mutation API's ADD_PANEL — was told
+    // the panel had been added and it simply never appeared. Make a row for it instead, the way
+    // dragging a panel into an empty rows layout already does.
+    const row = this.state.rows[0] ?? this.addNewRow();
+    row.getLayout().addPanel(vizPanel);
   }
 
   public setIsDropTarget(isDropTarget: boolean): void {
