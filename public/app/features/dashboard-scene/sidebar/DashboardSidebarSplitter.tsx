@@ -95,6 +95,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
     hiddenPersistenceKey: 'dashboard',
+    positionPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => sidebar.closePane(),
     onGoBack: () => sidebar.goBackToPrevious(),
@@ -147,7 +148,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
+          className={cx(
+            styles.scrollContainer,
+            sidebarContext.position === 'left' && styles.scrollContainerLeftSidebar,
+            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar
+          )}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
@@ -173,6 +178,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         containerRef={containerRef}
         isDocked={sidebarContext.isDocked}
         isHidden={sidebarContext.isHidden}
+        sidebarPosition={sidebarContext.position}
       >
         <ElementSelectionContext.Provider value={selectionContext}>
           <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
@@ -296,8 +302,13 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1.125, 1, 2, 2),
       marginTop: theme.spacing(-1),
     }),
+    scrollContainerLeftSidebar: css({
+      paddingRight: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
+    }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
+      paddingLeft: theme.spacing(2),
     }),
     body: css({
       label: 'body',

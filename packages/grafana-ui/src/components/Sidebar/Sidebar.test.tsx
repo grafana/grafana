@@ -57,6 +57,23 @@ describe('Sidebar', () => {
     expect(screen.getByLabelText('Undock')).toBeInTheDocument();
   });
 
+  it('defaults to the right and persists a move to the left', () => {
+    const { unmount } = render(<TestSetup persistenceKey="position-persist" />);
+
+    const wrapper = screen.getByTestId('sidebar-test-wrapper');
+    expect(wrapper).toHaveStyle('padding-right: 72px');
+
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Move sidebar left').click());
+    expect(wrapper).toHaveStyle('padding-left: 312px');
+    expect(screen.getByLabelText('Undock')).toBeInTheDocument();
+
+    unmount();
+    render(<TestSetup persistenceKey="position-persist" />);
+
+    expect(screen.getByTestId('sidebar-test-wrapper')).toHaveStyle('padding-left: 72px');
+  });
+
   describe('hidden state', () => {
     it('renders show button instead of the sidebar container when defaultIsHidden is true', () => {
       render(<TestSetup defaultIsHidden />);
@@ -72,6 +89,18 @@ describe('Sidebar', () => {
 
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.components.Sidebar.showHideToggle)).not.toBeInTheDocument();
+    });
+
+    it('anchors the show button to the sidebar container after moving left', () => {
+      render(<TestSetup />);
+
+      act(() => screen.getByLabelText('Move sidebar left').click());
+      act(() => screen.getByLabelText('Hide').click());
+
+      expect(screen.getByTestId(selectors.components.Sidebar.showHideToggle)).toHaveStyle({
+        position: 'absolute',
+        left: '4px',
+      });
     });
 
     it('does not reserve space on the outer wrapper when hidden', () => {
@@ -199,6 +228,11 @@ function TestSetup({ persistenceKey, defaultIsHidden, hiddenPersistenceKey }: Te
           <Sidebar.Button icon="cog" title="Settings" onClick={() => setOpenPane('settings')} />
           <Sidebar.Button icon="process" title="Data" tooltip="Data transformations" />
           <Sidebar.Button icon="bell" title="Alerts" />
+          <Sidebar.Button
+            icon="exchange-alt"
+            title={`Move sidebar ${contextValue.position === 'right' ? 'left' : 'right'}`}
+            onClick={contextValue.onTogglePosition}
+          />
           <Sidebar.Button icon="arrow-to-right" title="Hide" onClick={() => contextValue.setIsHidden(true)} />
         </Sidebar.Toolbar>
       </Sidebar>

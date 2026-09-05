@@ -31,13 +31,13 @@ describe('measureSidebarShiftPadding()', () => {
   test('when the container is missing, padding is 0', () => {
     const sidebar = document.createElement('div');
 
-    expect(measureSidebarShiftPadding(undefined, sidebar)).toBe(0);
+    expect(measureSidebarShiftPadding(undefined, sidebar, 'right')).toBe(0);
   });
 
   test('when the sidebar is missing, padding is 0', () => {
     const container = document.createElement('div');
 
-    expect(measureSidebarShiftPadding(container, undefined)).toBe(0);
+    expect(measureSidebarShiftPadding(container, undefined, 'right')).toBe(0);
   });
 
   test('when the container right edge is 1000 and the sidebar left edge is 680, right padding is 320', () => {
@@ -46,7 +46,7 @@ describe('measureSidebarShiftPadding()', () => {
     stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 680, 1000);
 
-    expect(measureSidebarShiftPadding(container, sidebar)).toEqual({ right: 320 });
+    expect(measureSidebarShiftPadding(container, sidebar, 'right')).toEqual({ right: 320 });
   });
 
   test('when the sidebar left edge is past the container right edge, right padding is 0', () => {
@@ -55,7 +55,16 @@ describe('measureSidebarShiftPadding()', () => {
     stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 1100, 1420);
 
-    expect(measureSidebarShiftPadding(container, sidebar)).toEqual({ right: 0 });
+    expect(measureSidebarShiftPadding(container, sidebar, 'right')).toEqual({ right: 0 });
+  });
+
+  test('when the sidebar is on the left, left padding is its overlap with the container', () => {
+    const container = document.createElement('div');
+    const sidebar = document.createElement('div');
+    stubClientRect(container, 100, 1100);
+    stubClientRect(sidebar, 100, 420);
+
+    expect(measureSidebarShiftPadding(container, sidebar, 'left')).toEqual({ left: 320 });
   });
 });
 
@@ -63,16 +72,23 @@ function renderUseEditActionsLayout({
   container = null,
   isDocked = false,
   isHidden = false,
+  sidebarPosition = 'right',
 }: {
   container?: HTMLDivElement | null;
   isDocked?: boolean;
   isHidden?: boolean;
+  sidebarPosition?: 'left' | 'right';
 } = {}) {
   const containerRef: RefObject<HTMLDivElement | null> = { current: container };
 
   return renderHook(() => useEditActionsLayout(), {
     wrapper: ({ children }) => (
-      <EditActionsLayoutProvider containerRef={containerRef} isDocked={isDocked} isHidden={isHidden}>
+      <EditActionsLayoutProvider
+        containerRef={containerRef}
+        isDocked={isDocked}
+        isHidden={isHidden}
+        sidebarPosition={sidebarPosition}
+      >
         {children}
       </EditActionsLayoutProvider>
     ),
@@ -150,5 +166,23 @@ describe('useEditActionsLayout()', () => {
     const { result } = renderUseEditActionsLayout({ container, isDocked: false, isHidden: false });
 
     expect(result.current.getSidebarShiftPadding()).toEqual({ right: 320 });
+  });
+
+  test('when the provider is undocked and the sidebar is on the left, left padding is 320', () => {
+    const container = document.createElement('div');
+    const sidebar = document.createElement('div');
+    sidebar.id = 'sidebar-container';
+    document.body.appendChild(sidebar);
+    stubClientRect(container, 100, 1100);
+    stubClientRect(sidebar, 100, 420);
+
+    const { result } = renderUseEditActionsLayout({
+      container,
+      isDocked: false,
+      isHidden: false,
+      sidebarPosition: 'left',
+    });
+
+    expect(result.current.getSidebarShiftPadding()).toEqual({ left: 320 });
   });
 });

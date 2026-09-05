@@ -180,6 +180,17 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             />
           )}
           <Sidebar.Divider />
+          {sidebarContext?.onTogglePosition && (
+            <Sidebar.Button
+              icon="exchange-alt"
+              onClick={sidebarContext.onTogglePosition}
+              title={
+                sidebarContext.position === 'right'
+                  ? t('dashboard.sidebar.move-left', 'Move sidebar left')
+                  : t('dashboard.sidebar.move-right', 'Move sidebar right')
+              }
+            />
+          )}
           <Sidebar.Button
             icon={'arrow-to-right'}
             onClick={onClickHideSidebar}
