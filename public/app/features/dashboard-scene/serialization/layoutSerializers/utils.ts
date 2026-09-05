@@ -34,6 +34,7 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -85,6 +86,12 @@ export function buildVizPanelState(
   // standalone notices title item is only shown with the legacy UI.
   if (!isNewPanelQueryErrorsUIEnabled()) {
     titleItems.push(new PanelNotices());
+  }
+
+  // A query-less panel is a plan placeholder, and its seeded data has to say so on the panel
+  // itself — the planning banner scrolls out of view, the numbers do not.
+  if (buildOptions.withoutQueries) {
+    titleItems.push(new PlanPlaceholderBadge());
   }
 
   const queryOptions = panel.spec.data.spec.queryOptions;

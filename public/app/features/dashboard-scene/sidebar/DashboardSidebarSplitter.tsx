@@ -35,6 +35,7 @@ import { type DashboardSidebarPane } from './types';
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
+  isPlanning?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
 }
@@ -47,7 +48,7 @@ export function DashboardSidebarSplitter(props: Props) {
   }
 }
 
-function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
+function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -55,13 +56,13 @@ function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
       <div className={styles.canvasWrappperOld}>
         <NavToolbarActions dashboard={dashboard} />
         <DashboardControlsChrome>{controls}</DashboardControlsChrome>
-        <div className={styles.body}>{body}</div>
+        <div className={cx(styles.body, isPlanning && styles.planningCanvas)}>{body}</div>
       </div>
     </NativeScrollbar>
   );
 }
 
-function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls }: Props) {
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -132,7 +133,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     if (renderWithoutSidebar) {
       return (
         <div
-          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
+          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk, isPlanning && styles.planningCanvas)}
           data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         >
           <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
@@ -147,7 +148,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
+          className={cx(
+            styles.scrollContainer,
+            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            isPlanning && styles.planningCanvas
+          )}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
@@ -281,6 +286,25 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     bodyWrapperKiosk: css({
       padding: theme.spacing(0, 2, 2, 2),
+    }),
+    /**
+     * A plan preview is not a dashboard, and it must not be mistaken for one by a reader whose
+     * attention is on the canvas rather than the banner above it. Dashed panel borders read as
+     * "draft" at a glance without obscuring the layout, which is the one thing the preview exists
+     * to let the user judge.
+     *
+     * Selector note: the bordered element is PanelChrome's <section>, whose emotion class is not a
+     * stable hook (labels are stripped in production builds). `data-viz-panel-key` is set by the
+     * scenes VizPanel renderer on the wrapper around it and is stable.
+     */
+    planningCanvas: css({
+      '[data-viz-panel-key] section': {
+        // Both halves matter. Grafana's panel border is border.weak — 12% opacity — and simply
+        // switching that to dashed is imperceptible, so the planning border also steps up to
+        // border.strong to carry the signal.
+        borderStyle: 'dashed',
+        borderColor: theme.colors.border.strong,
+      },
     }),
     scrollContainer: css({
       display: 'flex',

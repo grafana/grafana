@@ -6086,6 +6086,10 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "plan-placeholder-badge": {
+      "text": "Sample data",
+      "tooltip": "This is a plan, not a dashboard. The numbers shown are made up to illustrate the layout — build the plan to run real queries."
+    },
     "planning-banner": {
       "build": "Build",
       "dismiss": "Dismiss",
