@@ -223,6 +223,9 @@ FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 // Controls the value alignment in the TimelineChart component
 TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 
+// Controls where the series name is displayed in the TimelineChart component
+TimelineNamePosition: "left" | "top" @cuetsy(kind="type")
+
 // TODO docs
 VizTextDisplayOptions: {
 	// Explicit title text size
