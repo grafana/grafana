@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/mail"
 	"net/textproto"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -67,16 +68,27 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 	return sentEmailsCount, nil
 }
 
-func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) error {
+func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) (err error) {
 	ctx, span := tracer.Start(ctx, "notifications.SmtpClient.sendMessage", trace.WithAttributes(
 		attribute.String("smtp.sender", msg.From),
 		attribute.StringSlice("smtp.recipients", msg.To),
 	))
 	defer span.End()
 
+	// mail.v2 can panic on some attachment encodings (nil base64LineWriter.w).
+	// Recover so one bad email cannot take down the Grafana process.
+	defer func() {
+		if r := recover(); r != nil {
+			// Match the DialAndSend path: count the attempt, then the failure.
+			emailsSentTotal.Inc()
+			emailsSentFailed.Inc()
+			err = tracing.Errorf(span, "panic while sending email: %v\n%s", r, debug.Stack())
+		}
+	}()
+
 	m := sc.buildEmail(ctx, msg)
 
-	err := dialer.DialAndSend(m)
+	err = dialer.DialAndSend(m)
 	emailsSentTotal.Inc()
 	if err != nil {
 		// As gomail does not returned typed errors we have to parse the error
@@ -116,12 +128,12 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 		otel.GetTextMapPropagator().Inject(ctx, gomailHeaderCarrier{m})
 	}
 
-	sc.setFiles(m, msg)
 	for _, replyTo := range msg.ReplyTo {
 		m.SetAddressHeader("Reply-To", replyTo, "")
 	}
-	// loop over content types from settings in reverse order as they are ordered in according to descending
-	// preference while the alternatives should be ordered according to ascending preference
+	// Body parts first so multipart structure is established before attachments.
+	// Content types are stored most-preferred first; alternatives must be
+	// least-preferred first for MIME.
 	for i := len(sc.cfg.ContentTypes) - 1; i >= 0; i-- {
 		if i == len(sc.cfg.ContentTypes)-1 {
 			m.SetBody(sc.cfg.ContentTypes[i], msg.Body[sc.cfg.ContentTypes[i]])
@@ -129,6 +141,7 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 			m.AddAlternative(sc.cfg.ContentTypes[i], msg.Body[sc.cfg.ContentTypes[i]])
 		}
 	}
+	sc.setFiles(m, msg)
 
 	return m
 }
@@ -139,22 +152,40 @@ func (sc *SmtpClient) setFiles(
 	msg *Message,
 ) {
 	for _, file := range msg.EmbeddedFiles {
+		if file == "" {
+			continue
+		}
 		m.Embed(file)
 	}
 
 	for _, file := range msg.EmbeddedContents {
-		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		if file.Name == "" || len(file.Content) == 0 {
+			continue
+		}
+		content := file.Content
+		name := file.Name
+		m.Embed(name, gomail.SetCopyFunc(copyFileContent(content)))
 	}
 
 	for _, file := range msg.AttachedFiles {
-		file := file
-		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		if file == nil || file.Name == "" || len(file.Content) == 0 {
+			continue
+		}
+		content := file.Content
+		name := file.Name
+		m.Attach(name, gomail.SetCopyFunc(copyFileContent(content)))
+	}
+}
+
+// copyFileContent returns a gomail copy function that streams content safely.
+// A nil writer must not panic (mail.v2 has historically done so on the base64 path).
+func copyFileContent(content []byte) func(io.Writer) error {
+	return func(w io.Writer) error {
+		if w == nil {
+			return fmt.Errorf("mail attachment writer is nil")
+		}
+		_, err := io.Copy(w, bytes.NewReader(content))
+		return err
 	}
 }
 
