@@ -407,6 +407,8 @@ func (NotebookV2TransformationKind) OpenAPIModelName() string {
 // Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
 // +k8s:openapi-gen=true
 type NotebookV2TransformationSpec struct {
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results

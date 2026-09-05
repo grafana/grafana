@@ -74,6 +74,11 @@ const getOperator =
                   return v;
                 });
 
+            // Applied after interpolation so the static refId stays the literal the user typed.
+            if (config.refId !== undefined) {
+              interpolated.refId = config.refId;
+            }
+
             return of(filterInput(before, matcher)).pipe(
               transformation.operator(interpolated, ctx),
               postProcessTransform(before, info, matcher)

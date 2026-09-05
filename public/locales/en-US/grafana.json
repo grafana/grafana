@@ -6699,7 +6699,14 @@
         "title-remove": "Remove",
         "title-show-transform-help": "Show transform help"
       },
-      "title-delete": "Delete {{name}}?"
+      "title-delete": "Delete {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "Edit transformation name",
+        "edit-refId-placeholder": "(Auto)",
+        "refId-exists-error": "Transformation name already exists",
+        "refId-reserved-error": "Transformation name is already used by a query or an earlier transformation",
+        "refId-variable-error": "Transformation name cannot contain a variable"
+      }
     },
     "transformation-picker-ng": {
       "clear-search": "Clear search",

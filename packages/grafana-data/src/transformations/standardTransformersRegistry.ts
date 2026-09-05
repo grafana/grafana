@@ -43,6 +43,13 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    */
   isApplicableDescription?: string | ((data: DataFrame[]) => string);
 
+  /**
+   * True when the transformer generates a dynamic refId for its output frame(s).
+   * Hoisted from DataTransformerInfo so the editor can show the dynamic refId
+   * without resolving the async transformation.
+   */
+  usesDynamicRefId?: boolean;
+
   /** Markdown with more detailed description and help */
   help?: string;
 
