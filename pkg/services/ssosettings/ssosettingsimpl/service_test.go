@@ -16,6 +16,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -2705,4 +2706,29 @@ type testEnv struct {
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
 	secrets          *secretsFakes.MockService
 	reloadables      map[string]ssosettings.Reloadable
+}
+
+type fakeDefaultsReloadable struct {
+	defaults map[string]any
+}
+
+func (f *fakeDefaultsReloadable) Reload(context.Context, models.SSOSettings) error { return nil }
+
+func (f *fakeDefaultsReloadable) Validate(context.Context, models.SSOSettings, models.SSOSettings, identity.Requester) error {
+	return nil
+}
+
+func (f *fakeDefaultsReloadable) Defaults() map[string]any { return f.defaults }
+
+func TestService_RegisterReloadable_DefaultsProvider(t *testing.T) {
+	env := setupTestEnv(t, true, true, false)
+
+	defaults := map[string]any{"setting_1": "value_1"}
+	env.service.RegisterReloadable("providerWithDefaults", &fakeDefaultsReloadable{defaults: defaults})
+	require.Equal(t, defaults, env.service.GetDefaults("providerWithDefaults"))
+
+	env.service.RegisterReloadable("providerWithoutDefaults", ssosettingstests.NewMockReloadable(t))
+	require.Nil(t, env.service.GetDefaults("providerWithoutDefaults"))
+
+	require.Nil(t, env.service.GetDefaults("providerNotRegistered"))
 }

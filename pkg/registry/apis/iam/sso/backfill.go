@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -27,6 +28,7 @@ const (
 
 type storedLister interface {
 	ListStored(ctx context.Context) ([]*ssomodels.SSOSettings, error)
+	GetDefaults(provider string) map[string]any
 }
 
 // SSOSettingsBackfill copies the stored SSO overrides into MT-Settings so the
@@ -104,22 +106,48 @@ func (s *SSOSettingsBackfill) backfill(ctx context.Context) error {
 		return err
 	}
 
-	providers, keys := 0, 0
+	backfilledProviders := make([]string, 0, len(stored))
+	keys := 0
 	for _, provider := range stored {
 		// LDAP nests its config under servers[]; MT-Settings has no representation for it yet.
 		if provider.Provider == social.LDAPProviderName {
 			continue
 		}
+		settings := provider.Settings
+		if defaults := s.reader.GetDefaults(provider.Provider); defaults != nil {
+			settings = withDefaults(settings, defaults)
+		}
 		section := sectionFor(provider.Provider)
-		for key, val := range provider.Settings {
+		for key, val := range settings {
 			if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
 				return err
 			}
 			keys++
 		}
-		providers++
+		backfilledProviders = append(backfilledProviders, provider.Provider)
 	}
 
-	s.log.Info("Backfilled SSO settings into MT-Settings", "providers", providers, "keys", keys)
+	s.log.Info("Backfilled SSO settings into MT-Settings", "providers", backfilledProviders, "keys", keys)
 	return nil
+}
+
+// withDefaults returns a copy of settings with defaults filled in for any key
+// that is absent or set to an empty string.
+func withDefaults(settings map[string]any, defaults map[string]any) map[string]any {
+	if len(defaults) == 0 {
+		return settings
+	}
+	result := make(map[string]any, len(settings)+len(defaults))
+	maps.Copy(result, settings)
+	for key, def := range defaults {
+		v, ok := result[key]
+		if !ok {
+			result[key] = def
+			continue
+		}
+		if str, isStr := v.(string); isStr && str == "" {
+			result[key] = def
+		}
+	}
+	return result
 }

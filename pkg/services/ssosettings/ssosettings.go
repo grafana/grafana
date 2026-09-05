@@ -46,6 +46,12 @@ type Reloadable interface {
 	Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error
 }
 
+// DefaultsProvider is an interface to expose the implicit defaults to be applied when a setting is unset
+type DefaultsProvider interface {
+	// Defaults returns the provider's default values
+	Defaults() map[string]any
+}
+
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source
 // than the database. This is useful for providers that are not configured in the database, but instead are configured
 // using the config file and/or environment variables. Used mostly for backwards compatibility.
