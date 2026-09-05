@@ -35,16 +35,22 @@ var (
 	_ rest.GracefulDeleter      = (*MTSettingsStore)(nil)
 )
 
+// defaultsProvider exposes per-provider default setting values.
+type defaultsProvider interface {
+	GetDefaults(provider string) map[string]any
+}
+
 // MTSettingsStore backs the SSOSetting kind with MT-Settings: a provider's blob
 // maps to per-key Setting rows under the auth.<provider> section. Source-layer
 // precedence and secret encrypt/decrypt are handled server-side.
 type MTSettingsStore struct {
-	reader settingsvc.Service
-	writer settingsvc.Writer
+	reader   settingsvc.Service
+	writer   settingsvc.Writer
+	defaults defaultsProvider
 }
 
-func NewMTSettingsStore(reader settingsvc.Service, writer settingsvc.Writer) *MTSettingsStore {
-	return &MTSettingsStore{reader: reader, writer: writer}
+func NewMTSettingsStore(reader settingsvc.Service, writer settingsvc.Writer, defaults defaultsProvider) *MTSettingsStore {
+	return &MTSettingsStore{reader: reader, writer: writer, defaults: defaults}
 }
 
 // Destroy implements rest.Storage.
@@ -98,6 +104,19 @@ func (s *MTSettingsStore) get(ctx context.Context, name string) (*iamv0.SSOSetti
 	return rowsToSSOSetting(ctx, name, rows), nil
 }
 
+// withProviderDefaults fills any key the request left absent or empty with the
+// provider's default values.
+func (s *MTSettingsStore) withProviderDefaults(provider string, settings map[string]any) map[string]any {
+	if s.defaults == nil {
+		return settings
+	}
+	defaults := s.defaults.GetDefaults(provider)
+	if defaults == nil {
+		return settings
+	}
+	return withDefaults(settings, defaults)
+}
+
 // Create implements rest.Creater. It writes each key of the blob as a per-key
 // row under auth.<provider>. Secret classification/encryption is the settings
 // service mutator's job.
@@ -118,6 +137,7 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 	section := sectionFor(ssoSetting.Name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
 	resolveSecrets(desired, nil)
+	desired = s.withProviderDefaults(ssoSetting.Name, desired)
 	for key, val := range desired {
 		if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
 			return nil, apierrors.NewInternalError(err)
@@ -236,6 +256,7 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 		stored = current.Spec.Settings.Object
 	}
 	resolveSecrets(desired, stored)
+	desired = s.withProviderDefaults(name, desired)
 
 	// Upsert every desired key first — a required value is never removed before
 	// its replacement is durable.

@@ -36,6 +36,9 @@ type Service interface {
 	RegisterReloadable(provider string, reloadable Reloadable)
 	// Reload reloads the settings for a given provider
 	Reload(ctx context.Context, provider string)
+	// GetDefaults returns the default setting values of the provider, or nil if the
+	// provider doesn't have default values registered
+	GetDefaults(provider string) map[string]any
 }
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
