@@ -468,9 +468,9 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.DeleteDashboardByUID))
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
-				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.GetDashboardVersions))
+				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead, dashUIDScope)), routing.Wrap(hs.GetDashboardVersions))
 				dashUidRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.RestoreDashboardVersion))
-				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.GetDashboardVersion))
+				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead, dashUIDScope)), routing.Wrap(hs.GetDashboardVersion))
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead, dashUIDScope)), routing.Wrap(hs.GetDashboardPermissionList))
