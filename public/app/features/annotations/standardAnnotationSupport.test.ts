@@ -124,7 +124,7 @@ describe('DataFrame to annotations', () => {
           color: 'red',
           data: { text: 'a', value: 'A' },
           email: 'admin@unknown.us',
-          id: 1,
+          id: '1',
           login: 'admin',
           newState: 'alerting',
           panelId: 4,
