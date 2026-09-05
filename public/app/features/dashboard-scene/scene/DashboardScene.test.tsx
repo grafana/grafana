@@ -95,6 +95,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: true,
@@ -714,11 +719,11 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBeFalsy();
       });
 
-      it('Should create and add a new panel to the dashboard', () => {
+      it('Should create and add a new panel to the dashboard', async () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        const panel = scene.onCreateNewPanel();
+        const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);

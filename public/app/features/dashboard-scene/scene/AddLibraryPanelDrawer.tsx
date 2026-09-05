@@ -24,9 +24,9 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     getDashboardSceneFor(this).closeModal();
   };
 
-  public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
+  public onAddLibraryPanel = async (panelInfo: LibraryPanel) => {
     const dashboard = getDashboardSceneFor(this);
-    const newPanel = getDefaultVizPanel();
+    const newPanel = await getDefaultVizPanel();
 
     newPanel.setState({
       // Panel title takes precedence over library panel title when resolving the library panel
