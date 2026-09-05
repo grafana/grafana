@@ -4,6 +4,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
@@ -99,7 +100,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return config.featureToggles.dashboardNewLayouts ? <PlanningBanner planning={planning} /> : null;
+      // The banner carries no horizontal padding of its own, so give it the same insets
+      // DashboardControls uses — otherwise its buttons sit flush against the canvas edge.
+      return config.featureToggles.dashboardNewLayouts ? (
+        <Box paddingX={2} paddingTop={1}>
+          <PlanningBanner planning={planning} />
+        </Box>
+      ) : null;
     }
 
     return controls && <controls.Component model={controls} />;
@@ -130,6 +137,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isEditing}
+            isPlanning={Boolean(planning)}
             controls={renderControls()}
             body={renderBody()}
           />

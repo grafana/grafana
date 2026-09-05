@@ -66,7 +66,8 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(2),
-      // Matches the padding DashboardControls gives the bar it is standing in for.
+      // No horizontal padding of its own: each host bar supplies it — the app chrome actions bar
+      // in the legacy toolbar, DashboardSceneRenderer's controls slot under dashboardNewLayouts.
       padding: theme.spacing(1, 0),
     }),
     summary: css({
