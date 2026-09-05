@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
-	cloud.google.com/go/storage v1.63.0 // @grafana/grafana-backend-group
+	cloud.google.com/go/storage v1.64.0 // @grafana/grafana-backend-group
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.3.1 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/data-sources-plugins
