@@ -79,7 +79,13 @@ describe('DashboardPrompt', () => {
         contextSrv.isEditor = true;
         scene.setState({
           isDirty: true,
-          planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild: jest.fn(), onDismiss: jest.fn() },
+          planning: {
+            planId: 'plan-1',
+            planTitle: 'Kafka overview',
+            panelCount: 4,
+            onBuild: jest.fn(),
+            onDismiss: jest.fn(),
+          },
         });
 
         expect(ignoreChanges(scene)).toBe(true);

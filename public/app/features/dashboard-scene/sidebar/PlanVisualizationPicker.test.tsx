@@ -32,6 +32,7 @@ function setup(planning?: Partial<{ onPanelVisualizationChanged: jest.Mock }>) {
     meta: {},
     body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
     planning: {
+      planId: 'plan-1',
       planTitle: 'Kafka overview',
       panelCount: 1,
       onBuild: jest.fn(),

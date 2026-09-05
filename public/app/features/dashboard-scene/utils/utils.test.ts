@@ -492,7 +492,13 @@ describe('utils', () => {
         title: 'plan',
         meta: {},
         body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
-        planning: { planTitle: 'Kafka overview', panelCount: 2, onBuild: jest.fn(), onDismiss: jest.fn() },
+        planning: {
+          planId: 'plan-1',
+          planTitle: 'Kafka overview',
+          panelCount: 2,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
       });
 
       const panel = getDefaultVizPanel(scene);
@@ -506,7 +512,13 @@ describe('utils', () => {
         title: 'plan',
         meta: {},
         body: layout,
-        planning: { planTitle: 'Kafka overview', panelCount: 2, onBuild: jest.fn(), onDismiss: jest.fn() },
+        planning: {
+          planId: 'plan-1',
+          planTitle: 'Kafka overview',
+          panelCount: 2,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
       });
 
       expect(findDashboardSceneFor(layout)).toBe(scene);

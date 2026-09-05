@@ -84,6 +84,12 @@ export interface DashboardSceneState extends SceneObjectState {
 }
 
 export interface DashboardPlanningState {
+  /**
+   * Identifies the plan on screen, so whoever put the dashboard into planning mode can take it
+   * back out again without having to prove it still holds any other bookkeeping about the plan.
+   * Opaque to the dashboard: it only ever compares it for equality.
+   */
+  planId: string;
   /** Title of the plan being previewed, shown in the banner. */
   planTitle: string;
   /** How many panels the plan proposes, shown in the banner. */

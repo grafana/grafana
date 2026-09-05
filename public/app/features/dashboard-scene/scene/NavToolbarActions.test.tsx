@@ -230,7 +230,14 @@ describe('when previewing an unbuilt dashboard plan', () => {
       editable: true,
       uid: 'dash-1',
       isEditing: true,
-      planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild, onDismiss, ...planningOverrides },
+      planning: {
+        planId: 'plan-1',
+        planTitle: 'Kafka overview',
+        panelCount: 4,
+        onBuild,
+        onDismiss,
+        ...planningOverrides,
+      },
       body: DefaultGridLayoutManager.fromVizPanels([
         new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
       ]),
