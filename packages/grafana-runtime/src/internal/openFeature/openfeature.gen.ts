@@ -842,10 +842,10 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  *
  * **Details:**
  * - flag key: `logsTablePanelNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logsTablePanelNG", false, options).value;
+  return useFlag("logsTablePanelNG", true, options).value;
 };
 
 /**
