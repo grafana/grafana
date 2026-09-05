@@ -33,60 +33,40 @@ func TestBroadcastAlerts(t *testing.T) {
 		{
 			name:  "broadcasts alerts when channel exists",
 			orgID: 1,
-			alerts: apimodels.PostableAlerts{
-				PostableAlerts: []amv2.PostableAlert{
-					{Annotations: amv2.LabelSet{"summary": "test alert"}},
-				},
-			},
+			alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test alert"}}}},
 			channelExists: true,
 			expected: &AlertBroadcastPayload{
-				OrgID: 1,
-				Alerts: apimodels.PostableAlerts{
-					PostableAlerts: []amv2.PostableAlert{
-						{Annotations: amv2.LabelSet{"summary": "test alert"}},
-					},
-				},
+				OrgID:  1,
+				Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test alert"}}}},
 			},
 		},
 		{
-			name:  "does not broadcast when channel is nil",
-			orgID: 1,
-			alerts: apimodels.PostableAlerts{
-				PostableAlerts: []amv2.PostableAlert{
-					{Annotations: amv2.LabelSet{"summary": "test alert"}},
-				},
-			},
+			name:          "does not broadcast when channel is nil",
+			orgID:         1,
+			alerts:        apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test alert"}}}},
 			channelExists: false,
-			expected:      nil,
 		},
 		{
 			name:          "does not broadcast empty alerts",
 			orgID:         1,
 			alerts:        apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{}},
 			channelExists: true,
-			expected:      nil,
 		},
 		{
 			name:          "does not broadcast nil alerts",
 			orgID:         1,
 			alerts:        apimodels.PostableAlerts{},
 			channelExists: true,
-			expected:      nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockChannel := &MockBroadcastChannel{}
-
-			moa := &MultiOrgAlertmanager{
-				logger: log.NewNopLogger(),
-			}
-
+			moa := &MultiOrgAlertmanager{logger: log.NewNopLogger()}
 			if tc.channelExists {
 				moa.alertsBroadcastChannel = mockChannel
 			}
-
 			moa.BroadcastAlerts(tc.orgID, tc.alerts)
 
 			if tc.expected == nil {
@@ -94,8 +74,7 @@ func TestBroadcastAlerts(t *testing.T) {
 			} else {
 				require.Len(t, mockChannel.Broadcasts(), 1)
 				var decoded AlertBroadcastPayload
-				err := json.Unmarshal(mockChannel.Broadcasts()[0], &decoded)
-				require.NoError(t, err)
+				require.NoError(t, json.Unmarshal(mockChannel.Broadcasts()[0], &decoded))
 				require.Equal(t, *tc.expected, decoded)
 			}
 		})
@@ -104,9 +83,7 @@ func TestBroadcastAlerts(t *testing.T) {
 
 func TestAlertBroadcast_MarshalBinary(t *testing.T) {
 	state := newAlertBroadcastState(log.NewNopLogger(), nil)
-
 	data, err := state.MarshalBinary()
-
 	require.NoError(t, err)
 	require.Nil(t, data, "MarshalBinary should return nil for alert broadcast state (no full state sync)")
 }
@@ -141,6 +118,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 	t.Run("delivers alerts to alertmanager", func(t *testing.T) {
 		mockAM := alertmanager_mock.NewAlertmanagerMock(t)
 		mockAM.On("Ready").Return(true)
+		delivered := make(chan struct{})
 		mockAM.On("PutAlerts", mock.Anything, mock.MatchedBy(func(alerts apimodels.PostableAlerts) bool {
 			if len(alerts.PostableAlerts) != 3 {
 				return false
@@ -152,22 +130,19 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 				}
 			}
 			return true
-		})).Return(nil)
+		})).Run(func(mock.Arguments) { close(delivered) }).Return(nil)
 
 		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: map[int64]Alertmanager{1: mockAM}}
 		state := newAlertBroadcastState(log.NewNopLogger(), moa)
-		payload, err := json.Marshal(AlertBroadcastPayload{
-			OrgID: 1,
-			Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{
-				{Annotations: amv2.LabelSet{"summary": "alert 1"}},
-				{Annotations: amv2.LabelSet{"summary": "alert 2"}},
-				{Annotations: amv2.LabelSet{"summary": "alert 3"}},
-			}},
-		})
+		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{
+			{Annotations: amv2.LabelSet{"summary": "alert 1"}},
+			{Annotations: amv2.LabelSet{"summary": "alert 2"}},
+			{Annotations: amv2.LabelSet{"summary": "alert 3"}},
+		}}})
 		require.NoError(t, err)
-
 		require.NoError(t, state.Merge(payload))
-		require.Eventually(t, func() bool { return mockAM.AssertExpectations(t) }, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { select { case <-delivered: return true; default: return false } }, time.Second, 10*time.Millisecond)
+		mockAM.AssertExpectations(t)
 	})
 
 	t.Run("returns immediately when PutAlerts blocks", func(t *testing.T) {
@@ -175,30 +150,17 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		mockAM.On("Ready").Return(true)
 		entered := make(chan struct{})
 		release := make(chan struct{})
-		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			close(entered)
-			<-release
-		}).Return(nil)
+		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(mock.Arguments) { close(entered); <-release }).Return(nil)
 
 		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: map[int64]Alertmanager{1: mockAM}}
 		state := newAlertBroadcastState(log.NewNopLogger(), moa)
-		payload, err := json.Marshal(AlertBroadcastPayload{
-			OrgID: 1,
-			Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}},
-		})
+		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
 		require.NoError(t, err)
 
 		start := time.Now()
 		require.NoError(t, state.Merge(payload))
 		require.Less(t, time.Since(start), 100*time.Millisecond)
-		require.Eventually(t, func() bool {
-			select {
-			case <-entered:
-				return true
-			default:
-				return false
-			}
-		}, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { select { case <-entered: return true; default: return false } }, time.Second, 10*time.Millisecond)
 		close(release)
 	})
 
@@ -225,13 +187,15 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 	t.Run("does not return error when PutAlerts fails", func(t *testing.T) {
 		mockAM := alertmanager_mock.NewAlertmanagerMock(t)
 		mockAM.On("Ready").Return(true)
-		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Return(errors.New("test error"))
+		failed := make(chan struct{})
+		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(mock.Arguments) { close(failed) }).Return(errors.New("test error"))
 		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: map[int64]Alertmanager{1: mockAM}}
 		state := newAlertBroadcastState(log.NewNopLogger(), moa)
 		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
 		require.NoError(t, err)
 		require.NoError(t, state.Merge(payload))
-		require.Eventually(t, func() bool { return mockAM.AssertExpectations(t) }, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { select { case <-failed: return true; default: return false } }, time.Second, 10*time.Millisecond)
+		mockAM.AssertExpectations(t)
 	})
 }
 
