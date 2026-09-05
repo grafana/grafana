@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -55,16 +56,18 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 		return sentEmailsCount, err
 	}
 
+	var errs []error
+
 	for _, msg := range messages {
 		err := sc.sendMessage(ctx, dialer, msg)
 		if err != nil {
-			return sentEmailsCount, err
+			errs = append(errs, err)
+			continue
 		}
-
 		sentEmailsCount++
 	}
 
-	return sentEmailsCount, nil
+	return sentEmailsCount, errors.Join(errs...)
 }
 
 func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) error {
