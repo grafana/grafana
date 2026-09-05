@@ -6,18 +6,12 @@ import { byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  AnnoKeyManagerKind,
-  DENY_ALL_PREDEFINED,
-  ManagerKind,
-} from 'app/features/apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
@@ -370,8 +364,8 @@ describe('SaveDashboardDrawer', () => {
       expect(dashboard.state.meta.folderUid).toBe(initialFolderUid);
     });
 
-    it('Should persist predefined-variable denylist annotations', async () => {
-      const denyList = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+    it('Should persist cross-dashboard variable selection annotations', async () => {
+      const selection = '{"global":"all","folder":"all"}';
       const { dashboard, openAndRender } = setup();
       dashboard.setState({
         meta: {
@@ -380,7 +374,7 @@ describe('SaveDashboardDrawer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyIgnorePredefinedVariables]: denyList,
+              [AnnoKeyUseCrossDashboardVariables]: selection,
             },
           },
         },
@@ -394,7 +388,7 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.k8s).toEqual({
-        annotations: { [AnnoKeyIgnorePredefinedVariables]: denyList },
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: selection },
       });
       expect(dataSent.k8s?.name).toBeUndefined();
     });
