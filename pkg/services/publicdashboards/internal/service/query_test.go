@@ -1476,6 +1476,45 @@ func TestSanitizeDataV2(t *testing.T) {
 		assert.Equal(t, "A", q3spec.Get("refId").MustString())
 	})
 
+	t.Run("removes rawQuery from query specs", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawQuery":     "SELECT mean(\"value\") FROM cpu",
+													"refId":        "A",
+													"resultFormat": "time_series",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeDataV2(data)
+
+		elements := data.Get("elements").MustMap()
+		queries := simplejson.NewFromAny(elements["panel-1"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, queries, 1)
+		spec := simplejson.NewFromAny(queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, spec.Get("rawQuery").MustString())
+		assert.Equal(t, "A", spec.Get("refId").MustString())
+		assert.Equal(t, "time_series", spec.Get("resultFormat").MustString())
+	})
+
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {
 		data := simplejson.NewFromAny(map[string]interface{}{
 			"elements": map[string]interface{}{
@@ -1510,6 +1549,81 @@ func TestSanitizeDataV2(t *testing.T) {
 			},
 		})
 		require.NotPanics(t, func() { sanitizeDataV2(data) })
+	})
+}
+
+func TestSanitizeData(t *testing.T) {
+	t.Run("removes raw query fields from panel targets", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"targets": []interface{}{
+						map[string]interface{}{
+							"expr":       "go_goroutines{job=\"grafana\"}",
+							"refId":      "A",
+							"datasource": "prometheus",
+						},
+						map[string]interface{}{
+							"rawSql": "SELECT * FROM metrics",
+							"refId":  "B",
+						},
+						map[string]interface{}{
+							"rawQuery":     "SELECT mean(\"value\") FROM cpu",
+							"query":        "buckets()",
+							"refId":        "C",
+							"resultFormat": "time_series",
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeData(data)
+
+		targets := simplejson.NewFromAny(data.Get("panels").MustArray()[0]).Get("targets").MustArray()
+		require.Len(t, targets, 3)
+
+		t0 := simplejson.NewFromAny(targets[0])
+		assert.Empty(t, t0.Get("expr").MustString())
+		assert.Equal(t, "A", t0.Get("refId").MustString())
+		assert.Equal(t, "prometheus", t0.Get("datasource").MustString())
+
+		t1 := simplejson.NewFromAny(targets[1])
+		assert.Empty(t, t1.Get("rawSql").MustString())
+		assert.Equal(t, "B", t1.Get("refId").MustString())
+
+		t2 := simplejson.NewFromAny(targets[2])
+		assert.Empty(t, t2.Get("rawQuery").MustString())
+		assert.Empty(t, t2.Get("query").MustString())
+		assert.Equal(t, "C", t2.Get("refId").MustString())
+		assert.Equal(t, "time_series", t2.Get("resultFormat").MustString())
+	})
+
+	t.Run("removes raw query fields from panels inside a collapsed row", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"type":      "row",
+					"collapsed": true,
+					"panels": []interface{}{
+						map[string]interface{}{
+							"targets": []interface{}{
+								map[string]interface{}{
+									"rawQuery": "SELECT mean(\"value\") FROM cpu",
+									"refId":    "A",
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeData(data)
+
+		row := simplejson.NewFromAny(data.Get("panels").MustArray()[0])
+		target := simplejson.NewFromAny(row.Get("panels").MustArray()[0]).Get("targets").MustArray()[0]
+		assert.Empty(t, simplejson.NewFromAny(target).Get("rawQuery").MustString())
 	})
 }
 
