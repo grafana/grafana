@@ -47,6 +47,8 @@ type Reloadable interface {
 }
 
 // DefaultsProvider is an interface to expose the implicit defaults to be applied when a setting is unset
+//
+//go:generate mockery --name DefaultsProvider --structname MockDefaultsProvider --outpkg ssosettingstests --filename defaults_provider_mock.go --output ./ssosettingstests/
 type DefaultsProvider interface {
 	// Defaults returns the provider's default values
 	Defaults() map[string]any
