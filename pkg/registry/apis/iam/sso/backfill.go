@@ -120,7 +120,8 @@ func (s *SSOSettingsBackfill) backfill(ctx context.Context) error {
 		section := sectionFor(provider.Provider)
 		for key, val := range settings {
 			if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
-				return err
+				return fmt.Errorf("failed to backfill provider %q key %q (backfilled so far: %v): %w",
+					provider.Provider, key, backfilledProviders, err)
 			}
 			keys++
 		}
