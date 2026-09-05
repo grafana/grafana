@@ -424,6 +424,17 @@ export function describeTextRange(expr: string): TimeOption {
         opt.display += 's';
       }
     }
+    // The regex is intentionally loose (unbounded digit count, not
+    // anchored at the end) so the user can type partial inputs. Cross-
+    // check with the parser: if the parser rejects what the regex
+    // accepted, the value is invalid. Without this, the validator
+    // (`isValidTimeSpan`) reads `invalid` as `undefined`, treats the
+    // value as accepted, and a downstream caller ends up with
+    // `range.from === undefined`, which throws a `valueOf` TypeError
+    // at render time.
+    if (!dateMath.parse(expr, false, 'utc')) {
+      opt.invalid = true;
+    }
   } else {
     opt.display = opt.from + ' to ' + opt.to;
     opt.invalid = true;
