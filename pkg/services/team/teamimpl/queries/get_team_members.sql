@@ -7,8 +7,8 @@ SELECT
   team_user.name,
   team_user.login,
   team_user.uid AS user_uid,
-  team_member.external,
-  team_member.permission,
+  COALESCE(team_member.external, FALSE) AS external,
+  COALESCE(team_member.permission, 0) AS permission,
   user_auth.auth_module,
   team.uid AS team_uid
 FROM {{ .Ident .TeamMemberTable }} AS team_member
