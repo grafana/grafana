@@ -149,13 +149,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 
 func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
 	var target string
-	// GrafanaSql is not present on the generated AzureMonitorQuery type yet;
-	// embedding lets us pick it up in the same Unmarshal pass.
-	// TODO: Move GrafanaSql to the generated type.
-	var queryJSONModel struct {
-		dataquery.AzureMonitorQuery
-		GrafanaSql bool `json:"grafanaSql"`
-	}
+	var queryJSONModel dataquery.AzureMonitorQuery
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
@@ -181,7 +175,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	filterInBody := true
 	resourceIDs := []string{}
 	resourceMap := map[string]dataquery.AzureMonitorResource{}
-	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel.AzureMonitorQuery); hasOne {
+	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
 		ub := UrlBuilder{
 			ResourceURI: azJSONModel.ResourceUri,
 			// Alternative, used to reconstruct resource URI if it's not present
@@ -265,7 +259,6 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		Dimensions:   azJSONModel.DimensionFilters,
 		Resources:    resourceMap,
 		Subscription: sub,
-		GrafanaSql:   queryJSONModel.GrafanaSql,
 	}
 	if filterString != "" {
 		if filterInBody {
@@ -655,9 +648,8 @@ type metricFrameInput struct {
 }
 
 // buildMetricFrame converts a single timeseries into a data frame, applying the
-// shared label/unit/alias/aggregation/deep-link logic and the GrafanaSql frame
-// reshaping. Both the single-resource and batch parsers use it so they cannot
-// drift.
+// shared label/unit/alias/aggregation/deep-link logic. Both the single-resource
+// and batch parsers use it so they cannot drift.
 func buildMetricFrame(in metricFrameInput, azurePortalURL string) (*data.Frame, error) {
 	labels := in.labels
 	// The single-resource ARM response carries the resource ID as a metadata
@@ -690,30 +682,6 @@ func buildMetricFrame(in metricFrameInput, azurePortalURL string) (*data.Frame, 
 				DisplayName: displayName,
 			})
 		}
-	}
-
-	if in.query.GrafanaSql {
-		timeField.Name = "time"
-		metricFieldName := dataField.Name
-		dataField.Name = "value"
-		if in.query.Alias == "" {
-			if dataField.Config != nil {
-				if dataField.Config.DisplayName == "" {
-					dataField.Config.DisplayName = metricFieldName
-				}
-			} else {
-				dataField.SetConfig(&data.FieldConfig{
-					DisplayName: metricFieldName,
-				})
-			}
-		}
-
-		resourceNameField := data.NewFieldFromFieldType(data.FieldTypeString, len(in.series.Data))
-		resourceNameField.Name = "resourceName"
-		for i := 0; i < len(in.series.Data); i++ {
-			resourceNameField.Set(i, in.resourceName)
-		}
-		frame.Fields = append(frame.Fields, resourceNameField)
 	}
 
 	requestedAgg := in.query.Params.Get("aggregation")
