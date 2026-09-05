@@ -231,6 +231,10 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	return fileName, len(body), nil
 }
 
+func shouldSkipStrictValidation(oldHash, newHash string) bool {
+	return oldHash != "" && oldHash == newHash
+}
+
 // WriteResourceOption configures optional behavior for resource write operations.
 type WriteResourceOption func(*writeResourceConfig)
 
@@ -281,7 +285,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	// file, the spec is unchanged — only metadata (path, folder) differs. Skip
 	// strict validation so the unchanged spec is not rejected by rules introduced
 	// after the resource was first persisted (e.g. legacy dashboards).
-	if cfg.existingHash != "" && cfg.existingHash == fileInfo.Hash {
+	if shouldSkipStrictValidation(cfg.existingHash, fileInfo.Hash) {
 		parsed.SkipStrictValidation = true
 	}
 
@@ -443,10 +447,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read previous file: %w", err)
 	}
-	oldParsed, err := r.parser.Parse(ctx, oldInfo)
-	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to parse previous file: %w", err)
-	}
+	oldParsed, oldParseErr := r.parser.Parse(ctx, oldInfo)
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
@@ -456,6 +457,25 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	if oldParseErr != nil {
+		// The previous path can no longer be parsed (e.g. it fails path validation
+		// after the file was renamed away from it) -- its identity is unknown, so we
+		// cannot safely delete it or compare it against the new resource. Proceed
+		// with writing the new resource anyway: the rename's whole point is the new
+		// path, and it must not be held hostage by the old, now-irrelevant one. The
+		// old resource is left for manual cleanup instead of silently disappearing.
+		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
+			newParsed.SkipStrictValidation = true
+		}
+		// folderName is empty in both returns below: the old resource's
+		// identity is unknown, so there is no folder to signal cleanup for.
+		newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+		if err != nil {
+			return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
+		}
+		return newName, "", gvk, size, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
@@ -481,7 +501,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// Rename-with-edits (different hashes) keeps strict validation: the
 		// new content is a real change and any validation failure must be
 		// surfaced rather than silently admitted.
-		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
 			newParsed.SkipStrictValidation = true
 		}
 	}
