@@ -1013,6 +1013,36 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			},
 			expectedToken: unexpiredTokenWithoutRefreshWithIDToken,
 		},
+		{
+			desc:         "should return the stored auth info token when token refresh is disabled and only the id token has expired",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					OAuthAccessToken:  unexpiredToken.AccessToken,
+					OAuthRefreshToken: unexpiredToken.RefreshToken,
+					OAuthExpiry:       unexpiredToken.Expiry,
+					OAuthTokenType:    unexpiredToken.TokenType,
+					OAuthIdToken:      EXPIRED_ID_TOKEN,
+				}, nil)
+
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:          1,
+					UserID:      1234,
+					AuthModule:  login.GenericOAuthModule,
+					AccessToken: unexpiredToken.AccessToken,
+					ExpiresAt:   unexpiredToken.Expiry,
+				}, nil).Once()
+
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: false,
+				}
+			},
+			// Rebuilt from auth info exactly as stored; the expired id token
+			// rides along until the next login or refresh replaces it.
+			expectedToken: unexpiredToken.WithExtra(map[string]interface{}{"id_token": EXPIRED_ID_TOKEN}),
+		},
 		// Edge case, can only happen after the feature is enabled and logged in users don't have their external sessions set,
 		{
 			desc:         "should refresh token when the access token is expired and the external session was not found",
@@ -1351,6 +1381,34 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 				}
 			},
 			expectedToken: unexpiredTokenWithoutRefreshWithIDToken,
+		},
+		{
+			desc:         "should return the stored token when token refresh is disabled and only the id token has expired",
+			identity:     userIdentity,
+			sessionToken: &auth.UserToken{ExternalSessionId: 1},
+			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}, nil)
+
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AuthModule:   login.GenericOAuthModule,
+					AccessToken:  unexpiredTokenWithIDToken.AccessToken,
+					RefreshToken: unexpiredTokenWithIDToken.RefreshToken,
+					ExpiresAt:    unexpiredTokenWithIDToken.Expiry,
+					IDToken:      EXPIRED_ID_TOKEN,
+				}, nil).Once()
+
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: false,
+				}
+			},
+			// The token is rebuilt exactly as stored: the access and refresh
+			// tokens are intact, while the expired id token is passed through
+			// unchanged until the next successful login or refresh replaces it.
+			expectedToken: unexpiredToken.WithExtra(map[string]interface{}{"id_token": EXPIRED_ID_TOKEN}),
 		},
 		{
 			desc:         "should not do token refresh if access token or id token have not expired yet",
