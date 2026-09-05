@@ -12,6 +12,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
@@ -73,11 +74,17 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
 
-        // Nest the existing layout inside the requested row as-is,
-        // preserving its structure (tabs, grid, etc.).
+        // Nest the existing layout inside the requested row as-is, preserving its structure
+        // (tabs, grid, etc.) — unless it is a section container with no sections, which has nothing
+        // to preserve and nowhere to put a panel. The mirror of the same case in ADD_TAB.
         targetLayout.clearParent();
+        const isEmptyContainer =
+          (targetLayout instanceof RowsLayoutManager && targetLayout.state.rows.length === 0) ||
+          (targetLayout instanceof TabsLayoutManager && targetLayout.state.tabs.length === 0);
+        const preservesContent = !isEmptyContainer;
+
         const newRow = new RowItem({
-          layout: targetLayout,
+          layout: preservesContent ? targetLayout : DefaultGridLayoutManager.fromVizPanels([]),
           title: row.spec.title,
           collapse: row.spec.collapse,
           hideHeader: row.spec.hideHeader,

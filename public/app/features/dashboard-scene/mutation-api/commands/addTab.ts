@@ -10,6 +10,7 @@ import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
@@ -70,11 +71,21 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
 
-        // Nest the existing layout inside the requested tab as-is,
-        // preserving its structure (rows, grid, etc.).
+        // Nest the existing layout inside the requested tab as-is, preserving its structure
+        // (rows, grid, etc.) — unless it is a section container with no sections. Such a layout has
+        // nothing to preserve AND nowhere to put a panel: a rows layout with no rows cannot accept
+        // one, so every later ADD_PANEL against this tab would target a dead end. A dashboard whose
+        // rows were just removed is exactly that case. An empty GRID is still nested, because a
+        // grid accepts panels perfectly well, and a section that holds only variables or a title is
+        // still content even with no panels in it.
         targetLayout.clearParent();
+        const isEmptyContainer =
+          (targetLayout instanceof RowsLayoutManager && targetLayout.state.rows.length === 0) ||
+          (targetLayout instanceof TabsLayoutManager && targetLayout.state.tabs.length === 0);
+        const preservesContent = !isEmptyContainer;
+
         const newTab = new TabItem({
-          layout: targetLayout,
+          layout: preservesContent ? targetLayout : DefaultGridLayoutManager.fromVizPanels([]),
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
           conditionalRendering: tab.spec.conditionalRendering

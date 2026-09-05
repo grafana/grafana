@@ -607,7 +607,13 @@ describe('Panel mutation commands', () => {
     it('builds the panel without a query runner while a plan is being previewed', async () => {
       const scene = buildPanelScene();
       scene.setState({
-        planning: { planTitle: 'Kafka overview', panelCount: 1, onBuild: jest.fn(), onDismiss: jest.fn() },
+        planning: {
+          planId: 'plan-1',
+          planTitle: 'Kafka overview',
+          panelCount: 1,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
       });
       const client = new DashboardMutationClient(scene);
 
