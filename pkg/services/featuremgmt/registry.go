@@ -298,7 +298,7 @@ var (
 		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -306,7 +306,7 @@ var (
 		{
 			Name:        "reportingFooterSettings",
 			Description: "Enables the configurable footer settings for PDF reports",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
