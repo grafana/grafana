@@ -10314,6 +10314,156 @@
           },
           "name": "Объем"
         }
+      },
+      "siPrefixes": {
+        "base": "",
+        "exa": "Э",
+        "femto": "ф",
+        "giga": "Г",
+        "kilo": "к",
+        "mega": "М",
+        "micro": "мк",
+        "milli": "м",
+        "nano": "н",
+        "peta": "П",
+        "pico": "п",
+        "tera": "Т",
+        "yotta": "И",
+        "zetta": "З"
+      },
+      "symbols": {
+        "acceleration": {
+          "ms2": "м/с²"
+        },
+        "angle": {
+          "arcmin": "угл. мин",
+          "arcsec": "угл. с",
+          "gradian": "град",
+          "radian": "рад"
+        },
+        "area": {
+          "acre": "акр",
+          "hectare": "га",
+          "m2": "м²"
+        },
+        "bool": {
+          "false": "Ложь",
+          "no": "Нет",
+          "off": "Выкл",
+          "on": "Вкл",
+          "true": "Истина",
+          "yes": "Да"
+        },
+        "concentration": {
+          "gNm3": "г/нм³",
+          "gm3": "г/м³",
+          "mgNm3": "мг/нм³",
+          "mgdl": "мг/дл",
+          "mgm3": "мг/м³",
+          "mmoll": "ммоль/л",
+          "ngNm3": "нг/нм³",
+          "ngm3": "нг/м³",
+          "ugNm3": "мкг/нм³",
+          "ugm3": "мкг/м³"
+        },
+        "data": {
+          "bit": "бит",
+          "bitps": "бит/с",
+          "byte": "Б",
+          "byteps": "Б/с"
+        },
+        "electrical": {
+          "ah": "А·ч",
+          "amp": "А",
+          "farad": "Ф",
+          "henry": "Гн",
+          "ohm": "Ом",
+          "volt": "В"
+        },
+        "energy": {
+          "ev": "эВ",
+          "joule": "Дж",
+          "wh": "Вт·ч",
+          "whkg": "Вт·ч/кг",
+          "wmin": "кВт·мин"
+        },
+        "flow": {
+          "lh": "л/ч",
+          "lmin": "л/мин",
+          "mlmin": "мл/мин"
+        },
+        "force": {
+          "n": "Н",
+          "nm": "Н·м"
+        },
+        "frequency": {
+          "hertz": "Гц"
+        },
+        "length": {
+          "cm": "см",
+          "meter": "м"
+        },
+        "light": {
+          "lumen": "лм",
+          "lux": "лк"
+        },
+        "mass": {
+          "gram": "г",
+          "tonne": "т"
+        },
+        "misc": {
+          "candela": "кд",
+          "si-generic": ""
+        },
+        "power": {
+          "va": "ВА",
+          "var": "вар",
+          "watt": "Вт",
+          "wm2": "Вт/м²"
+        },
+        "pressure": {
+          "bar": "бар",
+          "hpa": "гПа",
+          "kpa": "кПа",
+          "pa": "Па"
+        },
+        "radiation": {
+          "bq": "Бк",
+          "ci": "Ки",
+          "ckg": "Кл/кг",
+          "gy": "Гр",
+          "rad": "рад",
+          "rem": "бэр",
+          "roentgen": "Р",
+          "sv": "Зв",
+          "svh": "Зв/ч"
+        },
+        "rotation": {
+          "degs": "°/с",
+          "rads": "рад/с",
+          "rpm": "об/мин"
+        },
+        "scale": {
+          "billion": "млрд",
+          "million": "млн",
+          "quadrillion": "квадрлн",
+          "quintillion": "квинтлн",
+          "septillion": "септлн",
+          "sextillion": "секстлн",
+          "thousand": "тыс",
+          "trillion": "трлн"
+        },
+        "velocity": {
+          "kmh": "км/ч",
+          "knot": "уз",
+          "ms": "м/с"
+        },
+        "volume": {
+          "dm3": "дм³",
+          "litre": "л",
+          "m3": "м³",
+          "nm3": "нм³"
+        }
       }
     }
   },
