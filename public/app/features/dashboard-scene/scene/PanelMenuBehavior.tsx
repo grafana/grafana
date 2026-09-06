@@ -100,23 +100,26 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const moreSubMenu: PanelMenuItem[] = [];
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
-    const exploreMenuItem = await getExploreMenuItem(panel);
     const isReadOnlyRepeat = isRepeatCloneOrChildOf(panel);
+
+    // A plan preview gets its own menu rather than the dashboard's minus exclusions. Most of what
+    // follows speaks about a panel with a query behind it — inspect, alerting, explore, sharing —
+    // and a placeholder has none, so listing them and disabling them one by one would be both more
+    // code and a worse menu. The policy in planningPolicy.ts decides what belongs. Checked before
+    // resolving the explore link below: a placeholder panel has no query to explore, so that lookup
+    // would only be thrown away.
+    if (dashboard.isPlanning()) {
+      menu.setState({ items: buildPlanningMenuItems(panel, dashboard) });
+      return;
+    }
+
+    const exploreMenuItem = await getExploreMenuItem(panel);
 
     // For embedded dashboards we only have explore action for now
     if (isEmbedded) {
       if (exploreMenuItem) {
         menu.setState({ items: [exploreMenuItem] });
       }
-      return;
-    }
-
-    // A plan preview gets its own menu rather than the dashboard's minus exclusions. Most of what
-    // follows speaks about a panel with a query behind it — inspect, alerting, explore, sharing —
-    // and a placeholder has none, so listing them and disabling them one by one would be both more
-    // code and a worse menu. The policy in planningPolicy.ts decides what belongs.
-    if (dashboard.isPlanning()) {
-      menu.setState({ items: buildPlanningMenuItems(panel, dashboard) });
       return;
     }
 

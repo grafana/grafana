@@ -10,13 +10,12 @@ import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
-import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
+import { isEmptySectionContainer, resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -79,10 +78,7 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
         // grid accepts panels perfectly well, and a section that holds only variables or a title is
         // still content even with no panels in it.
         targetLayout.clearParent();
-        const isEmptyContainer =
-          (targetLayout instanceof RowsLayoutManager && targetLayout.state.rows.length === 0) ||
-          (targetLayout instanceof TabsLayoutManager && targetLayout.state.tabs.length === 0);
-        const preservesContent = !isEmptyContainer;
+        const preservesContent = !isEmptySectionContainer(targetLayout);
 
         const newTab = new TabItem({
           layout: preservesContent ? targetLayout : DefaultGridLayoutManager.fromVizPanels([]),

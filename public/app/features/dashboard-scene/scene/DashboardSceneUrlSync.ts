@@ -70,7 +70,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
-    if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
+    if (
+      typeof values.editview === 'string' &&
+      this._scene.canEditDashboard() &&
+      this._scene.isPlanningActionAllowed('dashboard-settings')
+    ) {
       update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
@@ -136,7 +140,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    if (typeof values.shareView === 'string') {
+    if (typeof values.shareView === 'string' && this._scene.isPlanningActionAllowed('share-dashboard')) {
       update.shareView = values.shareView;
       update.overlay = new ShareDrawer({
         shareView: values.shareView,

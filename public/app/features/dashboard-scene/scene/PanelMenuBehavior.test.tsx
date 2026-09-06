@@ -641,6 +641,35 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.[0].text).toBe('Explore');
     });
 
+    it('does not resolve an explore link for a placeholder panel while planning', async () => {
+      // Regression: the explore link was resolved before the isPlanning() check discarded it, so
+      // every menu open on a plan preview paid for a lookup its own placeholder panel has no query
+      // to answer.
+      const { scene, menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockClear();
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      scene.setState({
+        planning: {
+          planId: 'plan-1',
+          planTitle: 'Kafka overview',
+          panelCount: 1,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
+      });
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(mocks.getExploreUrl).not.toHaveBeenCalled();
+    });
+
     describe('plugin links', () => {
       it('should not show Metrics Drilldown menu when no Metrics Drilldown links exist', async () => {
         getObservablePluginLinksMock.mockReturnValue(
