@@ -370,7 +370,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if r2 == "." && route.Path != "." {
 			r2 = ""
 		}
-		if !strings.HasPrefix(r1, r2) {
+		if r2 != "" && r1 != r2 && !strings.HasPrefix(r1, r2+"/") {
 			continue
 		}
 
