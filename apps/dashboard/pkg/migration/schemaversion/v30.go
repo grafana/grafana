@@ -384,7 +384,7 @@ func getActiveThresholdColor(value float64, thresholds map[string]interface{}) i
 						continue
 					}
 
-					if stepNum := GetFloatValue(stepMap, "value", -1); stepNum != -1 {
+					if stepNum, ok := ConvertToFloat(stepValue); ok {
 						if value >= stepNum {
 							activeStep = stepMap
 						} else {
