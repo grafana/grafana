@@ -307,7 +307,10 @@ export const RU_RU_VALUES: Record<string, string> = {
   'grafana-data.valueFormats.symbols.power.va': 'ВА',
   'grafana-data.valueFormats.symbols.power.var': 'вар',
   'grafana-data.valueFormats.symbols.energy.wh': 'Вт·ч',
-  'grafana-data.valueFormats.symbols.energy.wmin': 'кВт·мин',
+  // NOTE: bare base unit, matching en 'W-Min' — SIPrefix(..., 1) supplies the
+  // 'к'/'М'/... magnitude prefix dynamically. A baked-in 'к' here would double
+  // up with that dynamic prefix (e.g. "ккВт·мин"). Found by Cursor Bugbot.
+  'grafana-data.valueFormats.symbols.energy.wmin': 'Вт·мин',
   'grafana-data.valueFormats.symbols.energy.whkg': 'Вт·ч/кг',
   'grafana-data.valueFormats.symbols.electrical.ah': 'А·ч',
   'grafana-data.valueFormats.symbols.energy.joule': 'Дж',
