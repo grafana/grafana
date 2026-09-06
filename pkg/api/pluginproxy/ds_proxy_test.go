@@ -1430,6 +1430,37 @@ func Test_PathCheck(t *testing.T) {
 	require.Equal(t, routes[1], proxy.matchedRoute)
 }
 
+func Test_PathCheck_SegmentBoundary(t *testing.T) {
+	routes := []*plugins.Route{
+		{
+			Path:    "api",
+			URL:     "https://admin.example.com",
+			ReqRole: org.RoleAdmin,
+			Method:  http.MethodGet,
+		},
+		{
+			Path:    "api-v2",
+			URL:     "https://viewer.example.com",
+			ReqRole: org.RoleViewer,
+			Method:  http.MethodGet,
+		},
+	}
+
+	req, err := http.NewRequest("GET", "http://localhost/api/datasources/proxy/1/api-v2", nil)
+	require.NoError(t, err)
+	ctx := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req},
+		SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+	}
+
+	proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{}, routes, "api-v2")
+	require.NoError(t, err)
+
+	err = proxy.validateRequest()
+	require.NoError(t, err)
+	require.Equal(t, routes[1], proxy.matchedRoute)
+}
+
 func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasources.DataSource, routes []*plugins.Route, path string, opts ...func(proxy *DataSourceProxy)) (*DataSourceProxy, error) {
 	t.Helper()
 
