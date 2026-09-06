@@ -14,10 +14,29 @@ export interface DashboardMutationResult {
   data?: unknown; // command-specific return data
 }
 
+/**
+ * Optional, version-gated behaviours of the Grafana build serving this API.
+ *
+ * Declared statically rather than discovered through `getAvailableCommands()`, because a plugin
+ * ships independently of core and needs to answer "does this build support X" before any document
+ * is mounted — the command list is empty until a dashboard scene activates, which says nothing
+ * about the build. A capability absent from this object means a core too old to know about it.
+ */
+export interface DashboardMutationCapabilities {
+  /**
+   * A dashboard plan can be previewed as scaffolded, query-less placeholder panels before it is
+   * built: panels can be created without a query runner, and dashboard-level actions (save,
+   * settings, sharing, panel edit) are withheld while a plan is on screen.
+   */
+  planning?: boolean;
+}
+
 export interface DashboardMutationAPI {
   execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
   getPayloadSchema(commandId: string): ZodSchema | null;
   getAvailableCommands(): string[];
+  /** Absent on a core predating capability reporting; treat a missing entry as unsupported. */
+  capabilities?: DashboardMutationCapabilities;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {
