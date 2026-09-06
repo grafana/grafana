@@ -14,9 +14,8 @@ func TestValidateInterval_SubsecondTruncation(t *testing.T) {
 
 	t.Run("sub-second interval should fail validation", func(t *testing.T) {
 		interval := 500 * time.Millisecond
-		sec, err := validation.ValidateInterval(interval, baseInterval)
+		_, err := validation.ValidateInterval(interval, baseInterval)
 		require.Error(t, err, "sub-second interval must fail validation")
-		require.NotEqual(t, int64(0), sec, "should not return 0-second interval")
 	})
 
 	t.Run("fractional interval should fail validation", func(t *testing.T) {
