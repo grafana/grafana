@@ -61,10 +61,29 @@ function getDecimalsForValue(value: number): number {
   return decimals;
 }
 
-export function toFixedScaled(value: number, decimals: DecimalCount, ext?: string): FormattedValue {
+/**
+ * A unit's short display text can either be a plain string (the legacy shape,
+ * still accepted so third-party plugins and existing callers of the public
+ * `@grafana/data` formatter factories keep working unchanged), or a thunk
+ * that is invoked every time a value is formatted.
+ *
+ * Using a thunk lets a caller defer the string to `t()` from `@grafana/i18n`
+ * so the *rendered* text (not just the picker's dropdown label) tracks the
+ * current locale — without requiring the `getValueFormat()` index cache in
+ * `valueFormats.ts` to be rebuilt when the user switches languages. See
+ * `categories.ts` / `unitSymbols.ts` for how the built-in unit categories use
+ * this.
+ */
+export type UnitLike = string | (() => string);
+
+export function resolveUnit(unit: UnitLike): string {
+  return typeof unit === 'function' ? unit() : unit;
+}
+
+export function toFixedScaled(value: number, decimals: DecimalCount, ext?: UnitLike): FormattedValue {
   return {
     text: toFixed(value, decimals),
-    suffix: appendPluralIf(ext, Math.abs(value) > 1),
+    suffix: appendPluralIf(ext === undefined ? undefined : resolveUnit(ext), Math.abs(value) > 1),
   };
 }
 
@@ -85,17 +104,18 @@ function appendPluralIf(ext: string | undefined, condition: boolean): string | u
   }
 }
 
-export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
+export function toFixedUnit(unit: UnitLike, asPrefix?: boolean): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
       return { text: '' };
     }
     const text = toFixed(size, decimals);
-    if (unit) {
+    const resolvedUnit = resolveUnit(unit);
+    if (resolvedUnit) {
       if (asPrefix) {
-        return { text, prefix: unit };
+        return { text, prefix: resolvedUnit };
       }
-      return { text, suffix: ' ' + unit };
+      return { text, suffix: ' ' + resolvedUnit };
     }
     return { text };
   };
@@ -105,15 +125,20 @@ export function isBooleanUnit(unit?: string) {
   return unit && unit.startsWith('bool');
 }
 
-export function booleanValueFormatter(t: string, f: string): ValueFormatter {
+export function booleanValueFormatter(t: UnitLike, f: UnitLike): ValueFormatter {
   return (value) => {
-    return { text: value ? t : f };
+    return { text: resolveUnit(value ? t : f) };
   };
 }
 
 const logb = (b: number, x: number) => Math.log10(x) / Math.log10(b);
 
-export function scaledUnits(factor: number, extArray: string[], offset = 0): ValueFormatter {
+/**
+ * `extArray` can be a fixed list of suffixes (legacy shape) or a thunk
+ * returning the list, evaluated on every call — used by the built-in
+ * categories to keep e.g. the "short" (K/M/B/T…) magnitude words localized.
+ */
+export function scaledUnits(factor: number, extArray: string[] | (() => string[]), offset = 0): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
     if (size === null || size === undefined) {
       return { text: '' };
@@ -123,11 +148,12 @@ export function scaledUnits(factor: number, extArray: string[], offset = 0): Val
       return { text: size.toLocaleString() };
     }
 
+    const resolvedExtArray = typeof extArray === 'function' ? extArray() : extArray;
     const siIndex = size === 0 ? 0 : Math.floor(logb(factor, Math.abs(size)));
-    const suffix = extArray[clamp(offset + siIndex, 0, extArray.length - 1)];
+    const suffix = resolvedExtArray[clamp(offset + siIndex, 0, resolvedExtArray.length - 1)];
 
     return {
-      text: toFixed(size / factor ** clamp(siIndex, -offset, extArray.length - offset - 1), decimals),
+      text: toFixed(size / factor ** clamp(siIndex, -offset, resolvedExtArray.length - offset - 1), decimals),
       suffix,
     };
   };
@@ -142,7 +168,7 @@ export function locale(value: number, decimals: DecimalCount): FormattedValue {
   };
 }
 
-export function simpleCountUnit(symbol: string): ValueFormatter {
+export function simpleCountUnit(symbol: UnitLike): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
@@ -150,7 +176,7 @@ export function simpleCountUnit(symbol: string): ValueFormatter {
       return { text: '' };
     }
     const v = scaler(size, decimals, scaledDecimals);
-    v.suffix += ' ' + symbol;
+    v.suffix += ' ' + resolveUnit(symbol);
     return v;
   };
 }
