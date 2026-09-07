@@ -8,11 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// LogMessageConnectionUsageStatus is the connection-level snapshot: one line per
-// connection per reconcile. It is the connection counterpart of
-// LogMessageUsageStatus; see RepositoryUsageStatus for why this is a log line.
-const LogMessageConnectionUsageStatus = "connection usage status"
-
 // ConnectionUsageStatus is a point-in-time snapshot of a single provisioning
 // connection, logged by the connection controller on every reconcile. It mirrors
 // RepositoryUsageStatus (read that type's doc for the rationale) for the shared
@@ -50,7 +45,7 @@ type ConnectionUsageStatus struct {
 // Connection identity is expected to already be on logger (the reconcile logger
 // carries namespace and connection). Call it once per reconcile.
 func LogConnectionUsageStatus(logger logging.Logger, conn *provisioning.Connection) {
-	logger.Info(LogMessageConnectionUsageStatus, ConnectionUsageStatusFromConnection(conn).LogValues()...)
+	logger.Info("connection usage status", ConnectionUsageStatusFromConnection(conn).LogValues()...)
 }
 
 // ConnectionUsageStatusFromConnection builds a snapshot from the reconciled
@@ -83,7 +78,7 @@ func ConnectionUsageStatusFromConnection(conn *provisioning.Connection) Connecti
 }
 
 // LogValues returns the snapshot as structured key/value pairs for the
-// LogMessageConnectionUsageStatus line. Booleans render as 1/0 so they can be
+// "connection usage status" line. Booleans render as 1/0 so they can be
 // `unwrap`ped in Loki. These field names are part of the log's contract.
 func (s ConnectionUsageStatus) LogValues() []any {
 	return []any{

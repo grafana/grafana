@@ -8,18 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Log messages emitted per reconcile for the repository usage snapshot. They are
-// part of the log's contract -- dashboards and queries match on them -- so change
-// them only deliberately.
-const (
-	// LogMessageUsageStatus is the repository-level snapshot: one line per
-	// repository per reconcile.
-	LogMessageUsageStatus = "repository usage status"
-	// LogMessageManagedResources is the per-kind managed-resource breakdown: one
-	// line per (repository, group, resource) per reconcile.
-	LogMessageManagedResources = "repository managed resources"
-)
-
 // RepositoryUsageStatus is a point-in-time snapshot of a single provisioning
 // repository's usage. The repository controller logs it on every reconcile, so a
 // per-repository view of the Git Sync fleet can be reconstructed for any moment
@@ -47,9 +35,9 @@ const (
 // The snapshot is emitted as two logfmt-friendly shapes so breakdowns can be
 // plotted directly:
 //
-//   - One repository-level line (LogMessageUsageStatus) whose numeric fields
+//   - One repository-level line ("repository usage status") whose numeric fields
 //     (booleans rendered as 1/0, counts, timestamps) can be `unwrap`ped.
-//   - One line per managed-resource kind (LogMessageManagedResources) carrying
+//   - One line per managed-resource kind ("repository managed resources") carrying
 //     `group` and `resource` as field *values* and an unwrappable `count` -- so a
 //     per-kind breakdown is `sum by (group, resource) (... | unwrap count)` rather
 //     than a regex over a packed string. (A single line can't do this: group/
@@ -117,15 +105,15 @@ type RepositoryUsageStatus struct {
 }
 
 // LogRepositoryUsageStatus emits the repository usage-status snapshot on logger:
-// the repository-level LogMessageUsageStatus line plus one
-// LogMessageManagedResources line per managed-resource kind. Repository identity
-// is expected to already be on logger (the reconcile logger carries namespace,
+// the repository-level "repository usage status" line plus one "repository
+// managed resources" line per managed-resource kind. Repository identity is
+// expected to already be on logger (the reconcile logger carries namespace,
 // repository, repositoryType, connection). Call it once per reconcile.
 func LogRepositoryUsageStatus(logger logging.Logger, repo *provisioning.Repository) {
 	status := RepositoryUsageStatusFromRepository(repo)
-	logger.Info(LogMessageUsageStatus, status.LogValues()...)
+	logger.Info("repository usage status", status.LogValues()...)
 	for _, kv := range status.ManagedResourceLogValues() {
-		logger.Info(LogMessageManagedResources, kv...)
+		logger.Info("repository managed resources", kv...)
 	}
 }
 
@@ -189,7 +177,7 @@ func repositoryAuthMethod(repo *provisioning.Repository) string {
 }
 
 // LogValues returns the repository-level snapshot as structured key/value pairs
-// for the LogMessageUsageStatus line. Booleans are rendered as 1/0 so they can be
+// for the "repository usage status" line. Booleans are rendered as 1/0 so they can be
 // `unwrap`ped in Loki. Repository identity (incl. repositoryType) is carried by
 // the reconcile logger, so it is not repeated here. These field names are part of
 // the log's contract.
@@ -210,7 +198,7 @@ func (s RepositoryUsageStatus) LogValues() []any {
 }
 
 // ManagedResourceLogValues returns one key/value slice per managed-resource kind,
-// each meant for its own LogMessageManagedResources line. `count` is unwrappable
+// each meant for its own "repository managed resources" line. `count` is unwrappable
 // and `group`/`resource` are field values to group by. Empty when nothing is
 // managed.
 func (s RepositoryUsageStatus) ManagedResourceLogValues() [][]any {
