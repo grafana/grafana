@@ -2,14 +2,13 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { dateTime, PluginExtensionPoints } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { usePluginLinks } from '@grafana/runtime';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
-import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
+import { AlertInstanceExtensionPoint, useHasAlertInstancePluginLinks } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
@@ -32,6 +31,8 @@ type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
 export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showNotificationColumn }: Props) => {
+  const { hasLinks: hasPluginLinks, isLoading: isPluginLinksLoading } = useHasAlertInstancePluginLinks(rule, instances);
+
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -40,15 +41,6 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
       })),
     [instances, rule]
   );
-
-  // Detect if any plugins have registered alert instance actions at all. If none are registered,
-  // we avoid adding the plugin-actions column so the table doesn't reserve an empty 40px column.
-  const { links: anyInstanceActionLinks } = usePluginLinks({
-    extensionPointId: PluginExtensionPoints.AlertInstanceAction,
-    limitPerPlugin: 1,
-  });
-
-  const showPluginActionsColumn = anyInstanceActionLinks.length > 0;
 
   const columns: AlertTableColumnProps[] = [
     {
@@ -95,8 +87,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
           } satisfies AlertTableColumnProps,
         ]
       : []),
-    // Only include the plugin actions column when there are registered plugins that can provide actions.
-    ...(showPluginActionsColumn
+    ...(hasPluginLinks || isPluginLinksLoading
       ? [
           {
             id: 'plugin-actions',
@@ -105,8 +96,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
             renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
               <AlertInstanceExtensionPoint rule={rule} instance={alert} />
             ),
-            size: '40px',
-          },
+          } satisfies AlertTableColumnProps,
         ]
       : []),
   ];
