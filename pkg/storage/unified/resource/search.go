@@ -2199,13 +2199,17 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				if keepDeleted {
 					convertStart := time.Now()
 					doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
-					phases.recordConvert(time.Since(convertStart), err == nil)
+					// A failure here still leaves the removal below to give the index, so
+					// nothing is lost and this is not counted as producing nothing. The
+					// marker that could not be built is logged.
+					phases.recordConvert(time.Since(convertStart), true)
 					if err != nil {
 						span.RecordError(err)
 						logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
 					}
 				} else {
-					// The document is removed rather than converted, so it is not a drop.
+					// The document is removed rather than converted, so it produced
+					// something for the index all the same.
 					phases.recordConvertNotNeeded()
 				}
 				if doc == nil {

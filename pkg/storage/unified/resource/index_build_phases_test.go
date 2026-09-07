@@ -29,7 +29,7 @@ func TestBuildPhaseRecorder(t *testing.T) {
 	rec.flush()
 
 	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
-# HELP index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped, and fetched minus committed is how many did not reach the index.
+# HELP index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.
 # TYPE index_server_build_documents_total counter
 index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 1
 index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
@@ -240,15 +240,21 @@ func TestUpdateCountsDeduplicatedEventsAsConverted(t *testing.T) {
 	require.Equal(t, fetched, converted, "a skipped duplicate must not look like a dropped document")
 }
 
-// A delete counts as converted whether its trash marker was built or the
-// document was simply removed, so it is not mistaken for a dropped document.
+// A delete gives the index something whether its trash marker was built, the
+// marker could not be built, or the index does not keep them, so none of the
+// three may look like a document that produced nothing.
 func TestUpdateCountsDeletesAsConverted(t *testing.T) {
-	for _, keepDeleted := range []bool{true, false} {
-		name := "trash kept"
-		if !keepDeleted {
-			name = "trash off"
-		}
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		keepDeleted bool
+		value       []byte
+	}{
+		{name: "trash kept", keepDeleted: true, value: testObjectJSON("gone", "Gone")},
+		{name: "trash off", keepDeleted: false, value: testObjectJSON("gone", "Gone")},
+		{name: "trash kept but body unusable", keepDeleted: true, value: []byte("not json")},
+	} {
+		keepDeleted, value := tc.keepDeleted, tc.value
+		t.Run(tc.name, func(t *testing.T) {
 			reg := prometheus.NewPedanticRegistry()
 			metrics := ProvideIndexMetrics(reg)
 
@@ -257,7 +263,7 @@ func TestUpdateCountsDeletesAsConverted(t *testing.T) {
 				Action:          resourcepb.WatchEvent_DELETED,
 				Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "gone"},
 				ResourceVersion: 10,
-				Value:           testObjectJSON("gone", "Gone"),
+				Value:           value,
 			}}}
 
 			search := &mockSearchBackend{}
@@ -281,7 +287,7 @@ func TestUpdateCountsDeletesAsConverted(t *testing.T) {
 			fetched := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseFetch}, labels...)...))
 			converted := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseConvert}, labels...)...))
 			require.Equal(t, 1.0, fetched)
-			require.Equal(t, fetched, converted, "a delete must not look like a dropped document")
+			require.Equal(t, fetched, converted, "a delete always gives the index something")
 		})
 	}
 }

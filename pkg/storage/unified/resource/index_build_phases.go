@@ -53,19 +53,19 @@ func (r *buildPhaseRecorder) recordFetchWithNoValue(d time.Duration) {
 	r.fetch += d
 }
 
-// recordConvert counts an attempt to build a search document. Only successful
-// attempts add to the converted total, so fetched minus converted is how many
-// documents were dropped.
-func (r *buildPhaseRecorder) recordConvert(d time.Duration, ok bool) {
+// recordConvert counts an attempt to build a search document. Only attempts
+// that produced something for the index add to the converted total, so fetched
+// minus converted is how many documents produced nothing.
+func (r *buildPhaseRecorder) recordConvert(d time.Duration, produced bool) {
 	r.convert += d
-	if ok {
+	if produced {
 		r.converted++
 	}
 }
 
 // recordConvertNotNeeded counts a document that needs no search document, such
 // as a delete when the index does not keep deleted documents, so it is not
-// mistaken for one that failed to convert.
+// mistaken for one that produced nothing.
 func (r *buildPhaseRecorder) recordConvertNotNeeded() {
 	r.converted++
 }

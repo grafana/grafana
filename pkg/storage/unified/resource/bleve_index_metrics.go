@@ -179,7 +179,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{"phase", "path", "group", "resource"}),
 		BuildDocuments: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_documents_total",
-			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped, and fetched minus committed is how many did not reach the index.",
+			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.",
 		}, []string{"phase", "path", "group", "resource"}),
 		BuildSourceBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_source_bytes_total",
