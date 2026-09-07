@@ -21,7 +21,7 @@ func main() {
 		log.Fatal("no file specified, input", input, ", output", output)
 	}
 
-	//nolint
+	// nolint
 	b, err := os.ReadFile(input)
 	if err != nil {
 		log.Fatal(err)
@@ -41,18 +41,8 @@ func main() {
 	}
 
 	if info["title"] == nil {
-		info["title"] = "Unified Alerting API"
+		info["title"] = "Grafana Alerting API."
 	}
-
-	// The alertmanager dependency (api/v2/restapi/doc.go) contains its own
-	// swagger:meta block that go-swagger picks up during spec generation.
-	// This injects the alertmanager's host, basePath, and license into the
-	// ngalert spec, overriding the values from our own swagger:meta in
-	// definitions/api.go. Strip these so the ngalert sub-spec doesn't
-	// pollute the merged Grafana API spec with incorrect values.
-	delete(info, "license")
-	delete(data, "host")
-	data["basePath"] = "/api"
 
 	definitions, ok := data["definitions"]
 	if !ok {

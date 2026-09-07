@@ -23,6 +23,7 @@ function setup(
     isNewPr?: boolean;
     repoType?: RepoType;
     action?: string;
+    actionProp?: 'create' | 'update' | 'delete' | 'move';
     prTitle?: string;
     branchInfo?: PreviewBranchInfo;
     originalUrl?: string;
@@ -36,6 +37,7 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    action: options.actionProp,
     branchInfo: options.branchInfo,
     originalUrl: options.originalUrl,
     behindBranch: options.behindBranch,
@@ -219,6 +221,53 @@ describe('PreviewBannerViewPR', () => {
 
     it('should still render PR button for delete action', () => {
       setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
+
+      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+  });
+
+  describe('action prop precedence', () => {
+    it('renders the update title from the action prop even when isNewPr is true', () => {
+      setup({ prURL: 'test-url', isNewPr: true, actionProp: 'update' });
+
+      expect(screen.getByText('A resource has been updated in a branch in GitHub.')).toBeInTheDocument();
+      expect(screen.queryByText('A new resource has been created in a branch in GitHub.')).not.toBeInTheDocument();
+    });
+
+    it('renders the move title from the action prop', () => {
+      setup({ prURL: 'test-url', isNewPr: true, actionProp: 'move' });
+
+      expect(screen.getByText('A resource has been moved in a branch in GitHub.')).toBeInTheDocument();
+    });
+
+    it('renders the create title when the action prop is create', () => {
+      setup({ prURL: 'test-url', isNewPr: true, actionProp: 'create' });
+
+      expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
+    });
+
+    it('takes precedence over the action URL param', () => {
+      setup({ prURL: 'test-url', isNewPr: true, action: 'create', actionProp: 'update' });
+
+      expect(screen.getByText('A resource has been updated in a branch in GitHub.')).toBeInTheDocument();
+    });
+
+    it('falls back to the action URL param when no action prop is provided', () => {
+      setup({ prURL: 'test-url', isNewPr: true, action: 'update' });
+
+      expect(screen.getByText('A resource has been updated in a branch in GitHub.')).toBeInTheDocument();
+    });
+
+    it('keeps the "View pull request" button for an existing-PR update (button tracks isNewPr, not action)', () => {
+      setup({ prURL: 'test-url', isNewPr: false, actionProp: 'update' });
+
+      expect(screen.getByText('A resource has been updated in a branch in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('View pull request in GitHub')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in GitHub')).not.toBeInTheDocument();
+    });
+
+    it('shows the "Open pull request" button for a new-branch update', () => {
+      setup({ prURL: 'test-url', isNewPr: true, actionProp: 'update' });
 
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
     });

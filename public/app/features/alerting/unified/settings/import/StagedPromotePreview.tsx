@@ -97,11 +97,7 @@ function MergePreview({ stats }: { stats: PromoteStatsSummary }) {
         />
       )}
       {stats.route && (
-        <MergeRow
-          icon="sitemap"
-          count={1}
-          noun={t('alerting.settings.import.promote.merge-route', 'notification route added')}
-        />
+        <MergeRow icon="sitemap" count={1} noun={t('alerting.settings.import.promote.merge-route', 'route added')} />
       )}
     </Stack>
   );

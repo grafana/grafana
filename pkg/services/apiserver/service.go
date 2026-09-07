@@ -414,7 +414,7 @@ func (s *service) start(ctx context.Context) error {
 	// and the served WebServices, or the endpoint works but is undiscoverable.
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(false)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
 	searchRoutes := searchroutes.Build(searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
 
 	// Add OpenAPI specs for each group+version (existing builders)
@@ -464,7 +464,7 @@ func (s *service) start(ctx context.Context) error {
 			StorageClient:         s.unified,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
-			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
 			SecureValues:          s.secrets,
 			ConfigProvider:        s.restConfigProvider,
 			Metrics:               s.metrics,

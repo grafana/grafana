@@ -896,6 +896,19 @@ export const versionedComponents = {
       },
     },
     ElementEditPane: {
+      List: {
+        ListItem: {
+          editButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit edit button ${itemKey}`,
+          },
+          duplicateButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit duplicate button ${itemKey}`,
+          },
+          deleteButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit delete button ${itemKey}`,
+          },
+        },
+      },
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },
@@ -1053,6 +1066,14 @@ export const versionedComponents = {
     rows: {
       '13.1.0': 'data-testid Query editor row',
       [MIN_GRAFANA_VERSION]: 'Query editor row',
+    },
+  },
+  QueryEditorCoauthoring: {
+    selectionToolbar: {
+      '13.3.0': 'data-testid query-coauthoring-selection-toolbar',
+    },
+    container: {
+      '13.3.0': 'data-testid query-coauthoring-scroll-body',
     },
   },
   QueryEditorRow: {
@@ -1582,6 +1603,20 @@ export const versionedComponents = {
     },
     filtersRow: {
       '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
+    },
+    shareMenu: {
+      triggerButton: {
+        '13.3.0': 'data-testid TraceViewer share trigger-button',
+      },
+      copyLinkButton: {
+        '13.3.0': 'data-testid TraceViewer share copy-link-button',
+      },
+      exportJsonButton: {
+        '13.3.0': 'data-testid TraceViewer share export-json-button',
+      },
+      feedbackLink: {
+        '13.3.0': 'data-testid TraceViewer share feedback-link',
+      },
     },
   },
   QueryField: {

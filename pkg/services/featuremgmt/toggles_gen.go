@@ -415,10 +415,6 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
-	// FlagImprovedExternalSessionHandling
-	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
-	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
-
 	// FlagUseSessionStorageForRedirection
 	// Use session storage for handling the redirection after login
 	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
@@ -498,6 +494,14 @@ const (
 	// FlagTeamHttpHeadersFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformST
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformST = "datasources.teamHttpHeadersFromAppPlatformST"
+
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
@@ -925,10 +929,6 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
-
-	// FlagPreferencesRerouteLegacyAPIs
-	// Use K8s client implementation for legacy preferences API
-	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
 
 	// FlagPluginsMarketplaceLicensing
 	// Enables marketplace plugin licensing
