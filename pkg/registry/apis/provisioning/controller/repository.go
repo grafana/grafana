@@ -511,12 +511,12 @@ func isQuotaExceeded(conditions []v1.Condition) bool {
 }
 
 // resolveQuotaStatus retrieves current quota limits, falling back to the cached status for observed
-// repositories when the lookup fails and tracking how long that cache has been stale. New repositories
-// return the lookup error because they do not have a known valid cached quota.
+// repositories when the lookup fails. New repositories return the lookup error because they do not
+// have a known valid cached quota.
 func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *provisioning.Repository) (provisioning.QuotaStatus, error) {
 	quotaStatus, err := rc.quotaGetter.GetQuotaStatus(ctx, obj.Namespace)
 	if err == nil {
-		quotaStatus.StaleSince = 0
+		quotaStatus.UpdatedAt = time.Now().UnixMilli()
 		return quotaStatus, nil
 	}
 
@@ -524,14 +524,9 @@ func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *pro
 		return provisioning.QuotaStatus{}, fmt.Errorf("failed to get quota status: %w", err)
 	}
 
-	now := time.Now()
 	quotaStatus = obj.Status.Quota
-	if quotaStatus.StaleSince == 0 {
-		quotaStatus.StaleSince = now.UnixMilli()
-		logging.FromContext(ctx).Warn("failed to refresh quota status; using cached limits", "error", err)
-	}
-
-	rc.quotaMetrics.observeStaleness(now.Sub(time.UnixMilli(quotaStatus.StaleSince)))
+	logging.FromContext(ctx).Warn("failed to refresh quota status; using cached limits", "error", err, "quota_updated_at", quotaStatus.UpdatedAt)
+	rc.quotaMetrics.observeAge(time.Since(time.UnixMilli(quotaStatus.UpdatedAt)))
 	return quotaStatus, nil
 }
 
@@ -836,12 +831,14 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
 		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
-	if obj.Status.Quota != newQuota {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/quota",
-			"value": newQuota,
-		})
+	if hasQuotaChanged {
+		logger.Info("quota changed",
+			"previous_max_repositories", obj.Status.Quota.MaxRepositories,
+			"max_repositories", newQuota.MaxRepositories,
+			"previous_max_resources_per_repository", obj.Status.Quota.MaxResourcesPerRepository,
+			"max_resources_per_repository", newQuota.MaxResourcesPerRepository,
+		)
+		rc.quotaMetrics.recordChange()
 	}
 
 	var shouldGenerateToken bool
@@ -878,7 +875,6 @@ func (rc *RepositoryController) process(key string) (err error) {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		reason = "quota_changed"
-		logger.Info("quota changed", "quota", newQuota)
 	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		reason = "webhook_missing"
 		logger.Info("webhook missing, reconciling")
@@ -891,6 +887,14 @@ func (rc *RepositoryController) process(key string) (err error) {
 		return nil
 	}
 	span.SetAttributes(attribute.String("reconcile.reason", reason))
+
+	if hasQuotaChanged {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
+		})
+	}
 
 	if shouldGenerateToken {
 		logger.Info("updating token for repository")
@@ -1101,6 +1105,15 @@ func (rc *RepositoryController) process(key string) (err error) {
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
+	// Persist a timestamp-only quota refresh with other status changes so it does not
+	// create its own informer update and reconciliation loop.
+	if !hasQuotaChanged && obj.Status.Quota != newQuota && len(patchOperations) > 0 {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
+		})
+	}
 
 	// Apply all patch operations
 	if patchErr := applyPatches(); patchErr != nil {

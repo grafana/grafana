@@ -968,10 +968,10 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		require.ErrorIs(t, err, lookupErr)
 		assert.ErrorContains(t, err, "failed to get quota status")
 		assert.Equal(t, provisioning.QuotaStatus{}, status)
-		assert.Equal(t, uint64(0), histogramCount(t, reg, repositoryQuotaStalenessMetric))
+		assert.Equal(t, uint64(0), histogramCount(t, reg, repositoryQuotaAgeMetric))
 	})
 
-	t.Run("existing repository starts using cached quota", func(t *testing.T) {
+	t.Run("existing repository uses cached quota and its refresh timestamp", func(t *testing.T) {
 		reg := prometheus.NewPedanticRegistry()
 		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
 		getter.SetError(lookupErr)
@@ -979,6 +979,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			quotaGetter:  getter,
 			quotaMetrics: registerRepositoryQuotaMetrics(reg),
 		}
+		updatedAt := time.Now().Add(-time.Minute).UnixMilli()
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
 			Status: provisioning.RepositoryStatus{
@@ -986,21 +987,20 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 				Quota: provisioning.QuotaStatus{
 					MaxRepositories:           5,
 					MaxResourcesPerRepository: 100,
+					UpdatedAt:                 updatedAt,
 				},
 			},
 		}
-		before := time.Now().UnixMilli()
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
 		assert.Equal(t, int64(5), status.MaxRepositories)
 		assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
-		assert.GreaterOrEqual(t, status.StaleSince, before)
-		assert.LessOrEqual(t, status.StaleSince, time.Now().UnixMilli())
-		assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryQuotaStalenessMetric))
+		assert.Equal(t, updatedAt, status.UpdatedAt)
+		assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryQuotaAgeMetric))
 	})
 
-	t.Run("repeated failure preserves stale timestamp and records age", func(t *testing.T) {
+	t.Run("repeated failure preserves refresh timestamp and records increasing age", func(t *testing.T) {
 		reg := prometheus.NewPedanticRegistry()
 		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
 		getter.SetError(lookupErr)
@@ -1008,22 +1008,22 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			quotaGetter:  getter,
 			quotaMetrics: registerRepositoryQuotaMetrics(reg),
 		}
-		staleSince := time.Now().Add(-5 * time.Minute).UnixMilli()
+		updatedAt := time.Now().Add(-5 * time.Minute).UnixMilli()
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.QuotaStatus{
 					MaxRepositories: 5,
-					StaleSince:      staleSince,
+					UpdatedAt:       updatedAt,
 				},
 			},
 		}
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, staleSince, status.StaleSince)
-		family := gatherMetrics(t, reg)[repositoryQuotaStalenessMetric]
+		assert.Equal(t, updatedAt, status.UpdatedAt)
+		family := gatherMetrics(t, reg)[repositoryQuotaAgeMetric]
 		histogram := family.GetMetric()[0].GetHistogram()
 		assert.Equal(t, uint64(1), histogram.GetSampleCount())
 		assert.InDelta(t, 300, histogram.GetSampleSum(), 1)
@@ -1032,17 +1032,17 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		repo.Status.Quota = status
 		status, err = rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
-		assert.Equal(t, staleSince, status.StaleSince)
-		histogram = gatherMetrics(t, reg)[repositoryQuotaStalenessMetric].GetMetric()[0].GetHistogram()
+		assert.Equal(t, updatedAt, status.UpdatedAt)
+		histogram = gatherMetrics(t, reg)[repositoryQuotaAgeMetric].GetMetric()[0].GetHistogram()
 		assert.Equal(t, uint64(2), histogram.GetSampleCount())
 		assert.GreaterOrEqual(t, histogram.GetSampleSum()-firstAge, firstAge)
 	})
 
-	t.Run("successful refresh clears stale timestamp", func(t *testing.T) {
+	t.Run("successful refresh updates timestamp", func(t *testing.T) {
 		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
 			MaxRepositories:           8,
 			MaxResourcesPerRepository: 200,
-			StaleSince:                time.Now().Add(-time.Hour).UnixMilli(),
+			UpdatedAt:                 time.Now().Add(-time.Hour).UnixMilli(),
 		})
 		rc := &RepositoryController{quotaGetter: getter}
 		repo := &provisioning.Repository{
@@ -1051,16 +1051,18 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 				ObservedGeneration: 1,
 				Quota: provisioning.QuotaStatus{
 					MaxRepositories: 5,
-					StaleSince:      time.Now().Add(-5 * time.Minute).UnixMilli(),
+					UpdatedAt:       time.Now().Add(-5 * time.Minute).UnixMilli(),
 				},
 			},
 		}
+		before := time.Now().UnixMilli()
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
 		require.NoError(t, err)
 		assert.Equal(t, int64(8), status.MaxRepositories)
 		assert.Equal(t, int64(200), status.MaxResourcesPerRepository)
-		assert.Zero(t, status.StaleSince)
+		assert.GreaterOrEqual(t, status.UpdatedAt, before)
+		assert.LessOrEqual(t, status.UpdatedAt, time.Now().UnixMilli())
 	})
 }
 
@@ -1286,6 +1288,8 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 		t.Run(tc.name, func(t *testing.T) {
 			namespace := "default"
 			repoName := "test-repo"
+			reg := prometheus.NewPedanticRegistry()
+			quotaMetrics := registerRepositoryQuotaMetrics(reg)
 
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1344,6 +1348,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			rc := &RepositoryController{
 				repos:         repoGetter,
 				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
+				quotaMetrics:  quotaMetrics,
 				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 				healthChecker: healthChecker,
 				statusPatcher: patcher,
@@ -1355,6 +1360,12 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 
 			err := rc.process(namespace + "/" + repoName)
 			assert.NoError(t, err)
+			expectedChanges := 0.0
+			if tc.oldQuota.MaxRepositories != tc.newQuota.MaxRepositories ||
+				tc.oldQuota.MaxResourcesPerRepository != tc.newQuota.MaxResourcesPerRepository {
+				expectedChanges = 1
+			}
+			assert.Equal(t, expectedChanges, counterValue(t, reg, repositoryQuotaChangesMetric))
 
 			if tc.expectReconcile {
 				assert.NotEmpty(t, patcher.ops,
@@ -1369,7 +1380,10 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				assert.True(t, found, "expected /status/quota patch operation")
 				if found {
 					assert.Equal(t, "replace", quotaOp["op"])
-					assert.Equal(t, tc.newQuota, quotaOp["value"])
+					patchedQuota := quotaOp["value"].(provisioning.QuotaStatus)
+					assert.Equal(t, tc.newQuota.MaxRepositories, patchedQuota.MaxRepositories)
+					assert.Equal(t, tc.newQuota.MaxResourcesPerRepository, patchedQuota.MaxResourcesPerRepository)
+					assert.NotZero(t, patchedQuota.UpdatedAt)
 				}
 
 				condOp, found := patcher.findPatchOp("/status/conditions")
@@ -1395,34 +1409,25 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 	}
 }
 
-func TestRepositoryController_process_QuotaFreshnessOnlyPatchDoesNotForceReconciliation(t *testing.T) {
+func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(t *testing.T) {
 	lookupErr := errors.New("quota service failed")
 	errorGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
 	errorGetter.SetError(lookupErr)
+	updatedAt := time.Now().Add(-5 * time.Minute).UnixMilli()
 	testCases := []struct {
-		name             string
-		quota            provisioning.QuotaStatus
-		getter           quotas.QuotaGetter
-		expectStaleSince bool
+		name   string
+		getter quotas.QuotaGetter
 	}{
 		{
-			name:             "first failed refresh marks cached quota stale",
-			quota:            provisioning.QuotaStatus{MaxRepositories: 5, MaxResourcesPerRepository: 100},
-			getter:           errorGetter,
-			expectStaleSince: true,
+			name:   "failed refresh keeps cached timestamp",
+			getter: errorGetter,
 		},
 		{
-			name: "successful refresh clears stale marker",
-			quota: provisioning.QuotaStatus{
-				MaxRepositories:           5,
-				MaxResourcesPerRepository: 100,
-				StaleSince:                time.Now().Add(-5 * time.Minute).UnixMilli(),
-			},
+			name: "successful refresh waits for an existing reconciliation patch",
 			getter: quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
 				MaxRepositories:           5,
 				MaxResourcesPerRepository: 100,
 			}),
-			expectStaleSince: false,
 		},
 	}
 
@@ -1444,7 +1449,11 @@ func TestRepositoryController_process_QuotaFreshnessOnlyPatchDoesNotForceReconci
 						Healthy: true,
 						Checked: time.Now().UnixMilli(),
 					},
-					Quota: tc.quota,
+					Quota: provisioning.QuotaStatus{
+						MaxRepositories:           5,
+						MaxResourcesPerRepository: 100,
+						UpdatedAt:                 updatedAt,
+					},
 				},
 			}
 
@@ -1475,17 +1484,7 @@ func TestRepositoryController_process_QuotaFreshnessOnlyPatchDoesNotForceReconci
 			err := rc.process("default/repo")
 			require.NoError(t, err)
 			repoFactory.AssertNotCalled(t, "Build", mock.Anything, mock.Anything)
-			require.Len(t, patcher.ops, 1)
-			quotaOp, found := patcher.findPatchOp("/status/quota")
-			require.True(t, found)
-			patchedQuota := quotaOp["value"].(provisioning.QuotaStatus)
-			assert.Equal(t, int64(5), patchedQuota.MaxRepositories)
-			assert.Equal(t, int64(100), patchedQuota.MaxResourcesPerRepository)
-			if tc.expectStaleSince {
-				assert.NotZero(t, patchedQuota.StaleSince)
-			} else {
-				assert.Zero(t, patchedQuota.StaleSince)
-			}
+			assert.Empty(t, patcher.ops)
 		})
 	}
 }
@@ -2735,6 +2734,8 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 			repo.Status.FieldErrors = op["value"].([]provisioning.ErrorDetails)
 		case path == "/status/observedGeneration":
 			repo.Status.ObservedGeneration = op["value"].(int64)
+		case path == "/status/quota":
+			repo.Status.Quota = op["value"].(provisioning.QuotaStatus)
 		case path == "/status/conditions":
 			repo.Status.Conditions = op["value"].([]metav1.Condition)
 		case path == "/status/conditions/-":
@@ -2923,7 +2924,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	require.NoError(t, indexer.Add(repo))
 	repoLister := listers.NewRepositoryLister(indexer)
 
-	// This repo fixture deterministically produces 4 patch ops (health,
+	// This repo fixture deterministically produces 5 patch ops (quota, health,
 	// observedGeneration, two condition adds) on the one and only expected
 	// call; fieldErrors is not patched since both sides are already empty.
 	statusPatcher := mocks.NewStatusPatcher(t)
@@ -2931,6 +2932,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 		On(
 			"Patch",
 			mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),

@@ -6,9 +6,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Use finer resolution during the first hour of quota-service failures, then
-// track prolonged reliance on cached quota at 3, 6, 12, and 24 hours.
-var repositoryQuotaStalenessBuckets = []float64{
+// Use finer resolution during the first hour after the last successful quota
+// refresh, then track prolonged reliance on cached quota at 3, 6, 12, and 24 hours.
+var repositoryQuotaAgeBuckets = []float64{
 	0,
 	time.Minute.Seconds(),
 	(5 * time.Minute).Seconds(),
@@ -22,26 +22,38 @@ var repositoryQuotaStalenessBuckets = []float64{
 }
 
 type repositoryQuotaMetrics struct {
-	staleness prometheus.Histogram
+	age     prometheus.Histogram
+	changes prometheus.Counter
 }
 
 func registerRepositoryQuotaMetrics(registry prometheus.Registerer) *repositoryQuotaMetrics {
-	staleness := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "grafana_provisioning_repository_quota_staleness_seconds",
+	age := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "grafana_provisioning_repository_quota_age_seconds",
 		Help:    "Age of cached repository quota limits used after a quota refresh failure.",
-		Buckets: repositoryQuotaStalenessBuckets,
+		Buckets: repositoryQuotaAgeBuckets,
 	})
-	registry.MustRegister(staleness)
+	changes := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "grafana_provisioning_repository_quota_changes_total",
+		Help: "Total number of repository quota limit changes observed by the controller.",
+	})
+	registry.MustRegister(age, changes)
 
-	return &repositoryQuotaMetrics{staleness: staleness}
+	return &repositoryQuotaMetrics{age: age, changes: changes}
 }
 
-func (m *repositoryQuotaMetrics) observeStaleness(age time.Duration) {
+func (m *repositoryQuotaMetrics) observeAge(age time.Duration) {
 	if m == nil {
 		return
 	}
 	if age < 0 {
 		age = 0
 	}
-	m.staleness.Observe(age.Seconds())
+	m.age.Observe(age.Seconds())
+}
+
+func (m *repositoryQuotaMetrics) recordChange() {
+	if m == nil {
+		return
+	}
+	m.changes.Inc()
 }

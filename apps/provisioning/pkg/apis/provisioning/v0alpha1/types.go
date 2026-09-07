@@ -710,9 +710,9 @@ type QuotaStatus struct {
 	// 0 means unlimited.
 	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
 
-	// StaleSince is when the controller started using cached quota limits after a refresh failed.
-	// It is expressed as Unix milliseconds. 0 means the quota limits are fresh.
-	StaleSince int64 `json:"staleSince,omitempty"`
+	// UpdatedAt is when the controller last successfully refreshed these quota limits.
+	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
+	UpdatedAt int64 `json:"updatedAt,omitempty"`
 }
 
 func (QuotaStatus) OpenAPIModelName() string {

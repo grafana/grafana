@@ -14,9 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails verifies that existing repository updates
+// TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails verifies that existing repository updates
 // use cached quota during lookup failures, new repositories remain rejected, and recovery refreshes quota status.
-func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *testing.T) {
+func TestIntegrationProvisioning_RepositoryUsesCachedQuotaWhenRefreshFails(t *testing.T) {
 	helper := sharedHelper(t)
 	initialQuota := provisioning.QuotaStatus{
 		MaxRepositories:           5,
@@ -38,11 +38,13 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
 		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
 		assert.Equal(collect, repo.Generation, repo.Status.ObservedGeneration)
-		assert.Zero(collect, repo.Status.Quota.StaleSince)
+		assert.NotZero(collect, repo.Status.Quota.UpdatedAt)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
+	initialUpdatedAt := common.MustFromUnstructured[provisioning.Repository](t, repoObj).Status.Quota.UpdatedAt
+	require.NotZero(t, initialUpdatedAt)
 	lookupErr := apierrors.NewInternalError(errors.New("quota service returned 500"))
 	helper.SetQuotaError(lookupErr)
 
@@ -59,7 +61,7 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
 		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
 		assert.Equal(collect, updatedObj.GetGeneration(), repo.Status.ObservedGeneration)
-		assert.NotZero(collect, repo.Status.Quota.StaleSince)
+		assert.Equal(collect, initialUpdatedAt, repo.Status.Quota.UpdatedAt)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	newRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
@@ -88,16 +90,11 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		assert.Equal(collect, refreshedQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
 		assert.Equal(collect, refreshedQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
-		assert.Zero(collect, repo.Status.Quota.StaleSince)
+		assert.Greater(collect, repo.Status.Quota.UpdatedAt, initialUpdatedAt)
 
-		quota, found, nestedErr := nestedField(obj.Object, "status", "quota")
-		if !assert.NoError(collect, nestedErr) || !assert.True(collect, found) {
-			return
-		}
-		quotaMap, ok := quota.(map[string]interface{})
-		if assert.True(collect, ok) {
-			_, found = quotaMap["staleSince"]
-			assert.False(collect, found, "staleSince should be removed after quota refresh recovers")
-		}
+		updatedAt, found, nestedErr := unstructured.NestedInt64(obj.Object, "status", "quota", "updatedAt")
+		assert.NoError(collect, nestedErr)
+		assert.True(collect, found, "updatedAt should be persisted after quota refresh recovers")
+		assert.Equal(collect, repo.Status.Quota.UpdatedAt, updatedAt)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }

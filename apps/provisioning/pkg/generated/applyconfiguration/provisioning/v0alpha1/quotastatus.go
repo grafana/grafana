@@ -15,9 +15,9 @@ type QuotaStatusApplyConfiguration struct {
 	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
 	// 0 means unlimited.
 	MaxResourcesPerRepository *int64 `json:"maxResourcesPerRepository,omitempty"`
-	// StaleSince is when the controller started using cached quota limits after a refresh failed.
-	// It is expressed as Unix milliseconds. 0 means the quota limits are fresh.
-	StaleSince *int64 `json:"staleSince,omitempty"`
+	// UpdatedAt is when the controller last successfully refreshed these quota limits.
+	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
+	UpdatedAt *int64 `json:"updatedAt,omitempty"`
 }
 
 // QuotaStatusApplyConfiguration constructs a declarative configuration of the QuotaStatus type for use with
@@ -42,10 +42,10 @@ func (b *QuotaStatusApplyConfiguration) WithMaxResourcesPerRepository(value int6
 	return b
 }
 
-// WithStaleSince sets the StaleSince field in the declarative configuration to the given value
+// WithUpdatedAt sets the UpdatedAt field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the StaleSince field is set to the value of the last call.
-func (b *QuotaStatusApplyConfiguration) WithStaleSince(value int64) *QuotaStatusApplyConfiguration {
-	b.StaleSince = &value
+// If called multiple times, the UpdatedAt field is set to the value of the last call.
+func (b *QuotaStatusApplyConfiguration) WithUpdatedAt(value int64) *QuotaStatusApplyConfiguration {
+	b.UpdatedAt = &value
 	return b
 }

@@ -2306,9 +2306,9 @@ func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallb
 							Format:      "int64",
 						},
 					},
-					"staleSince": {
+					"updatedAt": {
 						SchemaProps: spec.SchemaProps{
-							Description: "StaleSince is when the controller started using cached quota limits after a refresh failed. It is expressed as Unix milliseconds. 0 means the quota limits are fresh.",
+							Description: "UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
