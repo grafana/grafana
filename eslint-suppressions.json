@@ -799,11 +799,6 @@
       "count": 2
     }
   },
-  "public/app/core/components/OptionsUI/NumberInput.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
     "@grafana/require-no-margin": {
       "count": 1

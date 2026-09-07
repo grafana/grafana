@@ -2746,6 +2746,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/plugin-compat@workspace:packages/grafana-plugin-compat":
+  version: 0.0.0-use.local
+  resolution: "@grafana/plugin-compat@workspace:packages/grafana-plugin-compat"
+  dependencies:
+    "@typescript/native": "npm:typescript@^7.0.2"
+    rimraf: "npm:^6.0.1"
+    rollup: "npm:^4.60.1"
+    rollup-plugin-esbuild: "npm:6.2.1"
+    rollup-plugin-node-externals: "npm:^8.0.0"
+    typescript: "npm:@typescript/typescript6@^6.0.2"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/plugin-configs@npm:13.3.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
@@ -27532,37 +27545,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pacote@npm:21.0.1":
-  version: 21.0.1
-  resolution: "pacote@npm:21.0.1"
+"pacote@npm:21.5.1":
+  version: 21.5.1
+  resolution: "pacote@npm:21.5.1"
   dependencies:
-    "@npmcli/git": "npm:^6.0.0"
-    "@npmcli/installed-package-contents": "npm:^3.0.0"
-    "@npmcli/package-json": "npm:^7.0.0"
-    "@npmcli/promise-spawn": "npm:^8.0.0"
-    "@npmcli/run-script": "npm:^10.0.0"
-    cacache: "npm:^20.0.0"
-    fs-minipass: "npm:^3.0.0"
-    minipass: "npm:^7.0.2"
-    npm-package-arg: "npm:^13.0.0"
-    npm-packlist: "npm:^10.0.1"
-    npm-pick-manifest: "npm:^10.0.0"
-    npm-registry-fetch: "npm:^19.0.0"
-    proc-log: "npm:^5.0.0"
-    promise-retry: "npm:^2.0.1"
-    sigstore: "npm:^4.0.0"
-    ssri: "npm:^12.0.0"
-    tar: "npm:^7.4.3"
-  bin:
-    pacote: bin/index.js
-  checksum: 10/7293aec3d2464da7e22b949b1cee3ccb5e5082dfb5798506ce731fed83878339ca5790935d4ff9f9c97ca3df48dd79ff6a8829d367953e9b16d53c7134fc2c6d
-  languageName: node
-  linkType: hard
-
-"pacote@npm:^21.0.0, pacote@npm:^21.0.2":
-  version: 21.0.4
-  resolution: "pacote@npm:21.0.4"
-  dependencies:
+    "@gar/promise-retry": "npm:^1.0.0"
     "@npmcli/git": "npm:^7.0.0"
     "@npmcli/installed-package-contents": "npm:^4.0.0"
     "@npmcli/package-json": "npm:^7.0.0"
@@ -27576,13 +27563,12 @@ __metadata:
     npm-pick-manifest: "npm:^11.0.1"
     npm-registry-fetch: "npm:^19.0.0"
     proc-log: "npm:^6.0.0"
-    promise-retry: "npm:^2.0.1"
     sigstore: "npm:^4.0.0"
     ssri: "npm:^13.0.0"
     tar: "npm:^7.4.3"
   bin:
     pacote: bin/index.js
-  checksum: 10/1c706ee45a683b559d0c9591e820627861eb58596507072a63e122c073af3f69f170017f453e44186496a9058feb430a21a43a8531739c5651f279be5fb065f1
+  checksum: 10/30054b7ea3d50943cf13804ff006ecda8ff2c1f9c22b3a5ee2c9b5170ac374052c3d6a70621219e3dcd69a728b795afe3677488e2d541dd9911be1b35e4d1f8e
   languageName: node
   linkType: hard
 

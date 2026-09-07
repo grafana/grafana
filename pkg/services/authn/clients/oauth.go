@@ -74,14 +74,14 @@ var (
 
 func ProvideOAuth(
 	name string, cfgProvider configprovider.ConfigProvider, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service,
+	socialService social.Service, settingsProvider setting.Provider,
 	features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
 		log.New(name), cfgProvider, tracer, oauthService,
-		socialService, features,
+		socialService, settingsProvider, features,
 	}
 }
 
@@ -93,9 +93,10 @@ type OAuth struct {
 	cfgProvider  configprovider.ConfigProvider
 	tracer       trace.Tracer
 
-	oauthService  oauthtoken.OAuthTokenService
-	socialService social.Service
-	features      featuremgmt.FeatureToggles
+	oauthService     oauthtoken.OAuthTokenService
+	socialService    social.Service
+	settingsProvider setting.Provider
+	features         featuremgmt.FeatureToggles
 }
 
 func (c *OAuth) Name() string {
@@ -213,6 +214,13 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	lookupParams := login.UserLookupParams{}
 	allowInsecureEmailLookup := cfg.OAuthAllowInsecureEmailLookup
+	// This setting is still writable through /api/admin/settings and stored by
+	// the runtime settings provider. ConfigProvider does not include those
+	// database overrides, so keep this read on the legacy provider until that
+	// write path is migrated to the settings service.
+	if c.settingsProvider != nil {
+		allowInsecureEmailLookup = c.settingsProvider.KeyValue("auth", "oauth_allow_insecure_email_lookup").MustBool(allowInsecureEmailLookup)
+	}
 	if allowInsecureEmailLookup {
 		lookupParams.Email = &userInfo.Email
 	}

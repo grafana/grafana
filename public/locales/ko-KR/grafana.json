@@ -2646,7 +2646,9 @@
       "view-in-explore": "탐색에서 보기"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "옵션",
+      "invalid-interval-error": "",
       "label-time-range": "시간 범위",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "최소 간격 = {{minInterval}}"
@@ -3226,6 +3228,7 @@
         "disable-confirm-title": "비활성화하면 지속적인 동기화가 중지됩니다?",
         "disable-success": "Mimir Alertmanager 자동 동기화 비활성화됨",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "이 값은 grafana.ini의 <1>[unified_alerting] external_alertmanager_uid</1> 키에 의해 설정되며 UI에서는 변경할 수 없습니다. 구성 파일을 편집하고 Grafana를 다시 시작하거나, 여기에서 동기화를 관리하려면 해당 키를 제거하세요.",
         "operator-managed-title": "운영자가 관리함",
         "orphan-warning": "구성된 데이터 소스 UID({{uid}})를 사용할 수 없습니다. 계속하려면 동기화를 비활성화하거나 데이터 소스를 복구하세요.",
@@ -3234,6 +3237,7 @@
         "picker-label": "데이터 소스",
         "picker-placeholder": "Mimir 또는 Cortex Alertmanager 데이터 소스를 선택하세요…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "저장을 활성화하려면 Mimir 또는 Cortex Alertmanager 데이터 소스를 선택하세요.",
         "save-disabled-staged-config": "",
         "save-error": "Mimir Alertmanager 자동 동기화 저장 실패",
@@ -5976,11 +5980,14 @@
     "notebook-layout": {
       "description": "패널, 텍스트 및 코드 셀을 세로로 배열한 시퀀스",
       "name": "노트북",
-      "pill": "게시된 노트북",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "시간"
+      "time": "시간",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9675,6 +9682,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "그저께",
           "previousFiscalQuarter": "이전 회계 분기",
@@ -12890,6 +12899,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12913,6 +12926,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -12995,7 +13015,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13003,7 +13022,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13021,6 +13039,9 @@
       "count_other": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13029,6 +13050,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13064,6 +13086,13 @@
     },
     "field-color": {
       "color-by-label": "기준별 색상 시리즈"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17767,7 +17796,7 @@
       "delete-modal-body": "\"{{name}}\"을(를) 삭제하시겠습니까?",
       "delete-modal-confirm": "삭제",
       "delete-modal-title": "변수 삭제",
-      "folder-description": "변수의 범위를 폴더로 지정하거나 루트 대시보드 폴더를 선택하여 전역으로 설정하세요(조직의 모든 곳에서 사용 가능)",
+      "folder-description": "",
       "folder-description-folder-only": "변수의 범위를 편집 가능한 폴더로 지정하세요.",
       "folder-label": "폴더",
       "moved": "변수 이동됨",
@@ -17787,7 +17816,7 @@
       "move": "이동",
       "moving": "이동 중...",
       "title": "변수 이동",
-      "body_other": "선택한 변수 {{count}}개를 이동합니다. 루트 대시보드 폴더를 선택하면 전역으로 설정됩니다(조직의 모든 곳에서 사용 가능).",
+      "body_other": "",
       "body-folder-only_other": "선택한 {{count}}개 변수를 편집 가능한 폴더로 이동하세요."
     },
     "page": {

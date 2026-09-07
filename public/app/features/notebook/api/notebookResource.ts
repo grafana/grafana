@@ -26,6 +26,8 @@ const NOTEBOOK_API_VERSION = `${API_GROUP}/${API_VERSION}`;
 export interface CreatedNotebook {
   uid: string;
   url: string;
+  /** The generation the server assigned it, when the response reported one. */
+  generation?: number;
 }
 
 /**
@@ -70,7 +72,10 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
 
   // The route's own helper, not a path restated here: `opened` compares this against where the push
   // landed, so a second spelling of the route reports success from a page with no notebook on it.
-  return { uid, url: notebookViewUrl(uid) };
+  //
+  // The generation comes back so a notebook created by autosave can be reopened without rebuilding its
+  // scene: NotebookPageStateManager compares it, and a missing number reads as somebody else's write.
+  return { uid, url: notebookViewUrl(uid), generation: result.data?.metadata?.generation };
 }
 
 /**

@@ -638,6 +638,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/data-sources-plugins
 /packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/data-sources-plugins
 
+# @grafana/plugin-compat
+/packages/grafana-plugin-compat/ @grafana/grafana-catalog
+
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
 
