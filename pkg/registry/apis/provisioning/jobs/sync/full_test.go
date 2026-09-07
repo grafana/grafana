@@ -1217,6 +1217,54 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 	repoResources.AssertNumberOfCalls(t, "WriteResourceFromFile", 1)
 }
 
+func TestFullSync_QuotaReleasedWhenCreateFails(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+	})
+
+	changes := []ResourceFileChange{
+		{Action: repository.FileActionCreated, Path: "dashboards/a.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/b.json"},
+	}
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil, nil)
+	progress.On("SetTotal", mock.Anything, 2).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", "dashboards/a.json").Return(false)
+	progress.On("HasDirPathFailedCreation", "dashboards/b.json").Return(false)
+
+	// a.json reserves the single free slot, but its write fails so nothing is
+	// created — the reservation must be handed back.
+	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/a.json", "ref").
+		Return("", schema.GroupVersionKind{}, 0, errors.New("write failed"))
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/a.json" && r.Error() != nil
+	})).Return().Once()
+
+	// Without the release, b.json would be skipped as quota-exceeded even though
+	// actual usage never increased.
+	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/b.json", "ref").
+		Return("dash-b", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/b.json" && r.Error() == nil && r.Warning() == nil
+	})).Return().Once()
+
+	// 9 of 10 used: exactly one creation allowed.
+	tracker := quotas.NewInMemoryQuotaTracker(9, 10)
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker, false, 0)
+	require.NoError(t, err)
+
+	repoResources.AssertNumberOfCalls(t, "WriteResourceFromFile", 2)
+}
+
 func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 	repo := repository.NewMockRepository(t)
 	repoResources := resources.NewMockRepositoryResources(t)

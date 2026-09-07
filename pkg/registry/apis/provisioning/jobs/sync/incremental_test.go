@@ -670,6 +670,51 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 		{
+			name:         "failed create releases its quota slot for the next create",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/first.json",
+						Ref:    "new-ref",
+					},
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/second.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/first.json").Return(false)
+				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
+
+				// first.json reserves the single free slot, but its write fails so
+				// nothing is created — the reservation must be handed back.
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/first.json", "new-ref").
+					Return("", schema.GroupVersionKind{}, 0, errors.New("write failed"))
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Path() == "dashboards/first.json" && result.Error() != nil
+				})).Return()
+
+				// Without the release, second.json would be skipped as quota-exceeded
+				// even though actual usage never increased.
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/second.json", "new-ref").
+					Return("second-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Path() == "dashboards/second.json" && result.Error() == nil && result.Warning() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
 			name:         "quota allows creation then blocks when full",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {

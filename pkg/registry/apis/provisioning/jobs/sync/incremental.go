@@ -275,6 +275,11 @@ func applyIncrementalChanges(
 			name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
 				writeSpan.RecordError(err)
+				// Nothing was created, so the slot reserved above was never consumed —
+				// whether the write hard-failed or was skipped (e.g. a cross-file
+				// duplicate). Give it back, otherwise a later valid create in this same
+				// sync can be wrongly rejected as quota-exceeded.
+				quotaTracker.Release()
 				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 			}
 			resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
