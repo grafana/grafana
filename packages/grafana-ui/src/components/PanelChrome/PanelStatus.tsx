@@ -46,17 +46,26 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: P
     return <PanelStatusPopover items={items} onInspect={onClick} ariaLabel={ariaLabel} />;
   }
 
-  return (
+  const button = (
     <Button
       onClick={onClick}
       variant={'destructive'}
       icon="exclamation-triangle"
       size="sm"
-      tooltip={message || ''}
       aria-label={ariaLabel}
       data-testid={selectors.components.Panels.Panel.status('error')}
     />
   );
+
+  if (message) {
+    return (
+      <Tooltip content={message} placement="bottom-start" interactive>
+        {button}
+      </Tooltip>
+    );
+  }
+
+  return button;
 }
 
 interface PanelStatusPopoverProps {
