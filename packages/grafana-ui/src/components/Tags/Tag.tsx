@@ -92,7 +92,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
         borderRadius: theme.shape.radius.sm,
       },
       visualRefreshEnabled && {
-        gap: theme.spacing.x0_5,
+        gap: '3px',
         borderRadius: theme.shape.radius.pill,
         padding: `3px ${theme.spacing.x1}`,
         // needed for the icon/text gap below to take effect
