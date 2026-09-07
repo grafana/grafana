@@ -132,11 +132,11 @@ func classifyTestResultReason(testResults *provisioning.TestResults) string {
 	case 401:
 		return provisioning.ReasonAuthenticationFailed
 	case 403:
-		// A write-permission-denied 403 is reachable (isReachableTestResult
-		// special-cases it) -- the credentials work, so it's not an auth
-		// failure, just a configuration gap. Fall through to the default case
-		// below instead of over-classifying it.
-		if !isReachableTestResult(testResults) {
+		// A write-permission-denied 403 leaves the repository accessible
+		// (isRepositoryAccessible special-cases it) -- the credentials work, so
+		// it's not an auth failure, just a configuration gap. Fall through to the
+		// default case below instead of over-classifying it.
+		if !isRepositoryAccessible(testResults) {
 			return provisioning.ReasonAuthenticationFailed
 		}
 	case 503: // Service unavailable

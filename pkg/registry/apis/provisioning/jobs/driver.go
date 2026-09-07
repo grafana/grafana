@@ -507,20 +507,14 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			return nil
 		}
 
-		// Every worker talks to the repository, so a repository known to be
-		// unreachable (revoked credentials, expired token) only produces a
-		// failed job the user can't act on from the job itself.
-		if health := r.Status.Health; health.Checked > 0 && !health.Healthy && health.Error == provisioning.HealthFailureHealth {
-			if ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady); ready != nil &&
-				ready.Status == metav1.ConditionFalse && ready.Reason == provisioning.ReasonAuthenticationFailed &&
-				ready.ObservedGeneration == r.Generation {
-				logger.Info("repository is unreachable - skip job",
-					"health_error", health.Error,
-					"ready_reason", ready.Reason,
-				)
-				recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository is unreachable - job skipped")).Build())
-				return nil
-			}
+		// Every worker talks to the repository, so a repository whose credentials
+		// are known to be broken only produces a failed job the user can't act on
+		// from the job itself. Skip it with a warning instead of burning the job
+		// success-rate SLI; the repository status stays the place the reason lives.
+		if repositoryAuthenticationFailed(r) {
+			logger.Info("repository authentication failed - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository authentication failed - job skipped")).Build())
+			return nil
 		}
 
 		err = worker.Process(ctx, repo, *job, recorder)
@@ -533,6 +527,34 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// repositoryAuthenticationFailed reports whether the repository's latest health
+// check concluded its credentials are broken (revoked or expired), so any job
+// against it would fail in a way only the user can fix on the repository itself.
+//
+// The check is intentionally narrow, so a repository that is merely
+// misconfigured or briefly unavailable is not skipped:
+//   - Checked > 0: trust the status only once a health check has actually run,
+//     so a brand-new repository is not skipped before its first check.
+//   - Healthy == false with Error == HealthFailureHealth: a webhook-permission
+//     gap (HealthFailureHook) doesn't mean content reads/writes are broken.
+//   - Ready == AuthenticationFailed: keys off the structured condition reason,
+//     not health message text, so an accessible-but-blocked failure (e.g. branch
+//     protection, classified InvalidSpec) does not trigger the skip.
+//   - ObservedGeneration == Generation: ignore a stale condition from before a
+//     spec edit that may already have repaired the credentials.
+func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
+	health := r.Status.Health
+	if health.Checked == 0 || health.Healthy || health.Error != provisioning.HealthFailureHealth {
+		return false
+	}
+
+	ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+	return ready != nil &&
+		ready.Status == metav1.ConditionFalse &&
+		ready.Reason == provisioning.ReasonAuthenticationFailed &&
+		ready.ObservedGeneration == r.Generation
 }
 
 // sumTotalChanges totals the per-summary TotalChanges for the duration-histogram

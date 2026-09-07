@@ -990,11 +990,11 @@ func (rc *RepositoryController) process(key string) (err error) {
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
-	// Captured before the over-quota override status below. We only block hooks being run if the repo is unreachable.
-	// Also not every failed Test() means unreachable: e.g. branch protection blocking direct pushes is
-	// reported. Hooks should still be able to run so a reachability-specific read of the test result is used
-	// instead of the raw Success flag.
-	reachable := isReachableTestResult(testResults)
+	// Captured before the over-quota override status below. We only block hooks being run if the repo is
+	// not accessible. Also not every failed Test() means the repo is inaccessible: e.g. branch protection
+	// blocking direct pushes is reported. Hooks should still be able to run, so an accessibility-specific
+	// read of the test result is used instead of the raw Success flag.
+	accessible := isRepositoryAccessible(testResults)
 
 	// If over quota, override health to unhealthy.
 	if isOverQuota {
@@ -1015,7 +1015,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
 
-	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, reachable, shouldRotateWebhookSecret)
+	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, accessible, shouldRotateWebhookSecret)
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
 	}
@@ -1103,10 +1103,10 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 // processHooks handles hook execution with intelligent retry logic. `suppressed`
 // reports whether there was hook work to do (generation changed or webhook
-// missing) that got skipped this pass due to cooldown/repo unreachability, as
+// missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoHealthy bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1117,9 +1117,9 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	hasWebhookToManage := webhookCapable && (len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty())
 
 	// Suppress the hook retry while the hook-failure cooldown is active, or while
-	// the repository just failed its health check (it's known unreachable, so any
+	// the repository just failed its health check (it's known inaccessible, so any
 	// create/update/delete call against it is doomed).
-	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoHealthy) {
+	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoAccessible) {
 		shouldRunHooks = false
 		suppressed = true
 	}
@@ -1138,10 +1138,10 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
-	// would be an equally doomed call against an unreachable repository, and
-	// skipped during the hook-failure cooldown too: repoHealthy alone doesn't
-	// catch this window, since a skipped health check reads as reachable.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoHealthy && !rc.healthChecker.inHookFailureCooldown(obj) {
+	// would be an equally doomed call against an inaccessible repository, and
+	// skipped during the hook-failure cooldown too: repoAccessible alone doesn't
+	// catch this window, since a skipped health check reads as accessible.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoAccessible && !rc.healthChecker.inHookFailureCooldown(obj) {
 		rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
 		rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
 		rotateSpan.End()
@@ -1184,13 +1184,23 @@ func classifyHookFailureReason(err error) string {
 	}
 }
 
-func isReachableTestResult(testResults *provisioning.TestResults) bool {
+// isRepositoryAccessible reports whether a failed health check still means the
+// repository itself is reachable and its credentials are valid -- i.e. the
+// failure is a config/permission gap on an otherwise-usable repository, not a
+// loss of access to the git server.
+//
+// It returns true for a write-permission-denied 403 (reads still work, only the
+// write was blocked) and for any status that isn't a definitive access failure.
+// It returns false for 401 (bad credentials), 404 (repository gone/hidden), 503
+// (server down), and a bare 403 -- the cases where we genuinely cannot reach or
+// authenticate to the repository.
+func isRepositoryAccessible(testResults *provisioning.TestResults) bool {
 	if testResults == nil || testResults.Success {
 		return true
 	}
 	switch testResults.Code {
 	case http.StatusForbidden:
-		// Couldn't be written to, but was still reachable
+		// Couldn't be written to, but the repository was still accessible.
 		for _, e := range testResults.Errors {
 			if e.Detail == repository.WritePermissionDeniedDetail {
 				return true

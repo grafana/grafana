@@ -341,11 +341,12 @@ func TestClassifyTestResultReason(t *testing.T) {
 			expectedReason: provisioning.ReasonAuthenticationFailed,
 		},
 		{
-			// A write-permission-denied 403 is reachable (isReachableTestResult
-			// special-cases it), so it must not classify as AuthenticationFailed
-			// alongside a genuine 403 -- job-skip logic elsewhere keys off this
-			// Reason and must not skip a repository that's actually usable.
-			name: "forbidden (403) with write permission denied is reachable, not an auth failure",
+			// A write-permission-denied 403 leaves the repository accessible
+			// (isRepositoryAccessible special-cases it), so it must not classify as
+			// AuthenticationFailed alongside a genuine 403 -- job-skip logic
+			// elsewhere keys off this Reason and must not skip a repository that's
+			// actually usable.
+			name: "forbidden (403) with write permission denied is accessible, not an auth failure",
 			testResults: &provisioning.TestResults{
 				Success: false,
 				Code:    http.StatusForbidden,
