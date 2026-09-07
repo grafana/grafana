@@ -70,6 +70,12 @@ import SpanGraph from './SpanGraph';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
+enum HttpStatusClass {
+  Success = '2',
+  ClientError = '4',
+  ServerError = '5',
+}
+
 export type TracePageHeaderProps = {
   trace: Trace | null;
   data: DataFrame;
@@ -168,17 +174,18 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
   const statusValue = status?.length ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
-  const showWarningIcon = statusClass === '4';
-  const showErrorIcon = !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === '5');
-  const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === '2';
+  const showWarningIcon = statusClass === HttpStatusClass.ClientError;
+  const showErrorIcon =
+    !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === HttpStatusClass.ServerError);
+  const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === HttpStatusClass.Success;
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
 
   let statusColor: BadgeColor = 'green';
-  if (statusClass === '4') {
+  if (statusClass === HttpStatusClass.ClientError) {
     statusColor = 'orange';
-  } else if (statusClass === '5') {
+  } else if (statusClass === HttpStatusClass.ServerError) {
     statusColor = 'red';
   }
 
