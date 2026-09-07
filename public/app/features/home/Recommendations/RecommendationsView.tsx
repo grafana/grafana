@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type CSSObject } from '@emotion/react';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -6,7 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { HomeGrid, HOME_SECTION_MIN_WIDTH } from '../HomeGrid';
+import { HomeGrid, homeGridColumnsUp, HOME_SECTION_MIN_WIDTH } from '../HomeGrid';
 import { recommendationsShown } from '../analytics/main';
 import { type Solution, type SolutionId } from '../solutions/types';
 
@@ -92,7 +93,7 @@ export function RecommendationsView({
   }, [items, selectionPending, startingState, activeSolution]);
 
   return (
-    <div className={styles.section}>
+    <div>
       <Stack direction="row" alignItems="center" columnGap={2} rowGap={1} wrap="wrap">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
@@ -260,27 +261,19 @@ function RecommendedCardSkeleton() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  // Same width HomeGrid switches to two columns at (gap 0); the arrow and header must flip with it.
-  const twoColumns = theme.breakpoints.container.up(2 * HOME_SECTION_MIN_WIDTH);
+  // The recommendations HomeGrid (2 × HOME_SECTION_MIN_WIDTH, gap 0) switches to two columns at the
+  // same point; the arrow, header line and pills must flip with it.
+  const twoColumns = (style: CSSObject) => homeGridColumnsUp(theme, 2, HOME_SECTION_MIN_WIDTH, 0, style);
 
   return {
-    section: css({
-      containerType: 'inline-size',
-    }),
     pills: css({
-      [theme.breakpoints.container.down(2 * HOME_SECTION_MIN_WIDTH)]: {
-        order: 1,
-      },
+      order: 1,
+      ...twoColumns({ order: 0 }),
     }),
     spacer: css({
       flex: '1 1 0%',
     }),
-    line: css({
-      [twoColumns]: {
-        background: theme.colors.border.medium,
-        height: '1px',
-      },
-    }),
+    line: css(twoColumns({ background: theme.colors.border.medium, height: '1px' })),
     cards: css({
       background: theme.colors.background.canvas,
       borderRadius: theme.shape.radius.default,
@@ -316,11 +309,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: '100%',
       transform: 'translate(-50%, -50%) rotate(90deg)',
 
-      [twoColumns]: {
-        top: theme.spacing(2),
-        left: '100%',
-        transform: 'translate(-50%, 0)',
-      },
+      ...twoColumns({ top: theme.spacing(2), left: '100%', transform: 'translate(-50%, 0)' }),
     }),
     dot: css({
       background: theme.colors.background.secondary,
