@@ -17,7 +17,7 @@ type FetchExternalGroups = ReturnType<typeof prometheusApi.useLazyGetGroupsQuery
 // Module-scope utilities
 const collator = new Intl.Collator();
 function getExternalRuleDataSources() {
-  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
+  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => Boolean(ds.url));
 }
 
 // Cap on how many groups we fetch per source to keep the request fast. Note this limits

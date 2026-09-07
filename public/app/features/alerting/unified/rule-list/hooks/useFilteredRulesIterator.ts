@@ -16,7 +16,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
-import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
+import { getDatasourceAPIUid, getExternalRulesSources, getRulesDataSourceByUID } from '../../utils/datasource';
 import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
@@ -158,7 +158,9 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
  * Returns all external rules sources if no filter is provided.
  */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
-  const allExternalSources = getExternalRulesSources();
+  const allExternalSources = getExternalRulesSources().filter((source) =>
+    Boolean(getRulesDataSourceByUID(source.uid)?.url)
+  );
 
   // If no filter is provided, return all external sources
   if (filter.dataSourceNames.length === 0) {
