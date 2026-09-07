@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Alert, ColorCard, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Box, ColorCard, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -25,21 +25,23 @@ export function ConnectionsRedirectNotice() {
 
   // title="" onRemove={() => setShowNotice(false)}
   return showNotice ? (
-    <ColorCard variant="info">
-      <ColorCard.Icon />
-
-      <p className={styles.alertParagraph}>
-        <Trans
-          i18nKey="connections.connections-redirect-notice.body"
-          defaults="Data sources have a new home! You can discover new data sources or manage existing ones in the <0>Connections page</0>, accessible from the main menu."
-          components={[
-            <TextLink key="0" href={ROUTES.DataSources}>
-              {''}
-            </TextLink>,
-          ]}
-        />
-      </p>
-    </ColorCard>
+    <Box paddingTop={2}>
+      <ColorCard variant="info">
+        <ColorCard.Icon />
+        <ColorCard.Title>Data sources</ColorCard.Title>
+        <p className={styles.alertParagraph}>
+          <Trans
+            i18nKey="connections.connections-redirect-notice.body"
+            defaults="Data sources have a new home! You can discover new data sources or manage existing ones in the <0>Connections page</0>, accessible from the main menu."
+            components={[
+              <TextLink key="0" href={ROUTES.DataSources}>
+                {''}
+              </TextLink>,
+            ]}
+          />
+        </p>
+      </ColorCard>
+    </Box>
   ) : (
     <></>
   );
