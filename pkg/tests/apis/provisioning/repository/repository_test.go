@@ -281,7 +281,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				"stats.repository.sync_target.folder.count":     2.0,
 				"stats.repository.auth_method.anonymous.count":  1.0,
 				"stats.repository.auth_method.none.count":       1.0,
-				"stats.repository.ready_reason.Available.count": 2.0,
+				"stats.repository.ready_reason.available.count": 2.0,
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})

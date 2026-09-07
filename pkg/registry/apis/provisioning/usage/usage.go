@@ -3,6 +3,7 @@ package usage
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -104,7 +105,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 				repoCounts[string(repo.Spec.Type)]++
 				authMethodCounts[repositoryAuthMethod(repo)]++
 				if r := readyReason(repo.Status.Conditions); r != "" {
-					readyReasonCounts[r]++
+					readyReasonCounts[strings.ToLower(r)]++
 				}
 				agg.observe(repo, syncTargetCounts, syncStateCounts)
 			}
@@ -123,7 +124,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 				for _, conn := range conns {
 					connCounts[string(conn.Spec.Type)]++
 					if r := readyReason(conn.Status.Conditions); r != "" {
-						connReadyReasonCounts[r]++
+						connReadyReasonCounts[strings.ToLower(r)]++
 					}
 					connAgg.observe(conn)
 				}
@@ -256,6 +257,7 @@ func repositoryAuthMethod(repo provisioning.Repository) string {
 // readyReason returns the reason of the Ready condition, or "" when the
 // condition is not present. The Ready reason is a bounded enum (see the
 // provisioning health package) and classifies why a resource is (not) usable.
+// Callers lower-case it to match the casing of the other stat-key segments.
 func readyReason(conditions []metav1.Condition) string {
 	if c := meta.FindStatusCondition(conditions, provisioning.ConditionTypeReady); c != nil {
 		return c.Reason

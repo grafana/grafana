@@ -3,6 +3,7 @@ package usage
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -171,8 +172,8 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 	require.Equal(t, 1, m["stats.repository.auth_method.connection.count"])
 	require.Equal(t, 1, m["stats.repository.auth_method.none.count"])
 
-	require.Equal(t, 1, m["stats.repository.ready_reason."+provisioning.ReasonAvailable+".count"])
-	require.Equal(t, 1, m["stats.repository.ready_reason."+provisioning.ReasonInvalidSpec+".count"])
+	require.Equal(t, 1, m["stats.repository.ready_reason."+strings.ToLower(provisioning.ReasonAvailable)+".count"])
+	require.Equal(t, 1, m["stats.repository.ready_reason."+strings.ToLower(provisioning.ReasonInvalidSpec)+".count"])
 }
 
 // connection stats are aggregated by type, health, and webhook state.
@@ -218,7 +219,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 	require.Equal(t, 1, m["stats.connection.webhook_disabled.count"])
 	require.Equal(t, 1, m["stats.connection."+string(provisioning.GithubConnectionType)+".count"])
 	require.Equal(t, 1, m["stats.connection."+string(provisioning.GithubOAuthConnectionType)+".count"])
-	require.Equal(t, 1, m["stats.connection.ready_reason."+provisioning.ReasonAuthenticationFailed+".count"])
+	require.Equal(t, 1, m["stats.connection.ready_reason."+strings.ToLower(provisioning.ReasonAuthenticationFailed)+".count"])
 }
 
 // an error from any namespace fails the whole collection (fail-fast).
