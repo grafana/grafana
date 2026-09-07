@@ -95,6 +95,20 @@ describe('markersLayer', () => {
     expect(duplicate.get('size')).toBeUndefined();
   });
 
+  it('update() keeps the existing layers when the layer set does not change', async () => {
+    const { handler, group } = await setup();
+    const layers = group.getLayers();
+    const symbolLayer = layers.item(0);
+    const onRemove = jest.fn();
+    layers.on('remove', onRemove);
+
+    handler.update!(pointData([46], [6]));
+    handler.update!(pointData([47, 48], [7, 8]));
+
+    expect(onRemove).not.toHaveBeenCalled();
+    expect(layers.item(0)).toBe(symbolLayer);
+  });
+
   it('update() clears the features when there is no data', async () => {
     const { handler, group } = await setup();
     handler.update!(pointData([46], [6]));
