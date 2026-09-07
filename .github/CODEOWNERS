@@ -1295,6 +1295,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/grafana-frontend-platform
+/.github/actions/check-jobs/action.yml @grafana/grafana-frontend-platform
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-operator-experience-squad
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-services-squad
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-operator-experience-squad
