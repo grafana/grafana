@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { compact, isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useDebounce } from 'react-use';
@@ -8,6 +8,7 @@ import {
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -114,7 +115,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
       {canSeeContactPoints && (
         <Field
           label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Contact point')}
-          className={styles.formField}
+          className={cx(styles.formField, styles.contactPointField)}
           noMargin
         >
           {isGrafanaAlertmanager ? (
@@ -132,7 +133,6 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
                   setSearchParams({ contactPoint: contactPoint.spec.title });
                 }
               }}
-              minWidth={15}
               isClearable
               value={searchParams.get('contactPoint') ?? undefined}
             />
@@ -180,10 +180,15 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
   );
 };
 
-function getStyles() {
+function getStyles(theme: GrafanaTheme2) {
   return {
     formField: css({
       flexGrow: 1,
+    }),
+    // The single-select Combobox only applies minWidth when it's auto sizing, so keep the
+    // floor here instead of passing it as a prop.
+    contactPointField: css({
+      minWidth: theme.spacing(15),
     }),
   };
 }
