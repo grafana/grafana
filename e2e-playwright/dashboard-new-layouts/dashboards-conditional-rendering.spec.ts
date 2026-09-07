@@ -238,6 +238,5 @@ async function importDashboardWithTabs(page: Page, selectors: E2ESelectorGroups,
 async function switchTabAndSave(page: Page, controls: Controls, tabs: Tabs) {
   // change active tab to tab 2 because we show the tab upon dashboard load if it's active, even if it's hidden by conditional rendering rules (see TabItemRenderer.tsx)
   await tabs.select('Tab 2');
-  await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-  await page.reload();
+  await flows.dashboards.saveDashboard(page, controls);
 }

@@ -12,6 +12,7 @@ import {
   type PanelData,
   type PanelProps,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
@@ -89,6 +90,12 @@ export const LogsTable = ({
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
+  const timeColumnHeaderTooltip = isLokiDataSource(data, rawTableFrame)
+    ? t(
+        'explore.logs-table.loki-time-sort-tooltip',
+        "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
+      )
+    : undefined;
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
@@ -235,6 +242,7 @@ export const LogsTable = ({
     onPermalinkClick: isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick,
     options,
     fieldConfig,
+    timeColumnHeaderTooltip,
   });
 
   // Build panel data
@@ -265,12 +273,16 @@ export const LogsTable = ({
   const logRows = useMemo(() => {
     const logs = rawTableFrame
       ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
-          (logRow) =>
-            new LogListModel(logRow, {
-              escape: false,
-              timeZone,
-              wrapLogMessage: true,
-            })
+          (logRow, index) =>
+            new LogListModel(
+              logRow,
+              {
+                escape: false,
+                timeZone,
+                wrapLogMessage: true,
+              },
+              index
+            )
         )
       : null;
     return logs ?? [];
@@ -364,6 +376,20 @@ export const LogsTable = ({
     </div>
   );
 };
+
+function isLokiDataSource(data: PanelData, frame: DataFrame | null): boolean {
+  const targets = data.request?.targets;
+  if (!targets?.length) {
+    return false;
+  }
+
+  const matchingQuery = frame?.refId ? targets.find((query) => query.refId === frame.refId) : undefined;
+  if (matchingQuery) {
+    return matchingQuery.datasource?.type === 'loki';
+  }
+
+  return targets.some((query) => query.datasource?.type === 'loki');
+}
 
 const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {

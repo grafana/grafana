@@ -471,7 +471,7 @@ export type UpdateLibraryPanelApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ SearchResults;
+export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ DashboardSearchResults;
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
@@ -1046,7 +1046,7 @@ export type SortBy = {
   desc?: boolean;
   field: string;
 };
-export type SearchResults = {
+export type DashboardSearchResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   facets?: {

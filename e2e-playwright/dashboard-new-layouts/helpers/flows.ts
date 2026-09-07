@@ -43,11 +43,7 @@ export const flows = {
         await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
         await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
 
-        // we always append a timestamp so every import gets a unique title. Collisions happen on test retries
-        // and when parallel workers import dashboards sharing the same title (several specs reuse titles like "Paste tab")
-        // a collision does not fail the test (the import overwrites the existing dashboard),
-        // but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
-        const uniqueTitle = `${title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;
+        const uniqueTitle = buildUniqueDashboardTitle(title);
         await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(uniqueTitle);
 
         if (options.requiresDataSourceSelection) {
@@ -71,8 +67,22 @@ export const flows = {
         return uniqueTitle;
       });
     },
-    async saveDashboardAndCloseToast(page: Page, controls: Controls, title?: string) {
-      await controls.saveDashboard(title);
+    /**
+     * Saves via the save drawer, closes the success toast, and reloads by default.
+     * Pass `reloadPageAfterSave: false` when the next step must keep the current page
+     * (e.g. measure layout, exit edit mode, or navigate with goto).
+     * Pass `title` only for a new (never saved) dashboard, or when you intentionally
+     * want Save as with a new name. Omit it when the dashboard already has a title
+     * (imported or previously saved) so the drawer does a plain Save.
+     */
+    async saveDashboard(
+      page: Page,
+      controls: Controls,
+      { reloadPageAfterSave = true, title }: { reloadPageAfterSave?: boolean; title?: string } = {}
+    ): Promise<string | undefined> {
+      const uniqueTitle = title ? buildUniqueDashboardTitle(title) : undefined;
+
+      await controls.saveDashboard(uniqueTitle);
 
       // wait for the toast
       const toast = page.getByRole('status', { name: 'Dashboard saved' });
@@ -80,6 +90,12 @@ export const flows = {
 
       // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
       await toast.getByRole('button', { name: 'Close alert' }).click();
+
+      if (reloadPageAfterSave) {
+        await page.reload();
+      }
+
+      return uniqueTitle;
     },
   },
   variables: {
@@ -171,3 +187,10 @@ function stripMetadataNameFromImportJson(input: string): string {
     return input;
   }
 }
+
+// we always append a timestamp so every import gets a unique title. Collisions happen on test retries
+// and when parallel workers import dashboards sharing the same title
+// a collision does not fail the test (the import overwrites the existing dashboard),
+// but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
+const buildUniqueDashboardTitle = (title = test.info().title) =>
+  `${title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;

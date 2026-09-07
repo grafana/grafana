@@ -1,7 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { canEditNotebooks } from './permissions';
+import { canDeleteNotebooks, canEditNotebooks } from './permissions';
 
 describe('canEditNotebooks', () => {
   afterEach(() => {
@@ -20,5 +20,26 @@ describe('canEditNotebooks', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     expect(canEditNotebooks()).toBe(false);
+  });
+});
+
+describe('canDeleteNotebooks', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('allows deleting for a user with dashboards:delete', () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    expect(canDeleteNotebooks()).toBe(true);
+    // Delete is its own action, not write - pin which one is asked for, since both are truthy for
+    // most users and a mix-up would only show up as a missing menu item for the few where they differ.
+    expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.DashboardsDelete);
+  });
+
+  it('refuses a user without it', () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+    expect(canDeleteNotebooks()).toBe(false);
   });
 });

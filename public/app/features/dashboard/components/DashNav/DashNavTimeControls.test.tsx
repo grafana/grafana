@@ -21,7 +21,7 @@ describe('DashNavTimeControls', () => {
             y: 8,
           },
           id: 1,
-          type: 'welcome',
+          type: 'text',
         },
       ],
       refresh: '',

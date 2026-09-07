@@ -156,7 +156,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-incident-app':
       return t('nav.incidents.title', 'Incident');
     case 'plugin-page-grafana-ml-app':
-      return t('nav.machine-learning.title', 'AI & machine learning');
+      return t('nav.machine-learning.title', 'Machine learning');
     case 'plugin-page-grafana-slo-app':
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
@@ -237,10 +237,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/variables':
       return t('nav.global-variables.subtitle', 'Template variables shared across dashboards, globally or per folder');
     case 'dashboards/recently-deleted':
-      return t(
-        'nav.recently-deleted.subtitle',
-        'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
-      );
+      return t('nav.recently-deleted.subtitle', 'Deleted dashboards are kept for up to 12 months.');
     case 'saved-queries':
       return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
     case 'alerting':

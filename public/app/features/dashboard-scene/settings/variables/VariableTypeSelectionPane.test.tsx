@@ -70,7 +70,7 @@ describe('VariableAddPane', () => {
     jest.restoreAllMocks();
   });
 
-  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', () => {
+  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', async () => {
     const variableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'variableTypeSelected');
     const dashboard = buildTestScene();
     const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
@@ -84,10 +84,10 @@ describe('VariableAddPane', () => {
 
     getByRole('button', { name: /query/i }).click();
 
-    expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
+    await waitFor(() => expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' }));
   });
 
-  it('generates a non-conflicting name when an existing variable already exists', () => {
+  it('generates a non-conflicting name when an existing variable already exists', async () => {
     const dashboard = buildTestSceneWithExistingVar('custom0');
     const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
     dashboard.state.sidebar.openPane(pane);
@@ -100,11 +100,13 @@ describe('VariableAddPane', () => {
 
     getByRole('button', { name: /custom/i }).click();
 
-    const dashboardVars = dashboard.state.$variables;
-    expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
-    const vars = (dashboardVars as SceneVariableSet).state.variables;
-    expect(vars).toHaveLength(2);
-    expect(vars[1].state.name).toBe('custom1');
+    await waitFor(() => {
+      const dashboardVars = dashboard.state.$variables;
+      expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
+      const vars = (dashboardVars as SceneVariableSet).state.variables;
+      expect(vars).toHaveLength(2);
+      expect(vars[1].state.name).toBe('custom1');
+    });
   });
 });
 

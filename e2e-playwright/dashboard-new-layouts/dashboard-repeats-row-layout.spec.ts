@@ -48,8 +48,7 @@ test.describe(
 
       await expectRepeatedRowTitlesToBe(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expectRepeatedRowTitlesToBe(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
@@ -98,8 +97,7 @@ test.describe(
 
       await expectRepeatedRowTitlesToBe(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expectRepeatedRowTitlesToBe(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
     });
@@ -133,8 +131,7 @@ test.describe(
       // reopen first row so collapse is not saved
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       // close first row to load the second row
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
@@ -183,8 +180,7 @@ test.describe(
       // open first row again so collapse is not saved
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       // collapse row again so lazy loading loads 2nd row
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
@@ -313,8 +309,7 @@ test.describe(
       await expect(panels.getPanel(`single panel row ${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
       await expectRepeatedRowTitlesToBe(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 'hidden');
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expect(rows.getTitle(nonRepeatedTitle)).toBeVisible();
       await expect(panels.getPanel(`single panel row ${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
@@ -339,8 +334,7 @@ test.describe(
 
       await expect(tabs.getTitle('tab-row-1')).toBeVisible();
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expectRepeatedTabTitlesToBe(tabs, 'tab-row-', [1, 2]);
     });
@@ -365,8 +359,7 @@ test.describe(
       // tabs repeated by c1 are present in the first row
       await expectRepeatedTabTitlesToBe(tabs, 'tab-', ['1-row-1', '2-row-1']);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       // each repeated tab is present in both repeated rows
       await expectRepeatedTabTitlesToBe(tabs, 'tab-1-row-', [1, 2]);
@@ -417,9 +410,7 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
       ).toHaveAttribute('data-testactive');
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
       for (let i = 1; i <= REPEAT_OPTIONS.length; i++) {

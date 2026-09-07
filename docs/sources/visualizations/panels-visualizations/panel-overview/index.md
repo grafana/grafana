@@ -82,7 +82,11 @@ If an option is only available in view mode or edit mode, that's indicated:
 
 ## View mode panel controls
 
-{{< docs/public-preview product="View panel sidebar" featureFlag="`viewPanelPane`" >}}
+{{< admonition type="note" >}}
+View panel sidebar is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+This feature is enabled by default. To turn it off, disable the `viewPanelPane` feature toggle in your Grafana configuration file or contact Support.
+{{< /admonition >}}
 
 When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with controls for adjusting the panel.
 These controls make it easier to view specific data or identify patterns and correlations.

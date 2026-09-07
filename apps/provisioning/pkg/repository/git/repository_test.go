@@ -99,7 +99,7 @@ func TestNewGit(t *testing.T) {
 
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewRepository(ctx, config, gitConfig)
+	gitRepo, err := NewRepository(ctx, config, gitConfig, nil)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
@@ -293,7 +293,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "failed check if authorized: auth error",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusUnauthorized,
 			},
 			wantError: nil,
 		},
@@ -314,7 +314,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "not authorized",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusUnauthorized,
 			},
 			wantError: nil,
 		},
@@ -336,7 +336,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "failed check if repository exists: repo error",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusNotFound,
 			},
 			wantError: nil,
 		},
@@ -358,7 +358,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "repository not found",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusNotFound,
 			},
 			wantError: nil,
 		},
@@ -2379,7 +2379,7 @@ func TestNewGitRepository(t *testing.T) {
 				},
 			}
 
-			gitRepo, err := NewRepository(ctx, config, tt.gitConfig)
+			gitRepo, err := NewRepository(ctx, config, tt.gitConfig, nil)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -3223,7 +3223,7 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 		Path:   "configs",
 	}
 
-	gitRepo, err := NewRepository(ctx, config, gitConfig)
+	gitRepo, err := NewRepository(ctx, config, gitConfig, nil)
 
 	// We expect this to fail during client creation
 	require.Error(t, err)

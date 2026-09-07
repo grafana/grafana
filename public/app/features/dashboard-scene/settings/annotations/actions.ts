@@ -2,9 +2,12 @@ import { t } from '@grafana/i18n';
 import { type dataLayers } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
+import { addElement } from '../../actions/element/addElement';
+import { duplicateElement } from '../../actions/element/duplicateElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { dashboardEditActions } from '../../sidebar/shared';
 
 type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
@@ -12,7 +15,7 @@ export const annotationEditActions = {
   addAnnotation({ source, addedObject }: { addedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeAddition = [...source.state.annotationLayers];
 
-    dashboardEditActions.addElement({
+    addElement({
       source,
       addedObject,
       perform() {
@@ -31,7 +34,7 @@ export const annotationEditActions = {
 
     const layersBefore = [...dataLayerSet.state.annotationLayers];
 
-    dashboardEditActions.duplicateElement({
+    duplicateElement({
       duplicatedObject: layer,
       source: dataLayerSet,
       cloneState: { name: `${layer.state.name} - Copy` },
@@ -42,7 +45,7 @@ export const annotationEditActions = {
   removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeRemoval = [...source.state.annotationLayers];
 
-    dashboardEditActions.removeElement({
+    removeElement({
       source,
       removedObject,
       perform() {
@@ -58,7 +61,7 @@ export const annotationEditActions = {
       return;
     }
 
-    dashboardEditActions.edit({
+    edit({
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-name',
         'Change annotation name'
@@ -85,7 +88,7 @@ export const annotationEditActions = {
     });
   },
   changeAnnotationEnabled({ source, oldValue, newValue }: { source: DataLayer; oldValue: boolean; newValue: boolean }) {
-    dashboardEditActions.edit({
+    edit({
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-enabled-state',
         'Change annotation enabled state'
@@ -112,7 +115,7 @@ export const annotationEditActions = {
     });
   },
   changeAnnotationColor({ source, oldValue, newValue }: { source: DataLayer; oldValue: string; newValue: string }) {
-    dashboardEditActions.edit({
+    edit({
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-color',
         'Change annotation color'
@@ -156,7 +159,7 @@ export const annotationEditActions = {
       }
     };
 
-    dashboardEditActions.edit({
+    edit({
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-controls-display',
         'Change annotation controls display'
@@ -197,7 +200,7 @@ export const annotationEditActions = {
     oldValue?: AnnotationPanelFilter;
     newValue?: AnnotationPanelFilter;
   }) {
-    dashboardEditActions.edit({
+    edit({
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-panel-filter',
         'Change annotation panel filter'

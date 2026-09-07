@@ -76,14 +76,6 @@ func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
 	}
 }
 
-func ProvideStorageBackend(
-	cfg *setting.Cfg,
-) (resource.StorageBackend, error) {
-	// TODO: make this the central place to provide SQL backend
-	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
-	return nil, nil
-}
-
 type Backend interface {
 	resource.StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
@@ -166,6 +158,8 @@ func NewStorageBackend(
 		return NewFileBackend(cfg, kvStore)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
+	case options.StorageTypeUnifiedKVGrpc:
+		return newKVGrpcBackend(cfg, reg, disableStorageServices, kvStore, gcGate, opts...)
 	default: // fall back to SQL backend
 	}
 
@@ -229,6 +223,7 @@ func NewStorageBackend(
 			Dialect:                 dialect,
 			DB:                      dbConn,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			Reg:                     reg,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
@@ -245,6 +240,35 @@ func NewStorageBackend(
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) (resource.StorageBackend, error) {
+	if kvStore == nil {
+		return nil, fmt.Errorf("storage_type=%s needs a kv client dialed by the wiring, and this build provides none (enterprise only)", options.StorageTypeUnifiedKVGrpc)
+	}
+	return resource.NewKVStorageBackend(newKVGrpcBackendOptions(cfg, reg, disableStorageServices, kvStore, gcGate, opts...))
+}
+
+func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) resource.KVBackendOptions {
+	kvBackendOpts := resource.NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.GCGate = gcGate
+	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
+
+	if cfg.EnableKVLeases {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
+	}
+
+	for _, opt := range opts {
+		opt(&kvBackendOpts)
+	}
+
+	return kvBackendOpts
 }
 
 func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, error) {
@@ -496,6 +520,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Dialect:                 b.dialect,
 		DB:                      b.db,
 		BatchTransactionTimeout: b.batchTxnTimeout,
+		Reg:                     b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
@@ -1589,6 +1614,18 @@ func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
 	}
 
 	return b.db
+}
+
+func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.NamespacedResource) (time.Time, error) {
+	for importTime, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return time.Time{}, err
+		}
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
+		}
+	}
+	return time.Time{}, nil
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {

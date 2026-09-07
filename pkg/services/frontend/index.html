@@ -193,7 +193,7 @@
       [[end]]
 
       [[if .Assets.ContentDeliveryURL]]
-        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]';
       [[end]]
 
       [[if .RenderBindingSupported]]
@@ -212,10 +212,6 @@
 
       [[if .ReduceBootdataAPI]]
         window.__grafanaReduceBootdataAPI = true;
-      [[end]]
-
-      [[if .NewPreferencesPage]]
-        window.__grafanaNewPreferencesPage = true;
       [[end]]
 
       [[if .OFREPRootUrlEnabled]]

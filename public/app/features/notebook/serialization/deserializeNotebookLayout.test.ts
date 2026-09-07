@@ -57,6 +57,18 @@ describe('deserializeNotebookLayout', () => {
     expect(manager.getVizPanels()).toHaveLength(2);
   });
 
+  it('skips a cell named after an inherited member instead of throwing', () => {
+    const { layout, elements } = fixture();
+    layout.spec.cells.push({
+      kind: 'NotebookLayoutItem',
+      spec: { element: { kind: 'ElementReference', name: 'constructor' }, source: 'user' },
+    });
+
+    const manager = deserializeNotebookLayout(layout, elements);
+
+    expect(manager.state.cells).toHaveLength(4);
+  });
+
   it('round-trips cell order, source and collapsed', () => {
     const { layout, elements } = fixture();
 

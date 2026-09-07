@@ -7,7 +7,79 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestResolveBuildDir(t *testing.T) {
+	t.Run("resolves build when the rspack flag is off", func(t *testing.T) {
+		require.Equal(t, "build", ResolveBuildDir(context.Background()))
+	})
+
+	t.Run("resolves build/rspack when the rspack flag is on", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+
+		require.Equal(t, "build/rspack", ResolveBuildDir(context.Background()))
+	})
+}
+
+func TestGetWebAssetsBuildDir(t *testing.T) {
+	// Env must be dev so GetWebAssets skips its process-wide cache between subtests.
+	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	t.Run("flag off reads the webpack manifest", func(t *testing.T) {
+		ctx := context.Background()
+
+		assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build/grafana.dark.722d809dba5a31f57d49.css", assets.Dark)
+	})
+
+	t.Run("flag on reads the rspack manifest", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+		ctx := context.Background()
+
+		assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
+	})
+}
+
+func TestGetWebAssetsSwagger(t *testing.T) {
+	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	t.Run("flag off", func(t *testing.T) {
+		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
+	})
+
+	t.Run("flag on", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+
+		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
+	})
+}
+
+func TestGetWebAssetsMissingBuildDir(t *testing.T) {
+	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	assets, err := GetWebAssets(context.Background(), "build-does-not-exist", cfg, license)
+	require.ErrorContains(t, err, "failed to load assets-manifest.json")
+	require.Nil(t, assets)
+}
 
 func TestReadWebassets(t *testing.T) {
 	assets, err := ReadWebAssetsFromFile("testdata/build/assets-manifest.json")
@@ -116,4 +188,31 @@ func TestReadWebassetsFromCDN(t *testing.T) {
 		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.b44253d019cd9cb46428.css",
 		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.e8e11c59b604d62836be.css"
 	  }`, string(dto))
+}
+
+func TestPublicPathFollowsBuildDir(t *testing.T) {
+	tests := []struct {
+		buildDir string
+		expected string
+	}{
+		{buildDir: BuildDir, expected: "public/build/"},
+		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
+		{buildDir: "build-swagger", expected: "public/build-swagger/"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.buildDir, func(t *testing.T) {
+			require.Equal(t, tt.expected, PublicPathFor(tt.buildDir))
+		})
+	}
+
+	t.Run("is set on assets read from disk", func(t *testing.T) {
+		cfg := &setting.Cfg{StaticRootPath: "testdata", Env: setting.Dev}
+		license := licensingtest.NewFakeLicensing()
+		license.On("ContentDeliveryPrefix").Return("grafana")
+
+		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+	})
 }

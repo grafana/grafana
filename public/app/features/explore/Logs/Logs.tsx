@@ -776,11 +776,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const panelData: PanelData = {
-    state: loading ? LoadingState.Loading : LoadingState.Done,
-    series: props.logsFrames ?? [],
-    timeRange: props.range,
-  };
+  const panelData: PanelData = useMemo(
+    () => ({
+      state: loading ? LoadingState.Loading : LoadingState.Done,
+      series: props.logsFrames ?? [],
+      timeRange: props.range,
+      request: getState().explore.panes[exploreId]?.queryResponse.request,
+    }),
+    [exploreId, loading, props.logsFrames, props.range]
+  );
 
   return (
     <>

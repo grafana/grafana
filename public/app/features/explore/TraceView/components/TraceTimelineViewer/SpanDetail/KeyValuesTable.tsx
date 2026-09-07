@@ -38,6 +38,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: autoColor(theme, '#fff'),
       maxHeight: '450px',
       overflow: 'auto',
+      color: theme.colors.text.primary,
     }),
     table: css({
       width: '100%',

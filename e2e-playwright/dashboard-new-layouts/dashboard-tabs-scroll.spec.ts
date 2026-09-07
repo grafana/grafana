@@ -132,8 +132,8 @@ test.describe(
       await gotoDashboardPage({});
       await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls, { title: test.info().title });
+
       await expect(page.getByRole('button', { name: 'Scroll tabs left' })).toBeVisible();
     });
   }

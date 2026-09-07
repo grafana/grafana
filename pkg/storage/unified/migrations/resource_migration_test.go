@@ -45,7 +45,7 @@ type testEnv struct {
 func newTestEnv(t *testing.T) testEnv {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	ensureOrg(t, dbstore.GetEngine())
 	return testEnv{engine: dbstore.GetEngine(), store: dbstore}
@@ -844,8 +844,8 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 							Name:      fmt.Sprintf("large-item-%d", i),
 						},
 						Action: resourcepb.BulkRequest_ADDED,
-						Value: []byte(fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
-							i, opts.Namespace, largeTitle)),
+						Value: fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
+							i, opts.Namespace, largeTitle),
 					})
 					if err != nil {
 						return err

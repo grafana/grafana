@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -17,7 +18,10 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/login/social"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -71,8 +75,16 @@ func (s *MTSettingsStore) ConvertToTable(ctx context.Context, object runtime.Obj
 	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-// Get reassembles the provider's SSOSetting from its (source-resolved) rows.
 func (s *MTSettingsStore) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+	obj, err := s.get(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return redactSecrets(obj), nil
+}
+
+// get returns the SSOSetting with the stored values as is, without redaction.
+func (s *MTSettingsStore) get(ctx context.Context, name string) (*iamv0.SSOSetting, error) {
 	if s.reader == nil {
 		return nil, s.notImplemented("get", name)
 	}
@@ -105,6 +117,7 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 
 	section := sectionFor(ssoSetting.Name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
+	resolveSecrets(desired, nil)
 	for key, val := range desired {
 		if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
 			return nil, apierrors.NewInternalError(err)
@@ -116,9 +129,58 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 	return s.Get(ctx, ssoSetting.Name, &metav1.GetOptions{})
 }
 
-// List implements rest.Lister.
-func (s *MTSettingsStore) List(_ context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, s.notImplemented("list", "")
+// List implements rest.Lister. It assembles one SSOSetting per configured
+// provider from that provider's MT-Settings rows. Providers with no rows are
+// omitted, secrets are redacted, and results follow the canonical provider
+// order.
+func (s *MTSettingsStore) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+	if s.reader == nil {
+		return nil, s.notImplemented("list", "")
+	}
+
+	rows, err := s.reader.List(ctx, ssoSectionsSelector())
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	byProvider := make(map[string][]*settingsvc.Setting)
+	for _, row := range rows {
+		provider := strings.TrimPrefix(row.Section, "auth.")
+		byProvider[provider] = append(byProvider[provider], row)
+	}
+
+	list := &iamv0.SSOSettingList{}
+	for _, provider := range ssoProviders() {
+		provRows, ok := byProvider[provider]
+		if !ok {
+			continue
+		}
+		list.Items = append(list.Items, *redactSecrets(rowsToSSOSetting(ctx, provider, provRows)))
+	}
+	return list, nil
+}
+
+// ssoProviders is the set of providers the SSOSetting kind serves: the OAuth
+// providers plus SAML. LDAP is excluded — MT-Settings has no representation for
+// its nested config (mirrors the backfill).
+func ssoProviders() []string {
+	return append(append([]string{}, ssosettings.AllOAuthProviders...), social.SAMLProviderName)
+}
+
+// ssoSectionsSelector matches every SSO provider section in one List call.
+func ssoSectionsSelector() metav1.LabelSelector {
+	providers := ssoProviders()
+	sections := make([]string, 0, len(providers))
+	for _, p := range providers {
+		sections = append(sections, sectionFor(p))
+	}
+	return metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+			Key:      "section",
+			Operator: metav1.LabelSelectorOpIn,
+			Values:   sections,
+		}},
+	}
 }
 
 // Update implements rest.Updater with the desired-state reconcile: upsert every
@@ -132,7 +194,7 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	var oldObj runtime.Object
-	current, err := s.Get(ctx, name, &metav1.GetOptions{})
+	current, err := s.get(ctx, name)
 	switch {
 	case err == nil:
 		oldObj = current
@@ -168,6 +230,12 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 
 	section := sectionFor(name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
+
+	var stored map[string]any
+	if !created {
+		stored = current.Spec.Settings.Object
+	}
+	resolveSecrets(desired, stored)
 
 	// Upsert every desired key first — a required value is never removed before
 	// its replacement is durable.
@@ -301,4 +369,75 @@ func valueToString(v any) string {
 		return s
 	}
 	return fmt.Sprintf("%v", v)
+}
+
+var secretFieldPatterns = []string{"secret", "private", "certificate", "password", "client_key"}
+
+// secretExceptions holds fields that match a secret pattern.
+// TODO: add SAML attributes
+var secretExceptions = map[string]struct{}{}
+
+func isSecretField(key string) bool {
+	if _, ok := secretExceptions[key]; ok {
+		return false
+	}
+	lower := strings.ToLower(key)
+	for _, p := range secretFieldPatterns {
+		if strings.Contains(lower, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveSecrets restores a placeholder secret from its stored value, or drops the key
+// when there's no real value to restore, so the placeholder is never persisted.
+func resolveSecrets(desired map[string]any, stored map[string]any) {
+	for key, val := range desired {
+		if str, ok := val.(string); !ok || str != setting.RedactedPassword || !isSecretField(key) {
+			continue
+		}
+		if prev, ok := stored[key].(string); ok && prev != "" && prev != setting.RedactedPassword {
+			desired[key] = prev
+		} else {
+			delete(desired, key)
+		}
+	}
+}
+
+// redactSecrets is a copy of the ssosettings redaction (IsSecretField/removeSecrets in
+// ssosettingsimpl). Keep the two in sync until the legacy mechanism is removed.
+func redactSecrets(obj *iamv0.SSOSetting) *iamv0.SSOSetting {
+	out := obj.DeepCopy()
+	settings := out.Spec.Settings.UnstructuredContent()
+	for _, m := range secretMaps(settings) {
+		for k, v := range m {
+			if str, ok := v.(string); ok && str != "" && isSecretField(k) {
+				m[k] = setting.RedactedPassword
+			}
+		}
+	}
+	out.Spec.Settings = common.Unstructured{Object: settings}
+	return out
+}
+
+// secretMaps returns every map that may hold secret fields. LDAP nests secrets
+// (e.g. bind_password) under config.servers[], so scanning only the top level
+// would leak them (mirrors the legacy getConfigMaps).
+func secretMaps(settings map[string]any) []map[string]any {
+	maps := []map[string]any{settings}
+	config, ok := settings["config"].(map[string]any)
+	if !ok {
+		return maps
+	}
+	servers, ok := config["servers"].([]any)
+	if !ok {
+		return maps
+	}
+	for _, srv := range servers {
+		if m, ok := srv.(map[string]any); ok {
+			maps = append(maps, m)
+		}
+	}
+	return maps
 }

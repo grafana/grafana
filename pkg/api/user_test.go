@@ -66,7 +66,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
@@ -94,7 +94,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -169,7 +169,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -201,7 +201,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -620,7 +620,7 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -671,13 +671,13 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
-		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -902,13 +902,13 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -1388,7 +1388,7 @@ func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,

@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -295,6 +296,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		},
 		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
+	moa.setExtraConfigOrigin(ctx, orgID, result.ExtraConfigs)
 
 	// First we encrypt the secure settings.
 	// This is done to ensure that any secure settings incorrectly stored in Settings are encrypted and moved to
@@ -345,6 +347,33 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	return result, nil
+}
+
+func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID int64, extraConfigs []definitions.ExtraConfiguration) {
+	if len(extraConfigs) == 0 {
+		return
+	}
+
+	var syncUID string
+	// Same flag gate as FetchExtraConfig: a stale UID match must not read as auto-sync once sync is off.
+	client := openfeature.NewDefaultClient()
+	syncEnabled := client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx))
+	if syncEnabled && moa.externalAMSyncer != nil { // nil in tests that bypass NewMultiOrgAlertmanager
+		uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
+		if err != nil {
+			// Degrade to "manual" rather than fail a config read that worked before this field existed.
+			moa.logger.Warn("Failed to resolve external AM sync UID while computing staged config origin", "err", err, "org_id", orgID)
+		}
+		syncUID = uid
+	}
+
+	for i := range extraConfigs {
+		if syncUID != "" && extraConfigs[i].Identifier == syncUID {
+			extraConfigs[i].ManagedBy = "auto-sync"
+		} else {
+			extraConfigs[i].ManagedBy = "manual"
+		}
+	}
 }
 
 // modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
@@ -522,7 +551,7 @@ type provisioningStore interface {
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
-	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 

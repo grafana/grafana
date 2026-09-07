@@ -30,6 +30,7 @@
     "clustering": (import '../dev-dashboards/annotations/clustering.json'),
     "color_modes": (import '../dev-dashboards/panel-common/color_modes.json'),
     "config-from-query": (import '../dev-dashboards/transforms/config-from-query.json'),
+    "content-fit-scenarios": (import '../dev-dashboards/dashboard-auto-grid/content-fit-scenarios.json'),
     "dashlist": (import '../dev-dashboards/panel-dashlist/dashlist.json'),
     "datadata-macros": (import '../dev-dashboards/feature-templating/datadata-macros.json'),
     "demo1": (import '../dev-dashboards/datasource-testdata/demo1.json'),

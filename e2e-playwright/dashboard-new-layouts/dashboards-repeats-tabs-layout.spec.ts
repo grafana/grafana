@@ -41,8 +41,7 @@ test.describe(
 
       await expectRepeatedTabTitlesToBe(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expectRepeatedTabTitlesToBe(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
@@ -83,8 +82,7 @@ test.describe(
 
       await expectRepeatedTabTitlesToBe(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expectRepeatedTabTitlesToBe(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
     });
@@ -111,8 +109,7 @@ test.describe(
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expect(panels.getPanel('New edited panel')).toBeVisible();
     });
@@ -158,8 +155,7 @@ test.describe(
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
@@ -209,8 +205,7 @@ test.describe(
         expect(normalTab.x).toBeLessThan(repeatedTab.x);
       }).toPass();
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       const repeatedTab2 = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
       const normalTab2 = await getTabBox(tabs, 'New tab');
@@ -345,8 +340,7 @@ test.describe(
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`)).toBeHidden();
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(3)}`)).toBeHidden();
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
       await expect(tabs.getTitle('New tab')).toBeVisible();

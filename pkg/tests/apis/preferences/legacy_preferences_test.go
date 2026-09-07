@@ -20,135 +20,119 @@ func TestMain(m *testing.M) {
 }
 
 // TestIntegrationPreferences_LegacyBridge verifies the legacy /api preferences
-// HTTP endpoints behave correctly in both code paths: the original pref.Service
-// implementation (flag off) and the new app-platform K8s bridge (flag on). Both
+// HTTP endpoints behave correctly in the new app-platform K8s bridge. This
 // must round-trip writes through GET, support PATCH-as-upsert, and respect
 // PUT-replace vs PATCH-merge semantics for user, team, and org owners.
 func TestIntegrationPreferences_LegacyBridge(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	cases := []struct {
-		name  string
-		flags []string
-	}{
-		{name: "legacy_path", flags: nil},
-		{name: "k8s_bridge", flags: []string{featuremgmt.FlagPreferencesRerouteLegacyAPIs}},
-	}
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: false,
+		DisableAnonymous:  true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+		},
+	})
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction: false,
-				DisableAnonymous:  true,
-				EnableFeatureToggles: append([]string{
-					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-				}, tc.flags...),
-			})
+	t.Run("user preferences round-trip", func(t *testing.T) {
+		putResult := putUserPrefs(t, helper, `{"theme":"dark","weekStart":"monday","timezone":"Europe/London"}`)
+		require.Equal(t, http.StatusOK, putResult)
 
-			t.Run("user preferences round-trip", func(t *testing.T) {
-				putResult := putUserPrefs(t, helper, `{"theme":"dark","weekStart":"monday","timezone":"Europe/London"}`)
-				require.Equal(t, http.StatusOK, putResult)
+		got := getUserPrefs(t, helper)
+		require.NotNil(t, got.Theme)
+		require.Equal(t, "dark", *got.Theme)
+		require.NotNil(t, got.WeekStart)
+		require.Equal(t, "monday", *got.WeekStart)
+		require.NotNil(t, got.Timezone)
+		require.Equal(t, "Europe/London", *got.Timezone)
+	})
 
-				got := getUserPrefs(t, helper)
-				require.NotNil(t, got.Theme)
-				require.Equal(t, "dark", *got.Theme)
-				require.NotNil(t, got.WeekStart)
-				require.Equal(t, "monday", *got.WeekStart)
-				require.NotNil(t, got.Timezone)
-				require.Equal(t, "Europe/London", *got.Timezone)
-			})
+	t.Run("team preferences write", func(t *testing.T) {
+		teamID := helper.Org1.Staff.ID
+		putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
+		require.Equal(t, http.StatusOK, putResult)
+	})
 
-			t.Run("team preferences write", func(t *testing.T) {
-				teamID := helper.Org1.Staff.ID
-				putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
-				require.Equal(t, http.StatusOK, putResult)
-			})
+	t.Run("team preferences read", func(t *testing.T) {
+		teamID := helper.Org1.Staff.ID
+		putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
+		require.Equal(t, http.StatusOK, putResult)
 
-			t.Run("team preferences read", func(t *testing.T) {
-				teamID := helper.Org1.Staff.ID
-				putResult := putTeamPrefs(t, helper, teamID, `{"theme":"light","weekStart":"sunday"}`)
-				require.Equal(t, http.StatusOK, putResult)
+		got := getTeamPrefs(t, helper, teamID)
+		require.NotNil(t, got.Theme)
+		require.Equal(t, "light", *got.Theme)
+		require.NotNil(t, got.WeekStart)
+		require.Equal(t, "sunday", *got.WeekStart)
+	})
 
-				got := getTeamPrefs(t, helper, teamID)
-				require.NotNil(t, got.Theme)
-				require.Equal(t, "light", *got.Theme)
-				require.NotNil(t, got.WeekStart)
-				require.Equal(t, "sunday", *got.WeekStart)
-			})
+	t.Run("org preferences round-trip", func(t *testing.T) {
+		putResult := putOrgPrefs(t, helper, `{"theme":"dark","timezone":"UTC"}`)
+		require.Equal(t, http.StatusOK, putResult)
 
-			t.Run("org preferences round-trip", func(t *testing.T) {
-				putResult := putOrgPrefs(t, helper, `{"theme":"dark","timezone":"UTC"}`)
-				require.Equal(t, http.StatusOK, putResult)
+		got := getOrgPrefs(t, helper)
+		require.NotNil(t, got.Theme)
+		require.Equal(t, "dark", *got.Theme)
+		require.NotNil(t, got.Timezone)
+		require.Equal(t, "UTC", *got.Timezone)
+	})
 
-				got := getOrgPrefs(t, helper)
-				require.NotNil(t, got.Theme)
-				require.Equal(t, "dark", *got.Theme)
-				require.NotNil(t, got.Timezone)
-				require.Equal(t, "UTC", *got.Timezone)
-			})
+	t.Run("PATCH on missing upserts", func(t *testing.T) {
+		// Use the Editor user — no other subtest writes preferences for them, so
+		// the PATCH below is genuinely against a non-existent record.
+		editor := helper.Org1.Editor
 
-			t.Run("PATCH on missing upserts", func(t *testing.T) {
-				// Use the Editor user — no other subtest writes preferences for them, so
-				// the PATCH below is genuinely against a non-existent record. Both the
-				// legacy pref.Service and the K8s bridge must upsert here.
-				editor := helper.Org1.Editor
+		patchResp := apis.DoRequest(helper, apis.RequestParams{
+			User:   editor,
+			Method: http.MethodPatch,
+			Path:   "/api/user/preferences",
+			Body:   []byte(`{"theme":"dark"}`),
+		}, &map[string]any{})
+		require.Equal(t, http.StatusOK, patchResp.Response.StatusCode, "PATCH on missing should upsert: %s", string(patchResp.Body))
 
-				patchResp := apis.DoRequest(helper, apis.RequestParams{
-					User:   editor,
-					Method: http.MethodPatch,
-					Path:   "/api/user/preferences",
-					Body:   []byte(`{"theme":"dark"}`),
-				}, &map[string]any{})
-				require.Equal(t, http.StatusOK, patchResp.Response.StatusCode, "PATCH on missing should upsert: %s", string(patchResp.Body))
+		out := preferences.PreferencesSpec{}
+		getResp := apis.DoRequest(helper, apis.RequestParams{
+			User:   editor,
+			Method: http.MethodGet,
+			Path:   "/api/user/preferences",
+		}, &out)
+		require.Equal(t, http.StatusOK, getResp.Response.StatusCode)
+		require.NotNil(t, getResp.Result.Theme)
+		require.Equal(t, "dark", *getResp.Result.Theme)
+	})
 
-				out := preferences.PreferencesSpec{}
-				getResp := apis.DoRequest(helper, apis.RequestParams{
-					User:   editor,
-					Method: http.MethodGet,
-					Path:   "/api/user/preferences",
-				}, &out)
-				require.Equal(t, http.StatusOK, getResp.Response.StatusCode)
-				require.NotNil(t, getResp.Result.Theme)
-				require.Equal(t, "dark", *getResp.Result.Theme)
-			})
+	t.Run("PUT replaces, PATCH merges", func(t *testing.T) {
+		// Seed full prefs for the org, then PATCH only one field — others must remain.
+		putResult := putOrgPrefs(t, helper,
+			`{"theme":"dark","weekStart":"monday","timezone":"UTC"}`)
+		require.Equal(t, http.StatusOK, putResult)
 
-			t.Run("PUT replaces, PATCH merges", func(t *testing.T) {
-				// Seed full prefs for the org, then PATCH only one field — others must remain.
-				putResult := putOrgPrefs(t, helper,
-					`{"theme":"dark","weekStart":"monday","timezone":"UTC"}`)
-				require.Equal(t, http.StatusOK, putResult)
+		patchResult := patchOrgPrefs(t, helper, `{"theme":"light"}`)
+		require.Equal(t, http.StatusOK, patchResult)
+		merged := getOrgPrefs(t, helper)
+		require.NotNil(t, merged.Theme)
+		require.Equal(t, "light", *merged.Theme, "PATCH must update theme")
+		require.NotNil(t, merged.WeekStart)
+		require.Equal(t, "monday", *merged.WeekStart, "PATCH must leave weekStart untouched (merge semantics)")
+		require.NotNil(t, merged.Timezone)
+		require.Equal(t, "UTC", *merged.Timezone, "PATCH must leave timezone untouched")
 
-				patchResult := patchOrgPrefs(t, helper, `{"theme":"light"}`)
-				require.Equal(t, http.StatusOK, patchResult)
-				merged := getOrgPrefs(t, helper)
-				require.NotNil(t, merged.Theme)
-				require.Equal(t, "light", *merged.Theme, "PATCH must update theme")
-				require.NotNil(t, merged.WeekStart)
-				require.Equal(t, "monday", *merged.WeekStart, "PATCH must leave weekStart untouched (merge semantics)")
-				require.NotNil(t, merged.Timezone)
-				require.Equal(t, "UTC", *merged.Timezone, "PATCH must leave timezone untouched")
-
-				// PUT now with a sparse body — fields the request omits should clear.
-				require.Equal(t, http.StatusOK, putOrgPrefs(t, helper, `{"theme":"dark"}`))
-				replaced := getOrgPrefs(t, helper)
-				require.NotNil(t, replaced.Theme)
-				require.Equal(t, "dark", *replaced.Theme)
-				// Legacy GET omits empty fields entirely; the K8s bridge stores empty
-				// strings explicitly. Either way, weekStart/timezone must no longer carry
-				// the previous values.
-				if replaced.WeekStart != nil {
-					require.Equal(t, "", *replaced.WeekStart, "PUT must clear weekStart it omitted")
-				}
-				if replaced.Timezone != nil {
-					require.Equal(t, "", *replaced.Timezone, "PUT must clear timezone it omitted")
-				}
-			})
-		})
-	}
+		// PUT now with a sparse body — fields the request omits should clear.
+		require.Equal(t, http.StatusOK, putOrgPrefs(t, helper, `{"theme":"dark"}`))
+		replaced := getOrgPrefs(t, helper)
+		require.NotNil(t, replaced.Theme)
+		require.Equal(t, "dark", *replaced.Theme)
+		// The bridge stores omitted fields as empty strings rather than dropping
+		// them, so accept either shape as long as the old values are gone.
+		if replaced.WeekStart != nil {
+			require.Equal(t, "", *replaced.WeekStart, "PUT must clear weekStart it omitted")
+		}
+		if replaced.Timezone != nil {
+			require.Equal(t, "", *replaced.Timezone, "PUT must clear timezone it omitted")
+		}
+	})
 }
 
-// putUserPrefs / patchUserPrefs / getUserPrefs are the legacy /api wrappers
-// the bridge tests exercise — same shape regardless of the feature flag.
+// Thin wrappers around the legacy /api preferences endpoints the bridge serves.
 
 func putUserPrefs(t *testing.T, helper *apis.K8sTestHelper, body string) int {
 	t.Helper()

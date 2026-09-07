@@ -1,5 +1,8 @@
 📋 Grafana detected **2** resource changes in this pull request.
 
+**By action:** ➕ Added (1), ✏️ Updated (1)
+**By kind:** Dashboard (2)
+
 | Action | Kind | Resource | File | Preview | Status |
 |--------|------|----------|------|---------|--------|
 | ➕ Added | Dashboard | Dashboard A | [source](https://github.com/example/repo/blob/pr/good.json) | [preview](http://grafana/admin/preview) | ✅ |

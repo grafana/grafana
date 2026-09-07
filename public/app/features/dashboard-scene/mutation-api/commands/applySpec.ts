@@ -7,13 +7,13 @@
  * Rebuilds the scene from the spec via `transformSaveModelSchemaV2ToScene` and
  * swaps the result onto the live DashboardScene in place (the pattern
  * `JsonModelEditView.onSaveSuccess` uses). Being a full rebuild-and-swap, it
- * resets transient runtime state (in-flight queries, variable selections,
- * scroll position).
+ * resets transient runtime state (in-flight queries, scroll position); the
+ * url-synced part of that state is re-initialized from the URL after the swap.
  */
 
 import * as z from 'zod';
 
-import { sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
@@ -179,6 +179,12 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       }
 
       scene.setState({ ...newState, editPanel: undefined });
+
+      // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
+      // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
+      // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path
+      // into panel edit.
+      scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
 
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });

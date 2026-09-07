@@ -1,15 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  useGetStarsQuery as useLegacyGetStarsQuery,
-  useStarDashboardByUidMutation as useLegacyStarDashboardMutation,
-  useUnstarDashboardByUidMutation as useLegacyUnstarDashboardMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -54,70 +48,45 @@ export const useStarItem = (group: string, kind: string) => {
   const [addStar] = useAddStarMutation();
   const [removeStar] = useRemoveStarMutation();
 
-  const [addStarLegacy] = useLegacyStarDashboardMutation();
-  const [removeStarLegacy] = useLegacyUnstarDashboardMutation();
-
-  if (config.featureToggles.starsFromAPIServer) {
-    return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
-      const name = `user-${contextSrv.user.uid}`;
-      const mutationArgs = { id, name, group, kind };
-      try {
-        if (newStarredState) {
-          await addStar(mutationArgs).unwrap();
-        } else {
-          await removeStar(mutationArgs).unwrap();
-        }
-      } catch {
-        // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
-        return;
-      }
-
-      const entry = starredNavEntry(group, kind, id);
-      if (entry) {
-        dispatch(
-          setStarred({
-            id,
-            title,
-            url: entry.url,
-            icon: entry.icon,
-            sortWeight: entry.sortWeight,
-            isStarred: newStarredState,
-          })
-        );
-      }
-    };
-  }
-
   return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
-    if (newStarredState) {
-      await addStarLegacy({ dashboardUid: id });
-    } else {
-      await removeStarLegacy({ dashboardUid: id });
+    const name = `user-${contextSrv.user.uid}`;
+    const mutationArgs = { id, name, group, kind };
+    try {
+      if (newStarredState) {
+        await addStar(mutationArgs).unwrap();
+      } else {
+        await removeStar(mutationArgs).unwrap();
+      }
+    } catch {
+      // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
+      return;
     }
 
-    dispatch(
-      setStarred({
-        id,
-        title,
-        url: locationUtil.assureBaseUrl(`/d/${id}`),
-        isStarred: newStarredState,
-      })
-    );
+    const entry = starredNavEntry(group, kind, id);
+    if (entry) {
+      dispatch(
+        setStarred({
+          id,
+          title,
+          url: entry.url,
+          icon: entry.icon,
+          sortWeight: entry.sortWeight,
+          isStarred: newStarredState,
+        })
+      );
+    }
   };
 };
 
 /**
- * Get starred items from legacy or app platform API
+ * Get starred items from the app platform API
  */
 export const useStarredItems = (group: string, kind: string, options?: { skip?: boolean }) => {
   const skip = options?.skip ?? false;
-  const appPlatform = config.featureToggles.starsFromAPIServer;
-  const legacyResponse = useLegacyGetStarsQuery(appPlatform || skip ? skipToken : undefined);
-  const queryArgs = !appPlatform || skip ? skipToken : { fieldSelector: userStarsFieldSelector() };
-  const appPlatformResponse = useListStarsQuery(queryArgs);
+  const response = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
 
-  const appPlatformStarredItems = useMemo(() => {
-    const { data, isLoading, isUninitialized } = appPlatformResponse;
+  const starredItems = useMemo(() => {
+    const { data, isLoading, isUninitialized } = response;
 
     // If query hasn't been initiated yet or is still loading, return undefined to show loading state
     if (isUninitialized || isLoading) {
@@ -130,22 +99,13 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
     }
 
     return findStarredNames(data, group, kind);
-  }, [appPlatformResponse, group, kind]);
+  }, [response, group, kind]);
 
-  if (appPlatform) {
-    return {
-      ...appPlatformResponse,
-      data: appPlatformStarredItems,
-      // Ensure isLoading is true when data is undefined (still loading or uninitialized)
-      isLoading: appPlatformStarredItems === undefined ? true : appPlatformResponse.isLoading,
-    };
-  }
-
-  // For legacy response, ensure isLoading is true when query is uninitialized
-  // RTK Query sets isLoading: false when uninitialized, but we need it to be true
   return {
-    ...legacyResponse,
-    isLoading: legacyResponse.isUninitialized || legacyResponse.isLoading,
+    ...response,
+    data: starredItems,
+    // Ensure isLoading is true when data is undefined (still loading or uninitialized)
+    isLoading: starredItems === undefined ? true : response.isLoading,
   };
 };
 

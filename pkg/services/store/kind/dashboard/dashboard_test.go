@@ -144,6 +144,30 @@ func TestReadV2PanelType(t *testing.T) {
 	assert.False(t, types["VizConfig"], "panel type must never be the literal VizConfig")
 }
 
+// An empty tag cannot be searched for or shown, and it would still take a slot in
+// the tag list a user picks from. Deleted dashboards are read by a different,
+// generic reader that already skips one, so both have to agree.
+func TestReadDashboardTags(t *testing.T) {
+	read := func(t *testing.T, tags string) []string {
+		t.Helper()
+		json := `{"metadata":{"name":"x"},"spec":{"title":"t","tags":` + tags + `}}`
+		dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
+		require.NoError(t, err)
+		return dash.Tags
+	}
+
+	t.Run("empty tags are skipped", func(t *testing.T) {
+		assert.Equal(t, []string{"prod", "team-a"}, read(t, `["prod","","team-a"]`))
+		assert.Empty(t, read(t, `[""]`))
+	})
+
+	// Whitespace is a tag a user can type and see, so it is kept: only a wholly
+	// empty string is dropped.
+	t.Run("other tags are kept as written", func(t *testing.T) {
+		assert.Equal(t, []string{"prod", " ", "prod"}, read(t, `["prod"," ","prod"]`))
+	})
+}
+
 // TestReadDashboardRecursionLimits ensures that maliciously deep nesting of `spec` or
 // `panels` is bounded so the parser cannot be driven into unbounded recursion.
 func TestReadDashboardRecursionLimits(t *testing.T) {

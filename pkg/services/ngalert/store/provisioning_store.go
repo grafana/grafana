@@ -294,35 +294,35 @@ func (st DBstore) GetManagerProperties(ctx context.Context, o models.Provisionab
 	return managerFromRecord(record), nil
 }
 
-// GetManagerPropertiesByUIDs returns ManagerProperties for specific UIDs of a resource type.
-func (st DBstore) GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error) {
-	if len(uids) == 0 {
-		return map[string]utils.ManagerProperties{}, nil
-	}
-
-	result := make(map[string]utils.ManagerProperties, len(uids))
+// GetAllManagerProperties returns all manager properties for the given org and resource type
+func (st DBstore) GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+	resultMap := make(map[string]utils.ManagerProperties)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var records []provenanceRecord
 		err := sess.Table(provenanceRecord{}).
 			Where("record_type = ? AND org_id = ?", resourceType, org).
-			In("record_key", uids).
+			Cols("record_key", "manager_kind", "manager_identity", "provenance").
 			Find(&records)
+
 		if err != nil {
-			return fmt.Errorf("failed to query for manager properties: %w", err)
+			return fmt.Errorf("failed to query for existing provenance status: %w", err)
 		}
+
 		for _, r := range records {
 			if r.ManagerKind != "" {
-				result[r.RecordKey] = utils.ManagerProperties{
+				resultMap[r.RecordKey] = utils.ManagerProperties{
 					Kind:     utils.ParseManagerKindString(r.ManagerKind),
 					Identity: r.ManagerIdentity,
 				}
 			} else {
-				result[r.RecordKey] = models.ProvenanceToManagerProperties(r.Provenance)
+				resultMap[r.RecordKey] = models.ProvenanceToManagerProperties(r.Provenance)
 			}
 		}
+
 		return nil
 	})
-	return result, err
+
+	return resultMap, err
 }
 
 // SetManagerProperties stores ManagerProperties for a provisionable object.
