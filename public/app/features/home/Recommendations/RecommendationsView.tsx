@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { HomeGrid, HOME_SECTION_MIN_WIDTH } from '../HomeGrid';
 import { recommendationsShown } from '../analytics/main';
@@ -218,9 +218,10 @@ export function RecommendationsView({
                   <div className={styles.outer}>
                     <div className={styles.inner} style={{ transform: `translateX(-${safeIndex * 100}%)` }}>
                       {items.map((recommendation, i) => (
-                        <div
+                        <Box
                           key={recommendation.id}
-                          className={styles.item}
+                          display="flex"
+                          minWidth="100%"
                           aria-hidden={i !== safeIndex}
                           inert={i !== safeIndex}
                         >
@@ -229,7 +230,7 @@ export function RecommendationsView({
                             startingState={startingState}
                             solution={activeSolution ?? undefined}
                           />
-                        </div>
+                        </Box>
                       ))}
                     </div>
                   </div>
@@ -389,10 +390,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.transitions.handleMotion('no-preference')]: {
         transition: theme.transitions.create(['transform']),
       },
-    }),
-    item: css({
-      display: 'flex',
-      minWidth: '100%',
     }),
   };
 };
