@@ -142,11 +142,10 @@ import { createTextBoxVariableAdapter } from './features/variables/textbox/adapt
 import { configureStore } from './store/configureStore';
 import { dispatch } from './store/store';
 
-// import symlinked extensions
-const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
-const extensionsExports = extensionsIndex.keys().map((key) => {
-  return extensionsIndex(key);
-});
+// Enterprise frontend entry point. Webpack aliases `app/extensions` at the
+// grafana-enterprise checkout when one is present, and at a no-op stub otherwise,
+// so this import resolves in both editions. See scripts/webpack/webpack.common.ts.
+import * as extensions from 'app/extensions';
 
 export interface AppInitOptions {
   // Preferences fetched during boot (see initPreferences). Passed through so we
@@ -403,15 +402,11 @@ export class GrafanaApp {
 }
 
 function addExtensionReducers() {
-  if (extensionsExports.length > 0) {
-    extensionsExports[0].addExtensionReducers();
-  }
+  extensions.addExtensionReducers();
 }
 
 function initExtensions() {
-  if (extensionsExports.length > 0) {
-    extensionsExports[0].init();
-  }
+  extensions.init();
 }
 
 export default new GrafanaApp();
