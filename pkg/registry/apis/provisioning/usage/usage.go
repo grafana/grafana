@@ -6,6 +6,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -20,7 +22,7 @@ import (
 // stats for. In a single-tenant deployment this is one namespace per org.
 type NamespaceLister func(ctx context.Context) ([]string, error)
 
-func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
+func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), connectionLister func(ctx context.Context) ([]provisioning.Connection, error), unified resource.ResourceClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (m map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {
@@ -58,7 +60,12 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		repoCounts := make(map[string]int)
 		syncTargetCounts := make(map[string]int)
 		syncStateCounts := make(map[string]int)
+		authMethodCounts := make(map[string]int)
+		readyReasonCounts := make(map[string]int)
+		connCounts := make(map[string]int)
+		connReadyReasonCounts := make(map[string]int)
 		agg := repoAggregate{}
+		connAgg := connectionAggregate{}
 		for _, ns := range nss {
 			nsSpanCtx, nsSpan := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats.countManagedObjects")
 
@@ -95,10 +102,34 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 
 			for _, repo := range repos {
 				repoCounts[string(repo.Spec.Type)]++
+				authMethodCounts[repositoryAuthMethod(repo)]++
+				if r := readyReason(repo.Status.Conditions); r != "" {
+					readyReasonCounts[r]++
+				}
 				agg.observe(repo, syncTargetCounts, syncStateCounts)
 			}
-
 			nsSpan.SetAttributes(attribute.Int("totalRepositoriesCount", len(repos)))
+
+			// Connections are optional -- older deployments and the standalone
+			// path may not wire a lister, so skip cleanly when absent.
+			if connectionLister != nil {
+				var conns []provisioning.Connection
+				conns, err = connectionLister(nsCtx)
+				if err != nil {
+					nsSpan.RecordError(err)
+					nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to list connections on namespace %s: %v", ns, err))
+					return m, fmt.Errorf("list connections on namespace %s: %w", ns, err)
+				}
+				for _, conn := range conns {
+					connCounts[string(conn.Spec.Type)]++
+					if r := readyReason(conn.Status.Conditions); r != "" {
+						connReadyReasonCounts[r]++
+					}
+					connAgg.observe(conn)
+				}
+				nsSpan.SetAttributes(attribute.Int("totalConnectionsCount", len(conns)))
+			}
+
 			nsSpan.SetStatus(codes.Ok, "")
 			nsSpan.End()
 		}
@@ -118,6 +149,15 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		for k, v := range syncStateCounts {
 			m[fmt.Sprintf("stats.repository.sync_state.%s.count", k)] = v
 		}
+		// Count repositories by how they authenticate (none/connection/token/anonymous).
+		for k, v := range authMethodCounts {
+			m[fmt.Sprintf("stats.repository.auth_method.%s.count", k)] = v
+		}
+		// Count repositories by their Ready condition reason -- the "why (not) usable"
+		// breakdown (Available, AuthenticationFailed, InvalidSpec, ...).
+		for k, v := range readyReasonCounts {
+			m[fmt.Sprintf("stats.repository.ready_reason.%s.count", k)] = v
+		}
 		// Fleet-wide repository dimensions. These complement the per-type counts
 		// above and mirror the dimensions carried by the reconcile snapshot logs.
 		m["stats.repository.count"] = agg.total
@@ -128,6 +168,19 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		m["stats.repository.webhook_disabled.count"] = agg.webhookDisabled
 		m["stats.repository.workflow.write.count"] = agg.writeWorkflow
 		m["stats.repository.workflow.branch.count"] = agg.branchWorkflow
+
+		// Connection stats mirror the repository ones. A connection is how a
+		// repository delegates auth, so its type is the concrete auth mechanism.
+		for k, v := range connCounts {
+			m[fmt.Sprintf("stats.connection.%s.count", k)] = v
+		}
+		for k, v := range connReadyReasonCounts {
+			m[fmt.Sprintf("stats.connection.ready_reason.%s.count", k)] = v
+		}
+		m["stats.connection.count"] = connAgg.total
+		m["stats.connection.healthy.count"] = connAgg.healthy
+		m["stats.connection.unhealthy.count"] = connAgg.total - connAgg.healthy
+		m["stats.connection.webhook_disabled.count"] = connAgg.webhookDisabled
 
 		return m, nil
 	}
@@ -178,5 +231,53 @@ func (a *repoAggregate) observe(repo provisioning.Repository, syncTargetCounts, 
 	}
 	if s := repo.Status.Sync.State; s != "" {
 		syncStateCounts[string(s)]++
+	}
+}
+
+// repositoryAuthMethod classifies how a repository authenticates:
+//   - "none": local repositories, which have no remote to authenticate against.
+//   - "connection": auth is delegated to a referenced Connection, whose own type
+//     (counted under stats.connection.*) carries the concrete mechanism.
+//   - "token": a token/PAT is stored on the repository.
+//   - "anonymous": a remote repository with neither a token nor a connection.
+func repositoryAuthMethod(repo provisioning.Repository) string {
+	switch {
+	case repo.Spec.Local != nil:
+		return "none"
+	case repo.Spec.Connection != nil && repo.Spec.Connection.Name != "":
+		return "connection"
+	case !repo.Secure.Token.IsZero():
+		return "token"
+	default:
+		return "anonymous"
+	}
+}
+
+// readyReason returns the reason of the Ready condition, or "" when the
+// condition is not present. The Ready reason is a bounded enum (see the
+// provisioning health package) and classifies why a resource is (not) usable.
+func readyReason(conditions []metav1.Condition) string {
+	if c := meta.FindStatusCondition(conditions, provisioning.ConditionTypeReady); c != nil {
+		return c.Reason
+	}
+	return ""
+}
+
+// connectionAggregate accumulates fleet-wide connection dimensions. Like
+// repoAggregate, all fields are simple counters keyed on fixed stat names.
+type connectionAggregate struct {
+	total           int
+	healthy         int
+	webhookDisabled int
+}
+
+// observe folds a single connection into the aggregate.
+func (a *connectionAggregate) observe(conn provisioning.Connection) {
+	a.total++
+	if conn.Status.Health.Healthy {
+		a.healthy++
+	}
+	if conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled {
+		a.webhookDisabled++
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -29,7 +30,7 @@ func managedCount(kind string, count int64) *resourcepb.CountManagedObjectsRespo
 
 // no unified storage -> nothing to count, no error.
 func TestMetricCollector_NoUnifiedStorage(t *testing.T) {
-	fn := MetricCollector(tracing.NewNoopTracerService(), nil, nil, nil)
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, nil, nil, nil)
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -54,7 +55,7 @@ func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
 		}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -93,7 +94,7 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 		return []string{"default", "org-2"}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, repoLister, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, repoLister, nil, unified)
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -113,34 +114,42 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 		return []provisioning.Repository{
 			{
 				// Healthy, sync enabled to instance, editable via write + branch,
-				// last sync succeeded, webhook explicitly disabled.
+				// last sync succeeded, webhook disabled, auth delegated to a connection.
 				Spec: provisioning.RepositorySpec{
-					Type:      provisioning.GitHubRepositoryType,
-					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
-					Sync:      provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
-					Webhook:   &provisioning.WebhookConfig{Disabled: true},
+					Type:       provisioning.GitHubRepositoryType,
+					Workflows:  []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+					Sync:       provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
+					Webhook:    &provisioning.WebhookConfig{Disabled: true},
+					Connection: &provisioning.ConnectionInfo{Name: "my-conn"},
 				},
 				Status: provisioning.RepositoryStatus{
 					Health: provisioning.HealthStatus{Healthy: true},
 					Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess},
+					Conditions: []metav1.Condition{
+						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAvailable},
+					},
 				},
 			},
 			{
 				// Unhealthy, read-only (no workflows), sync disabled to a folder,
-				// last sync errored.
+				// last sync errored, local repository (auth method "none").
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.LocalRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolder},
+					Type:  provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{Path: "/tmp/repo"},
+					Sync:  provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolder},
 				},
 				Status: provisioning.RepositoryStatus{
 					Health: provisioning.HealthStatus{Healthy: false},
 					Sync:   provisioning.SyncStatus{State: provisioning.JobStateError},
+					Conditions: []metav1.Condition{
+						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonInvalidSpec},
+					},
 				},
 			},
 		}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -158,6 +167,58 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.SyncTargetTypeFolder)+".count"])
 	require.Equal(t, 1, m["stats.repository.sync_state."+string(provisioning.JobStateSuccess)+".count"])
 	require.Equal(t, 1, m["stats.repository.sync_state."+string(provisioning.JobStateError)+".count"])
+
+	require.Equal(t, 1, m["stats.repository.auth_method.connection.count"])
+	require.Equal(t, 1, m["stats.repository.auth_method.none.count"])
+
+	require.Equal(t, 1, m["stats.repository.ready_reason."+provisioning.ReasonAvailable+".count"])
+	require.Equal(t, 1, m["stats.repository.ready_reason."+provisioning.ReasonInvalidSpec+".count"])
+}
+
+// connection stats are aggregated by type, health, and webhook state.
+func TestMetricCollector_ConnectionStats(t *testing.T) {
+	unified := resource.NewMockResourceClient(t)
+	unified.EXPECT().
+		CountManagedObjects(mock.Anything, mock.Anything).
+		Return(managedCount(managedKind, 0), nil).
+		Once()
+
+	repoLister := func(ctx context.Context) ([]provisioning.Repository, error) {
+		return nil, nil
+	}
+	connLister := func(ctx context.Context) ([]provisioning.Connection, error) {
+		return []provisioning.Connection{
+			{
+				Spec:   provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+				Status: provisioning.ConnectionStatus{Health: provisioning.HealthStatus{Healthy: true}},
+			},
+			{
+				Spec: provisioning.ConnectionSpec{
+					Type:    provisioning.GithubOAuthConnectionType,
+					Webhook: &provisioning.ConnectionWebhookConfig{Disabled: true},
+				},
+				Status: provisioning.ConnectionStatus{
+					Health: provisioning.HealthStatus{Healthy: false},
+					Conditions: []metav1.Condition{
+						{Type: provisioning.ConditionTypeReady, Reason: provisioning.ReasonAuthenticationFailed},
+					},
+				},
+			},
+		}, nil
+	}
+
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, connLister, unified)
+
+	m, err := fn(context.Background())
+	require.NoError(t, err)
+
+	require.Equal(t, 2, m["stats.connection.count"])
+	require.Equal(t, 1, m["stats.connection.healthy.count"])
+	require.Equal(t, 1, m["stats.connection.unhealthy.count"])
+	require.Equal(t, 1, m["stats.connection.webhook_disabled.count"])
+	require.Equal(t, 1, m["stats.connection."+string(provisioning.GithubConnectionType)+".count"])
+	require.Equal(t, 1, m["stats.connection."+string(provisioning.GithubOAuthConnectionType)+".count"])
+	require.Equal(t, 1, m["stats.connection.ready_reason."+provisioning.ReasonAuthenticationFailed+".count"])
 }
 
 // an error from any namespace fails the whole collection (fail-fast).
@@ -171,7 +232,7 @@ func TestMetricCollector_ErrorFailFast(t *testing.T) {
 		return []string{"default"}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, nil, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, nil, nil, unified)
 
 	_, err := fn(context.Background())
 	require.Error(t, err)
