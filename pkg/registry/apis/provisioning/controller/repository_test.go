@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -947,6 +948,136 @@ func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool)
 	return nil, false
 }
 
+func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
+	lookupErr := errors.New("quota service failed")
+
+	t.Run("new repository returns lookup error", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+		getter.SetError(lookupErr)
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status:     provisioning.RepositoryStatus{ObservedGeneration: 0},
+		}
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.ErrorIs(t, err, lookupErr)
+		assert.ErrorContains(t, err, "failed to get quota status")
+		assert.Equal(t, provisioning.QuotaStatus{}, status)
+		assert.Equal(t, uint64(0), histogramCount(t, reg, repositoryQuotaAgeMetric))
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 1.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
+	})
+
+	t.Run("existing repository uses cached quota and its refresh timestamp", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+		getter.SetError(lookupErr)
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		updatedAt := time.Now().Add(-time.Minute).UnixMilli()
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Quota: provisioning.QuotaStatus{
+					MaxRepositories:           5,
+					MaxResourcesPerRepository: 100,
+					UpdatedAt:                 updatedAt,
+				},
+			},
+		}
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), status.MaxRepositories)
+		assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
+		assert.Equal(t, updatedAt, status.UpdatedAt)
+		assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryQuotaAgeMetric))
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 1.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
+	})
+
+	t.Run("repeated failure preserves refresh timestamp and records increasing age", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+		getter.SetError(lookupErr)
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		updatedAt := time.Now().Add(-5 * time.Minute).UnixMilli()
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Quota: provisioning.QuotaStatus{
+					MaxRepositories: 5,
+					UpdatedAt:       updatedAt,
+				},
+			},
+		}
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, updatedAt, status.UpdatedAt)
+		family := gatherMetrics(t, reg)[repositoryQuotaAgeMetric]
+		histogram := family.GetMetric()[0].GetHistogram()
+		assert.Equal(t, uint64(1), histogram.GetSampleCount())
+		assert.InDelta(t, 300, histogram.GetSampleSum(), 1)
+		firstAge := histogram.GetSampleSum()
+
+		repo.Status.Quota = status
+		status, err = rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, updatedAt, status.UpdatedAt)
+		histogram = gatherMetrics(t, reg)[repositoryQuotaAgeMetric].GetMetric()[0].GetHistogram()
+		assert.Equal(t, uint64(2), histogram.GetSampleCount())
+		assert.GreaterOrEqual(t, histogram.GetSampleSum()-firstAge, firstAge)
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 2.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
+	})
+
+	t.Run("successful refresh updates timestamp", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+			MaxRepositories:           8,
+			MaxResourcesPerRepository: 200,
+			UpdatedAt:                 time.Now().Add(-time.Hour).UnixMilli(),
+		})
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Quota: provisioning.QuotaStatus{
+					MaxRepositories: 5,
+					UpdatedAt:       time.Now().Add(-5 * time.Minute).UnixMilli(),
+				},
+			},
+		}
+		before := time.Now().UnixMilli()
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, int64(8), status.MaxRepositories)
+		assert.Equal(t, int64(200), status.MaxResourcesPerRepository)
+		assert.GreaterOrEqual(t, status.UpdatedAt, before)
+		assert.LessOrEqual(t, status.UpdatedAt, time.Now().UnixMilli())
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
+	})
+}
+
 // repoIDHandlerStub is a minimal repository.Repository that also implements
 // repository.RepoIDHandler, so tests can drive the RepoID backfill branch in
 // process() without needing a real gitlab/github repository.
@@ -1110,7 +1241,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			err := rc.process(namespace + "/" + repoName)
+			_, err := rc.process(namespace + "/" + repoName)
 
 			if tc.wantErr {
 				require.Error(t, err)
@@ -1136,6 +1267,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 		newQuota         provisioning.QuotaStatus
 		expectReconcile  bool
 		expectQuotaPatch bool
+		expectRefreshes  float64
 	}{
 		{
 			name: "quota change triggers reconciliation and patches status",
@@ -1149,6 +1281,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			},
 			expectReconcile:  true,
 			expectQuotaPatch: true,
+			expectRefreshes:  1,
 		},
 		{
 			name: "unchanged quota skips reconciliation",
@@ -1162,6 +1295,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			},
 			expectReconcile:  false,
 			expectQuotaPatch: false,
+			expectRefreshes:  0,
 		},
 	}
 
@@ -1169,6 +1303,8 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 		t.Run(tc.name, func(t *testing.T) {
 			namespace := "default"
 			repoName := "test-repo"
+			reg := prometheus.NewPedanticRegistry()
+			quotaMetrics := registerRepositoryQuotaMetrics(reg)
 
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1227,6 +1363,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			rc := &RepositoryController{
 				repos:         repoGetter,
 				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
+				quotaMetrics:  quotaMetrics,
 				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 				healthChecker: healthChecker,
 				statusPatcher: patcher,
@@ -1236,8 +1373,10 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			err := rc.process(namespace + "/" + repoName)
+			_, err := rc.process(namespace + "/" + repoName)
 			assert.NoError(t, err)
+			assert.Equal(t, tc.expectRefreshes, counterValue(t, reg, repositoryQuotaRefreshMetric))
+			assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 
 			if tc.expectReconcile {
 				assert.NotEmpty(t, patcher.ops,
@@ -1252,7 +1391,10 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				assert.True(t, found, "expected /status/quota patch operation")
 				if found {
 					assert.Equal(t, "replace", quotaOp["op"])
-					assert.Equal(t, tc.newQuota, quotaOp["value"])
+					patchedQuota := quotaOp["value"].(provisioning.QuotaStatus)
+					assert.Equal(t, tc.newQuota.MaxRepositories, patchedQuota.MaxRepositories)
+					assert.Equal(t, tc.newQuota.MaxResourcesPerRepository, patchedQuota.MaxResourcesPerRepository)
+					assert.NotZero(t, patchedQuota.UpdatedAt)
 				}
 
 				condOp, found := patcher.findPatchOp("/status/conditions")
@@ -1274,6 +1416,86 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(t *testing.T) {
+	lookupErr := errors.New("quota service failed")
+	errorGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+	errorGetter.SetError(lookupErr)
+	updatedAt := time.Now().Add(-5 * time.Minute).UnixMilli()
+	testCases := []struct {
+		name   string
+		getter quotas.QuotaGetter
+	}{
+		{
+			name:   "failed refresh keeps cached timestamp",
+			getter: errorGetter,
+		},
+		{
+			name: "successful refresh waits for an existing reconciliation patch",
+			getter: quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+				MaxRepositories:           5,
+				MaxResourcesPerRepository: 100,
+			}),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: true,
+						Checked: time.Now().UnixMilli(),
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxRepositories:           5,
+						MaxResourcesPerRepository: 100,
+						UpdatedAt:                 updatedAt,
+					},
+				},
+			}
+
+			indexer := cache.NewIndexer(
+				cache.MetaNamespaceKeyFunc,
+				cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+			)
+			require.NoError(t, indexer.Add(repo))
+			repoGetter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+
+			patcher := &capturePatcher{}
+			healthMetrics := NewMockHealthMetricsRecorder(t)
+			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+			healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
+			repoFactory := repository.NewMockFactory(t)
+
+			rc := &RepositoryController{
+				repos:         repoGetter,
+				quotaGetter:   tc.getter,
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+				healthChecker: healthChecker,
+				statusPatcher: patcher,
+				repoFactory:   repoFactory,
+				logger:        logging.DefaultLogger.With("logger", loggerName),
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			_, err := rc.process("default/repo")
+			require.NoError(t, err)
+			repoFactory.AssertNotCalled(t, "Build", mock.Anything, mock.Anything)
+			assert.Empty(t, patcher.ops)
 		})
 	}
 }
@@ -1333,7 +1555,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process("default/test-repo")
+	_, err := rc.process("default/test-repo")
 	require.NoError(t, err)
 
 	// Find the last /status/conditions patch operation — if there are multiple
@@ -1487,7 +1709,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	// The token patch must be present even though the repository is currently over quota.
@@ -1592,7 +1814,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	// Regeneration happened: a fresh token status was written and Build was retried.
@@ -1857,7 +2079,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
@@ -1950,7 +2172,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 		webhookSecretRotationInterval: 30 * 24 * time.Hour,
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
@@ -1989,7 +2211,7 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
@@ -2032,7 +2254,7 @@ func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t
 	stub := &hookRepoStub{cfg: repo} // hookErrSet is false -> hookResult() returns assert.AnError
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.Error(t, err, "a non-auth hook failure must still surface as a controller error")
 	assert.ErrorIs(t, err, assert.AnError)
 
@@ -2129,7 +2351,7 @@ func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2188,7 +2410,7 @@ func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2242,7 +2464,7 @@ func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *tes
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2294,7 +2516,7 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2376,7 +2598,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
@@ -2429,7 +2651,7 @@ func TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObserved
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
 
 	assert.Equal(t, int32(0), stub.onDeleteCalls.Load(),
@@ -2487,8 +2709,11 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	repoType, err := rc.process(namespace + "/" + repoName)
 
+	require.NoError(t, err)
+	assert.Equal(t, string(provisioning.GitHubRepositoryType), repoType,
+		"process must return the repository type so the controller can attribute failure/retry log lines")
 	assert.Equal(t, int32(1), stub.testCalls.Load(),
 		"health refresh must run after workflows are removed even during the previous cooldown")
 
@@ -2523,6 +2748,8 @@ func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map
 			repo.Status.FieldErrors = op["value"].([]provisioning.ErrorDetails)
 		case path == "/status/observedGeneration":
 			repo.Status.ObservedGeneration = op["value"].(int64)
+		case path == "/status/quota":
+			repo.Status.Quota = op["value"].(provisioning.QuotaStatus)
 		case path == "/status/conditions":
 			repo.Status.Conditions = op["value"].([]metav1.Condition)
 		case path == "/status/conditions/-":
@@ -2586,14 +2813,15 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 	rc, patcher := newRecoveryController(t, repo, stub)
 
 	// Pass 1: the repo is unreachable for the first time and status is updated.
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
 	require.NotEmpty(t, patcher.ops, "the first transition to unhealthy should record status")
 	applyCapturedPatches(t, repo, patcher.ops)
 	patcher.ops = nil
 
 	// Pass 2: same repo, same failure, nothing has changed since pass 1.
-	require.NoError(t, rc.process(namespace+"/"+repoName))
-
+	_, err = rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
 	assert.Equal(t, int32(2), stub.testCalls.Load(),
 		"Test() must still run on pass 2 -- reachability can't be safely inferred from stale status")
 	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
@@ -2645,8 +2873,9 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 	stub := &hookRepoStub{cfg: repo}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	_, err := rc.process(namespace + "/" + repoName)
 
+	require.NoError(t, err)
 	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
 		"hooks must not run when the spec is observed and the webhook already exists")
 	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
@@ -2711,7 +2940,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	require.NoError(t, indexer.Add(repo))
 	repoLister := listers.NewRepositoryLister(indexer)
 
-	// This repo fixture deterministically produces 4 patch ops (health,
+	// This repo fixture deterministically produces 5 patch ops (quota, health,
 	// observedGeneration, two condition adds) on the one and only expected
 	// call; fieldErrors is not patched since both sides are already empty.
 	statusPatcher := mocks.NewStatusPatcher(t)
@@ -2719,6 +2948,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 		On(
 			"Patch",
 			mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
@@ -2756,7 +2986,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	_, err := rc.process(namespace + "/" + repoName)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "status patch operations failed")
 }
@@ -2783,7 +3013,7 @@ func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		switch processCount.Add(1) {
 		case 1:
 			close(firstProcessingStarted)
@@ -2791,7 +3021,7 @@ func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 		case 2:
 			close(secondProcessingDone)
 		}
-		return nil
+		return "", nil
 	}
 
 	rc.queue.Add("test/repo")
@@ -2837,10 +3067,10 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		processCount.Add(1)
 		close(processingDone)
-		return nil
+		return "", nil
 	}
 
 	// Enqueue the same key several times before any worker starts.
@@ -2881,11 +3111,11 @@ func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testin
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		if processCount.Add(1) == maxAttempts {
 			close(allAttemptsDone)
 		}
-		return apierrors.NewServiceUnavailable("test")
+		return "", apierrors.NewServiceUnavailable("test")
 	}
 
 	rc.queue.Add("test/repo")
@@ -2921,10 +3151,10 @@ func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		processCount.Add(1)
 		close(processingDone)
-		return errors.New("some non-retryable error")
+		return "", errors.New("some non-retryable error")
 	}
 
 	rc.queue.Add("test/repo")
