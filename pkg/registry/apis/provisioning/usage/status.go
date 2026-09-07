@@ -1,7 +1,10 @@
 package usage
 
 import (
+	"k8s.io/apimachinery/pkg/api/meta"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Log messages emitted per reconcile for the repository usage snapshot. They are
@@ -70,15 +73,37 @@ const (
 //	)
 //	# Unhealthy repositories
 //	count by (repository) (count_over_time({...} | logfmt | msg=`repository usage status` | healthy=`0` [$__interval]))
+//	# Repositories by why they are not ready (auth, invalid spec, ...)
+//	count by (readyReason) (count by (repository, readyReason) (
+//	  count_over_time({...} | logfmt | msg=`repository usage status` [$__range])))
 type RepositoryUsageStatus struct {
 	// Type is the repository backend type (github, git, local, ...).
 	Type string
+	// CreatedAt is when the repository resource was created, in epoch milliseconds.
+	CreatedAt int64
+	// UpdatedAt is when the repository resource was last updated
+	// (grafana.app/updatedTimestamp), in epoch milliseconds; 0 if never set.
+	UpdatedAt int64
+	// AuthMethod is how the repository authenticates: "none" (local), "connection"
+	// (delegated to a referenced Connection -- whose own type carries the concrete
+	// auth mechanism), or "token" (a token/PAT stored on the repository).
+	AuthMethod string
+	// ReadOnly reports that no write workflows are enabled (Spec.Workflows empty),
+	// so the repository is pull-only.
+	ReadOnly bool
 	// SyncEnabled reports whether scheduled sync is turned on.
 	SyncEnabled bool
 	// SyncTarget is where the repository syncs to (instance, folder, folderless).
 	SyncTarget string
 	// Healthy is the repository's last observed health.
 	Healthy bool
+	// ReadyReason classifies the repository's Ready condition. It is the single
+	// field that says *why* a repository is (not) usable: "Available" when ready,
+	// or a failure class otherwise -- notably "AuthenticationFailed" (bad/expired
+	// credentials or insufficient permissions) and "InvalidSpec" (a configuration
+	// error the user must fix), plus "ServiceUnavailable", "RateLimited", and the
+	// quota reasons. Empty before the first health check sets a Ready condition.
+	ReadyReason string
 	// SyncState is the state of the last sync job (pending/working/success/error).
 	SyncState string
 	// LastSyncFinished is when the last sync finished, in epoch milliseconds.
@@ -98,15 +123,54 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		total += s.Count
 	}
 
+	var readyReason string
+	if ready := meta.FindStatusCondition(repo.Status.Conditions, provisioning.ConditionTypeReady); ready != nil {
+		readyReason = ready.Reason
+	}
+
+	var createdAt int64
+	if ts := repo.GetCreationTimestamp(); !ts.IsZero() {
+		createdAt = ts.UnixMilli()
+	}
+	// UpdatedAt is best-effort: it comes from the grafana.app/updatedTimestamp
+	// annotation, which may be absent or malformed; either way we log 0 rather
+	// than fail the snapshot.
+	var updatedAt int64
+	if acc, err := utils.MetaAccessor(repo); err == nil {
+		if ts, err := acc.GetUpdatedTimestamp(); err == nil && ts != nil {
+			updatedAt = ts.UnixMilli()
+		}
+	}
+
 	return RepositoryUsageStatus{
 		Type:                 string(repo.Spec.Type),
+		CreatedAt:            createdAt,
+		UpdatedAt:            updatedAt,
+		AuthMethod:           repositoryAuthMethod(repo),
+		ReadOnly:             len(repo.Spec.Workflows) == 0,
 		SyncEnabled:          repo.Spec.Sync.Enabled,
 		SyncTarget:           string(repo.Spec.Sync.Target),
 		Healthy:              repo.Status.Health.Healthy,
+		ReadyReason:          readyReason,
 		SyncState:            string(repo.Status.Sync.State),
 		LastSyncFinished:     repo.Status.Sync.Finished,
 		ManagedResourceCount: total,
 		ManagedResources:     repo.Status.Stats,
+	}
+}
+
+// repositoryAuthMethod classifies how a repository authenticates. The concrete
+// mechanism for a connection-backed repository lives on the Connection (its type
+// distinguishes GitHub App from the OAuth providers); here we only record that
+// auth is delegated.
+func repositoryAuthMethod(repo *provisioning.Repository) string {
+	switch {
+	case repo.Spec.Type == provisioning.LocalRepositoryType:
+		return "none"
+	case repo.Spec.Connection != nil && repo.Spec.Connection.Name != "":
+		return "connection"
+	default:
+		return "token"
 	}
 }
 
@@ -117,9 +181,14 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 // the log's contract.
 func (s RepositoryUsageStatus) LogValues() []any {
 	return []any{
+		"createdAt", s.CreatedAt,
+		"updatedAt", s.UpdatedAt,
+		"authMethod", s.AuthMethod,
+		"readOnly", boolToInt(s.ReadOnly),
 		"target", s.SyncTarget,
 		"syncEnabled", boolToInt(s.SyncEnabled),
 		"healthy", boolToInt(s.Healthy),
+		"readyReason", s.ReadyReason,
 		"syncState", s.SyncState,
 		"lastSyncFinished", s.LastSyncFinished,
 		"managedResourceCount", s.ManagedResourceCount,
