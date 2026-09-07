@@ -21,9 +21,7 @@ export { FrameGeometrySourceMode };
  */
 export type { FrameGeometrySource, MapLayerOptions } from '@grafana/schema';
 
-/**
- * @alpha
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
   /**
@@ -48,8 +46,6 @@ export interface MapLayerHandler<TConfig = any> {
 
 /**
  * Map layer configuration
- *
- * @alpha
  */
 export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
   /**
@@ -82,5 +78,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
     options: MapLayerOptions<TConfig>,
     eventBus: EventBus,
     theme: GrafanaTheme2
-  ) => Promise<MapLayerHandler>;
+  ) => Promise<MapLayerHandler<TConfig>>;
 }

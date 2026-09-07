@@ -30,10 +30,13 @@ export function hasPredefinedVariablesAnnotationChanges(dashboard: DashboardScen
 /** Human-readable label for save-diff UI (metadata is not part of Spec JSON). */
 export function formatPredefinedVariablesAnnotationLabel(annotation: string | undefined): string {
   if (annotation === undefined) {
-    return t('dashboard-scene.predefined-variables.label-all', 'All');
+    return t('dashboard-scene.predefined-variables.label-none', 'None');
   }
   const denyList = parseIgnorePredefinedVariables({ [AnnoKeyIgnorePredefinedVariables]: annotation });
-  if (denyList === undefined || denyList.length === 0) {
+  if (denyList === undefined) {
+    return t('dashboard-scene.predefined-variables.label-none', 'None');
+  }
+  if (denyList.length === 0) {
     return t('dashboard-scene.predefined-variables.label-all', 'All');
   }
   if (denyList.includes(DENY_ALL_PREDEFINED)) {

@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -26,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
+var testSpanRecorder = tracetest.NewSpanRecorder()
+
 func TestMain(m *testing.M) {
+	otel.SetTracerProvider(tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(testSpanRecorder)))
 	testsuite.Run(m)
 }
 
@@ -259,7 +265,7 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 }
 
 func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
-	sqlDB := db.InitTestDB(t)
+	sqlDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 2
 

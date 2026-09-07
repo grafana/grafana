@@ -882,6 +882,10 @@ export type TimeZoneBrowser = 'browser';
  */
 export interface TimeCompareOptions {
   /**
+   * How the tooltip delta between the current and comparison values is colored
+   */
+  colorMode?: TimeCompareColorMode;
+  /**
    * Enable time comparison control
    */
   timeCompare?: boolean;
@@ -1100,6 +1104,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   inspect: boolean;
   minWidth?: number;
   /**
+   * Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
+   */
+  sortable?: boolean;
+  /**
    * The name of the field which contains styling overrides for this cell
    */
   styleField?: string;
@@ -1138,3 +1146,13 @@ export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
+
+/**
+ * Colors the tooltip delta between the current and comparison values. "standard" colors an increase
+ * green, "inverted" colors an increase red, and "same_as_value" reuses the series color.
+ */
+export enum TimeCompareColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}

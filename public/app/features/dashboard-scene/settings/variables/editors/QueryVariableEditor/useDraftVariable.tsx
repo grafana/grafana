@@ -5,7 +5,7 @@ import { QueryVariable, sceneGraph, SceneTimeRange, SceneVariableSet } from '@gr
 import { collectAncestorSceneVariables } from '../../../../utils/collectAncestorSceneVariables';
 
 export function useDraftVariable(variable: QueryVariable) {
-  const draftVariableRef = useRef<QueryVariable>();
+  const draftVariableRef = useRef<QueryVariable | undefined>(undefined);
 
   if (!draftVariableRef.current) {
     const timeRange = sceneGraph.getTimeRange(variable);

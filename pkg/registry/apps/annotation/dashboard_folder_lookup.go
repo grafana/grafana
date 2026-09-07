@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	authlib "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,6 +40,11 @@ type dashboardFolderResolver struct {
 }
 
 func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
+	ctx, span := tracer.Start(ctx, "annotation.authz.dashboardFolderResolver.ResolveFolder", trace.WithAttributes(
+		attribute.String("dashboard_uid", dashboardUID),
+	))
+	defer span.End()
+
 	nsInfo, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return "", fmt.Errorf("parse namespace %q: %w", namespace, err)

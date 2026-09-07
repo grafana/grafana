@@ -47,3 +47,12 @@ type TokenConnection interface {
 	// GenerateConnectionToken mints a new connection-level token and returns it.
 	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)
 }
+
+// OAuthConnection is the interface implemented by all OAuth app connections.
+//
+//go:generate mockery --name OAuthConnection --structname MockOAuthConnection --inpackage --filename connection_oauth_mock.go --with-expecter
+type OAuthConnection interface {
+	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
+	// Returns the value to store as the connection token.
+	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
+}

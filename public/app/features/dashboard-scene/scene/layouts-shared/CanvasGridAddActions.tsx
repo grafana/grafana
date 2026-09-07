@@ -14,6 +14,7 @@ import { addNewRowTo, addNewTabTo } from './addNew';
 import { getDisableTabsMessage, getNestingRestrictionMessage, useNestingRestrictions } from './nestingRestrictions';
 import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
+import { useIsMultiSelection } from './useIsMultiSelection';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -25,6 +26,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   const { hasCopiedPanel } = useClipboardState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { disableGrouping, disableTabs, disableTabsReason } = useNestingRestrictions(layoutManager);
+  const isMultiSelection = useIsMultiSelection();
 
   return (
     <div
@@ -32,7 +34,8 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         styles.controls,
         localStyles.addAction,
         'dashboard-canvas-controls',
-        isMenuOpen && localStyles.menuOpen
+        isMenuOpen && localStyles.menuOpen,
+        isMultiSelection && styles.controlsHidden
       )}
       onPointerUp={(evt) => evt.stopPropagation()}
       onPointerDown={(evt) => evt.stopPropagation()}

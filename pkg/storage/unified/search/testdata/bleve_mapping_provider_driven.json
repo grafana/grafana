@@ -172,7 +172,8 @@
       },
       "labels": {
         "enabled": true,
-        "dynamic": true
+        "dynamic": true,
+        "default_analyzer": "keyword"
       },
       "managedBy": {
         "enabled": true,

@@ -69,7 +69,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			{
 				Receiver: "",
 				MuteTimeIntervals: []string{
-					rev.Config.AlertmanagerConfig.TimeIntervals[0].Name,
+					"test-mute-interval",
 				},
 			},
 			{
@@ -298,10 +298,8 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("", "test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
 	}
-	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []v1.TimeInterval{
-		{
-			Name: "test",
-		},
+	currentRevision.Config.TimeIntervals = map[v1.ResourceUID]v1.TimeInterval{
+		v1.TimeIntervalUID("test"): {Title: "test"},
 	}
 	currentRevision.Config.AlertmanagerConfig.Receivers = []*v1.PostableApiReceiver{
 		{
@@ -533,17 +531,15 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 						Receiver: "test-receiver",
 					},
 					InhibitRules: nil,
-					TimeIntervals: []v1.TimeInterval{
-						{
-							Name: "test-mute-interval",
-						},
-					},
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
 						Name: "test-receiver",
 					},
 				},
+			},
+			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+				v1.TimeIntervalUID("test-mute-interval"): {Title: "test-mute-interval"},
 			},
 		},
 		ConcurrencyToken: util.GenerateShortUID(),

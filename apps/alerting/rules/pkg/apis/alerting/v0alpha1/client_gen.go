@@ -42,7 +42,7 @@ func (c *CustomRouteClient) CreateSearchRules(ctx context.Context, namespace str
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
 	}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/search",
+		Path:    "/searchRules",
 		Verb:    "POST",
 		Body:    io.NopCloser(bytes.NewReader(body)),
 		Headers: request.Headers,

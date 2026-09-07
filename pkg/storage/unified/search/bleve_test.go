@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -877,7 +878,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -897,7 +898,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -916,7 +917,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
 			},
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
 		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
@@ -929,7 +930,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {Field: "labels.region", Limit: 10},
 			},
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
@@ -945,11 +946,174 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
 				},
-			}, nil, postRankAuthz)
+			}, nil, postRankAuthz, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
 		}
+	})
+}
+
+func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
+	tests := []struct {
+		name                  string
+		wantsDeletedDocuments bool
+		message               string
+	}{
+		{
+			name:    "indexing is disabled",
+			message: "trash is not available for this resource because indexing deleted documents is disabled",
+		},
+		{
+			name:                  "index is awaiting rebuild",
+			wantsDeletedDocuments: true,
+			message:               "trash is not available for this resource until its search index has been rebuilt",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			idx := &bleveIndex{
+				fields:                resource.StandardSearchFields(),
+				searchFields:          newKindSearchFields(nil, "", "", nil),
+				wantsDeletedDocuments: tc.wantsDeletedDocuments,
+			}
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{},
+				Limit:     10,
+				IsDeleted: true,
+			}, nil, false, nil)
+
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+			assert.Equal(t, tc.message, errResult.Message)
+		})
+	}
+}
+
+// TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
+func TestBleveSortCapabilityCheck(t *testing.T) {
+	const group, kindResource = "example.grafana.app", "widgets"
+	// v1 and v2 declare different fields on purpose: a request naming no version
+	// is validated against the union.
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		{Group: group, Version: "v1", Resource: kindResource}: {
+			{
+				Name:         "note",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort},
+			},
+			{
+				Name:         "category",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+			},
+		},
+		{Group: group, Version: "v2", Resource: kindResource}: {
+			{
+				Name:         "weight",
+				Type:         resource.SearchFieldTypeInt64,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve},
+			},
+		},
+	}, map[schema.GroupResource]string{{Group: group, Resource: kindResource}: "v1"})
+
+	newIndex := func(enforce bool) *bleveIndex {
+		return &bleveIndex{
+			key:                   resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
+			fields:                resource.StandardSearchFields(),
+			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
+			enforceSortCapability: enforce,
+			logger:                log.NewNopLogger(),
+		}
+	}
+
+	sortBy := func(field string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			SortBy:  []*resourcepb.ResourceSearchRequest_Sort{{Field: field}},
+		}
+	}
+
+	accepted := []struct {
+		name  string
+		field string
+	}{
+		{"standard sortable field", resource.SEARCH_FIELD_TITLE},
+		{"physical title variant", resource.SEARCH_FIELD_TITLE_PHRASE},
+		{"name", resource.SEARCH_FIELD_NAME},
+		{"folder", resource.SEARCH_FIELD_FOLDER},
+		{"per-kind field, bare name", "note"},
+		{"per-kind field, prefixed name", resource.SEARCH_FIELD_PREFIX + "note"},
+		// Declared by v2 only.
+		{"field declared by another version", resource.SEARCH_FIELD_PREFIX + "weight"},
+	}
+	for _, tc := range accepted {
+		t.Run("accepts "+tc.name, func(t *testing.T) {
+			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			require.Nil(t, errResult)
+			require.NotNil(t, searchReq)
+		})
+	}
+
+	rejected := []struct {
+		name  string
+		field string
+	}{
+		{"standard retrieve-only field", resource.SEARCH_FIELD_CREATED},
+		{"per-kind field without sort", "category"},
+		{"per-kind field without sort, prefixed", resource.SEARCH_FIELD_PREFIX + "category"},
+		{"undeclared field", "nonexistent"},
+		{"label", "labels.region"},
+		// A standard field lives top-level, so nothing is indexed under this path.
+		{"standard field under the per-kind prefix", resource.SEARCH_FIELD_PREFIX + resource.SEARCH_FIELD_TITLE},
+		// Selectable fields exist to be filtered on; nothing sorts on them.
+		{"selectable field", resource.SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.slug"},
+	}
+	for _, tc := range rejected {
+		t.Run("rejects "+tc.name, func(t *testing.T) {
+			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, fmt.Sprintf("field %q does not support sorting", tc.field))
+		})
+
+		t.Run("counts but allows "+tc.name+" with enforcement off", func(t *testing.T) {
+			idx := newIndex(false)
+			reg := prometheus.NewPedanticRegistry()
+			idx.indexMetrics = resource.ProvideIndexMetrics(reg)
+
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			require.Nil(t, errResult)
+			require.NotNil(t, searchReq)
+			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "index_server_search_capability_violations_total"))
+		})
+	}
+
+	// Trash fields are refused on a live search, so they cannot go in the list above.
+	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
+		idx := newIndex(true)
+		idx.keepsDeletedDocuments = true
+		idx.wantsDeletedDocuments = true
+		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
+		req.IsDeleted = true
+		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil)
+		require.Nil(t, errResult)
+	})
+
+	t.Run("an index without declarations still allows standard sortable fields", func(t *testing.T) {
+		idx := &bleveIndex{
+			fields:                resource.StandardSearchFields(),
+			enforceSortCapability: true,
+			logger:                log.NewNopLogger(),
+		}
+		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
+		require.Nil(t, errResult)
+
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil)
+		require.NotNil(t, errResult)
 	})
 }
 
@@ -1235,7 +1399,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
 		t.Helper()
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = idx.Close() })
 		require.NoError(t, setRV(idx, 42))
@@ -1257,13 +1421,110 @@ func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 		require.ErrorContains(t, err, "missing required index features [alpha]")
 	})
 }
+
+// The setting is read once, when the index is created, so later changes cannot
+// leave trash missing whatever was deleted while it was off.
+func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
+	for _, keep := range []bool{true, false} {
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", keep)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+
+		bi, err := getBuildInfo(idx)
+		require.NoError(t, err)
+		require.Equal(t, keep, slices.Contains(bi.Features, resource.IndexFeatureHoldsDeletedDocuments))
+		require.Equal(t, keep, slices.Contains(bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments))
+
+		// Only an index holding deleted documents needs a reader that filters them.
+		if keep {
+			require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
+		} else {
+			require.Empty(t, bi.ReaderRequirements)
+		}
+	}
+}
+
+// A local index whose build info cannot be read is discarded: there is no way to
+// tell whether it declares a requirement this binary cannot meet.
+func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
+	newIndexOnDisk := func(t *testing.T, rawBuildInfo []byte) string {
+		t.Helper()
+		resourceDir := t.TempDir()
+		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+		require.NoError(t, err)
+		require.NoError(t, setRV(idx, 42))
+		if rawBuildInfo != nil {
+			require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), rawBuildInfo))
+		}
+		require.NoError(t, idx.Close())
+		return resourceDir
+	}
+
+	logger := log.New("bleve-test")
+
+	t.Run("reused when build info is readable", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+		idx, _, rv, err := backend.tryReuseFileIndex(newIndexOnDisk(t, nil), time.Time{}, logger)
+		require.NoError(t, err)
+		require.NotNil(t, idx)
+		require.Equal(t, int64(42), rv)
+		require.NoError(t, idx.Close())
+	})
+
+	t.Run("discarded when build info cannot be parsed", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+		idx, _, _, err := backend.tryReuseFileIndex(newIndexOnDisk(t, []byte("{not json")), time.Time{}, logger)
+		require.NoError(t, err)
+		require.Nil(t, idx)
+	})
+}
+
+// Stands in for an index written by a newer binary.
+func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
+	t.Helper()
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = idx.Close() })
+	require.NoError(t, setRV(idx, 42))
+
+	bi, err := getBuildInfo(idx)
+	require.NoError(t, err)
+	bi.ReaderRequirements = requirements
+	raw, err := json.Marshal(bi)
+	require.NoError(t, err)
+	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), raw))
+	return idx
+}
+
+// Backstops selection, which can only check snapshots whose manifest carries the
+// requirements.
+func TestValidateDownloadedIndexChecksReaderRequirements(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+
+	t.Run("rejected for a requirement this binary does not know", func(t *testing.T) {
+		_, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, "feature-from-the-future"))
+		require.ErrorContains(t, err, "does not understand [feature-from-the-future]")
+	})
+
+	t.Run("accepted when every requirement is understood", func(t *testing.T) {
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, resource.IndexFeatureDeletedMarker))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+
+	t.Run("accepted when none are declared", func(t *testing.T) {
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+}
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "", false)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -1516,7 +1777,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 	require.NoError(t, err)
 	resourceDir := backend.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
-	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	rv, err := getRV(unfinished)
 	require.NoError(t, err)
@@ -2656,7 +2917,7 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
-	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = raw.Close() })
 
@@ -2702,7 +2963,7 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T
 // so leaving match-all there and testing the marker as a Filter would read every
 // document in the index to find the few deleted ones.
 func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
-	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true).(*query.BooleanQuery)
+	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
@@ -2713,13 +2974,13 @@ func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
 	// A real query drives iteration itself, so the marker moves to Filter where it
 	// does not score.
 	textQuery := bleve.NewMatchQuery("hello")
-	scoped, ok = scopeQuery(textQuery, true).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(textQuery, true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
 
 	// Live searches only exclude the marker; provisioning is irrelevant to them.
-	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
 	assert.Nil(t, scoped.Filter)
@@ -2810,10 +3071,10 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 	assert.Equal(t, map[string]float64{
 		id("live-1"): unscoped[id("live-1")],
 		id("live-2"): unscoped[id("live-2")],
-	}, scores(scopeQuery(textQuery, false)))
+	}, scores(scopeQuery(textQuery, false, 0)))
 
 	assert.Equal(t, map[string]float64{
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
-	}, scores(scopeQuery(textQuery, true)))
+	}, scores(scopeQuery(textQuery, true, 0)))
 }

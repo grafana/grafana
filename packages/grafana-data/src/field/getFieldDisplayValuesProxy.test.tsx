@@ -83,6 +83,11 @@ describe('getFieldDisplayValuesProxy', () => {
     expect(p[100]).toBeUndefined();
   });
 
+  it('should not throw when coerced to a primitive directly', () => {
+    const p = getFieldDisplayValuesProxy({ frame: dataShortTimeRange, rowIndex: 0 });
+    expect(`${p}`).toBe('');
+  });
+
   it('should use default display processor if display is not defined', () => {
     const p = getFieldDisplayValuesProxy({
       frame: createDataFrame({ fields: [{ name: 'test', values: [1, 2] }] }),

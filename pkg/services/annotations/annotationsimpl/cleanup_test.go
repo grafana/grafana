@@ -21,7 +21,7 @@ import (
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeSQL := db.InitTestDB(t)
+	fakeSQL := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	tests := []struct {
 		name                    string
@@ -132,7 +132,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeSQL := db.InitTestDB(t)
+	fakeSQL := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	t.Cleanup(func() {
 		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {

@@ -48,7 +48,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	l := log.New("alertmanager-test")
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,

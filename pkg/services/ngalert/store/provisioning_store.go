@@ -239,11 +239,13 @@ func managerFromRecord(record provenanceRecord) utils.ManagerProperties {
 // DeleteProvenance deletes the provenance record from the table
 func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(provenanceRecord{
-			RecordKey:  o.ResourceID(),
-			RecordType: o.ResourceType(),
-			OrgID:      org,
-		})
+		// Explicit Where+Delete, not sess.Delete(&provenanceRecord{...}): xorm's struct-based
+		// Delete only conditions on non-zero fields, so a resource with ResourceID() == ""
+		// (e.g. the default alerting route) would drop record_key from the WHERE clause
+		// entirely and delete every record of that record_type/org.
+		_, err := sess.Table(provenanceRecord{}).
+			Where("record_key = ? AND record_type = ? AND org_id = ?", o.ResourceID(), o.ResourceType(), org).
+			Delete(&provenanceRecord{})
 		return err
 	})
 }
@@ -292,35 +294,35 @@ func (st DBstore) GetManagerProperties(ctx context.Context, o models.Provisionab
 	return managerFromRecord(record), nil
 }
 
-// GetManagerPropertiesByUIDs returns ManagerProperties for specific UIDs of a resource type.
-func (st DBstore) GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error) {
-	if len(uids) == 0 {
-		return map[string]utils.ManagerProperties{}, nil
-	}
-
-	result := make(map[string]utils.ManagerProperties, len(uids))
+// GetAllManagerProperties returns all manager properties for the given org and resource type
+func (st DBstore) GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+	resultMap := make(map[string]utils.ManagerProperties)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var records []provenanceRecord
 		err := sess.Table(provenanceRecord{}).
 			Where("record_type = ? AND org_id = ?", resourceType, org).
-			In("record_key", uids).
+			Cols("record_key", "manager_kind", "manager_identity", "provenance").
 			Find(&records)
+
 		if err != nil {
-			return fmt.Errorf("failed to query for manager properties: %w", err)
+			return fmt.Errorf("failed to query for existing provenance status: %w", err)
 		}
+
 		for _, r := range records {
 			if r.ManagerKind != "" {
-				result[r.RecordKey] = utils.ManagerProperties{
+				resultMap[r.RecordKey] = utils.ManagerProperties{
 					Kind:     utils.ParseManagerKindString(r.ManagerKind),
 					Identity: r.ManagerIdentity,
 				}
 			} else {
-				result[r.RecordKey] = models.ProvenanceToManagerProperties(r.Provenance)
+				resultMap[r.RecordKey] = models.ProvenanceToManagerProperties(r.Provenance)
 			}
 		}
+
 		return nil
 	})
-	return result, err
+
+	return resultMap, err
 }
 
 // SetManagerProperties stores ManagerProperties for a provisionable object.

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,12 +31,20 @@ import (
 // singletonID is the only valid identifier for the per-org Config singleton.
 var singletonID = resource.Identifier{
 	Namespace: apis.DefaultNamespace,
-	Name:      alertingnotifv0alpha1.ConfigSingletonName,
+	Name:      alertingnotifv1beta1.ConfigSingletonName,
 }
 
 // configGVR is the GroupVersionResource for the Config kind, used by the raw
 // dynamic client below.
 var configGVR = schema.GroupVersionResource{
+	Group:    alertingnotifv1beta1.APIGroup,
+	Version:  alertingnotifv1beta1.APIVersion,
+	Resource: "configs",
+}
+
+// configGVRV0alpha1 addresses the pre-promotion version, which is still served
+// (non-storage) for backward compatibility.
+var configGVRV0alpha1 = schema.GroupVersionResource{
 	Group:    alertingnotifv0alpha1.APIGroup,
 	Version:  alertingnotifv0alpha1.APIVersion,
 	Resource: "configs",
@@ -60,9 +69,9 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 
 func ptr[T any](v T) *T { return &v }
 
-func newConfigClient(t *testing.T, user apis.User) *alertingnotifv0alpha1.ConfigClient {
+func newConfigClient(t *testing.T, user apis.User) *alertingnotifv1beta1.ConfigClient {
 	t.Helper()
-	client, err := alertingnotifv0alpha1.NewConfigClientFromGenerator(user.GetClientRegistry())
+	client, err := alertingnotifv1beta1.NewConfigClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 	return client
 }
@@ -77,7 +86,7 @@ func rawConfigClient(t *testing.T, user apis.User) dynamic.ResourceInterface {
 }
 
 // rawUpdate PUTs cfg via the dynamic client (create-on-update capable).
-func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingnotifv0alpha1.Config) (*alertingnotifv0alpha1.Config, error) {
+func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingnotifv1beta1.Config) (*alertingnotifv1beta1.Config, error) {
 	t.Helper()
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cfg)
 	require.NoError(t, err)
@@ -85,7 +94,7 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingn
 	if err != nil {
 		return nil, err
 	}
-	out := &alertingnotifv0alpha1.Config{}
+	out := &alertingnotifv1beta1.Config{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(res.Object, out))
 	return out, nil
 }
@@ -93,17 +102,17 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingn
 // newConfig builds a Config resource with the given name. ExternalAlertmanagerSync
 // is left unset, which is always valid (clearing/omitting is never rejected by
 // the admission validator).
-func newConfig(name string) *alertingnotifv0alpha1.Config {
-	return &alertingnotifv0alpha1.Config{
+func newConfig(name string) *alertingnotifv1beta1.Config {
+	return &alertingnotifv1beta1.Config{
 		TypeMeta: v1.TypeMeta{
-			Kind:       alertingnotifv0alpha1.ConfigKind().Kind(),
-			APIVersion: alertingnotifv0alpha1.GroupVersion.Identifier(),
+			Kind:       alertingnotifv1beta1.ConfigKind().Kind(),
+			APIVersion: alertingnotifv1beta1.GroupVersion.Identifier(),
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: apis.DefaultNamespace,
 			Name:      name,
 		},
-		Spec: alertingnotifv0alpha1.ConfigSpec{},
+		Spec: alertingnotifv1beta1.ConfigSpec{},
 	}
 }
 
@@ -197,7 +206,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 				t.Run("can get the singleton", func(t *testing.T) {
 					got, err := client.Get(ctx, singletonID)
 					require.NoError(t, err)
-					require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, got.Name)
+					require.Equal(t, alertingnotifv1beta1.ConfigSingletonName, got.Name)
 				})
 				t.Run("can list configs", func(t *testing.T) {
 					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -217,12 +226,12 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 
 			if tc.canUpdate {
 				t.Run("can update the singleton", func(t *testing.T) {
-					_, err := client.Update(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.UpdateOptions{})
+					_, err := client.Update(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.UpdateOptions{})
 					require.NoError(t, err)
 				})
 			} else {
 				t.Run("is forbidden to update the singleton", func(t *testing.T) {
-					_, err := client.Update(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.UpdateOptions{})
+					_, err := client.Update(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.UpdateOptions{})
 					requireForbidden(t, err, "")
 				})
 			}
@@ -231,7 +240,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 			// update permission. The singleton is brought into existence by the sync
 			// worker; humans only read/update the seeded object.
 			t.Run("is forbidden to create", func(t *testing.T) {
-				_, err := client.Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
+				_, err := client.Create(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.CreateOptions{})
 				requireForbidden(t, err, "seeded automatically")
 			})
 
@@ -241,7 +250,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 			})
 
 			t.Run("is forbidden to write status", func(t *testing.T) {
-				_, err := client.UpdateStatus(ctx, singletonID, alertingnotifv0alpha1.ConfigStatus{
+				_, err := client.UpdateStatus(ctx, singletonID, alertingnotifv1beta1.ConfigStatus{
 					ObservedGeneration: ptr(int64(1)),
 				}, resource.UpdateOptions{})
 				requireForbidden(t, err, "")
@@ -261,13 +270,13 @@ func TestIntegrationConfigCreate(t *testing.T) {
 
 	t.Run("POST create is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
-		_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
+		_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.CreateOptions{})
 		requireForbidden(t, err, "seeded automatically")
 	})
 
 	t.Run("PUT upsert (create-on-update) is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
-		_, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingnotifv0alpha1.ConfigSingletonName))
+		_, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingnotifv1beta1.ConfigSingletonName))
 		requireForbidden(t, err, "")
 	})
 }
@@ -293,8 +302,8 @@ func TestIntegrationConfigValidator(t *testing.T) {
 	seedSingleton(t, ctx, helper)
 
 	t.Run("setting a non-existent datasource UID is rejected", func(t *testing.T) {
-		cfg := newConfig(alertingnotifv0alpha1.ConfigSingletonName)
-		cfg.Spec.ExternalAlertmanagerSync = &alertingnotifv0alpha1.ConfigV0alpha1SpecExternalAlertmanagerSync{
+		cfg := newConfig(alertingnotifv1beta1.ConfigSingletonName)
+		cfg.Spec.ExternalAlertmanagerSync = &alertingnotifv1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{
 			DatasourceUid: ptr("does-not-exist-uid"),
 		}
 		_, err := adminClient.Update(ctx, cfg, resource.UpdateOptions{})
@@ -302,9 +311,40 @@ func TestIntegrationConfigValidator(t *testing.T) {
 	})
 
 	t.Run("clearing the datasource UID is allowed", func(t *testing.T) {
-		cfg := newConfig(alertingnotifv0alpha1.ConfigSingletonName)
+		cfg := newConfig(alertingnotifv1beta1.ConfigSingletonName)
 		cfg.Spec.ExternalAlertmanagerSync = nil
 		_, err := adminClient.Update(ctx, cfg, resource.UpdateOptions{})
 		require.NoError(t, err)
+	})
+}
+
+// TestIntegrationConfigServesV0alpha1 covers the backward-compatibility half of
+// the v1beta1 promotion: v1beta1 is the storage version, but clients pinned to
+// v0alpha1 must keep reading the same object. The list case additionally
+// exercises the hand-registered ConfigList conversion (the app-sdk only
+// generates item-level conversions) — see registerListConversions in
+// pkg/registry/apps/alerting/notifications/register.go.
+func TestIntegrationConfigServesV0alpha1(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	seedSingleton(t, ctx, helper)
+
+	client := helper.Org1.Admin.ResourceClient(t, configGVRV0alpha1).Namespace(apis.DefaultNamespace)
+	wantAPIVersion := alertingnotifv0alpha1.GroupVersion.Identifier()
+
+	t.Run("get returns the singleton as v0alpha1", func(t *testing.T) {
+		got, err := client.Get(ctx, alertingnotifv0alpha1.ConfigSingletonName, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, wantAPIVersion, got.GetAPIVersion())
+	})
+
+	t.Run("list returns items as v0alpha1", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, wantAPIVersion, list.Items[0].GetAPIVersion())
+		require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, list.Items[0].GetName())
 	})
 }

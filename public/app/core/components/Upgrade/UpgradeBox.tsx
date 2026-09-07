@@ -271,5 +271,5 @@ const getImgUrl = (urlOrId: string) => {
     return urlOrId;
   }
 
-  return '/public/build/img/enterprise/highlights/' + urlOrId;
+  return `${window.__grafana_build_path__}img/enterprise/highlights/${urlOrId}`;
 };

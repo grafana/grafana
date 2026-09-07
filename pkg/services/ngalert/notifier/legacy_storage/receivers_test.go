@@ -488,10 +488,6 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "receiver1"},
-					TimeIntervals: []v1.TimeInterval{
-						{Name: "time-interval-1"},
-						{Name: "mute-interval-1"},
-					},
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
@@ -525,6 +521,10 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 						},
 					},
 				},
+			},
+			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+				v1.TimeIntervalUID("time-interval-1"): {Title: "time-interval-1"},
+				v1.TimeIntervalUID("mute-interval-1"): {Title: "mute-interval-1"},
 			},
 			ManagedRoutes: map[string]*v1.Route{
 				"named_route": {Receiver: "receiver1"},

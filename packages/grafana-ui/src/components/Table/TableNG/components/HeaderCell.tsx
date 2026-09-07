@@ -8,10 +8,11 @@ import { type Column, type SortDirection } from '@grafana/react-data-grid';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName } from '../utils';
+import { getDisplayName, isSortableField } from '../utils';
 
 interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
@@ -44,9 +45,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
-  const styles = useStyles2(getStyles, headerCellWrap);
+  const sortable = isSortableField(field);
+  const styles = useStyles2(getStyles, headerCellWrap, sortable);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
+  const hideHeader = field.config.custom?.hideHeader ?? false;
+  const headerTooltip = field.config.custom?.headerTooltip;
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -58,6 +62,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       });
     }
   }, [filterable, displayName, filter, setFilter]);
+
+  if (hideHeader) {
+    return null;
+  }
 
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
@@ -106,6 +114,17 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
+      {headerTooltip && (
+        <IconButton
+          name="info-circle"
+          size="sm"
+          tooltip={headerTooltip}
+          className={styles.headerTooltipIcon}
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        />
+      )}
 
       {filterable && (
         <Filter
@@ -124,10 +143,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   );
 };
 
-const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sortable = true) => ({
   headerCellLabel: css({
     all: 'unset',
-    cursor: 'pointer',
+    cursor: sortable ? 'pointer' : 'default',
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.secondary,
     overflow: 'hidden',
@@ -136,7 +155,7 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     borderRadius: theme.spacing(0.25),
     lineHeight: '20px',
     '&:hover': {
-      textDecoration: 'underline',
+      textDecoration: sortable ? 'underline' : 'none',
     },
     '&::selection': {
       backgroundColor: 'var(--rdg-background-color)',
@@ -145,5 +164,8 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  headerTooltipIcon: css({
+    cursor: 'default',
   }),
 }));

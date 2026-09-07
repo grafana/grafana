@@ -57,41 +57,39 @@ const QueryAndCondition = ({ rule }: Props) => {
       });
   }, [queries]);
 
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
+  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
 
-  // Tracks whether a run has been initiated but both runners have not yet emitted their first
-  // LoadingState.Loading value. Without this, isPreviewLoading is transiently false between the
-  // moment onRunQueries fires and the moment the runners populate queryPreviewData.
-  const [isRunning, setIsRunning] = useState(false);
+  // isPreviewLoading only turns true once a runner emits, which skips query preparation entirely
+  // and lags the request by up to 200ms. Counted, so overlapping runs don't clear each other.
+  const [activeRuns, setActiveRuns] = useState(0);
 
   const onRunQueries = useCallback(() => {
-    if (queries.length > 0 && allDataSourcesAvailable) {
-      let condition;
-      if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
-        condition = rule.rulerRule.grafana_alert.condition;
-      }
-      setIsRunning(true);
-      // Run original queries for expression evaluation
-      runExpressionQueries(queries, condition ?? 'A');
-      // Run range-converted data source queries for visualization
-      runVisualizationQueries(visualizationQueries, '');
+    if (queries.length === 0 || isDsLoading || !allDataSourcesAvailable) {
+      return;
     }
-  }, [queries, visualizationQueries, allDataSourcesAvailable, rule, runExpressionQueries, runVisualizationQueries]);
+
+    const condition = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.condition : 'A';
+
+    setActiveRuns((runs) => runs + 1);
+    void Promise.allSettled([
+      runExpressionQueries(queries, condition),
+      runVisualizationQueries(visualizationQueries, ''),
+    ]).then(() => {
+      setActiveRuns((runs) => runs - 1);
+    });
+  }, [
+    queries,
+    visualizationQueries,
+    isDsLoading,
+    allDataSourcesAvailable,
+    rule.rulerRule,
+    runExpressionQueries,
+    runVisualizationQueries,
+  ]);
 
   useEffect(() => {
-    if (allDataSourcesAvailable) {
-      onRunQueries();
-    }
-  }, [allDataSourcesAvailable, onRunQueries]);
-
-  // Clear isRunning once both runners have settled (neither is in a loading state anymore).
-  // isExpressionLoading and isVisualizationLoading stay false until the runners emit their first
-  // LoadingState.Loading, so we only clear isRunning after at least one run has been kicked off.
-  useEffect(() => {
-    if (isRunning && !isExpressionLoading && !isVisualizationLoading) {
-      setIsRunning(false);
-    }
-  }, [isRunning, isExpressionLoading, isVisualizationLoading]);
+    onRunQueries();
+  }, [onRunQueries]);
 
   // Merge: visualization (range) data for data source queries, expression data for expressions
   const mergedPreviewData = useMemo(() => {
@@ -102,8 +100,10 @@ const QueryAndCondition = ({ rule }: Props) => {
 
   // The visualization runner produces the range-converted query that draws the graph;
   // the expression runner runs the original raw queries + expression DAG that yield the result data.
-  const queryGraphLoading = isRunning || isVisualizationLoading;
-  const queryDataLoading = isRunning || isExpressionLoading;
+  // Both include isDsLoading because the runners can only start once the data source availability
+  // check has resolved — without it there is a gap where nothing reports loading yet.
+  const queryGraphLoading = isDsLoading || activeRuns > 0 || isVisualizationLoading;
+  const queryDataLoading = isDsLoading || activeRuns > 0 || isExpressionLoading;
 
   return (
     <>
@@ -136,7 +136,7 @@ const QueryAndCondition = ({ rule }: Props) => {
           })}
         </Stack>
       )}
-      {!isFederatedRule && !allDataSourcesAvailable && (
+      {!isFederatedRule && !isDsLoading && !allDataSourcesAvailable && (
         <Alert title={t('alerting.rule-view.query.datasources-na.title', 'Query not available')} severity="warning">
           <Trans i18nKey="alerting.rule-view.query.datasources-na.description">
             Cannot display the query preview. Some of the data sources used in the queries are not available.

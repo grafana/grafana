@@ -2,18 +2,32 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 
-import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
 import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -53,6 +67,8 @@ function ControlledEditor({
   const [mode, setMode] = useState(initialMode);
   const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
   const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
+  // The panel owns this in production; mirror that here so the view radios work.
+  const [view, setView] = useState<ViewMode>(() => (initialValue.trim().length === 0 ? 'write' : 'preview'));
   return (
     <TextNGEditor
       content={value}
@@ -60,6 +76,8 @@ function ControlledEditor({
       showLineNumbers={showLineNumbers}
       codeLanguage={codeLanguage}
       replaceVariables={replaceVariables}
+      view={view}
+      onViewChange={setView}
       onChange={(change) => {
         setValue(change.content);
         if (change.mode !== undefined) {
@@ -261,13 +279,16 @@ describe('TextNGEditor', () => {
       expect(onChange).not.toHaveBeenCalledWith({ content: 'updated' });
     });
 
-    it('interpolates with the json format when code language is json, regardless of mode', () => {
+    // Must match the panel, which keys the format off the mode rather than code.language alone.
+    it.each([
+      [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+      [TextMode.Code, CodeLanguage.Json, 'json'],
+      [TextMode.Markdown, CodeLanguage.Json, 'html'],
+    ] as const)('interpolates %s mode with the %s language using the %s format', (mode, language, format) => {
       const replaceVariables = jest.fn((value: string) => value);
-      setup('# Hello', TextMode.Markdown, jest.fn(), false, CodeLanguage.Json, replaceVariables);
+      setup('a: ${var}', mode, jest.fn(), false, language, replaceVariables);
 
-      // Matches the panel render path, which keys the interpolation format off
-      // code.language alone.
-      expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+      expect(replaceVariables).toHaveBeenCalledWith('a: ${var}', {}, format);
     });
   });
 
@@ -321,6 +342,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -331,6 +354,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -519,5 +544,105 @@ describe('TextNGEditor', () => {
       expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
       expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
     });
+  });
+});
+
+describe('TextNGEditor render mode preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  // Reports the row context it was handed, so these assert the preview wiring
+  // rather than re-testing macro resolution (covered in renderContent.test.ts).
+  const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+    const context = scopedVars?.__dataContext?.value;
+    return context ? `row-${context.rowIndex}` : target;
+  };
+
+  const previewFor = (renderMode?: RenderMode) => (
+    <TextNGEditor
+      content="no row context"
+      mode={TextMode.Markdown}
+      showLineNumbers={false}
+      renderMode={renderMode}
+      series={series}
+      replaceVariables={reportRowContext}
+      onChange={jest.fn()}
+      view="preview"
+      onViewChange={jest.fn()}
+    />
+  );
+
+  const previewHtml = () => screen.getByTestId(PREVIEW_TEST_ID).innerHTML;
+
+  it('previews one block per row in every row mode, matching the panel', () => {
+    render(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+
+  it.each([
+    ['once mode', RenderMode.Once],
+    ['an unset render mode', undefined],
+  ])('previews a single render with no row context in %s', (_name, renderMode) => {
+    render(previewFor(renderMode));
+
+    expect(previewHtml()).toContain('no row context');
+  });
+
+  it('updates the preview when the pane changes the render mode', () => {
+    const { rerender } = render(previewFor(RenderMode.Once));
+    expect(previewHtml()).toContain('no row context');
+
+    rerender(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+});
+
+describe('TextNGEditor handlebars preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  it('evaluates expressions in the preview', () => {
+    render(
+      <TextNGEditor
+        content="{{#each data}}- {{host}}\n{{/each}}"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1');
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-2');
+  });
+
+  it('shows an alert in the preview when the template is broken', () => {
+    render(
+      <TextNGEditor
+        content="{{#each data}}"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
   });
 });
