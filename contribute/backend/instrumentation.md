@@ -148,11 +148,13 @@ Do not declare collectors as package-level variables with `promauto.NewCounter` 
 
 Registering two collectors with the same name on one registry fails. With `promauto` or `MustRegister` that means a panic, usually at startup; plain `Register` returns an `AlreadyRegisteredError` instead. Note that the registry compares label _names_, not label values: two collectors named `foo_total` with a `resource` label conflict even when one is only ever used with `resource="a"` and the other with `resource="b"`.
 
-A duplicate registration means something is wired twice. Do not catch it and reuse the collector already registered — that hides the mistake and, if the two callers then observe different things, produces one series fed from two places. Pick whichever of these fits instead:
+Duplicate registration usually means either that the same component was wired twice or that multiple legitimate components register identical collectors on the same registry without distinguishing themselves.
 
-- **Build the collectors once and pass them down.** If several components report on the same metric, construct the collectors in one place and hand them to each component.
-- **Use a const label per component.** `ConstLabels: prometheus.Labels{"resource": name}` gives each component its own collector and descriptor, so each registers cleanly. The scrape still shows one metric family with a `resource` dimension. Registering the same component twice now fails, which is what you want.
-- **Wrap the registry.** `prometheus.WrapRegistererWithPrefix("mycomponent_", reg)` and `prometheus.WrapRegistererWith(prometheus.Labels{...}, reg)` add a prefix or labels to everything registered through them, so identical collectors built by separate instances no longer collide.
+Do not resolve a production collision by catching and ignoring the error, reusing another component's collector, passing a nil registerer, or otherwise skipping registration. Every production component must report its metrics. Consider these options:
+
+- **Build the collectors once and pass them down.** If several callers intentionally contribute to the same measurements, construct the collectors in one place and hand them to each caller.
+- **Use a const label per component.** If separate components expose the same measurements, apply the same stable, bounded label name, such as `component`, to every collector in the metric family and give each component a different value. This keeps a shared metric name for dashboards while allowing each component to report separately. Registering the same component twice still fails, which is what you want.
+- **Use distinct metric names for different measurements.** If components expose different concepts that should not be queried together, give their metrics distinct names. `prometheus.WrapRegistererWithPrefix("mycomponent_", reg)` can apply a prefix to everything registered by a component.
 
 ### How to collect and visualize metrics locally
 
