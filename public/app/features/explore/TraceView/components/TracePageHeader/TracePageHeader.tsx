@@ -166,7 +166,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const serviceName = rootSpan ? getServiceDisplayName(rootSpan.process) : '';
   const operationName = rootSpan?.operationName ?? '';
   const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
-  const statusValue = status && status.length > 0 ? status[0].value.toString() : undefined;
+  const statusValue = status?.length ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
   const showWarningIcon = statusClass === '4';
   const showErrorIcon = !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === '5');
