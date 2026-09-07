@@ -1,8 +1,21 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { type DataFrame, FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  type DataFrame,
+  FALLBACK_COLOR,
+  type FieldConfig,
+  FieldType,
+  type InterpolateFunction,
+  MappingType,
+  standardFieldConfigEditorRegistry,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -22,6 +35,9 @@ afterAll(() => {
   setTestFlags({});
 });
 
+// applyFieldOverrides copies panel defaults through this registry, which app.ts seeds.
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
 const hosts = toDataFrame({
   name: 'frameA',
   refId: 'A',
@@ -37,6 +53,15 @@ const regions = toDataFrame({
   fields: [{ name: 'host', type: FieldType.string, values: ['db-1'] }],
 });
 
+const services = toDataFrame({
+  name: 'frameC',
+  refId: 'C',
+  fields: [
+    { name: 'service', type: FieldType.string, values: ['checkout', 'payments', 'search'] },
+    { name: 'state', type: FieldType.string, values: ['ok', 'degraded', 'unknown'] },
+  ],
+});
+
 /** The real macro registry, so ${__data.*} resolution is not faked. */
 function createReplaceVariables(): InterpolateFunction {
   const templateSrv = initTemplateSrv('hello', []);
@@ -50,6 +75,52 @@ function interpolate(
   mode = TextMode.Markdown
 ) {
   return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
+}
+
+const theme = createTheme();
+const green = theme.visualization.getColorByName('green');
+const red = theme.visualization.getColorByName('red');
+const blue = theme.visualization.getColorByName('blue');
+
+/**
+ * Without this the frame has no `field.display`, the macro falls back to a processor
+ * that returns no color, and every `.color` assertion silently passes on ''.
+ */
+function withFieldConfig(series: DataFrame[], defaults: FieldConfig): DataFrame[] {
+  return applyFieldOverrides({
+    data: series,
+    fieldConfig: { defaults, overrides: [] },
+    replaceVariables: (value) => value,
+    theme,
+    timeZone: 'utc',
+  });
+}
+
+const absoluteThresholds = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 80, color: 'red' },
+  ],
+};
+
+function withThresholds(series: DataFrame[]): DataFrame[] {
+  return withFieldConfig(series, { thresholds: absoluteThresholds });
+}
+
+/** `unknown` matches nothing, so it exercises the unmapped fallback. */
+function withMappings(series: DataFrame[]): DataFrame[] {
+  return withFieldConfig(series, {
+    mappings: [
+      {
+        type: MappingType.ValueToText,
+        options: {
+          ok: { text: 'Healthy', color: 'green' },
+          degraded: { text: 'Degraded', color: 'red' },
+        },
+      },
+    ],
+  });
 }
 
 describe('hasRenderableData', () => {
@@ -111,6 +182,46 @@ describe('interpolateTemplate', () => {
     ])('falls back to a single render when %s', (_name, series) => {
       expect(interpolate('CPU is ${__data.fields.cpu}%', series, RenderMode.PerRow)).toBe(
         'CPU is ${__data.fields.cpu}%'
+      );
+    });
+
+    it('colors each row from its own value', () => {
+      const colored = '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>';
+
+      expect(interpolate(colored, withThresholds([hosts]), RenderMode.PerRow)).toBe(
+        `<span style="color:${red}">84</span>\n\n<span style="color:${green}">12</span>`
+      );
+    });
+
+    it('renders the mapped text in place of the raw value', () => {
+      expect(
+        interpolate('${__data.fields.service}: ${__data.fields.state}', withMappings([services]), RenderMode.PerRow)
+      ).toBe('checkout: Healthy\n\npayments: Degraded\n\nsearch: unknown');
+    });
+
+    it('colors each row from its mapping', () => {
+      const colored = '<span style="color:${__data.fields.state.color}">${__data.fields.state}</span>';
+
+      expect(interpolate(colored, withMappings([services]), RenderMode.PerRow)).toBe(
+        [
+          `<span style="color:${green}">Healthy</span>`,
+          `<span style="color:${red}">Degraded</span>`,
+          // Nothing matched, so the color comes from the field's scale instead of the mapping.
+          `<span style="color:${FALLBACK_COLOR}">unknown</span>`,
+        ].join('\n\n')
+      );
+    });
+
+    it('prefers a mapping over the threshold for the rows it matches', () => {
+      const withBoth = withFieldConfig([hosts], {
+        thresholds: absoluteThresholds,
+        mappings: [{ type: MappingType.RangeToText, options: { from: 80, to: 100, result: { color: 'blue' } } }],
+      });
+      const colored = '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>';
+
+      // 84 is in the mapped range, so blue wins over the red threshold; 12 keeps the green one.
+      expect(interpolate(colored, withBoth, RenderMode.PerRow)).toBe(
+        `<span style="color:${blue}">84</span>\n\n<span style="color:${green}">12</span>`
       );
     });
 
@@ -228,6 +339,42 @@ describe('renderContent', () => {
 
   it('leaves code mode content untransformed', () => {
     expect(render('${__data.fields.host},', RenderMode.PerRow, TextMode.Code)).toBe('web-1,\nweb-2,');
+  });
+
+  function renderMarkdownPerRow(content: string, series: DataFrame[]) {
+    return renderContent(
+      {
+        content,
+        series,
+        renderMode: RenderMode.PerRow,
+        mode: TextMode.Markdown,
+        // What the panel passes for markdown, and it escapes what it interpolates.
+        format: 'html',
+      },
+      createReplaceVariables(),
+      false
+    );
+  }
+
+  it('keeps threshold colors through markdown rendering and sanitization', () => {
+    const html = renderMarkdownPerRow(
+      '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>',
+      withThresholds([hosts])
+    );
+
+    // The sanitizer rewrites the style attribute, adding a trailing semicolon.
+    expect(html).toContain(`<span style="color:${red};">84</span>`);
+    expect(html).toContain(`<span style="color:${green};">12</span>`);
+  });
+
+  it('keeps mapped text and colors through markdown rendering and sanitization', () => {
+    const html = renderMarkdownPerRow(
+      '<span style="color:${__data.fields.state.color}">${__data.fields.state}</span>',
+      withMappings([services])
+    );
+
+    expect(html).toContain(`<span style="color:${green};">Healthy</span>`);
+    expect(html).toContain(`<span style="color:${red};">Degraded</span>`);
   });
 
   it('sanitizes per-row HTML output', () => {

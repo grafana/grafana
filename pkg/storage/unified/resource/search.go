@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
-	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -349,15 +348,19 @@ type searchServer struct {
 	log           log.Logger
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
-	embedder      *embedder.Embedder
-	reranker      *rerank.Reranker
-	search        SearchBackend
-	indexMetrics  *BleveIndexMetrics
-	vectorMetrics *VectorMetrics
-	access        types.AccessClient
-	builders      *builderCache
-	initWorkers   int
-	initMinSize   int
+	// Lexical leg for external collections (internal use bleve); nil = unsupported.
+	// Interim until bleve indexes external kinds — then external routes down
+	// the existing bleve leg and this field (and the FTS impl) gets deleted.
+	externalLexical vector.LexicalSearcher
+	embedder        *embedder.Embedder
+	reranker        *rerank.Reranker
+	search          SearchBackend
+	indexMetrics    *BleveIndexMetrics
+	vectorMetrics   *VectorMetrics
+	access          types.AccessClient
+	builders        *builderCache
+	initWorkers     int
+	initMinSize     int
 
 	queryCache             vector.QueryEmbeddingCache
 	queryCacheMaxPerTenant int
@@ -481,6 +484,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+	}
+
+	// pgvector doubles as the FTS lexical searcher.
+	if lex, ok := vectorBackend.(vector.LexicalSearcher); ok {
+		s.externalLexical = lex
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -804,7 +812,12 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	// record metrics at the end
 	defer func() {
-		code := vectorSearchResponseCode(resp, retErr)
+		code := codes.OK
+		if retErr != nil {
+			code = status.Code(retErr)
+		} else if resp != nil && resp.Error != nil {
+			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
 				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -821,7 +834,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return errResp, nil
 	}
 
-	// External collections skip the per-result BatchCheck, so this namespace check is their only cross-tenant guard.
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
@@ -880,26 +892,20 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// External rows aren't unified-storage resources — the authz service
-	// has nothing to answer for them, so per-result checks are skipped
-	// and the caller does its own post-filtering.
-	var allowed map[vectorAuthzKey]bool
-	if !coll.IsExternal {
-		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil, status.FromContextError(ctx.Err()).Err()
-			}
-			s.log.Error("vector search: authz batch check", "err", err)
-			return nil, status.Error(codes.Internal, "authz batch check")
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
 		}
+		s.log.Error("vector search: authz batch check", "err", err)
+		return nil, status.Error(codes.Internal, "authz batch check")
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		if !coll.IsExternal && !allowed[vectorAuthzKey{r.UID, r.Folder}] {
+		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -913,31 +919,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
-}
-
-// vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
-// on the search-duration metric. ErrorResult carries HTTP-style codes; an
-// unmapped code labels as Unknown — a signal to add a mapping, not a silent
-// mislabel.
-func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
-	switch {
-	case retErr != nil:
-		return status.Code(retErr)
-	case resp == nil || resp.Error == nil:
-		return codes.OK
-	}
-	switch resp.Error.Code {
-	case http.StatusBadRequest:
-		return codes.InvalidArgument
-	case http.StatusNotFound:
-		return codes.NotFound
-	case http.StatusForbidden:
-		return codes.PermissionDenied
-	case http.StatusUnauthorized:
-		return codes.Unauthenticated
-	default:
-		return codes.Unknown
-	}
 }
 
 // validateVectorSearchRequest returns a non-nil response with a
@@ -1304,7 +1285,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		})
 	}
 
-	importTimes, err := s.getLastImportTimes(ctx)
+	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{
 			Error: AsErrorResult(err),
@@ -1493,11 +1474,12 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			importTimes, err := s.getLastImportTimes(ctx)
+			keys := s.search.GetOpenIndexes()
+			importTimes, err := s.getLastImportTimes(ctx, keys)
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
 		}
 	}
 }
@@ -1626,14 +1608,15 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 	return completeChs
 }
 
-func (s *searchServer) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
-	result := map[NamespacedResource]time.Time{}
-	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
+func (s *searchServer) getLastImportTimes(ctx context.Context, keys []NamespacedResource) (map[NamespacedResource]time.Time, error) {
+	result := make(map[NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 		if err != nil {
-			// We return times that we have collected so far, if any.
+			// Return the times collected so far so periodic scans can still check those indexes.
 			return result, err
 		}
-		result[importTime.NamespacedResource] = importTime.LastImportTime
+		result[key] = lastImportTime
 	}
 	return result, nil
 }
@@ -1911,13 +1894,10 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
-			var lastImportTime time.Time
-			importTimes, err := s.getLastImportTimes(ctx)
+			lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 			if err != nil {
-				s.log.FromContext(ctx).Warn("failed to get last import times", "error", err)
+				s.log.FromContext(ctx).Warn("failed to get last import time", "error", err)
 				// Continue without import time check
-			} else {
-				lastImportTime = importTimes[key]
 			}
 
 			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
@@ -2358,8 +2338,8 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 
 // buildDeletedDocument builds the document for an object that is in the trash.
 // Trash serves a fixed field set, so the kind's builder is skipped: it would only
-// add live-only fields, at about twice the cost. Its title comes from the same
-// FindTitle, so trash and live search agree.
+// add live-only fields, at about twice the cost. Title and tags come from the same
+// place live search reads them, so the two agree.
 //
 // Fields are listed rather than cleared, so a field added to IndexableDocument
 // later cannot reach trash documents by accident.
@@ -2383,6 +2363,14 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 
 		IsDeleted: new(true),
 		DeletedRV: new(strconv.FormatInt(rv, 10)),
+	}
+	// Tags come from the marker's spec, which is the whole object as it was, so this
+	// costs no extra read. A spec that is missing or not an object leaves them unset,
+	// exactly as it leaves the title falling back to the name.
+	if spec, err := obj.GetSpec(); err == nil {
+		if specValue, ok := spec.(map[string]any); ok {
+			doc.Tags = specTags(specValue["tags"])
+		}
 	}
 	// The deletion marker records the deleting user as the last updater, which is
 	// also what listFromTrash reads, so both trash views name the same user.

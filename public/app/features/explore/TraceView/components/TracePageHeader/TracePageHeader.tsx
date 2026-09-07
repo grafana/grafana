@@ -72,7 +72,7 @@ import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController
 export type TracePageHeaderProps = {
   trace: Trace | null;
   data: DataFrame;
-  app?: CoreApp;
+  app: CoreApp | string;
   timeZone: TimeZone;
   search: TraceSearchProps;
   setSearch: (newSearch: TraceSearchProps) => void;

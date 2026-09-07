@@ -207,8 +207,8 @@ type StorageBackend interface {
 	// returned identity may have no live objects by the time the caller queries it.
 	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
 
-	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
-	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
+	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
+	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
 }
 
 type ModifiedResource struct {
@@ -2665,12 +2665,8 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Namespace: nsr.Namespace,
 		Kinds:     []string{nsr.GroupResource()},
 	})
-	if err != nil {
-		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
-		return nil
-	}
-	if statsRsp.Error != nil {
-		s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(statsRsp.Error.Message))
+	if err := ErrorFromResponse(statsRsp.GetError(), err); err != nil {
+		s.degraded(ctx, "check_quota", "stats_error", nsr, err)
 		return nil
 	}
 	stats := statsRsp.Stats

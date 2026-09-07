@@ -16,7 +16,7 @@ import { isPrometheusType } from '../utils/prometheus';
 import { MetricDetailPanel } from './MetricDetailPanel';
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
-import { rangeKey } from './data/metricResourceClient';
+import { dsKey, rangeKey } from './data/metricResourceClient';
 import { type MetricSelection } from './types';
 
 interface CardDescriptor {
@@ -114,7 +114,12 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
   // The selected metric goes with them, and also when its card keeps its refId but changes
   // datasource, because the list underneath is then a different catalog.
   useEffect(() => {
-    const expandable = new Map(cards.filter((card) => card.isExpandable).map((card) => [card.refId, card.dsUid]));
+    // Keyed by `dsKey`, not uid, so a card compares on the identity its catalog is fetched under.
+    const expandable = new Map(
+      cards
+        .filter((card) => card.isExpandable)
+        .map((card) => [card.refId, dsKey({ uid: card.dsUid, type: card.dsType })])
+    );
 
     setExpandedRefIds((prev) => {
       if (prev.size === 0) {
@@ -131,9 +136,8 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       if (!prev) {
         return prev;
       }
-      // `has` as well as `get`: a card with no resolved uid stores `undefined`, which `get` alone
-      // cannot tell from a refId that has left the pane.
-      return expandable.has(prev.refId) && expandable.get(prev.refId) === prev.dsUid ? prev : null;
+      // A refId that has left the pane reads `undefined`, which no key can equal.
+      return expandable.get(prev.refId) === prev.dsKey ? prev : null;
     });
   }, [cards]);
 

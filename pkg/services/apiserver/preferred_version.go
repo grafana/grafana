@@ -83,13 +83,7 @@ func ApplyPreferredForGroup(logger log.Logger, scheme *runtime.Scheme, apiResour
 		return nil
 	}
 
-	found := false
-	for _, gv := range pvs {
-		if gv == preferred {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(pvs, preferred)
 	if !found {
 		logger.Info("preferred_api_version: version not registered for group, skipping",
 			"group", group, "version", preferred.Version)

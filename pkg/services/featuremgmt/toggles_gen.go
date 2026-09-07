@@ -499,13 +499,13 @@ const (
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
-	// FlagTeamHttpHeadersFromAppPlatformST
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformST
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana
-	FlagTeamHttpHeadersFromAppPlatformST = "teamHttpHeadersFromAppPlatformST"
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformST = "datasources.teamHttpHeadersFromAppPlatformST"
 
-	// FlagTeamHttpHeadersFromAppPlatformMT
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
-	FlagTeamHttpHeadersFromAppPlatformMT = "teamHttpHeadersFromAppPlatformMT"
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
@@ -933,10 +933,6 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
-
-	// FlagPreferencesRerouteLegacyAPIs
-	// Use K8s client implementation for legacy preferences API
-	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
 
 	// FlagPluginsMarketplaceLicensing
 	// Enables marketplace plugin licensing
