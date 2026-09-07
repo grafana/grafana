@@ -771,12 +771,20 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 	if obj.DeletionTimestamp != nil {
 		err := rc.handleDelete(ctx, obj)
-		if err == nil || !rc.isUserCaused(err) {
-			return err
+		if err == nil {
+			return nil
 		}
 
-		// TODO: Write to delete status instead once we surface these errors to users
-		logger.Warn("unable to delete repository, user-facing error", "error", err)
+		// Surface the delete failure on status regardless of its cause. A stuck
+		// deletion is otherwise invisible to users (status.deleteError is not
+		// rendered anywhere) while it keeps showing the "Deleting" spinner, and a
+		// permanent failure re-logs at ERROR on every resync. Recording it on
+		// health -- with a reason classified the same way health-check failures are
+		// -- gives users the reason instead. The per-finalizer error metric is
+		// recorded inside finalizer.process independently of this return, so metric
+		// visibility on deletion errors is preserved either way.
+		// TODO: Write to a dedicated delete status once one is surfaced to users.
+		logger.Warn("unable to delete repository", "error", err)
 		deleteHealthStatus := provisioning.HealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
@@ -797,6 +805,14 @@ func (rc *RepositoryController) process(key string) (err error) {
 			}
 		}
 
+		// A transient (retryable) failure still bubbles up so the workqueue retries
+		// it with backoff -- this is the same class the retry path already fast-
+		// retries. Everything else has been surfaced on status above and is only
+		// re-attempted on the next informer resync, so returning it would add
+		// nothing but ERROR-log noise while the finalizer stays stuck.
+		if apierrors.IsServiceUnavailable(err) {
+			return err
+		}
 		return nil
 	}
 

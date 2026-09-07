@@ -1492,6 +1492,75 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
 }
 
+// TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
+// verifies that a deletion blocked by a non-user-caused, non-retryable error is
+// still surfaced on /status/health rather than only returned. A stuck deletion
+// is invisible to the user otherwise, and returning the error would re-log it at
+// ERROR on every resync without making progress, so process reports it on
+// health and returns nil.
+func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	// A generic build failure -- neither user-caused (auth) nor a retryable
+	// ServiceUnavailable -- so it exercises the "surface on status, return nil"
+	// branch.
+	buildErr := errors.New("create repository from configuration: boom")
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	err := rc.process("default/test-repo")
+	require.NoError(t, err, "a non-retryable delete failure must be surfaced on status, not returned and re-logged every resync")
+
+	healthPatch, ok := patcher.findPatchOp("/status/health")
+	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
+	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	require.True(t, ok)
+	assert.False(t, health.Healthy)
+	require.Len(t, health.Message, 1)
+	assert.Contains(t, health.Message[0], "unable to delete repository")
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "conditions value should be []metav1.Condition")
+	var readyCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeReady {
+			readyCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, readyCond, "expected Ready condition to be present")
+	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+}
+
 func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
