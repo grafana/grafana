@@ -1987,10 +1987,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.8.0":
-  version: 9.9.0
-  resolution: "@faker-js/faker@npm:9.9.0"
-  checksum: 10/b24b1be0fb3090d54abaaa3a814f37d1a7551f1207dcd330a1af2c70f6312a8b95ebb82653577757dd62f4cbbb56caa3c83513053253654dc3e286a05040ecbe
+"@faker-js/faker@npm:^10.6.0":
+  version: 10.6.0
+  resolution: "@faker-js/faker@npm:10.6.0"
+  checksum: 10/f45220ceae76133d831dee8c8f5c8566767bfd857b7f872b5ec58866b68da889dabe96e805a598e095a6c58eae250363a7f335aa0afc513cb2ad5fe69e2a967f
   languageName: node
   linkType: hard
 
@@ -2330,7 +2330,7 @@ __metadata:
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
-    "@faker-js/faker": "npm:^9.8.0"
+    "@faker-js/faker": "npm:^10.6.0"
     "@grafana/api-clients": "npm:13.3.0-pre"
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
@@ -3260,7 +3260,7 @@ __metadata:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/serialize": "npm:^1.3.3"
-    "@faker-js/faker": "npm:^9.0.0"
+    "@faker-js/faker": "npm:^10.6.0"
     "@floating-ui/react": "npm:^0.27.19"
     "@grafana/data": "npm:13.3.0-pre"
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
