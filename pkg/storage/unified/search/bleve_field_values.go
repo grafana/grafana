@@ -63,7 +63,8 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 		fields[field.Name] = field
 	}
 
-	allNames := []string{
+	mappingFields := fieldDefinitionsForMapping(provider, group, kindResource)
+	defaultFieldNames := []string{
 		resource.SEARCH_FIELD_ID,
 		resource.SEARCH_FIELD_TITLE,
 		resource.SEARCH_FIELD_TAGS,
@@ -73,7 +74,9 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 		resource.SEARCH_FIELD_LEGACY_ID,
 		resource.SEARCH_FIELD_MANAGER_KIND,
 	}
-	for _, field := range fieldDefinitionsForMapping(provider, group, kindResource) {
+	allNames := make([]string, 0, len(defaultFieldNames)+len(mappingFields))
+	allNames = append(allNames, defaultFieldNames...)
+	for _, field := range mappingFields {
 		allNames = append(allNames, field.Name)
 	}
 	allFields := make([]resource.SearchFieldDefinition, 0, len(allNames))
@@ -119,18 +122,20 @@ func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValue
 	definitions := make([]resource.SearchFieldDefinition, 0, len(selectFields))
 	if slices.Contains(selectFields, resource.SEARCH_FIELD_ALL_FIELDS) {
 		definitions = append(definitions, b.searchFields.allResultFields...)
-	} else {
-		for _, name := range selectFields {
-			definition, ok := b.searchFields.resultFields[name]
-			if !ok && strings.HasPrefix(name, resource.SEARCH_FIELD_LABELS+".") {
-				definition = resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString}
-				ok = true
-			}
-			if !ok {
-				return nil, fmt.Errorf("unknown response field %q", name)
-			}
-			definitions = append(definitions, definition)
+	}
+	for _, name := range selectFields {
+		if name == resource.SEARCH_FIELD_ALL_FIELDS {
+			continue
 		}
+		definition, ok := b.searchFields.resultFields[name]
+		if !ok && strings.HasPrefix(name, resource.SEARCH_FIELD_LABELS+".") {
+			definition = resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString}
+			ok = true
+		}
+		if !ok {
+			return nil, fmt.Errorf("unknown response field %q", name)
+		}
+		definitions = append(definitions, definition)
 	}
 
 	schema := &fieldValueResultSchema{

@@ -631,6 +631,18 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, []int64{1234}, fields[resource.SEARCH_FIELD_CREATED].Int64Values)
 	})
 
+	t.Run("default fields include score for free-text query", func(t *testing.T) {
+		req := newTestQuery("Hello")
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.NotEmpty(t, res.Fields)
+		require.Len(t, res.Rows, 1)
+		require.NotNil(t, res.Rows[0].Score)
+	})
+
 	t.Run("legacy remains default", func(t *testing.T) {
 		req := newTestQuery("")
 		req.Fields = []string{resource.SEARCH_FIELD_TITLE}

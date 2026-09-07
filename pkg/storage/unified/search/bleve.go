@@ -2276,6 +2276,13 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
+	// Keep the response fields before ensureSearchFields expands the Bleve load
+	// list. The query conversion may have added _score, which is part of the
+	// response shape but is not a stored index field.
+	selectFields := slices.Clone(searchrequest.Fields)
+	if len(req.Fields) < 1 && req.Limit > 0 {
+		selectFields = append(selectFields, resource.SEARCH_FIELD_ALL_FIELDS)
+	}
 	if err := b.ensureSearchFields(searchrequest, req); err != nil {
 		return nil, err
 	}
@@ -2309,13 +2316,6 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// selectFields is the response column list, derived from the caller's
-	// requested fields (or the all-fields sentinel when none were requested).
-	// It is snapshotted before ensureAuthzFields so the folder field — which
-	// bleve loads only to authorize hits — is never returned to the caller.
-	// This keeps "fields loaded from bleve" (searchrequest.Fields) separate
-	// from "fields returned to the caller" (selectFields).
-	selectFields := slices.Clone(searchrequest.Fields)
 	var fieldValueSchema *fieldValueResultSchema
 	if resultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		fieldValueSchema, err = b.resolveFieldValueSchema(selectFields)
