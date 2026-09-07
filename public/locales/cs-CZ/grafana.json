@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Zděděno ze složky",
-      "locked-aria-label": "Indikátor uzamčení oprávnění",
       "remove-aria-label": "Odebrat oprávnění pro {{identifier}}",
       "tooltip-inherited-permission": "Zděděné oprávnění",
       "tooltip-provisioned-permission": "Zajištěné oprávnění"
@@ -2707,7 +2706,9 @@
       "view-in-explore": "Zobrazit v Prozkoumat"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Možnosti",
+      "invalid-interval-error": "",
       "label-time-range": "Časový rozsah",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -3296,6 +3297,7 @@
         "disable-confirm-title": "Zakázat automatickou synchronizaci Mimir Alertmanager?",
         "disable-success": "Automatická synchronizace Mimir Alertmanager zakázána",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Tato hodnota je nastavena klíčem <1>[unified_alerting] external_alertmanager_uid</1> v souboru grafana.ini a nelze ji změnit z uživatelského rozhraní. Upravte konfigurační soubor a restartujte Grafanu nebo odeberte klíč pro správu synchronizace odsud.",
         "operator-managed-title": "Spravuje operátor",
         "orphan-warning": "Nakonfigurované UID zdroje dat {{uid}} není dostupné. Chcete-li pokračovat, zakažte synchronizaci nebo obnovte zdroj dat.",
@@ -3304,6 +3306,7 @@
         "picker-label": "Zdroj dat",
         "picker-placeholder": "Vyberte zdroj dat Mimir nebo Cortex Alertmanager…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Vyberte zdroj dat Mimir nebo Cortex Alertmanager pro povolení ukládání.",
         "save-disabled-staged-config": "",
         "save-error": "Automatickou synchronizaci Mimir Alertmanager se nepodařilo uložit",
@@ -6103,11 +6106,14 @@
     "notebook-layout": {
       "description": "Vertikální sekvence panelů, textu a buněk kódu",
       "name": "Poznámkový blok",
-      "pill": "Zveřejněný poznámkový blok",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Čas"
+      "time": "Čas",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6134,6 +6140,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "Den před",
         "compare-month-before": "Měsíc před",
         "compare-week-before": "Týden před",
@@ -8880,7 +8891,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "Sbalit {{name}}",
@@ -9828,6 +9841,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Předevčírem",
           "previousFiscalQuarter": "Předchozí fiskální čtvrtletí",
@@ -13142,8 +13157,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -13158,6 +13172,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13171,15 +13189,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13199,13 +13268,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13213,7 +13288,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13221,7 +13295,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13245,6 +13318,9 @@
       "count-truncated_many": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13253,6 +13329,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13288,6 +13365,13 @@
     },
     "field-color": {
       "color-by-label": "Vybarvit řady podle"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13422,6 +13506,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Kopírovat",
       "copy-styles": "Kopírovat styly",
       "download-diagnostics": "Stáhnout diagnostiku",
@@ -15296,6 +15381,75 @@
       "title-data-source-help": "Nápověda pro zdroj dat"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Přidat filtr",
@@ -16098,7 +16252,6 @@
       "home-dashboard-placeholder": "Výchozí nástěnka",
       "language-preference-label": "Jazyk",
       "language-preference-placeholder": "Vyberte jazyk",
-      "theme-description": "Baví vás experimentální motivy? Řekněte nám, co byste <2>tady uvítali.</2>",
       "theme-label": "Motiv rozhraní",
       "week-start-label": "Začátek týdne"
     },
@@ -18024,7 +18177,7 @@
       "delete-modal-body": "Opravdu chcete odstranit „{{name}}“?",
       "delete-modal-confirm": "Odstranit",
       "delete-modal-title": "Odstranit proměnnou",
-      "folder-description": "Rozšiřte proměnnou do složky nebo vyberte kořenovou složku nástěnek a převeďte ji na globální (k dispozici všude v organizaci)",
+      "folder-description": "",
       "folder-description-folder-only": "Rozšiřte proměnnou do složky, kterou můžete upravovat",
       "folder-label": "Složka",
       "moved": "Proměnná byla přesunuta",
@@ -18044,10 +18197,10 @@
       "move": "Přesunout",
       "moving": "Probíhá přesouvání…",
       "title": "Přesunout proměnné",
-      "body_one": "Přesunout {{count}} vybranou proměnnou. Výběrem kořenové složky nástěnek ji převedete na globální (k dispozici všude v organizaci).",
-      "body_few": "Přesunout vybrané proměnné ({{count}}). Výběrem kořenové složky nástěnek je převedete na globální (k dispozici všude v organizaci).",
-      "body_many": "Přesunout vybrané proměnné ({{count}}). Výběrem kořenové složky nástěnek je převedete na globální (k dispozici všude v organizaci).",
-      "body_other": "Přesunout vybrané proměnné ({{count}}). Výběrem kořenové složky nástěnek je převedete na globální (k dispozici všude v organizaci).",
+      "body_one": "",
+      "body_few": "",
+      "body_many": "",
+      "body_other": "",
       "body-folder-only_one": "Přesuňte {{count}} vybranou proměnnou do složky, kterou můžete upravovat.",
       "body-folder-only_few": "Přesuňte vybrané proměnné ({{count}}) do složky, kterou můžete upravovat.",
       "body-folder-only_many": "Přesuňte vybrané proměnné ({{count}}) do složky, kterou můžete upravovat.",
@@ -18075,6 +18228,14 @@
       "select-all": "Vybrat všechny proměnné",
       "select-folder": "Vyberte všechny proměnné ve složce {{title}}",
       "select-variable": "Vyberte proměnnou {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

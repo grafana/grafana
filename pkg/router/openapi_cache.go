@@ -27,6 +27,26 @@ func stripConditionalHeaders(req *http.Request) {
 	req.Header.Del("If-Modified-Since")
 }
 
+// stripHashQueryParam removes the "hash" query parameter before proxying a
+// request upstream. Our discovery doc (buildOpenAPIV3Index) hash-busts each
+// group-version's serverRelativeURL with our own RV, an opaque cache token
+// with no relation to the backend's content. But kube-openapi's own
+// handler3 treats a client-supplied "hash" as a claim about ITS content
+// hash and 301-redirects to the correct one on mismatch -- a redirect
+// rejectBackendRedirects then turns into a 502. Since our RV essentially
+// never matches the backend's real hash, forwarding it verbatim breaks
+// every cold-cache request. Stripping it here keeps the RV-based
+// busting meaningful for our own cache/ETag while never surfacing our
+// token to a protocol that expects its own.
+func stripHashQueryParam(req *http.Request) {
+	q := req.URL.Query()
+	if !q.Has("hash") {
+		return
+	}
+	q.Del("hash")
+	req.URL.RawQuery = q.Encode()
+}
+
 // captureWriter records a proxied response (status + body) so it can be
 // cached on success before being relayed to the real client, without letting
 // the backend write directly to the real ResponseWriter first.

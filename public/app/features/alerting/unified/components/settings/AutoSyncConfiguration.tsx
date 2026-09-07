@@ -5,8 +5,10 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { hasConfiguredUid, isOperatorManaged } from '../../utils/autoSync';
+
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
-import { hasConfiguredUid, isOperatorManaged, useAutoSyncConfiguration } from './useAutoSyncConfiguration';
+import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
 interface AutoSyncConfigurationProps {
   /** Identifier of the staged import occupying the shared `extra_config` slot, if there is one. */
@@ -15,8 +17,17 @@ interface AutoSyncConfigurationProps {
 
 export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
-  const { state, autoSyncEligibleAlertmanagers, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
-    useAutoSyncConfiguration();
+  const {
+    state,
+    autoSyncEligibleAlertmanagers,
+    selectedUid,
+    setSelectedUid,
+    save,
+    disableSync,
+    isPending,
+    isLoading,
+    notReadyMessage,
+  } = useAutoSyncConfiguration();
 
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
@@ -42,16 +53,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
   const savingWouldBreakSync = slotBlocksSyncFrom(selectedUid);
   const runningSyncIsBroken = Boolean(savedUid) && slotBlocksSyncFrom(savedUid);
 
-  const saveDisabled = !selectedUid || selectedUid === savedUid || savingWouldBreakSync;
-  const saveDisabledTooltip = savingWouldBreakSync
-    ? t(
-        'alerting.settings.auto-sync.save-disabled-staged-config',
-        'Promote or revert the staged configuration before enabling auto-sync.'
-      )
-    : t(
-        'alerting.settings.auto-sync.save-disabled-no-selection',
-        'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
-      );
+  const saveDisabledReason = getSaveDisabledReason({ notReadyMessage, selectedUid, savedUid, savingWouldBreakSync });
 
   const handleDisableConfirm = async () => {
     setShowDisableConfirm(false);
@@ -163,9 +165,13 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
                   </Button>
                 )}
                 {showSave && (
-                  <Tooltip content={saveDisabled ? saveDisabledTooltip : ''} show={saveDisabled ? undefined : false}>
+                  <Tooltip content={saveDisabledReason ?? ''} show={saveDisabledReason ? undefined : false}>
                     <span className={styles.tooltipTarget}>
-                      <Button variant="primary" onClick={() => save()} disabled={saveDisabled || isPending}>
+                      <Button
+                        variant="primary"
+                        onClick={() => save()}
+                        disabled={Boolean(saveDisabledReason) || isPending}
+                      >
                         <Trans i18nKey="common.save">Save</Trans>
                       </Button>
                     </span>
@@ -224,6 +230,37 @@ function StagedConflictAlert({ identifier, isRunningSyncBroken }: StagedConflict
       </Trans>
     </Alert>
   );
+}
+
+function getSaveDisabledReason({
+  notReadyMessage,
+  selectedUid,
+  savedUid,
+  savingWouldBreakSync,
+}: {
+  notReadyMessage: string | undefined;
+  selectedUid: string;
+  savedUid: string;
+  savingWouldBreakSync: boolean;
+}): string | undefined {
+  // Set exactly when the hook is not ready, and already distinguishes an unseeded singleton from a
+  // failed read — the second is not something waiting fixes.
+  if (notReadyMessage) {
+    return notReadyMessage;
+  }
+  if (savingWouldBreakSync) {
+    return t(
+      'alerting.settings.auto-sync.save-disabled-staged-config',
+      'Promote or revert the staged configuration before enabling auto-sync.'
+    );
+  }
+  if (!selectedUid || selectedUid === savedUid) {
+    return t(
+      'alerting.settings.auto-sync.save-disabled-no-selection',
+      'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
+    );
+  }
+  return undefined;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

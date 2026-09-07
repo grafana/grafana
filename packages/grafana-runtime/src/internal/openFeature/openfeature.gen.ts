@@ -165,6 +165,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Enables AI-assisted coauthoring in code query editors */
+  QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
   RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
@@ -1031,6 +1033,17 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
+};
+
+/**
+ * Enables AI-assisted coauthoring in code query editors
+ *
+ * **Details:**
+ * - flag key: `queryeditor.coauthoringUi`
+ * - default value: `false`
+ */
+export const useFlagQueryeditorCoauthoringUi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryeditor.coauthoringUi", false, options).value;
 };
 
 /**

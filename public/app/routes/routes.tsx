@@ -14,7 +14,7 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
+import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -31,6 +31,18 @@ const LazyConfigureIRM = lazy(() =>
   import(/* webpackChunkName: "ConfigureIRM" */ 'app/features/gops/configuration-tracker/components/ConfigureIRM').then(
     (module) => ({ default: module.ConfigureIRM })
   )
+);
+
+/**
+ * One component shared by both notebook page routes, rather than a SafeDynamicImport call in each.
+ *
+ * Two separate calls make two different components, and React unmounts one and mounts the other when
+ * you move between routes. That happened for real: `/notebooks/new` becomes `/notebooks/<uid>` the
+ * moment you create a notebook by typing, and the remount wiped out every cell's editor mid-sentence.
+ * One shared component means React treats this as the same page with a new url, so nothing unmounts.
+ */
+const NotebookPageComponent = SafeDynamicImport(
+  () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
 );
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -63,18 +75,26 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // A notebook that does not exist yet. Sits beside the route below for readability, not for
+      // precedence: routes are rendered by a v6 `<Routes>` (see AppWrapper), which ranks a static
+      // segment above a dynamic one, so this wins over `:uid` wherever it is in the list.
+      path: NOTEBOOK_NEW_URL,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: NotebookPageComponent,
+    },
+    {
       path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
-      ),
+      component: NotebookPageComponent,
     },
     {
-      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates both notebook
-      // routes. The feature flag is enforced inside the pages instead, since getAppRoutes cannot
-      // use hooks.
+      // Notebooks reuse dashboard RBAC actions: dashboards:read to read one, and dashboards:create
+      // for the blank route above. The feature flag is enforced inside the pages instead, since
+      // getAppRoutes cannot use hooks.
       path: NOTEBOOKS_BASE_URL,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       component: SafeDynamicImport(
@@ -182,8 +202,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/variables',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.VariablesRead]),
       component: SafeDynamicImport(
         () =>
           import(
@@ -193,8 +212,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/variables/new',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.VariablesCreate]),
       component: SafeDynamicImport(
         () =>
           import(
@@ -207,7 +225,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       // metadata.name is literally "new" can never collide with the create route.
       path: '/dashboards/variables/edit/:name',
       roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+        contextSrv.evaluatePermission([AccessControlAction.VariablesWrite, AccessControlAction.VariablesCreate]),
       component: SafeDynamicImport(
         () =>
           import(

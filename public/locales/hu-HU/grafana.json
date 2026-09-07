@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Mappából örökölve",
-      "locked-aria-label": "Zárolt engedély jelzése",
       "remove-aria-label": "Engedély eltávolítása ennél: {{identifier}}",
       "tooltip-inherited-permission": "Örökölt engedély",
       "tooltip-provisioned-permission": "Kiosztott engedély"
@@ -2667,7 +2666,9 @@
       "view-in-explore": "Megtekintés az Explore-ban"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Beállítások",
+      "invalid-interval-error": "",
       "label-time-range": "Időtartomány",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. intervallum = {{minInterval}}"
@@ -3250,6 +3251,7 @@
         "disable-confirm-title": "Letiltja a Mimir-riasztáskezelő automatikus szinkronizálását?",
         "disable-success": "A Mimir-riasztáskezelő automatikus szinkronizálása letiltva",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Ezt az értéket a grafana.ini fájlban található <1>[unified_alerting] external_alertmanager_uid</1> kulcs állítja be, és nem módosítható a felhasználói felületről. Szerkessze a konfigurációs fájlt, és indítsa újra a Grafanát, vagy távolítsa el a kulcsot a szinkronizálás innen történő kezeléséhez.",
         "operator-managed-title": "Operátor által felügyelt",
         "orphan-warning": "Nem áll rendelkezésre a konfigurált adatforrás {{uid}} UID-je. A folytatáshoz tiltsa le a szinkronizálást, vagy állítsa vissza az adatforrást.",
@@ -3258,6 +3260,7 @@
         "picker-label": "Adatforrás",
         "picker-placeholder": "Válasszon egy Mimir- vagy Cortex-riasztáskezelő adatforrást…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Válasszon egy Mimir- vagy Cortex-riasztáskezelő adatforrást a mentés engedélyezéséhez.",
         "save-disabled-staged-config": "",
         "save-error": "A Mimir-riasztáskezelő automatikus szinkronizálásának mentése nem sikerült",
@@ -6019,11 +6022,14 @@
     "notebook-layout": {
       "description": "Panelek, szöveg és kódcellák függőleges sorozata",
       "name": "Jegyzetfüzet",
-      "pill": "Közzétett jegyzetfüzet",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Idő"
+      "time": "Idő",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6048,6 +6054,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "1 nappal korábban",
         "compare-month-before": "1 hónappal korábban",
         "compare-week-before": "1 héttel korábban",
@@ -8782,7 +8793,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "{{name}} összecsukása",
@@ -9722,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Tegnapelőtt",
           "previousFiscalQuarter": "Az előző pénzügyi negyedév",
@@ -12960,8 +12975,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12976,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12989,15 +13007,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13017,13 +13086,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13031,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13039,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13059,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13067,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13102,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Színsorozat alapja"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13236,6 +13320,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Másolás",
       "copy-styles": "Stílusok másolása",
       "download-diagnostics": "Diagnosztika letöltése",
@@ -15072,6 +15157,75 @@
       "title-data-source-help": "Adatforrás súgója"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Szűrő hozzáadása",
@@ -15854,7 +16008,6 @@
       "home-dashboard-placeholder": "Alapértelmezett irányítópult",
       "language-preference-label": "Nyelv",
       "language-preference-placeholder": "Válasszon nyelvet",
-      "theme-description": "Tetszenek a kísérleti témák? Ossza meg velünk a véleményét <2>itt.</2>",
       "theme-label": "Felület témája",
       "week-start-label": "Hét kezdete"
     },
@@ -17770,7 +17923,7 @@
       "delete-modal-body": "Biztosan törölni kívánja ezt: „{{name}}”?",
       "delete-modal-confirm": "Törlés",
       "delete-modal-title": "Változó törlése",
-      "folder-description": "Határozza meg a változó hatókörét egy mappára, vagy válassza az irányítópultok gyökérmappáját, hogy globálissá tegye (a szervezetben mindenhol elérhetővé)",
+      "folder-description": "",
       "folder-description-folder-only": "Állítsa be a változó hatókörét egy Ön által szerkeszthető mappára",
       "folder-label": "Mappa",
       "moved": "Változó áthelyezve",
@@ -17790,8 +17943,8 @@
       "move": "Áthelyezés",
       "moving": "Áthelyezés...",
       "title": "Változók áthelyezése",
-      "body_one": "{{count}} kiválasztott változó áthelyezése. Az irányítópultok gyökérmappájának kiválasztásával globálissá teszi (a szervezetben mindenhol elérhetővé).",
-      "body_other": "{{count}} kiválasztott változó áthelyezése. Az irányítópultok gyökérmappájának kiválasztásával globálissá teszi őket (a szervezetben mindenhol elérhetővé).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Helyezze át a(z) {{count}} kiválasztott változót egy Ön által szerkeszthető mappába.",
       "body-folder-only_other": "Helyezze át a(z) {{count}} kiválasztott változót egy Ön által szerkeszthető mappába."
     },
@@ -17815,6 +17968,14 @@
       "select-all": "Az összes változó kiválasztása",
       "select-folder": "Az összes változó kiválasztása a(z) {{title}} mappában",
       "select-variable": "Válassza ki a(z) {{name}} változót"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {
