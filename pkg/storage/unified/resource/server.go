@@ -207,8 +207,8 @@ type StorageBackend interface {
 	// returned identity may have no live objects by the time the caller queries it.
 	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
 
-	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
-	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
+	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
+	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
 }
 
 type ModifiedResource struct {

@@ -73,6 +73,8 @@ type AppPluginRunnerOptions struct {
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
+	// the API group -- the group defined in manifest data or the pluginID
+	group           string
 	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
@@ -104,15 +106,9 @@ func NewAppPluginAPIBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
-	var manifest *app.ManifestData
-	if plugin.Manifest != nil {
-		// Plugin APIs are always served under the plugin ID.
-		manifestCopy := *plugin.Manifest
-		manifestCopy.Group = plugin.JSONData.ID
-		manifest = &manifestCopy
-	}
 	return &AppPluginAPIBuilder{
-		manifest:        manifest,
+		group:           apiGroupForPlugin(plugin),
+		manifest:        plugin.Manifest,
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		clientV3:        clientV3,
@@ -135,6 +131,7 @@ func RegisterAPIService(
 	clientV3Loader v3.ClientV3Loader,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
+	acService ac.Service, // Required to declare roles from a manifest
 	accessControl ac.AccessControl,
 	unified resource.ResourceClient,
 	decrypter decrypt.DecryptService,
@@ -179,10 +176,10 @@ func RegisterAPIService(
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
-			unified,
+			unified, // search support
 			AppPluginRunnerOptions{
 				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
-				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
+				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
 
 				DataProxyLogging:         cfg.DataProxyLogging,
@@ -202,11 +199,20 @@ func RegisterAPIService(
 	return last, nil
 }
 
+// apiGroupForPlugin returns the API group the plugin is served under: the group
+// declared in the manifest when it has one, otherwise the plugin id.
+func apiGroupForPlugin(plugin definition.PluginDefinition) string {
+	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
+		return plugin.Manifest.Group
+	}
+	return plugin.JSONData.ID
+}
+
 // GetGroupVersions returns the served versions, preferred version first.
 // The settings kind is registered in every version so it is always reachable.
 func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	return []schema.GroupVersion{{
-		Group:   b.pluginJSON.ID,
+		Group:   b.group,
 		Version: apppluginV0.VERSION,
 	}}
 }
@@ -226,7 +232,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	registerSubresourceMetrics(opts.MetricsRegister)
 
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
-		b.pluginJSON.ID, b.pluginJSON.ID,
+		b.group, b.pluginJSON.ID,
 	)
 
 	if opts.StorageOptsRegister == nil {

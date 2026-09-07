@@ -1,6 +1,7 @@
 package search
 
 import (
+	"maps"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -46,9 +47,7 @@ func schemaRef(goName string) spec.Ref {
 // owns, and through them metav1.LabelSelector.
 func envelopeSchemas(roots ...string) map[string]spec.Schema {
 	defs := searchv0.GetOpenAPIDefinitions(schemaRef)
-	for name, def := range commonv0.GetOpenAPIDefinitions(schemaRef) {
-		defs[name] = def
-	}
+	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(schemaRef))
 
 	out := map[string]spec.Schema{}
 	queue := append([]string{}, roots...)

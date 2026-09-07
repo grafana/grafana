@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Ärvd från mapp",
-      "locked-aria-label": "Låst behörighetsindikator",
       "remove-aria-label": "Ta bort behörighet för {{identifier}}",
       "tooltip-inherited-permission": "Ärvd behörighet",
       "tooltip-provisioned-permission": "Tilldelad behörighet"
@@ -2667,7 +2666,9 @@
       "view-in-explore": "Visa i Utforska"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Alternativ",
+      "invalid-interval-error": "",
       "label-time-range": "Tidsintervall",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervall = {{minInterval}}"
@@ -3250,6 +3251,7 @@
         "disable-confirm-title": "Inaktivera automatisk synkronisering av Mimir Alertmanager?",
         "disable-success": "Automatisk synkronisering av Mimir Alertmanager har inaktiverats",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Detta värde ställs in av nyckeln <1>[unified_alerting] external_alertmanager_uid</1> i grafana.ini och kan inte ändras från användargränssnittet. Redigera konfigurationsfilen och starta om Grafana, eller ta bort nyckeln om du vill hantera synkronisering härifrån.",
         "operator-managed-title": "Hanteras av operatör",
         "orphan-warning": "Den konfigurerade datakällans UID {{uid}} är inte tillgänglig. Inaktivera synkroniseringen eller återställ datakällan för att fortsätta.",
@@ -3258,6 +3260,7 @@
         "picker-label": "Datakälla",
         "picker-placeholder": "Välj en Mimir- eller Cortex Alertmanager-datakälla …",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Välj en Mimir- eller Cortex Alertmanager-datakälla för att aktivera sparande.",
         "save-disabled-staged-config": "",
         "save-error": "Det gick inte att spara automatisk synkronisering av Mimir Alertmanager",
@@ -6019,11 +6022,14 @@
     "notebook-layout": {
       "description": "En vertikal sekvens av paneler, text och kodceller",
       "name": "Anteckningsbok",
-      "pill": "Publicerad anteckningsbok",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Tid"
+      "time": "Tid",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6048,6 +6054,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "Dagen före",
         "compare-month-before": "Månaden före",
         "compare-week-before": "Veckan före",
@@ -8782,7 +8793,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "Dölj {{name}}",
@@ -9722,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "I förrgår",
           "previousFiscalQuarter": "Föregående räkenskapskvartal",
@@ -12960,8 +12975,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12976,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12989,15 +13007,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13017,13 +13086,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13031,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13039,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13059,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13067,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13102,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Färga serier efter"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13236,6 +13320,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Kopiera",
       "copy-styles": "Kopiera stilar",
       "download-diagnostics": "Ladda ner diagnostik",
@@ -15072,6 +15157,75 @@
       "title-data-source-help": "Hjälp med datakälla"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Lägg till filter",
@@ -15854,7 +16008,6 @@
       "home-dashboard-placeholder": "Standardinstrumentpanel",
       "language-preference-label": "Språk",
       "language-preference-placeholder": "Välj språk",
-      "theme-description": "Gillar du experimentella teman? Berätta vad du vill se <2>här.</2>",
       "theme-label": "Gränssnittstema",
       "week-start-label": "Veckostart"
     },
@@ -17770,7 +17923,7 @@
       "delete-modal-body": "Är du säker på att du vill ta bort ”{{name}}”?",
       "delete-modal-confirm": "Ta bort",
       "delete-modal-title": "Ta bort variabel",
-      "folder-description": "Begränsa variabeln till en mapp, eller välj rotmappen för instrumentpaneler för att göra den global (tillgänglig överallt i organisationen)",
+      "folder-description": "",
       "folder-description-folder-only": "Begränsa variabeln till en mapp som du kan redigera",
       "folder-label": "Mapp",
       "moved": "Variabel flyttades",
@@ -17790,8 +17943,8 @@
       "move": "Flytta",
       "moving": "Flyttar …",
       "title": "Flytta variabler",
-      "body_one": "Flytta {{count}} vald variabel. Om du väljer rotmappen för instrumentpaneler blir den global (tillgänglig överallt i organisationen).",
-      "body_other": "Flytta {{count}} valda variabler. Om du väljer rotmappen för instrumentpaneler blir de globala (tillgängliga överallt i organisationen).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Flytta {{count}} vald variabel till en mapp som du kan redigera.",
       "body-folder-only_other": "Flytta {{count}} valda variabler till en mapp som du kan redigera."
     },
@@ -17815,6 +17968,14 @@
       "select-all": "Välj alla variabler",
       "select-folder": "Välj alla variabler i mappen {{title}}",
       "select-variable": "Välj variabeln {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

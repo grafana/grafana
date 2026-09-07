@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"slices"
 	"sync"
 	"testing"
@@ -174,9 +175,7 @@ func (m *mapKV) Batch(ctx context.Context, sec string, ops []kv.BatchOp) error {
 
 	// Snapshot for atomic rollback on failure.
 	snapshot := make(map[string][]byte, len(m.data))
-	for k, v := range m.data {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, m.data)
 
 	for i, op := range ops {
 		switch op.Mode {

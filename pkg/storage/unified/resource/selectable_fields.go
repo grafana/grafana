@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"maps"
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -43,9 +44,7 @@ func SelectableFieldsForManifests(manifests ...*app.ManifestData) map[LowerGroup
 		if m == nil {
 			continue
 		}
-		for k, v := range selectableFieldsForManifest(m) {
-			fields[k] = v
-		}
+		maps.Copy(fields, selectableFieldsForManifest(m))
 	}
 	return fields
 }

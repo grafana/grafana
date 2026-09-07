@@ -1,3 +1,19 @@
+<!-- 13.2.1 START -->
+
+# 13.2.1 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+
+### Bug fixes
+
+- **Dashboards:** Fix adhoc and groupby variable datasource on UI import [#131819](https://github.com/grafana/grafana/pull/131819), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Packaging:** Fix issue with bundled plugins not being moved properly [#131037](https://github.com/grafana/grafana/pull/131037), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **PanelEditor:** Fix options pane not resizable beyond the preview's content width [#131608](https://github.com/grafana/grafana/pull/131608), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.2.1 END -->
 <!-- 13.2.0 START -->
 
 # 13.2.0 (2026-08-18)
@@ -179,6 +195,17 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.5 START -->
+
+# 13.1.5 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
+<!-- 13.1.5 END -->
 <!-- 13.1.4 START -->
 
 # 13.1.4 (2026-08-18)
@@ -456,6 +483,21 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.8 START -->
+
+# 13.0.8 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
+### Bug fixes
+
+- **Dashboards:** Fix version dates and user display names in the legacy version history page [#131809](https://github.com/grafana/grafana/pull/131809), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 13.0.8 END -->
 <!-- 13.0.7 START -->
 
 # 13.0.7 (2026-08-18)
@@ -916,6 +958,21 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.10 START -->
+
+# 12.4.10 (2026-09-02)
+
+### Security
+
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
+### Bug fixes
+
+- **Dashboards:** Fix adhoc and groupby variable datasource on UI import [#131821](https://github.com/grafana/grafana/pull/131821), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Dashboards:** Fix version dates and user display names in the legacy version history page [#131808](https://github.com/grafana/grafana/pull/131808), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 12.4.10 END -->
 <!-- 12.4.9 START -->
 
 # 12.4.9 (2026-08-18)

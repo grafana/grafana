@@ -1002,7 +1002,7 @@ export interface FeatureToggles {
   enableDashboardEmptyExtensions?: boolean;
   /**
   * Enables use of app platform API for folders
-  * @default false
+  * @default true
   */
   foldersAppPlatformAPI?: boolean;
   /**
