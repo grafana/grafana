@@ -73,6 +73,20 @@ func newReconciler(t *testing.T, st *fakeStorage, vec *fakeVector) (*Reconciler,
 	return s, text
 }
 
+// newReconcilerWithBuilders is newReconciler with an explicit builder set.
+func newReconcilerWithBuilders(t *testing.T, st *fakeStorage, vec *fakeVector, builders ...embed.Builder) *Reconciler {
+	t.Helper()
+	s, err := New(Options{
+		Storage:       st,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+		Builders:      builders,
+		Interval:      time.Hour,
+	})
+	require.NoError(t, err)
+	return s
+}
+
 // dashEvent builds a pendingEvent with the dashboard group/resource pre-filled.
 func dashEvent(action resourcepb.WatchEvent_Type, ns, name string, rv int64, value []byte) *pendingEvent {
 	return &pendingEvent{
@@ -92,6 +106,17 @@ func dashChange(action resourcepb.WatchEvent_Type, ns, name string, rv int64, va
 		Key: resourcepb.ResourceKey{
 			Group: dashGroup, Resource: dashRes, Namespace: ns, Name: name,
 		},
+		ResourceVersion: rv,
+		Value:           value,
+	}
+}
+
+// change builds a ModifiedResource for a group/resource without a
+// dedicated helper.
+func change(group, res, ns, name string, rv int64, value []byte) *resource.ModifiedResource {
+	return &resource.ModifiedResource{
+		Action:          resourcepb.WatchEvent_ADDED,
+		Key:             resourcepb.ResourceKey{Group: group, Resource: res, Namespace: ns, Name: name},
 		ResourceVersion: rv,
 		Value:           value,
 	}
@@ -817,17 +842,16 @@ func TestReconciler_AcquireLockBlocking_RespectsContextCancel(t *testing.T) {
 // TestReconciler_StartupReconcile_FlushesAtBatchSize verifies that
 // startupReconcile drains the listing iterator in startupBatchSize-sized
 // chunks (so memory stays bounded) but advances the cursor exactly once
-// at the end. Advancing per batch would lose events on real SQL where
-// the rows come back ORDER BY resource_version DESC: the first
-// (highest-RV) batch would bump the cursor past every later, lower-RV
-// batch, silently dropping them.
+// at the end. Advancing per batch would lose events: the event store
+// yields RV-descending, so the first (highest-RV) batch would bump the
+// cursor past every later, lower-RV batch.
 func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 	prev := startupBatchSize
 	startupBatchSize = 3
 	t.Cleanup(func() { startupBatchSize = prev })
 
 	st := &fakeStorage{}
-	// Emit in DESC order to mirror the real SQL backend.
+	// Emit in DESC order, as the event store does.
 	for i := 6; i >= 0; i-- {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
@@ -849,18 +873,17 @@ func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 
 // TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents is the
 // regression test for the bug where startupReconcile flushed each
-// batch via processBatch (which advances the cursor) while the real
-// SQL backend yields ORDER BY resource_version DESC. The first batch
-// held the highest RVs, the cursor jumped past every subsequent
-// (lower-RV) batch's events, and they were silently filtered out by
-// the "ev.rv <= sinceRv" guard.
+// batch via processBatch (which advances the cursor) while the event
+// store yields RV-descending. The first batch held the highest RVs, the
+// cursor jumped past every subsequent (lower-RV) batch's events, and
+// they were silently filtered out by the "ev.rv <= sinceRv" guard.
 func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	prev := startupBatchSize
 	startupBatchSize = 2
 	t.Cleanup(func() { startupBatchSize = prev })
 
 	st := &fakeStorage{}
-	// Strictly descending RV order, mirroring the real SQL backend.
+	// Strictly descending RV order, as the event store yields.
 	for i := 5; i >= 0; i-- {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
@@ -928,93 +951,52 @@ func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
 	})
 }
 
-// TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure
-// pins the recovery behavior when SetLatestRV fails after embeds
-// succeed. Without re-enqueueing the embedded events the cursor stays
-// stale (no advance happened) and the queue is empty, so the next
-// steady-state cycle has nothing to retry — the cursor sits behind
-// real progress until a new write arrives.
-func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing.T) {
-	st := &fakeStorage{}
-	for i := range 3 {
-		rv := snowflakeRV(int64(100 + i*10))
-		name := fmt.Sprintf("dash-%d", i)
-		st.changes = append(st.changes,
-			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
-	}
-
+// When SetLatestRV fails after the embeds succeeded, the cursor stays
+// put and the next run re-lists from it. Nothing is re-enqueued: only a
+// re-walk can prove the RV again.
+func TestReconciler_StartupReconcile_CheckpointWriteFailure_RetriesNextRun(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
+	}}
 	vec := newFakeVector()
 	vec.latestRV = snowflakeRV(50)
-	vec.setLatestRVErr = fmt.Errorf("transient checkpoint write failure")
+	vec.setLatestRVErr = errBoom
 	s, _ := newReconciler(t, st, vec)
 
-	s.startupReconcile(context.Background())
+	s.startupReconcile(t.Context())
 
-	assert.Len(t, vec.upserts, 3, "embeds succeeded even though the cursor write failed")
+	require.Len(t, vec.upserts, 1, "embeds succeeded even though the cursor write failed")
 	assert.Equal(t, snowflakeRV(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
-	assert.Equal(t, 3, s.pendingLen(), "all processed events re-enqueued for the next cycle to retry the advance")
-}
+	assert.Zero(t, s.pendingLen(), "nothing queued; the next walk re-proves the RV")
 
-// TestReconciler_StartupReconcile_FreesEmbeddedValues verifies an
-// embedded event releases its value, so the successes slice doesn't grow
-// unbounded over the backlog. Observed via the checkpoint-write-failure
-// path, which re-enqueues every embedded event.
-func TestReconciler_StartupReconcile_FreesEmbeddedValues(t *testing.T) {
-	st := &fakeStorage{}
-	for i := range 3 {
-		rv := snowflakeRV(int64(100 + i*10))
-		name := fmt.Sprintf("dash-%d", i)
-		st.changes = append(st.changes,
-			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
-	}
-
-	vec := newFakeVector()
-	vec.latestRV = snowflakeRV(50)
-	vec.setLatestRVErr = errBoom // fail the checkpoint so successes are re-enqueued
-	s, _ := newReconciler(t, st, vec)
-
-	s.startupReconcile(context.Background())
-
-	pending := s.drainPending()
-	require.Len(t, pending, 3, "all embedded events re-enqueued after the checkpoint write failed")
-	for _, ev := range pending {
-		assert.Nil(t, ev.value, "embedded value released before re-enqueue")
-	}
-}
-
-// After a checkpoint write fails, the re-enqueued value-less events must
-// replay as no-ops (no re-embed, no delete) while still advancing the
-// cursor. Distinct from FreesEmbeddedValues, which pins the release itself.
-func TestReconciler_StartupReconcile_ReleasedValuesReplayAsNoOps(t *testing.T) {
-	st := &fakeStorage{}
-	for i := range 3 {
-		rv := snowflakeRV(int64(100 + i*10))
-		name := fmt.Sprintf("dash-%d", i)
-		st.changes = append(st.changes,
-			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
-	}
-
-	vec := newFakeVector()
-	vec.latestRV = snowflakeRV(50)
-	vec.setLatestRVErr = errBoom // fail the checkpoint so the embedded events re-enqueue
-	s, text := newReconciler(t, st, vec)
-
-	s.startupReconcile(context.Background())
-	require.Len(t, vec.upserts, 3, "startup embedded all three")
-	require.Equal(t, 3, s.pendingLen(), "all re-enqueued after the checkpoint write failed")
-
-	embedCalls := text.calls
-	upserts := len(vec.upserts)
-
-	// Recover: checkpoint writes succeed; pending value-less events replay.
 	vec.setLatestRVErr = nil
-	s.processPending(context.Background())
+	s.startupReconcile(t.Context())
 
-	assert.Equal(t, embedCalls, text.calls, "replay does not re-embed released values")
-	assert.Equal(t, upserts, len(vec.upserts), "replay does not upsert")
+	assert.Equal(t, snowflakeRV(100), vec.latestRV, "the next run advances the cursor")
+}
+
+// A successful embed releases the event's value, so a caller
+// accumulating successes over a long backlog doesn't retain every
+// dashboard body. Replaying a released event must then be a no-op, and
+// above all must not delete the vectors it already wrote.
+func TestReconciler_EmbeddedValueReleasedAndReplaysAsNoOp(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+	ev := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-0", snowflakeRV(100), minimalDashboard("dash-0", "Dash 0"))
+
+	_, _, failed, successes, abort := s.processEvents(t.Context(), snowflakeRV(50), []*pendingEvent{ev})
+	require.False(t, abort)
+	require.Empty(t, failed)
+	require.Len(t, successes, 1)
+	require.Nil(t, ev.value, "value released after a successful embed")
+
+	ev.rv = snowflakeRV(110)
+	s.enqueue(ev)
+	s.processPending(t.Context())
+
+	assert.Equal(t, 1, text.calls, "replay does not re-embed")
+	assert.Len(t, vec.upserts, 1, "replay does not upsert")
 	assert.Empty(t, vec.deletes, "replay does not delete")
-	assert.Equal(t, snowflakeRV(120), vec.latestRV, "cursor advances to highest RV on replay")
-	assert.Equal(t, 0, s.pendingLen(), "queue drained after replay")
 }
 
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
@@ -1524,4 +1506,131 @@ func TestReconciler_EnsureResourceInitialized_CreateError(t *testing.T) {
 	err := s.ensureResourceInitialized(context.Background(), dashboard.New(), snowflakeRV(1))
 	require.Error(t, err)
 	assert.Empty(t, vec.backfillJobs)
+}
+
+// The cursor may only move to an RV every builder proved complete, and
+// it must move even when this builder saw nothing, or it ages off the
+// event store and every later listing falls onto the full data-store
+// scan.
+func TestReconciler_StartupReconcile_AdvancesCursor(t *testing.T) {
+	widgets := fakeBuilder{group: "test.grafana.app", resource: "widgets"}
+	dashAt := func(rv int64, name string) *resource.ModifiedResource {
+		return dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name))
+	}
+
+	tests := []struct {
+		name        string
+		builders    []embed.Builder
+		changes     []*resource.ModifiedResource
+		itemErr     error
+		snapshotRv  int64
+		cursor      int64
+		wantCursor  int64
+		wantUpserts int
+		wantPending int
+	}{
+		{
+			name: "a write landing mid-walk does not lift the listing ceiling",
+			changes: []*resource.ModifiedResource{
+				dashAt(snowflakeRV(200), "dash-1"),
+				dashAt(snowflakeRV(300), "dash-2"),
+			},
+			snapshotRv:  snowflakeRV(200),
+			cursor:      snowflakeRV(50),
+			wantCursor:  snowflakeRV(200),
+			wantUpserts: 2,
+		},
+		{
+			name: "no changes for this builder still rides the store's latest RV",
+			changes: []*resource.ModifiedResource{
+				dashAt(snowflakeRV(100), "dash-1"), // at the cursor, so skipped
+				change("other.grafana.app", "others", "ns", "other-1", snowflakeRV(300), nil),
+			},
+			cursor:     snowflakeRV(100),
+			wantCursor: snowflakeRV(300),
+		},
+		{
+			name:       "interrupted walk proves nothing",
+			changes:    []*resource.ModifiedResource{dashAt(snowflakeRV(100), "dash-1"), dashAt(snowflakeRV(200), "dash-2")},
+			itemErr:    errBoom,
+			cursor:     snowflakeRV(50),
+			wantCursor: snowflakeRV(50),
+		},
+		{
+			name:     "one builder's failure holds the cursor for all of them",
+			builders: []embed.Builder{dashboard.New(), widgets},
+			changes: []*resource.ModifiedResource{
+				dashAt(snowflakeRV(200), "dash-1"),
+				change(widgets.group, widgets.resource, "ns", "widget-1", snowflakeRV(150), []byte("boom")),
+			},
+			cursor:      snowflakeRV(50),
+			wantCursor:  snowflakeRV(150) - 1,
+			wantUpserts: 1,
+			wantPending: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			st := &fakeStorage{changes: tc.changes, itemErr: tc.itemErr, itemErrI: 1, latestRvOverride: tc.snapshotRv}
+			vec := newFakeVector()
+			vec.latestRV = tc.cursor
+			builders := tc.builders
+			if builders == nil {
+				builders = []embed.Builder{dashboard.New()}
+			}
+			s := newReconcilerWithBuilders(t, st, vec, builders...)
+
+			s.startupReconcile(t.Context())
+
+			assert.Equal(t, tc.wantCursor, vec.latestRV, "cursor")
+			assert.Len(t, vec.upserts, tc.wantUpserts, "upserts")
+			assert.Equal(t, tc.wantPending, s.pendingLen(), "queued for retry")
+		})
+	}
+}
+
+// A watch copy that is newer than the listed one but still below the
+// ceiling gets dropped by the live path once the cursor reaches that
+// ceiling, so the walk cannot defer to it.
+func TestReconciler_StartupReconcile_EmbedsEventQueuedBelowTheCeiling(t *testing.T) {
+	st := &fakeStorage{
+		changes: []*resource.ModifiedResource{
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(90), minimalDashboard("dash-1", "Dash 1")),
+		},
+		latestRvOverride: snowflakeRV(100),
+	}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	s, _ := newReconciler(t, st, vec)
+	// Watch delivers a newer copy while the walk is running.
+	st.onYield = func() {
+		s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(95), minimalDashboard("dash-1", "Dash 1")))
+	}
+
+	s.startupReconcile(t.Context())
+
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+	assert.True(t, vec.hasUpsertFor("ns", dashRes, "dash-1"), "the walk must embed what the cursor is about to pass")
+}
+
+// A write can reach the watch and the walk at the same RV. The walk must
+// still embed it, because the cursor is about to move past that RV and
+// the queued copy is discarded once it does.
+func TestReconciler_StartupReconcile_EmbedsEventAlreadyQueuedFromWatch(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(99)
+	s, _ := newReconciler(t, st, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")))
+
+	s.startupReconcile(t.Context())
+	require.True(t, vec.hasUpsertFor("ns", dashRes, "dash-1"), "the walk must embed what the cursor is about to pass")
+	require.Equal(t, snowflakeRV(100), vec.latestRV)
+
+	s.processPending(t.Context())
+	assert.Len(t, vec.upserts, 1, "the queued copy replays as a no-op")
 }

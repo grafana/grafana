@@ -410,7 +410,7 @@ func (s *Reconciler) checkpointRV(ctx context.Context) (int64, error) {
 	return resource.ToSnowflakeRV(rv), nil
 }
 
-// startupReconcile enqueues changes since the last processed RV.
+// startupReconcile embeds everything written since the last processed RV.
 func (s *Reconciler) startupReconcile(ctx context.Context) {
 	sinceRv, err := s.checkpointRV(ctx)
 	if err != nil {
@@ -423,60 +423,70 @@ func (s *Reconciler) startupReconcile(ctx context.Context) {
 	}
 	s.log.Info("reconciler: startupReconcile starting", "since_rv", sinceRv)
 
+	// One cursor for every builder, so it can only move to the lowest RV
+	// all of them proved.
+	target := int64(math.MaxInt64)
 	for _, b := range s.builders {
 		if ctx.Err() != nil {
 			return
 		}
-		s.reconcileSince(ctx, b, sinceRv)
+		proven, complete := s.reconcileSince(ctx, b, sinceRv)
+		if !complete {
+			return
+		}
+		if proven < target {
+			target = proven
+		}
 	}
-	s.log.Info("reconciler: startupReconcile complete")
+	if target > sinceRv {
+		if err := s.vectorBackend.SetLatestRV(ctx, target); err != nil {
+			s.log.Error("reconciler: startupReconcile advance checkpoint",
+				"err", err, "sinceRV", sinceRv, "target", target)
+			return
+		}
+	}
+	s.log.Info("reconciler: startupReconcile complete", "from", sinceRv, "to", target)
 }
 
-// reconcileSince walks ListModifiedSince and processes events in
-// startup-sized batches. Bootstrap deliberately bypasses the shared
-// pending map: a watch event with a higher RV landing mid-iteration
-// would otherwise advance the cursor past iter events not yet yielded,
-// which would then be filtered out as "already processed" — leaving
-// those dashboards without their initial embedding.
+// reconcileSince walks ListModifiedSince in batches and returns the RV
+// it proved complete; complete is false if the walk was interrupted.
 //
-// The cursor is pinned to the value read at startupReconcile and
-// advanced once after all batches drain. Advancing per-batch would
-// drop events on the real SQL backend: rows come back ORDER BY
-// resource_version DESC, so the first batch holds the highest RVs,
-// and advancing after it would push every later (lower-RV) batch
-// below the freshly-bumped cursor — silently losing those resources.
-//
-// Watch events accumulate in the shared pending map while bootstrap
-// runs and are picked up by the first processPending cycle in Run.
-func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64) {
+// sinceRv stays pinned and the caller advances the cursor only once the
+// walk finishes. Listing is not RV-ascending, so a bump partway through
+// buries whatever has not been yielded yet.
+func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64) (int64, bool) {
 	logger := s.log.FromContext(ctx)
 	key := resource.NamespacedResource{
 		Group:    builder.Group(),
 		Resource: builder.Resource(),
 		// Empty namespace → cross-namespace listing.
 	}
-	_, seq := s.storage.ListModifiedSince(ctx, key, sinceRv, nil)
+	// The listing snapshot: the store's latest RV, read before the walk
+	// and covered by it. It is a ceiling, not a floor — the walk may yield
+	// a write that landed after the snapshot while a lower-RV write is
+	// still in flight, so proving anything above it would jump the
+	// in-flight one. Without a snapshot at all, an idle resource freezes
+	// the cursor until it ages off the event store and listing falls back
+	// to a full scan.
+	latestRv, seq := s.storage.ListModifiedSince(ctx, key, sinceRv, nil)
+	ceiling := resource.ToSnowflakeRV(latestRv)
 
 	var (
 		failed         []*pendingEvent
-		successes      []*pendingEvent
-		maxRv          = sinceRv
+		succeeded      int
 		lowestFailedRv = int64(math.MaxInt64)
 	)
 
 	flush := func(batch []*pendingEvent) bool {
-		batchMax, batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, sinceRv, batch)
+		_, batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, sinceRv, batch)
 		if abort {
 			return false
-		}
-		if batchMax > maxRv {
-			maxRv = batchMax
 		}
 		if batchLowestFailed < lowestFailedRv {
 			lowestFailedRv = batchLowestFailed
 		}
 		failed = append(failed, batchFailed...)
-		successes = append(successes, batchSuccess...)
+		succeeded += len(batchSuccess)
 		return true
 	}
 
@@ -484,12 +494,12 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	var batchBytes int
 	for mr, err := range seq {
 		if ctx.Err() != nil {
-			return
+			return sinceRv, false
 		}
 		if err != nil {
-			logger.Warn("reconciler: startupReconcile iterator error",
+			logger.Warn("reconciler: reconcileSince iterator error",
 				"group", builder.Group(), "resource", builder.Resource(), "err", err)
-			return
+			return sinceRv, false
 		}
 		if mr == nil {
 			continue
@@ -504,16 +514,16 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 			rv:        resource.ToSnowflakeRV(mr.ResourceVersion),
 		}
 		// Skip iter events that watch has already superseded with a
-		// newer write — re-embedding the older copy would just be
+		// newer write - re-embedding the older copy would just be
 		// overwritten by the watch event the next cycle.
-		if s.supersedesPending(ev) {
+		if s.supersedesPending(ev, ceiling) {
 			continue
 		}
 		batch = append(batch, ev)
 		batchBytes += len(ev.value)
 		if len(batch) >= startupBatchSize || batchBytes >= maxStartupBatchBytes {
 			if !flush(batch) {
-				return
+				return sinceRv, false
 			}
 			batch = batch[:0]
 			batchBytes = 0
@@ -521,48 +531,31 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}
 	if len(batch) > 0 {
 		if !flush(batch) {
-			return
+			return sinceRv, false
 		}
 	}
 
-	target := pickLatestRV(sinceRv, maxRv, lowestFailedRv)
-	if target > sinceRv {
-		if err := s.vectorBackend.SetLatestRV(ctx, target); err != nil {
-			logger.Error("reconciler: startupReconcile advance checkpoint",
-				"err", err, "sinceRV", sinceRv, "target", target)
-			// Cursor write failed: re-enqueue everything we touched so
-			// the steady-state loop retries the advance with fresh
-			// state. Without this the cursor stays stale until a new
-			// write happens to arrive (forcing another full catch-up
-			// on the next restart). Re-enqueue of already-embedded
-			// events is idempotent — UpsertReplaceSubresources just
-			// rewrites the same rows.
-			for _, ev := range successes {
-				s.enqueue(ev)
-			}
-			for _, ev := range failed {
-				s.enqueue(ev)
-			}
-			return
-		}
-	}
+	target := pickLatestRV(sinceRv, resource.ToSnowflakeRV(latestRv), lowestFailedRv)
 	for _, ev := range failed {
 		s.enqueue(ev)
 	}
-	logger.Info("reconciler: startupReconcile builder complete",
+	logger.Info("reconciler: reconcileSince builder complete",
 		"group", builder.Group(), "resource", builder.Resource(),
-		"events", len(successes), "failed", len(failed),
+		"events", succeeded, "failed", len(failed),
 		"from", sinceRv, "to", target)
+	return target, true
 }
 
-// supersedesPending returns true if the shared pending map has an event for the
-// same resource at a higher-or-equal RV. Used by reconcileSince so it
-// doesn't waste work on iter events that watch has overtaken.
-func (s *Reconciler) supersedesPending(ev *pendingEvent) bool {
+// supersedesPending reports whether the pending map holds a newer event
+// for the same resource that the cursor cannot reach, letting the walk
+// skip work watch has overtaken. Both conditions matter: at an equal RV,
+// or at any RV the cursor is about to pass, the queued copy is dropped as
+// already processed, so the walk has to embed it itself.
+func (s *Reconciler) supersedesPending(ev *pendingEvent, ceiling int64) bool {
 	s.pendingMu.Lock()
 	defer s.pendingMu.Unlock()
 	existing, ok := s.pending[pendingKey(ev.group, ev.resource, ev.namespace, ev.name)]
-	return ok && existing.rv >= ev.rv
+	return ok && existing.rv > ev.rv && existing.rv > ceiling
 }
 
 // processPending drains the in-memory pending map (watch-sourced events

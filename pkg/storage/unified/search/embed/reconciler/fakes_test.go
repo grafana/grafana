@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
@@ -30,6 +31,12 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	// latestRvOverride pins the RV ListModifiedSince reports as its
+	// snapshot ceiling. Set it below an RV in changes to stand in for a
+	// write that commits after the snapshot is taken but is still yielded
+	// by the iterator.
+	latestRvOverride int64
 
 	// onYield, if set, fires once per resource the ListModifiedSince
 	// iterator yields — lets tests observe iterator progress at each flush.
@@ -157,22 +164,25 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	matches := make([]*resource.ModifiedResource, 0, len(f.changes))
 	var latestRv int64
 	for _, c := range f.changes {
+		// latestRv mirrors the KV backend: the latest event RV in the
+		// store, across every resource and independent of both the
+		// group/resource filter and the sinceRv cutoff below.
+		if c.ResourceVersion > latestRv {
+			latestRv = c.ResourceVersion
+		}
 		if c.Key.Group != key.Group || c.Key.Resource != key.Resource {
 			continue
 		}
 		if key.Namespace != "" && c.Key.Namespace != key.Namespace {
 			continue
 		}
-		// latestRv mirrors the real backend's behavior: it's the
-		// absolute latest event RV for this resource, independent
-		// of the sinceRv cutoff applied to the iterator.
-		if c.ResourceVersion > latestRv {
-			latestRv = c.ResourceVersion
-		}
 		if c.ResourceVersion <= sinceRv {
 			continue
 		}
 		matches = append(matches, c)
+	}
+	if f.latestRvOverride != 0 {
+		latestRv = f.latestRvOverride
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
@@ -558,4 +568,45 @@ func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
 
 func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
 	b.ch <- ev
+}
+
+// fakeBuilder is a second embed.Builder, for the cross-builder cursor
+// behavior the single real builder can't reach.
+type fakeBuilder struct {
+	group    string
+	resource string
+}
+
+func (b fakeBuilder) Group() string            { return b.group }
+func (b fakeBuilder) Resource() string         { return b.resource }
+func (b fakeBuilder) MaxItemsPerResource() int { return 0 }
+func (b fakeBuilder) Version() int             { return 1 }
+
+func (b fakeBuilder) Extract(_ context.Context, key *resourcepb.ResourceKey, value []byte, _ string) ([]embed.Item, error) {
+	if len(value) == 0 {
+		return nil, nil
+	}
+	if string(value) == "boom" {
+		return nil, errBoom
+	}
+	return []embed.Item{{
+		UID:     key.Name,
+		Title:   key.Name,
+		Content: string(value),
+	}}, nil
+}
+
+// hasUpsertFor reports whether any upsert wrote a vector for this
+// resource, for tests that care that a document was embedded at all.
+func (f *fakeVector) hasUpsertFor(namespace, resource, uid string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, batch := range f.upserts {
+		for _, v := range batch {
+			if v.Namespace == namespace && v.Resource == resource && v.UID == uid {
+				return true
+			}
+		}
+	}
+	return false
 }
