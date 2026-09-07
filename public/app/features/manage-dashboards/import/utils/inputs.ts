@@ -778,7 +778,10 @@ function replaceVariableDatasources(
           },
           options: [],
           current: { text: '', value: '' },
-          refresh: 'onDashboardLoad' as const,
+          // Keep the author's refresh setting (e.g. onTimeRangeChanged). Options are cleared
+          // above, so 'never' has to be upgraded or the variable would never get any values.
+          refresh:
+            variable.spec.refresh && variable.spec.refresh !== 'never' ? variable.spec.refresh : 'onDashboardLoad',
         },
       };
     }
