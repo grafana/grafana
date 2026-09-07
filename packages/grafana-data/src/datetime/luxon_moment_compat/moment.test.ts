@@ -146,6 +146,25 @@ describe('format', () => {
     );
   });
 
+  it.each([
+    { format: "MMM'YY", expected: "May'24" },
+    { format: "[Today's date:] MMM D", expected: "Today's date: May 8" },
+    { format: "MMM''YY", expected: "May''24" },
+  ])('treats single quotes as literal characters in $format', ({ format, expected }) => {
+    expect(moment.utc('2024-05-08T10:30:45Z').format(format)).toBe(expected);
+  });
+
+  it('formats 1-24 hours and fractional seconds like moment', () => {
+    const value = moment.utc('2024-05-08T00:30:45.123Z');
+
+    expect(value.format('k kk S SS SSS SSSS SSSSSSSSS')).toBe('24 24 1 12 123 1230 123000000');
+    expect(value.clone().hour(5).format('k kk')).toBe('5 05');
+  });
+
+  it('formats GG as the two-digit ISO week-year', () => {
+    expect(moment.utc('2021-01-01T00:00:00Z').format('GG')).toBe('20');
+  });
+
   it('omits z for the local system zone like moment', () => {
     expect(moment(1587126975779).format('z')).toBe('');
     expect(moment(1587126975779).format('[z] z')).toBe('z ');
@@ -165,6 +184,22 @@ describe('format', () => {
 });
 
 describe('formatted string parsing', () => {
+  it('treats single quotes as literal characters in the format', () => {
+    expect(moment.utc("May'24", "MMM'YY").toISOString()).toBe('2024-05-01T00:00:00.000Z');
+  });
+
+  it('parses 1-24 hours and fractional seconds like moment', () => {
+    expect(moment.utc('2024-05-08 24:00:00.0', 'YYYY-MM-DD kk:mm:ss.S').toISOString()).toBe('2024-05-09T00:00:00.000Z');
+    expect(moment.utc('2024-05-08 5:30:45.12', 'YYYY-MM-DD k:mm:ss.SS').toISOString()).toBe('2024-05-08T05:30:45.120Z');
+    expect(moment.utc('2024-05-08 5:30:45.123456789', 'YYYY-MM-DD k:mm:ss.SSSSSSSSS').toISOString()).toBe(
+      '2024-05-08T05:30:45.123Z'
+    );
+  });
+
+  it('parses GG as the two-digit ISO week-year', () => {
+    expect(moment.utc('20-53-5', 'GG-WW-E').toISOString()).toBe('2021-01-01T00:00:00.000Z');
+  });
+
   it('accepts abbreviated month names for the long month token like moment', () => {
     const parsed = moment.utc('Aug 20, 2020 10:30:20 am', 'MMMM D, YYYY, h:mm:ss a');
 

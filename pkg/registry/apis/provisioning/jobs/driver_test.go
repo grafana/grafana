@@ -41,6 +41,31 @@ func TestSumTotalChanges(t *testing.T) {
 	require.Equal(t, 8, sumTotalChanges(summaries))
 }
 
+// TestSumTotalDryRun verifies pull request jobs count viewed-but-not-actionable
+// (Noop) files alongside changes, while every other action falls back to
+// TotalChanges (identical to sumTotalChanges), skipping nil entries.
+func TestSumTotalDryRun(t *testing.T) {
+	require.Equal(t, 0, sumTotalDryRun(provisioning.JobActionPullRequest, nil))
+
+	prSummaries := []*provisioning.JobResourceSummary{
+		{Create: 2, Update: 1, Delete: 1, Noop: 3},
+		nil,
+		{Create: 1},
+	}
+	require.Equal(t, 8, sumTotalDryRun(provisioning.JobActionPullRequest, prSummaries))
+
+	prSummariesLarge := []*provisioning.JobResourceSummary{
+		{Create: 8, Update: 5, Noop: 2}, // all 15 files are evaluated, uncapped
+	}
+	require.Equal(t, 15, sumTotalDryRun(provisioning.JobActionPullRequest, prSummariesLarge))
+
+	pullSummaries := []*provisioning.JobResourceSummary{
+		{TotalChanges: 5, Noop: 10},
+		{TotalChanges: 3},
+	}
+	require.Equal(t, 8, sumTotalDryRun(provisioning.JobActionPull, pullSummaries))
+}
+
 func makeTestJob(rv string) *provisioning.Job {
 	return &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{

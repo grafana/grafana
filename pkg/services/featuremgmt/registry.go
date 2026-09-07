@@ -375,7 +375,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -974,7 +974,7 @@ var (
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -1258,14 +1258,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "improvedExternalSessionHandling",
-			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       identityAccessTeam,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1478,18 +1470,18 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamHttpHeadersFromAppPlatformST",
+			Name:        "datasources.teamHttpHeadersFromAppPlatformST",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
 		{
-			Name:        "teamHttpHeadersFromAppPlatformMT",
+			Name:        "datasources.teamHttpHeadersFromAppPlatformMT",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
@@ -1953,11 +1945,11 @@ var (
 		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
@@ -2332,6 +2324,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryeditor.coauthoringUi",
+			Description: "Enables AI-assisted coauthoring in code query editors",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2534,6 +2534,15 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "dashboard.recentlyDeletedViaTrash",
+			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:            "deletedFolderResourceCleanup",
@@ -2865,14 +2874,6 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preferences.rerouteLegacyAPIs",
-			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",
@@ -3287,15 +3288,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:         "tracesDrilldown.useValueTypeFiltering",
-			Description:  "Enables value type filtering in Traces Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Generate:     Generate{React: true},
-			Expression:   "false",
-			HideFromDocs: true,
-		},
-		{
 			Name:         "grafana.dashboardsAutoHeightPanels",
 			Description:  "Enables the auto-height feature for dashboard panels",
 			Stage:        FeatureStageExperimental,
@@ -3303,6 +3295,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 			HideFromDocs: true,
+		},
+		{
+			Name:        "grafana.dashboardAutoGridDefault",
+			Description: "Uses auto grid as the default layout for new dashboards",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

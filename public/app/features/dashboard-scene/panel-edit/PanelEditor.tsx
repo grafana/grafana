@@ -33,12 +33,8 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { type PanelDataPane } from './PanelDataPane/PanelDataPane';

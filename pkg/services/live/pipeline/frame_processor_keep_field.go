@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -15,15 +16,6 @@ func NewKeepFieldsFrameProcessor(config KeepFieldsFrameProcessorConfig) *KeepFie
 	return &KeepFieldsFrameProcessor{config: config}
 }
 
-func stringInSlice(str string, slice []string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
 const FrameProcessorTypeKeepFields = "keepFields"
 
 func (p *KeepFieldsFrameProcessor) Type() string {
@@ -33,7 +25,7 @@ func (p *KeepFieldsFrameProcessor) Type() string {
 func (p *KeepFieldsFrameProcessor) ProcessFrame(_ context.Context, _ Vars, frame *data.Frame) (*data.Frame, error) {
 	var fieldsToKeep []*data.Field
 	for _, field := range frame.Fields {
-		if stringInSlice(field.Name, p.config.FieldNames) {
+		if slices.Contains(p.config.FieldNames, field.Name) {
 			fieldsToKeep = append(fieldsToKeep, field)
 		}
 	}

@@ -107,9 +107,10 @@ export const {
   // tags itself into the same namespace so create/delete refetch it too.
   useListNotebookQuery,
   useCreateNotebookMutation,
-  // Lazy, because the list response is flattened for the table: exporting a row has to fetch that
-  // notebook's spec on demand rather than every row's up front.
+  // Lazy because exporting a list row has to fetch that one notebook's spec on demand rather than
+  // every row's up front.
   useLazyGetNotebookQuery,
+  useDeleteNotebookMutation,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

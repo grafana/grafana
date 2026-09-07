@@ -139,11 +139,21 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 		return nil, fmt.Errorf("reading %s: %w", appSDKManifestFile, err)
 	}
 
-	// The AppManifest CR schema differs between versions (e.g. v1alpha1 kinds
-	// carry "schema" while v1alpha2 carries "schemas", and json decoding would
-	// silently drop the mismatched field), so dispatch on the declared
-	// apiVersion and reject anything we cannot faithfully decode -- including a
-	// manifest that declares no apiVersion at all.
+	manifest, err := ParseManifest(raw)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", appSDKManifestFile, err)
+	}
+	return manifest, nil
+}
+
+// ParseManifest decodes the app-sdk AppManifest a plugin ships as
+// app-sdk-manifest.json.
+//
+// The schema differs between versions (v1alpha1 kinds carry "schema", v1alpha2
+// carries "schemas") and json decoding would silently drop the mismatched
+// field, so dispatch on the declared apiVersion and reject anything we cannot
+// faithfully decode -- including a manifest that declares no apiVersion.
+func ParseManifest(raw []byte) (*app.ManifestData, error) {
 	var meta struct {
 		APIVersion string `json:"apiVersion"`
 	}
@@ -152,6 +162,7 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 	}
 
 	var manifest app.ManifestData
+	var err error
 	switch meta.APIVersion {
 	case "apps.grafana.app/v1alpha2":
 		var cr appmanifestV1alpha2.AppManifest
@@ -166,7 +177,7 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 		}
 		manifest, err = cr.Spec.ToManifestData()
 	default:
-		return nil, fmt.Errorf("unsupported AppManifest apiVersion %q in %s", meta.APIVersion, appSDKManifestFile)
+		return nil, fmt.Errorf("unsupported AppManifest apiVersion %q", meta.APIVersion)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("converting AppManifestSpec to ManifestData: %w", err)

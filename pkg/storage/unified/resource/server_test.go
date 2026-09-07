@@ -1491,11 +1491,8 @@ func createTestPlaylistRV(ctx context.Context, srv *server) (int64, error) {
 		Name:      name,
 	}
 	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-	if err != nil {
-		return 0, err
-	}
-	if created.Error != nil {
-		return 0, fmt.Errorf("creating playlist %q: %v", name, created.Error)
+	if err := ErrorFromResponse(created.GetError(), err); err != nil {
+		return 0, fmt.Errorf("creating playlist %q: %w", name, err)
 	}
 	return created.ResourceVersion, nil
 }
