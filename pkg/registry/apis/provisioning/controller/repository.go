@@ -813,7 +813,11 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 		if len(patchOps) > 0 {
 			if patchErr := rc.statusPatcher.Patch(ctx, obj, patchOps...); patchErr != nil {
+				// Return the patch error so a transient API failure follows the
+				// retry path instead of silently forgetting the key without ever
+				// publishing the delete reason to the user.
 				logger.Error("failed to update repository health after delete error", "error", patchErr)
+				return repoType, patchErr
 			}
 		}
 
@@ -1325,7 +1329,7 @@ func classifyHookFailureReason(err error) string {
 	switch {
 	case errors.Is(err, repository.ErrUnauthorized), errors.Is(err, repository.ErrPermissionDenied):
 		return provisioning.ReasonAuthenticationFailed
-	case errors.Is(err, repository.ErrServerUnavailable):
+	case errors.Is(err, repository.ErrServerUnavailable), apierrors.IsServiceUnavailable(err):
 		return provisioning.ReasonServiceUnavailable
 	case errors.Is(err, repository.ErrTooManyRequests):
 		return provisioning.ReasonRateLimited

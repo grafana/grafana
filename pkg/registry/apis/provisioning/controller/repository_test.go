@@ -930,11 +930,12 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 // capturePatcher captures all patch operations for inspection in tests.
 type capturePatcher struct {
 	ops []map[string]interface{}
+	err error
 }
 
 func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
 	c.ops = append(c.ops, patchOperations...)
-	return nil
+	return c.err
 }
 
 // findPatchOp returns the last captured op for path, matching JSON Patch's
@@ -1420,10 +1421,6 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 	}
 }
 
-// TestRepositoryController_process_UserCausedBuildFailure verifies that a Build
-// failure the user has to fix (revoked credentials, missing scope) is reported
-// through /status/health but not returned as a controller error. Returning one
-// re-logs it at ERROR on every pass, which spams the SLIs
 // TestRepositoryController_process_UserCausedDeleteFailure verifies that a
 // deletion blocked by credentials the user has to fix reports itself on
 // /status/health rather than as a controller error. The repository renders a
@@ -1561,6 +1558,53 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
 }
 
+// TestRepositoryController_process_DeleteStatusPatchFailureRetries verifies that
+// when surfacing a delete failure on status itself fails (a transient API
+// error), the reconcile returns that error so the workqueue retries, rather
+// than forgetting the key without ever publishing the delete reason.
+func TestRepositoryController_process_DeleteStatusPatchFailureRetries(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	patchErr := errors.New("apiserver unavailable")
+	patcher := &capturePatcher{err: patchErr}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.ErrorIs(t, err, patchErr, "a failed status patch must be returned so the reconcile is retried")
+}
+
+// TestRepositoryController_process_UserCausedBuildFailure verifies that a Build
+// failure the user has to fix (revoked credentials, missing scope) is reported
+// through /status/health but not returned as a controller error. Returning one
+// re-logs it at ERROR on every pass, which spams the SLIs.
 func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1633,6 +1677,28 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 //
 // The chain is rebuilt here rather than imported: the provider that produces it
 // lives in an enterprise package the controller must not depend on.
+func TestClassifyHookFailureReason(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"unauthorized", repository.ErrUnauthorized, provisioning.ReasonAuthenticationFailed},
+		{"permission denied wrapped", fmt.Errorf("execute deletion hooks: %w", repository.ErrPermissionDenied), provisioning.ReasonAuthenticationFailed},
+		{"repository server unavailable", repository.ErrServerUnavailable, provisioning.ReasonServiceUnavailable},
+		// A Kubernetes 503 (e.g. apiserver/finalizer request) must read as a
+		// service outage, not a config problem the user needs to fix.
+		{"kubernetes service unavailable", apierrors.NewServiceUnavailable("apiserver down"), provisioning.ReasonServiceUnavailable},
+		{"too many requests", repository.ErrTooManyRequests, provisioning.ReasonRateLimited},
+		{"generic falls back to invalid spec", errors.New("boom"), provisioning.ReasonInvalidSpec},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, classifyHookFailureReason(tt.err))
+		})
+	}
+}
+
 func TestRepositoryController_isUserCaused(t *testing.T) {
 	// Stands in for gitlab's ErrClientNotProjectScopedPermission.
 	errUnscoped := errors.New("gitlab client could not resolve its immutable projectID")
