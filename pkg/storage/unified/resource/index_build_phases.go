@@ -78,6 +78,8 @@ func (r *buildPhaseRecorder) recordIndexed(count int) {
 // timeModifiedResources reports the time the sequence spends producing each
 // resource. The clock restarts once the loop body has run, whichever way it
 // left, so a body that skips an item cannot charge its own work to the fetch.
+// The time after the last resource counts too, which for a sequence that yields
+// nothing is all of it.
 func (r *buildPhaseRecorder) timeModifiedResources(seq iter.Seq2[*ModifiedResource, error]) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		start := time.Now()
@@ -93,6 +95,7 @@ func (r *buildPhaseRecorder) timeModifiedResources(seq iter.Seq2[*ModifiedResour
 			start = time.Now()
 			return ok
 		})
+		r.recordFetchWithNoValue(time.Since(start))
 	}
 }
 

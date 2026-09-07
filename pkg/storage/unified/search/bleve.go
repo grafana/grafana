@@ -1825,6 +1825,27 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	}
 
 	mapStart := time.Now()
+	batch, mapErr := b.mapBatch(req)
+	mapElapsed := time.Since(mapStart)
+	if mapErr != nil {
+		// The time still counts, so a batch that fails to map is not missing from
+		// the metrics.
+		b.recordBatchPhases(req.Path, mapElapsed, 0, 0, false)
+		return mapErr
+	}
+
+	commitStart := time.Now()
+	err := b.index.Batch(batch)
+	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize(), err == nil)
+	if err != nil {
+		return err
+	}
+	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// mapBatch turns the request into a bleve batch, mapping each document onto the
+// index schema.
+func (b *bleveIndex) mapBatch(req *resource.BulkIndexRequest) (*bleve.Batch, error) {
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
 	droppedMarkers := 0
@@ -1832,7 +1853,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
-				return fmt.Errorf("missing document")
+				return nil, fmt.Errorf("missing document")
 			}
 
 			// An index built before these fields were mapped drops them, which would
@@ -1862,7 +1883,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case resource.ActionDelete:
 			batch.Delete(resource.SearchID(item.Key))
@@ -1878,15 +1899,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			"documents", droppedMarkers)
 	}
 
-	mapElapsed := time.Since(mapStart)
-
-	commitStart := time.Now()
-	err := b.index.Batch(batch)
-	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize(), err == nil)
-	if err != nil {
-		return err
-	}
-	return b.addSnapshotMutationCount(int64(len(req.Items)))
+	return batch, nil
 }
 
 // recordBatchPhases separates the CPU spent mapping documents onto the index

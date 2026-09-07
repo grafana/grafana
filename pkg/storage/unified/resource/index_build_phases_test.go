@@ -29,7 +29,7 @@ func TestBuildPhaseRecorder(t *testing.T) {
 	rec.flush()
 
 	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
-# HELP index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped.
+# HELP index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped; index counts those the index accepted.
 # TYPE index_server_build_documents_total counter
 index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 1
 index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
@@ -164,6 +164,53 @@ func TestUpdateRecordsPhaseMetrics(t *testing.T) {
 	require.Equal(t, 2.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseConvert}, labels...)...)))
 	require.Equal(t, 2.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseIndex}, labels...)...)))
 	require.Positive(t, testutil.ToFloat64(metrics.BuildSourceBytes.WithLabelValues(labels...)))
+}
+
+// An event the dedup cache has already seen needs no conversion, so it must not
+// look like a dropped document.
+func TestUpdateCountsDeduplicatedEventsAsConverted(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideIndexMetrics(reg)
+
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	event := &ModifiedResource{
+		Action:          resourcepb.WatchEvent_MODIFIED,
+		Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "one"},
+		ResourceVersion: 10,
+		Value:           testObjectJSON("one", "One"),
+	}
+	storage := &trashStorageBackend{modified: []*ModifiedResource{event}}
+
+	search := &mockSearchBackend{}
+	opts := trashSearchOptions(search)
+	opts.IndexModificationCacheTTL = time.Minute
+	server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, metrics, nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	search.mu.Lock()
+	updater := search.lastUpdater
+	search.mu.Unlock()
+
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+
+	_, docs, err := updater(t.Context(), index, 1)
+	require.NoError(t, err)
+	require.Equal(t, 1, docs)
+
+	// The lookback window hands the same event to the next update, where the
+	// cache skips it.
+	_, docs, err = updater(t.Context(), index, 1)
+	require.NoError(t, err)
+	require.Zero(t, docs, "the duplicate is skipped")
+
+	labels := []string{IndexPathUpdate, key.Group, key.Resource}
+	fetched := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseFetch}, labels...)...))
+	converted := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{IndexPhaseConvert}, labels...)...))
+	require.Equal(t, 2.0, fetched, "the event was read by both updates")
+	require.Equal(t, fetched, converted, "a skipped duplicate must not look like a dropped document")
 }
 
 // A delete counts as converted whether its trash marker was built or the

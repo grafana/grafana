@@ -51,8 +51,10 @@ const (
 	// IndexPhaseCommit writes the batch, which is where a file-backed index pays
 	// for disk.
 	IndexPhaseCommit = "commit"
-	// IndexPhaseIndex counts documents given to the index. Their time is reported
-	// as map and commit.
+	// IndexPhaseIndex counts documents the index accepted, so a batch that fails
+	// to commit leaves fetch and convert ahead of index. Time is reported as map
+	// and commit whether or not the batch was accepted, since it was spent either
+	// way.
 	IndexPhaseIndex = "index"
 )
 
@@ -179,7 +181,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{"phase", "path", "group", "resource"}),
 		BuildDocuments: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_documents_total",
-			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped.",
+			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped; index counts those the index accepted.",
 		}, []string{"phase", "path", "group", "resource"}),
 		BuildSourceBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_source_bytes_total",

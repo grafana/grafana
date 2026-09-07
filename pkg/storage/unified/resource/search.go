@@ -2013,6 +2013,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
+		// Storage does some of its work before handing over the iterator, so the
+		// fetch phase starts here rather than at the first document.
+		listStart := time.Now()
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -2026,6 +2029,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// Report whatever was accumulated even when the build gives up early, so a
 			// failed build is not missing from the metrics.
 			defer phases.flush()
+			phases.recordFetchWithNoValue(time.Since(listStart))
 			batch := newBulkIndexBatcher(index, span, phases)
 
 			for {
@@ -2154,6 +2158,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			cacheKey := fmt.Sprintf("%s~%d", res.Key.Name, res.ResourceVersion)
 			if dedupCache != nil {
 				if _, found := dedupCache.Get(cacheKey); found {
+					// Already processed, so there is nothing to convert and nothing lost.
+					phases.recordConvertNotNeeded()
 					continue
 				}
 			}
@@ -2335,7 +2341,13 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 	// Report whatever was accumulated even when the pass gives up early.
 	defer phases.flush()
 	batch := newBulkIndexBatcher(index, span, phases)
+
+	// Listing trash scans the history for deleted objects before handing over the
+	// iterator, and for a resource with a lot of history that scan is most of the
+	// fetching, so the phase starts here.
+	listStart := time.Now()
 	_, err := s.storage.ListHistory(ctx, req, func(iter ListIterator) error {
+		phases.recordFetchWithNoValue(time.Since(listStart))
 		for {
 			fetchStart := time.Now()
 			hasNext := iter.Next()
