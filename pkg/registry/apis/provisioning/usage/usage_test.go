@@ -116,9 +116,11 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 			{
 				// Healthy, sync enabled to instance, editable via write + branch,
 				// last sync succeeded, webhook disabled, auth delegated to a connection.
+				// The duplicate write workflow must still count as a single write
+				// capability (validator accepts duplicates).
 				Spec: provisioning.RepositorySpec{
 					Type:       provisioning.GitHubRepositoryType,
-					Workflows:  []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+					Workflows:  []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.WriteWorkflow, provisioning.BranchWorkflow},
 					Sync:       provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
 					Webhook:    &provisioning.WebhookConfig{Disabled: true},
 					Connection: &provisioning.ConnectionInfo{Name: "my-conn"},
@@ -174,6 +176,15 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 
 	require.Equal(t, 1, m["stats.repository.ready_reason."+strings.ToLower(provisioning.ReasonAvailable)+".count"])
 	require.Equal(t, 1, m["stats.repository.ready_reason."+strings.ToLower(provisioning.ReasonInvalidSpec)+".count"])
+
+	// The duplicate write workflow on the first repo still counts once.
+	require.Equal(t, 1, m["stats.repository.workflow.write.count"])
+	require.Equal(t, 1, m["stats.repository.workflow.branch.count"])
+
+	// No connection lister was wired, so no connection keys are emitted at all --
+	// zero-valued keys would conflate "not wired" with "empty fleet".
+	_, ok := m["stats.connection.count"]
+	require.False(t, ok, "connection stats must be absent without a lister")
 }
 
 // connection stats are aggregated by type, health, and webhook state.

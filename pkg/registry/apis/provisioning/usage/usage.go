@@ -184,16 +184,21 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 
 		// Connection stats mirror the repository ones. A connection is how a
 		// repository delegates auth, so its type is the concrete auth mechanism.
-		for k, v := range connCounts {
-			m[fmt.Sprintf("stats.connection.%s.count", k)] = v
+		// Only emit them when a lister was wired -- otherwise fixed zero-valued
+		// keys would conflate "connection storage not available" with an empty
+		// fleet.
+		if connectionLister != nil {
+			for k, v := range connCounts {
+				m[fmt.Sprintf("stats.connection.%s.count", k)] = v
+			}
+			for k, v := range connReadyReasonCounts {
+				m[fmt.Sprintf("stats.connection.ready_reason.%s.count", k)] = v
+			}
+			m["stats.connection.count"] = connAgg.total
+			m["stats.connection.healthy.count"] = connAgg.healthy
+			m["stats.connection.unhealthy.count"] = connAgg.total - connAgg.healthy
+			m["stats.connection.webhook_disabled.count"] = connAgg.webhookDisabled
 		}
-		for k, v := range connReadyReasonCounts {
-			m[fmt.Sprintf("stats.connection.ready_reason.%s.count", k)] = v
-		}
-		m["stats.connection.count"] = connAgg.total
-		m["stats.connection.healthy.count"] = connAgg.healthy
-		m["stats.connection.unhealthy.count"] = connAgg.total - connAgg.healthy
-		m["stats.connection.webhook_disabled.count"] = connAgg.webhookDisabled
 
 		return m, nil
 	}
@@ -224,17 +229,27 @@ func (a *repoAggregate) observe(repo *provisioning.Repository, syncTargetCounts,
 	if repo.Spec.Sync.Enabled {
 		a.syncEnabled++
 	}
-	// A repository with no write workflows cannot be edited (read-only).
+	// A repository with no workflows cannot be edited (read-only).
 	if len(repo.Spec.Workflows) == 0 {
 		a.readOnly++
 	}
+	// Count each workflow capability at most once per repository -- duplicate
+	// entries (e.g. [write, write]) are accepted by the validator but represent a
+	// single capability, so these fleet counts must never exceed the repo count.
+	var hasWrite, hasBranch bool
 	for _, w := range repo.Spec.Workflows {
 		switch w {
 		case provisioning.WriteWorkflow:
-			a.writeWorkflow++
+			hasWrite = true
 		case provisioning.BranchWorkflow:
-			a.branchWorkflow++
+			hasBranch = true
 		}
+	}
+	if hasWrite {
+		a.writeWorkflow++
+	}
+	if hasBranch {
+		a.branchWorkflow++
 	}
 	if repo.Spec.Webhook != nil && repo.Spec.Webhook.Disabled {
 		a.webhookDisabled++
