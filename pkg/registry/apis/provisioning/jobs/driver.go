@@ -507,11 +507,14 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			return nil
 		}
 
-		// Every worker talks to the repository, so a repository whose credentials
+		// Most workers talk to the repository, so a repository whose credentials
 		// are known to be broken only produces a failed job the user can't act on
 		// from the job itself. Skip it with a warning instead of burning the job
 		// success-rate SLI; the repository status stays the place the reason lives.
-		if repositoryAuthenticationFailed(r) {
+		// The synthetic test action is exempt: its worker does no repository work
+		// and exists purely to exercise the queue, so it must run even when the
+		// repository is unhealthy.
+		if job.Spec.Action != provisioning.JobActionTest && repositoryAuthenticationFailed(r) {
 			logger.Info("repository authentication failed - skip job")
 			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository authentication failed - job skipped")).Build())
 			return nil

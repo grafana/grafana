@@ -469,6 +469,45 @@ func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
 	worker.AssertNotCalled(t, "Process", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
+// TestProcessJob_AuthFailureRepo_TestActionStillRuns covers the synthetic test
+// action, whose worker does no repository work and exists to exercise the queue.
+// It must run even against an authentication-failed repository -- otherwise a
+// performance test targeting an unhealthy repo would finish immediately as a
+// warning instead of generating load.
+func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+	driver.currentJob.Spec.Action = provisioning.JobActionTest
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	repoCfg.Status.Health = provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{"authentication failed"},
+	}
+	repoCfg.Status.Conditions = []metav1.Condition{{
+		Type:   provisioning.ConditionTypeReady,
+		Status: metav1.ConditionFalse,
+		Reason: provisioning.ReasonAuthenticationFailed,
+	}}
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).Return(nil)
+
+	err := driver.processJob(context.Background(), recorder)
+	require.NoError(t, err)
+
+	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
 // TestProcessJob_StaleAuthFailureCondition_CallsWorker covers the race where a
 // spec edit that repairs credentials bumps Generation immediately, but the
 // Ready condition still reflects the pre-fix reconcile until the controller
