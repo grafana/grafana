@@ -68,7 +68,11 @@ export interface AlertManagerDataSource {
   handleGrafanaManagedAlerts?: boolean;
 }
 
-export function getRulesDataSources() {
+export interface GetRulesDataSourcesOptions {
+  hasUrl?: boolean;
+}
+
+export function getRulesDataSources(options: GetRulesDataSourcesOptions = {}) {
   const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
   const canCreate = getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted;
   if (!canView && !canCreate) {
@@ -78,6 +82,7 @@ export function getRulesDataSources() {
   return getAllDataSources()
     .filter((ds) => isSupportedExternalRulesSourceType(ds.type))
     .filter((ds) => isDataSourceManagingAlerts(ds))
+    .filter((ds) => !options.hasUrl || Boolean(ds.url))
     .sort((a, b) => collator.compare(a.name, b.name));
 }
 
@@ -226,8 +231,8 @@ export function getAllRulesSourceNames(): string[] {
   return availableRulesSources;
 }
 
-export function getExternalRulesSources(): DataSourceRulesSourceIdentifier[] {
-  return getRulesDataSources().map((ds) => ({
+export function getExternalRulesSources(options: GetRulesDataSourcesOptions = {}): DataSourceRulesSourceIdentifier[] {
+  return getRulesDataSources(options).map((ds) => ({
     name: ds.name,
     uid: ds.uid,
     ruleSourceType: 'datasource',

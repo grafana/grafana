@@ -19,7 +19,7 @@ export function useRulesSourcesWithRuler(): {
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
   useEffect(() => {
-    const dataSources = getRulesDataSources();
+    const dataSources = getRulesDataSources({ hasUrl: true });
     if (dataSources.length === 0) {
       return;
     }
