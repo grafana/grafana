@@ -17,6 +17,10 @@
     "types": ["systemjs", "webpack-env", "gtag.js", "trusted-types"],
     "paths": {
       "@grafana/schema/dist/esm/*": ["./packages/grafana-schema/src/*"],
+      // Enterprise frontend, mirroring the webpack alias: the sibling checkout when
+      // present, else a no-op stub. TypeScript tries each target in order.
+      "app/extensions": ["../grafana-enterprise/src/public/index.ts", "./public/app/core/extensionsStub.ts"],
+      "app/extensions/*": ["../grafana-enterprise/src/public/*"],
       "*": ["./public/*"]
     }
   },
