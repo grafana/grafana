@@ -4,8 +4,9 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { HomeGrid, HOME_SECTION_MIN_WIDTH } from '../HomeGrid';
 import { recommendationsShown } from '../analytics/main';
 import { type Solution, type SolutionId } from '../solutions/types';
 
@@ -91,7 +92,7 @@ export function RecommendationsView({
   }, [items, selectionPending, startingState, activeSolution]);
 
   return (
-    <div>
+    <div className={styles.section}>
       <Stack direction="row" alignItems="center" columnGap={2} rowGap={1} wrap="wrap">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
@@ -135,7 +136,7 @@ export function RecommendationsView({
 
       {cardsMounted && (
         <div className={styles.cards} hidden={collapsed}>
-          <Grid gap={0} columns={hasRecommendations ? { xs: 1, md: 2 } : 1}>
+          <HomeGrid columns={hasRecommendations ? 2 : 1} minColumnWidth={HOME_SECTION_MIN_WIDTH} gap={0}>
             <div className={styles.card}>
               <RecommendationExisting onSelectionChange={setActiveSolution} solutions={solutions} />
 
@@ -234,7 +235,7 @@ export function RecommendationsView({
                   </div>
                 </div>
               ))}
-          </Grid>
+          </HomeGrid>
         </div>
       )}
     </div>
@@ -257,133 +258,141 @@ function RecommendedCardSkeleton() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  pills: css({
-    [theme.breakpoints.down('md')]: {
-      order: 1,
-    },
-  }),
-  spacer: css({
-    flex: '1 1 0%',
-  }),
-  line: css({
-    [theme.breakpoints.up('md')]: {
-      background: theme.colors.border.medium,
-      height: '1px',
-    },
-  }),
-  cards: css({
-    background: theme.colors.background.canvas,
-    borderRadius: theme.shape.radius.default,
-    margin: theme.spacing(2, 0, 0),
-    overflow: 'hidden',
-  }),
-  card: css({
-    display: 'flex',
-    flexDirection: 'column',
-    padding: theme.spacing(3, 4),
-    position: 'relative',
-    minWidth: 0,
-  }),
-  recommended: css({
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      background: theme.colors.gradients.brandHorizontal,
-      opacity: 0.05,
-      pointerEvents: 'none',
-    },
-  }),
-  arrow: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.circle,
-    border: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.25),
-    lineHeight: 0,
-    position: 'absolute',
-    zIndex: 1,
-    left: '50%',
-    top: '100%',
-    transform: 'translate(-50%, -50%) rotate(90deg)',
+const getStyles = (theme: GrafanaTheme2) => {
+  // Same width HomeGrid switches to two columns at (gap 0); the arrow and header must flip with it.
+  const twoColumns = theme.breakpoints.container.up(2 * HOME_SECTION_MIN_WIDTH);
 
-    [theme.breakpoints.up('md')]: {
-      top: theme.spacing(2),
-      left: '100%',
-      transform: 'translate(-50%, 0)',
-    },
-  }),
-  dot: css({
-    background: theme.colors.background.secondary,
-    lineHeight: 0,
-    padding: 0,
-    width: theme.spacing(1),
-    height: theme.spacing(1),
-    borderRadius: theme.shape.radius.pill,
-    position: 'relative',
-
-    '&::after': {
-      content: '""',
+  return {
+    section: css({
+      containerType: 'inline-size',
+    }),
+    pills: css({
+      [theme.breakpoints.container.down(2 * HOME_SECTION_MIN_WIDTH)]: {
+        order: 1,
+      },
+    }),
+    spacer: css({
+      flex: '1 1 0%',
+    }),
+    line: css({
+      [twoColumns]: {
+        background: theme.colors.border.medium,
+        height: '1px',
+      },
+    }),
+    cards: css({
+      background: theme.colors.background.canvas,
+      borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(2, 0, 0),
+      overflow: 'hidden',
+    }),
+    card: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(3, 4),
+      position: 'relative',
+      minWidth: 0,
+    }),
+    recommended: css({
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background: theme.colors.gradients.brandHorizontal,
+        opacity: 0.05,
+        pointerEvents: 'none',
+      },
+    }),
+    arrow: css({
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.circle,
+      border: `1px solid ${theme.colors.border.medium}`,
+      padding: theme.spacing(0.25),
+      lineHeight: 0,
       position: 'absolute',
-      top: '50%',
+      zIndex: 1,
       left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-    },
+      top: '100%',
+      transform: 'translate(-50%, -50%) rotate(90deg)',
 
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['background-color', 'width', 'height'], {
-        duration: theme.transitions.duration.short,
-      }),
-    },
-  }),
-  active: css({
-    '&, &::after': {
-      width: theme.spacing(3),
-    },
+      [twoColumns]: {
+        top: theme.spacing(2),
+        left: '100%',
+        transform: 'translate(-50%, 0)',
+      },
+    }),
+    dot: css({
+      background: theme.colors.background.secondary,
+      lineHeight: 0,
+      padding: 0,
+      width: theme.spacing(1),
+      height: theme.spacing(1),
+      borderRadius: theme.shape.radius.pill,
+      position: 'relative',
 
-    '&, &:hover, &:focus': {
-      background: theme.colors.text.maxContrast,
-      color: theme.colors.background.secondary,
-    },
-
-    '&:hover, &[data-paused]': {
-      height: theme.spacing(2),
-    },
-
-    '& > svg': {
-      margin: '0 auto',
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: theme.spacing(2),
+        height: theme.spacing(2),
+      },
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
+        transition: theme.transitions.create(['background-color', 'width', 'height'], {
           duration: theme.transitions.duration.short,
         }),
       },
-    },
-
-    '&:not(:hover):not([data-paused])': {
-      '& > svg': {
-        opacity: 0,
+    }),
+    active: css({
+      '&, &::after': {
+        width: theme.spacing(3),
       },
-    },
-  }),
-  outer: css({
-    overflow: 'hidden',
-    flex: 1,
-    margin: theme.spacing(2, 0, 0),
-  }),
-  inner: css({
-    display: 'flex',
-    // Fill the card cell so its CTA stays bottom-aligned with the existing card.
-    height: '100%',
 
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: theme.transitions.create(['transform']),
-    },
-  }),
-  item: css({
-    display: 'flex',
-    minWidth: '100%',
-  }),
-});
+      '&, &:hover, &:focus': {
+        background: theme.colors.text.maxContrast,
+        color: theme.colors.background.secondary,
+      },
+
+      '&:hover, &[data-paused]': {
+        height: theme.spacing(2),
+      },
+
+      '& > svg': {
+        margin: '0 auto',
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create(['opacity'], {
+            duration: theme.transitions.duration.short,
+          }),
+        },
+      },
+
+      '&:not(:hover):not([data-paused])': {
+        '& > svg': {
+          opacity: 0,
+        },
+      },
+    }),
+    outer: css({
+      overflow: 'hidden',
+      flex: 1,
+      margin: theme.spacing(2, 0, 0),
+    }),
+    inner: css({
+      display: 'flex',
+      // Fill the card cell so its CTA stays bottom-aligned with the existing card.
+      height: '100%',
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['transform']),
+      },
+    }),
+    item: css({
+      display: 'flex',
+      minWidth: '100%',
+    }),
+  };
+};

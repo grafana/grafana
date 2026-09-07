@@ -76,7 +76,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      <Card.Actions>
+      <Card.Actions className={styles.actions}>
         {ctaLoading ? (
           <Skeleton width={120} height={24} />
         ) : cta ? (
@@ -96,7 +96,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               })
             }
           >
-            {cta.label}
+            <Text truncate>{cta.label}</Text>
           </LinkButton>
         ) : null}
       </Card.Actions>
@@ -208,6 +208,9 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     minHeight: theme.spacing(22),
     background: theme.colors.background.canvas,
     border: `1px solid ${theme.colors.border.weak}`,
+    // Card's own template is 'auto 1fr auto'; the 1fr track grows to unbreakable content (nowrap
+    // CTA label) and gets clipped. Cap the content column at the card width.
+    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     ...(needsAttention && {
       borderColor: `color-mix(in srgb, ${theme.colors.warning.main} 32%, ${theme.colors.border.weak})`,
       overflow: 'hidden',
@@ -222,6 +225,9 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
         background: theme.colors.warning.main,
       },
     }),
+  }),
+  actions: css({
+    minWidth: 0,
   }),
   icon: css({
     display: 'flex',
@@ -287,6 +293,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
   textAction: css({
     paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(0.5),
+    maxWidth: '100%',
   }),
   attentionAction: css({
     color: theme.colors.warning.text,
