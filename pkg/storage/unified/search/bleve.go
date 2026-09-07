@@ -2206,6 +2206,13 @@ func (b *bleveIndex) Search(
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
+	resultFormat, err := selectedResultFormat(req.ResultFormat)
+	if err != nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError(err.Error()),
+		}, nil
+	}
+
 	if req.Options == nil || req.Options.Key == nil {
 		return &resourcepb.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
@@ -2215,6 +2222,7 @@ func (b *bleveIndex) Search(
 	response := &resourcepb.ResourceSearchResponse{
 		Error:           b.verifyKey(req.Options.Key),
 		ResourceVersion: b.resourceVersion.Load(),
+		ResultFormat:    resultFormat,
 	}
 	if response.Error != nil {
 		return response, nil
@@ -2308,13 +2316,22 @@ func (b *bleveIndex) Search(
 	// This keeps "fields loaded from bleve" (searchrequest.Fields) separate
 	// from "fields returned to the caller" (selectFields).
 	selectFields := slices.Clone(searchrequest.Fields)
+	var fieldValueSchema *fieldValueResultSchema
+	if resultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		fieldValueSchema, err = b.resolveFieldValueSchema(selectFields)
+		if err != nil {
+			return &resourcepb.ResourceSearchResponse{
+				Error: resource.NewBadRequestError(err.Error()),
+			}, nil
+		}
+	}
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -2333,8 +2350,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, selectFields, res.Hits, searchrequest.Sort, req.Explain)
-	if err != nil {
+	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, res.Hits, searchrequest.Sort, req.Explain); err != nil {
 		return nil, err
 	}
 
