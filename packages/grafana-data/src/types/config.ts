@@ -301,6 +301,7 @@ export interface GrafanaConfig {
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;
   analyticsConsoleReporting: boolean;
+  pluginImportTelemetryPackages: string[];
   rendererAvailable: boolean;
   rendererVersion: string;
   rendererDefaultImageWidth: number;

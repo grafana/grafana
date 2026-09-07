@@ -223,6 +223,7 @@ func NewStorageBackend(
 			Dialect:                 dialect,
 			DB:                      dbConn,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			Reg:                     reg,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
@@ -519,6 +520,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Dialect:                 b.dialect,
 		DB:                      b.db,
 		BatchTransactionTimeout: b.batchTxnTimeout,
+		Reg:                     b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
@@ -1612,6 +1614,18 @@ func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
 	}
 
 	return b.db
+}
+
+func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.NamespacedResource) (time.Time, error) {
+	for importTime, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return time.Time{}, err
+		}
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
+		}
+	}
+	return time.Time{}, nil
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {

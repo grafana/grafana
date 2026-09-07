@@ -443,7 +443,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			t,
 			func() bool {
 				cms, _ := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
-				return cms.Status == cloudmigration.SnapshotStatusFinished
+				return cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished
 			},
 			5*time.Second,
 			100*time.Millisecond,

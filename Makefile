@@ -100,13 +100,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	$(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -126,7 +126,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -143,7 +143,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
+	$(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -515,18 +515,21 @@ $(MSI_FILE): $(TARGZ_FILE)
 	ENTERPRISE="$(if $(filter grafana-enterprise,$(TARGZ_PACKAGE_NAME)),true,false)" \
 	bash scripts/build-msi.sh
 
+# The toggle name has a dot, so it needs `env`, not a bare VAR=value prefix.
+RSPACK_ON := $(filter 1 true,$(RSPACK))
+
 .PHONY: run
-run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
-	$(air) -c .air.toml
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration. Set RSPACK=1 to serve the rspack build.
+	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(air) -c .air.toml
 
 .PHONY: run-go
-run-go: ## Build and run web server immediately.
-	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+run-go: ## Build and run web server immediately. Set RSPACK=1 to serve the rspack build.
+	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
 		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
-run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
-	yarn start
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild. Set RSPACK=1 to build with rspack.
+	yarn start$(if $(RSPACK_ON),:rspack)
 
 .PHONY: frontend-service-check
 frontend-service-check:

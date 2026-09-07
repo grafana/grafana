@@ -8,6 +8,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -19,10 +20,32 @@ import (
 // headroom for the orgID placeholder and stays well under MySQL/Postgres limits.
 const folderBatchSize = 500
 
+// Config section keys for the resources that own the legacy tables counted below.
+const (
+	alertRuleResource     = "alertrules.rules.alerting.grafana.app"
+	recordingRuleResource = "recordingrules.rules.alerting.grafana.app"
+	libraryPanelResource  = "librarypanels.dashboard.grafana.app"
+)
+
+// LegacyCountedResources is guarded by a test: once one of these gets a migration
+// registered, legacyTableIsStale has to read the migration status instead of config.
+var LegacyCountedResources = []string{alertRuleResource, recordingRuleResource, libraryPanelResource}
+
 // Read stats from legacy SQL
 type LegacyStatsGetter struct {
 	SQL legacysql.LegacyDatabaseProvider
 	Cfg *setting.Cfg
+}
+
+// From mode 4 on nothing writes the legacy table, so its rows are leftovers and
+// counting them would warn about resources that no longer exist. Config is enough
+// because these two resources have no migration registered; if that changes, read
+// the migration status like dualwrite.Service.ReadFromUnified does.
+func (s *LegacyStatsGetter) legacyTableIsStale(resource string) bool {
+	if s.Cfg == nil {
+		return false
+	}
+	return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -102,20 +125,26 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// NULL has to count as "not a recording rule". Comparing NULL with = or != yields
 		// NULL rather than true, which would drop those rows from both counts and let a
 		// folder that still holds alert rules look empty.
-		err = fn("alert_rule", "namespace_uid", group, "alertrules", false, "(record IS NULL OR record = '')")
-		if err != nil {
-			return err
+		if !s.legacyTableIsStale(alertRuleResource) {
+			err = fn("alert_rule", "namespace_uid", group, "alertrules", false, "(record IS NULL OR record = '')")
+			if err != nil {
+				return err
+			}
 		}
 
-		err = fn("alert_rule", "namespace_uid", group, "recordingrules", false, "(record IS NOT NULL AND record != '')")
-		if err != nil {
-			return err
+		if !s.legacyTableIsStale(recordingRuleResource) {
+			err = fn("alert_rule", "namespace_uid", group, "recordingrules", false, "(record IS NOT NULL AND record != '')")
+			if err != nil {
+				return err
+			}
 		}
 
 		// Legacy library_elements table
-		err = fn("library_element", "folder_uid", group, "library_elements", false, "")
-		if err != nil {
-			return err
+		if !s.legacyTableIsStale(libraryPanelResource) {
+			err = fn("library_element", "folder_uid", group, "library_elements", false, "")
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})

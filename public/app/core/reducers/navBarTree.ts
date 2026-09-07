@@ -1,8 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type IconName, type NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
+import { getInitialNavTree } from '../navtree/buildStaticNavTree';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
@@ -38,7 +38,7 @@ const compareStarredChildren = (a: NavModelItem, b: NavModelItem): number =>
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
-  initialState: () => translateNav(config.bootData?.navTree ?? []),
+  initialState: () => translateNav(getInitialNavTree()),
   reducers: {
     setStarred: (state, action: PayloadAction<StarredNavItem & { isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');

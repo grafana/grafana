@@ -1,6 +1,8 @@
 import type { DateTime } from './luxon';
 
 const LOWER_MERIDIEM_FORMAT = "'__mls__'a'__mle__'";
+const ONE_TO_TWENTY_FOUR_HOUR_FORMAT = "'__khs__'H'__khe__'";
+const PADDED_ONE_TO_TWENTY_FOUR_HOUR_FORMAT = "'__khs__'HH'__khe__'";
 
 const TOKEN_MAP: Record<string, string> = {
   // moment's L* tokens are locale-aware (word order changes per locale), so map them to luxon's
@@ -28,9 +30,23 @@ const TOKEN_MAP: Record<string, string> = {
   D: 'd',
   dddd: 'cccc',
   ddd: 'ccc',
-  // HH/H, hh/h, mm/m, ss/s are identical in moment and luxon and pass through unmapped
+  // HH/H, hh/h, mm/m, ss/s are identical in moment and luxon and pass through unmapped.
+  // Moment's k/kk clock runs from 1-24, while Luxon's H/HH clock runs from 0-23.
+  kk: PADDED_ONE_TO_TWENTY_FOUR_HOUR_FORMAT,
+  k: ONE_TO_TWENTY_FOUR_HOUR_FORMAT,
   A: 'a',
   a: LOWER_MERIDIEM_FORMAT,
+
+  GG: 'kk',
+  SSSSSSSSS: "u'000000'",
+  SSSSSSSS: "u'00000'",
+  SSSSSSS: "u'0000'",
+  SSSSSS: "u'000'",
+  SSSSS: "u'00'",
+  SSSS: "u'0'",
+  SSS: 'u',
+  SS: 'uu',
+  S: 'uuu',
 
   ZZ: 'ZZZ',
   Z: 'ZZ',
@@ -40,8 +56,21 @@ const TOKEN_MAP: Record<string, string> = {
   T: "'T'",
 };
 
+const PARSING_TOKEN_MAP: Record<string, string> = {
+  ...TOKEN_MAP,
+  kk: 'HH',
+  k: 'H',
+  SSSSSSSSS: 'u',
+  SSSSSSSS: 'u',
+  SSSSSSS: 'u',
+  SSSSSS: 'u',
+  SSSSS: 'u',
+  SSSS: 'u',
+  SSS: 'u',
+};
+
 const TOKEN_PATTERN = new RegExp(
-  `\\[([^\\]]+)\\]|Do|${Object.keys(TOKEN_MAP)
+  `\\[([^\\]]+)\\]|'|Do|${Object.keys(TOKEN_MAP)
     .sort((a, b) => b.length - a.length)
     .join('|')}`,
   'g'
@@ -50,12 +79,15 @@ const ORDINAL_MARKER = '__ord__';
 const ORDINAL_MARKER_PATTERN = new RegExp(`(\\d+)${ORDINAL_MARKER}`, 'g');
 const MERIDIEM_START_MARKER = '__mls__';
 const LOWER_MERIDIEM_MARKER_PATTERN = /__mls__(.*?)__mle__/g;
+const ONE_TO_TWENTY_FOUR_HOUR_MARKER = '__khs__';
+const ONE_TO_TWENTY_FOUR_HOUR_MARKER_PATTERN = /__khs__(\d{1,2})__khe__/g;
 const ORDINAL_SUFFIXES = ['th', 'st', 'nd', 'rd'] as const;
 
 interface ConvertedFormat {
   luxonFormat: string;
   hasOrdinal: boolean;
   hasMeridiem: boolean;
+  hasOneToTwentyFourHour: boolean;
 }
 
 // format conversion runs on every format() call in hot paths (table cells, axis ticks) and format
@@ -63,8 +95,8 @@ interface ConvertedFormat {
 // format strings, so the cache stays small for the lifetime of the page.
 const convertedFormatCache = new Map<string, ConvertedFormat>();
 
-function convertFormat(format: string, omitZoneName = false): ConvertedFormat {
-  const cacheKey = `${omitZoneName ? 'local' : 'zoned'}|${format}`;
+function convertFormat(format: string, omitZoneName = false, forParsing = false): ConvertedFormat {
+  const cacheKey = `${forParsing ? 'parse' : 'format'}|${omitZoneName ? 'local' : 'zoned'}|${format}`;
   let converted = convertedFormatCache.get(cacheKey);
 
   if (!converted) {
@@ -72,13 +104,14 @@ function convertFormat(format: string, omitZoneName = false): ConvertedFormat {
     // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
     const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
     const luxonFormat = withEscapedLiterals.replace(TOKEN_PATTERN, (match, escapedText?: string) =>
-      replaceMomentToken(match, escapedText, omitZoneName)
+      replaceMomentToken(match, escapedText, omitZoneName, forParsing)
     );
 
     converted = {
       luxonFormat,
       hasOrdinal: luxonFormat.includes(ORDINAL_MARKER),
       hasMeridiem: luxonFormat.includes(MERIDIEM_START_MARKER),
+      hasOneToTwentyFourHour: luxonFormat.includes(ONE_TO_TWENTY_FOUR_HOUR_MARKER),
     };
     convertedFormatCache.set(cacheKey, converted);
   }
@@ -86,9 +119,13 @@ function convertFormat(format: string, omitZoneName = false): ConvertedFormat {
   return converted;
 }
 
-function replaceMomentToken(match: string, escapedText?: string, omitZoneName = false): string {
+function replaceMomentToken(match: string, escapedText?: string, omitZoneName = false, forParsing = false): string {
   if (escapedText != null) {
-    return `'${escapedText}'`;
+    return toLuxonLiteral(escapedText);
+  }
+
+  if (match === "'") {
+    return toLuxonLiteral(match);
   }
 
   if (omitZoneName && (match === 'z' || match === 'zz')) {
@@ -99,7 +136,15 @@ function replaceMomentToken(match: string, escapedText?: string, omitZoneName = 
     return `d'${ORDINAL_MARKER}'`;
   }
 
-  return TOKEN_MAP[match] ?? match;
+  return (forParsing ? PARSING_TOKEN_MAP : TOKEN_MAP)[match] ?? match;
+}
+
+function toLuxonLiteral(literal: string): string {
+  // An empty Luxon literal (`''`) emits one quote, so quoted sections must be split around quotes.
+  return literal
+    .split("'")
+    .map((part) => (part ? `'${part}'` : ''))
+    .join("''");
 }
 
 export function convertMomentToLuxonWithOrdinal(format: string): string {
@@ -107,7 +152,7 @@ export function convertMomentToLuxonWithOrdinal(format: string): string {
 }
 
 export function convertMomentToLuxonForParsing(format: string): string {
-  return convertFormat(format).luxonFormat.split(LOWER_MERIDIEM_FORMAT).join('a');
+  return convertFormat(format, false, true).luxonFormat.split(LOWER_MERIDIEM_FORMAT).join('a');
 }
 
 function getOrdinal(day: number): string {
@@ -116,7 +161,10 @@ function getOrdinal(day: number): string {
 }
 
 export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string): string {
-  const { luxonFormat, hasOrdinal, hasMeridiem } = convertFormat(momentFormat, luxonDateTime.zone.type === 'system');
+  const { luxonFormat, hasOrdinal, hasMeridiem, hasOneToTwentyFourHour } = convertFormat(
+    momentFormat,
+    luxonDateTime.zone.type === 'system'
+  );
   // ZZZZ doesnt work
   // https://github.com/moment/luxon/discussions/1041
   // https://github.com/moment/luxon/issues/499#issuecomment-865017957
@@ -135,6 +183,12 @@ export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string)
     // Moment's `a` is lowercase meridiem while Luxon's `a` is uppercase.
     formatted = formatted.replace(LOWER_MERIDIEM_MARKER_PATTERN, (_: string, meridiem: string) =>
       meridiem.toLowerCase()
+    );
+  }
+
+  if (hasOneToTwentyFourHour) {
+    formatted = formatted.replace(ONE_TO_TWENTY_FOUR_HOUR_MARKER_PATTERN, (_: string, rawHour: string) =>
+      Number(rawHour) === 0 ? '24' : rawHour
     );
   }
 

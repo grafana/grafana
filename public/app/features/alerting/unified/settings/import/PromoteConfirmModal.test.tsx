@@ -122,7 +122,7 @@ describe('PromoteConfirmModal', () => {
     expect(dialog).toHaveTextContent('4 templates added');
     expect(dialog).toHaveTextContent('2 time intervals added');
     expect(dialog).toHaveTextContent('3 inhibition rules added');
-    expect(dialog).toHaveTextContent('1 notification route added');
+    expect(dialog).toHaveTextContent('1 route added');
 
     // Rename-to-avoid-conflicts list and the "rules already active" note.
     expect(dialog).toHaveTextContent('Renamed to avoid conflicts');

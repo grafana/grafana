@@ -38,6 +38,7 @@ const DEFAULT_STATE: SolutionState = {
   traces: 'inactive',
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
+  synthetics: 'inactive',
 };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {

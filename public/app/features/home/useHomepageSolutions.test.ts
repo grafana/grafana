@@ -6,6 +6,7 @@ import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
+import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution, type SolutionId } from './solutions/types';
 import { useHomepageSolutions } from './useHomepageSolutions';
@@ -14,6 +15,7 @@ jest.mock('./solutions/kubernetesSolution', () => ({ kubernetesSolution: jest.fn
 jest.mock('./solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
 jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }));
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
+jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
 
 const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
@@ -21,6 +23,7 @@ const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
   traces: jest.mocked(tracesSolution),
   metrics: jest.mocked(metricsSolution),
   logs: jest.mocked(logsSolution),
+  synthetics: jest.mocked(syntheticsSolution),
 };
 const mockProbeSpanMetrics = jest.mocked(probeSpanMetrics);
 
@@ -58,6 +61,7 @@ beforeEach(() => {
     traces: solution('traces', 'unknown'),
     metrics: solution('metrics', 'active'),
     logs: solution('logs', 'inactive'),
+    synthetics: solution('synthetics'),
   };
   for (const id of Object.keys(mockFactories) as SolutionId[]) {
     mockFactories[id].mockReset().mockImplementation(() => fixtures[id]);
@@ -91,7 +95,13 @@ describe('useHomepageSolutions', () => {
   it('returns solutions in display order', () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
-    expect(result.current.solutions.map(({ id }) => id)).toEqual(['kubernetes', 'metrics', 'logs', 'traces']);
+    expect(result.current.solutions.map(({ id }) => id)).toEqual([
+      'kubernetes',
+      'metrics',
+      'logs',
+      'traces',
+      'synthetics',
+    ]);
   });
 
   it('keeps the registry and its solution instances stable across rerenders', () => {
@@ -115,11 +125,13 @@ describe('useHomepageSolutions', () => {
       traces: 'unknown',
       kubernetes: 'active',
       spanMetrics: 'active',
+      synthetics: 'inactive',
     });
     expect(fixtures.metrics.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.kubernetes.signal).toHaveBeenCalledTimes(1);
+    expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
   });
 

@@ -238,6 +238,7 @@ export class GrafanaBootConfig {
   postHogToken?: string;
   postHogHost?: string;
   analyticsConsoleReporting = false;
+  pluginImportTelemetryPackages: string[] = [];
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
   dashboardDefaultPreload = false;

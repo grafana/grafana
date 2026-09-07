@@ -82,7 +82,7 @@ For information on how to set up each method, refer to:
 Fill in the following fields:
 
 1. Paste the **Repository URL** for your GitHub repository into the text box.
-1. Paste your **Personal Acccess Token**.
+1. Paste your **Personal Access Token**.
 
 Select **Configure repository** to set up your provisioning folder.
 
@@ -112,7 +112,7 @@ Similarly, you can connect to GitHub Enterprise Server or GitHub Enterprise Clou
 Fill in the following fields:
 
 1. Paste the **Repository URL** for your GitHub repository into the text box.
-1. Paste your **Personal Acccess Token**.
+1. Paste your **Personal Access Token**.
 
 Select **Configure repository** to set up your provisioning folder.
 
