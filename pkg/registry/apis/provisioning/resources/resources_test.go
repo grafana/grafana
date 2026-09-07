@@ -995,12 +995,16 @@ func TestWriteResourceFromParsed_SkippedDuplicateDoesNotPolluteLookup(t *testing
 	mgr := NewResourcesManager(repo, nil, parser, clients)
 
 	// dir-b is processed first and skipped as a cross-file duplicate.
+	//nolint:dogsled
 	_, _, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
 	require.ErrorIs(t, err, ErrDuplicateName)
 
 	// dir-a (the real owner) is processed later in the same run: it must not be
 	// flagged as an in-run duplicate just because dir-b was attempted first.
+	//nolint:dogsled
 	_, _, _, err = mgr.WriteResourceFromFile(context.Background(), pathQ, ref)
+
 	require.NoError(t, err, "the real owner must not be flagged as an in-run duplicate after a skipped cross-file duplicate")
 	clientQ.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
