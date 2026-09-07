@@ -32,7 +32,7 @@ export const getStyles = (theme: GrafanaTheme2, label?: string) => {
     badge: css(
       {
         ...theme.typography.bodySmall,
-        backgroundColor: theme.v1.palette.gray1,
+        backgroundColor: background,
         borderRadius: theme.shape.radius.sm,
         color: theme.v1.palette.white,
         display: 'inline-block',
@@ -46,7 +46,6 @@ export const getStyles = (theme: GrafanaTheme2, label?: string) => {
         },
       },
       visualRefreshEnabled && {
-        backgroundColor: background,
         color: text,
         gap: '3px',
         borderRadius: theme.shape.radius.pill,
