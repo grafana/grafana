@@ -1,7 +1,6 @@
-import { logError } from '@grafana/runtime';
-import { iamAPIv0alpha1, type UserPermissions } from 'app/api/clients/iam/v0alpha1';
-import { extractErrorMessage } from 'app/api/utils';
-import { dispatch } from 'app/store/store';
+import { getBackendSrv, logError } from '@grafana/runtime';
+import { API_GROUP, API_VERSION, type UserPermissions } from 'app/api/clients/iam/v0alpha1';
+import { extractErrorMessage, getAPIBaseURL } from 'app/api/utils';
 import { type UserPermission } from 'app/types/accessControl';
 
 /**
@@ -11,14 +10,18 @@ import { type UserPermission } from 'app/types/accessControl';
  */
 export async function loadUserPermissions(): Promise<UserPermission | null> {
   try {
-    const { permissions }: UserPermissions = await dispatch(
-      // forceRefetch because callers use this to observe permissions they were
-      // just granted; subscribe: false alone would serve a cached map back
-      iamAPIv0alpha1.endpoints.getCurrentUserPermissions.initiate(undefined, {
-        subscribe: false,
-        forceRefetch: true,
-      })
-    ).unwrap();
+    const { permissions } = await getBackendSrv().get<UserPermissions>(
+      `${getAPIBaseURL(API_GROUP, API_VERSION)}/users/~/permissions`,
+      // Recompute rather than serving the cached AuthZ snapshot: callers use this
+      // to observe permissions they were just granted. Older servers without the
+      // parameter ignore it and answer from the cache as before
+      { skipCache: true },
+      undefined,
+      // Callers fall back to the permissions they already have, so a failure is
+      // not worth a toast on top of that — boot in particular has no context to
+      // show one against
+      { showErrorAlert: false }
+    );
 
     return permissions.reduce<UserPermission>((acc, { action }) => {
       acc[action] = true;
