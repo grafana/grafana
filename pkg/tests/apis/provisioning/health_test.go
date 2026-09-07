@@ -363,6 +363,85 @@ func TestIntegrationProvisioning_UnhealthyRepositorySkipsJobs(t *testing.T) {
 	common.RequireJobWarningContains(t, completedJob, "repository authentication failed - job skipped")
 }
 
+// TestIntegrationProvisioning_UserCausedErrorReportedOnStatus is the end-to-end
+// guard for the contract that a user-caused reconciliation error (revoked or
+// insufficient credentials) is surfaced on the repository's status.health --
+// with the underlying error carried in health.message and an
+// AuthenticationFailed Ready condition -- rather than being swallowed or leaving
+// the repository in a generic failure state. The controller-level unit tests
+// cover that such errors are not returned (and therefore not re-logged at ERROR
+// every reconcile); this test exercises the real GitHub client + reconcile +
+// status-patch wiring that produces the state a user actually sees.
+func TestIntegrationProvisioning_UserCausedErrorReportedOnStatus(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "test-user-caused-error-status"
+	repoConfig := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      repo,
+			"namespace": "default",
+			"finalizers": []string{
+				"remove-orphan-resources",
+				"cleanup",
+			},
+		},
+		"spec": map[string]any{
+			"title": "User-caused error is reported on status",
+			"type":  "git",
+			"git": map[string]any{
+				"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+				"branch": "integration-test",
+			},
+			"workflows": []string{"write"},
+			"sync": map[string]any{
+				"enabled":         false,
+				"target":          "folder",
+				"intervalSeconds": 10,
+			},
+		},
+		"secure": map[string]any{
+			"token": map[string]any{
+				// A garbage token makes the real GitHub API reject the
+				// authorization probe with a 401, which the client maps to a
+				// user-caused ErrUnauthorized.
+				"create": base64.StdEncoding.EncodeToString([]byte("ghp_invalid_authentication_will_fail")),
+			},
+		},
+	}}
+
+	_, err := helper.Repositories.Resource.Create(t.Context(), repoConfig, metav1.CreateOptions{})
+	require.NoError(t, err, "repository creation should succeed")
+	t.Cleanup(func() {
+		_ = helper.Repositories.Resource.Delete(context.Background(), repo, metav1.DeleteOptions{})
+	})
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
+			return
+		}
+		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
+
+		assert.Greater(c, r.Status.Health.Checked, int64(0), "health check has not run yet")
+		assert.False(c, r.Status.Health.Healthy, "repository should be unhealthy")
+		assert.Equal(c, provisioning.HealthFailureHealth, r.Status.Health.Error)
+		// The auth error must be surfaced to the user on the status, not swallowed.
+		assert.NotEmpty(c, r.Status.Health.Message, "the user-caused error should be reported on status.health.message")
+
+		ready := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(c, ready, "Ready condition should exist") {
+			assert.Equal(c, metav1.ConditionFalse, ready.Status)
+			assert.Equal(c, provisioning.ReasonAuthenticationFailed, ready.Reason,
+				"an auth failure must classify as AuthenticationFailed, not a generic reason")
+			assert.Equal(c, r.Generation, ready.ObservedGeneration,
+				"controller should have observed the current generation")
+		}
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"repository should report the user-caused auth error on status with an AuthenticationFailed Ready condition")
+}
+
 // parseTestResults extracts TestResults from the API response
 func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResults {
 	t.Helper()
