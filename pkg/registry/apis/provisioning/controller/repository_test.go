@@ -1568,22 +1568,22 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 	patchErr := errors.New("apiserver rejected the status patch")
 
 	tests := []struct {
-		name        string
-		buildErr    error
-		wantErrIs   error
-		description string
+		name                   string
+		buildErr               error
+		wantServiceUnavailable bool // true => the retryable original error is preferred; false => the patch error is returned
+		description            string
 	}{
 		{
-			name:        "non-retryable delete error returns the patch error",
-			buildErr:    fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied),
-			wantErrIs:   patchErr,
-			description: "a failed status patch must be returned so the delete reason is re-attempted",
+			name:                   "non-retryable delete error returns the patch error",
+			buildErr:               fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied),
+			wantServiceUnavailable: false,
+			description:            "a failed status patch must be returned so the delete reason is re-attempted",
 		},
 		{
-			name:        "retryable delete error is preferred over the patch error",
-			buildErr:    fmt.Errorf("create repository: %w", apierrors.NewServiceUnavailable("git server down")),
-			wantErrIs:   apierrors.NewServiceUnavailable("git server down"),
-			description: "a retryable delete error must not be dropped when the status patch also fails",
+			name:                   "retryable delete error is preferred over the patch error",
+			buildErr:               fmt.Errorf("create repository: %w", apierrors.NewServiceUnavailable("git server down")),
+			wantServiceUnavailable: true,
+			description:            "a retryable delete error must not be dropped when the status patch also fails",
 		},
 	}
 
@@ -1622,11 +1622,11 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 			}
 
 			_, err := rc.process("default/test-repo")
-			if tt.wantErrIs == patchErr {
-				require.ErrorIs(t, err, patchErr, tt.description)
-			} else {
-				require.Error(t, err, tt.description)
+			require.Error(t, err, tt.description)
+			if tt.wantServiceUnavailable {
 				assert.True(t, apierrors.IsServiceUnavailable(err), tt.description)
+			} else {
+				require.ErrorIs(t, err, patchErr, tt.description)
 			}
 		})
 	}
