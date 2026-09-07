@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -67,7 +68,7 @@ type RepositoryController struct {
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
-	processFn         func(key string) error
+	processFn         func(key string) (repoType string, err error)
 	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
@@ -336,13 +337,16 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		rc.processed.RecordProcessed(trigger)
 	}
 
-	err := rc.processFn(key)
+	repoType, err := rc.processFn(key)
 	if err == nil {
 		rc.queue.Forget(key)
 		return true
 	}
 
-	logger = logger.With("error", err, "attempts", attempts)
+	// repoType is empty when process failed before resolving the object (bad key
+	// or not-found); the field is still emitted so type-scoped log filters match
+	// every failure/retry line for a resolvable repository.
+	logger = logger.With("repositoryType", repoType, "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
 	if attempts >= maxAttempts {
@@ -714,14 +718,18 @@ func repoSpanAttrs(obj *provisioning.Repository) trace.SpanStartOption {
 	)
 }
 
+// repoType is a named return so processNextWorkItem can attribute its
+// failure/retry log lines to a repository type. It stays empty until the object
+// is resolved below (an unparsable key or a not-found repository yields "").
+//
 //nolint:gocyclo
-func (rc *RepositoryController) process(key string) (err error) {
+func (rc *RepositoryController) process(key string) (repoType string, err error) {
 	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return err
+		return repoType, err
 	}
 
 	// process runs from a background context, so this opens a fresh trace per
@@ -744,15 +752,16 @@ func (rc *RepositoryController) process(key string) (err error) {
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found")
+		return repoType, errors.New("repository not found")
 	case err != nil:
-		return err
+		return repoType, err
 	}
+	repoType = string(obj.Spec.Type)
 
 	logger = logger.With(
 		"namespace", namespace,
 		"repository", name,
-		"repositoryType", string(obj.Spec.Type),
+		"repositoryType", repoType,
 		"connection", obj.ConnectionName(),
 	)
 	ctx = logging.Context(ctx, logger)
@@ -764,32 +773,39 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		return err
+		return repoType, err
 	}
 	ctx = request.WithNamespace(ctx, namespace)
 	logger = logger.WithContext(ctx)
 
 	if obj.DeletionTimestamp != nil {
-		return rc.handleDelete(ctx, obj)
+		return repoType, rc.handleDelete(ctx, obj)
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
 	if appcontroller.IsPendingDelete(obj.Labels) {
 		logger.Info("skipping reconciliation: namespace is pending deletion")
-		return nil
+		return repoType, nil
 	}
+
+	// Log a repository usage-status snapshot on every reconcile (including the
+	// no-op cycles below), so a point-in-time view of the fleet can be
+	// reconstructed from logs. This log line is load-bearing -- see the
+	// usage.RepositoryUsageStatus doc for why it exists, why metrics were not used
+	// instead, and how it plots in Loki.
+	usage.LogRepositoryUsageStatus(logger, obj)
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
 	newQuota, err := rc.resolveQuotaStatus(ctx, obj)
 	if err != nil {
-		return err
+		return repoType, err
 	}
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
 	quotaSpan.End()
 	if err != nil {
-		return fmt.Errorf("check repository quota: %w", err)
+		return repoType, fmt.Errorf("check repository quota: %w", err)
 	}
 	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
@@ -885,7 +901,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	default:
 		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
-		return nil
+		return repoType, nil
 	}
 	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
@@ -903,13 +919,13 @@ func (rc *RepositoryController) process(key string) (err error) {
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
 			logger.Error("retrieving connection", "error", err)
-			return err
+			return repoType, err
 		}
 
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
 			logger.Error("generating token for repository", "error", err)
-			return err
+			return repoType, err
 		}
 
 		if len(tokenOps) > 0 {
@@ -935,7 +951,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
 				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
-				return nil
+				return repoType, nil
 			}
 
 			logger.Warn("repository token secret could not be decrypted, regenerating from connection",
@@ -943,12 +959,12 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 			c, cerr := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 			if cerr != nil {
-				return fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
+				return repoType, fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
 			}
 
 			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
 			if gerr != nil {
-				return fmt.Errorf("regenerating repository token: %w", gerr)
+				return repoType, fmt.Errorf("regenerating repository token: %w", gerr)
 			}
 
 			if len(tokenOps) > 0 {
@@ -962,7 +978,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
-			return fmt.Errorf("unable to create repository from configuration: %w", err)
+			return repoType, fmt.Errorf("unable to create repository from configuration: %w", err)
 		}
 	}
 
@@ -975,7 +991,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
 			if err != nil {
-				return fmt.Errorf("failed to get default branch: %w", err)
+				return repoType, fmt.Errorf("failed to get default branch: %w", err)
 			}
 
 			branchHandler.SetBranch(defaultBranch)
@@ -1017,15 +1033,15 @@ func (rc *RepositoryController) process(key string) (err error) {
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 	healthSpan.End()
 	if err != nil {
-		return fmt.Errorf("update health status: %w", err)
+		return repoType, fmt.Errorf("update health status: %w", err)
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
-	// Captured before the over-quota override status below. We only block hooks being run if the repo is unreachable.
-	// Also not every failed Test() means unreachable: e.g. branch protection blocking direct pushes is
-	// reported. Hooks should still be able to run so a reachability-specific read of the test result is used
-	// instead of the raw Success flag.
-	reachable := isReachableTestResult(testResults)
+	// Captured before the over-quota override status below. We only block hooks being run if the repo is
+	// not accessible. Also not every failed Test() means the repo is inaccessible: e.g. branch protection
+	// blocking direct pushes is reported. Hooks should still be able to run, so an accessibility-specific
+	// read of the test result is used instead of the raw Success flag.
+	accessible := isRepositoryAccessible(testResults)
 
 	// If over quota, override health to unhealthy.
 	if isOverQuota {
@@ -1046,7 +1062,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
 
-	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, reachable, shouldRotateWebhookSecret)
+	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, accessible, shouldRotateWebhookSecret)
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
 	}
@@ -1123,10 +1139,10 @@ func (rc *RepositoryController) process(key string) (err error) {
 		} else {
 			err = errors.Join(err, patchErr)
 		}
-		return err
+		return repoType, err
 	}
 	if err != nil {
-		return err
+		return repoType, err
 	}
 
 	// QUESTION: should we trigger the sync job after we have applied all patch operations or before?
@@ -1134,19 +1150,19 @@ func (rc *RepositoryController) process(key string) (err error) {
 	// Trigger sync job after we have applied all patch operations
 	if syncOptions != nil {
 		if err := rc.addSyncJob(ctx, obj, syncOptions); err != nil {
-			return err
+			return repoType, err
 		}
 	}
 
-	return nil
+	return repoType, nil
 }
 
 // processHooks handles hook execution with intelligent retry logic. `suppressed`
 // reports whether there was hook work to do (generation changed or webhook
-// missing) that got skipped this pass due to cooldown/repo unreachability, as
+// missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoHealthy bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1157,9 +1173,9 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	hasWebhookToManage := webhookCapable && (len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty())
 
 	// Suppress the hook retry while the hook-failure cooldown is active, or while
-	// the repository just failed its health check (it's known unreachable, so any
+	// the repository just failed its health check (it's known inaccessible, so any
 	// create/update/delete call against it is doomed).
-	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoHealthy) {
+	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoAccessible) {
 		shouldRunHooks = false
 		suppressed = true
 	}
@@ -1178,10 +1194,10 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
-	// would be an equally doomed call against an unreachable repository, and
-	// skipped during the hook-failure cooldown too: repoHealthy alone doesn't
-	// catch this window, since a skipped health check reads as reachable.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoHealthy && !rc.healthChecker.inHookFailureCooldown(obj) {
+	// would be an equally doomed call against an inaccessible repository, and
+	// skipped during the hook-failure cooldown too: repoAccessible alone doesn't
+	// catch this window, since a skipped health check reads as accessible.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoAccessible && !rc.healthChecker.inHookFailureCooldown(obj) {
 		rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
 		rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
 		rotateSpan.End()
@@ -1224,13 +1240,23 @@ func classifyHookFailureReason(err error) string {
 	}
 }
 
-func isReachableTestResult(testResults *provisioning.TestResults) bool {
+// isRepositoryAccessible reports whether a failed health check still means the
+// repository itself is reachable and its credentials are valid -- i.e. the
+// failure is a config/permission gap on an otherwise-usable repository, not a
+// loss of access to the git server.
+//
+// It returns true for a write-permission-denied 403 (reads still work, only the
+// write was blocked) and for any status that isn't a definitive access failure.
+// It returns false for 401 (bad credentials), 404 (repository gone/hidden), 503
+// (server down), and a bare 403 -- the cases where we genuinely cannot reach or
+// authenticate to the repository.
+func isRepositoryAccessible(testResults *provisioning.TestResults) bool {
 	if testResults == nil || testResults.Success {
 		return true
 	}
 	switch testResults.Code {
 	case http.StatusForbidden:
-		// Couldn't be written to, but was still reachable
+		// Couldn't be written to, but the repository was still accessible.
 		for _, e := range testResults.Errors {
 			if e.Detail == repository.WritePermissionDeniedDetail {
 				return true

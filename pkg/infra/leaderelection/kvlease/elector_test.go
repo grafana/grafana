@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
@@ -41,11 +42,68 @@ func testElectorOpts() []Option {
 	}
 }
 
+// TestKVLeaseElector_ScopesLeaseMetrics ensures the elector's lease.Manager
+// registers under its own component label, so it coexists with another
+// lease.Manager (e.g. the storage backend's) already on the same process
+// registry instead of panicking on a duplicate collector.
+func TestKVLeaseElector_ScopesLeaseMetrics(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	store := newTestKV(t)
+
+	// A lease.Manager already on this registry, as the storage backend would be.
+	_ = lease.NewManager(store, "storage-holder", "storage", reg, lease.WithGarbageCollectionDisabled)
+
+	elector, err := New(store, testElectionConfig(), "zanzana_reconciler", log.NewNopLogger(), reg, testElectorOpts()...)
+	require.NoError(t, err)
+
+	// Run builds the lease.Manager (registering its metrics) before checking the
+	// context, so a cancelled context still exercises the registration path.
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	require.NotPanics(t, func() {
+		_ = elector.Run(ctx, func(context.Context) {})
+	})
+
+	// Both managers report the same lease_manager_* metric, distinguished by
+	// the component label.
+	require.ElementsMatch(t,
+		[]string{"storage", "zanzana_reconciler"},
+		componentLabelValues(t, reg, "lease_manager_acquire_duration_seconds"),
+	)
+}
+
+// componentLabelValues gathers reg and returns the distinct "component" label
+// values present on the metric family named name.
+func componentLabelValues(t *testing.T, reg prometheus.Gatherer, name string) []string {
+	t.Helper()
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+
+	seen := map[string]struct{}{}
+	for _, mf := range mfs {
+		if mf.GetName() != name {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			for _, l := range m.GetLabel() {
+				if l.GetName() == "component" {
+					seen[l.GetValue()] = struct{}{}
+				}
+			}
+		}
+	}
+	values := make([]string, 0, len(seen))
+	for v := range seen {
+		values = append(values, v)
+	}
+	return values
+}
+
 func TestKVLeaseElector_AcquireLeadership(t *testing.T) {
 	kvp := newTestKV(t)
 	cfg := testElectionConfig()
 
-	elector, err := New(kvp, cfg, log.NewNopLogger(), nil, testElectorOpts()...)
+	elector, err := New(kvp, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -70,7 +128,7 @@ func TestKVLeaseElector_GracefulRelease(t *testing.T) {
 	kvp := newTestKV(t)
 	cfg := testElectionConfig()
 
-	elector, err := New(kvp, cfg, log.NewNopLogger(), nil, testElectorOpts()...)
+	elector, err := New(kvp, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -105,7 +163,7 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 		Identity:      "holder-1",
 		LeaseDuration: cfg.LeaseDuration,
 		RetryPeriod:   cfg.RetryPeriod,
-	}, log.NewNopLogger(), nil, testElectorOpts()...)
+	}, "test", log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	elector2, err := New(kvp, leaderelection.Config{
@@ -113,7 +171,7 @@ func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
 		Identity:      "holder-2",
 		LeaseDuration: cfg.LeaseDuration,
 		RetryPeriod:   cfg.RetryPeriod,
-	}, log.NewNopLogger(), nil, testElectorOpts()...)
+	}, "test", log.NewNopLogger(), nil, testElectorOpts()...)
 	require.NoError(t, err)
 
 	ctx1, cancel1 := context.WithCancel(t.Context())
@@ -160,7 +218,7 @@ func TestKVLeaseElector_IdentityAutoGeneration(t *testing.T) {
 		Identity:      "",
 		LeaseDuration: time.Second,
 		RetryPeriod:   200 * time.Millisecond,
-	}, log.NewNopLogger(), nil)
+	}, "test", log.NewNopLogger(), nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, elector.identity)
 	require.Contains(t, elector.identity, ":")
@@ -171,13 +229,13 @@ func TestKVLeaseElector_MissingLeaseName(t *testing.T) {
 
 	_, err := New(kvp, leaderelection.Config{
 		LeaseName: "",
-	}, log.NewNopLogger(), nil)
+	}, "test", log.NewNopLogger(), nil)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "leader_election_lease_name")
 }
 
 func TestKVLeaseElector_NilKVRejected(t *testing.T) {
-	_, err := New(nil, testElectionConfig(), log.NewNopLogger(), nil)
+	_, err := New(nil, testElectionConfig(), "test", log.NewNopLogger(), nil)
 	require.Error(t, err)
 }
 

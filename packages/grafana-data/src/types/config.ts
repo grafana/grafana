@@ -322,7 +322,6 @@ export interface GrafanaConfig {
   pluginAdminEnabled: boolean;
   pluginAdminExternalManageEnabled: boolean;
   pluginCatalogHiddenPlugins: string[];
-  pluginCatalogManagedPlugins: string[];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[];
   pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL: string;
