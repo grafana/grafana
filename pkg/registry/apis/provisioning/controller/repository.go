@@ -67,7 +67,7 @@ type RepositoryController struct {
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
-	processFn         func(key string) error
+	processFn         func(key string) (repoType string, err error)
 	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
@@ -339,13 +339,16 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		rc.processed.RecordProcessed(trigger)
 	}
 
-	err := rc.processFn(key)
+	repoType, err := rc.processFn(key)
 	if err == nil {
 		rc.queue.Forget(key)
 		return true
 	}
 
-	logger = logger.With("error", err, "attempts", attempts)
+	// repoType is empty when process failed before resolving the object (bad key
+	// or not-found); the field is still emitted so type-scoped log filters match
+	// every failure/retry line for a resolvable repository.
+	logger = logger.With("repositoryType", repoType, "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
 	if attempts >= maxAttempts {
@@ -717,14 +720,18 @@ func repoSpanAttrs(obj *provisioning.Repository) trace.SpanStartOption {
 	)
 }
 
+// repoType is a named return so processNextWorkItem can attribute its
+// failure/retry log lines to a repository type. It stays empty until the object
+// is resolved below (an unparsable key or a not-found repository yields "").
+//
 //nolint:gocyclo
-func (rc *RepositoryController) process(key string) (err error) {
+func (rc *RepositoryController) process(key string) (repoType string, err error) {
 	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return err
+		return repoType, err
 	}
 
 	// process runs from a background context, so this opens a fresh trace per
@@ -747,15 +754,16 @@ func (rc *RepositoryController) process(key string) (err error) {
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found")
+		return repoType, errors.New("repository not found")
 	case err != nil:
-		return err
+		return repoType, err
 	}
+	repoType = string(obj.Spec.Type)
 
 	logger = logger.With(
 		"namespace", namespace,
 		"repository", name,
-		"repositoryType", string(obj.Spec.Type),
+		"repositoryType", repoType,
 		"connection", obj.ConnectionName(),
 	)
 	ctx = logging.Context(ctx, logger)
@@ -767,7 +775,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		return err
+		return repoType, err
 	}
 	ctx = request.WithNamespace(ctx, namespace)
 	logger = logger.WithContext(ctx)
@@ -775,7 +783,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	if obj.DeletionTimestamp != nil {
 		err := rc.handleDelete(ctx, obj)
 		if err == nil {
-			return nil
+			return repoType, nil
 		}
 		rc.recordReconcileError(reconcilePhaseDelete, err)
 
@@ -815,28 +823,28 @@ func (rc *RepositoryController) process(key string) (err error) {
 		// re-attempted on the next informer resync, so returning it would add
 		// nothing but ERROR-log noise while the finalizer stays stuck.
 		if apierrors.IsServiceUnavailable(err) {
-			return err
+			return repoType, err
 		}
-		return nil
+		return repoType, nil
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
 	if appcontroller.IsPendingDelete(obj.Labels) {
 		logger.Info("skipping reconciliation: namespace is pending deletion")
-		return nil
+		return repoType, nil
 	}
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
 	newQuota, err := rc.resolveQuotaStatus(ctx, obj)
 	if err != nil {
-		return err
+		return repoType, err
 	}
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
 	quotaSpan.End()
 	if err != nil {
-		return fmt.Errorf("check repository quota: %w", err)
+		return repoType, fmt.Errorf("check repository quota: %w", err)
 	}
 	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
@@ -932,7 +940,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	default:
 		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
-		return nil
+		return repoType, nil
 	}
 	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
@@ -950,13 +958,13 @@ func (rc *RepositoryController) process(key string) (err error) {
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
 			logger.Error("retrieving connection", "error", err)
-			return err
+			return repoType, err
 		}
 
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
 			logger.Error("generating token for repository", "error", err)
-			return err
+			return repoType, err
 		}
 
 		if len(tokenOps) > 0 {
@@ -982,7 +990,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
 				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
-				return nil
+				return repoType, nil
 			}
 
 			logger.Warn("repository token secret could not be decrypted, regenerating from connection",
@@ -990,12 +998,12 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 			c, cerr := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 			if cerr != nil {
-				return fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
+				return repoType, fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
 			}
 
 			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
 			if gerr != nil {
-				return fmt.Errorf("regenerating repository token: %w", gerr)
+				return repoType, fmt.Errorf("regenerating repository token: %w", gerr)
 			}
 
 			if len(tokenOps) > 0 {
@@ -1028,10 +1036,10 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 			if rc.isUserCaused(err) {
 				logger.Warn("unable to create repository from configuration, user-facing error", "error", err)
-				return nil
+				return repoType, nil
 			}
 
-			return fmt.Errorf("unable to create repository from configuration: %w", err)
+			return repoType, fmt.Errorf("unable to create repository from configuration: %w", err)
 		}
 	}
 
@@ -1044,7 +1052,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
 			if err != nil {
-				return fmt.Errorf("failed to get default branch: %w", err)
+				return repoType, fmt.Errorf("failed to get default branch: %w", err)
 			}
 
 			branchHandler.SetBranch(defaultBranch)
@@ -1086,7 +1094,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 	healthSpan.End()
 	if err != nil {
-		return fmt.Errorf("update health status: %w", err)
+		return repoType, fmt.Errorf("update health status: %w", err)
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
@@ -1189,10 +1197,10 @@ func (rc *RepositoryController) process(key string) (err error) {
 		} else {
 			err = errors.Join(err, patchErr)
 		}
-		return err
+		return repoType, err
 	}
 	if err != nil {
-		return err
+		return repoType, err
 	}
 
 	// QUESTION: should we trigger the sync job after we have applied all patch operations or before?
@@ -1200,11 +1208,11 @@ func (rc *RepositoryController) process(key string) (err error) {
 	// Trigger sync job after we have applied all patch operations
 	if syncOptions != nil {
 		if err := rc.addSyncJob(ctx, obj, syncOptions); err != nil {
-			return err
+			return repoType, err
 		}
 	}
 
-	return nil
+	return repoType, nil
 }
 
 // processHooks handles hook execution with intelligent retry logic. `suppressed`
