@@ -21,12 +21,9 @@ type AutoSizeConditionals =
       maxWidth?: number;
     }
   | {
-      minWidth: number;
-    }
-  | {
       width?: number;
-      minWidth?: never;
-      maxWidth?: never;
+      minWidth?: number;
+      maxWidth?: number;
     };
 
 export type CustomComboBoxProps<T> = Omit<ComponentProps<typeof Combobox<string>>, 'options' | 'loading' | 'onChange'> &

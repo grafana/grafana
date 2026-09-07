@@ -8,7 +8,6 @@ import {
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-import { type GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -181,7 +180,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
   );
 };
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles() {
   return {
     formField: css({
       flexGrow: 1,

@@ -132,8 +132,8 @@ export type AutoSizeConditionals =
     }
   | {
       width?: number;
-      minWidth?: never;
-      maxWidth?: never;
+      minWidth?: number;
+      maxWidth?: number;
     };
 
 export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
