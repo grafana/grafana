@@ -24,14 +24,9 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
   const styles = useStyles2(getStyles);
   const [pendingIndex, setPendingIndex] = useState(index + 1);
   const labelId = useId();
-  // Kept revealed while the menu is open: opening it moves focus into the menu's own Portal (see
-  // Dropdown's FloatingFocusManager), which lives outside this cell's frame — so the frame's own
-  // :hover/:focus-within reveal rule stops matching and would otherwise fade this back out mid-interaction.
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Keyboard activation (Enter/Space on the trigger) never fires mouseUp, so without this, a cell
-  // that moved — something inserted, deleted, or reordered above it — since mount or since its last
-  // mouse interaction would keep offering its stale former position instead of its current one.
   useEffect(() => {
     setPendingIndex(index + 1);
   }, [index]);
