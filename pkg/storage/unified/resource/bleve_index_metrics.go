@@ -16,7 +16,7 @@ type BleveIndexMetrics struct {
 	IndexBuildFailures   prometheus.Counter
 	IndexBuildSkipped    prometheus.Counter
 	UpdateLatency        prometheus.Histogram
-	UpdatedDocuments     prometheus.Summary
+	UpdatedDocuments     prometheus.Histogram
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
@@ -40,7 +40,7 @@ var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 5
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "index_server_index_size",
+			Name: "index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",
 		}),
 		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
@@ -78,9 +78,12 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
-		UpdatedDocuments: promauto.With(reg).NewSummary(prometheus.SummaryOpts{
-			Name: "index_server_update_documents",
-			Help: "Number of documents indexed during index update",
+		UpdatedDocuments: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "index_server_update_documents",
+			Help:                            "Number of documents indexed during index update",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		SearchUpdateWaitTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_search_update_wait_time_seconds",

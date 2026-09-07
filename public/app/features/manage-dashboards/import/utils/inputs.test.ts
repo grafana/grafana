@@ -126,6 +126,10 @@ interface QueryVariableModel extends VariableModel {
   datasource?: { uid?: string };
 }
 
+interface VariableWithDatasource extends VariableModel {
+  datasource?: { uid?: string };
+}
+
 interface DatasourceVariableModel {
   type: string;
   current?: { value?: string; text?: string; selected?: boolean };
@@ -969,6 +973,39 @@ describe('applyV1Inputs', () => {
 
     const dsVariable = result.templating?.list?.[1] as DatasourceVariableModel;
     expect(dsVariable.current?.value).toBe('ds-uid');
+  });
+
+  it('resolves templateized datasources on adhoc and groupby variables', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      schemaVersion: 42,
+      templating: {
+        list: [
+          { type: 'adhoc', name: 'Filters', datasource: { type: 'prometheus', uid: '${DS}' } },
+          { type: 'groupby', name: 'GroupBy', datasource: { type: 'prometheus', uid: '${DS}' } },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    const adhocVariable = result.templating?.list?.[0] as VariableWithDatasource;
+    expect(adhocVariable.datasource?.uid).toBe('ds-uid');
+
+    const groupByVariable = result.templating?.list?.[1] as VariableWithDatasource;
+    expect(groupByVariable.datasource?.uid).toBe('ds-uid');
   });
 
   it('handles legacy string datasource format', () => {

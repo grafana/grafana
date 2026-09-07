@@ -107,9 +107,9 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getLayoutForObject,
-  getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';

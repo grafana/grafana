@@ -2646,7 +2646,9 @@
       "view-in-explore": "Lihat di Jelajahi"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opsi",
+      "invalid-interval-error": "",
       "label-time-range": "Rentang Waktu",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -3226,6 +3228,7 @@
         "disable-confirm-title": "Nonaktifkan sinkronisasi otomatis Mimir Alertmanager?",
         "disable-success": "Sinkronisasi otomatis Mimir Alertmanager dinonaktifkan",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Nilai ini ditetapkan oleh kunci <1>[unified_alerting] external_alertmanager_uid</1> di grafana.ini dan tidak dapat diubah dari UI. Edit file konfigurasi dan mulai ulang Grafana, atau hapus kunci untuk mengelola sinkronisasi dari sini.",
         "operator-managed-title": "Dikelola oleh operator",
         "orphan-warning": "UID sumber data yang dikonfigurasi {{uid}} tidak tersedia. Nonaktifkan sinkronisasi atau pulihkan sumber data untuk melanjutkan.",
@@ -3234,6 +3237,7 @@
         "picker-label": "Sumber data",
         "picker-placeholder": "Pilih sumber data Mimir atau Cortex Alertmanager…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Pilih sumber data Mimir atau Cortex Alertmanager untuk mengaktifkan penyimpanan.",
         "save-disabled-staged-config": "",
         "save-error": "Gagal menyimpan sinkronisasi otomatis Mimir Alertmanager",
@@ -5976,11 +5980,14 @@
     "notebook-layout": {
       "description": "Urutan vertikal panel, teks, dan sel kode",
       "name": "Buku catatan",
-      "pill": "Buku catatan yang Dipublikasikan",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Waktu"
+      "time": "Waktu",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9675,6 +9682,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Selumbari",
           "previousFiscalQuarter": "Kuartal fiskal sebelumnya",
@@ -12890,6 +12899,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12913,6 +12926,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -12995,7 +13015,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13003,7 +13022,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13021,6 +13039,9 @@
       "count_other": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13029,6 +13050,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13064,6 +13086,13 @@
     },
     "field-color": {
       "color-by-label": "Seri warna berdasarkan"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17767,7 +17796,7 @@
       "delete-modal-body": "Yakin ingin menghapus '{{name}}'?",
       "delete-modal-confirm": "Hapus",
       "delete-modal-title": "Hapus variabel",
-      "folder-description": "Atur cakupan variabel ke folder, atau pilih folder Dasbor root untuk menjadikannya global (tersedia di mana saja dalam organisasi)",
+      "folder-description": "",
       "folder-description-folder-only": "Atur ruang lingkup variabel ke folder yang dapat Anda edit",
       "folder-label": "Folder",
       "moved": "Variabel dipindahkan",
@@ -17787,7 +17816,7 @@
       "move": "Pindahkan",
       "moving": "Memindahkan...",
       "title": "Pindahkan variabel",
-      "body_other": "Pindahkan {{count}} variabel yang dipilih. Memilih folder Dasbor root akan menjadikannya global (tersedia di mana saja dalam organisasi).",
+      "body_other": "",
       "body-folder-only_other": "Pindahkan {{count}} variabel yang dipilih ke folder yang dapat Anda edit."
     },
     "page": {
