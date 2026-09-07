@@ -519,6 +519,7 @@ func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *pro
 		quotaStatus.UpdatedAt = time.Now().UnixMilli()
 		return quotaStatus, nil
 	}
+	rc.quotaMetrics.recordRefreshError()
 
 	if obj.Status.ObservedGeneration == 0 {
 		return provisioning.QuotaStatus{}, fmt.Errorf("failed to get quota status: %w", err)
@@ -832,13 +833,13 @@ func (rc *RepositoryController) process(key string) (err error) {
 	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
 		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
 	if hasQuotaChanged {
-		logger.Info("quota changed",
+		logger.Info("quota refreshed",
 			"previous_max_repositories", obj.Status.Quota.MaxRepositories,
 			"max_repositories", newQuota.MaxRepositories,
 			"previous_max_resources_per_repository", obj.Status.Quota.MaxResourcesPerRepository,
 			"max_resources_per_repository", newQuota.MaxResourcesPerRepository,
 		)
-		rc.quotaMetrics.recordChange()
+		rc.quotaMetrics.recordRefresh()
 	}
 
 	var shouldGenerateToken bool

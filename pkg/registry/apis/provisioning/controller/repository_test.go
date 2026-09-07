@@ -969,6 +969,8 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		assert.ErrorContains(t, err, "failed to get quota status")
 		assert.Equal(t, provisioning.QuotaStatus{}, status)
 		assert.Equal(t, uint64(0), histogramCount(t, reg, repositoryQuotaAgeMetric))
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 1.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 	})
 
 	t.Run("existing repository uses cached quota and its refresh timestamp", func(t *testing.T) {
@@ -998,6 +1000,8 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
 		assert.Equal(t, updatedAt, status.UpdatedAt)
 		assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryQuotaAgeMetric))
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 1.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 	})
 
 	t.Run("repeated failure preserves refresh timestamp and records increasing age", func(t *testing.T) {
@@ -1036,15 +1040,21 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		histogram = gatherMetrics(t, reg)[repositoryQuotaAgeMetric].GetMetric()[0].GetHistogram()
 		assert.Equal(t, uint64(2), histogram.GetSampleCount())
 		assert.GreaterOrEqual(t, histogram.GetSampleSum()-firstAge, firstAge)
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 2.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 	})
 
 	t.Run("successful refresh updates timestamp", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
 		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
 			MaxRepositories:           8,
 			MaxResourcesPerRepository: 200,
 			UpdatedAt:                 time.Now().Add(-time.Hour).UnixMilli(),
 		})
-		rc := &RepositoryController{quotaGetter: getter}
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
 			Status: provisioning.RepositoryStatus{
@@ -1063,6 +1073,8 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		assert.Equal(t, int64(200), status.MaxResourcesPerRepository)
 		assert.GreaterOrEqual(t, status.UpdatedAt, before)
 		assert.LessOrEqual(t, status.UpdatedAt, time.Now().UnixMilli())
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+		assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 	})
 }
 
@@ -1255,6 +1267,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 		newQuota         provisioning.QuotaStatus
 		expectReconcile  bool
 		expectQuotaPatch bool
+		expectRefreshes  float64
 	}{
 		{
 			name: "quota change triggers reconciliation and patches status",
@@ -1268,6 +1281,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			},
 			expectReconcile:  true,
 			expectQuotaPatch: true,
+			expectRefreshes:  1,
 		},
 		{
 			name: "unchanged quota skips reconciliation",
@@ -1281,6 +1295,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			},
 			expectReconcile:  false,
 			expectQuotaPatch: false,
+			expectRefreshes:  0,
 		},
 	}
 
@@ -1360,12 +1375,8 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 
 			err := rc.process(namespace + "/" + repoName)
 			assert.NoError(t, err)
-			expectedChanges := 0.0
-			if tc.oldQuota.MaxRepositories != tc.newQuota.MaxRepositories ||
-				tc.oldQuota.MaxResourcesPerRepository != tc.newQuota.MaxResourcesPerRepository {
-				expectedChanges = 1
-			}
-			assert.Equal(t, expectedChanges, counterValue(t, reg, repositoryQuotaChangesMetric))
+			assert.Equal(t, tc.expectRefreshes, counterValue(t, reg, repositoryQuotaRefreshMetric))
+			assert.Equal(t, 0.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 
 			if tc.expectReconcile {
 				assert.NotEmpty(t, patcher.ops,

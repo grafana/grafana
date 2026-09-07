@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	repositoryQuotaAgeMetric     = "grafana_provisioning_repository_quota_age_seconds"
-	repositoryQuotaChangesMetric = "grafana_provisioning_repository_quota_changes_total"
+	repositoryQuotaAgeMetric           = "grafana_provisioning_repository_quota_age_seconds"
+	repositoryQuotaRefreshMetric       = "grafana_provisioning_repository_quota_refresh_total"
+	repositoryQuotaRefreshErrorsMetric = "grafana_provisioning_repository_quota_refresh_errors_total"
 )
 
 func TestRepositoryQuotaMetrics_ObserveAge(t *testing.T) {
@@ -29,20 +30,23 @@ func TestRepositoryQuotaMetrics_ObserveAge(t *testing.T) {
 	assert.InDelta(t, 300, histogram.GetSampleSum(), 0.001)
 }
 
-func TestRepositoryQuotaMetrics_RecordChange(t *testing.T) {
+func TestRepositoryQuotaMetrics_RecordRefresh(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	metrics := registerRepositoryQuotaMetrics(reg)
 
-	metrics.recordChange()
-	metrics.recordChange()
+	metrics.recordRefresh()
+	metrics.recordRefresh()
+	metrics.recordRefreshError()
 
-	assert.Equal(t, 2.0, counterValue(t, reg, repositoryQuotaChangesMetric))
+	assert.Equal(t, 2.0, counterValue(t, reg, repositoryQuotaRefreshMetric))
+	assert.Equal(t, 1.0, counterValue(t, reg, repositoryQuotaRefreshErrorsMetric))
 }
 
 func TestRepositoryQuotaMetrics_NilSafe(t *testing.T) {
 	var metrics *repositoryQuotaMetrics
 	assert.NotPanics(t, func() {
 		metrics.observeAge(time.Minute)
-		metrics.recordChange()
+		metrics.recordRefresh()
+		metrics.recordRefreshError()
 	})
 }

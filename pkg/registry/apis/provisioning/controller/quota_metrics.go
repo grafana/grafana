@@ -22,8 +22,9 @@ var repositoryQuotaAgeBuckets = []float64{
 }
 
 type repositoryQuotaMetrics struct {
-	age     prometheus.Histogram
-	changes prometheus.Counter
+	age           prometheus.Histogram
+	refreshTotal  prometheus.Counter
+	refreshErrors prometheus.Counter
 }
 
 func registerRepositoryQuotaMetrics(registry prometheus.Registerer) *repositoryQuotaMetrics {
@@ -32,13 +33,17 @@ func registerRepositoryQuotaMetrics(registry prometheus.Registerer) *repositoryQ
 		Help:    "Age of cached repository quota limits used after a quota refresh failure.",
 		Buckets: repositoryQuotaAgeBuckets,
 	})
-	changes := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "grafana_provisioning_repository_quota_changes_total",
-		Help: "Total number of repository quota limit changes observed by the controller.",
+	refreshTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "grafana_provisioning_repository_quota_refresh_total",
+		Help: "Total number of repository quota refreshes that changed limits.",
 	})
-	registry.MustRegister(age, changes)
+	refreshErrors := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "grafana_provisioning_repository_quota_refresh_errors_total",
+		Help: "Total number of failed repository quota refreshes.",
+	})
+	registry.MustRegister(age, refreshTotal, refreshErrors)
 
-	return &repositoryQuotaMetrics{age: age, changes: changes}
+	return &repositoryQuotaMetrics{age: age, refreshTotal: refreshTotal, refreshErrors: refreshErrors}
 }
 
 func (m *repositoryQuotaMetrics) observeAge(age time.Duration) {
@@ -51,9 +56,16 @@ func (m *repositoryQuotaMetrics) observeAge(age time.Duration) {
 	m.age.Observe(age.Seconds())
 }
 
-func (m *repositoryQuotaMetrics) recordChange() {
+func (m *repositoryQuotaMetrics) recordRefresh() {
 	if m == nil {
 		return
 	}
-	m.changes.Inc()
+	m.refreshTotal.Inc()
+}
+
+func (m *repositoryQuotaMetrics) recordRefreshError() {
+	if m == nil {
+		return
+	}
+	m.refreshErrors.Inc()
 }
