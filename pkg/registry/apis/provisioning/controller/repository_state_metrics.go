@@ -1,112 +1,136 @@
 package controller
 
 import (
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// repositoryStateMetrics exposes the observed state of each repository as
-// per-repository gauges, refreshed on every reconcile from the object already in
-// hand. Series are labelled by namespace+name so they are identical across
-// replicas (every replica re-lists the full fleet on resync); dashboards dedupe
-// with `max by (...)` across replica/pod target labels. Series must be deleted
-// when a repository goes away, otherwise a repo deleted while a replica was not
-// its event owner would leak a stale gauge forever.
+// repositoryStateMetrics aggregates observed repository state into low-cardinality
+// fleet gauges. Per-repository state is kept in an in-memory map (keyed by
+// namespace/name) that the reconcile loop refreshes; only aggregates -- counts by
+// type and managed-resource totals by group/resource -- are exposed to Prometheus.
+// The metric cardinality is therefore bounded by the number of repository types and
+// resource kinds, never by the number of namespaces or repositories (which would be
+// unbounded in the multi-tenant operator). Per-repository/per-namespace drill-down
+// lives in the reconcile log line instead, where high cardinality is free.
+//
+// It is a prometheus.Collector: Collect recomputes the aggregates from the map at
+// scrape time, so there are no stale series to clean up and no drift. Each replica
+// keeps its own map; because every replica re-lists the full fleet on resync, the
+// aggregates converge across replicas -- dashboards use `max by (...)` to dedupe.
 type repositoryStateMetrics struct {
-	info             *prometheus.GaugeVec
-	managedResources *prometheus.GaugeVec
-	health           *prometheus.GaugeVec
-	lastSync         *prometheus.GaugeVec
+	mu    sync.RWMutex
+	state map[string]repoSnapshot
+
+	repositories *prometheus.Desc
+	unhealthy    *prometheus.Desc
+	managed      *prometheus.Desc
+}
+
+// repoSnapshot is the per-repository state we aggregate over. It is small and
+// owned by the map (stats is copied on write), so nothing here aliases the
+// informer cache.
+type repoSnapshot struct {
+	repoType string
+	healthy  bool
+	stats    []provisioning.ResourceCount
 }
 
 func registerRepositoryStateMetrics(registry prometheus.Registerer) *repositoryStateMetrics {
-	info := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "grafana_provisioning_repository_info",
-		Help: "A metric with a constant value of 1 for each provisioning repository, labelled by its type and sync target.",
-	}, []string{"namespace", "name", "type", "target"})
-
-	managedResources := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "grafana_provisioning_repository_managed_resources",
-		Help: "Number of resources managed by a repository, by group and resource, as of its last sync.",
-	}, []string{"namespace", "name", "group", "resource"})
-
-	health := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "grafana_provisioning_repository_health",
-		Help: "Current health of a provisioning repository (1 = healthy, 0 = unhealthy).",
-	}, []string{"namespace", "name"})
-
-	lastSync := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "grafana_provisioning_repository_last_sync_timestamp_seconds",
-		Help: "Unix timestamp (seconds) of when the repository's last sync finished.",
-	}, []string{"namespace", "name"})
-
-	registry.MustRegister(info, managedResources, health, lastSync)
-
-	return &repositoryStateMetrics{
-		info:             info,
-		managedResources: managedResources,
-		health:           health,
-		lastSync:         lastSync,
+	m := &repositoryStateMetrics{
+		state: make(map[string]repoSnapshot),
+		repositories: prometheus.NewDesc(
+			"grafana_provisioning_repositories",
+			"Number of provisioning repositories, by type.",
+			[]string{"type"}, nil,
+		),
+		unhealthy: prometheus.NewDesc(
+			"grafana_provisioning_repositories_unhealthy",
+			"Number of provisioning repositories currently unhealthy, by type.",
+			[]string{"type"}, nil,
+		),
+		managed: prometheus.NewDesc(
+			"grafana_provisioning_managed_resources",
+			"Number of resources managed by provisioning repositories, by group and resource, as of each repository's last sync.",
+			[]string{"group", "resource"}, nil,
+		),
 	}
+	registry.MustRegister(m)
+	return m
 }
 
-// Record refreshes all per-repository gauges from the reconciled object. It is
-// nil-safe so tests and CRUD-only wiring can pass a nil recorder.
+func repoStateKey(namespace, name string) string { return namespace + "/" + name }
+
+// Record refreshes the stored snapshot for a repository from the reconciled
+// object. It is nil-safe so tests and CRUD-only wiring can pass a nil recorder.
 func (m *repositoryStateMetrics) Record(obj *provisioning.Repository) {
 	if m == nil {
 		return
 	}
 
-	namespace := obj.GetNamespace()
-	name := obj.GetName()
+	// Copy the stats slice so the map does not alias the (possibly shared)
+	// informer-cache object. ResourceCount is a value type, so a shallow copy
+	// fully isolates it.
+	stats := make([]provisioning.ResourceCount, len(obj.Status.Stats))
+	copy(stats, obj.Status.Stats)
 
-	m.info.With(prometheus.Labels{
-		"namespace": namespace,
-		"name":      name,
-		"type":      string(obj.Spec.Type),
-		"target":    string(obj.Spec.Sync.Target),
-	}).Set(1)
-
-	healthy := 0.0
-	if obj.Status.Health.Healthy {
-		healthy = 1.0
-	}
-	m.health.WithLabelValues(namespace, name).Set(healthy)
-
-	// Status.Sync.Finished is milliseconds; expose it as seconds. Leave it unset
-	// when a sync has never finished so "time since last sync" panels don't report
-	// a bogus 1970 timestamp.
-	if obj.Status.Sync.Finished > 0 {
-		m.lastSync.WithLabelValues(namespace, name).Set(float64(obj.Status.Sync.Finished) / 1000.0)
-	} else {
-		m.lastSync.DeletePartialMatch(prometheus.Labels{"namespace": namespace, "name": name})
-	}
-
-	// Clear stale per-kind series first so a resource kind that dropped out of
-	// Status.Stats (e.g. count fell to zero) does not linger, then re-publish the
-	// current counts.
-	m.managedResources.DeletePartialMatch(prometheus.Labels{"namespace": namespace, "name": name})
-	for _, stat := range obj.Status.Stats {
-		m.managedResources.With(prometheus.Labels{
-			"namespace": namespace,
-			"name":      name,
-			"group":     stat.Group,
-			"resource":  stat.Resource,
-		}).Set(float64(stat.Count))
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.state[repoStateKey(obj.GetNamespace(), obj.GetName())] = repoSnapshot{
+		repoType: string(obj.Spec.Type),
+		healthy:  obj.Status.Health.Healthy,
+		stats:    stats,
 	}
 }
 
-// Delete removes every series for a repository. It is nil-safe.
+// Delete forgets a repository's snapshot. It is nil-safe.
 func (m *repositoryStateMetrics) Delete(namespace, name string) {
 	if m == nil {
 		return
 	}
-	labels := prometheus.Labels{"namespace": namespace, "name": name}
-	m.info.DeletePartialMatch(labels)
-	m.managedResources.DeletePartialMatch(labels)
-	m.health.DeletePartialMatch(labels)
-	m.lastSync.DeletePartialMatch(labels)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.state, repoStateKey(namespace, name))
+}
+
+func (m *repositoryStateMetrics) Describe(ch chan<- *prometheus.Desc) {
+	ch <- m.repositories
+	ch <- m.unhealthy
+	ch <- m.managed
+}
+
+func (m *repositoryStateMetrics) Collect(ch chan<- prometheus.Metric) {
+	type kind struct{ group, resource string }
+
+	byType := make(map[string]int)
+	unhealthyByType := make(map[string]int)
+	managedByKind := make(map[kind]int64)
+
+	m.mu.RLock()
+	for _, s := range m.state {
+		byType[s.repoType]++
+		if !s.healthy {
+			unhealthyByType[s.repoType]++
+		}
+		for _, rc := range s.stats {
+			managedByKind[kind{rc.Group, rc.Resource}] += rc.Count
+		}
+	}
+	m.mu.RUnlock()
+
+	// Emit repositories and unhealthy for every observed type so the unhealthy
+	// series is present (0) even when a type has no unhealthy repositories,
+	// avoiding gaps in dashboards and alerts.
+	for t, n := range byType {
+		ch <- prometheus.MustNewConstMetric(m.repositories, prometheus.GaugeValue, float64(n), t)
+		ch <- prometheus.MustNewConstMetric(m.unhealthy, prometheus.GaugeValue, float64(unhealthyByType[t]), t)
+	}
+	for k, n := range managedByKind {
+		ch <- prometheus.MustNewConstMetric(m.managed, prometheus.GaugeValue, float64(n), k.group, k.resource)
+	}
 }
 
 // totalManagedResources sums the per-kind counts for a repository, for the

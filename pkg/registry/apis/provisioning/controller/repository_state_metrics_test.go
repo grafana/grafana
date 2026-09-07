@@ -31,66 +31,58 @@ func testRepository(namespace, name string, repoType provisioning.RepositoryType
 	}
 }
 
-func TestRepositoryStateMetrics_Record(t *testing.T) {
+func TestRepositoryStateMetrics_AggregatesByType(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	m := registerRepositoryStateMetrics(reg)
 
 	m.Record(testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType))
+	m.Record(testRepository("stacks-2", "repo-b", provisioning.GitHubRepositoryType))
+	m.Record(testRepository("stacks-3", "repo-c", provisioning.GitRepositoryType))
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.info.WithLabelValues("stacks-1", "repo-a", "github", "instance")))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.health.WithLabelValues("stacks-1", "repo-a")))
-	assert.Equal(t, 1_600_000_000.0, testutil.ToFloat64(m.lastSync.WithLabelValues("stacks-1", "repo-a")))
-	assert.Equal(t, 7.0, testutil.ToFloat64(m.managedResources.WithLabelValues("stacks-1", "repo-a", "dashboard.grafana.app", "dashboards")))
-	assert.Equal(t, 3.0, testutil.ToFloat64(m.managedResources.WithLabelValues("stacks-1", "repo-a", "folder.grafana.app", "folders")))
+	expected := `
+# HELP grafana_provisioning_repositories Number of provisioning repositories, by type.
+# TYPE grafana_provisioning_repositories gauge
+grafana_provisioning_repositories{type="git"} 1
+grafana_provisioning_repositories{type="github"} 2
+`
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_repositories"))
 }
 
-func TestRepositoryStateMetrics_RecordUnhealthyAndNeverSynced(t *testing.T) {
-	reg := prometheus.NewRegistry()
-	m := registerRepositoryStateMetrics(reg)
-
-	repo := testRepository("stacks-1", "repo-a", provisioning.GitRepositoryType)
-	repo.Status.Health.Healthy = false
-	repo.Status.Sync.Finished = 0
-
-	m.Record(repo)
-
-	assert.Equal(t, 0.0, testutil.ToFloat64(m.health.WithLabelValues("stacks-1", "repo-a")))
-	// A repository that never finished a sync must not publish a bogus timestamp.
-	assert.Equal(t, 0, testutil.CollectAndCount(m.lastSync))
-}
-
-func TestRepositoryStateMetrics_RecordDropsStaleResourceSeries(t *testing.T) {
-	reg := prometheus.NewRegistry()
-	m := registerRepositoryStateMetrics(reg)
-
-	repo := testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType)
-	m.Record(repo)
-	require.Equal(t, 2, testutil.CollectAndCount(m.managedResources))
-
-	// Folders drop out of the stats on the next sync.
-	repo.Status.Stats = []provisioning.ResourceCount{
-		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 9},
-	}
-	m.Record(repo)
-
-	assert.Equal(t, 1, testutil.CollectAndCount(m.managedResources))
-	assert.Equal(t, 9.0, testutil.ToFloat64(m.managedResources.WithLabelValues("stacks-1", "repo-a", "dashboard.grafana.app", "dashboards")))
-}
-
-func TestRepositoryStateMetrics_DoesNotCrossRepositories(t *testing.T) {
+func TestRepositoryStateMetrics_ManagedResourcesSumAcrossRepositories(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	m := registerRepositoryStateMetrics(reg)
 
 	m.Record(testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType))
-	m.Record(testRepository("stacks-1", "repo-b", provisioning.GitRepositoryType))
+	m.Record(testRepository("stacks-2", "repo-b", provisioning.GitRepositoryType))
 
-	m.Delete("stacks-1", "repo-a")
+	// Two repos, each with 7 dashboards + 3 folders → 14 and 6 in aggregate.
+	expected := `
+# HELP grafana_provisioning_managed_resources Number of resources managed by provisioning repositories, by group and resource, as of each repository's last sync.
+# TYPE grafana_provisioning_managed_resources gauge
+grafana_provisioning_managed_resources{group="dashboard.grafana.app",resource="dashboards"} 14
+grafana_provisioning_managed_resources{group="folder.grafana.app",resource="folders"} 6
+`
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_managed_resources"))
+}
 
-	// repo-b is untouched; only repo-a's series are gone.
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.info.WithLabelValues("stacks-1", "repo-b", "git", "instance")))
-	assert.Equal(t, 1, testutil.CollectAndCount(m.info))
-	assert.Equal(t, 1, testutil.CollectAndCount(m.health))
-	assert.Equal(t, 2, testutil.CollectAndCount(m.managedResources)) // only repo-b's two kinds remain
+func TestRepositoryStateMetrics_Unhealthy(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	m := registerRepositoryStateMetrics(reg)
+
+	healthy := testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType)
+	unhealthy := testRepository("stacks-2", "repo-b", provisioning.GitHubRepositoryType)
+	unhealthy.Status.Health.Healthy = false
+	m.Record(healthy)
+	m.Record(unhealthy)
+
+	// The unhealthy series is present (0) for a type even when all its repos are
+	// healthy, but here one github repo is unhealthy.
+	expected := `
+# HELP grafana_provisioning_repositories_unhealthy Number of provisioning repositories currently unhealthy, by type.
+# TYPE grafana_provisioning_repositories_unhealthy gauge
+grafana_provisioning_repositories_unhealthy{type="github"} 1
+`
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_repositories_unhealthy"))
 }
 
 func TestRepositoryStateMetrics_Delete(t *testing.T) {
@@ -98,12 +90,57 @@ func TestRepositoryStateMetrics_Delete(t *testing.T) {
 	m := registerRepositoryStateMetrics(reg)
 
 	m.Record(testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType))
+	m.Record(testRepository("stacks-2", "repo-b", provisioning.GitRepositoryType))
 	m.Delete("stacks-1", "repo-a")
 
-	assert.Equal(t, 0, testutil.CollectAndCount(m.info))
-	assert.Equal(t, 0, testutil.CollectAndCount(m.managedResources))
-	assert.Equal(t, 0, testutil.CollectAndCount(m.health))
-	assert.Equal(t, 0, testutil.CollectAndCount(m.lastSync))
+	// Only repo-b (git) remains; github series disappears entirely.
+	expected := `
+# HELP grafana_provisioning_repositories Number of provisioning repositories, by type.
+# TYPE grafana_provisioning_repositories gauge
+grafana_provisioning_repositories{type="git"} 1
+`
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_repositories"))
+	assert.Equal(t, 2, testutil.CollectAndCount(m, "grafana_provisioning_managed_resources"))
+}
+
+func TestRepositoryStateMetrics_RecordDoesNotAliasCacheObject(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	m := registerRepositoryStateMetrics(reg)
+
+	repo := testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType)
+	m.Record(repo)
+
+	// Mutating the object after Record must not change the recorded snapshot.
+	repo.Status.Stats[0].Count = 999
+
+	expected := `
+# HELP grafana_provisioning_managed_resources Number of resources managed by provisioning repositories, by group and resource, as of each repository's last sync.
+# TYPE grafana_provisioning_managed_resources gauge
+grafana_provisioning_managed_resources{group="dashboard.grafana.app",resource="dashboards"} 7
+grafana_provisioning_managed_resources{group="folder.grafana.app",resource="folders"} 3
+`
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_managed_resources"))
+}
+
+func TestRepositoryStateMetrics_ReRecordReplacesSnapshot(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	m := registerRepositoryStateMetrics(reg)
+
+	repo := testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType)
+	m.Record(repo)
+
+	// Next sync drops folders and grows dashboards.
+	repo.Status.Stats = []provisioning.ResourceCount{
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 9},
+	}
+	m.Record(repo)
+
+	expected := `
+# HELP grafana_provisioning_managed_resources Number of resources managed by provisioning repositories, by group and resource, as of each repository's last sync.
+# TYPE grafana_provisioning_managed_resources gauge
+grafana_provisioning_managed_resources{group="dashboard.grafana.app",resource="dashboards"} 9
+`
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_managed_resources"))
 }
 
 func TestRepositoryStateMetrics_NilSafe(t *testing.T) {
@@ -112,20 +149,6 @@ func TestRepositoryStateMetrics_NilSafe(t *testing.T) {
 		m.Record(testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType))
 		m.Delete("stacks-1", "repo-a")
 	})
-}
-
-func TestRepositoryStateMetrics_Exposition(t *testing.T) {
-	reg := prometheus.NewRegistry()
-	m := registerRepositoryStateMetrics(reg)
-	m.Record(testRepository("stacks-1", "repo-a", provisioning.GitHubRepositoryType))
-
-	expected := `
-# HELP grafana_provisioning_repository_health Current health of a provisioning repository (1 = healthy, 0 = unhealthy).
-# TYPE grafana_provisioning_repository_health gauge
-grafana_provisioning_repository_health{name="repo-a",namespace="stacks-1"} 1
-`
-	err := testutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_provisioning_repository_health")
-	require.NoError(t, err)
 }
 
 func TestTotalManagedResources(t *testing.T) {
