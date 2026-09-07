@@ -89,6 +89,7 @@ type RepositoryController struct {
 	quotaGetter                   quotas.QuotaGetter
 	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
+	reconcileMetrics              *reconcileErrorMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 }
@@ -122,6 +123,7 @@ func NewRepositoryController(
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 	quotaMetrics := registerRepositoryQuotaMetrics(registry)
+	reconcileMetrics := registerReconcileErrorMetrics(registry)
 
 	rc := &RepositoryController{
 		client:    provisioningClient,
@@ -157,6 +159,7 @@ func NewRepositoryController(
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
+		reconcileMetrics:              reconcileMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
@@ -774,6 +777,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		if err == nil {
 			return nil
 		}
+		rc.recordReconcileError(reconcilePhaseDelete, err)
 
 		// Surface the delete failure on status regardless of its cause. A stuck
 		// deletion is otherwise invisible to users (status.deleteError is not
@@ -1005,6 +1009,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
+			rc.recordReconcileError(reconcilePhaseBuild, err)
 			buildHealthStatus := provisioning.HealthStatus{
 				Healthy: false,
 				Error:   provisioning.HealthFailureHealth,
@@ -1115,6 +1120,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
 	}
 	if hookErr != nil {
+		rc.recordReconcileError(reconcilePhaseHook, hookErr)
 		if rc.isUserCaused(hookErr) {
 			logger.Warn("repository hook failed with a user-facing error", "error", hookErr)
 		} else {
@@ -1277,6 +1283,19 @@ func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repositor
 		"path":  "/status/health",
 		"value": status,
 	}}
+}
+
+// recordReconcileError counts a reconcile failure for SLO tracking, classifying
+// it as user-caused (the user must fix it, e.g. revoked credentials) or
+// system-caused. User-caused failures are surfaced on status and not returned,
+// so this metric is how they stay visible; SLOs should alert on cause=system
+// and exclude cause=user.
+func (rc *RepositoryController) recordReconcileError(phase string, err error) {
+	cause := reconcileCauseSystem
+	if rc.isUserCaused(err) {
+		cause = reconcileCauseUser
+	}
+	rc.reconcileMetrics.RecordReconcileError(phase, cause)
 }
 
 // Returns errors that are due to user errors

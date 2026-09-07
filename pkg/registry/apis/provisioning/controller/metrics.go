@@ -48,6 +48,48 @@ func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string,
 	}
 }
 
+// Cause labels for the reconcile-error metric. A userCause failure is one the
+// user must fix (e.g. revoked or insufficient credentials); systemCause covers
+// everything else. SLOs should alert on systemCause and exclude userCause.
+const (
+	reconcileCauseUser   = "user"
+	reconcileCauseSystem = "system"
+)
+
+// Phase labels for the reconcile-error metric, identifying where in
+// reconciliation the failure occurred.
+const (
+	reconcilePhaseDelete = "delete"
+	reconcilePhaseBuild  = "build"
+	reconcilePhaseHook   = "hook"
+)
+
+type reconcileErrorMetrics struct {
+	reconcileErrorsTotal *prometheus.CounterVec
+}
+
+func registerReconcileErrorMetrics(registry prometheus.Registerer) *reconcileErrorMetrics {
+	reconcileErrorsTotal := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_repository_reconcile_errors_total",
+			Help: "Total number of repository reconciliation errors by phase and cause. Filter cause!=\"user\" to exclude user-caused failures (e.g. revoked credentials) from SLOs.",
+		},
+		[]string{"phase", "cause"},
+	)
+	registry.MustRegister(reconcileErrorsTotal)
+
+	return &reconcileErrorMetrics{reconcileErrorsTotal: reconcileErrorsTotal}
+}
+
+func (m *reconcileErrorMetrics) RecordReconcileError(phase, cause string) {
+	// Nil receiver keeps partial-construction unit tests (which don't wire
+	// metrics) safe; the production controller always registers this recorder.
+	if m == nil {
+		return
+	}
+	m.reconcileErrorsTotal.WithLabelValues(phase, cause).Inc()
+}
+
 //go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter
 type HealthMetricsRecorder interface {
 	RecordHealthCheck(resource, outcome string, duration float64)
