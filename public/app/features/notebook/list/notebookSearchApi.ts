@@ -190,5 +190,4 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
   }),
 });
 
-export const { useSearchNotebooksInfiniteQuery, useNotebookFieldFacetQuery, useLazyNotebookFieldFacetQuery } =
-  notebookSearchAPI;
+export const { useSearchNotebooksInfiniteQuery, useLazyNotebookFieldFacetQuery } = notebookSearchAPI;

@@ -15,9 +15,7 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 
 // The row menu pulls in the notebook header's tag facet, which calls injectEndpoints on the real
 // client as it loads - which the mock above does not provide.
-jest.mock('./notebookSearchApi', () => ({
-  useNotebookFieldFacetQuery: jest.fn(),
-}));
+jest.mock('./notebookSearchApi', () => ({}));
 
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
 

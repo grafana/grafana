@@ -74,6 +74,7 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
     canFilterByMe: true,
     tagFilter: [],
     setTagFilter: jest.fn(),
+    loadedTags: [],
     sort: 'updated',
     setSort: jest.fn(),
     ...overrides,
@@ -500,6 +501,24 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(await within(listbox).findByText('latency'));
 
       expect(setTagFilter).toHaveBeenCalledWith(['latency']);
+    });
+
+    // TagFilter reads its options once per focus, so a picker opened while the rows are still
+    // loading would cache the empty set and go on claiming there are no tags. Nothing to offer yet,
+    // so nothing to open.
+    it('holds the tag filter shut until the notebooks have loaded', async () => {
+      setPicker({ isLoading: true });
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      expect(screen.getByLabelText('Tag filter')).toBeDisabled();
+    });
+
+    it('opens the tag filter once they have', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      expect(screen.getByLabelText('Tag filter')).toBeEnabled();
     });
 
     // Nothing to mean without an identity, so the control is not offered at all.

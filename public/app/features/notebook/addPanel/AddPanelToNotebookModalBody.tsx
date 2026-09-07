@@ -203,6 +203,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                       onChange={picker.setTagFilter}
                       fallbackTags={picker.loadedTags}
                       allowCustomValue
+                      disabled={picker.isLoading}
                       placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
                     />
                     {/* Not a picker of authors: filtering by one is supported server-side, but
