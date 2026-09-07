@@ -1882,7 +1882,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 	commitStart := time.Now()
 	err := b.index.Batch(batch)
-	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize())
+	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize(), err == nil)
 	if err != nil {
 		return err
 	}
@@ -1891,14 +1891,18 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 // recordBatchPhases separates the CPU spent mapping documents onto the index
 // schema from the write that follows, so a slow index can be told apart from a
-// slow disk. An empty path means the caller is not measuring.
-func (b *bleveIndex) recordBatchPhases(path string, mapped, commit time.Duration, indexedBytes uint64) {
+// slow disk. The time counts either way, since it was spent, but the bytes only
+// count once they are in the index. An empty path means the caller is not
+// measuring.
+func (b *bleveIndex) recordBatchPhases(path string, mapped, commit time.Duration, indexedBytes uint64, committed bool) {
 	if b.indexMetrics == nil || path == "" {
 		return
 	}
 	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseMap, path, b.key.Group, b.key.Resource).Add(mapped.Seconds())
 	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(commit.Seconds())
-	b.indexMetrics.BuildIndexedBytes.WithLabelValues(path, b.key.Group, b.key.Resource).Add(float64(indexedBytes))
+	if committed {
+		b.indexMetrics.BuildIndexedBytes.WithLabelValues(path, b.key.Group, b.key.Resource).Add(float64(indexedBytes))
+	}
 }
 
 // mapsTrashFields reports whether this index can hold everything a deleted

@@ -2023,6 +2023,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			},
 		}, func(iter ListIterator) error {
 			phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathBuild, nsr)
+			// Report whatever was accumulated even when the build gives up early, so a
+			// failed build is not missing from the metrics.
+			defer phases.flush()
 			batch := newBulkIndexBatcher(index, span, phases)
 
 			for {
@@ -2067,7 +2070,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			if err = batch.flush(); err != nil {
 				return err
 			}
-			phases.flush()
 			return iter.Error()
 		})
 		if err != nil {
@@ -2130,6 +2132,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		pendingKeys := make([]string, 0, maxBatchSize)
 
 		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathUpdate, nsr)
+		// Report whatever was accumulated even when the update gives up early, so a
+		// failed run is not missing from the metrics.
+		defer phases.flush()
 
 		docs := 0
 		for res, err := range phases.timeModifiedResources(it) {
@@ -2179,11 +2184,16 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				// index that cannot hold the markers, and a body we cannot read.
 				var doc *IndexableDocument
 				if keepDeleted {
+					convertStart := time.Now()
 					doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
+					phases.recordConvert(time.Since(convertStart), err == nil)
 					if err != nil {
 						span.RecordError(err)
 						logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
 					}
+				} else {
+					// The document is removed rather than converted, so it is not a drop.
+					phases.recordConvertNotNeeded()
 				}
 				if doc == nil {
 					span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
@@ -2231,7 +2241,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			addToDedupCache(pendingKeys)
 			phases.recordIndexed(len(items))
 		}
-		phases.flush()
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
 		// time this function is called.
@@ -2323,6 +2332,8 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 	}
 
 	phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathTrash, nsr)
+	// Report whatever was accumulated even when the pass gives up early.
+	defer phases.flush()
 	batch := newBulkIndexBatcher(index, span, phases)
 	_, err := s.storage.ListHistory(ctx, req, func(iter ListIterator) error {
 		for {
@@ -2364,7 +2375,6 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 		if err := batch.flush(); err != nil {
 			return err
 		}
-		phases.flush()
 		return iter.Error()
 	})
 	if errors.Is(err, errUnimplemented) {

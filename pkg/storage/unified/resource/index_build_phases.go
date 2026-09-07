@@ -64,6 +64,13 @@ func (r *buildPhaseRecorder) recordConvert(d time.Duration, ok bool) {
 	}
 }
 
+// recordConvertNotNeeded counts a document that needs no search document, such
+// as a delete when the index does not keep deleted documents, so it is not
+// mistaken for one that failed to convert.
+func (r *buildPhaseRecorder) recordConvertNotNeeded() {
+	r.converted++
+}
+
 func (r *buildPhaseRecorder) recordIndexed(count int) {
 	r.indexed += count
 }
