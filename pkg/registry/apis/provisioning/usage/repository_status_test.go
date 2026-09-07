@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -27,6 +28,7 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 			Sync:      provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
 		},
+		Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Name: "repo-token"}},
 		Status: provisioning.RepositoryStatus{
 			Health: provisioning.HealthStatus{Healthy: true},
 			Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: 1_600_000_000_000},
@@ -77,8 +79,16 @@ func TestRepositoryAuthMethod(t *testing.T) {
 		},
 		{
 			name: "direct token",
-			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}},
+			repo: &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{Type: provisioning.GitRepositoryType},
+				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Name: "repo-token"}},
+			},
 			want: "token",
+		},
+		{
+			name: "anonymous public repo",
+			repo: &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}},
+			want: "anonymous",
 		},
 	}
 	for _, tt := range tests {

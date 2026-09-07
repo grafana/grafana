@@ -44,6 +44,14 @@ import (
 //     resource names like "dashboard.grafana.app/dashboards" are not valid logfmt
 //     keys.)
 //
+// A kind is logged only while the repository still manages at least one of it; a
+// kind whose count falls to zero simply stops being emitted (there is no
+// tombstone, as that would need per-repository state we intentionally avoid). So
+// `last_over_time(... | unwrap count)` keeps a removed kind's last positive value
+// until it ages out of the query window: bound the range to a small multiple of
+// the reconcile/resync interval for a "current" snapshot, and use the
+// repository-level managedResourceCount for exact per-repository totals.
+//
 // Repository identity -- namespace, name, type, connection -- is carried by the
 // reconcile logger on both lines, so queries can still group by those without the
 // snapshot repeating them.
@@ -161,18 +169,23 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 	}
 }
 
-// repositoryAuthMethod classifies how a repository authenticates. The concrete
-// mechanism for a connection-backed repository lives on the Connection (its type
-// distinguishes GitHub App from the OAuth providers); here we only record that
-// auth is delegated.
+// repositoryAuthMethod classifies how a repository authenticates:
+//   - "none": local repositories, which have no remote to authenticate against.
+//   - "connection": auth is delegated to a referenced Connection, whose own type
+//     distinguishes GitHub App from the OAuth providers.
+//   - "token": a token/PAT is stored on the repository.
+//   - "anonymous": a remote repository with neither a token nor a connection --
+//     a public, read-only repo, which the validator permits.
 func repositoryAuthMethod(repo *provisioning.Repository) string {
 	switch {
 	case repo.Spec.Type == provisioning.LocalRepositoryType:
 		return "none"
 	case repo.Spec.Connection != nil && repo.Spec.Connection.Name != "":
 		return "connection"
-	default:
+	case !repo.Secure.Token.IsZero():
 		return "token"
+	default:
+		return "anonymous"
 	}
 }
 
