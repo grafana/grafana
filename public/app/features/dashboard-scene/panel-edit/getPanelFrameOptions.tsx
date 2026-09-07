@@ -5,7 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch, Stack, Label, Field } from '@grafana/ui';
-import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -99,12 +98,6 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
-        addon: (
-          <GenAIPanelDescriptionButton
-            onGenerate={(description) => panel.setState({ description })}
-            panel={vizPanelToPanel(panel)}
-          />
-        ),
       })
     )
     .addItem(
@@ -202,7 +195,8 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   const { description, subtitle } = panel.useState();
   const value = description ?? subtitle ?? '';
   const [prevValue, setPrevValue] = React.useState(value);
-  let propName: 'description' | 'subtitle' = description ? 'description' : 'subtitle';
+  // Default to description for now
+  let propName: 'description' | 'subtitle' = description ? 'description' : subtitle ? 'subtitle' : 'description';
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     edit({
