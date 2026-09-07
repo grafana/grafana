@@ -1258,14 +1258,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "improvedExternalSessionHandling",
-			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       identityAccessTeam,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1478,18 +1470,18 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamHttpHeadersFromAppPlatformST",
+			Name:        "datasources.teamHttpHeadersFromAppPlatformST",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
 		{
-			Name:        "teamHttpHeadersFromAppPlatformMT",
+			Name:        "datasources.teamHttpHeadersFromAppPlatformMT",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
