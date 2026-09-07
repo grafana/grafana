@@ -686,7 +686,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect; @grafana/identity-access-team
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
