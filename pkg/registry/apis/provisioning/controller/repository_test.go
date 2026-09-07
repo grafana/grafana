@@ -1558,47 +1558,78 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
 }
 
-// TestRepositoryController_process_DeleteStatusPatchFailureRetries verifies that
-// when surfacing a delete failure on status itself fails (a transient API
-// error), the reconcile returns that error so the workqueue retries, rather
-// than forgetting the key without ever publishing the delete reason.
-func TestRepositoryController_process_DeleteStatusPatchFailureRetries(t *testing.T) {
-	now := metav1.Now()
-	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "test-repo",
-			Namespace:         "default",
-			DeletionTimestamp: &now,
-			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+// TestRepositoryController_process_DeleteStatusPatchFailure verifies how a
+// failed status write during delete-error handling is surfaced to the
+// workqueue: the patch error is returned so the delete reason is re-attempted
+// rather than the key being forgotten, but a retryable original delete error is
+// preferred so it is never dropped just because the patch happened to fail with
+// something non-retryable.
+func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
+	patchErr := errors.New("apiserver rejected the status patch")
+
+	tests := []struct {
+		name        string
+		buildErr    error
+		wantErrIs   error
+		description string
+	}{
+		{
+			name:        "non-retryable delete error returns the patch error",
+			buildErr:    fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied),
+			wantErrIs:   patchErr,
+			description: "a failed status patch must be returned so the delete reason is re-attempted",
 		},
-		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		{
+			name:        "retryable delete error is preferred over the patch error",
+			buildErr:    fmt.Errorf("create repository: %w", apierrors.NewServiceUnavailable("git server down")),
+			wantErrIs:   apierrors.NewServiceUnavailable("git server down"),
+			description: "a retryable delete error must not be dropped when the status patch also fails",
+		},
 	}
 
-	mockNamespaceLister := &MockRepositoryNamespaceLister{}
-	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
-	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
-	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			now := metav1.Now()
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-repo",
+					Namespace:         "default",
+					DeletionTimestamp: &now,
+					Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+			}
 
-	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
-	mockFactory := repository.NewMockFactory(t)
-	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+			mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-	patchErr := errors.New("apiserver unavailable")
-	patcher := &capturePatcher{err: patchErr}
-	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
-	rc := &RepositoryController{
-		repos:         repoGetter,
-		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
-		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		repoFactory:   mockFactory,
-		statusPatcher: patcher,
-		logger:        logging.DefaultLogger,
-		tracer:        tracing.InitializeTracerForTest(),
+			mockFactory := repository.NewMockFactory(t)
+			mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildErr)
+
+			patcher := &capturePatcher{err: patchErr}
+			repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+			rc := &RepositoryController{
+				repos:         repoGetter,
+				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+				healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+				repoFactory:   mockFactory,
+				statusPatcher: patcher,
+				logger:        logging.DefaultLogger,
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			_, err := rc.process("default/test-repo")
+			if tt.wantErrIs == patchErr {
+				require.ErrorIs(t, err, patchErr, tt.description)
+			} else {
+				require.Error(t, err, tt.description)
+				assert.True(t, apierrors.IsServiceUnavailable(err), tt.description)
+			}
+		})
 	}
-
-	_, err := rc.process("default/test-repo")
-	require.ErrorIs(t, err, patchErr, "a failed status patch must be returned so the reconcile is retried")
 }
 
 // TestRepositoryController_process_UserCausedBuildFailure verifies that a Build

@@ -811,25 +811,28 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			patchOps = append(patchOps, conditionPatchOps...)
 		}
 
+		var patchErr error
 		if len(patchOps) > 0 {
-			if patchErr := rc.statusPatcher.Patch(ctx, obj, patchOps...); patchErr != nil {
-				// Return the patch error so a transient API failure follows the
-				// retry path instead of silently forgetting the key without ever
-				// publishing the delete reason to the user.
+			if patchErr = rc.statusPatcher.Patch(ctx, obj, patchOps...); patchErr != nil {
 				logger.Error("failed to update repository health after delete error", "error", patchErr)
-				return repoType, patchErr
 			}
 		}
 
-		// A transient (retryable) failure still bubbles up so the workqueue retries
-		// it with backoff -- this is the same class the retry path already fast-
-		// retries. Everything else has been surfaced on status above and is only
-		// re-attempted on the next informer resync, so returning it would add
-		// nothing but ERROR-log noise while the finalizer stays stuck.
-		if apierrors.IsServiceUnavailable(err) {
+		// Surface a retryable failure to the workqueue, preferring the original
+		// delete error so a retryable one is never dropped when the status patch
+		// happens to fail with something non-retryable. A failed status patch is
+		// returned too rather than swallowed, so the delete reason is re-attempted
+		// instead of the key being forgotten without ever reaching the user. Only
+		// a Kubernetes 503 fast-retries; anything else is re-attempted on the next
+		// informer resync while the finalizer stays stuck.
+		switch {
+		case apierrors.IsServiceUnavailable(err):
 			return repoType, err
+		case patchErr != nil:
+			return repoType, patchErr
+		default:
+			return repoType, nil
 		}
-		return repoType, nil
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
