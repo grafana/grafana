@@ -101,6 +101,65 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 	require.Equal(t, 3, m["stats.repository."+string(provisioning.GitHubRepositoryType)+".count"]) // 1 + 2
 }
 
+// fleet-wide dimensions are aggregated from repository spec/status across namespaces.
+func TestMetricCollector_RepositoryDimensions(t *testing.T) {
+	unified := resource.NewMockResourceClient(t)
+	unified.EXPECT().
+		CountManagedObjects(mock.Anything, mock.Anything).
+		Return(managedCount(managedKind, 0), nil).
+		Once()
+
+	repoLister := func(ctx context.Context) ([]provisioning.Repository, error) {
+		return []provisioning.Repository{
+			{
+				// Healthy, sync enabled to instance, editable via write + branch,
+				// last sync succeeded, webhook explicitly disabled.
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+					Sync:      provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeInstance},
+					Webhook:   &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Health: provisioning.HealthStatus{Healthy: true},
+					Sync:   provisioning.SyncStatus{State: provisioning.JobStateSuccess},
+				},
+			},
+			{
+				// Unhealthy, read-only (no workflows), sync disabled to a folder,
+				// last sync errored.
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolder},
+				},
+				Status: provisioning.RepositoryStatus{
+					Health: provisioning.HealthStatus{Healthy: false},
+					Sync:   provisioning.SyncStatus{State: provisioning.JobStateError},
+				},
+			},
+		}, nil
+	}
+
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, unified)
+
+	m, err := fn(context.Background())
+	require.NoError(t, err)
+
+	require.Equal(t, 2, m["stats.repository.count"])
+	require.Equal(t, 1, m["stats.repository.healthy.count"])
+	require.Equal(t, 1, m["stats.repository.unhealthy.count"])
+	require.Equal(t, 1, m["stats.repository.sync_enabled.count"])
+	require.Equal(t, 1, m["stats.repository.read_only.count"])
+	require.Equal(t, 1, m["stats.repository.webhook_disabled.count"])
+	require.Equal(t, 1, m["stats.repository.workflow.write.count"])
+	require.Equal(t, 1, m["stats.repository.workflow.branch.count"])
+
+	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.SyncTargetTypeInstance)+".count"])
+	require.Equal(t, 1, m["stats.repository.sync_target."+string(provisioning.SyncTargetTypeFolder)+".count"])
+	require.Equal(t, 1, m["stats.repository.sync_state."+string(provisioning.JobStateSuccess)+".count"])
+	require.Equal(t, 1, m["stats.repository.sync_state."+string(provisioning.JobStateError)+".count"])
+}
+
 // an error from any namespace fails the whole collection (fail-fast).
 func TestMetricCollector_ErrorFailFast(t *testing.T) {
 	unified := resource.NewMockResourceClient(t)

@@ -51,8 +51,14 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		}
 
 		// Counts are aggregated across all namespaces into the same stat keys.
+		// Keys are fixed (bounded enums or booleans) so the phoned-home stat set
+		// stays stable and low cardinality -- per-repository detail lives in the
+		// reconcile snapshot log lines, not here.
 		managedCounts := make(map[string]int)
 		repoCounts := make(map[string]int)
+		syncTargetCounts := make(map[string]int)
+		syncStateCounts := make(map[string]int)
+		agg := repoAggregate{}
 		for _, ns := range nss {
 			nsSpanCtx, nsSpan := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats.countManagedObjects")
 
@@ -89,6 +95,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 
 			for _, repo := range repos {
 				repoCounts[string(repo.Spec.Type)]++
+				agg.observe(repo, syncTargetCounts, syncStateCounts)
 			}
 
 			nsSpan.SetAttributes(attribute.Int("totalRepositoriesCount", len(repos)))
@@ -104,7 +111,72 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		for k, v := range repoCounts {
 			m[fmt.Sprintf("stats.repository.%s.count", k)] = v
 		}
+		// Count repositories by sync target and by last sync state.
+		for k, v := range syncTargetCounts {
+			m[fmt.Sprintf("stats.repository.sync_target.%s.count", k)] = v
+		}
+		for k, v := range syncStateCounts {
+			m[fmt.Sprintf("stats.repository.sync_state.%s.count", k)] = v
+		}
+		// Fleet-wide repository dimensions. These complement the per-type counts
+		// above and mirror the dimensions carried by the reconcile snapshot logs.
+		m["stats.repository.count"] = agg.total
+		m["stats.repository.healthy.count"] = agg.healthy
+		m["stats.repository.unhealthy.count"] = agg.total - agg.healthy
+		m["stats.repository.sync_enabled.count"] = agg.syncEnabled
+		m["stats.repository.read_only.count"] = agg.readOnly
+		m["stats.repository.webhook_disabled.count"] = agg.webhookDisabled
+		m["stats.repository.workflow.write.count"] = agg.writeWorkflow
+		m["stats.repository.workflow.branch.count"] = agg.branchWorkflow
 
 		return m, nil
+	}
+}
+
+// repoAggregate accumulates fleet-wide repository dimensions while iterating the
+// repositories of every namespace. All fields are simple counters so the emitted
+// stat keys stay fixed and low cardinality.
+type repoAggregate struct {
+	total           int
+	healthy         int
+	syncEnabled     int
+	readOnly        int
+	webhookDisabled int
+	writeWorkflow   int
+	branchWorkflow  int
+}
+
+// observe folds a single repository into the aggregate. syncTargetCounts and
+// syncStateCounts are keyed by the repository's configured sync target and last
+// observed sync state respectively; empty values are skipped so unset fields do
+// not create an empty-string bucket.
+func (a *repoAggregate) observe(repo provisioning.Repository, syncTargetCounts, syncStateCounts map[string]int) {
+	a.total++
+	if repo.Status.Health.Healthy {
+		a.healthy++
+	}
+	if repo.Spec.Sync.Enabled {
+		a.syncEnabled++
+	}
+	// A repository with no write workflows cannot be edited (read-only).
+	if len(repo.Spec.Workflows) == 0 {
+		a.readOnly++
+	}
+	for _, w := range repo.Spec.Workflows {
+		switch w {
+		case provisioning.WriteWorkflow:
+			a.writeWorkflow++
+		case provisioning.BranchWorkflow:
+			a.branchWorkflow++
+		}
+	}
+	if repo.Spec.Webhook != nil && repo.Spec.Webhook.Disabled {
+		a.webhookDisabled++
+	}
+	if t := repo.Spec.Sync.Target; t != "" {
+		syncTargetCounts[string(t)]++
+	}
+	if s := repo.Status.Sync.State; s != "" {
+		syncStateCounts[string(s)]++
 	}
 }
