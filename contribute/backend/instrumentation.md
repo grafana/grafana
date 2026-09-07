@@ -142,6 +142,8 @@ To guarantee the existence of metrics before any observations have happened, you
 
 Register collectors on the `prometheus.Registerer` your service is given, using `promauto.With(reg)`. A nil registerer leaves the collectors unregistered, which is what tests usually want.
 
+These helpers handle nil registerers directly. `promauto.With(nil)` returns a factory whose `New*` methods create unregistered collectors. `prometheus.WrapRegistererWith` and `prometheus.WrapRegistererWithPrefix` also accept nil and return a no-op registerer, so callers do not need nil checks before using them.
+
 Do not declare collectors as package-level variables with `promauto.NewCounter` and friends. Those register on the global default registry at init, so they ignore the registry your service was wired with and they leak between tests.
 
 ### Duplicate registration
