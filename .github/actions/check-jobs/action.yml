@@ -1,5 +1,5 @@
 name: Check jobs results
-description: Checks if any jobs have failed and exits with error if failures are found. Use to check the results of matrix test runs.
+description: Checks if any jobs were unsuccessful and exits with error if failures or cancellations are found. Use to check the results of matrix test runs.
 inputs:
   needs:
     description: JSON string containing the needs context from the workflow
@@ -14,7 +14,7 @@ inputs:
     default: "All jobs passed successfully"
 outputs:
   any-failed:
-    description: Whether any jobs failed
+    description: Whether any jobs failed or were cancelled
     value: ${{ steps.check-jobs.outputs.any-failed }}
 
 runs:
@@ -33,14 +33,13 @@ runs:
         # Print the needs context, debugging
         echo "$NEEDS" | jq
 
-        # Extract failures
-        FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+        # Skipped jobs are expected when conditional test suites do not apply.
+        UNSUCCESSFUL="$(echo "$NEEDS" | jq 'with_entries(select(.value.result != "success" and .value.result != "skipped")) | map_values(.result)')"
 
-        # Check if there are any failures
-        if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+        if [ "$(echo "$UNSUCCESSFUL" | jq '. | length')" != "0" ]; then
           echo "❌ $FAILURE_MSG"
-          echo "Failed suites:"
-          echo "$FAILURES" | jq -r 'to_entries[] | "- \(.key): \(.value)"'
+          echo "Unsuccessful suites:"
+          echo "$UNSUCCESSFUL" | jq -r 'to_entries[] | "- \(.key): \(.value)"'
           echo "any-failed=true" >> "$GITHUB_OUTPUT"
           exit 1
         fi
