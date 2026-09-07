@@ -50,7 +50,7 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 		Healthy:              true,
 		ReadyReason:          provisioning.ReasonAvailable,
 		SyncState:            string(provisioning.JobStateSuccess),
-		LastSyncFinished:     1_600_000_000_000,
+		LastSyncFinishedAt:   1_600_000_000_000,
 		ManagedResourceCount: 10,
 		ManagedResources:     stats,
 	}, got)
@@ -144,7 +144,7 @@ func TestRepositoryUsageStatus_LogValues(t *testing.T) {
 		Healthy:              false,
 		ReadyReason:          provisioning.ReasonAuthenticationFailed,
 		SyncState:            "error",
-		LastSyncFinished:     42,
+		LastSyncFinishedAt:   42,
 		ManagedResourceCount: 5,
 	}
 
@@ -160,7 +160,7 @@ func TestRepositoryUsageStatus_LogValues(t *testing.T) {
 		"healthy", 0,
 		"readyReason", provisioning.ReasonAuthenticationFailed,
 		"syncState", "error",
-		"lastSyncFinished", int64(42),
+		"lastSyncFinishedAt", int64(42),
 		"managedResourceCount", int64(5),
 	}, s.LogValues())
 }

@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/api/meta"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -43,6 +44,13 @@ type ConnectionUsageStatus struct {
 	// WebhookDisabled reports that webhook integration is turned off for this
 	// connection (Spec.Webhook.Disabled).
 	WebhookDisabled bool
+}
+
+// LogConnectionUsageStatus emits the connection usage-status snapshot on logger.
+// Connection identity is expected to already be on logger (the reconcile logger
+// carries namespace and connection). Call it once per reconcile.
+func LogConnectionUsageStatus(logger logging.Logger, conn *provisioning.Connection) {
+	logger.Info(LogMessageConnectionUsageStatus, ConnectionUsageStatusFromConnection(conn).LogValues()...)
 }
 
 // ConnectionUsageStatusFromConnection builds a snapshot from the reconciled

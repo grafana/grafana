@@ -792,12 +792,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// no-op cycles below), so a point-in-time view of the fleet can be
 	// reconstructed from logs. This log line is load-bearing -- see the
 	// usage.RepositoryUsageStatus doc for why it exists, why metrics were not used
-	// instead, and how the two shapes below plot in Loki.
-	usageStatus := usage.RepositoryUsageStatusFromRepository(obj)
-	logger.Info(usage.LogMessageUsageStatus, usageStatus.LogValues()...)
-	for _, kv := range usageStatus.ManagedResourceLogValues() {
-		logger.Info(usage.LogMessageManagedResources, kv...)
-	}
+	// instead, and how it plots in Loki.
+	usage.LogRepositoryUsageStatus(logger, obj)
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers

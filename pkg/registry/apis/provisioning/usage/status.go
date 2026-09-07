@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/api/meta"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -106,13 +107,26 @@ type RepositoryUsageStatus struct {
 	ReadyReason string
 	// SyncState is the state of the last sync job (pending/working/success/error).
 	SyncState string
-	// LastSyncFinished is when the last sync finished, in epoch milliseconds.
-	LastSyncFinished int64
+	// LastSyncFinishedAt is when the last sync finished, in epoch milliseconds.
+	LastSyncFinishedAt int64
 	// ManagedResourceCount is the total number of resources managed by the
 	// repository as of its last sync.
 	ManagedResourceCount int64
 	// ManagedResources is the per-kind breakdown, one entry per group/resource.
 	ManagedResources []provisioning.ResourceCount
+}
+
+// LogRepositoryUsageStatus emits the repository usage-status snapshot on logger:
+// the repository-level LogMessageUsageStatus line plus one
+// LogMessageManagedResources line per managed-resource kind. Repository identity
+// is expected to already be on logger (the reconcile logger carries namespace,
+// repository, repositoryType, connection). Call it once per reconcile.
+func LogRepositoryUsageStatus(logger logging.Logger, repo *provisioning.Repository) {
+	status := RepositoryUsageStatusFromRepository(repo)
+	logger.Info(LogMessageUsageStatus, status.LogValues()...)
+	for _, kv := range status.ManagedResourceLogValues() {
+		logger.Info(LogMessageManagedResources, kv...)
+	}
 }
 
 // RepositoryUsageStatusFromRepository builds a snapshot from the reconciled
@@ -153,7 +167,7 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		Healthy:              repo.Status.Health.Healthy,
 		ReadyReason:          readyReason,
 		SyncState:            string(repo.Status.Sync.State),
-		LastSyncFinished:     repo.Status.Sync.Finished,
+		LastSyncFinishedAt:   repo.Status.Sync.Finished,
 		ManagedResourceCount: total,
 		ManagedResources:     repo.Status.Stats,
 	}
@@ -190,7 +204,7 @@ func (s RepositoryUsageStatus) LogValues() []any {
 		"healthy", boolToInt(s.Healthy),
 		"readyReason", s.ReadyReason,
 		"syncState", s.SyncState,
-		"lastSyncFinished", s.LastSyncFinished,
+		"lastSyncFinishedAt", s.LastSyncFinishedAt,
 		"managedResourceCount", s.ManagedResourceCount,
 	}
 }

@@ -312,7 +312,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	// Log a connection usage-status snapshot on every reconcile (including no-op
 	// cycles), the connection counterpart of the repository usage status; see
 	// usage.ConnectionUsageStatus.
-	logger.Info(usage.LogMessageConnectionUsageStatus, usage.ConnectionUsageStatusFromConnection(conn).LogValues()...)
+	usage.LogConnectionUsageStatus(logger, conn)
 
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
