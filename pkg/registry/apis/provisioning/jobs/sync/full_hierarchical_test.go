@@ -17,7 +17,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -420,7 +419,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			quotaTracker.EXPECT().Release().Maybe()
 			quotaTracker.EXPECT().AllowOverLimit(mock.Anything).Maybe()
 
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, false, 0)
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, false, 0)
 
 			if tt.expectError {
 				require.Error(t, err)

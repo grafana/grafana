@@ -10,18 +10,15 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
-	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// noopTracer is a no-op tracer for the many factory tests that don't assert on spans.
-var noopTracer = noop.NewTracerProvider().Tracer("test")
 
 func TestProvideFactory(t *testing.T) {
 	tests := []struct {
@@ -73,7 +70,7 @@ func TestProvideFactory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			extras := tt.setupExtras(t)
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -166,7 +163,7 @@ func TestFactory_Types(t *testing.T) {
 				extras = append(extras, extra)
 			}
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
 			require.NoError(t, err)
 
 			types := factory.Types()
@@ -310,7 +307,7 @@ func TestFactory_Build(t *testing.T) {
 
 			extras, expectedConnection, _ := tt.setupExtras(t, ctx)
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
 			require.NoError(t, err)
 
 			conn := &provisioning.Connection{
@@ -352,7 +349,6 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 	factory, err := connection.ProvideFactory(
 		map[provisioning.ConnectionType]struct{}{provisioning.GithubConnectionType: {}},
 		[]connection.Extra{extra},
-		tp.Tracer("test"),
 	)
 	require.NoError(t, err)
 
@@ -361,7 +357,9 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
 	}
 
-	_, err = factory.Build(context.Background(), conn)
+	// The factory reads the tracer from the context, so inject it here.
+	ctx := tracing.WithTracer(context.Background(), tp.Tracer("test"))
+	_, err = factory.Build(ctx, conn)
 	require.NoError(t, err)
 
 	var buildSpan sdktrace.ReadOnlySpan
@@ -496,7 +494,7 @@ func TestFactory_Mutate(t *testing.T) {
 				extras = append(extras, tt.setupExtras(t, ctx, tt.obj)...)
 			}
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
 			require.NoError(t, err)
 
 			err = factory.Mutate(ctx, tt.obj)
@@ -719,7 +717,7 @@ func TestFactory_Validate(t *testing.T) {
 			ctx := context.Background()
 			extras := tt.setupExtras(t, ctx)
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
 			require.NoError(t, err)
 
 			var obj runtime.Object = tt.connection
