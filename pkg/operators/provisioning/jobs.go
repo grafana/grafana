@@ -80,6 +80,7 @@ func buildDriver(
 		jobHistoryWriter,
 		registry,
 		metrics,
+		tracer,
 		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)

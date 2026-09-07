@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -67,7 +68,7 @@ type RepositoryController struct {
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
-	processFn         func(key string) error
+	processFn         func(ctx context.Context, key string) error
 	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
@@ -333,7 +334,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		rc.processed.RecordProcessed(trigger)
 	}
 
-	err := rc.processFn(key)
+	err := rc.processFn(ctx, key)
 	if err == nil {
 		rc.queue.Forget(key)
 		return true
@@ -691,17 +692,37 @@ func repoSpanAttrs(obj *provisioning.Repository) trace.SpanStartOption {
 }
 
 //nolint:gocyclo
-func (rc *RepositoryController) process(key string) (err error) {
+func (rc *RepositoryController) process(ctx context.Context, key string) (err error) {
 	logger := rc.logger.With("key", key)
-	ctx := logging.Context(context.Background(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
 	}
 
-	// process runs from a background context, so this opens a fresh trace per
-	// reconcile whose children show where the reconcile spends its time.
+	// Reconcile the object the read seam returns; how it is sourced and kept
+	// fresh is the informer.RepositoryGetter's concern, not the controller's.
+	obj, err := rc.repos.Get(ctx, namespace, name)
+	switch {
+	case apierrors.IsNotFound(err):
+		return errors.New("repository not found")
+	case err != nil:
+		return err
+	}
+
+	// Continue the trace of whatever last wrote this repository (the request
+	// that changed its spec, or created it), so a spec-change or
+	// resync-driven sync job traces back to that request instead of a
+	// disconnected root. A no-op if the object carries no trace annotation --
+	// in that case (and for every controller-driven reconcile that isn't
+	// itself request-triggered, e.g. a periodic resync) this still opens a
+	// fresh root, same as before.
+	ctx = utils.ExtractTraceContext(ctx, obj.Annotations)
+
+	// process runs from a worker/background context with no active span
+	// (unless bridged above), so this opens a fresh trace per reconcile whose
+	// children show where the reconcile spends its time.
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.reconcile",
 		trace.WithAttributes(
 			attribute.String("repository.namespace", namespace),
@@ -714,16 +735,6 @@ func (rc *RepositoryController) process(key string) (err error) {
 			_ = tracing.Error(span, err)
 		}
 	}()
-
-	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the informer.RepositoryGetter's concern, not the controller's.
-	obj, err := rc.repos.Get(ctx, namespace, name)
-	switch {
-	case apierrors.IsNotFound(err):
-		return errors.New("repository not found")
-	case err != nil:
-		return err
-	}
 
 	logger = logger.With(
 		"namespace", namespace,

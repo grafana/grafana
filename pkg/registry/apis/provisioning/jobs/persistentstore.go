@@ -20,6 +20,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -548,13 +549,19 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	// provisioning identity: user-triggered flows keep the requesting user in
 	// context, while background callers (repository controller, webhooks)
 	// establish the provisioning identity themselves before calling Insert.
+	// Stamp the caller's trace context onto the job so that whichever operator
+	// process eventually claims and executes it (possibly on a different pod,
+	// reached via NATS) can continue this trace instead of starting a
+	// disconnected root. A no-op if ctx carries no live span.
+	annotations := utils.SetTraceContext(ctx, webhookAttributionFromContext(ctx))
+
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
-			Annotations: webhookAttributionFromContext(ctx),
+			Annotations: annotations,
 		},
 		Spec: spec,
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -18,6 +19,7 @@ import (
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -95,6 +97,15 @@ type jobProcessor struct {
 	// latency) once a claim confirms a genuine pickup.
 	processed *usinformer.ProcessedMetrics
 
+	// tracer creates the real, exported span that bridges a job's trace
+	// annotation (see withJobTraceParent) into ctx. This must be a real
+	// tracer, not the package-level tracing.Start helper: a context
+	// carrying only a reconstructed remote SpanContext has no
+	// TracerProvider of its own (see trace.ContextWithRemoteSpanContext),
+	// so tracing.Start's "read the provider off the current span" trick
+	// would silently no-op for every job claimed across a process boundary.
+	tracer tracing.Tracer
+
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -109,6 +120,7 @@ func newJobProcessor(
 	driverID string,
 	metrics *JobMetrics,
 	processed *usinformer.ProcessedMetrics,
+	tracer tracing.Tracer,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{
@@ -121,6 +133,7 @@ func newJobProcessor(
 		driverID:             driverID,
 		metrics:              metrics,
 		processed:            processed,
+		tracer:               tracer,
 	}
 }
 
@@ -187,6 +200,15 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		attribute.String("job.repository", claimedJob.Spec.Repository),
 		attribute.String("job.action", string(claimedJob.Spec.Action)),
 	)
+
+	// Continue the trace of whatever created this job (an HTTP request, a
+	// webhook, or a controller-driven sync) rather than the claim operation
+	// above: the object -- and its trace annotation -- only became available
+	// once the claim succeeded. Everything from here on, including the
+	// process_job span and the eventual Complete call, becomes part of that
+	// original trace.
+	ctx, jobSpan := d.withJobTraceParent(ctx, claimedJob)
+	defer jobSpan.End()
 
 	// Now that we have a job, we need to augment our namespace to grant ourselves permission to work on it.
 	// Incidentally, this also limits our permissions to only the namespace of the job.
@@ -431,6 +453,28 @@ func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.
 		return ctx
 	}
 	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
+}
+
+// withJobTraceParent continues the trace that created this job, via the
+// traceparent annotation stamped by Insert (see utils.SetTraceContext), by
+// starting a real span bound to the driver's tracer. A reconstructed remote
+// SpanContext alone is not enough: per the OpenTelemetry API,
+// trace.ContextWithRemoteSpanContext attaches a non-recording span with no
+// TracerProvider of its own, so every downstream tracing.Start call in this
+// package -- which resolves its provider from the current span in ctx --
+// would silently stay a no-op even though a parent trace exists. Starting a
+// real span here, bound to a real TracerProvider, fixes that for the rest of
+// this job's processing.
+//
+// Returns ctx and a no-op span, unchanged, if the job carries no trace
+// annotation (e.g. it was created from a context without a live span) --
+// there is nothing to bridge.
+func (d *jobProcessor) withJobTraceParent(ctx context.Context, job *provisioning.Job) (context.Context, trace.Span) {
+	parentCtx := utils.ExtractTraceContext(ctx, job.Annotations)
+	if parentCtx == ctx {
+		return ctx, trace.SpanFromContext(ctx)
+	}
+	return d.tracer.Start(parentCtx, "provisioning.jobs.job")
 }
 
 func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecorder) error {
