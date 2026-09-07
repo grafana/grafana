@@ -791,9 +791,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Log a repository usage-status snapshot on every reconcile (including the
 	// no-op cycles below), so a point-in-time view of the fleet can be
 	// reconstructed from logs. This log line is load-bearing -- see the
-	// usage.RepositoryUsageStatus doc for why it exists and why metrics were not
-	// used instead.
-	logger.Info("repository usage status", usage.RepositoryUsageStatusFromRepository(obj).LogValues()...)
+	// usage.RepositoryUsageStatus doc for why it exists, why metrics were not used
+	// instead, and how the two shapes below plot in Loki.
+	usageStatus := usage.RepositoryUsageStatusFromRepository(obj)
+	logger.Info(usage.LogMessageUsageStatus, usageStatus.LogValues()...)
+	for _, kv := range usageStatus.ManagedResourceLogValues() {
+		logger.Info(usage.LogMessageManagedResources, kv...)
+	}
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
