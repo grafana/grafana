@@ -357,6 +357,10 @@ func TestIntegrationProvisioning_UnhealthyRepositorySkipsJobs(t *testing.T) {
 	job := helper.CreatePullJob(t, repo+"-job", repo)
 	completed := helper.AwaitJob(t, job)
 	common.RequireJobWarning(t, completed)
+	// Assert the exact skip message so this proves the auth-failure gate fired,
+	// not some other warning that happens to leave the job in a warning state.
+	completedJob := common.MustFromUnstructured[provisioning.Job](t, completed)
+	common.RequireJobWarningContains(t, completedJob, "repository authentication failed - job skipped")
 }
 
 // parseTestResults extracts TestResults from the API response
