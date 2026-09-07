@@ -32,15 +32,14 @@ type fakeStorage struct {
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
 
-	// latestRvOverride pins the RV ListModifiedSince reports as its
-	// snapshot ceiling. Set it below an RV in changes to stand in for a
-	// write that commits after the snapshot is taken but is still yielded
-	// by the iterator.
-	latestRvOverride int64
+	latestRvOverride int64 // RV reported as the snapshot ceiling, instead of the highest in changes
+	lookback         int64 // widens the listing floor to sinceRv-lookback, like the backend's searchLookback
 
 	// onYield, if set, fires once per resource the ListModifiedSince
 	// iterator yields — lets tests observe iterator progress at each flush.
 	onYield func()
+
+	lastCalledWith []*time.Time // the lastCalledWithSinceRv argument of every ListModifiedSince call
 
 	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
 	// -> title. An unset entry reads as NotFound.
@@ -148,9 +147,10 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	return out, nil
 }
 
-func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.lastCalledWith = append(f.lastCalledWith, lastCalledWithSinceRv)
 	if f.listErr != nil {
 		err := f.listErr
 		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
@@ -176,7 +176,13 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 		if key.Namespace != "" && c.Key.Namespace != key.Namespace {
 			continue
 		}
-		if c.ResourceVersion <= sinceRv {
+		// A non-nil lastCalledWithSinceRv makes the real backend skip its
+		// lookback window, so mirror that here.
+		floor := sinceRv
+		if lastCalledWithSinceRv == nil {
+			floor -= f.lookback
+		}
+		if c.ResourceVersion <= floor {
 			continue
 		}
 		matches = append(matches, c)
@@ -347,6 +353,15 @@ func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel ve
 	}
 	return int64(len(sel.UIDs)), false, nil
 }
+
+// storedContentFor returns the subresource content currently indexed for
+// a UID, so tests can assert a replay left it alone.
+func (f *fakeVector) storedContentFor(ns, res, uid string) map[string]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return maps.Clone(f.storedSubs[subsKey(ns, testModel, res, uid)])
+}
+
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()

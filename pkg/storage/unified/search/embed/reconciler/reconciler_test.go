@@ -56,9 +56,9 @@ func multiPanelDashboard(uid, title string, n int) []byte {
 	return body
 }
 
-// newReconciler builds a Reconciler without running startupReconcile. Tests that
-// want startupReconcile should set vec.latestRV first (so startupReconcile doesn't
-// short-circuit on RV=0) and call s.startupReconcile(ctx) explicitly.
+// newReconciler builds a Reconciler without running a cycle. Tests that
+// want the sweep should set vec.latestRV first (so the sweep doesn't
+// short-circuit on RV=0) and call s.sweep(ctx) explicitly.
 func newReconciler(t *testing.T, st *fakeStorage, vec *fakeVector) (*Reconciler, *fakeText) {
 	t.Helper()
 	text := &fakeText{dim: 4}
@@ -230,7 +230,6 @@ func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 
 	assert.Equal(t, 2, text.calls, "one EmbedText call per dashboard")
 	require.Len(t, vec.upserts, 2, "one Upsert per dashboard")
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
 func TestReconciler_HappyPath_StampsBuilderVersion(t *testing.T) {
@@ -272,39 +271,7 @@ func TestReconciler_DeleteEvent_CallsVectorDelete(t *testing.T) {
 
 	require.Len(t, vec.deletes, 1)
 	assert.Equal(t, deleteCall{Namespace: "ns", Model: testModel, Resource: dashRes, UID: "dash-x"}, vec.deletes[0])
-	assert.Equal(t, int64(50), vec.latestRV)
 	assert.Equal(t, 0, text.calls, "delete does not call the embedder")
-}
-
-func TestReconciler_PerEventFailure_BlocksAdvanceAtFailureRV(t *testing.T) {
-	// Three dashboards: two succeed at RVs 100 and 300, one fails at 200.
-	// Cursor advances to 199 so the failure is retried next cycle and
-	// the unrelated successes don't get rolled back.
-	vec := newFakeVector()
-	vec.upsertErrFn = func(vs []vector.Vector) error {
-		for _, v := range vs {
-			if v.UID == "boom" {
-				return errBoom
-			}
-		}
-		return nil
-	}
-	s, _ := newReconciler(t, &fakeStorage{}, vec)
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "ok-a", 100, minimalDashboard("ok-a", "OK A")))
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "boom", 200, minimalDashboard("boom", "Boom")))
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "ok-b", 300, minimalDashboard("ok-b", "OK B")))
-
-	s.processPending(context.Background())
-
-	// ok-a and ok-b succeeded; boom failed and is re-queued.
-	require.Len(t, vec.upserts, 2)
-	assert.Equal(t, int64(199), vec.latestRV)
-
-	// boom should be back in the queue.
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	_, hasBoom := s.pending[pendingKey(dashGroup, dashRes, "ns", "boom")]
-	assert.True(t, hasBoom)
 }
 
 func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
@@ -360,7 +327,6 @@ func TestReconciler_PartialReembed_OnlyChangedPanel(t *testing.T) {
 	assert.Equal(t, 2, text.calls)
 	assert.Equal(t, []int{1}, text.textSets[1], "embedder called with exactly one text")
 	assert.Empty(t, vec.delsubs, "nothing deleted; every panel is still desired")
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
 // Re-processing identical content writes nothing but still advances the checkpoint.
@@ -380,7 +346,6 @@ func TestReconciler_PartialReembed_NoChangeSkipsWrite(t *testing.T) {
 	require.Len(t, vec.upserts, 1, "no re-embed when content is unchanged")
 	assert.Equal(t, 1, text.calls, "embedder not called again")
 	assert.Empty(t, vec.delsubs, "nothing deleted")
-	assert.Equal(t, int64(200), vec.latestRV, "cursor still advances on a no-op write")
 }
 
 // dashboardInFolder sets the folder UID via the grafana.app/folder annotation.
@@ -481,7 +446,6 @@ func TestReconciler_PartialReembed_DeleteOnly(t *testing.T) {
 	assert.Equal(t, 1, text.calls, "no embed; surviving panels unchanged")
 	require.Len(t, vec.delsubs, 1, "the removed panel is deleted")
 	assert.ElementsMatch(t, []string{"panel/3"}, vec.delsubs[0].Subresources)
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
 // Two panels can map to the same subresource (explicit id N and an
@@ -514,21 +478,21 @@ func TestReconciler_PartialReembed_SubresourceCollision_DeletesStale(t *testing.
 	assert.ElementsMatch(t, []string{"panel/9"}, vec.delsubs[0].Subresources)
 }
 
-func TestReconciler_MonotonicCheckpoint(t *testing.T) {
+// The same resource written again at a higher RV re-embeds on the next
+// cycle; dedup keeps the newer copy rather than the one already queued.
+func TestReconciler_SameResourceHigherRV_ReembedsNextCycle(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
 	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 1)
-	require.Equal(t, int64(100), vec.latestRV)
 	require.Equal(t, 1, text.calls)
 
 	// Same dashboard at a higher RV: dedup keeps the new one.
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, minimalDashboard("dash-1", "Dash 1 v2")))
 	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 2)
-	require.Equal(t, int64(200), vec.latestRV)
 	require.Equal(t, 2, text.calls)
 }
 
@@ -551,9 +515,9 @@ func TestReconciler_UnknownAction_BlocksAdvance(t *testing.T) {
 	assert.Equal(t, int64(49), vec.latestRV, "checkpoint stops at (failed - 1)")
 }
 
-// ---------- Bootstrap ----------
+// ---------- Sweep ----------
 
-func TestReconciler_Bootstrap_SkipsWhenCursorIsZero(t *testing.T) {
+func TestReconciler_Sweep_SkipsWhenCursorIsZero(t *testing.T) {
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")),
@@ -561,15 +525,15 @@ func TestReconciler_Bootstrap_SkipsWhenCursorIsZero(t *testing.T) {
 	vec := newFakeVector() // latestRV stays 0
 	s, text := newReconciler(t, st, vec)
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 	s.processPending(context.Background())
 
-	assert.Empty(t, vec.upserts, "startupReconcile is a no-op when cursor is 0")
+	assert.Empty(t, vec.upserts, "the sweep is a no-op when cursor is 0")
 	assert.Equal(t, 0, text.calls)
 }
 
-func TestReconciler_Bootstrap_PullsCrossNamespaceEvents(t *testing.T) {
-	// Cursor non-zero → startupReconcile walks every namespace in one pass via
+func TestReconciler_Sweep_PullsCrossNamespaceEvents(t *testing.T) {
+	// Cursor non-zero → the sweep walks every namespace in one pass via
 	// cross-namespace ListModifiedSince, enqueues each event, processes
 	// them per-dashboard.
 	st := &fakeStorage{}
@@ -581,7 +545,7 @@ func TestReconciler_Bootstrap_PullsCrossNamespaceEvents(t *testing.T) {
 	vec.latestRV = snowflakeRV(50) // anything below the change RVs
 	s, text := newReconciler(t, st, vec)
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 	s.processPending(context.Background())
 
 	require.Len(t, vec.upserts, 2)
@@ -589,7 +553,7 @@ func TestReconciler_Bootstrap_PullsCrossNamespaceEvents(t *testing.T) {
 	assert.Equal(t, snowflakeRV(200), vec.latestRV)
 }
 
-func TestReconciler_Bootstrap_FiltersBelowCursor(t *testing.T) {
+func TestReconciler_Sweep_FiltersBelowCursor(t *testing.T) {
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "old", snowflakeRV(100), minimalDashboard("old", "Old")),
@@ -599,12 +563,11 @@ func TestReconciler_Bootstrap_FiltersBelowCursor(t *testing.T) {
 	vec.latestRV = snowflakeRV(150)
 	s, _ := newReconciler(t, st, vec)
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 	s.processPending(context.Background())
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "new", vec.upserts[0][0].UID)
-	assert.Equal(t, snowflakeRV(200), vec.latestRV)
 }
 
 // ---------- Watch path ----------
@@ -623,7 +586,6 @@ func TestReconciler_WatchEvent_DrivesNextCycle(t *testing.T) {
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, 1, text.calls)
-	assert.Equal(t, int64(100), vec.latestRV)
 }
 
 func TestReconciler_WatchConsumer_IgnoresUnrelatedResources(t *testing.T) {
@@ -680,7 +642,6 @@ func TestReconciler_EnqueueDedup_KeepsHighestRV(t *testing.T) {
 	require.Len(t, vec.upserts, 1)
 	require.Len(t, vec.upserts[0], 1)
 	assert.Equal(t, int64(200), vec.upserts[0][0].ResourceVersion)
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
 func TestReconciler_EnqueueDedup_DeleteOverridesOlderUpsert(t *testing.T) {
@@ -695,11 +656,12 @@ func TestReconciler_EnqueueDedup_DeleteOverridesOlderUpsert(t *testing.T) {
 	assert.Empty(t, vec.upserts, "older upsert overridden by newer delete")
 	require.Len(t, vec.deletes, 1)
 	assert.Equal(t, "dash", vec.deletes[0].UID)
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
-// Events at or below the cursor were already processed; they're filtered
-// out and only newer ones embed. The cursor advances to the max.
+// Events at or below the cursor were covered by the walk that moved the
+// cursor there, so the live path filters them out: they cost an embed
+// call, and a late copy would overwrite the newer content that walk
+// already indexed.
 func TestReconciler_FiltersEventsAtOrBelowCursor(t *testing.T) {
 	vec := newFakeVector()
 	vec.latestRV = snowflakeRV(150)
@@ -708,12 +670,20 @@ func TestReconciler_FiltersEventsAtOrBelowCursor(t *testing.T) {
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "old", snowflakeRV(100), minimalDashboard("old", "Old")))
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "new", snowflakeRV(200), minimalDashboard("new", "New")))
 
-	s.processPending(context.Background())
+	s.processPending(t.Context())
 
 	assert.Equal(t, 1, text.calls)
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "new", vec.upserts[0][0].UID)
-	assert.Equal(t, snowflakeRV(200), vec.latestRV)
+
+	// A late copy of "new" from below the cursor must not replace what is
+	// already indexed for it.
+	indexed := vec.storedContentFor("ns", dashRes, "new")
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "new", snowflakeRV(140), minimalDashboard("new", "Stale")))
+	s.processPending(t.Context())
+
+	assert.Len(t, vec.upserts, 1, "the stale copy is not embedded")
+	assert.Equal(t, indexed, vec.storedContentFor("ns", dashRes, "new"), "indexed content untouched")
 }
 
 // ---------- Retry cap ----------
@@ -730,19 +700,12 @@ func TestReconciler_RetryCap_DropsEventAfterMaxAttempts(t *testing.T) {
 
 	require.Equal(t, 0, s.pendingLen(), "event dropped after max attempts")
 	assert.Empty(t, vec.upserts)
-	// First failure pinned the cursor at lowestFailedRv-1 (= 99). On
-	// the give-up cycle the failure no longer pins it, but no successful
-	// event has a higher RV, so the cursor stays at 99 until something
-	// past it succeeds.
-	assert.Equal(t, int64(99), vec.latestRV)
 
-	// A subsequent healthy event proves the reconciler is unblocked and
-	// advances the cursor.
+	// A subsequent healthy event proves the reconciler is unblocked.
 	vec.upsertErr = nil
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns-other", "ok", 200, minimalDashboard("ok", "OK")))
 	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 1)
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
 func TestReconciler_RetryCap_FreshHigherRVResetsBudget(t *testing.T) {
@@ -759,7 +722,6 @@ func TestReconciler_RetryCap_FreshHigherRVResetsBudget(t *testing.T) {
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, int64(200), vec.upserts[0][0].ResourceVersion)
-	assert.Equal(t, int64(200), vec.latestRV)
 }
 
 func TestReconciler_RetryCap_ReEnqueuePreservesAttempts(t *testing.T) {
@@ -839,13 +801,13 @@ func TestReconciler_AcquireLockBlocking_RespectsContextCancel(t *testing.T) {
 
 // ---------- Startup pagination ----------
 
-// TestReconciler_StartupReconcile_FlushesAtBatchSize verifies that
-// startupReconcile drains the listing iterator in startupBatchSize-sized
+// TestReconciler_Sweep_FlushesAtBatchSize verifies that
+// the sweep drains the listing iterator in startupBatchSize-sized
 // chunks (so memory stays bounded) but advances the cursor exactly once
 // at the end. Advancing per batch would lose events: the event store
 // yields RV-descending, so the first (highest-RV) batch would bump the
 // cursor past every later, lower-RV batch.
-func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
+func TestReconciler_Sweep_FlushesAtBatchSize(t *testing.T) {
 	prev := startupBatchSize
 	startupBatchSize = 3
 	t.Cleanup(func() { startupBatchSize = prev })
@@ -863,7 +825,7 @@ func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 	vec.latestRV = snowflakeRV(50)
 	s, _ := newReconciler(t, st, vec)
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 
 	require.Len(t, vec.upserts, 7, "every event must be processed across batched flushes")
 	assert.Equal(t, snowflakeRV(160), vec.latestRV, "cursor advances to highest RV")
@@ -871,13 +833,13 @@ func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 	assert.Equal(t, 1, vec.setLatestRVCalls, "cursor advances exactly once at end of startup")
 }
 
-// TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents is the
-// regression test for the bug where startupReconcile flushed each
+// TestReconciler_Sweep_DescOrderDoesNotDropEvents is the regression
+// test for the bug where the sweep flushed each
 // batch via processBatch (which advances the cursor) while the event
 // store yields RV-descending. The first batch held the highest RVs, the
 // cursor jumped past every subsequent (lower-RV) batch's events, and
 // they were silently filtered out by the "ev.rv <= sinceRv" guard.
-func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
+func TestReconciler_Sweep_DescOrderDoesNotDropEvents(t *testing.T) {
 	prev := startupBatchSize
 	startupBatchSize = 2
 	t.Cleanup(func() { startupBatchSize = prev })
@@ -895,7 +857,7 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	vec.latestRV = snowflakeRV(50)
 	s, _ := newReconciler(t, st, vec)
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 
 	assert.Len(t, vec.upserts, 6, "every event embedded even though batches arrive in DESC order")
 	assert.Equal(t, snowflakeRV(150), vec.latestRV)
@@ -905,7 +867,7 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 // observe it via the lazily-pulled iterator: yields-at-each-upsert is
 // [1,2,..] when flushing per event, [N,N,..] for one terminal flush. The
 // end-state invariants alone can't see the byte branch.
-func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
+func TestReconciler_Sweep_FlushesAtByteBudget(t *testing.T) {
 	// run returns the iterator-yield count observed at each upsert.
 	run := func(t *testing.T, capBytes int) []int {
 		prevCount, prevBytes := startupBatchSize, maxStartupBatchBytes
@@ -932,7 +894,7 @@ func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
 		vec.onUpsert = func() { atUpsert = append(atUpsert, yielded) }
 
 		s, _ := newReconciler(t, st, vec)
-		s.startupReconcile(context.Background())
+		s.sweep(context.Background())
 
 		require.Len(t, vec.upserts, 6, "every event embedded")
 		assert.Equal(t, snowflakeRV(150), vec.latestRV, "cursor advances to highest RV")
@@ -952,9 +914,9 @@ func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
 }
 
 // When SetLatestRV fails after the embeds succeeded, the cursor stays
-// put and the next run re-lists from it. Nothing is re-enqueued: only a
-// re-walk can prove the RV again.
-func TestReconciler_StartupReconcile_CheckpointWriteFailure_RetriesNextRun(t *testing.T) {
+// put and the next sweep re-lists from it. Nothing is re-enqueued: only
+// a re-walk can prove the RV again.
+func TestReconciler_Sweep_CheckpointWriteFailure_RetriesNextRun(t *testing.T) {
 	st := &fakeStorage{changes: []*resource.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
 	}}
@@ -963,16 +925,16 @@ func TestReconciler_StartupReconcile_CheckpointWriteFailure_RetriesNextRun(t *te
 	vec.setLatestRVErr = errBoom
 	s, _ := newReconciler(t, st, vec)
 
-	s.startupReconcile(t.Context())
+	s.sweep(t.Context())
 
 	require.Len(t, vec.upserts, 1, "embeds succeeded even though the cursor write failed")
 	assert.Equal(t, snowflakeRV(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
 	assert.Zero(t, s.pendingLen(), "nothing queued; the next walk re-proves the RV")
 
 	vec.setLatestRVErr = nil
-	s.startupReconcile(t.Context())
+	s.sweep(t.Context())
 
-	assert.Equal(t, snowflakeRV(100), vec.latestRV, "the next run advances the cursor")
+	assert.Equal(t, snowflakeRV(100), vec.latestRV, "the next sweep advances the cursor")
 }
 
 // A successful embed releases the event's value, so a caller
@@ -984,7 +946,7 @@ func TestReconciler_EmbeddedValueReleasedAndReplaysAsNoOp(t *testing.T) {
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 	ev := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-0", snowflakeRV(100), minimalDashboard("dash-0", "Dash 0"))
 
-	_, _, failed, successes, abort := s.processEvents(t.Context(), snowflakeRV(50), []*pendingEvent{ev})
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{ev})
 	require.False(t, abort)
 	require.Empty(t, failed)
 	require.Len(t, successes, 1)
@@ -999,12 +961,12 @@ func TestReconciler_EmbeddedValueReleasedAndReplaysAsNoOp(t *testing.T) {
 	assert.Empty(t, vec.deletes, "replay does not delete")
 }
 
-// TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
-// that a watch event queued while bootstrap is iterating is left in the
+// TestReconciler_Sweep_DoesNotProcessWatchEvents verifies
+// that a watch event queued while the sweep is iterating is left in the
 // global queue and is NOT processed mid-batch. If it were, its higher
 // RV would advance the cursor past iter events not yet yielded, which
 // would then be filtered out and never embedded.
-func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
+func TestReconciler_Sweep_DoesNotProcessWatchEvents(t *testing.T) {
 	prev := startupBatchSize
 	startupBatchSize = 2
 	t.Cleanup(func() { startupBatchSize = prev })
@@ -1022,35 +984,36 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 	s, _ := newReconciler(t, st, vec)
 
 	// Pre-seed the global queue with a watch event at a much higher RV
-	// for an unrelated dashboard. If bootstrap incorrectly drained the
+	// for an unrelated dashboard. If the sweep incorrectly drained the
 	// global queue, this RV (9999) would become the new cursor and the
 	// remaining iter events would be filtered out.
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "watch-only", snowflakeRV(9999),
 		minimalDashboard("watch-only", "Watch Only")))
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 
 	// All 4 iter events embedded, watch event still queued.
-	require.Len(t, vec.upserts, 4, "all iter events processed during bootstrap")
+	require.Len(t, vec.upserts, 4, "all iter events processed by the sweep")
 	for _, batch := range vec.upserts {
 		require.NotEmpty(t, batch)
-		assert.NotEqual(t, "watch-only", batch[0].UID, "watch event must not be processed during bootstrap")
+		assert.NotEqual(t, "watch-only", batch[0].UID, "watch event must not be processed by the sweep")
 	}
-	assert.Equal(t, snowflakeRV(130), vec.latestRV, "cursor stays within iter range during bootstrap")
+	assert.Equal(t, snowflakeRV(130), vec.latestRV, "cursor stays within the swept range")
 	assert.Equal(t, 1, s.pendingLen(), "watch event remains in global queue for the next cycle")
 
-	// A subsequent processPending (Run's first cycle) drains the watch event.
+	// A subsequent processPending drains the watch event.
 	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 5)
 	assert.Equal(t, "watch-only", vec.upserts[4][0].UID)
-	assert.Equal(t, snowflakeRV(9999), vec.latestRV)
+	assert.Equal(t, snowflakeRV(130), vec.latestRV,
+		"draining live events does not move the cursor past the swept window")
 }
 
-// TestReconciler_StartupReconcile_SkipsIterEventsSupersededByWatch
+// TestReconciler_Sweep_SkipsIterEventsSupersededByWatch
 // verifies the iter-side dedup: when watch has already queued a newer
 // event for a dashboard, the iter's older copy is dropped before
 // processing rather than wasting an embed call.
-func TestReconciler_StartupReconcile_SkipsIterEventsSupersededByWatch(t *testing.T) {
+func TestReconciler_Sweep_SkipsIterEventsSupersededByWatch(t *testing.T) {
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "shared", snowflakeRV(100), minimalDashboard("shared", "v1")),
@@ -1064,9 +1027,9 @@ func TestReconciler_StartupReconcile_SkipsIterEventsSupersededByWatch(t *testing
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "shared", snowflakeRV(500),
 		minimalDashboard("shared", "v2")))
 
-	s.startupReconcile(context.Background())
+	s.sweep(context.Background())
 
-	// "other" is processed by bootstrap; "shared" is skipped because
+	// "other" is processed by the sweep; "shared" is skipped because
 	// watch's @500 supersedes iter's @100.
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "other", vec.upserts[0][0].UID)
@@ -1221,7 +1184,7 @@ func TestReconciler_Run_ContextCancelDuringLockWait(t *testing.T) {
 }
 
 // TestReconciler_Run_RunsStartupAndCycles asserts the end-to-end
-// behavior: Run executes startupReconcile (embedding the pre-existing
+// behavior: Run sweeps immediately (embedding the pre-existing
 // changes) and then ticks the queue (embedding watch-style events
 // pushed onto the queue). Both must land in vec.upserts before ctx
 // is cancelled.
@@ -1231,7 +1194,7 @@ func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", snowflakeRV(100), minimalDashboard("startup-1", "Startup 1")),
 	}
 	vec := newFakeVector()
-	vec.latestRV = snowflakeRV(50) // > 0 so startupReconcile actually runs
+	vec.latestRV = snowflakeRV(50) // > 0 so the sweep actually runs
 	s, _ := newRunnable(t, st, vec)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1244,7 +1207,7 @@ func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
 		return len(vec.upserts) >= 1
-	}, time.Second, time.Millisecond, "startupReconcile should run before the first tick")
+	}, time.Second, time.Millisecond, "the first sweep should run before the first tick")
 
 	// Now enqueue a tick-driven event and wait for the next cycle.
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "live-1", snowflakeRV(200), minimalDashboard("live-1", "Live 1")))
@@ -1283,26 +1246,6 @@ func TestReconciler_ProcessBatch_RequeuesOnGetLatestRVFailure(t *testing.T) {
 	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued for the next cycle")
 }
 
-// TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure: in steady
-// state we already embedded the events; failing to advance the cursor
-// means we can't trust the checkpoint, so the whole batch goes back
-// on the queue (idempotent re-embed via UpsertReplaceSubresources).
-func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
-	vec := newFakeVector()
-	vec.latestRV = 50
-	vec.setLatestRVErr = fmt.Errorf("transient checkpoint write failure")
-	s, _ := newReconciler(t, &fakeStorage{}, vec)
-
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "a", 100, minimalDashboard("a", "A")))
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "b", 110, minimalDashboard("b", "B")))
-
-	s.processPending(context.Background())
-
-	assert.Len(t, vec.upserts, 2, "embeds happen even when SetLatestRV errors")
-	assert.Equal(t, int64(50), vec.latestRV, "cursor stays put on SetLatestRV failure")
-	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued so the next cycle retries the advance")
-}
-
 func labeledDashboard(uid, title string) []byte {
 	body, _ := json.Marshal(map[string]any{
 		"metadata": map[string]any{
@@ -1314,7 +1257,7 @@ func labeledDashboard(uid, title string) []byte {
 	return body
 }
 
-func TestReconciler_PendingDeleteLabel_SkipsUpsertAndAdvancesCursor(t *testing.T) {
+func TestReconciler_PendingDeleteLabel_SkipsUpsert(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 
@@ -1325,7 +1268,6 @@ func TestReconciler_PendingDeleteLabel_SkipsUpsertAndAdvancesCursor(t *testing.T
 
 	require.Len(t, vec.upserts, 1, "only the unlabeled resource should be embedded")
 	assert.Equal(t, 1, text.calls, "skipped event must not call the embedder")
-	assert.Equal(t, int64(200), vec.latestRV, "skips count as processed so the cursor advances")
 	assert.Equal(t, 0, s.pendingLen(), "skipped events are not retried")
 }
 
@@ -1512,7 +1454,7 @@ func TestReconciler_EnsureResourceInitialized_CreateError(t *testing.T) {
 // it must move even when this builder saw nothing, or it ages off the
 // event store and every later listing falls onto the full data-store
 // scan.
-func TestReconciler_StartupReconcile_AdvancesCursor(t *testing.T) {
+func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 	widgets := fakeBuilder{group: "test.grafana.app", resource: "widgets"}
 	dashAt := func(rv int64, name string) *resource.ModifiedResource {
 		return dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name))
@@ -1581,7 +1523,7 @@ func TestReconciler_StartupReconcile_AdvancesCursor(t *testing.T) {
 			}
 			s := newReconcilerWithBuilders(t, st, vec, builders...)
 
-			s.startupReconcile(t.Context())
+			s.sweep(t.Context())
 
 			assert.Equal(t, tc.wantCursor, vec.latestRV, "cursor")
 			assert.Len(t, vec.upserts, tc.wantUpserts, "upserts")
@@ -1593,7 +1535,7 @@ func TestReconciler_StartupReconcile_AdvancesCursor(t *testing.T) {
 // A watch copy that is newer than the listed one but still below the
 // ceiling gets dropped by the live path once the cursor reaches that
 // ceiling, so the walk cannot defer to it.
-func TestReconciler_StartupReconcile_EmbedsEventQueuedBelowTheCeiling(t *testing.T) {
+func TestReconciler_Sweep_EmbedsEventQueuedBelowTheCeiling(t *testing.T) {
 	st := &fakeStorage{
 		changes: []*resource.ModifiedResource{
 			dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(90), minimalDashboard("dash-1", "Dash 1")),
@@ -1608,16 +1550,84 @@ func TestReconciler_StartupReconcile_EmbedsEventQueuedBelowTheCeiling(t *testing
 		s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(95), minimalDashboard("dash-1", "Dash 1")))
 	}
 
-	s.startupReconcile(t.Context())
+	s.sweep(t.Context())
 
 	assert.Equal(t, snowflakeRV(100), vec.latestRV)
 	assert.True(t, vec.hasUpsertFor("ns", dashRes, "dash-1"), "the walk must embed what the cursor is about to pass")
 }
 
+// A write in flight when the walk read its ceiling shows up below the
+// cursor on the next sweep, inside the backend's lookback window. The
+// walk has to embed it: nothing else ever will.
+func TestReconciler_Sweep_EmbedsWriteRecoveredByLookback(t *testing.T) {
+	st := &fakeStorage{
+		changes:  []*resource.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "late", snowflakeRV(95), minimalDashboard("late", "Late"))},
+		lookback: 10,
+	}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	s, _ := newReconciler(t, st, vec)
+
+	s.sweep(t.Context())
+
+	require.Len(t, vec.upserts, 1)
+	assert.Equal(t, "late", vec.upserts[0][0].UID)
+}
+
+// A lookback-recovered write that fails on the first attempt keeps its
+// retry budget. The next sweep skips the lookback window, so if the live
+// path also discarded it for sitting below the cursor, nothing would ever
+// embed it.
+func TestReconciler_Sweep_RetriesFailedLookbackWrite(t *testing.T) {
+	st := &fakeStorage{
+		changes:  []*resource.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "late", snowflakeRV(95), minimalDashboard("late", "Late"))},
+		lookback: 10,
+	}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	vec.upsertErr = errBoom
+	s, _ := newReconciler(t, st, vec)
+
+	s.reconcileCycle(t.Context())
+	require.Equal(t, 1, s.pendingLen(), "the failed write is queued for retry")
+
+	vec.upsertErr = nil
+	s.reconcileCycle(t.Context())
+
+	assert.True(t, vec.hasUpsertFor("ns", dashRes, "late"), "the retry must embed it")
+	assert.Zero(t, s.pendingLen())
+}
+
+// A queued event that failed earlier must not be replayed over a newer
+// revision the sweep has since indexed: the walk bypasses the pending
+// map, so nothing else drops the stale copy.
+func TestReconciler_StaleQueuedRetry_DoesNotOverwriteNewerEmbedding(t *testing.T) {
+	st := &fakeStorage{
+		changes:  []*resource.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(150), multiPanelDashboard("dash-1", "New", 2))},
+		lookback: 10,
+	}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100)
+	s, _ := newReconciler(t, st, vec)
+
+	// A lookback-recovered revision that failed on an earlier cycle.
+	stale := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(95), minimalDashboard("dash-1", "Old"))
+	stale.attempts = 1
+	s.enqueue(stale)
+
+	s.sweep(t.Context())
+	indexed := vec.storedContentFor("ns", dashRes, "dash-1")
+	require.NotEmpty(t, indexed, "the sweep indexed the newer revision")
+
+	s.processPending(t.Context())
+
+	assert.Equal(t, indexed, vec.storedContentFor("ns", dashRes, "dash-1"), "the newer revision survives")
+}
+
 // A write can reach the watch and the walk at the same RV. The walk must
 // still embed it, because the cursor is about to move past that RV and
 // the queued copy is discarded once it does.
-func TestReconciler_StartupReconcile_EmbedsEventAlreadyQueuedFromWatch(t *testing.T) {
+func TestReconciler_Sweep_EmbedsEventAlreadyQueuedFromWatch(t *testing.T) {
 	st := &fakeStorage{changes: []*resource.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
 	}}
@@ -1627,10 +1637,196 @@ func TestReconciler_StartupReconcile_EmbedsEventAlreadyQueuedFromWatch(t *testin
 
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")))
 
-	s.startupReconcile(t.Context())
+	s.sweep(t.Context())
 	require.True(t, vec.hasUpsertFor("ns", dashRes, "dash-1"), "the walk must embed what the cursor is about to pass")
 	require.Equal(t, snowflakeRV(100), vec.latestRV)
 
+	assert.Zero(t, s.pendingLen(), "the queued copy is superseded by what the walk wrote")
 	s.processPending(t.Context())
-	assert.Len(t, vec.upserts, 1, "the queued copy replays as a no-op")
+	assert.Len(t, vec.upserts, 1, "and is not written a second time")
+}
+
+// Delivery is at-most-once on the NATS notifier, so a write can never
+// arrive. If the cursor moves on the strength of the events that did
+// arrive, the missing one is jumped over and never looked at again.
+func TestReconciler_Sweep_EmbedsEventWithheldFromWatch(t *testing.T) {
+	st := &fakeStorage{}
+	for i, name := range []string{"dash-100", "dash-101", "dash-102"} {
+		st.changes = append(st.changes, dashChange(resourcepb.WatchEvent_ADDED, "ns", name,
+			snowflakeRV(int64(100+i)), minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(99)
+	s, _ := newReconciler(t, st, vec)
+
+	// dash-101's event is dropped in transit; the other two arrive.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-100", snowflakeRV(100), minimalDashboard("dash-100", "dash-100")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-102", snowflakeRV(102), minimalDashboard("dash-102", "dash-102")))
+
+	s.reconcileCycle(t.Context())
+
+	assert.True(t, vec.hasUpsertFor("ns", dashRes, "dash-101"),
+		"the withheld write must be embedded by the sweep")
+	assert.Equal(t, snowflakeRV(102), vec.latestRV, "cursor advances only once the sweep has covered the window")
+}
+
+// Draining live events must not move the cursor: the batch that arrived
+// says nothing about the writes that did not. The one exception is a
+// fleet that has never checkpointed, where the sweep needs a non-zero
+// cursor to start from and gets one below the batch's lowest RV.
+func TestReconciler_LiveBatch_CursorAdvance(t *testing.T) {
+	tests := []struct {
+		name       string
+		cursor     int64
+		wantCursor int64
+	}{
+		{name: "an established cursor is left alone", cursor: snowflakeRV(50), wantCursor: snowflakeRV(50)},
+		{name: "a cursor of 0 is seeded below the batch", cursor: 0, wantCursor: snowflakeRV(100) - 1},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			vec := newFakeVector()
+			vec.latestRV = tc.cursor
+			s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")))
+			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-2", snowflakeRV(110), minimalDashboard("dash-2", "Dash 2")))
+			s.processPending(t.Context())
+
+			require.Len(t, vec.upserts, 2, "live events are still embedded promptly")
+			assert.Equal(t, tc.wantCursor, vec.latestRV)
+		})
+	}
+}
+
+// A seeded cursor sits below the events that seeded it, so the sweep
+// re-lists them rather than trusting the live path with them. Re-listing
+// is free: same content, so the diff writes nothing.
+func TestReconciler_Sweep_RelistsTheSeededBatch(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-a", snowflakeRV(100), minimalDashboard("dash-a", "dash-a")),
+	}}
+	vec := newFakeVector() // latestRV stays 0
+	s, _ := newReconciler(t, st, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-a", snowflakeRV(100), minimalDashboard("dash-a", "dash-a")))
+	s.processPending(t.Context())
+	require.Equal(t, snowflakeRV(100)-1, vec.latestRV, "seeded below the batch")
+
+	yielded := 0
+	st.onYield = func() { yielded++ }
+	s.sweep(t.Context())
+
+	assert.Equal(t, 1, yielded, "the sweep re-lists the seeded event")
+	assert.Len(t, vec.upserts, 1, "unchanged content is not re-embedded")
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+}
+
+// A repeat sweep at an unchanged cursor passes the previous call's
+// timestamp, so the backend can skip its lookback window.
+func TestReconciler_Sweep_SkipsLookbackOnRepeatSinceRv(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(100) // already at the store's latest: the cursor won't move
+	s, _ := newReconciler(t, st, vec)
+
+	s.sweep(t.Context())
+	s.sweep(t.Context())
+
+	require.Len(t, st.lastCalledWith, 2)
+	assert.Nil(t, st.lastCalledWith[0], "first sweep at this cursor needs the lookback")
+	assert.NotNil(t, st.lastCalledWith[1], "repeat sweep at the same cursor can skip it")
+}
+
+// A failed seed leaves the cursor at 0, where the sweep cannot run at
+// all, so the batch is kept and the seed retried on the next cycle
+// rather than waiting for another write to arrive.
+func TestReconciler_LiveBatch_RetriesFailedSeed(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
+	}}
+	vec := newFakeVector() // latestRV stays 0
+	vec.setLatestRVErr = errBoom
+	s, _ := newReconciler(t, st, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")))
+	s.reconcileCycle(t.Context())
+
+	require.Zero(t, vec.latestRV, "the seed write failed")
+	require.Equal(t, 1, s.pendingLen(), "the batch is kept so the seed can be retried")
+
+	vec.setLatestRVErr = nil
+	s.reconcileCycle(t.Context())
+
+	assert.Equal(t, snowflakeRV(100), vec.latestRV, "the retried seed lets the sweep run and advance")
+}
+
+// The retry cap exists so a permanently broken resource can't wedge the
+// cursor. The sweep re-lists that resource from storage every interval,
+// so it must not hand it a fresh retry budget each time.
+func TestReconciler_Sweep_DoesNotResetExhaustedRetries(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "boom", snowflakeRV(100), minimalDashboard("boom", "Boom")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "ok", snowflakeRV(200), minimalDashboard("ok", "OK")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.upsertErrFn = func(vs []vector.Vector) error {
+		for _, v := range vs {
+			if v.UID == "boom" {
+				return errBoom
+			}
+		}
+		return nil
+	}
+	s, _ := newReconciler(t, st, vec)
+
+	// Well past the budget: every cycle retries the queued copy and
+	// re-lists the stored one.
+	for range maxEventAttempts + 3 {
+		s.reconcileCycle(t.Context())
+	}
+
+	assert.True(t, vec.hasUpsertFor("ns", dashRes, "ok"), "the healthy resource is embedded")
+	assert.Equal(t, snowflakeRV(200), vec.latestRV, "cursor moves past the resource that exhausted its retries")
+	assert.Zero(t, s.pendingLen(), "the broken resource is not queued again")
+}
+
+// The exhausted record is per (resource, RV): a newer write clears it so
+// a resource that starts embedding again is not skipped forever.
+func TestReconciler_ExhaustedRecord_ClearedByNewerRV(t *testing.T) {
+	s, _ := newReconciler(t, &fakeStorage{}, newFakeVector())
+	broken := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), nil)
+
+	s.markExhausted(broken)
+	assert.True(t, s.isExhausted(broken), "same RV stays exhausted")
+
+	rewritten := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(200), nil)
+	assert.False(t, s.isExhausted(rewritten), "a newer write gets a fresh budget")
+	assert.False(t, s.isExhausted(broken), "and clears the record")
+}
+
+// The cursor moving past an exhausted RV is not enough to forget it: the
+// backend lists from a lookback window behind the cursor, so the next
+// sweep can hand the same event back and would give it a fresh budget.
+// The record is dropped only once a sweep stops re-listing it.
+func TestReconciler_ExhaustedRecord_SurvivesLookbackRelist(t *testing.T) {
+	s, _ := newReconciler(t, &fakeStorage{}, newFakeVector())
+	broken := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), nil)
+	past := snowflakeRV(200)
+
+	s.markExhausted(broken)
+
+	s.forgetExhaustedBelow(past)
+	assert.True(t, s.isExhausted(broken), "still skipped when the lookback re-lists it")
+
+	s.forgetExhaustedBelow(past)
+	assert.Len(t, s.exhausted, 1, "kept while sweeps keep re-listing it")
+
+	s.forgetExhaustedBelow(past)
+	assert.Empty(t, s.exhausted, "dropped once a sweep no longer lists it")
 }
