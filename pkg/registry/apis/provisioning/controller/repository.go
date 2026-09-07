@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -786,6 +787,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		logger.Info("skipping reconciliation: namespace is pending deletion")
 		return repoType, nil
 	}
+
+	// Log a repository usage-status snapshot on every reconcile (including the
+	// no-op cycles below), so a point-in-time view of the fleet can be
+	// reconstructed from logs. This log line is load-bearing -- see the
+	// usage.RepositoryUsageStatus doc for why it exists, why metrics were not used
+	// instead, and how it plots in Loki.
+	usage.LogRepositoryUsageStatus(logger, obj)
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers

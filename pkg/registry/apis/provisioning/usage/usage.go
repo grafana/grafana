@@ -20,6 +20,15 @@ import (
 // stats for. In a single-tenant deployment this is one namespace per org.
 type NamespaceLister func(ctx context.Context) ([]string, error)
 
+// MetricCollector returns the usage-stats callback that phones home aggregated,
+// instance-wide provisioning counts (repositories by type, managed objects by
+// kind). It is intentionally coarse and infrequent.
+//
+// For a point-in-time, per-repository view -- which repository, in which
+// namespace, and what it looked like at a given moment -- see
+// RepositoryUsageStatus, logged every reconcile by the repository controller.
+// The two are complementary: this feeds long-term aggregate telemetry, the log
+// line supports operational debugging of a specific repository.
 func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (m map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
