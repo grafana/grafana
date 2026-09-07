@@ -30,9 +30,10 @@ export function useAlertQueryRunner() {
     runner.current.cancel();
   }, []);
 
-  const runQueries = useCallback((queriesToPreview: AlertQuery[], condition: string) => {
-    runner.current.run(queriesToPreview, condition);
-  }, []);
+  const runQueries = useCallback(
+    (queriesToPreview: AlertQuery[], condition: string) => runner.current.run(queriesToPreview, condition),
+    []
+  );
 
   const isPreviewLoading = useMemo(() => {
     return Object.values(queryPreviewData).some((d) => d.state === LoadingState.Loading);

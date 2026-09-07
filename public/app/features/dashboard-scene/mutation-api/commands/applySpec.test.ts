@@ -8,6 +8,7 @@
  * that is what is asserted.
  */
 
+import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -142,7 +143,8 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect(editedPanelKey(scene)).toBeUndefined();
 
     libPanel.setState({ isLoaded: true });
-    expect(editedPanelKey(scene)).toBe('panel-2');
+    // The panel editor is code split, so editPanel lands in a follow-up state update.
+    await waitFor(() => expect(editedPanelKey(scene)).toBe('panel-2'));
     expect(editorIsAttached(scene)).toBe(true);
   });
 
@@ -161,7 +163,7 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect(editedPanelKey(scene)).toBeUndefined();
 
     getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!.setState({ isLoaded: true });
-    expect(editedPanelKey(scene)).toBe('panel-2');
+    await waitFor(() => expect(editedPanelKey(scene)).toBe('panel-2'));
     expect(editorIsAttached(scene)).toBe(true);
   });
 
@@ -178,7 +180,7 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     stale.setState({ isLoaded: true });
     getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!.setState({ isLoaded: true });
 
-    expect(editedPanelKey(scene)).toBe('panel-2');
+    await waitFor(() => expect(editedPanelKey(scene)).toBe('panel-2'));
     expect(editorIsAttached(scene)).toBe(true);
   });
 

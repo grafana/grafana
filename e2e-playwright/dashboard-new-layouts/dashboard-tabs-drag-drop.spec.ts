@@ -1,8 +1,8 @@
 import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
 
 import { test, expect } from './fixtures';
+import { flows, dragTo } from './helpers';
 import { type Tabs } from './page-objects';
-import { dragTo, importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -26,16 +26,21 @@ async function getTabWithBoundingBox(tabs: Tabs, tabTitle: string) {
 
 test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
   test('drag a tab within the same manager and then to a different row', async ({
-    dashboardPage,
     selectors,
     page,
     controls,
     tabs,
   }) => {
-    await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
-      checkPanelsVisible: false,
-      requiresDataSourceSelection: false,
-    });
+    await flows.dashboards.importTestDashboard(
+      page,
+      selectors,
+      'Drag tab within manager',
+      JSON.stringify(v2DashboardWithTabs),
+      {
+        checkPanelsVisible: false,
+        requiresDataSourceSelection: false,
+      }
+    );
     await controls.enterEditMode();
 
     // drag a tab within the same tabs manager ---

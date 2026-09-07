@@ -1,8 +1,10 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-// metadata contains embedded CommonMetadata and can be extended with custom string fields
-// TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
-// without external reference as using the CommonMetadata reference breaks thema codegen.
+/**
+ * metadata contains embedded CommonMetadata and can be extended with custom string fields
+ * TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
+ * without external reference as using the CommonMetadata reference breaks thema codegen.
+ */
 export interface Metadata {
 	updateTimestamp: string;
 	createdBy: string;

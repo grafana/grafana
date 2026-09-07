@@ -66,8 +66,11 @@ export class HistoryWrapper implements LocationService, H.History {
     return this.base.location;
   }
 
-  // Arrow class fields auto-bind, so detached calls (`const m = history.push; m(loc)`)
-  // keep `this` and the orgId injection still fires.
+  // Every member below is an arrow class field, not a prototype method, because callers alias
+  // them off the instance (`const m = history.push; m(loc)` in react-router, `const update =
+  // locationService.partial` in AlertmanagerContext). Arrow fields auto-bind, so `this` — and
+  // therefore the orgId injection — survives being detached. Do not convert these back to
+  // methods without binding them in the constructor.
   push: H.History['push'] = (location, state) =>
     this.singleHistoryEntryMode
       ? this.base.replace(this.appendOrgId(location), state)
@@ -81,16 +84,20 @@ export class HistoryWrapper implements LocationService, H.History {
   block: H.History['block'] = (prompt) => this.base.block(prompt);
   listen: H.History['listen'] = (listener) => this.base.listen(listener);
 
-  setOrgIdGetter(fn: () => number) {
+  setOrgIdGetter = (fn: () => number) => {
     this.orgIdGetter = fn;
-  }
+  };
 
   // While enabled, `push` behaves as `replace`, so everything navigated to stays within
   // the entry that was current when the mode was enabled
-  setSingleHistoryEntryMode(enabled: boolean) {
+  setSingleHistoryEntryMode = (enabled: boolean) => {
     this.singleHistoryEntryMode = enabled;
-  }
+  };
 
+  // The only prototype method left: the overloads are needed because `base.createHref` accepts
+  // only a LocationDescriptorObject, and an arrow field cannot carry overloads without a cast.
+  // Safe because it is on neither LocationService nor H.History, so nothing detaches it — every
+  // caller reaches it as `this.appendOrgId(...)` from the bound arrow fields above.
   appendOrgId(location: H.LocationDescriptorObject): H.LocationDescriptorObject;
   appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor;
   appendOrgId(location: H.Path | H.LocationDescriptor): H.Path | H.LocationDescriptor {
@@ -124,27 +131,27 @@ export class HistoryWrapper implements LocationService, H.History {
   }
 
   // LocationService
-  getLocationObservable() {
+  getLocationObservable = () => {
     return this.locationObservable.asObservable();
-  }
+  };
 
-  getHistory() {
+  getHistory = () => {
     return this;
-  }
+  };
 
-  getSearch() {
+  getSearch = () => {
     return new URLSearchParams(this.base.location.search);
-  }
+  };
 
-  getLocation() {
+  getLocation = () => {
     return this.base.location;
-  }
+  };
 
-  getSearchObject() {
+  getSearchObject = () => {
     return locationSearchToObject(this.base.location.search);
-  }
+  };
 
-  partial(query: Record<string, any>, replace?: boolean) {
+  partial = (query: Record<string, any>, replace?: boolean) => {
     const currentLocation = this.base.location;
     const newQuery = this.getSearchObject();
 
@@ -164,9 +171,9 @@ export class HistoryWrapper implements LocationService, H.History {
     } else {
       this.push(updatedUrl, currentLocation.state);
     }
-  }
+  };
 
-  reload() {
+  reload = () => {
     const state = this.base.location.state;
     let prevCounter: number | undefined;
     if (state !== null && typeof state === 'object' && 'routeReloadCounter' in state) {
@@ -179,10 +186,10 @@ export class HistoryWrapper implements LocationService, H.History {
       ...this.base.location,
       state: { routeReloadCounter: prevCounter !== undefined ? prevCounter + 1 : 1 },
     });
-  }
+  };
 
   /** @deprecated use partial, push or replace instead */
-  update(options: LocationUpdate) {
+  update = (options: LocationUpdate) => {
     deprecationWarning('LocationSrv', 'update', 'partial, push or replace');
     if (options.partial && options.query) {
       this.partial(options.query, options.partial);
@@ -199,7 +206,7 @@ export class HistoryWrapper implements LocationService, H.History {
         this.push(newLocation);
       }
     }
-  }
+  };
 }
 
 /**

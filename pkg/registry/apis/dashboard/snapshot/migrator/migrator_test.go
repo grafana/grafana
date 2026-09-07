@@ -86,7 +86,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	future := now.Add(time.Hour)
 
 	t.Run("external snapshot is migrated without touching the secrets service", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 			OrgID: 1, Name: "ext", Key: "ext-key", DeleteKey: "ext-del", UserID: 42,
@@ -111,7 +111,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	})
 
 	t.Run("internal snapshot decrypts the body into Spec.Dashboard", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		body, err := json.Marshal(map[string]any{"title": "internal"})
 		require.NoError(t, err)
@@ -132,7 +132,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	})
 
 	t.Run("decrypt failure halts the migration", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(decryptErrSecrets{secretsfakes.NewFakeSecretsService()}, store)
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 			OrgID: 1, Name: "bad", Key: "bad-key",
@@ -146,7 +146,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	})
 
 	t.Run("invalid decrypted JSON halts the migration", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(invalidJSONSecrets{secretsfakes.NewFakeSecretsService()}, store)
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 			OrgID: 1, Name: "bad-json", Key: "bad-json-key",
@@ -160,7 +160,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	})
 
 	t.Run("expiry dates before 2070 are preserved; 2070+ are dropped", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		before := time.Date(2069, time.December, 31, 23, 59, 59, 0, time.UTC)
 		at := time.Date(2070, time.January, 1, 0, 0, 0, 0, time.UTC)
@@ -192,7 +192,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	})
 
 	t.Run("pagination sends every row when total exceeds the batch limit", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		const total = 150 // batch limit in MigrateSnapshots is 100
 		for i := 0; i < total; i++ {
@@ -209,7 +209,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 	})
 
 	t.Run("only the requested org is migrated", func(t *testing.T) {
-		store := db.InitTestDB(t)
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 			OrgID: 1, Name: "in", Key: "in-key", External: true, ExternalURL: "x",

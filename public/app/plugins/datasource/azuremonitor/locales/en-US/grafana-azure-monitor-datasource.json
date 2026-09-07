@@ -105,7 +105,11 @@
       "load-subscriptions": "Load Subscriptions"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remove",
+      "aria-label-field": "Dimension {{position}} field",
+      "aria-label-operator": "Dimension {{position}} operator",
+      "aria-label-remove": "Remove dimension {{position}}",
+      "aria-label-value": "Dimension {{position}} value",
+      "aria-label-values": "Dimension {{position}} values",
       "label-dimensions": "Dimensions",
       "placeholder-field": "Field",
       "placeholder-operation": "Operation",

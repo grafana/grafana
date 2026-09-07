@@ -153,7 +153,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, qs)
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(store), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		qs, supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(b, err)
 	userIds := make([]int64, 0)

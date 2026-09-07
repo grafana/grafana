@@ -32,6 +32,7 @@ const config: KnipConfig = {
 
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
+    'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
@@ -51,6 +52,12 @@ const config: KnipConfig = {
         // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
+
+        // not imported directly, but the pin keeps react-router@5 hoisted to the top level so
+        // @types/react-router-dom resolves v5 types (otherwise react-router@6 from
+        // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
+        'react-router',
+        '@types/react-router',
       ],
       project: [
         'public/app/**',
@@ -87,6 +94,9 @@ const config: KnipConfig = {
       ],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
       },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',

@@ -46,11 +46,11 @@ const geojsonObject = {
   ],
 };
 
-const publicPath = 'https://grafana.fake/public/';
+const buildPath = 'https://grafana.fake/public/build/';
 
 describe('Legacy path rewriting', () => {
   beforeAll(() => {
-    window.__grafana_public_path__ = publicPath;
+    window.__grafana_build_path__ = buildPath;
   });
 
   beforeEach(() => {
@@ -62,20 +62,20 @@ describe('Legacy path rewriting', () => {
   });
 
   it.each([
-    ['public/gazetteer/countries.json', `${publicPath}build/gazetteer/countries.json`],
-    ['public/gazetteer/usa-states.json', `${publicPath}build/gazetteer/usa-states.json`],
-    ['public/gazetteer/airports.geojson', `${publicPath}build/gazetteer/airports.geojson`],
-    ['public/gazetteer/custom.json', `${publicPath}build/gazetteer/custom.json`],
+    ['public/gazetteer/countries.json', `${buildPath}gazetteer/countries.json`],
+    ['public/gazetteer/usa-states.json', `${buildPath}gazetteer/usa-states.json`],
+    ['public/gazetteer/airports.geojson', `${buildPath}gazetteer/airports.geojson`],
+    ['public/gazetteer/custom.json', `${buildPath}gazetteer/custom.json`],
   ])('rewrites "%s" to "%s"', async (legacyPath, expectedUrl) => {
     const gaz = await getGazetteer(legacyPath);
     expect(fetch).toHaveBeenCalledWith(expectedUrl);
     expect(gaz.path).toBe(expectedUrl);
   });
 
-  it('resolves GAZETTEER_OPTIONS paths using the public path', () => {
-    expect(GAZETTEER_OPTIONS.countries.path).toBe(`${publicPath}build/gazetteer/countries.json`);
-    expect(GAZETTEER_OPTIONS.usaStates.path).toBe(`${publicPath}build/gazetteer/usa-states.json`);
-    expect(GAZETTEER_OPTIONS.airports.path).toBe(`${publicPath}build/gazetteer/airports.geojson`);
+  it('resolves GAZETTEER_OPTIONS paths using the build path', () => {
+    expect(GAZETTEER_OPTIONS.countries.path).toBe(`${buildPath}gazetteer/countries.json`);
+    expect(GAZETTEER_OPTIONS.usaStates.path).toBe(`${buildPath}gazetteer/usa-states.json`);
+    expect(GAZETTEER_OPTIONS.airports.path).toBe(`${buildPath}gazetteer/airports.geojson`);
   });
 
   it('does not rewrite absolute http URLs', async () => {

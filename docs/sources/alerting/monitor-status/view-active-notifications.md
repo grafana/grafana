@@ -23,6 +23,11 @@ labels:
 title: View active notifications
 weight: 800
 refs:
+  view-notification-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-notification-history/
   alertmanager:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
@@ -47,6 +52,8 @@ In this view, you can:
 - Filter for alert instances that match specific criteria.
 
 The Active notifications view is useful for debugging and verifying how notifications are grouped based on your notification policy settings.
+
+To review notifications that were already sent, refer to [View notification history](ref:view-notification-history).
 
 ## View alert groups and notification state
 
@@ -102,3 +109,5 @@ To view notification errors, navigate to **Alerts & IRM** -> **Alerting** -> **N
 Each contact point displays a message about the status of their latest notification deliveries.
 
 If a contact point is failing, a red message indicates that there are errors delivering notifications. Hover over the error message to see the notification error details.
+
+To review past delivery attempts across contact points, refer to [View notification history](ref:view-notification-history).

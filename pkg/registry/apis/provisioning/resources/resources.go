@@ -134,14 +134,17 @@ func (r *ResourcesManager) claimResource(id resourceID, path string) (string, bo
 }
 
 // CreateResource writes an object to the repository
-func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+// WriteResourceFileFromObject serialises obj and writes it to the repository.
+// The returned size is the number of bytes written, so callers can record how
+// large the exported resource was.
+func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, int, error) {
 	if err := ctx.Err(); err != nil {
-		return "", fmt.Errorf("context error: %w", err)
+		return "", 0, fmt.Errorf("context error: %w", err)
 	}
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return "", fmt.Errorf("extract meta accessor: %w", err)
+		return "", 0, fmt.Errorf("extract meta accessor: %w", err)
 	}
 
 	// Message from annotations
@@ -157,7 +160,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	name := meta.GetName()
 	if name == "" {
-		return "", ErrMissingName
+		return "", 0, ErrMissingName
 	}
 
 	manager, _ := meta.GetManagerProperties()
@@ -166,7 +169,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// matching on identity alone would misclassify other manager kinds.
 	if manager.Kind == utils.ManagerKindRepo && manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
-		return "", ErrAlreadyInRepository
+		return "", 0, ErrAlreadyInRepository
 	}
 
 	title := meta.FindTitle("")
@@ -191,7 +194,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 			// TODO: should we build the tree in a different way?
 			fid, ok = r.folders.Tree().DirPath(folder, "")
 			if !ok {
-				return "", fmt.Errorf("folder %s NOT found in tree", folder)
+				return "", 0, fmt.Errorf("folder %s NOT found in tree", folder)
 			}
 		}
 	}
@@ -209,7 +212,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// Reject any unsafe path (traversal, absolute, too deep) before it reaches
 	// the backend, using the same validation enforced on the import side.
 	if err := IsPathSupported(fileName); err != nil {
-		return "", fmt.Errorf("unsafe export path %q: %w", fileName, err)
+		return "", 0, fmt.Errorf("unsafe export path %q: %w", fileName, err)
 	}
 
 	parsed := ParsedResource{
@@ -221,15 +224,18 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	}
 	body, err := parsed.ToSaveBytes()
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
-		return "", fmt.Errorf("failed to write file: %s, %w", fileName, err)
+		// The body was already serialized, so report its size even on failure:
+		// this lets the bytes metric's outcome=error series surface size-related
+		// write rejections (e.g. an oversized resource exceeding a backend limit).
+		return "", len(body), fmt.Errorf("failed to write file: %s, %w", fileName, err)
 	}
 
-	return fileName, nil
+	return fileName, len(body), nil
 }
 
 // WriteResourceOption configures optional behavior for resource write operations.
@@ -248,7 +254,10 @@ func WithExistingHash(hash string) WriteResourceOption {
 	}
 }
 
-func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+// WriteResourceFromFile reads, parses and writes the resource at path/ref. The
+// returned size is the number of raw bytes read from the repository file, so
+// callers can record how large the written resource was.
+func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error) {
 	var cfg writeResourceConfig
 	for _, o := range opts {
 		o(&cfg)
@@ -260,16 +269,18 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	if err != nil {
 		readSpan.RecordError(err)
 		readSpan.End()
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read file: %w", err)
 	}
 	readSpan.End()
+
+	size := len(fileInfo.Data)
 
 	parseCtx, parseSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.parse_file")
 	parsed, err := r.parser.Parse(parseCtx, fileInfo)
 	if err != nil {
 		parseSpan.RecordError(err)
 		parseSpan.End()
-		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse file: %w", err)
+		return "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse file: %w", err)
 	}
 	parseSpan.End()
 
@@ -281,7 +292,8 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		parsed.SkipStrictValidation = true
 	}
 
-	return r.writeResourceFromParsed(ctx, path, ref, parsed)
+	name, gvk, err := r.writeResourceFromParsed(ctx, path, ref, parsed)
+	return name, gvk, size, err
 }
 
 func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
@@ -445,28 +457,28 @@ func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, r
 // ReplaceResourceFromFile writes a resource from file and, if the resource name
 // changed compared to oldName, deletes the old resource to prevent orphans.
 // Used by full sync where the old identity is known from Changes().Existing.
-func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
-	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref, opts...)
+func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error) {
+	newName, gvk, size, err := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if err != nil || oldName == "" || oldName == newName {
-		return newName, gvk, err
+		return newName, gvk, size, err
 	}
 
-	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldGVR, newName)
+	return newName, gvk, size, r.deleteOldResource(ctx, path, oldName, oldGVR, newName)
 }
 
 // ReplaceResourceFromFileByRef writes a resource from the file at path/ref and,
 // if the resource identity changed compared to the previous version at
 // path/previousRef, deletes the old resource to prevent orphans.
 // Used by incremental sync where the previous git ref is available.
-func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error) {
 	oldInfo, err := r.repo.Read(ctx, path, previousRef)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("reading previous file: %w", err)
+		return "", schema.GroupVersionKind{}, 0, fmt.Errorf("reading previous file: %w", err)
 	}
 
 	oldParsed, err := r.parser.Parse(ctx, oldInfo)
 	if err != nil {
-		return "", schema.GroupVersionKind{}, fmt.Errorf("parsing previous file: %w", err)
+		return "", schema.GroupVersionKind{}, 0, fmt.Errorf("parsing previous file: %w", err)
 	}
 
 	// Inject the previous file's hash so WriteResourceFromFile can skip strict
@@ -474,17 +486,17 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 	if oldInfo.Hash != "" {
 		opts = append(opts, WithExistingHash(oldInfo.Hash))
 	}
-	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref, opts...)
+	newName, gvk, size, writeErr := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if writeErr != nil {
-		return newName, gvk, writeErr
+		return newName, gvk, size, writeErr
 	}
 
 	oldName := oldParsed.Obj.GetName()
 	if oldName == "" || oldName == newName {
-		return newName, gvk, nil
+		return newName, gvk, size, nil
 	}
 
-	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName)
+	return newName, gvk, size, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName)
 }
 
 // deleteOldResource deletes the previous resource when a name change is
@@ -539,23 +551,26 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error) {
+// RenameResourceFile moves the resource at previousPath to newPath. The returned
+// size is the number of bytes of the new file content written at newPath.
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read previous file: %w", err)
 	}
 	oldParsed, err := r.parser.Parse(ctx, oldInfo)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse previous file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to parse previous file: %w", err)
 	}
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read new file: %w", err)
 	}
+	size := len(newInfo.Data)
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
 	// Dry-run the delete to fetch the old object without mutating it, only so we
@@ -563,7 +578,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	// through the sourcePath-aware deleteOldResource, which re-reads the resource.
 	oldParsed.Action = provisioning.ResourceActionDelete
 	if err := oldParsed.DryRun(ctx); err != nil {
-		return "", "", schema.GroupVersionKind{}, err
+		return "", "", schema.GroupVersionKind{}, size, err
 	}
 	oldFolderName := oldParsed.ExistingFolder()
 
@@ -586,7 +601,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		}
 		newName, gvk, err = r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 		if err != nil {
-			return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+			return oldParsed.Obj.GetName(), oldFolderName, gvk, size, fmt.Errorf("failed to write resource: %w", err)
 		}
 	} else {
 		// Identity-changing rename. Run BOTH fallible guards — the cross-file duplicate
@@ -596,15 +611,15 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		id := resourceID{Name: newParsed.Obj.GetName(), Resource: newParsed.GVR.Resource, Group: newParsed.GVK.Group}
 		owner, dup, derr := r.accidentalDuplicateOwner(ctx, newPath, newRef, newParsed)
 		if derr != nil {
-			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, derr
+			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, size, derr
 		}
 		if dup {
-			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, NewResourceValidationError(
+			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, size, NewResourceValidationError(
 				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", newParsed.Obj.GetName(), newPath, owner, ErrDuplicateName),
 			)
 		}
 		if existingOwner, ok := r.claimResource(id, newPath); !ok {
-			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, NewResourceValidationError(
+			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, size, NewResourceValidationError(
 				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", newParsed.Obj.GetName(), newPath, existingOwner, ErrDuplicateName),
 			)
 		}
@@ -616,7 +631,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// managed-by-other warning rather than destroying it.
 		if derr := r.deleteOldResource(ctx, previousPath, oldParsed.Obj.GetName(), oldParsed.GVR, newParsed.Obj.GetName()); derr != nil {
 			if !errors.Is(derr, ErrResourceManagedByOtherFile) {
-				return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, fmt.Errorf("failed to delete old resource: %w", derr)
+				return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, size, fmt.Errorf("failed to delete old resource: %w", derr)
 			}
 			skippedOldDelete = derr
 			// The old resource was not deleted — it still exists under the file that
@@ -631,7 +646,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// orphan the file now that the old resource is gone.
 		newName, gvk, err = r.writeClaimedResource(ctx, newPath, newRef, newParsed, folderOpts...)
 		if err != nil {
-			return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+			return oldParsed.Obj.GetName(), oldFolderName, gvk, size, fmt.Errorf("failed to write resource: %w", err)
 		}
 	}
 
@@ -643,18 +658,22 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		oldFolderName = ""
 	}
 
-	return newName, oldFolderName, gvk, skippedOldDelete
+	return newName, oldFolderName, gvk, size, skippedOldDelete
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
+// RemoveResourceFromFile deletes the resource described by the file at path/ref.
+// The returned size is the number of bytes of the removed file's content.
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, int, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read file: %w", err)
 	}
+
+	size := len(info.Data)
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, err
+		return "", "", schema.GroupVersionKind{}, size, err
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -665,8 +684,8 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	folderName := parsed.ExistingFolder()
 
 	if err != nil {
-		return objName, folderName, parsed.GVK, fmt.Errorf("failed to delete: %w", err)
+		return objName, folderName, parsed.GVK, size, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, folderName, parsed.GVK, nil
+	return objName, folderName, parsed.GVK, size, nil
 }

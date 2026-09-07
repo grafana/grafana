@@ -2,7 +2,8 @@ import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { moveElement } from '../../actions/element/moveElement';
+import { removeElement } from '../../actions/element/removeElement';
 import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -19,27 +20,33 @@ let lastUndo: (() => void) | undefined;
 let lastEditPerform: (() => void) | undefined;
 let lastEditUndo: (() => void) | undefined;
 
-jest.mock('../../sidebar/shared', () => ({
-  dashboardEditActions: {
-    addElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    removeElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    moveElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    edit: jest.fn(({ perform, undo }) => {
-      perform();
-      lastEditPerform = perform;
-      lastEditUndo = undo;
-    }),
-  },
-  ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
+jest.mock('../../actions/element/addElement', () => ({
+  addElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/moveElement', () => ({
+  moveElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/utils/edit', () => ({
+  edit: jest.fn(({ perform, undo }) => {
+    perform();
+    lastEditPerform = perform;
+    lastEditUndo = undo;
+  }),
 }));
 
 function buildTabsLayoutManager(tabs: TabItem[] = []) {
@@ -263,7 +270,7 @@ describe('TabsLayoutManager', () => {
       expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
       expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
       expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug());
-      expect(dashboardEditActions.removeElement).toHaveBeenCalled();
+      expect(removeElement).toHaveBeenCalled();
     });
 
     it('should handle undo action correctly', () => {
@@ -330,7 +337,7 @@ describe('TabsLayoutManager', () => {
       expect(tabsLayoutManager.state.tabs[0]).toBe(tab2);
       expect(tabsLayoutManager.state.tabs[1]).toBe(tab3);
       expect(tabsLayoutManager.state.tabs[2]).toBe(tab1);
-      expect(dashboardEditActions.moveElement).toHaveBeenCalled();
+      expect(moveElement).toHaveBeenCalled();
     });
 
     describe('undo', () => {

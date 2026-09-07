@@ -180,6 +180,31 @@ func TestConnection(t *testing.T) {
 		})
 	})
 
+	t.Run("redactURL", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			raw  string
+			want string
+		}{
+			{"empty", "", ""},
+			{"no userinfo", "nats://us-nats.us-nats.svc.cluster.local:4222", "nats://us-nats.us-nats.svc.cluster.local:4222"},
+			{"user and password", "nats://user:s3cret@host:4222", "nats://host:4222"},
+			{"token only", "nats://s3cret@host:4222", "nats://host:4222"},
+			{"unparseable", "nats://host:4222/\x7f", "<invalid url>"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				got := redactURL(tc.raw)
+				require.Equal(t, tc.want, got)
+				require.NotContains(t, got, "s3cret")
+			})
+		}
+	})
+
+	t.Run("redactURLs joins every url with credentials stripped", func(t *testing.T) {
+		got := redactURLs([]string{"nats://user:s3cret@a:4222", "nats://b:4222"})
+		require.Equal(t, "nats://a:4222,nats://b:4222", got)
+	})
+
 	t.Run("connectOptions", func(t *testing.T) {
 		t.Run("builds base options without auth", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true}

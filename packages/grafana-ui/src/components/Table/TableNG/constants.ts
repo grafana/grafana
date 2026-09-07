@@ -4,6 +4,12 @@ export const COLUMN = {
   EXPANDER_WIDTH: 50,
   // This will need to eventually change to 36
   MIN_WIDTH: 50,
+  // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
+  // Keeps one long value (e.g. a JSON blob) from consuming the whole table width.
+  MAX_AUTO_WIDTH: 400,
+  // Content-aware width for image columns. Images scale to the cell (object-fit: contain), so a
+  // wide column is mostly whitespace — a small default reads better than the graphical default.
+  IMAGE_WIDTH: 72,
 };
 
 /** Table layout and display constants */
@@ -18,6 +24,12 @@ export const TABLE = {
   NESTED_NO_DATA_HEIGHT: 60,
   BORDER_RIGHT: 1,
   SCROLLBAR_AFFORDANCE: 16,
+  // Bounds on a JSON cell expanded by hover. Unlike a long string, a JSON blob can be hundreds of
+  // lines and thousands of columns wide, so an unbounded expansion escapes the panel and puts the
+  // content out of reach again. Capping the width lets `pre-wrap` wrap instead of growing, and the
+  // height cap keeps the overlay scrollable in place; the inspector remains the full-value view.
+  JSON_OVERFLOW_MAX_WIDTH: 600,
+  JSON_OVERFLOW_MAX_HEIGHT: '40vh',
 };
 
 /**

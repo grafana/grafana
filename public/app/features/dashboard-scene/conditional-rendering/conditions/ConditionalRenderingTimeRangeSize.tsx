@@ -7,7 +7,7 @@ import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject
 import { type ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Field, Select } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { edit } from '../../actions/utils/edit';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
@@ -220,7 +220,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
 
   const handleChange = useCallback(
     (newValue: string | undefined) => {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.edit-time-range-rule', 'Change time range rule'),
         source: model,
         perform: () => model.changeValue(newValue ?? ''),

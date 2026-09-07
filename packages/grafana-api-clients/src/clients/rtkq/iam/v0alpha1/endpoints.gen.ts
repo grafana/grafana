@@ -436,6 +436,10 @@ const injectedRtkApi = api
         query: () => ({ url: `/users/~` }),
         providesTags: ['Display'],
       }),
+      getCurrentUserPermissions: build.query<GetCurrentUserPermissionsApiResponse, GetCurrentUserPermissionsApiArg>({
+        query: () => ({ url: `/users/~/permissions` }),
+        providesTags: ['User'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -894,6 +898,8 @@ export type GetUserTeamsApiArg = {
 };
 export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ Display;
 export type GetCurrentUserDisplayApiArg = void;
+export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
+export type GetCurrentUserPermissionsApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1254,6 +1260,13 @@ export type GetUserTeamsResponse = {
   kind?: string;
   metadata: any;
 };
+export type UserPermission = {
+  action: string;
+  scope: string;
+};
+export type UserPermissions = {
+  permissions: UserPermission[];
+};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -1308,4 +1321,6 @@ export const {
   useLazyGetUserTeamsQuery,
   useGetCurrentUserDisplayQuery,
   useLazyGetCurrentUserDisplayQuery,
+  useGetCurrentUserPermissionsQuery,
+  useLazyGetCurrentUserPermissionsQuery,
 } = injectedRtkApi;

@@ -85,7 +85,7 @@ export interface AlertGroupsFilter {
  *
  * i.e. "things that should be fetched fresh if the AM config has changed"
  */
-const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
+export const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
   'AlertingConfiguration',
   'AlertmanagerConfiguration',
   'AlertmanagerConnectionStatus',
@@ -355,6 +355,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         method: 'POST',
         data: config,
         showSuccessAlert: false,
+        showErrorAlert: false,
       }),
       invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
     }),

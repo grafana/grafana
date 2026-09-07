@@ -330,12 +330,11 @@ describe('AlertIncidentTabs', () => {
     mockIncidents([activeIncident]);
     let handle: AlertIncidentSwitchHandle | null = null;
     const scrollIntoView = jest.fn();
-    const originalScrollIntoView = Element.prototype.scrollIntoView;
-
-    Object.defineProperty(Element.prototype, 'scrollIntoView', {
-      configurable: true,
-      value: scrollIntoView,
-    });
+    // Patch HTMLElement.prototype (not Element.prototype) to match the rest of the codebase's convention
+    // and the shared jest-setup.ts default it shadows - Element.prototype sits further up the prototype
+    // chain, so a real DOM node would resolve scrollIntoView via HTMLElement.prototype first regardless.
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
       render(
@@ -364,10 +363,7 @@ describe('AlertIncidentTabs', () => {
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(scrollIntoView).not.toHaveBeenCalled();
     } finally {
-      Object.defineProperty(Element.prototype, 'scrollIntoView', {
-        configurable: true,
-        value: originalScrollIntoView,
-      });
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
   });
 
