@@ -296,10 +296,11 @@ function getColorForVariant(theme: GrafanaTheme2, variant: ColorCardVariant): Co
   }
 
   const color = theme.colors[variant];
-  const cardBg = theme.isDark ? theme.colors.background.primary : theme.colors.background.secondary;
+  const mixColor = theme.colors.background.page;
+  const mixAmount = theme.isDark ? 85 : 90;
 
   return {
-    background: `linear-gradient(90deg, color-mix(in oklab, ${cardBg} 90%, ${color.main}), ${cardBg})`,
+    background: `color-mix(in oklab, ${mixColor} ${mixAmount}%, ${color.main})`,
     backgroundEmphasis: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
     borderColor: color.border,
     borderWidth: '0 0 0 2px',

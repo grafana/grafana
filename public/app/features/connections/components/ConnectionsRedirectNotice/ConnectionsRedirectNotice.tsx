@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Alert, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, ColorCard, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -23,8 +23,11 @@ export function ConnectionsRedirectNotice() {
     contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const [showNotice, setShowNotice] = useState(canAccessDataSources);
 
+  // title="" onRemove={() => setShowNotice(false)}
   return showNotice ? (
-    <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
+    <ColorCard variant="info">
+      <ColorCard.Icon />
+
       <p className={styles.alertParagraph}>
         <Trans
           i18nKey="connections.connections-redirect-notice.body"
@@ -36,7 +39,7 @@ export function ConnectionsRedirectNotice() {
           ]}
         />
       </p>
-    </Alert>
+    </ColorCard>
   ) : (
     <></>
   );

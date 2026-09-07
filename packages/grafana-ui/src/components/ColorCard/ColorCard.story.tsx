@@ -1,7 +1,7 @@
 import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 import { action } from 'storybook/actions';
 
-import { StoryExample } from '../../utils/storybook/StoryExample';
+import { Link, TextLink } from '../..';
 import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -39,16 +39,25 @@ const variants: ColorCardVariant[] = ['default', 'error', 'warning', 'info', 'su
 export const Examples: StoryFn<typeof ColorCard> = () => {
   return (
     <Stack direction="column" gap={4}>
-      <ColorCard size={'sm'} variant={'default'}>
-        <ColorCard.Title>Default small with title only</ColorCard.Title>
-      </ColorCard>
-      <SimpleExampleWithButton title="Info with title only" variant={'info'} size="sm" />
-      <SimpleExampleWithButton title="Success" content="With content" variant={'success'} size="sm" />
-      <SimpleExampleWithButton title="Default" content="with content" variant={'default'} size="md" />
-      <SimpleExampleWithButton title="Error" content="with content" variant={'error'} size="md" />
+      <SimpleExampleWithButton title="Default title" content={getExampleContent()} variant={'default'} size="md" />
+      <SimpleExampleWithButton title="Info title" content={getExampleContent()} variant={'info'} size="md" />
+      <SimpleExampleWithButton title="Success title" content={getExampleContent()} variant={'success'} size="md" />
+      <SimpleExampleWithButton title="Warning title" content={getExampleContent()} variant={'warning'} size="md" />
+      <SimpleExampleWithButton title="Error title" content={getExampleContent()} variant={'error'} size="md" />
     </Stack>
   );
 };
+
+function getExampleContent() {
+  return (
+    <span>
+      Child content that includes some alert details, and a link to{' '}
+      <TextLink href="http://www.example.com" external>
+        more details
+      </TextLink>
+    </span>
+  );
+}
 
 export const Variants: StoryFn<typeof ColorCard> = () => {
   return (
@@ -84,7 +93,7 @@ function SimpleExampleWithButton({
 }: {
   title?: string;
   variant: ColorCardVariant;
-  content?: string;
+  content?: React.ReactNode;
   size?: ColorCardSize;
 }) {
   return (
