@@ -58,7 +58,6 @@ const unknownBuildSize int64 = -1
 
 const (
 	defaultVectorSearchLimit = 50
-
 	maxVectorSearchLimit     = 200
 	// authz BatchCheck enforces a per-request cap; chunk to stay under it.
 	batchCheckChunkSize = 50
@@ -87,7 +86,6 @@ type IndexAction int
 
 const (
 	ActionIndex IndexAction = iota
-
 	ActionDelete
 )
 
@@ -430,9 +428,7 @@ func (s *searchServer) maybeInjectFailure() error {
 
 var (
 	_ resourcepb.ResourceIndexServer      = (*searchServer)(nil)
-
 	_ resourcepb.ManagedObjectIndexServer = (*searchServer)(nil)
-
 	_ SearchServer                        = (*searchServer)(nil)
 )
 

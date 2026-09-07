@@ -1913,11 +1913,10 @@ func (b *bleveIndex) mapBatch(req *resource.BulkIndexRequest) (*bleve.Batch, err
 // recordPromotePhase reports what copying the index to disk cost, for the one
 // batch that crosses the threshold.
 func (a *adaptiveBuildIndex) recordPromotePhase(path string, d time.Duration) {
-	if a.bleveIndex == nil || a.bleveIndex.indexMetrics == nil || path == "" {
+	if a.bleveIndex == nil || a.indexMetrics == nil || path == "" {
 		return
 	}
-	key := a.bleveIndex.key
-	a.bleveIndex.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhasePromote, path, key.Group, key.Resource).Add(d.Seconds())
+	a.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhasePromote, path, a.key.Group, a.key.Resource).Add(d.Seconds())
 }
 
 // recordBatchPhases separates the CPU spent mapping documents onto the index
