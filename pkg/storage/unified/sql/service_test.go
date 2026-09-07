@@ -337,7 +337,7 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 	t.Run("constructs store when everything is wired", func(t *testing.T) {
 		cfg := &setting.Cfg{EnableKVLeases: true}
 		store := newTestKV(t)
-		mgr := lease.NewManager(store, "test-holder", nil)
+		mgr := lease.NewManager(store, "test-holder", "test", nil)
 		t.Cleanup(mgr.Stop)
 		backend := &stubKVBackend{kv: store, mgr: mgr}
 
