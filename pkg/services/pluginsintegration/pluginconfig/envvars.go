@@ -62,6 +62,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 			p.envVar("GF_APP_URL", p.cfg.GrafanaAppURL),
 			p.envVar("GF_PLUGIN_APP_CLIENT_ID", plugin.ExternalService.ClientID),
 			p.envVar("GF_PLUGIN_APP_CLIENT_SECRET", plugin.ExternalService.ClientSecret),
+			p.envVar("GF_PLUGIN_APP_NAMESPACE", p.cfg.Namespace),
 		)
 		if plugin.ExternalService.PrivateKey != "" {
 			hostEnv = append(hostEnv, p.envVar("GF_PLUGIN_APP_PRIVATE_KEY", plugin.ExternalService.PrivateKey))
