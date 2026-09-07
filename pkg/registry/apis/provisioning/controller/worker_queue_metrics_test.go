@@ -86,6 +86,7 @@ func TestConnectionController_WorkerQueueWaitHistogram(t *testing.T) {
 		nil, nil, nil, nil,
 		time.Minute, 30*time.Second,
 		reg,
+		nil,
 		false,
 	)
 
@@ -143,6 +144,7 @@ func TestConnectionController_WorkerQueueSizeGauge(t *testing.T) {
 		nil, nil, nil, nil,
 		time.Minute, 30*time.Second,
 		reg,
+		nil,
 		false,
 	)
 

@@ -475,7 +475,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
-/e2e-playwright/dashboards-suite/new-datasource-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-interval-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-query-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-text-box-variable.spec.ts @grafana/dashboards-squad
@@ -638,6 +637,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/data-sources-plugins
 /packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/data-sources-plugins
 /packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/data-sources-plugins
+
+# @grafana/plugin-compat
+/packages/grafana-plugin-compat/ @grafana/grafana-catalog
 
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
@@ -850,6 +852,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
+/public/app/core/components/AccentBoxBadge/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppNotifications/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AppChrome/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AssistantTooltip/ @grafana/dataviz-squad
@@ -920,6 +923,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
+/public/app/core/navtree/ @grafana/grafana-frontend-navigation
+/public/app/core/navtree/sections/dashboards.navEntry.ts @grafana/grafana-frontend-navigation @grafana/dashboards-squad
+/public/app/core/navtree/sections/profile.navEntry.ts @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
+/public/app/core/navtree/sections/admin.navEntry.ts @grafana/grafana-frontend-navigation @grafana/identity-access-team
 /public/app/core/journeys/ @grafana/dashboards-squad
 /scripts/cuj-new.ts @grafana/dashboards-squad
 /scripts/cuj-smoke.ts @grafana/dashboards-squad
@@ -1052,6 +1059,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/users/ @grafana/access-squad
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/features/variables-management/ @grafana/dashboards-squad
+/public/app/features/visual-refresh/ @grafana/grafana-frontend-platform
 /public/app/features/bookmarks/ @grafana/grafana-frontend-navigation
 /public/app/initPreferences* @grafana/grafana-frontend-platform
 /public/app/plugins/panel/* @grafana/dataviz-squad
@@ -1117,6 +1125,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/api-enterprise-spec.json @grafanabot
 /public/openapi3.json @grafanabot
 /public/app/app.ts @grafana/grafana-frontend-platform
+/public/app/polyfills.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
 /public/app/index.ts @grafana/grafana-frontend-platform
@@ -1290,6 +1299,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-operator-experience-squad
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-services-squad
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-operator-experience-squad
+/.github/actions/build-frontend @grafana/grafana-frontend-platform
 /.github/actions/build-go @grafana/grafana-operator-experience-squad
 /.github/actions/build-targz @grafana/grafana-operator-experience-squad
 /.github/actions/bundle-schema-types @grafana/grafana-frontend-platform
@@ -1337,6 +1347,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/external-pr-weekly-digest.yml @grafana/grafana-community-support
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
+/.github/workflows/pr-bundle-size.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-squad
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero

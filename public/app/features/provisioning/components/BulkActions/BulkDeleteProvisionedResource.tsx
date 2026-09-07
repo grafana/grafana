@@ -145,8 +145,8 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                 })}
                 nonEmptyMessage={t('browse-dashboards.bulk-delete-resources-form.folder-not-empty', '', {
                   count: getSelectedFolderUIDs(selectedItems).length,
-                  defaultValue_one: 'Selected folder contains other resources that will be deleted',
-                  defaultValue_other: 'Selected folders contain other resources that will be deleted',
+                  defaultValue_one: 'Selected folder contains resources that will be deleted',
+                  defaultValue_other: 'Selected folders contain resources that will be deleted',
                 })}
               />
               <ResourceEditFormSharedFields

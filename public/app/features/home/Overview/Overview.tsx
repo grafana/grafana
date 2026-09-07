@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -18,6 +19,8 @@ import { groupOverviewCards, resolveOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
+
+const GET_STARTED_OPTION_VALUE = 'get-started';
 
 interface Option {
   value: string;
@@ -88,7 +91,7 @@ export function Overview({ solutions }: OverviewProps) {
       ...(!guides || guides.length > 0
         ? [
             {
-              value: 'get-started',
+              value: GET_STARTED_OPTION_VALUE,
               label: t('home.overview.options.get-started', 'Get started'),
               icon: 'rocket' as const,
               highlight: true,
@@ -99,8 +102,21 @@ export function Overview({ solutions }: OverviewProps) {
     ],
     [cards, cardsLoading, groups, guides]
   );
-  const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
+  // Empty instances onboard through guides: with no live solution, an unset preference defaults
+  // to Get started instead of All solutions. An explicit pick always wins, and once a solution
+  // goes live the unset default returns to All solutions.
+  const settledWithoutLiveSolutions = !cardsLoading && !!cards && cards.every((card) => card.kind !== 'live');
+  const showGuidesByDefault =
+    settledWithoutLiveSolutions && options.some((option) => option.value === GET_STARTED_OPTION_VALUE);
+  const [stored, setStored] = useStoredString(
+    HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY,
+    showGuidesByDefault ? GET_STARTED_OPTION_VALUE : options[0].value
+  );
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
+
+  // The unset default is computed from settled cards and guides; keep the filter hidden until
+  // then so its label never flips (e.g. All solutions → Get started) in front of the user.
+  const optionsSettled = !cardsLoading && guides !== undefined;
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -170,24 +186,28 @@ export function Overview({ solutions }: OverviewProps) {
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>
         </Text>
 
-        <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
-          <Button variant="secondary" size="md">
-            <Stack direction="row" alignItems="center" columnGap={1}>
-              {option.icon && (
-                <Icon
-                  name={option.icon}
-                  color={
-                    theme.flags.visualDesignRefresh
-                      ? theme.colors.accent.main
-                      : theme.visualization.getColorByName('orange')
-                  }
-                />
-              )}
-              {option.label}
-              <Icon name={open ? 'angle-up' : 'angle-down'} />
-            </Stack>
-          </Button>
-        </Dropdown>
+        {optionsSettled ? (
+          <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
+            <Button variant="secondary" size="md">
+              <Stack direction="row" alignItems="center" columnGap={1}>
+                {option.icon && (
+                  <Icon
+                    name={option.icon}
+                    color={
+                      theme.flags.visualDesignRefresh
+                        ? theme.colors.accent.main
+                        : theme.visualization.getColorByName('orange')
+                    }
+                  />
+                )}
+                {option.label}
+                <Icon name={open ? 'angle-up' : 'angle-down'} />
+              </Stack>
+            </Button>
+          </Dropdown>
+        ) : (
+          <Skeleton width={140} height={32} />
+        )}
       </Stack>
 
       {option.content}

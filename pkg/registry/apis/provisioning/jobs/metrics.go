@@ -13,9 +13,10 @@ import (
 )
 
 type JobMetrics struct {
-	registry       prometheus.Registerer
-	processedTotal *prometheus.CounterVec
-	durationHist   *prometheus.HistogramVec
+	registry           prometheus.Registerer
+	processedTotal     *prometheus.CounterVec
+	durationHist       *prometheus.HistogramVec // duration bucketed by resources changed
+	dryRunDurationHist *prometheus.HistogramVec // duration bucketed by resources dry-run (viewed)
 
 	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
@@ -55,9 +56,9 @@ type QueueMetrics struct {
 	claimRoundsCont *prometheus.CounterVec // lost to another worker — job already claimed, or all CAS retries exhausted
 }
 
-// durationBucketUnknown is the resources_changed_bucket used when a job did not
-// succeed: the resource count is partial and not meaningful, so failed durations are
-// grouped here instead of a misleading count bucket.
+// durationBucketUnknown is the resources_changed_bucket/resources_dryrun_bucket used
+// when a job did not succeed: the resource count is partial and not meaningful, so
+// failed durations are grouped here instead of a misleading count bucket.
 const durationBucketUnknown = "unknown"
 
 var (
@@ -180,12 +181,22 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		durationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_jobs_duration_seconds",
-				Help:    "Duration of job",
+				Help:    "Duration of job, bucketed by the number of resources changed",
 				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
 			},
 			[]string{"action", "resources_changed_bucket", "outcome"},
 		)
 		registry.MustRegister(durationHist)
+
+		dryRunDurationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_dryrun_duration_seconds",
+				Help:    "Duration of job, bucketed by the number of resources dry-run (viewed)",
+				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+			},
+			[]string{"action", "resources_dryrun_bucket", "outcome"},
+		)
+		registry.MustRegister(dryRunDurationHist)
 
 		incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -270,6 +281,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			registry:                         registry,
 			processedTotal:                   processedTotal,
 			durationHist:                     durationHist,
+			dryRunDurationHist:               dryRunDurationHist,
 			incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
@@ -310,18 +322,25 @@ func (m *JobMetrics) RecordBusySeconds(driverID, action string, seconds float64)
 	m.busySeconds.WithLabelValues(driverID, action).Add(seconds)
 }
 
-func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, duration float64) {
+func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// Record duration for every outcome so slow-but-failing jobs are visible (a job
 	// that runs to the timeout then errors is exactly what we want to catch). Only a
 	// failed job's resource count is unreliable (partial work), so bucket errors under
 	// a sentinel; success and warning keep their size bucket.
-	bucket := utils.GetResourceCountBucket(resourceCountChanged)
+	changedBucket := utils.GetResourceCountBucket(resourceCountChanged)
+	dryRunBucket := utils.GetResourceCountBucket(resourceCountDryRun)
 	if outcome == utils.ErrorOutcome {
-		bucket = durationBucketUnknown
+		changedBucket = durationBucketUnknown
+		dryRunBucket = durationBucketUnknown
 	}
-	m.durationHist.WithLabelValues(jobAction, bucket, outcome).Observe(duration)
+
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		m.dryRunDurationHist.WithLabelValues(jobAction, dryRunBucket, outcome).Observe(duration)
+	} else {
+		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
+	}
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

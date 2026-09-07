@@ -47,6 +47,18 @@ jobs:
       with:
         persist-credentials: false
 
+    # Runs before Setup Enterprise, so it inspects the committed go.mod rather than
+    # the overlay's local edits.
+    - name: go.mod must not reference grafana-enterprise
+      run: |
+        if grep -q 'grafana/grafana-enterprise' go.mod; then
+          echo "::error::go.mod references grafana-enterprise. Those lines are added locally"
+          echo "by the enterprise overlay (grafana-enterprise/build.sh) and must never be"
+          echo "committed - they break every OSS build. Run remove-enterprise.sh and"
+          echo "re-commit go.mod."
+          exit 1
+        fi
+
     - name: Get GitHub App token
       if: github.event.pull_request.head.repo.fork == false
       id: get-github-app-token
@@ -71,6 +83,10 @@ jobs:
 
     - name: Check for go mod & workspace changes
       run: |
+        # The enterprise overlay adds a require/replace pair pointing at the sibling
+        # grafana-enterprise checkout. Drop it so this only reports genuine drift; a
+        # pair that was actually committed still shows up here, as a removal.
+        go mod edit -droprequire=github.com/grafana/grafana-enterprise -dropreplace=github.com/grafana/grafana-enterprise
         if ! git diff --exit-code --quiet -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go; then
           echo "Changes detected:"
           git diff -- go.mod go.sum '**/go.mod' '**/go.sum' go.work go.work.sum pkg/extensions/enterprise_imports*.go

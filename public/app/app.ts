@@ -1,8 +1,3 @@
-import 'symbol-observable';
-import 'regenerator-runtime/runtime';
-
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'file-saver';
 import 'jquery';
 
 import { createElement } from 'react';
@@ -44,6 +39,7 @@ import {
   setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  logError,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
@@ -165,14 +161,13 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
-      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
-      // on the login page.
-      if (contextSrv.user.isSignedIn) {
-        try {
-          await initOpenFeature();
-        } catch (err) {
-          console.error('Failed to initialize OpenFeature provider', err);
-        }
+      // Capture any error generated to pass to Faro once available.
+      let openFeatureError: unknown;
+      try {
+        await initOpenFeature();
+      } catch (err) {
+        openFeatureError = err;
+        console.error('Failed to initialize OpenFeature provider', err);
       }
 
       const initI18nPromise = initializeI18n({
@@ -193,6 +188,12 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
+
+      // This needs to be done after the `initEchoSrv` since that initializes Faro.
+      if (openFeatureError) {
+        logError(new Error('Failed to initialize OpenFeature provider', { cause: openFeatureError }));
+      }
+
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 

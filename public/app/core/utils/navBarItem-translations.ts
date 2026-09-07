@@ -237,10 +237,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/variables':
       return t('nav.global-variables.subtitle', 'Template variables shared across dashboards, globally or per folder');
     case 'dashboards/recently-deleted':
-      return t(
-        'nav.recently-deleted.subtitle',
-        'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
-      );
+      return t('nav.recently-deleted.subtitle', 'Deleted dashboards are kept for up to 12 months.');
     case 'saved-queries':
       return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
     case 'alerting':
