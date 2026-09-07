@@ -296,7 +296,7 @@ export type SpanDetailProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -464,7 +464,11 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanID,
     spanStartTime: startTime,
   });
-  const promoGetter = useAttributePluginPromoGetter();
+  const promoAttributeKeys = useMemo(
+    () => [...tags.map((tag) => tag.key), ...(process.tags ?? []).map((tag) => tag.key)],
+    [tags, process.tags]
+  );
+  const promoGetter = useAttributePluginPromoGetter(promoAttributeKeys);
 
   const listOfContentCards = [];
 
@@ -495,31 +499,29 @@ export default function SpanDetail(props: SpanDetailProps) {
     />
   );
 
-  if (process.tags) {
-    listOfContentCards.push(
-      <AccordionCategorizedKeyValues
-        data={process.tags}
-        sectionType="resource"
-        label={
-          isSummarySpan ? (
-            <>
-              {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
-              <span className={styles.inheritedNote}>
-                {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
-              </span>
-            </>
-          ) : (
-            t('explore.span-detail.label-resource-attributes', 'Resource attributes')
-          )
-        }
-        linksGetter={resourceLinksGetter}
-        isOpen={isProcessOpen}
-        onToggle={() => processToggle(spanID)}
-        promoGetter={promoGetter}
-        datasourceType={datasourceType}
-      />
-    );
-  }
+  listOfContentCards.push(
+    <AccordionCategorizedKeyValues
+      data={process.tags ?? []}
+      sectionType="resource"
+      label={
+        isSummarySpan ? (
+          <>
+            {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
+            <span className={styles.inheritedNote}>
+              {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
+            </span>
+          </>
+        ) : (
+          t('explore.span-detail.label-resource-attributes', 'Resource attributes')
+        )
+      }
+      linksGetter={resourceLinksGetter}
+      isOpen={isProcessOpen}
+      onToggle={() => processToggle(spanID)}
+      promoGetter={promoGetter}
+      datasourceType={datasourceType}
+    />
+  );
 
   if (logs && logs.length > 0) {
     listOfContentCards.push(

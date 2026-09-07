@@ -1234,6 +1234,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				informerFactoryResyncInterval,
 				30*time.Second,
 				b.registry,
+				b.tracer,
 				nats.Enabled(b.natsSubscriber),
 			)
 			connReg, err := connSource.AddEventHandler(connController.EventHandler())

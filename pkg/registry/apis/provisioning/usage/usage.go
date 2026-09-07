@@ -23,6 +23,17 @@ import (
 // stats for. In a single-tenant deployment this is one namespace per org.
 type NamespaceLister func(ctx context.Context) ([]string, error)
 
+// MetricCollector returns the usage-stats callback that phones home aggregated,
+// instance-wide provisioning counts (repositories and connections by type,
+// health, auth, sync and Ready-reason breakdowns; managed objects by kind). It
+// is intentionally coarse and infrequent.
+//
+// For a point-in-time, per-object view -- which repository/connection, in which
+// namespace, and what it looked like at a given moment -- see
+// RepositoryUsageStatus and ConnectionUsageStatus, logged every reconcile by the
+// respective controllers. The two are complementary: this feeds long-term
+// aggregate telemetry, the log lines support operational debugging of a specific
+// object.
 func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), connectionLister func(ctx context.Context) ([]provisioning.Connection, error), unified resource.ResourceClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (m map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
@@ -101,7 +112,8 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 				return m, fmt.Errorf("list repositories on namespace %s: %w", ns, err)
 			}
 
-			for _, repo := range repos {
+			for i := range repos {
+				repo := &repos[i]
 				repoCounts[string(repo.Spec.Type)]++
 				authMethodCounts[repositoryAuthMethod(repo)]++
 				if r := readyReason(repo.Status.Conditions); r != "" {
@@ -204,7 +216,7 @@ type repoAggregate struct {
 // syncStateCounts are keyed by the repository's configured sync target and last
 // observed sync state respectively; empty values are skipped so unset fields do
 // not create an empty-string bucket.
-func (a *repoAggregate) observe(repo provisioning.Repository, syncTargetCounts, syncStateCounts map[string]int) {
+func (a *repoAggregate) observe(repo *provisioning.Repository, syncTargetCounts, syncStateCounts map[string]int) {
 	a.total++
 	if repo.Status.Health.Healthy {
 		a.healthy++
@@ -232,25 +244,6 @@ func (a *repoAggregate) observe(repo provisioning.Repository, syncTargetCounts, 
 	}
 	if s := repo.Status.Sync.State; s != "" {
 		syncStateCounts[string(s)]++
-	}
-}
-
-// repositoryAuthMethod classifies how a repository authenticates:
-//   - "none": local repositories, which have no remote to authenticate against.
-//   - "connection": auth is delegated to a referenced Connection, whose own type
-//     (counted under stats.connection.*) carries the concrete mechanism.
-//   - "token": a token/PAT is stored on the repository.
-//   - "anonymous": a remote repository with neither a token nor a connection.
-func repositoryAuthMethod(repo provisioning.Repository) string {
-	switch {
-	case repo.Spec.Local != nil:
-		return "none"
-	case repo.Spec.Connection != nil && repo.Spec.Connection.Name != "":
-		return "connection"
-	case !repo.Secure.Token.IsZero():
-		return "token"
-	default:
-		return "anonymous"
 	}
 }
 

@@ -504,6 +504,7 @@ type Cfg struct {
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 	MeticulousAIRecordingToken          string
+	PluginImportTelemetryPackages       []string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -1683,6 +1684,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
+	cfg.PluginImportTelemetryPackages = util.SplitString(analytics.Key("plugin_import_telemetry_packages").MustString(""))
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")

@@ -698,18 +698,16 @@ func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
 	assert.Equal(t, "part_key", backend.gotResource)
 }
 
-func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
-	// External rows aren't unified-storage resources; per-result authz is
-	// skipped (the caller post-filters), so every row comes back even
-	// when the access client would deny everything.
+func TestVectorSearch_ExternalCollectionEnforcesAuthz(t *testing.T) {
+	// External collections are batch-checked per result like internal resources.
 	backend := &fakeVectorBackend{
-		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true},
 		results: []vector.VectorSearchResult{
-			{UID: "u1", Title: "T1", Score: 0.1},
-			{UID: "u2", Title: "T2", Score: 0.2},
+			{UID: "u1", Title: "T1", Folder: "f-allowed", Score: 0.1},
+			{UID: "u2", Title: "T2", Folder: "f-denied", Score: 0.2},
 		},
 	}
-	access := &countingAccessClient{allow: func(string, string) bool { return false }}
+	access := &countingAccessClient{allow: func(_, folder string) bool { return folder == "f-allowed" }}
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
 
 	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
@@ -717,8 +715,9 @@ func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Nil(t, resp.Error)
-	require.Len(t, resp.Results, 2)
-	assert.Zero(t, access.batchCalls, "BatchCheck must not be called for external collections")
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "u1", resp.Results[0].Name)
+	assert.NotZero(t, access.batchCalls, "BatchCheck must run for external collections")
 }
 
 func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
@@ -733,9 +732,7 @@ func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
 }
 
 func TestVectorSearch_NamespaceMismatchIsForbidden(t *testing.T) {
-	// A caller authenticated for one namespace must not read another
-	// tenant's rows — critical for external collections, where the
-	// per-result BatchCheck (the old implicit tenant guard) is skipped.
+	// A caller authenticated for one namespace must not read another tenant's rows.
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
 		results:    []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},

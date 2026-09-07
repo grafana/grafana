@@ -82,6 +82,34 @@ func (r *jobProgressRecorder) Started() time.Time {
 }
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
+	r.record(ctx, result, false)
+}
+
+// RecordDryRun tallies result into the job summary without the write-assuming
+// side effects Record has: no resource-operation metric, no per-file success/
+// failure log, and no contribution to errors/errorCount (so a preview failure
+// cannot flip the job's own state to error/warning in Complete). Use it for
+// previews (e.g. pull request evaluation) that never actually change anything.
+func (r *jobProgressRecorder) RecordDryRun(ctx context.Context, result JobResourceResult) {
+	r.record(ctx, result, true)
+}
+
+// record is the shared implementation behind Record and RecordDryRun. The
+// summary tally (updateSummary) always runs; isDryRun gates everything that
+// assumes a real write happened -- the resource-operation metric, the per-file
+// success/failure log, and error/warning bookkeeping (errors, errorCount,
+// failedCreations/Deletions/Updates) that would otherwise let a preview
+// failure flip the job's own state in Complete.
+func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResult, isDryRun bool) {
+	if isDryRun {
+		r.mu.Lock()
+		r.updateSummary(result)
+		r.mu.Unlock()
+
+		r.maybeNotify(ctx)
+		return
+	}
+
 	var (
 		shouldLogError   bool
 		shouldLogWarning bool

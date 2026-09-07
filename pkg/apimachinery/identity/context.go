@@ -241,6 +241,9 @@ var serviceIdentityTokenPermissions = []string{
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
 
+	// Named explicitly: the *.ext.grafana.app wildcard only matches single-segment prefixes.
+	"assistant.alertrules.ext.grafana.app:*",
+
 	// Allow access to apps.grafana.app resources (e.g. AppManifest)
 	"apps.grafana.app:*",
 }

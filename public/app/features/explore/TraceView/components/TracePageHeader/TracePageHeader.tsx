@@ -41,12 +41,10 @@ import {
   Badge,
   type BadgeColor,
   Button,
-  ButtonGroup,
   CollapsableSection,
   Dropdown,
   Icon,
   Label,
-  LinkButton,
   Menu,
   Tooltip,
   useStyles2,
@@ -74,7 +72,7 @@ import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController
 export type TracePageHeaderProps = {
   trace: Trace | null;
   data: DataFrame;
-  app?: CoreApp;
+  app: CoreApp | string;
   timeZone: TimeZone;
   search: TraceSearchProps;
   setSearch: (newSearch: TraceSearchProps) => void;
@@ -126,10 +124,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
 
-  useEffect(() => {
-    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [setHeaderHeight, showSpanFilters, styles.header]);
-
   // Build context for plugin extensions if trace is available
   const traceContext: TraceViewPluginExtensionContext | undefined = trace
     ? {
@@ -151,6 +145,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const { components: extensionComponents } = usePluginComponents<TraceViewPluginExtensionContext>({
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
+
+  useEffect(() => {
+    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
+  }, [setHeaderHeight, showSpanFilters, styles.header, extensionComponents, extensionLinks, logsLinkModel]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -197,22 +195,37 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
   const shareDropdownMenu = (
     <Menu>
-      <Menu.Item
-        label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
-        icon="link"
-        onClick={() => {
-          navigator.clipboard.writeText(window.location.href);
-          notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
-        }}
-      />
-      <Menu.Item
-        label={t('explore.trace-page-header.share-export-json', 'Export as JSON')}
-        icon="download-alt"
-        onClick={() => {
-          exportTrace();
-          notifyApp.success(t('explore.trace-page-header.export-started', 'Export started'));
-        }}
-      />
+      <Menu.Group label={t('explore.trace-page-header.share-group', 'Share')}>
+        <Menu.Item
+          label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
+          icon="link"
+          testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+          }}
+        />
+        <Menu.Item
+          label={t('explore.trace-page-header.share-export-json', 'Export as JSON')}
+          icon="download-alt"
+          testId={selectors.components.TraceViewer.shareMenu.exportJsonButton}
+          onClick={() => {
+            exportTrace();
+            notifyApp.success(t('explore.trace-page-header.export-started', 'Export started'));
+          }}
+        />
+      </Menu.Group>
+      {config.feedbackLinksEnabled && (
+        <Menu.Group label={t('explore.trace-page-header.feedback-group', 'Feedback')}>
+          <Menu.Item
+            label={t('explore.trace-page-header.give-feedback-item', 'Give feedback')}
+            icon="comment-alt-message"
+            url="https://forms.gle/RZDEx8ScyZNguDoC8"
+            target="_blank"
+            testId={selectors.components.TraceViewer.shareMenu.feedbackLink}
+          />
+        </Menu.Group>
+      )}
     </Menu>
   );
 
@@ -255,64 +268,31 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               </div>
             )}
 
-            <div className={styles.actions}>
+            <div className={styles.pluginActions}>
               {traceContext
                 ? renderLimitedComponents<TraceViewPluginExtensionContext>({
                     props: traceContext,
                     components: extensionComponents,
                     limit: 2,
+                    wrapper: PluginActionItem,
                   })
                 : null}
             </div>
 
             {logsLinkModel && <LogsLinkButton linkModel={logsLinkModel} traceDatasourceUid={datasourceUid} forTrace />}
 
-            {config.feedbackLinksEnabled && (
-              <Tooltip
-                content={t(
-                  'explore.trace-page-header.title-share-thoughts-about-tracing-grafana',
-                  'Share your thoughts about tracing in Grafana.'
-                )}
-              >
-                <LinkButton
-                  size="sm"
-                  variant="secondary"
-                  fill="outline"
-                  icon="comment-alt-message"
-                  href="https://forms.gle/RZDEx8ScyZNguDoC8"
-                  target="_blank"
-                >
-                  <Trans i18nKey="explore.trace-page-header.give-feedback">Feedback</Trans>
-                </LinkButton>
-              </Tooltip>
-            )}
-
-            <ButtonGroup>
-              <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  fill="outline"
-                  icon="share-alt"
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
-                  }}
-                >
-                  {t('explore.trace-page-header.share', 'Share')}
-                </Button>
-              </Tooltip>
-
-              <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
-                <Button
-                  aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share trace options menu')}
-                  size="sm"
-                  variant="secondary"
-                  fill="outline"
-                  icon="angle-down"
-                />
-              </Dropdown>
-            </ButtonGroup>
+            <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
+              <Button
+                size="sm"
+                variant="primary"
+                fill="outline"
+                icon="ellipsis-v"
+                tooltip={t('explore.trace-page-header.share-tooltip', 'Share and feedback')}
+                aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share and feedback menu')}
+                aria-haspopup="menu"
+                data-testid={selectors.components.TraceViewer.shareMenu.triggerButton}
+              />
+            </Dropdown>
           </div>
         )}
       </div>
@@ -442,6 +422,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
 TracePageHeader.displayName = 'TracePageHeader';
 
+function PluginActionItem({ children }: { children: React.ReactNode }) {
+  const styles = useStyles2(getStyles);
+  return <div className={styles.pluginActionItem}>{children}</div>;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
@@ -456,7 +441,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     titleRow: css({
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
       gap: theme.spacing(2),
@@ -494,6 +479,29 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       gap: theme.spacing(1),
       flexShrink: 0,
+    }),
+
+    pluginActions: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      flexShrink: 0,
+    }),
+
+    pluginActionItem: css({
+      display: 'flex',
+      alignItems: 'center',
+      '&:has([data-testid="assistant-button"])': {
+        padding: 1,
+        borderRadius: theme.shape.radius.default,
+        background: 'linear-gradient(90deg, rgb(168, 85, 247), rgb(249, 115, 22))',
+      },
+      '& [data-testid="assistant-button"]': {
+        border: 'none !important',
+      },
+      '& [data-testid="assistant-button"]::before, & [data-testid="assistant-button"]::after': {
+        display: 'none',
+      },
     }),
 
     metadataRow: css({

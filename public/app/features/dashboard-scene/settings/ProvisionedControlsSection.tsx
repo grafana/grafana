@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import classNames from 'clsx';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -100,15 +100,14 @@ function getSourceTooltip(pluginName: string | undefined): string {
 }
 
 function usePluginName(origin: ControlSourceRef | undefined): string | undefined {
-  return useMemo(() => {
-    if (!origin?.group) {
-      return undefined;
-    }
+  const pluginId = origin?.group ?? '';
+  const { value: meta } = useDatasourcePluginMeta(pluginId);
 
-    const list = getDataSourceSrv().getList({});
-    const ds = list.find((d) => d.meta.id === origin.group);
-    return ds?.meta.name ?? origin.group;
-  }, [origin?.group]);
+  if (!pluginId) {
+    return undefined;
+  }
+
+  return meta?.name ?? pluginId;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
