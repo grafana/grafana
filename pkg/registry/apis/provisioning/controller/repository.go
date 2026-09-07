@@ -89,6 +89,7 @@ type RepositoryController struct {
 	quotaGetter                   quotas.QuotaGetter
 	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
+	stateMetrics                  *repositoryStateMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 }
@@ -122,6 +123,7 @@ func NewRepositoryController(
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 	quotaMetrics := registerRepositoryQuotaMetrics(registry)
+	stateMetrics := registerRepositoryStateMetrics(registry)
 
 	rc := &RepositoryController{
 		client:    provisioningClient,
@@ -157,6 +159,7 @@ func NewRepositoryController(
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
+		stateMetrics:                  stateMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
@@ -412,11 +415,13 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		if err != nil {
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
+		rc.stateMetrics.Delete(obj.GetNamespace(), obj.GetName())
 		return nil
 	} else {
 		logger.Info("no finalizers to process")
 	}
 
+	rc.stateMetrics.Delete(obj.GetNamespace(), obj.GetName())
 	return nil
 }
 
@@ -751,6 +756,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
+		// The repository is gone. On replicas that were not the delete's event
+		// owner this is how the resync re-list surfaces the deletion, so drop the
+		// per-repository gauges here too or they would leak forever.
+		rc.stateMetrics.Delete(namespace, name)
 		return repoType, errors.New("repository not found")
 	case err != nil:
 		return repoType, err
@@ -786,6 +795,19 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		logger.Info("skipping reconciliation: namespace is pending deletion")
 		return repoType, nil
 	}
+
+	// Publish the observed repository state on every reconcile (including the
+	// no-op cycles below) so dashboards see a live view of the fleet. All values
+	// come from the object already in hand -- no extra reads.
+	rc.stateMetrics.Record(obj)
+	logger.Info("repository reconcile",
+		"target", obj.Spec.Sync.Target,
+		"syncEnabled", obj.Spec.Sync.Enabled,
+		"healthy", obj.Status.Health.Healthy,
+		"syncState", obj.Status.Sync.State,
+		"lastSyncFinished", obj.Status.Sync.Finished,
+		"managedResourceCount", totalManagedResources(obj.Status.Stats),
+	)
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
