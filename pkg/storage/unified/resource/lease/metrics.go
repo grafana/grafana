@@ -42,9 +42,7 @@ type Metrics struct {
 // exercising unrelated behavior) can pass nil rather than wiring up a
 // throwaway registry.
 func NewMetrics(reg prometheus.Registerer, component string) *Metrics {
-	if reg != nil {
-		reg = prometheus.WrapRegistererWith(prometheus.Labels{"component": component}, reg)
-	}
+	reg = prometheus.WrapRegistererWith(prometheus.Labels{"component": component}, reg)
 	m := &Metrics{
 		AcquireDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "lease_manager_acquire_duration_seconds",
