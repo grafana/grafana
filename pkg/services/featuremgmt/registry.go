@@ -1446,14 +1446,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "improvedExternalSessionHandlingSAML",
-			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       identityAccessTeam,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "teamHttpHeadersTempo",
 			Description: "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
 			Stage:       FeatureStageExperimental,

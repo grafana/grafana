@@ -483,10 +483,6 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagImprovedExternalSessionHandlingSAML
-	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
-
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"

@@ -3776,7 +3776,8 @@
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-09T17:02:49Z"
+        "creationTimestamp": "2025-01-09T17:02:49Z",
+        "deletionTimestamp": "2026-09-07T08:53:22Z"
       },
       "spec": {
         "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
