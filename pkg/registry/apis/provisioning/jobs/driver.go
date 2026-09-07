@@ -9,6 +9,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -505,6 +507,19 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			return nil
 		}
 
+		// Most workers talk to the repository, so a repository whose credentials
+		// are known to be broken only produces a failed job the user can't act on
+		// from the job itself. Skip it with a warning instead of burning the job
+		// success-rate SLI; the repository status stays the place the reason lives.
+		// The synthetic test action is exempt: its worker does no repository work
+		// and exists purely to exercise the queue, so it must run even when the
+		// repository is unhealthy.
+		if job.Spec.Action != provisioning.JobActionTest && repositoryAuthenticationFailed(r) {
+			logger.Info("repository authentication failed - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository authentication failed - job skipped")).Build())
+			return nil
+		}
+
 		err = worker.Process(ctx, repo, *job, recorder)
 		if err != nil {
 			span.RecordError(err)
@@ -515,6 +530,34 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// repositoryAuthenticationFailed reports whether the repository's latest health
+// check concluded its credentials are broken (revoked or expired), so any job
+// against it would fail in a way only the user can fix on the repository itself.
+//
+// The check is intentionally narrow, so a repository that is merely
+// misconfigured or briefly unavailable is not skipped:
+//   - Checked > 0: trust the status only once a health check has actually run,
+//     so a brand-new repository is not skipped before its first check.
+//   - Healthy == false with Error == HealthFailureHealth: a webhook-permission
+//     gap (HealthFailureHook) doesn't mean content reads/writes are broken.
+//   - Ready == AuthenticationFailed: keys off the structured condition reason,
+//     not health message text, so an accessible-but-blocked failure (e.g. branch
+//     protection, classified InvalidSpec) does not trigger the skip.
+//   - ObservedGeneration == Generation: ignore a stale condition from before a
+//     spec edit that may already have repaired the credentials.
+func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
+	health := r.Status.Health
+	if health.Checked == 0 || health.Healthy || health.Error != provisioning.HealthFailureHealth {
+		return false
+	}
+
+	ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+	return ready != nil &&
+		ready.Status == metav1.ConditionFalse &&
+		ready.Reason == provisioning.ReasonAuthenticationFailed &&
+		ready.ObservedGeneration == r.Generation
 }
 
 // sumTotalChanges totals the per-summary TotalChanges for the duration-histogram

@@ -2706,7 +2706,9 @@
       "view-in-explore": "Zobrazit v Prozkoumat"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Možnosti",
+      "invalid-interval-error": "",
       "label-time-range": "Časový rozsah",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -3295,6 +3297,7 @@
         "disable-confirm-title": "Zakázat automatickou synchronizaci Mimir Alertmanager?",
         "disable-success": "Automatická synchronizace Mimir Alertmanager zakázána",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Tato hodnota je nastavena klíčem <1>[unified_alerting] external_alertmanager_uid</1> v souboru grafana.ini a nelze ji změnit z uživatelského rozhraní. Upravte konfigurační soubor a restartujte Grafanu nebo odeberte klíč pro správu synchronizace odsud.",
         "operator-managed-title": "Spravuje operátor",
         "orphan-warning": "Nakonfigurované UID zdroje dat {{uid}} není dostupné. Chcete-li pokračovat, zakažte synchronizaci nebo obnovte zdroj dat.",
@@ -3303,6 +3306,7 @@
         "picker-label": "Zdroj dat",
         "picker-placeholder": "Vyberte zdroj dat Mimir nebo Cortex Alertmanager…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Vyberte zdroj dat Mimir nebo Cortex Alertmanager pro povolení ukládání.",
         "save-disabled-staged-config": "",
         "save-error": "Automatickou synchronizaci Mimir Alertmanager se nepodařilo uložit",
@@ -6102,11 +6106,14 @@
     "notebook-layout": {
       "description": "Vertikální sekvence panelů, textu a buněk kódu",
       "name": "Poznámkový blok",
-      "pill": "Zveřejněný poznámkový blok",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Čas"
+      "time": "Čas",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9834,6 +9841,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Předevčírem",
           "previousFiscalQuarter": "Předchozí fiskální čtvrtletí",
@@ -13163,6 +13172,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13186,6 +13199,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13268,7 +13288,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13276,7 +13295,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13300,6 +13318,9 @@
       "count-truncated_many": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13308,6 +13329,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13343,6 +13365,13 @@
     },
     "field-color": {
       "color-by-label": "Vybarvit řady podle"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -18148,7 +18177,7 @@
       "delete-modal-body": "Opravdu chcete odstranit „{{name}}“?",
       "delete-modal-confirm": "Odstranit",
       "delete-modal-title": "Odstranit proměnnou",
-      "folder-description": "Rozšiřte proměnnou do složky nebo vyberte kořenovou složku nástěnek a převeďte ji na globální (k dispozici všude v organizaci)",
+      "folder-description": "",
       "folder-description-folder-only": "Rozšiřte proměnnou do složky, kterou můžete upravovat",
       "folder-label": "Složka",
       "moved": "Proměnná byla přesunuta",
@@ -18168,10 +18197,10 @@
       "move": "Přesunout",
       "moving": "Probíhá přesouvání…",
       "title": "Přesunout proměnné",
-      "body_one": "Přesunout {{count}} vybranou proměnnou. Výběrem kořenové složky nástěnek ji převedete na globální (k dispozici všude v organizaci).",
-      "body_few": "Přesunout vybrané proměnné ({{count}}). Výběrem kořenové složky nástěnek je převedete na globální (k dispozici všude v organizaci).",
-      "body_many": "Přesunout vybrané proměnné ({{count}}). Výběrem kořenové složky nástěnek je převedete na globální (k dispozici všude v organizaci).",
-      "body_other": "Přesunout vybrané proměnné ({{count}}). Výběrem kořenové složky nástěnek je převedete na globální (k dispozici všude v organizaci).",
+      "body_one": "",
+      "body_few": "",
+      "body_many": "",
+      "body_other": "",
       "body-folder-only_one": "Přesuňte {{count}} vybranou proměnnou do složky, kterou můžete upravovat.",
       "body-folder-only_few": "Přesuňte vybrané proměnné ({{count}}) do složky, kterou můžete upravovat.",
       "body-folder-only_many": "Přesuňte vybrané proměnné ({{count}}) do složky, kterou můžete upravovat.",

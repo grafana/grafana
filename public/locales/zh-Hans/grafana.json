@@ -2646,7 +2646,9 @@
       "view-in-explore": "在 Explore 中查看"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "选项",
+      "invalid-interval-error": "",
       "label-time-range": "时间范围",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小间隔 = {{minInterval}}"
@@ -3226,6 +3228,7 @@
         "disable-confirm-title": "要禁用 Mimir Alertmanager 自动同步吗？",
         "disable-success": "Mimir Alertmanager 自动同步已禁用",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 密钥设置，无法通过 UI 更改。编辑配置文件并重新启动 Grafana，或移除密钥以从此处管理同步。",
         "operator-managed-title": "由操作员管理",
         "orphan-warning": "已配置的数据源 UID {{uid}} 不可用。禁用同步或恢复数据源以继续。",
@@ -3234,6 +3237,7 @@
         "picker-label": "数据源",
         "picker-placeholder": "选择 Mimir 或 Cortex Alertmanager 数据源…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "选择 Mimir 或 Cortex Alertmanager 数据源以启用保存。",
         "save-disabled-staged-config": "",
         "save-error": "保存 Mimir Alertmanager 自动同步失败",
@@ -5976,11 +5980,14 @@
     "notebook-layout": {
       "description": "垂直排列的面板、文本和代码单元格",
       "name": "笔记本",
-      "pill": "已发布的笔记本",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "时间"
+      "time": "时间",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9675,6 +9682,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "前天",
           "previousFiscalQuarter": "上一财季",
@@ -12890,6 +12899,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12913,6 +12926,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -12995,7 +13015,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13003,7 +13022,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13021,6 +13039,9 @@
       "count_other": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13029,6 +13050,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13064,6 +13086,13 @@
     },
     "field-color": {
       "color-by-label": "为序列添加颜色的方式"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17767,7 +17796,7 @@
       "delete-modal-body": "您确定要删除“{{name}}”吗？",
       "delete-modal-confirm": "删除",
       "delete-modal-title": "删除变量",
-      "folder-description": "将变量的作用域限定为一个文件夹，或选择根数据面板文件夹以使其成为全局变量（在组织中的任何地方都可用）",
+      "folder-description": "",
       "folder-description-folder-only": "将变量的作用域设置为您可以编辑的文件夹",
       "folder-label": "文件夹",
       "moved": "变量已移动",
@@ -17787,7 +17816,7 @@
       "move": "移动",
       "moving": "正在移动…",
       "title": "移动变量",
-      "body_other": "移动 {{count}} 个选定的变量。选择根数据面板文件夹会使其成为全局变量（在组织中的任何地方都可用）。",
+      "body_other": "",
       "body-folder-only_other": "将 {{count}} 个选定的变量移动到您可以编辑的文件夹。"
     },
     "page": {

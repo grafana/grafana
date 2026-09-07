@@ -2666,7 +2666,9 @@
       "view-in-explore": "In Explore anzeigen"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Optionen",
+      "invalid-interval-error": "",
       "label-time-range": "Zeitraum",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Mind. Intervall = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "Automatische Synchronisierung von Mimir Alertmanager deaktivieren?",
         "disable-success": "Automatische Synchronisierung von Mimir Alertmanager deaktiviert",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Dieser Wert wird durch den Schlüssel <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini festgelegt und kann über die Benutzeroberfläche nicht geändert werden. Bearbeiten Sie die Konfigurationsdatei und starten Sie Grafana neu oder entfernen Sie den Schlüssel, um die Synchronisierung von hier zu verwalten.",
         "operator-managed-title": "Verwaltet von Operator",
         "orphan-warning": "Die konfigurierte Datenquellen-UID {{uid}} ist nicht verfügbar. Deaktivieren Sie die Synchronisierung oder stellen Sie die Datenquelle wieder her, um fortzufahren.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Datenquelle",
         "picker-placeholder": "Wählen Sie eine Datenquelle von Mimir oder Cortex Alertmanager aus …",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Wählen Sie eine Datenquelle von Mimir oder Cortex Alertmanager, um das Speichern zu aktivieren.",
         "save-disabled-staged-config": "",
         "save-error": "Speichern der automatischen Synchronisierung von Mimir Alertmanager fehlgeschlagen",
@@ -6018,11 +6022,14 @@
     "notebook-layout": {
       "description": "Eine vertikale Abfolge von Panels, Text und Codezellen",
       "name": "Notizbuch",
-      "pill": "Veröffentlichtes Notizbuch",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Zeit"
+      "time": "Zeit",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9728,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Vorgestern",
           "previousFiscalQuarter": "Vorheriges Geschäftsquartal",
@@ -12981,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13004,6 +13017,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13086,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13094,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13114,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13122,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13157,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Farbreihe nach"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17894,7 +17923,7 @@
       "delete-modal-body": "Sind Sie sicher, dass Sie „{{name}}“ löschen möchten?",
       "delete-modal-confirm": "Löschen",
       "delete-modal-title": "Variable löschen",
-      "folder-description": "Ordnen Sie die Variable einem Ordner zu oder wählen Sie den Stammordner der Dashboards aus, um sie global zugänglich machen (überall im Unternehmen verfügbar)",
+      "folder-description": "",
       "folder-description-folder-only": "Ordnen Sie die Variable einem Ordner zu, den Sie bearbeiten können",
       "folder-label": "Ordner",
       "moved": "Variable verschoben",
@@ -17914,8 +17943,8 @@
       "move": "Verschieben",
       "moving": "Wird verschoben ...",
       "title": "Variablen verschieben",
-      "body_one": "Verschieben von {{count}} ausgewählten Variable. Wenn Sie den Stammordner der Dashboards auswählen, wird sie global zugänglich gemacht (überall im Unternehmen verfügbar).",
-      "body_other": "Verschieben von {{count}} ausgewählten Variablen. Wenn Sie den Stammordner der Dashboards auswählen, werden sie global zugänglich gemacht (überall im Unternehmen verfügbar).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Verschieben Sie {{count}} ausgewählte Variable in einen Ordner, den Sie bearbeiten können.",
       "body-folder-only_other": "Verschieben Sie {{count}} ausgewählte Variablen in einen Ordner, den Sie bearbeiten können."
     },
