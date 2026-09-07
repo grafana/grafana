@@ -34,6 +34,11 @@ function row(overrides: Partial<NotebookRow> = {}): NotebookRow {
   };
 }
 
+/** Renders the table with the props it requires, returning the tag-click spy for the cases about it. */
+function renderTable(rows: NotebookRow[], onTagClick = jest.fn()) {
+  return { onTagClick, ...render(<NotebooksTable notebooks={rows} onTagClick={onTagClick} />) };
+}
+
 /** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */
 function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
   const trigger = jest.fn().mockReturnValue({ unwrap });
@@ -63,7 +68,7 @@ describe('NotebooksTable delete', () => {
   it('names the notebook in the confirmation rather than asking in the abstract', async () => {
     setupDelete();
 
-    const { user } = render(<NotebooksTable notebooks={[row()]} />);
+    const { user } = renderTable([row()]);
     await openDeleteConfirmation(user);
 
     expect(await screen.findByText('Are you sure you want to delete "Q2 latency regression"?')).toBeInTheDocument();
@@ -73,7 +78,7 @@ describe('NotebooksTable delete', () => {
     const trigger = setupDelete();
 
     // Two rows, so a delete that ignored which menu was opened would still look right with one.
-    const { user } = render(<NotebooksTable notebooks={[row(), row({ uid: 'nb2', title: 'Checkout errors' })]} />);
+    const { user } = renderTable([row(), row({ uid: 'nb2', title: 'Checkout errors' })]);
     // Scoped to the row rather than taken by index: the table sorts on `updated`, so the rows do not
     // necessarily appear in the order they were passed.
     const secondRow = screen.getByRole('row', { name: /Checkout errors/ });
@@ -89,7 +94,7 @@ describe('NotebooksTable delete', () => {
   it('deletes nothing when the confirmation is dismissed', async () => {
     const trigger = setupDelete();
 
-    const { user } = render(<NotebooksTable notebooks={[row()]} />);
+    const { user } = renderTable([row()]);
     await openDeleteConfirmation(user);
     await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
@@ -109,12 +114,36 @@ describe('NotebooksTable delete', () => {
     const { user } = render(
       <>
         <AppNotificationList />
-        <NotebooksTable notebooks={[row()]} />
+        <NotebooksTable notebooks={[row()]} onTagClick={jest.fn()} />
       </>
     );
     await openDeleteConfirmation(user);
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
 
     expect(await screen.findByText('Failed to delete notebook')).toBeInTheDocument();
+  });
+});
+
+describe('NotebooksTable tags', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    setupDelete();
+  });
+
+  // Filtering is the list's, not the table's: the row reports the tag and the caller decides.
+  it('reports a clicked tag to the caller', async () => {
+    const { user, onTagClick } = renderTable([row({ tags: ['latency', 'slo'] })]);
+
+    await user.click(screen.getByRole('button', { name: 'Filter by tag slo' }));
+
+    expect(onTagClick).toHaveBeenCalledWith('slo', expect.anything());
+  });
+
+  // A clickable Tag is a button, and "slo, button" would not say what pressing it does.
+  it('says what pressing a tag will do', () => {
+    renderTable([row({ tags: ['latency'] })]);
+
+    expect(screen.getByRole('button', { name: 'Filter by tag latency' })).toBeInTheDocument();
   });
 });

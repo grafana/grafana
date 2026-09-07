@@ -1,10 +1,8 @@
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, TagList, Text, useStyles2 } from '@grafana/ui';
+import { Stack, TagList, Text } from '@grafana/ui';
 
-import { getNeutralTagListStyle } from '../../tagColors';
+import { NotebookTagsField } from '../../NotebookTagsField';
 
-import { NotebookTagPicker } from './NotebookTagPicker';
 import { NotebookTitleEditor } from './NotebookTitleEditor';
 
 const TAGS_INPUT_ID = 'notebook-tags';
@@ -31,7 +29,6 @@ export function NotebookDocumentHeader({
   onTagsChange,
   onTitleChange,
 }: Props) {
-  const styles = useStyles2(getStyles);
   const canEditTags = Boolean(isEditing && onTagsChange);
   const canEditTitle = Boolean(isEditing && onTitleChange);
   // While reading, an untagged notebook shows no Tags row at all; while editing it always shows one,
@@ -60,21 +57,21 @@ export function NotebookDocumentHeader({
         // flex-start, which would otherwise shrink this row to its content.
         <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined} fillWidth={canEditTags}>
           {canEditTags && onTagsChange ? (
-            // Its chips are neutral without being asked, ValuePill using the same two tokens the
-            // read-mode override in tagColors.ts applies.
-            <NotebookTagPicker id={TAGS_INPUT_ID} tags={tags} onChange={onTagsChange} />
+            <NotebookTagsField
+              inputId={TAGS_INPUT_ID}
+              value={tags ?? []}
+              onChange={onTagsChange}
+              allowCustomValue
+              placeholder={t('dashboard.notebook-layout.tags-placeholder', 'Add a tag')}
+            />
           ) : (
-            <TagList tags={tags ?? []} className={styles.neutralTags} />
+            <TagList tags={tags ?? []} />
           )}
         </MetaRow>
       ) : null}
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  neutralTags: getNeutralTagListStyle(theme),
-});
 
 /**
  * One line of document metadata: a dimmed label, then its value.

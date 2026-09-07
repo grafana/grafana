@@ -170,8 +170,9 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
      * The search provides the `Notebook` type because it is a list that writes must refresh; the
      * generated notebook mutations invalidate that type in bulk, so sharing it would have every write
      * refetch this. A caller holding this open for the length of an editing session would then re-ask
-     * on every autosave, for options it may never show. Fetched once per mount instead, which for a
-     * dropdown of suggestions is the right staleness.
+     * on every autosave, for options it may never show. Its callers decide when to ask instead — the
+     * header's tag editor once per mount, the list's tag filter each time the picker is opened —
+     * which for a dropdown of suggestions is the right staleness.
      */
     notebookFieldFacet: build.query<SearchResults, { field: string; limit: number }>({
       query: ({ field, limit }) => ({
@@ -189,4 +190,5 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
   }),
 });
 
-export const { useSearchNotebooksInfiniteQuery, useNotebookFieldFacetQuery } = notebookSearchAPI;
+export const { useSearchNotebooksInfiniteQuery, useNotebookFieldFacetQuery, useLazyNotebookFieldFacetQuery } =
+  notebookSearchAPI;

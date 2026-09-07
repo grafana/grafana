@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -29,9 +29,9 @@ jest.mock('app/core/services/context_srv');
 // The create fields now offer the library's existing tags, which reads a facet off this module. It
 // calls injectEndpoints on the real client as it loads, which nothing here provides.
 jest.mock('../list/notebookSearchApi', () => ({
-  useNotebookFieldFacetQuery: jest.fn(() => ({
-    data: { items: [], facets: { tags: [{ value: 'latency', count: 1 }] } },
-  })),
+  useLazyNotebookFieldFacetQuery: jest.fn(() => [
+    jest.fn().mockResolvedValue({ data: { items: [], facets: { tags: [{ value: 'latency', count: 1 }] } } }),
+  ]),
 }));
 
 jest.mock('app/core/copy/appNotification', () => ({
@@ -377,8 +377,10 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  Checkout latency  ');
       await user.type(screen.getByRole('textbox', { name: /Description/ }), 'Why is checkout slow?');
-      await user.type(screen.getByRole('combobox', { name: /Tags/ }), 'latency');
-      await user.click(await screen.findByRole('option', { name: /latency/ }));
+      // The create form's only tag field, by TagFilter's own label.
+      await user.type(screen.getByLabelText('Tag filter'), 'latency');
+      const tagOptions = await screen.findByRole('listbox');
+      await user.click(await within(tagOptions).findByText('latency'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -425,11 +427,6 @@ describe('AddPanelToNotebookModalBody', () => {
       // would sit at the far edge instead of under the meta line they belong to.
       const list = screen.getByRole('list', { name: 'Tags' });
       expect(getComputedStyle(list).justifyContent).toBe('flex-start');
-
-      // The neutral grey the card also opts into is deliberately not asserted here: it is applied
-      // through a `[data-tag-id]` descendant rule, which jsdom does not resolve, so any colour
-      // assertion would pass whether or not the class were applied. What that style does is covered
-      // by tagColors.test.tsx against the same helper this card uses.
     });
   });
 
@@ -496,8 +493,11 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderModal();
       await chooseExisting(user);
 
-      await user.click(screen.getByRole('combobox', { name: 'Filter by tag' }));
-      await user.click(await screen.findByRole('option', { name: 'latency' }));
+      // Options load when the field is focused, and are matched by text: every option carries the
+      // same "Tag option" aria-label.
+      await user.click(screen.getByLabelText('Tag filter'));
+      const listbox = await screen.findByRole('listbox');
+      await user.click(await within(listbox).findByText('latency'));
 
       expect(setTagFilter).toHaveBeenCalledWith(['latency']);
     });

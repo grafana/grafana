@@ -165,6 +165,13 @@ function withExpr(query: DataQuery, expr: string): DataQuery {
   return { ...query, expr } as DataQuery;
 }
 
+// The document header's tag field loads the library's tags. Stubbed so its async load cannot land
+// outside act(); everything else in this module stays real.
+jest.mock('../../list/notebookSearchApi', () => ({
+  ...jest.requireActual('../../list/notebookSearchApi'),
+  useLazyNotebookFieldFacetQuery: jest.fn(() => [jest.fn().mockResolvedValue({ data: undefined })]),
+}));
+
 describe('NotebookLayoutManager', () => {
   afterEach(() => {
     jest.restoreAllMocks();
