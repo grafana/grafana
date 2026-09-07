@@ -31,12 +31,12 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
 
   return (
     <Card noMargin className={styles.card}>
-      <Card.Heading>
+      <Card.Heading className={styles.heading}>
         <Stack direction="row" gap={1.5} alignItems="center">
           <div className={cx(styles.icon, styles.activeIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
-          <Stack direction="column" gap={0}>
+          <Stack direction="column" gap={0} minWidth={0}>
             <Text element="h3" variant="h6">
               {solution.title}
             </Text>
@@ -226,6 +226,13 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
       },
     }),
   }),
+  heading: css({
+    // Card.Heading wraps its children in a span flex item whose automatic minimum size is the
+    // min-content of the nowrap `via …` text; let it shrink so that text can truncate.
+    '> span': {
+      minWidth: 0,
+    },
+  }),
   actions: css({
     minWidth: 0,
   }),
@@ -237,6 +244,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     borderRadius: theme.shape.radius.default,
     width: theme.spacing(4),
     height: theme.spacing(4),
+    flexShrink: 0,
   }),
   activeIcon: css({
     background: theme.colors.background.secondary,
@@ -256,6 +264,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    flex: '1 1 0%',
     minWidth: 0,
 
     '&::before': {
