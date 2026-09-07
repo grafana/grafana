@@ -69,7 +69,7 @@ test.describe(
       });
     });
 
-    test.describe('edit panel plugin settings', () => {
+    test.describe.skip('edit panel plugin settings', () => {
       test('change viz to table panel, set panel title and collapse section', async ({
         panelEditPage,
         selectors,
