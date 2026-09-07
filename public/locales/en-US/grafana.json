@@ -12490,6 +12490,9 @@
       "subtitle": "Rules that determine whether an alert will fire",
       "title": "Alert rules"
     },
+    "alerting-notification-config": {
+      "subtitle": "Manage contact points, notification policies, templates, and time intervals"
+    },
     "alerting-receivers": {
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Explore"
     },
+    "extensions": {
+      "subtitle": "Extend the UI of plugins and Grafana",
+      "title": "Extensions"
+    },
     "frontend": {
       "subtitle": "Gain real user monitoring insights",
       "title": "Frontend"
@@ -12674,6 +12681,10 @@
       "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
       "title": "Notebooks"
     },
+    "observability": {
+      "subtitle": "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
+      "title": "Observability"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profiles"
+    },
+    "provisioning": {
+      "subtitle": "View and manage your provisioning connections",
+      "title": "Provisioning"
     },
     "recently-deleted": {
       "subtitle": "Deleted dashboards are kept for up to 12 months.",
