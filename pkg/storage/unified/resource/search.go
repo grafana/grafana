@@ -1981,7 +1981,6 @@ func (b *bulkIndexBatcher) flush() error {
 		return err
 	}
 	b.total += len(b.items)
-	b.phases.recordIndexed(len(b.items))
 	b.phases.flush()
 	b.items = b.items[:0]
 	return nil
@@ -2013,9 +2012,17 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
+		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathBuild, nsr)
+		// Report whatever was accumulated even when the build gives up early, and
+		// even when storage fails before handing over the iterator.
+		defer phases.flush()
+
 		// Storage does some of its work before handing over the iterator, so the
-		// fetch phase starts here rather than at the first document.
+		// fetch phase starts here rather than at the first document. When storage
+		// fails before handing it over there is no callback to charge that time to,
+		// so it is charged once the call returns.
 		listStart := time.Now()
+		gotIterator := false
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -2025,10 +2032,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				},
 			},
 		}, func(iter ListIterator) error {
-			phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathBuild, nsr)
-			// Report whatever was accumulated even when the build gives up early, so a
-			// failed build is not missing from the metrics.
-			defer phases.flush()
+			gotIterator = true
 			phases.recordFetchWithNoValue(time.Since(listStart))
 			batch := newBulkIndexBatcher(index, span, phases)
 
@@ -2076,6 +2080,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			}
 			return iter.Error()
 		})
+		if !gotIterator {
+			phases.recordFetchWithNoValue(time.Since(listStart))
+		}
 		if err != nil {
 			return listRV, err
 		}
@@ -2122,23 +2129,27 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 		keepDeleted := s.keepsDeletedDocuments(index, logger)
 
+		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathUpdate, nsr)
+		// Report whatever was accumulated even when the update gives up early, so a
+		// failed run is not missing from the metrics.
+		defer phases.flush()
+
+		// Storage queries for the latest resource version before returning the
+		// sequence, which for an update with no changes is nearly all of the
+		// fetching, so the phase starts here.
 		listModifiedTime := time.Now()
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
 			Resource:  nsr.Resource,
 			Namespace: nsr.Namespace,
 		}, sinceRV, calledAt)
+		phases.recordFetchWithNoValue(time.Since(listModifiedTime))
 
 		// Process documents in batches to avoid memory issues
 		// When dealing with large collections (e.g., 100k+ documents),
 		// loading all documents into memory at once can cause OOM errors.
 		items := make([]*BulkIndexItem, 0, maxBatchSize)
 		pendingKeys := make([]string, 0, maxBatchSize)
-
-		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathUpdate, nsr)
-		// Report whatever was accumulated even when the update gives up early, so a
-		// failed run is not missing from the metrics.
-		defer phases.flush()
 
 		docs := 0
 		for res, err := range phases.timeModifiedResources(it) {
@@ -2230,7 +2241,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				}
 
 				addToDedupCache(pendingKeys)
-				phases.recordIndexed(len(items))
 				phases.flush()
 				items = items[:0]
 				pendingKeys = pendingKeys[:0]
@@ -2245,7 +2255,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			}
 
 			addToDedupCache(pendingKeys)
-			phases.recordIndexed(len(items))
 		}
 
 		// Update timestamp of calling the given `sinceRV` to be used the next
@@ -2344,9 +2353,13 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 
 	// Listing trash scans the history for deleted objects before handing over the
 	// iterator, and for a resource with a lot of history that scan is most of the
-	// fetching, so the phase starts here.
+	// fetching, so the phase starts here. A failure before the iterator arrives
+	// has no callback to charge that time to, so it is charged once the call
+	// returns.
 	listStart := time.Now()
+	gotIterator := false
 	_, err := s.storage.ListHistory(ctx, req, func(iter ListIterator) error {
+		gotIterator = true
 		phases.recordFetchWithNoValue(time.Since(listStart))
 		for {
 			fetchStart := time.Now()
@@ -2389,6 +2402,9 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 		}
 		return iter.Error()
 	})
+	if !gotIterator {
+		phases.recordFetchWithNoValue(time.Since(listStart))
+	}
 	if errors.Is(err, errUnimplemented) {
 		// The IAM backends (resourcepermission, noopstorage) embed
 		// UnimplementedStorageBackend and serve their resource from legacy SQL, so

@@ -49,13 +49,11 @@ const (
 	// IndexPhaseMap adds it to a batch, which maps it onto the index schema.
 	IndexPhaseMap = "map"
 	// IndexPhaseCommit writes the batch, which is where a file-backed index pays
-	// for disk.
+	// for disk. Documents in this phase are the ones the write accepted.
 	IndexPhaseCommit = "commit"
-	// IndexPhaseIndex counts documents the index accepted, so a batch that fails
-	// to commit leaves fetch and convert ahead of index. Time is reported as map
-	// and commit whether or not the batch was accepted, since it was spent either
-	// way.
-	IndexPhaseIndex = "index"
+	// IndexPhasePromote copies an index that has outgrown memory onto disk, which
+	// happens once during a build and costs more the later it happens.
+	IndexPhasePromote = "promote"
 )
 
 // What was being done to the index, used as the path label. Trash is the pass
@@ -177,11 +175,11 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
 		BuildPhaseSeconds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_phase_seconds_total",
-			Help: "Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch.",
+			Help: "Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch, promote moves an index that outgrew memory onto disk.",
 		}, []string{"phase", "path", "group", "resource"}),
 		BuildDocuments: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_documents_total",
-			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped; index counts those the index accepted.",
+			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many were dropped, and fetched minus committed is how many did not reach the index.",
 		}, []string{"phase", "path", "group", "resource"}),
 		BuildSourceBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_build_source_bytes_total",

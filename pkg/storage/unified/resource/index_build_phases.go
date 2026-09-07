@@ -20,7 +20,6 @@ type buildPhaseRecorder struct {
 	convert     time.Duration
 	fetched     int
 	converted   int
-	indexed     int
 	sourceBytes int64
 }
 
@@ -71,10 +70,6 @@ func (r *buildPhaseRecorder) recordConvertNotNeeded() {
 	r.converted++
 }
 
-func (r *buildPhaseRecorder) recordIndexed(count int) {
-	r.indexed += count
-}
-
 // timeModifiedResources reports the time the sequence spends producing each
 // resource. The clock restarts once the loop body has run, whichever way it
 // left, so a body that skips an item cannot charge its own work to the fetch.
@@ -85,7 +80,9 @@ func (r *buildPhaseRecorder) timeModifiedResources(seq iter.Seq2[*ModifiedResour
 		start := time.Now()
 		seq(func(res *ModifiedResource, err error) bool {
 			elapsed := time.Since(start)
-			if res != nil {
+			// Storage reports its failures with an empty resource, so only count a
+			// document when one actually arrived.
+			if res != nil && err == nil {
 				r.recordFetch(elapsed, len(res.Value))
 			} else {
 				r.recordFetchWithNoValue(elapsed)
@@ -118,14 +115,11 @@ func (r *buildPhaseRecorder) flush() {
 	if r.converted > 0 {
 		r.metrics.BuildDocuments.WithLabelValues(IndexPhaseConvert, r.path, r.group, r.resource).Add(float64(r.converted))
 	}
-	if r.indexed > 0 {
-		r.metrics.BuildDocuments.WithLabelValues(IndexPhaseIndex, r.path, r.group, r.resource).Add(float64(r.indexed))
-	}
 	if r.sourceBytes > 0 {
 		r.metrics.BuildSourceBytes.WithLabelValues(r.path, r.group, r.resource).Add(float64(r.sourceBytes))
 	}
 
 	r.fetch, r.convert = 0, 0
-	r.fetched, r.converted, r.indexed = 0, 0, 0
+	r.fetched, r.converted = 0, 0
 	r.sourceBytes = 0
 }
