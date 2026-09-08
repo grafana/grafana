@@ -144,6 +144,14 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     };
   }
 
+  const sortArrow = direction && (
+    <Icon
+      className={clsx(styles.headerCellIcon, tableRefreshEnabled && styles.headerCellSortIcon)}
+      size="lg"
+      name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+    />
+  );
+
   const label = (
     <>
       {showTypeIcons && (
@@ -155,10 +163,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         title={displayName}
       >
         {displayName}
-        {direction && (
-          <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
-        )}
+        {!tableRefreshEnabled && sortArrow}
       </button>
+      {/* The refreshed label can shrink to ellipsize a long title, and it clips its own overflow, so
+          the arrow has to sit outside it to survive — same reason the active-filter icon does. */}
+      {tableRefreshEnabled && sortArrow}
       {headerTooltip && (
         <IconButton
           name="info-circle"
@@ -318,6 +327,12 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  // The sort arrow reports the column's state, so it keeps its full size while the title beside it
+  // gives up width to the trailing controls.
+  headerCellSortIcon: css({
+    label: 'headerCellSortIcon',
+    flexShrink: 0,
   }),
   headerTooltipIcon: css({
     cursor: 'default',

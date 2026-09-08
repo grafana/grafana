@@ -91,6 +91,23 @@ describe('HeaderCell', () => {
     );
   });
 
+  it('keeps the sort arrow outside the truncating label under table.refresh', () => {
+    // The refreshed label clips its own overflow to ellipsize a long title, so an arrow inside it
+    // would be the first thing to disappear — exactly when the sort state matters most.
+    const { container, unmount } = render(
+      <HeaderCell {...baseProps} field={makeField()} direction="ASC" tableRefreshEnabled />
+    );
+    const label = screen.getByRole('button', { name: 'Field1' });
+    expect(label.querySelector('svg')).not.toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeInTheDocument();
+
+    unmount();
+
+    // the classic header's label doesn't shrink, so the arrow stays inside it
+    render(<HeaderCell {...baseProps} field={makeField()} direction="ASC" />);
+    expect(screen.getByRole('button', { name: 'Field1' }).querySelector('svg')).toBeInTheDocument();
+  });
+
   it('lets the header label shrink so a long title truncates against the column menu', () => {
     // As a flex item the label won't shrink below its own min-content width unless min-width is 0,
     // and the refreshed header pins the column menu to the trailing edge for it to truncate against.
