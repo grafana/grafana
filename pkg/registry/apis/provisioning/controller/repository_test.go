@@ -1708,6 +1708,65 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 //
 // The chain is rebuilt here rather than imported: the provider that produces it
 // lives in an enterprise package the controller must not depend on.
+// TestRepositoryController_process_RecordsReconcileErrorPhase drives process()
+// to fail at a stage other than delete/build/hook (quota) and asserts the
+// central recorder still counts it under the right phase -- proving the metric
+// is a complete reconciliation-error signal, not just the three swallowed paths.
+func TestRepositoryController_process_RecordsReconcileErrorPhase(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	// ObservedGeneration is 0, so a quota lookup failure is returned rather than
+	// falling back to cached limits.
+	quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+	quotaGetter.SetError(errors.New("quota service down"))
+
+	reg := prometheus.NewPedanticRegistry()
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:            repoGetter,
+		quotaGetter:      quotaGetter,
+		quotaChecker:     NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		statusPatcher:    &capturePatcher{},
+		reconcileMetrics: registerReconcileErrorMetrics(reg),
+		logger:           logging.DefaultLogger,
+		tracer:           tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.Error(t, err, "a quota lookup failure must be returned")
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseQuota, reconcileCauseSystem),
+		"the failure must be counted under the quota phase")
+}
+
+func TestClassifyBuildFailureReason(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		// A secret that cannot be read (decrypt service/keeper/KMS outage) is a
+		// transient infra failure, not an invalid repository configuration.
+		{"decrypt failure is a service issue", fmt.Errorf("build: %w", repository.ErrSecretDecryptFailed), provisioning.ReasonServiceUnavailable},
+		{"auth failure still classified as auth", fmt.Errorf("build: %w", repository.ErrUnauthorized), provisioning.ReasonAuthenticationFailed},
+		{"k8s 503 is a service issue", apierrors.NewServiceUnavailable("secrets down"), provisioning.ReasonServiceUnavailable},
+		{"unrecognized build failure falls back to invalid spec", errors.New("bad url"), provisioning.ReasonInvalidSpec},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, classifyBuildFailureReason(tt.err))
+		})
+	}
+}
+
 func TestClassifyHookFailureReason(t *testing.T) {
 	tests := []struct {
 		name string

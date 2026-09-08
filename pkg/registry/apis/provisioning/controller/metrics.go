@@ -57,11 +57,22 @@ const (
 )
 
 // Phase labels for the reconcile-error metric, identifying where in
-// reconciliation the failure occurred.
+// reconciliation the failure occurred. Every error exit of process() maps to
+// one of these so the counter is a complete reconciliation-error signal, not a
+// partial one.
 const (
-	reconcilePhaseDelete = "delete"
-	reconcilePhaseBuild  = "build"
-	reconcilePhaseHook   = "hook"
+	reconcilePhaseSetup    = "setup"    // parsing the work-queue key
+	reconcilePhaseFetch    = "fetch"    // resolving the object from the read seam
+	reconcilePhaseIdentity = "identity" // establishing the provisioning identity
+	reconcilePhaseDelete   = "delete"   // running delete finalizers
+	reconcilePhaseQuota    = "quota"    // resolving/evaluating namespace quota
+	reconcilePhaseToken    = "token"    // generating a repository token from a connection
+	reconcilePhaseBuild    = "build"    // constructing the repository (incl. secret decryption)
+	reconcilePhaseBranch   = "branch"   // resolving the default branch
+	reconcilePhaseHealth   = "health"   // running the health check
+	reconcilePhaseHook     = "hook"     // running webhooks / secret rotation
+	reconcilePhaseStatus   = "status"   // writing the status patch
+	reconcilePhaseSync     = "sync"     // enqueuing the sync job
 )
 
 type reconcileErrorMetrics struct {
