@@ -21,6 +21,7 @@ declare module "@openfeature/core" {
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "snapshots.kubernetesSnapshots"
+    | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
@@ -32,6 +33,7 @@ declare module "@openfeature/core" {
     | "sqlExpressionsCodeMirror"
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
+    | "playlistsRBAC"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
@@ -49,7 +51,9 @@ declare module "@openfeature/core" {
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
+    | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "dashboard.recentlyDeletedViaTrash"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
@@ -60,7 +64,6 @@ declare module "@openfeature/core" {
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
-    | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
@@ -75,6 +78,7 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
+    | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
@@ -91,10 +95,14 @@ declare module "@openfeature/core" {
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
+    | "grafana.pluginPathNesting"
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
-    | "tracesDrilldown.useValueTypeFiltering";
+    | "grafana.panelPluginTransformations"
+    | "grafana.dashboardsAutoHeightPanels"
+    | "grafana.dashboardAutoGridDefault"
+    | "grafana.multiTenantUserPermissions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

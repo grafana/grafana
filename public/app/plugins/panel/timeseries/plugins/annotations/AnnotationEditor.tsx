@@ -172,7 +172,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       userSelect: 'text',
       width: '460px',
     }),

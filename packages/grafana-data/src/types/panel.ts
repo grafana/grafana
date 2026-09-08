@@ -96,6 +96,14 @@ export interface PanelProps<T = any> {
   /** Current height of the panel in pixels */
   height: number;
 
+  /**
+   * When true the panel is rendered in a content-fit layout: it has no fixed
+   * height and should size to its content (the cell enforces min/max via CSS).
+   * Only set for plugins that opt in via {@link PanelPlugin.setFitContentSupport}.
+   * Fit-aware panels must not rely on `height` in this mode.
+   */
+  fitContent?: boolean;
+
   /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 

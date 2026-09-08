@@ -33,7 +33,11 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
 
   return (
     <div data-testid={selectors.components.TransformTab.transformationEditor(registryItem?.name || '')}>
-      <ErrorBoundaryAlert>
+      {/*
+        Adding boundary here prevents editor from taking down surrounding pane.
+        Keying on config still allows interaction with filters or header actions while editor is errored.
+      */}
+      <ErrorBoundaryAlert boundaryName="transformation-editor" dependencies={[transformConfig]}>
         <Suspense
           fallback={<LoadingPlaceholder text={t('transformers.transformation-editor.loading', 'Loading editor...')} />}
         >

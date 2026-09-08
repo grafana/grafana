@@ -74,7 +74,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
         backgroundColor: theme.colors.background.elevated,
         borderColor: theme.colors.border.weak,
         borderRadius: theme.shape.radius.default,
-        boxShadow: theme.shadows.z3,
+        boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       },
       '.cm-tooltip-autocomplete > ul > li': {
         padding: theme.spacing(0.25, 1),

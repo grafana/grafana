@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -951,6 +953,44 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
 		}
 	})
+}
+
+func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
+	tests := []struct {
+		name                  string
+		wantsDeletedDocuments bool
+		message               string
+	}{
+		{
+			name:    "indexing is disabled",
+			message: "trash is not available for this resource because indexing deleted documents is disabled",
+		},
+		{
+			name:                  "index is awaiting rebuild",
+			wantsDeletedDocuments: true,
+			message:               "trash is not available for this resource until its search index has been rebuilt",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			idx := &bleveIndex{
+				fields:                resource.StandardSearchFields(),
+				searchFields:          newKindSearchFields(nil, "", "", nil),
+				wantsDeletedDocuments: tc.wantsDeletedDocuments,
+			}
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{},
+				Limit:     10,
+				IsDeleted: true,
+			}, nil, false, nil)
+
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+			assert.Equal(t, tc.message, errResult.Message)
+		})
+	}
 }
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
@@ -2351,10 +2391,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	var rebuilds, updates, searches atomic.Int64
 	const searchConcurrency = 25
 	for i := range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for ctx.Err() == nil {
 				select {
 				case <-ctx.Done():
@@ -2393,18 +2430,16 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				require.Equal(t, int64(10), resp.TotalHits)
 				searches.Add(1)
 			}
-		}()
+		})
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for ctx.Err() == nil {
 			_, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 			require.NoError(t, err)
 			rebuilds.Add(1)
 		}
-	}()
+	})
 
 	time.Sleep(5 * time.Second)
 	cancel()
@@ -2437,10 +2472,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 
 	const searchConcurrency = 25
 	for range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			prevRV := int64(0)
 			for ctx.Err() == nil {
 				// We use t.Context() here to avoid getting errors from context cancellation.
@@ -2454,7 +2486,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 				updatedRVs[rv]++
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	time.Sleep(1 * time.Second)
@@ -2495,10 +2527,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
 	const searchConcurrency = 10
 	for range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			var collectedRVs []int64
 			for ctx.Err() == nil {
 				attemptedUpdates.Add(1)
@@ -2520,7 +2549,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 				// (We get measurements from update function, but check is done on times inside updater)
 				require.GreaterOrEqual(t, collectedRVs[i], collectedRVs[i-1]+(9*int64(minInterval/time.Millisecond)/10))
 			}
-		}()
+		})
 	}
 
 	// Run updates and searches for this time.

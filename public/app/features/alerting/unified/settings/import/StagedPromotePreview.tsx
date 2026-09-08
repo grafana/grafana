@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -97,11 +97,7 @@ function MergePreview({ stats }: { stats: PromoteStatsSummary }) {
         />
       )}
       {stats.route && (
-        <MergeRow
-          icon="sitemap"
-          count={1}
-          noun={t('alerting.settings.import.promote.merge-route', 'notification route added')}
-        />
+        <MergeRow icon="sitemap" count={1} noun={t('alerting.settings.import.promote.merge-route', 'route added')} />
       )}
     </Stack>
   );
@@ -158,12 +154,12 @@ function RenamedList({ receivers, timeIntervals }: { receivers: RenameEntry[]; t
 function RenameRow({ label, from, to }: { label: string; from: string; to: string }) {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.renameRow}>
+    <Stack direction="row" gap={1} alignItems="center">
       <span className={styles.renameLabel}>{label}</span>
-      <span className={styles.renameFrom}>{from}</span>
+      <span className={cx(styles.renameValue, styles.renameFrom)}>{from}</span>
       <Icon name="arrow-right" size="sm" />
-      <span className={styles.renameTo}>{to}</span>
-    </div>
+      <span className={cx(styles.renameValue, styles.renameTo)}>{to}</span>
+    </Stack>
   );
 }
 
@@ -176,20 +172,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   addedIcon: css({
     color: theme.colors.success.text,
   }),
-  renameRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
   renameLabel: css({
     // Fixed label column so the original → new pairs align across rows.
     width: theme.spacing(12),
     flex: 'none',
-    fontFamily: theme.typography.fontFamily,
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
+  }),
+  renameValue: css({
+    // Monospace aligns the renamed name pairs — the same convention StagedConfiguration.tsx
+    // uses for its own resource-identifier rows.
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   renameFrom: css({
     textDecoration: 'line-through',

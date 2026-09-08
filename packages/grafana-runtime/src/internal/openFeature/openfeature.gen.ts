@@ -31,6 +31,8 @@ export const FlagKeys = {
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
+  /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
+  DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables the Assistant button in the dashboard templates card */
@@ -57,14 +59,20 @@ export const FlagKeys = {
   FlameGraphTableNg: "flameGraph.tableNg",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
+  GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Uses auto grid as the default layout for new dashboards */
+  GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Enables the auto-height feature for dashboard panels */
+  GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -81,16 +89,20 @@ export const FlagKeys = {
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
+  /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
+  GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
-  /** Whether to use the new SharedPreferences functional component */
-  GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables the new text panel */
   GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Let panel plugins register system transformations */
+  GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
+  GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -117,6 +129,8 @@ export const FlagKeys = {
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
+  /** Routes library panel requests from /api to the /apis endpoint */
+  LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
@@ -129,6 +143,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables RBAC for playlists */
+  PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -151,6 +167,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Enables AI-assisted coauthoring in code query editors */
+  QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
   RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
@@ -179,8 +197,6 @@ export const FlagKeys = {
   TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
-  /** Enables value type filtering in Traces Drilldown */
-  TracesDrilldownUseValueTypeFiltering: "tracesDrilldown.useValueTypeFiltering",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -282,6 +298,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
  */
 export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.notebooks", false, options).value;
+};
+
+/**
+ * Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser
+ *
+ * **Details:**
+ * - flag key: `dashboard.recentlyDeletedViaTrash`
+ * - default value: `false`
+ */
+export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
 };
 
 /**
@@ -428,6 +455,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkHybridSearch`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkHybridSearch", false, options).value;
+};
+
+/**
  * Enables custom dashboard templates for enterprise
  *
  * **Details:**
@@ -450,6 +488,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Uses auto grid as the default layout for new dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardAutoGridDefault`
+ * - default value: `true`
+ */
+export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardAutoGridDefault", true, options).value;
+};
+
+/**
  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
  *
  * **Details:**
@@ -469,6 +518,17 @@ export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * Enables the auto-height feature for dashboard panels
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardsAutoHeightPanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
 };
 
 /**
@@ -560,6 +620,17 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantUserPermissions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantUserPermissions", false, options).value;
+};
+
+/**
  * Enables a new UI for query errors and notices
  *
  * **Details:**
@@ -568,17 +639,6 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
-};
-
-/**
- * Whether to use the new SharedPreferences functional component
- *
- * **Details:**
- * - flag key: `grafana.newPreferencesPage`
- * - default value: `true`
- */
-export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", true, options).value;
 };
 
 /**
@@ -612,6 +672,28 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Let panel plugins register system transformations
+ *
+ * **Details:**
+ * - flag key: `grafana.panelPluginTransformations`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginPathNesting`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginPathNesting", false, options).value;
 };
 
 /**
@@ -758,6 +840,17 @@ export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Routes library panel requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `libraryelements.kubernetesLibraryPanels`
+ * - default value: `false`
+ */
+export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("libraryelements.kubernetesLibraryPanels", false, options).value;
+};
+
+/**
  * Enables the logs tableNG panel to replace existing tableRT
  *
  * **Details:**
@@ -821,6 +914,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables RBAC for playlists
+ *
+ * **Details:**
+ * - flag key: `playlistsRBAC`
+ * - default value: `false`
+ */
+export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("playlistsRBAC", false, options).value;
 };
 
 /**
@@ -942,6 +1046,17 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
+};
+
+/**
+ * Enables AI-assisted coauthoring in code query editors
+ *
+ * **Details:**
+ * - flag key: `queryeditor.coauthoringUi`
+ * - default value: `false`
+ */
+export const useFlagQueryeditorCoauthoringUi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryeditor.coauthoringUi", false, options).value;
 };
 
 /**
@@ -1096,17 +1211,6 @@ export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
-};
-
-/**
- * Enables value type filtering in Traces Drilldown
- *
- * **Details:**
- * - flag key: `tracesDrilldown.useValueTypeFiltering`
- * - default value: `false`
- */
-export const useFlagTracesDrilldownUseValueTypeFiltering = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("tracesDrilldown.useValueTypeFiltering", false, options).value;
 };
 
 /**

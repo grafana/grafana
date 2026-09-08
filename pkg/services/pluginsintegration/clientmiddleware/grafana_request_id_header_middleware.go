@@ -125,6 +125,16 @@ func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *ba
 	return m.BaseHandler.QueryData(ctx, req)
 }
 
+func (m *HostedGrafanaACHeaderMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *HostedGrafanaACHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)

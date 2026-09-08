@@ -2738,6 +2738,22 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(loader.state.dashboard!.getPath()).toBe('v2dashboards/new-dashboard-2025-04-09-nTqgq.json');
     });
+
+    // skipSceneCache is implemented separately in the v1 and v2 managers, so cover both.
+    // The fixtures are declared below this block, so resolve them inside the test body.
+    it.each(['v1', 'v2'] as const)(
+      'should not cache the previewed %s scene, so navigating back to the real dashboard is never served stale preview content',
+      async (version) => {
+        const resource = version === 'v1' ? v1ProvisionedDashboardResource : v2ProvisionedDashboardResource;
+        fetchMock.mockImplementation(() => of(createFetchResponse(resource)));
+
+        const loader = new UnifiedDashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
+
+        expect(loader.state.dashboard).toBeDefined();
+        expect(loader.getSceneFromCache('blah-blah')).toBeFalsy();
+      }
+    );
   });
 
   describe('New dashboards', () => {

@@ -40,9 +40,6 @@
     "./internal/rtkq/legacy/preferences/user": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
     },
-    "./internal/rtkq/legacy/user": {
-      "@grafana-app/source": "./src/clients/rtkq/user/index.ts"
-    },
     "./internal/rtkq/legacy/preferences/org": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/org/index.ts"
     },

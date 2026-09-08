@@ -1,5 +1,5 @@
-import type { DrilldownsApplicability } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import type { DataSourceApi, DrilldownsApplicability } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
   GROUP_BY_OPERATOR,
@@ -17,24 +17,19 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { getDrilldownApplicability, verifyDrilldownApplicability } from './drilldownUtils';
 
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
+jest.mock('@grafana/runtime/unstable', () => {
+  const actual = jest.requireActual('@grafana/runtime/unstable');
   return {
     ...actual,
-    getDataSourceSrv: jest.fn(),
+    getDataSourceInstance: jest.fn(),
   };
 });
 
-const getDataSourceSrvMock = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
+const getDataSourceInstanceMock = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
 
-const createMockDataSourceSrv = (overrides: Partial<DataSourceSrv> = {}): DataSourceSrv => ({
-  get: jest.fn(),
-  getList: jest.fn(),
-  getInstanceSettings: jest.fn(),
-  reload: jest.fn(),
-  registerRuntimeDataSource: jest.fn(),
-  ...overrides,
-});
+function mockDataSourceInstance(ds: Partial<DataSourceApi> = {}) {
+  getDataSourceInstanceMock.mockResolvedValue(ds as unknown as DataSourceApi);
+}
 
 describe('verifyDrilldownApplicability', () => {
   afterEach(() => {
@@ -80,12 +75,7 @@ describe('verifyDrilldownApplicability', () => {
 describe('getDrilldownApplicability', () => {
   beforeEach(() => {
     const applicabilityFn = jest.fn().mockResolvedValue([]);
-    getDataSourceSrvMock.mockReturnValue(
-      createMockDataSourceSrv({
-        get: jest.fn().mockResolvedValue({ getDrilldownsApplicability: applicabilityFn }),
-        getInstanceSettings: jest.fn(),
-      })
-    );
+    mockDataSourceInstance({ getDrilldownsApplicability: applicabilityFn });
   });
 
   afterEach(() => {
@@ -101,16 +91,11 @@ describe('getDrilldownApplicability', () => {
     const result = await getDrilldownApplicability(queryRunner);
 
     expect(result).toBeUndefined();
-    expect(getDataSourceSrvMock).not.toHaveBeenCalled();
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
   it('returns undefined when datasource lacks getDrilldownsApplicability', async () => {
-    getDataSourceSrvMock.mockReturnValue(
-      createMockDataSourceSrv({
-        get: jest.fn().mockResolvedValue({}),
-        getInstanceSettings: jest.fn(),
-      })
-    );
+    mockDataSourceInstance();
 
     const { queryRunner, adhocFiltersVariable } = buildScene();
 
@@ -121,12 +106,7 @@ describe('getDrilldownApplicability', () => {
 
   it('returns undefined when drilldown variables use a different datasource', async () => {
     const applicabilityFn = jest.fn().mockResolvedValue([]);
-    getDataSourceSrvMock.mockReturnValue(
-      createMockDataSourceSrv({
-        get: jest.fn().mockResolvedValue({ getDrilldownsApplicability: applicabilityFn }),
-        getInstanceSettings: jest.fn(),
-      })
-    );
+    mockDataSourceInstance({ getDrilldownsApplicability: applicabilityFn });
 
     const { queryRunner, adhocFiltersVariable } = buildScene({
       datasourceUid: 'ds-query',
@@ -142,12 +122,7 @@ describe('getDrilldownApplicability', () => {
   it('returns applicability data with both filters and groupBy keys from AdHocFiltersVariable', async () => {
     const applicability: DrilldownsApplicability[] = [{ key: 'region', applicable: true }];
     const getApplicability = jest.fn().mockResolvedValue(applicability);
-    getDataSourceSrvMock.mockReturnValue(
-      createMockDataSourceSrv({
-        get: jest.fn().mockResolvedValue({ getDrilldownsApplicability: getApplicability }),
-        getInstanceSettings: jest.fn(),
-      })
-    );
+    mockDataSourceInstance({ getDrilldownsApplicability: getApplicability });
 
     const { queryRunner, adhocFiltersVariable } = buildScene({
       datasourceUid: 'ds-apply',

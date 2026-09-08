@@ -32,6 +32,7 @@ const config: KnipConfig = {
 
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
+    'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
@@ -93,6 +94,9 @@ const config: KnipConfig = {
       ],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
       },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',

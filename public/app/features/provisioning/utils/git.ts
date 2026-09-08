@@ -32,6 +32,18 @@ export function formatRepoUrl(url?: string): string {
   return url.split('/').slice(3).join('/');
 }
 
+// Extract the scheme + host (e.g. https://ghes.example.com) from a URL; empty string when unparseable.
+export function getServerOrigin(url?: string): string {
+  if (!url) {
+    return '';
+  }
+  try {
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
+}
+
 // Remove leading and trailing slashes from a string.
 const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 
