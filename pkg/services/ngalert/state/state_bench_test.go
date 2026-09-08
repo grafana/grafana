@@ -43,7 +43,7 @@ func BenchmarkCreateAndPatch(b *testing.B) {
 	// values := make([]int64, count)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			s := newState(ctx, log, rule, result, nil, u)
+			s := newState(ctx, log, rule, result, nil, u, 0, nil)
 			current := cache.get(rule.OrgID, rule.UID, s.CacheID)
 			if current == nil {
 				patch(s, current, result)
