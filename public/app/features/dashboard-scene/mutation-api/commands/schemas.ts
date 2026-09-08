@@ -768,6 +768,17 @@ const updateDashboardSettingsPayloadSchema = z.object({
   preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
 });
 
+const scopeSelectionSchema = z.union([
+  z.literal('all'),
+  z.literal('none'),
+  z.array(z.string()).describe('Variable names in this scope'),
+]);
+
+const setCrossDashboardVariablesPayloadSchema = z.object({
+  global: scopeSelectionSchema.describe('Which org-wide variables this dashboard receives'),
+  folder: scopeSelectionSchema.describe('Which folder-scoped variables this dashboard receives'),
+});
+
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
@@ -810,5 +821,11 @@ export const payloads = {
   ),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
+  ),
+  getCrossDashboardVariables: emptyPayloadSchema.describe(
+    'Get which global and folder-scoped variables this dashboard receives, plus the names available in each scope'
+  ),
+  setCrossDashboardVariables: setCrossDashboardVariablesPayloadSchema.describe(
+    'Replace which global and folder-scoped variables this dashboard receives. Both scopes "none" clears the opt-in.'
   ),
 };

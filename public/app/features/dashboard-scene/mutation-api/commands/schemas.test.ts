@@ -113,3 +113,16 @@ describe('fieldConfigSchema matcher validation', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('SET_CROSS_DASHBOARD_VARIABLES payload', () => {
+  it('accepts all/none/name-array scopes', () => {
+    expect(payloads.setCrossDashboardVariables.safeParse({ global: 'all', folder: 'none' }).success).toBe(true);
+    expect(payloads.setCrossDashboardVariables.safeParse({ global: ['env'], folder: ['cluster'] }).success).toBe(true);
+  });
+
+  it('rejects an invalid scope value', () => {
+    expect(payloads.setCrossDashboardVariables.safeParse({ global: 'maybe', folder: 'none' }).success).toBe(false);
+    expect(payloads.setCrossDashboardVariables.safeParse({ global: [1], folder: 'none' }).success).toBe(false);
+    expect(payloads.setCrossDashboardVariables.safeParse({ global: 'all' }).success).toBe(false);
+  });
+});

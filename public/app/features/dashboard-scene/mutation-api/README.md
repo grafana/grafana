@@ -1021,6 +1021,73 @@ Get dashboard identity/folder metadata plus every dashboard-level setting that `
 }
 ```
 
+### `GET_CROSS_DASHBOARD_VARIABLES`
+
+Read which global and folder-scoped variables this dashboard receives (`grafana.app/useCrossDashboardVariables` on `metadata.annotations`), plus the names available in each scope. Requires the `grafana.dashboardGlobalVariables` feature toggle. Read-only.
+
+This is **not** the dashboard spec and is **not** a query annotation layer. `GET_SPEC` / `APPLY_SPEC` / `LIST_ANNOTATIONS` do not include this selection.
+
+**Request:**
+
+```json
+{ "type": "GET_CROSS_DASHBOARD_VARIABLES", "payload": {} }
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "selection": { "global": "all", "folder": ["env"] },
+    "available": { "global": ["env", "ds"], "folder": ["cluster"] }
+  },
+  "changes": []
+}
+```
+
+`selection` is omitted/`undefined` when the annotation is missing or invalid (the dashboard is not opted in). A failed Variable-list fetch still returns the current `selection` with empty `available` and a warning.
+
+### `SET_CROSS_DASHBOARD_VARIABLES`
+
+Replace the selection. Full replace of both scopes. Both `"none"` deletes the annotation (opt out). Requires edit permissions, the `grafana.dashboardGlobalVariables` toggle, and a dashboard that is not a locked managed resource. Enters edit mode and re-injects predefined variables.
+
+**Request:**
+
+```json
+{
+  "type": "SET_CROSS_DASHBOARD_VARIABLES",
+  "payload": { "global": "all", "folder": ["cluster"] }
+}
+```
+
+**Clear (delete the annotation):**
+
+```json
+{
+  "type": "SET_CROSS_DASHBOARD_VARIABLES",
+  "payload": { "global": "none", "folder": "none" }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": { "selection": { "global": "all", "folder": ["cluster"] } },
+  "changes": [
+    {
+      "path": "/metadata/annotations/grafana.app/useCrossDashboardVariables",
+      "previousValue": null,
+      "newValue": "{\"global\":\"all\",\"folder\":[\"cluster\"]}"
+    }
+  ]
+}
+```
+
+Each scope is `"all"`, `"none"`, or a name array. `"all"` auto-includes new variables in that scope; a name array does not.
+
 ---
 
 ## Utility

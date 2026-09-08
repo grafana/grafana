@@ -40,7 +40,8 @@ describe('Command consistency', () => {
         cmd.name === 'ENTER_EDIT_MODE' ||
         cmd.name === 'GET_LAYOUT' ||
         cmd.name === 'LIST_PANELS' ||
-        cmd.name === 'GET_DASHBOARD_INFO'
+        cmd.name === 'GET_DASHBOARD_INFO' ||
+        cmd.name === 'GET_CROSS_DASHBOARD_VARIABLES'
       ) {
         const result = cmd.payloadSchema.safeParse({});
         expect(result.success).toBe(true);
@@ -58,6 +59,7 @@ describe('Command consistency', () => {
       'ADD_VARIABLE',
       'APPLY_SPEC',
       'ENTER_EDIT_MODE',
+      'GET_CROSS_DASHBOARD_VARIABLES',
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
       'GET_SPEC',
@@ -72,6 +74,7 @@ describe('Command consistency', () => {
       'REMOVE_ROW',
       'REMOVE_TAB',
       'REMOVE_VARIABLE',
+      'SET_CROSS_DASHBOARD_VARIABLES',
       'UPDATE_ANNOTATION',
       'UPDATE_DASHBOARD_SETTINGS',
       'UPDATE_LAYOUT',

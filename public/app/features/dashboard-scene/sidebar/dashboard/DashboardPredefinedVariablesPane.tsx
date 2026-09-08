@@ -5,9 +5,9 @@ import { Box, Sidebar } from '@grafana/ui';
 import { getDashboardSceneLike } from '../../scene/types/dashboard';
 
 import {
-  DashboardPredefinedVariablesOptions,
-  type PredefinedVariablesDashboard,
-} from './DashboardPredefinedVariablesOptions';
+  DashboardCrossDashboardVariablesOptions,
+  type CrossDashboardVariablesDashboard,
+} from './DashboardCrossDashboardVariablesOptions';
 
 export class DashboardPredefinedVariablesPane extends SceneObjectBase {
   public static Component = DashboardPredefinedVariablesPaneRenderer;
@@ -17,9 +17,9 @@ export class DashboardPredefinedVariablesPane extends SceneObjectBase {
   }
 }
 
-function isPredefinedVariablesDashboard(
+function isCrossDashboardVariablesDashboard(
   scene: ReturnType<typeof getDashboardSceneLike>
-): scene is PredefinedVariablesDashboard {
+): scene is CrossDashboardVariablesDashboard {
   return 'refreshPredefinedVariables' in scene && 'serializer' in scene && 'managedResourceCannotBeEdited' in scene;
 }
 
@@ -27,7 +27,7 @@ function DashboardPredefinedVariablesPaneRenderer({ model }: SceneComponentProps
   // Prefer getDashboardSceneLike over getDashboardSceneFor(utils) — the utils import
   // closes a new circular dep through DashboardSidebarRenderer.
   const scene = getDashboardSceneLike(model);
-  if (!isPredefinedVariablesDashboard(scene)) {
+  if (!isCrossDashboardVariablesDashboard(scene)) {
     throw new Error('SceneObject root does not support predefined variable controls');
   }
 
@@ -37,7 +37,7 @@ function DashboardPredefinedVariablesPaneRenderer({ model }: SceneComponentProps
         title={t('dashboard.sidebar.cross-dashboard-variables.pane-header', 'Cross-dashboard variables')}
       />
       <Box padding={2}>
-        <DashboardPredefinedVariablesOptions dashboard={scene} />
+        <DashboardCrossDashboardVariablesOptions dashboard={scene} />
       </Box>
     </Box>
   );
