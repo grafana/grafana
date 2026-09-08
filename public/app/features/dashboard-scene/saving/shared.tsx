@@ -1,11 +1,12 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Button } from '@grafana/ui';
 
 import { type Diffs } from '../settings/version-history/utils';
+
+import { getSaveDashboardErrorInfo, type SaveDashboardErrorInfo } from './saveErrors';
 
 export interface DashboardChangeInfo {
   changedSaveModel: Dashboard | DashboardV2Spec;
@@ -23,15 +24,61 @@ export interface DashboardChangeInfo {
 }
 
 export function isVersionMismatchError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
+  return getSaveDashboardErrorInfo(error)?.kind === 'conflict';
 }
 
 export function isNameExistsError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'name-exists';
+  return getSaveDashboardErrorInfo(error)?.kind === 'already-exists';
 }
 
 export function isPluginDashboardError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
+  return getSaveDashboardErrorInfo(error)?.kind === 'plugin-dashboard';
+}
+
+/**
+ * Renders the save failures that leave the form usable, so the user can correct the dashboard and
+ * retry. Conflicts and name collisions are rendered by their callers instead, because they replace
+ * the footer with their own recovery actions.
+ */
+export function SaveDashboardErrorAlert({ info }: { info: SaveDashboardErrorInfo }) {
+  if (info.kind === 'forbidden') {
+    return (
+      <Alert
+        title={t('save-dashboards.forbidden.title', 'You do not have permission to save this dashboard')}
+        severity="error"
+      >
+        <p>{info.message}</p>
+      </Alert>
+    );
+  }
+
+  if (info.kind === 'invalid') {
+    return (
+      <Alert title={t('save-dashboards.invalid.title', 'This dashboard is not valid')} severity="error">
+        {info.causes.length > 0 ? (
+          <ul>
+            {info.causes.map((cause) => (
+              <li key={cause}>{cause}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>{info.message}</p>
+        )}
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert
+      title={t(
+        'dashboard-scene.save-dashboard-form.render-footer.title-failed-to-save-dashboard',
+        'Failed to save dashboard'
+      )}
+      severity="error"
+    >
+      <p>{info.message}</p>
+    </Alert>
+  );
 }
 
 export function NameAlreadyExistsError() {

@@ -7633,9 +7633,6 @@
       },
       "label-copy-tags": "Copy tags",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Failed to save dashboard"
-      },
       "required": "Required"
     },
     "save-dashboard-drawer": {
@@ -7678,6 +7675,9 @@
       "save-variables-label-update-default-variable-values": "Update default variable values",
       "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
       "show-variables-warning-alert-title": "Variable queries failed"
+    },
+    "save-errors": {
+      "unexpected": "An unexpected error occurred while saving."
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
@@ -15593,6 +15593,12 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": "You do not have permission to save this dashboard"
+    },
+    "invalid": {
+      "title": "This dashboard is not valid"
+    },
     "message-length": {
       "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
       "title": "Message too long"

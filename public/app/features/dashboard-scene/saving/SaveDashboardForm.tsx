@@ -8,14 +8,8 @@ import { type SaveDashboardOptions } from 'app/features/dashboard/components/Sav
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
-import {
-  type DashboardChangeInfo,
-  NameAlreadyExistsError,
-  SaveButton,
-  isNameExistsError,
-  isPluginDashboardError,
-  isVersionMismatchError,
-} from './shared';
+import { getSaveDashboardErrorInfo } from './saveErrors';
+import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, SaveDashboardErrorAlert } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 export interface Props {
@@ -96,7 +90,9 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
-    if (isVersionMismatchError(error)) {
+    const errorInfo = getSaveDashboardErrorInfo(error);
+
+    if (errorInfo?.kind === 'conflict') {
       return (
         <Alert
           title={t(
@@ -110,6 +106,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
               Would you still like to save this dashboard?
             </Trans>
           </p>
+          <p>{errorInfo.message}</p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}
@@ -120,11 +117,11 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
-    if (isNameExistsError(error)) {
+    if (errorInfo?.kind === 'already-exists') {
       return <NameAlreadyExistsError />;
     }
 
-    if (isPluginDashboardError(error)) {
+    if (errorInfo?.kind === 'plugin-dashboard') {
       return (
         <Alert
           title={t('dashboard-scene.save-dashboard-form.render-footer.title-plugin-dashboard', 'Plugin dashboard')}
@@ -148,17 +145,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
 
     return (
       <>
-        {error && (
-          <Alert
-            title={t(
-              'dashboard-scene.save-dashboard-form.render-footer.title-failed-to-save-dashboard',
-              'Failed to save dashboard'
-            )}
-            severity="error"
-          >
-            <p>{error.message}</p>
-          </Alert>
-        )}
+        {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
           {cancelButton}
           {saveButton(false)}

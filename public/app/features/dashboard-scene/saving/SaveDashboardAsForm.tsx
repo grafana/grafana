@@ -3,7 +3,7 @@ import { type UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
+import { Button, Input, Switch, Field, Label, TextArea, Stack, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import {
   AnnoKeyIgnorePredefinedVariables,
@@ -16,7 +16,8 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { getSaveDashboardErrorInfo } from './saveErrors';
+import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, SaveDashboardErrorAlert } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -185,22 +186,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
-    if (isNameExistsError(error) && formValuesMatchContentSent) {
+    // Once the user edits the title or folder the error no longer describes what they'd be saving.
+    const errorInfo = formValuesMatchContentSent ? getSaveDashboardErrorInfo(error) : undefined;
+
+    if (errorInfo?.kind === 'already-exists') {
       return <NameAlreadyExistsError />;
     }
     return (
       <>
-        {error && formValuesMatchContentSent && (
-          <Alert
-            title={t(
-              'dashboard-scene.save-dashboard-as-form.render-footer.title-failed-to-save-dashboard',
-              'Failed to save dashboard'
-            )}
-            severity="error"
-          >
-            {error.message && <p>{error.message}</p>}
-          </Alert>
-        )}
+        {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
           {cancelButton}
           {saveButton(false)}
