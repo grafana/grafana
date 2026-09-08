@@ -63,9 +63,9 @@ func (r *commitRecorder) byPhase(phase string) []chunkedCommit {
 // large enough that a tiny per-chunk budget forces multiple history chunks.
 func chunkedTestValue(name string, version, padBytes int) []byte {
 	pad := strings.Repeat("x", padBytes)
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		`{"apiVersion":"shorturl.grafana.app/v1beta1","kind":"ShortURL","metadata":{"name":%q,"namespace":"default"},"spec":{"path":"d/%s-v%d","pad":%q}}`,
-		name, name, version, pad))
+		name, name, version, pad)
 }
 
 // buildMultiVersionBulk emits `versions` ADDED/MODIFIED events per name (plus a

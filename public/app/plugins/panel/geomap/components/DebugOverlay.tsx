@@ -3,7 +3,6 @@ import type Map from 'ol/Map';
 import { type Coordinate } from 'ol/coordinate';
 import { transform } from 'ol/proj';
 import { memo, useState, useEffect } from 'react';
-import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -59,7 +58,7 @@ export const DebugOverlay = memo(function DebugOverlay({ map }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   infoWrap: css({
     color: theme.colors.text.primary,
-    background: tinycolor(theme.components.panel.background).setAlpha(0.7).toString(),
+    background: `rgb(from ${theme.components.panel.background} r g b / 0.7)`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
   }),

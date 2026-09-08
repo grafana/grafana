@@ -21,7 +21,6 @@ permissions: {}
 jobs:
   setup:
     name: Setup opted-in teams
-    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.
@@ -40,7 +39,6 @@ jobs:
 
   detect-changes:
     name: Detect changed files
-    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
@@ -48,10 +46,25 @@ jobs:
       changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
       main-sha: ${{ steps.get-main-sha.outputs.sha }}
     steps:
+      # Written from one of the first jobs to run (independent of checkout/diffing
+      # below) so it's the first thing on the run's Summary page, ahead of every
+      # team's own block. The skip-label reminder and run-locally command are the
+      # same for every opted-in team, so they're written once here instead of
+      # repeated in each `coverage` matrix leg.
+      - name: Write shared coverage-check info
+        if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
+        run: |
+          {
+            echo "🚨 **Skip label:** in an emergency, add the \`no-check-frontend-test-coverage\` label to this PR to bypass this check."
+            echo
+            echo "💻 **Run locally:** \`yarn test:coverage:by-codeowner <codeowner>\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/checkout@v5
         with:
-          persist-credentials: true
+          persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
+          filter: blob:none
 
       - name: Get main SHA
         id: get-main-sha
@@ -65,7 +78,7 @@ jobs:
 
       - name: Detect changed files
         id: changed-files
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           separator: ' '
 
@@ -75,103 +88,13 @@ jobs:
           echo "${{ steps.changed-files.outputs.all_changed_files }}"
           echo "=============================="
 
-  cleanup-on-skip:
-    name: Cleanup coverage comments
-    needs: setup
-    if: contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false
-    runs-on: ubuntu-x64-small
-    permissions:
-      pull-requests: write
-      id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
-    steps:
-      - name: Get GitHub App token
-        id: generate_token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-pr-automation
-
-      - name: Delete coverage comment for ${{ matrix.codeowner }}
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        if: steps.generate_token.outcome == 'success'
-        with:
-          header: coverage-report-${{ matrix.codeowner }}
-          delete: true
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
-  post-skip-warning:
-    name: Post skip warning
-    needs: [setup, cleanup-on-skip]
-    if: contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false
-    runs-on: ubuntu-x64-small
-    permissions:
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Get GitHub App token
-        id: generate_token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-pr-automation
-
-      - name: Generate skip message
-        id: skip-message
-        run: |
-          TEAMS='${{ needs.setup.outputs.opted-in-teams }}'
-          TEAM_LIST=$(echo "$TEAMS" | jq -r '.[] | "- `" + . + "`"' | tr '\n' '\n')
-
-          {
-            echo "message<<EOF"
-            echo "## ⚠️ Frontend Test Coverage Checks Skipped"
-            echo
-            echo "Coverage checks have been skipped for the following codeowners:"
-            echo
-            echo "$TEAM_LIST"
-            echo
-            echo "Remove the \`no-check-frontend-test-coverage\` label to re-enable coverage checks."
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Post skip warning comment
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        with:
-          header: coverage-skip-warning
-          message: ${{ steps.skip-message.outputs.message }}
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
-  clear-skip-warning:
-    name: Clear skip warning
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
-    runs-on: ubuntu-x64-small
-    permissions:
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Get GitHub App token
-        id: generate_token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-pr-automation
-
-      - name: Delete skip warning comment
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        with:
-          header: coverage-skip-warning
-          delete: true
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
   coverage:
     name: Coverage - ${{ matrix.codeowner }}
     needs: [setup, detect-changes]
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
-      pull-requests: write
-      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -205,19 +128,24 @@ jobs:
           echo "affected=$AFFECTED" >> "$GITHUB_OUTPUT"
           echo "Codeowner ${{ matrix.codeowner }} affected: $AFFECTED"
 
-      - name: Get GitHub App token
-        id: generate_token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-pr-automation
+      - name: Get codeowner coverage directory slug
+        id: coverage-dir
+        working-directory: './pr'
+        run: |
+          SLUG=$(node -e "
+            const {createCodeownerSlug} = require('./scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
+          ")
+          echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
+          PATH=$(node -e "
+            const {buildCodeownerDirectoryPath} = require('./scripts/codeowners-manifest/utils.js');
+            console.log(buildCodeownerDirectoryPath('${{ matrix.codeowner }}'));
+          ")
+          echo "path=${PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Delete old coverage comment if not affected
-        if: steps.check-affected.outputs.affected == 'false' && github.event.pull_request.head.repo.fork == false
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        with:
-          header: coverage-report-${{ matrix.codeowner }}
-          delete: true
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+      - name: Write not-affected summary
+        if: steps.check-affected.outputs.affected == 'false'
+        run: echo "### ⏭️ ${{ matrix.codeowner }} — not affected by this PR's changes" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout main branch
         if: steps.check-affected.outputs.affected == 'true'
@@ -265,21 +193,6 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         run: mkdir -p ./coverage-pr && cp ./pr/coverage-summary.json ./coverage-pr/coverage-summary.json
 
-      - name: Get codeowner coverage directory slug
-        if: steps.check-affected.outputs.affected == 'true'
-        id: coverage-dir
-        run: |
-          SLUG=$(node -e "
-            const {createCodeownerSlug} = require('./pr/scripts/codeowners-manifest/utils.js');
-            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
-          ")
-          echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
-          PATH=$(node -e "
-            const {buildCodeownerDirectoryPath} = require('./pr/scripts/codeowners-manifest/utils.js');
-            console.log(buildCodeownerDirectoryPath('${{ matrix.codeowner }}'));
-          ")
-          echo "path=${PATH}" >> "$GITHUB_OUTPUT"
-
       - name: Upload PR HTML coverage report
         if: steps.check-affected.outputs.affected == 'true'
         id: upload-coverage
@@ -289,55 +202,32 @@ jobs:
           path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.path }}/html
           retention-days: 7
 
-      - name: Compare coverage
+      # Writes this leg's block straight to its own job summary and exits non-zero on
+      # a regression — no separate fan-in job or intermediate artifact. Every opted-in
+      # team's block lands on the run's Summary page under its own job, decoupled from
+      # every other team: one team's job crashing here (install, tests, HTML upload)
+      # just fails that job normally, same as any other CI failure — there's no
+      # shared artifact step for it to silently drop out of.
+      - name: Compare coverage and write summary
         if: steps.check-affected.outputs.affected == 'true'
-        id: compare
         env:
           COVERAGE_ARTIFACT_URL: ${{ steps.upload-coverage.outputs.artifact-url }}
           PR_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          # Run comparison from workspace root where coverage-main/ and coverage-pr/ live
-          if node ./pr/scripts/compare-coverage-by-codeowner.js; then
-            echo "passed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          fi
+        run: node ./pr/scripts/compare-coverage-by-codeowner.js >> "$GITHUB_STEP_SUMMARY"
 
-          # Always capture the markdown output
-          {
-            echo "markdown<<EOF"
-            cat ./coverage-comparison.md
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Post PR comment
-        if: steps.check-affected.outputs.affected == 'true' && github.event.pull_request.head.repo.fork == false
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        with:
-          header: coverage-report-${{ matrix.codeowner }}
-          message: ${{ steps.compare.outputs.markdown }}
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
-      - name: Fail if coverage decreased
-        if: steps.check-affected.outputs.affected == 'true' && steps.compare.outputs.passed == 'false'
-        run: |
-          echo "❌ Coverage check failed for ${{ matrix.codeowner }}"
-          exit 1
-
-  all-coverage-checks-pass:
+  coverage-summary:
     name: All coverage checks pass
     needs: [setup, coverage]
     if: always()
     runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
     steps:
       - name: Check if skipped
         id: check-skip
         run: |
-          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
-            echo "skipped=true" >> "$GITHUB_OUTPUT"
-            echo "⏭️ Coverage checks skipped for fork PR"
-          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
           else
@@ -345,11 +235,32 @@ jobs:
             echo "All opted-in teams' coverage checks have completed."
           fi
 
+      - name: Write skip summary
+        if: steps.check-skip.outputs.skipped == 'true'
+        env:
+          TEAMS: ${{ needs.setup.outputs.opted-in-teams }}
+        run: |
+          {
+            echo "# Frontend Test Coverage Summary"
+            echo
+            echo "## ⚠️ Skipped via the \`no-check-frontend-test-coverage\` label"
+            echo
+            echo "Coverage checks were skipped for the following opted-in codeowners:"
+            echo
+            echo "$TEAMS" | jq -r '.[] | "- `" + . + "`"'
+            echo
+            echo "🚨 **Skip label:** remove the \`no-check-frontend-test-coverage\` label from this PR to re-enable coverage checks."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Verify all checks passed
         if: steps.check-skip.outputs.skipped == 'false'
         run: |
           if [[ "${{ needs.coverage.result }}" != "success" ]]; then
-            echo "❌ Coverage checks failed for one or more teams"
+            # Job summaries render on the *run's* summary page, never on this job's own
+            # log page (which is where the failed check's "Details" link lands) — so
+            # print the run URL directly; GitHub autolinks it in the log.
+            echo "❌ Coverage checks failed for one or more teams."
+            echo "👉 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for the full report."
             exit 1
           fi
           echo "✅ All coverage metrics were maintained, improved, or within tolerance."

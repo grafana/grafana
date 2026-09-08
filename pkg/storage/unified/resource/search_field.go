@@ -32,8 +32,8 @@ const (
 	// SearchCapabilityPartial enables substring matching (Bleve ngram
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
-	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant for column-wise reads and stable sort tie-breakers.
+	// SearchCapabilitySort enables sorting on the field. A search request can only
+	// sort on fields that declare it.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
@@ -62,6 +62,11 @@ const (
 	// into a single int64. Standard fields never use INT32 today, and
 	// numeric search behaviour is identical (bleve indexes through float64
 	// internally).
+	//
+	// That float64 is exact only up to 2^53, which is far above a timestamp in
+	// millis but below a resource version. Declare a field whose values can reach
+	// that far as a string, the way SEARCH_FIELD_DELETED_RV is: filters and sorts
+	// on a larger int64 cannot tell neighbouring values apart.
 	SearchFieldTypeInt64 SearchFieldType = "int64"
 	// SearchFieldTypeDouble covers floating-point fields. The protobuf-level
 	// distinction between FLOAT and DOUBLE is similarly collapsed; SFDs use

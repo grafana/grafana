@@ -12,6 +12,10 @@ window.__grafana_public_path__ =
   __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build-swagger/')) ||
   __webpack_public_path__;
 
+// The swagger bundle copies no images of its own, so assets read from the build directory
+// (icons) come from the app build rather than from '/build-swagger'.
+window.__grafana_build_path__ = `${window.__grafana_public_path__}build/`;
+
 if (window.nonce) {
   __webpack_nonce__ = window.nonce;
 }

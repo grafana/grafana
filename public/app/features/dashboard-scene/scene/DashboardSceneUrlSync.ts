@@ -1,8 +1,8 @@
 import { type Unsubscribable } from 'rxjs';
 
-import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues } from '@grafana/scenes';
+import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
@@ -27,7 +27,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'drow'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -126,8 +126,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      this._releaseEditPanel();
-      update.editPanel = buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
+      this._enterPanelEdit(values.editPanel, panel);
     } else if (values.editPanel === null) {
       // Closing the pane supersedes a re-open still waiting on a library panel.
       this._releaseEditPanel();
@@ -158,6 +157,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
+    }
+
+    if (typeof values.drow === 'string') {
+      this._scene.scrollToRow(values.drow);
     }
   }
 
@@ -212,8 +215,23 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       return;
     }
 
-    this._scene.setState({
-      editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
+    this._enterPanelEdit(panelId, panel);
+  }
+
+  /**
+   * The editor is code split, so the pane only lands in a follow-up state update once the chunk has
+   * loaded. The hold stands for that window, the same way it does for the library panel wait: any
+   * state change in between would otherwise write `?editPanel=` out of the URL.
+   */
+  private _enterPanelEdit(panelId: string, panel: VizPanel) {
+    this._libPanelSub?.unsubscribe();
+    this._libPanelSub = undefined;
+    this._heldEditPanelId = panelId;
+
+    openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID).then(() => {
+      if (this._heldEditPanelId === panelId) {
+        this._heldEditPanelId = undefined;
+      }
     });
   }
 }

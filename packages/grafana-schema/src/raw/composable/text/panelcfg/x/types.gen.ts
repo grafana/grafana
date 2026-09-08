@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/text/panelcfg.cue file.
 
-export const pluginVersion = "13.2.0-pre";
+export const pluginVersion = "13.3.0-pre";
 
 export enum TextMode {
   Code = 'code',
@@ -58,6 +58,14 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
 export interface Options {
   code?: CodeOptions;
   content: string;
+  /**
+   * Index of the selected frame, when the query returns more than one
+   */
+  frameIndex?: number;
+  /**
+   * How many rows of query data the content template may render. Unset renders every row.
+   */
+  maxRows?: number;
   mode: TextMode;
   renderMode?: RenderMode;
 }
@@ -66,6 +74,7 @@ export const defaultOptions: Partial<Options> = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
+  frameIndex: 0,
   mode: TextMode.Markdown,
   renderMode: RenderMode.Once,
 };

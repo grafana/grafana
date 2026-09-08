@@ -39,11 +39,15 @@ composableKinds: PanelCfg: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
 					code?:       CodeOptions
+					// How many rows of query data the content template may render. Unset renders every row.
+					maxRows?: number
 					content: string | *"""
 						# Title
 
 						For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
 						"""
+					// Index of the selected frame, when the query returns more than one
+					frameIndex?: number & (*0 | _)
 				} @cuetsy(kind="interface")
 			}
 		}]

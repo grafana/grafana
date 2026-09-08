@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "基本ログを有効にする"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "バッチAPI",
+      "description-batch-api": "1回のリクエストで複数のリソースをクエリし、大規模なダッシュボードのパフォーマンスを向上させます。<6>metrics.monitor.azure.com</6>のサブスクリプションスコープで<2>Monitoring Reader</2>ロールが必要です。無料利用枠を超えると、追加の<9>費用が発生する場合があります</9>。",
+      "label-enable-batch-api": "バッチAPIを有効にする"
     },
     "config-editor": {
       "description-additional-settings": "追加設定は、データソースをより詳細に制御するために指定できるオプション設定です。これには、セキュアSOCKSプロキシ、リクエストタイムアウト、および転送されたCookieが含まれます。",
@@ -105,7 +105,11 @@
       "load-subscriptions": "サブスクリプションを読み込む"
     },
     "dimension-fields": {
-      "aria-label-remove": "削除",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "ディメンション",
       "placeholder-field": "フィールド",
       "placeholder-operation": "操作",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "メトリック名前空間"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "サブスクリプションやリージョンをまたいで、同じリソースタイプの項目を選択できます。異なるサブスクリプションやリージョンのリソースは、別々のリクエストでクエリされ、個別に失敗する場合があります。異なるリソースタイプのリソースを選択するには、まず現在の選択を解除してください。",
+      "selection-notice-standard": "同じリソースタイプと場所の項目を選択できます。異なるリソースタイプまたは場所のリソースを選択するには、まず現在の選択を解除してください。"
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "機能"
     },
     "nested-row": {
       "text-loading": "読み込み中..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "1つ以上の列に基づいて結果を昇順または降順で並び替えます。"
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "{{maxPages}}ページで読み込みを停止しました。一部の結果が表示されていない可能性があります。",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitorからメタデータをリクエスト中にエラーが発生しました"

@@ -22,7 +22,7 @@ import (
 // standard name/title/folder fields are included so identity and display fields
 // can be filtered too. A filter on any other field is rejected rather than
 // silently ignored, so a client learns its query targets an unindexed field.
-// Note: some entries here are further constrained by validateFilterLeaf (e.g.
+// Note: some entries here are further constrained by checkAndNormalizeFilterLeaf (e.g.
 // the legacy backend cannot yet filter every indexed field, see
 // legacyUnsupportedFilterFields).
 var filterableFields = map[string]struct{}{
@@ -232,7 +232,7 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 	if err != nil {
 		return err
 	}
-	if err := validateFilterLeaf(leaf); err != nil {
+	if err := checkAndNormalizeFilterLeaf(leaf); err != nil {
 		return err
 	}
 
@@ -244,7 +244,7 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 	}
 
 	if leaf.Field == fieldLabels {
-		// validateFilterLeaf holds labels to exactly one value (see scalarFields).
+		// checkAndNormalizeFilterLeaf holds labels to exactly one value (see scalarFields).
 		v := leaf.Values[0]
 		// The In/NotIn operator carries negation, so a "!"-prefixed value would
 		// double-negate. Reject it rather than resolve it ambiguously.
@@ -293,12 +293,15 @@ var legacyUnsupportedFilterFields = map[string]struct{}{
 	fieldAnnotations:   {},
 }
 
-// validateFilterLeaf rejects filter leaves the backend cannot faithfully apply,
-// so a client learns its query was not honored instead of getting wrong results
-// with a 200. Scalar fields must carry a single value; type must narrow to one
-// valid kind via In; paused must be a boolean; NotIn is only honored on labels;
-// and fields the legacy backend cannot filter are rejected outright.
-func validateFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilterLeaf) error {
+// checkAndNormalizeFilterLeaf rejects filter leaves the backend cannot faithfully
+// apply, so a client learns its query was not honored instead of getting wrong
+// results with a 200. Scalar fields must carry a single value; type must narrow to
+// one valid kind via In; paused must be a boolean; NotIn is only honored on
+// labels; and fields the legacy backend cannot filter are rejected outright.
+//
+// It also rewrites the values it parses into one spelling, because the two
+// backends parse them again themselves and do not agree on the accepted forms.
+func checkAndNormalizeFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilterLeaf) error {
 	if _, scalar := scalarFields[leaf.Field]; scalar && len(leaf.Values) != 1 {
 		return fmt.Errorf("filter on %q accepts exactly one value", leaf.Field)
 	}
@@ -323,13 +326,21 @@ func validateFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilterLeaf) er
 			return fmt.Errorf("invalid %q value %q: must be alertrule or recordingrule", fieldType, leaf.Values[0])
 		}
 	case fieldPaused:
-		if _, err := strconv.ParseBool(leaf.Values[0]); err != nil {
+		b, err := strconv.ParseBool(leaf.Values[0])
+		if err != nil {
 			return fmt.Errorf("invalid %q value %q: must be a boolean", fieldPaused, leaf.Values[0])
 		}
+		// "TRUE" and "1" are booleans to ParseBool, which the legacy backend also
+		// uses, but the unified index accepts only "true" and "false".
+		leaf.Values[0] = strconv.FormatBool(b)
 	case fieldPanelID:
-		if _, err := strconv.ParseInt(leaf.Values[0], 10, 64); err != nil {
+		n, err := strconv.ParseInt(leaf.Values[0], 10, 64)
+		if err != nil {
 			return fmt.Errorf("invalid %q value %q: must be an integer", fieldPanelID, leaf.Values[0])
 		}
+		// The legacy backend compares this as a string, so "+10" and "010" would
+		// match nothing there while the unified index reads them as 10.
+		leaf.Values[0] = strconv.FormatInt(n, 10)
 	}
 	return nil
 }
@@ -360,12 +371,10 @@ var selectableLabelKeys = map[string]struct{}{
 // generic search.grafana.app translation), not on the rules' spec labels: those
 // are filtered through a where filter leaf on the indexed "labels" field.
 //
-// Known limitation on the unified backend: metadata labels are indexed with the
-// default analyzer, so value matching can overmatch on values that share a
-// prefix segment (the same caveat the generic search translator carries).
-// Exact-match label semantics in the backend are the fix; until then, restrict
-// selection to the controlled keys below, whose values are generated and do not
-// collide in practice.
+// The unified backend now indexes label values whole, so matching is exact on any
+// index built since. An index built before that still overmatches values sharing
+// a word, until it is rebuilt, which is one reason selection stays restricted to
+// selectableLabelKeys, whose values are generated and do not collide in practice.
 func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string) error {
 	if selector == nil || *selector == "" {
 		return nil

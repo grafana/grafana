@@ -1,8 +1,11 @@
 import { within } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { base64UrlEncode } from '@grafana/alerting';
+
+import { setupMswServer } from '../../mockApi';
 
 import { StagedConfiguration } from './StagedConfiguration';
 
@@ -53,6 +56,8 @@ receivers:
 `,
 };
 
+const server = setupMswServer();
+
 const ui = {
   heading: byRole('heading', { name: 'prometheus-prod' }),
   badge: byText(/staged · read-only/i),
@@ -64,13 +69,15 @@ const ui = {
   syncManagedNote: byText(/kept up to date by auto-sync/i),
   parseError: byText(/couldn't read the staged configuration/i),
   revertButton: byRole('button', { name: /^revert$/i }),
+  promoteButton: byRole('button', { name: /promote to live config/i }),
+  promoteModalTitle: byRole('heading', { name: /promote this configuration/i }),
   revertModalTitle: byRole('heading', { name: /revert this staged configuration/i }),
   noPermissionTooltip: byText(/don't have permission to modify/i),
 };
 
 describe('StagedConfiguration', () => {
   it('renders the identifier, staged badge and resource sections', () => {
-    render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+    render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     expect(ui.heading.get()).toBeInTheDocument();
     expect(ui.badge.get()).toBeInTheDocument();
@@ -78,7 +85,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('expands a section to reveal resource names', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     await user.click(ui.contactPointsSection.get());
 
@@ -87,7 +94,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('reveals every section when Expand all is clicked', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     await user.click(ui.expandAll.get());
 
@@ -96,7 +103,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('links each resource to its detail/list page', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     await user.click(ui.expandAll.get());
 
@@ -132,6 +139,7 @@ describe('StagedConfiguration', () => {
     const { user } = render(
       <StagedConfiguration
         stagedConfig={stagedConfig}
+        canPromote
         canRevert
         liveConfig={{ receivers: [{ name: 'default' }], time_intervals: [{ name: 'weekends', time_intervals: [] }] }}
       />
@@ -154,7 +162,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('shows inhibition rule details inline (no link)', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     await user.click(ui.expandAll.get());
 
@@ -162,7 +170,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('presents the import as a single routing tree named after the identifier', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} canRevert />);
+    const { user } = render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} canPromote canRevert />);
 
     // One import contributes one routing tree, so the section count is 1 regardless of the tree's size.
     expect(within(ui.notificationPoliciesSection.get()).getByText('1')).toBeInTheDocument();
@@ -177,7 +185,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('does not label the imported root as the default policy', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     await user.click(ui.notificationPoliciesSection.get());
 
@@ -186,31 +194,57 @@ describe('StagedConfiguration', () => {
   });
 
   it('shows an error when the configuration cannot be parsed', () => {
-    render(<StagedConfiguration stagedConfig={{ identifier: 'broken', alertmanager_config: 'foo: [bar' }} canRevert />);
+    render(
+      <StagedConfiguration
+        stagedConfig={{ identifier: 'broken', alertmanager_config: 'foo: [bar' }}
+        canPromote
+        canRevert
+      />
+    );
 
     expect(ui.parseError.get()).toBeInTheDocument();
   });
 
-  describe('revert action', () => {
-    it('enables revert when the user can delete the import', () => {
-      render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+  describe('promote/revert actions', () => {
+    it('enables the actions when the user can update', () => {
+      render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
       expect(ui.revertButton.get()).toBeEnabled();
+      expect(ui.promoteButton.get()).toBeEnabled();
     });
 
-    it('disables revert with an explanatory tooltip when the user cannot', async () => {
-      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert={false} />);
+    it('disables the actions with an explanatory tooltip when the user cannot update', async () => {
+      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote={false} canRevert={false} />);
 
-      // A button with a tooltip renders aria-disabled (wrapped so the tooltip still shows on hover)
+      // Buttons with a tooltip render aria-disabled (wrapped so the tooltip still shows on hover)
       // rather than the native disabled attribute.
       expect(ui.revertButton.get()).toHaveAttribute('aria-disabled', 'true');
+      expect(ui.promoteButton.get()).toHaveAttribute('aria-disabled', 'true');
 
-      await user.hover(ui.revertButton.get());
+      await user.hover(ui.promoteButton.get());
       expect(await ui.noPermissionTooltip.find()).toBeInTheDocument();
     });
 
+    // Promote and revert are authorized independently by the backend, so a user holding only the scoped
+    // delete permission must still be able to revert.
+    it('gates promote and revert independently', () => {
+      render(<StagedConfiguration stagedConfig={stagedConfig} canPromote={false} canRevert />);
+
+      expect(ui.revertButton.get()).toBeEnabled();
+      expect(ui.promoteButton.get()).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('opens the promote modal from the header action', async () => {
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
+
+      await user.click(ui.promoteButton.get());
+
+      expect(await ui.promoteModalTitle.find()).toBeInTheDocument();
+    });
+
     it('opens the revert modal from the header action', async () => {
-      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
       await user.click(ui.revertButton.get());
 
@@ -220,17 +254,27 @@ describe('StagedConfiguration', () => {
 
   describe('when the staged config belongs to auto-sync', () => {
     it('hides revert and explains why', () => {
-      render(<StagedConfiguration stagedConfig={stagedConfig} canRevert isSyncManaged />);
+      render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
 
       expect(ui.revertButton.query()).not.toBeInTheDocument();
       expect(ui.syncManagedNote.get()).toBeInTheDocument();
+      expect(ui.promoteButton.get()).toBeEnabled();
     });
 
     it('marks the card as synced rather than staged', () => {
-      render(<StagedConfiguration stagedConfig={stagedConfig} canRevert isSyncManaged />);
+      render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
 
       expect(ui.syncedBadge.get()).toBeInTheDocument();
       expect(ui.badge.query()).not.toBeInTheDocument();
+    });
+
+    it('warns in the promote modal that the sync stops', async () => {
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
+
+      await user.click(ui.promoteButton.get());
+
+      expect(await screen.findByText(/this will stop auto-sync/i)).toBeInTheDocument();
     });
   });
 });
