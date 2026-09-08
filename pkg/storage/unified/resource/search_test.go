@@ -472,13 +472,11 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 
 	const concurrency = 100
 	wg := sync.WaitGroup{}
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range concurrency {
+		wg.Go(func() {
 			<-start
 			_, _ = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
-		}()
+		})
 	}
 
 	// Wait a bit for goroutines to start (hopefully)
