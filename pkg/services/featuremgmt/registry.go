@@ -1258,14 +1258,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "improvedExternalSessionHandling",
-			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       identityAccessTeam,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1454,14 +1446,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "improvedExternalSessionHandlingSAML",
-			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       identityAccessTeam,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "teamHttpHeadersTempo",
 			Description: "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
 			Stage:       FeatureStageExperimental,
@@ -1478,18 +1462,18 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamHttpHeadersFromAppPlatformST",
+			Name:        "datasources.teamHttpHeadersFromAppPlatformST",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
 		{
-			Name:        "teamHttpHeadersFromAppPlatformMT",
+			Name:        "datasources.teamHttpHeadersFromAppPlatformMT",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
@@ -1953,11 +1937,11 @@ var (
 		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
@@ -2328,6 +2312,14 @@ var (
 			Description: "Enables next generation query editor experience",
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryeditor.coauthoringUi",
+			Description: "Enables AI-assisted coauthoring in code query editors",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -3128,6 +3120,15 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "reporting.redirectReportSettingsToK8SApi",
+			Description:     "Redirect legacy report settings API endpoints to the Kubernetes reporting API",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "grafana.onDemandDiagnostics",
 			Description: "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
 			Stage:       FeatureStageExperimental,
@@ -3236,7 +3237,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.rspackBuild",
@@ -3303,6 +3304,15 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:         "grafana.multiTenantUserPermissions",
+			Description:  "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

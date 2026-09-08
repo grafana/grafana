@@ -22,6 +22,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -307,6 +308,11 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		logger.Info("skipping reconciliation: namespace is pending deletion")
 		return nil
 	}
+
+	// Log a connection usage-status snapshot on every reconcile (including no-op
+	// cycles), the connection counterpart of the repository usage status; see
+	// usage.ConnectionUsageStatus.
+	usage.LogConnectionUsageStatus(logger, conn)
 
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)

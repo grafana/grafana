@@ -263,9 +263,24 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 					stats[k] = v
 				}
 			}
+			// Two read-only repositories (github + local), neither syncing, both
+			// healthy. The github repo has no token, so it authenticates
+			// anonymously; the local repo needs no auth.
 			assert.Equal(collect, map[string]any{
-				"stats.repository.github.count": 1.0,
-				"stats.repository.local.count":  1.0,
+				"stats.repository.count":                        2.0,
+				"stats.repository.github.count":                 1.0,
+				"stats.repository.local.count":                  1.0,
+				"stats.repository.healthy.count":                2.0,
+				"stats.repository.unhealthy.count":              0.0,
+				"stats.repository.sync_enabled.count":           0.0,
+				"stats.repository.read_only.count":              2.0,
+				"stats.repository.webhook_disabled.count":       0.0,
+				"stats.repository.workflow.write.count":         0.0,
+				"stats.repository.workflow.branch.count":        0.0,
+				"stats.repository.sync_target.folder.count":     2.0,
+				"stats.repository.auth_method.anonymous.count":  1.0,
+				"stats.repository.auth_method.none.count":       1.0,
+				"stats.repository.ready_reason.available.count": 2.0,
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
