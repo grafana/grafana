@@ -489,16 +489,30 @@ func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *
 }
 
 func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
-	for _, useChannel := range []bool{true, false} {
-		backend := setupTestStorageBackend(t)
-		name := "pollingNotifier"
-
-		if useChannel {
-			backend = setupTestStorageBackend(t, withChannelNotifier)
-			name = "channelNotifier"
-		}
-
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		configure func(*KVBackendOptions)
+	}{
+		{name: "pollingNotifier"},
+		{name: "channelNotifier", configure: withChannelNotifier},
+		{name: "natsNotifier", configure: func(opts *KVBackendOptions) {
+			sub := &fakeEventSubscriber{enabled: true}
+			opts.EnableNatsNotifier = true
+			opts.EventSubscriber = sub
+			opts.EventPublisher = &fakeEventPublisher{
+				enabled: true,
+				onPublish: func(subject string, data []byte) {
+					sub.currentHandler()(subject, data)
+				},
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				if tc.configure != nil {
+					tc.configure(opts)
+				}
+			})
 			ctx, stop := context.WithTimeout(t.Context(), 3*time.Second)
 			defer stop()
 
