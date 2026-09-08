@@ -1,74 +1,36 @@
-import { PureComponent } from 'react';
+import { useAsync } from 'react-use';
 
 import { type StandardEditorProps, type SelectFieldConfigSettings, type SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
-
-interface State<T> {
-  isLoading: boolean;
-  options: Array<SelectableValue<T>>;
-}
 
 type Props<T> = StandardEditorProps<T[], SelectFieldConfigSettings<T>>;
 
 /**
  * MultiSelect for options UI
  */
-export class MultiSelectValueEditor<T> extends PureComponent<Props<T>, State<T>> {
-  state: State<T> = {
-    isLoading: true,
-    options: [],
-  };
+export function MultiSelectValueEditor<T>({ value, onChange, item, id, context }: Props<T>) {
+  const { settings } = item;
 
-  componentDidMount() {
-    this.updateOptions();
-  }
-
-  componentDidUpdate(oldProps: Props<T>) {
-    const old = oldProps.item?.settings;
-    const now = this.props.item?.settings;
-    if (old !== now) {
-      this.updateOptions();
-    } else if (now?.getOptions) {
-      const old = oldProps.context?.data;
-      const now = this.props.context?.data;
-      if (old !== now) {
-        this.updateOptions();
-      }
-    }
-  }
-
-  updateOptions = async () => {
-    const { item } = this.props;
-    const { settings } = item;
-    let options: Array<SelectableValue<T>> = item.settings?.options || [];
+  const { value: options } = useAsync(async (): Promise<Array<SelectableValue<T>>> => {
     if (settings?.getOptions) {
-      options = await settings.getOptions(this.props.context);
+      return settings.getOptions(context);
     }
-    if (this.state.options !== options) {
-      this.setState({
-        isLoading: false,
-        options,
-      });
-    }
-  };
+    return settings?.options ?? [];
+  }, [settings, context]);
 
-  render() {
-    const { options, isLoading } = this.state;
-    const { value, onChange, item, id } = this.props;
-
-    const { settings } = item;
-    return (
-      <MultiSelect<T>
-        inputId={id}
-        isLoading={isLoading}
-        value={value}
-        defaultValue={value}
-        allowCustomValue={settings?.allowCustomValue}
-        onChange={(e) => {
-          onChange(e.map((v) => v.value).flatMap((v) => (v !== undefined ? [v] : [])));
-        }}
-        options={options}
-      />
-    );
-  }
+  return (
+    <MultiSelect<T>
+      inputId={id}
+      // Loading state is "options have never arrived", not "a fetch is in flight" — options
+      // are kept across refetches, so a reload must not put the picker back into loading.
+      isLoading={options === undefined}
+      value={value}
+      defaultValue={value}
+      allowCustomValue={settings?.allowCustomValue}
+      onChange={(e) => {
+        onChange(e.map((v) => v.value).flatMap((v) => (v !== undefined ? [v] : [])));
+      }}
+      options={options ?? []}
+    />
+  );
 }
