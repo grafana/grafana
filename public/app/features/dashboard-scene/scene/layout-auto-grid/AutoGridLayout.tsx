@@ -99,8 +99,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   private _activationHandler() {
     return () => {
       this._resetPanelPositionAndSize();
-      document.body.removeEventListener('pointermove', this._onDrag);
-      document.body.removeEventListener('pointerup', this._onDragEnd);
       document.body.classList.remove('dashboard-draggable-transparent-selection');
     };
   }
@@ -177,11 +175,15 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this.setState({ draggingKey: this._draggedGridItem.state.key });
 
-    document.body.addEventListener('pointermove', this._onDrag);
-    document.body.addEventListener('pointerup', this._onDragEnd);
     document.body.classList.add('dashboard-draggable-transparent-selection');
 
-    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem);
+    // The orchestrator owns the document-level pointermove/pointerup listeners for the whole
+    // drag; we hook into them via callbacks instead of registering our own, so cleanup doesn't
+    // depend on this layout staying active (e.g. across a tab switch mid-drag).
+    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem, {
+      onDrag: this._onDrag,
+      onDragEnd: this._onDragEnd,
+    });
   }
 
   // Stop inside dragging
@@ -205,8 +207,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       this.setState({ draggingKey: undefined });
     }
 
-    document.body.removeEventListener('pointermove', this._onDrag);
-    document.body.removeEventListener('pointerup', this._onDragEnd);
     document.body.classList.remove('dashboard-draggable-transparent-selection');
 
     if (this.state.draggedChildren) {

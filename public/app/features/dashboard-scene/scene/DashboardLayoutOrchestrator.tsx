@@ -72,6 +72,22 @@ export type TabDragState = {
   index: number;
 };
 
+/**
+ * Layout-specific hooks for a grid item drag started via `startDraggingSync`. The orchestrator
+ * owns the document-level pointermove/pointerup listeners for the whole drag; a layout that needs
+ * to react to the raw pointer events (e.g. to move its own drag preview, or detect hovering over
+ * a sibling item) does so through these callbacks instead of registering its own listeners.
+ */
+export interface GridItemDragCallbacks {
+  /** Called on every pointermove for the duration of the drag. */
+  onDrag?: (evt: PointerEvent) => void;
+  /**
+   * Called once the drop decision has been made (and, for a same-layout drop, already committed)
+   * so the layout can reset its own local drag state.
+   */
+  onDragEnd?: () => void;
+}
+
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
   public static Component = DragPreviewRenderer;
 
@@ -111,6 +127,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _tabDragState: TabDragState | undefined;
   /** Stored pointerup handler for new-panel drag so we can remove it */
   private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
+  /** Layout-supplied callbacks for the grid item drag currently in progress, if any */
+  private _dragCallbacks: GridItemDragCallbacks | null = null;
 
   public constructor() {
     super({});
@@ -135,6 +153,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._clearTabActivationTimer();
       this._clearDragPreview();
       this._cleanupDragState();
+      this._dragCallbacks = null;
     };
   }
 
@@ -147,7 +166,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return this._droppedElsewhere;
   }
 
-  public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
+  public startDraggingSync(
+    evt: ReactPointerEvent,
+    gridItem: SceneGridItemLike,
+    callbacks?: GridItemDragCallbacks
+  ): void {
     const dropTarget = sceneGraph.findObject(gridItem, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
@@ -157,6 +180,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._sourceDropTarget = dropTarget;
     this._lastDropTarget = dropTarget;
     this._sourceOriginalIndex = this._captureSourceGridState(gridItem);
+    this._dragCallbacks = callbacks ?? null;
 
     // Capture the offset from cursor to item's top-left corner
     this._captureDragOffset(evt.clientX, evt.clientY, gridItem);
@@ -239,6 +263,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._lastDropTarget?.setIsDropTarget?.(false);
       this._commitSameLayoutReorder(sourceDropTarget, gridItem);
     }
+
+    // Let the source layout reset its own local drag state now that the drop decision above
+    // has been made (and, for a same-layout drop, already committed via `_commitSameLayoutReorder`).
+    const dragCallbacks = this._dragCallbacks;
+    this._dragCallbacks = null;
+    dragCallbacks?.onDragEnd?.();
 
     document.body.removeEventListener('pointermove', this._onPointerMove);
     document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
@@ -904,6 +934,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   };
 
   private _onPointerMove(evt: PointerEvent) {
+    // Let the source layout react to the raw pointer position first (e.g. AutoGridLayout moves
+    // its own drag preview and updates same-grid reorder hover state).
+    this._dragCallbacks?.onDrag?.(evt);
+
     // Store cursor position early so it's available for immediate preview on tab switch
     this._lastCursorX = evt.clientX;
     this._lastCursorY = evt.clientY;
