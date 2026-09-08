@@ -57,7 +57,7 @@ interface DashboardPreviewBannerProps {
   route?: string;
   slug?: string;
   path?: string;
-  onSaveToNewBranch?: () => void;
+  onSaveToNewBranch?: (options: { isUnmergedDraft: boolean }) => void;
   onDiscardChanges?: () => void;
 }
 
@@ -380,13 +380,7 @@ describe('DashboardPreviewBanner', () => {
       await clickOpenPullRequest();
 
       await waitFor(() => expect(mockTriggerRefs).toHaveBeenCalledWith({ name: 'my-repo' }));
-      await waitFor(() =>
-        expect(windowOpenSpy).toHaveBeenCalledWith(
-          'https://github.com/org/repo/compare',
-          '_blank',
-          'noopener,noreferrer'
-        )
-      );
+      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
 
@@ -408,13 +402,46 @@ describe('DashboardPreviewBanner', () => {
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
       });
-      setup({ onSaveToNewBranch });
+      setup(
+        { onSaveToNewBranch },
+        {
+          fileQuery: {
+            data: { ...defaultFileQueryReturn.data, resource: { action: 'update' } },
+          },
+        }
+      );
 
       await clickOpenPullRequest();
       await screen.findByText('This branch no longer exists');
       await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
 
       expect(onSaveToNewBranch).toHaveBeenCalledTimes(1);
+      // The dashboard also exists on the configured branch, so the recovery save can update it.
+      expect(onSaveToNewBranch).toHaveBeenCalledWith({ isUnmergedDraft: false });
+    });
+
+    it('flags the recovery save as a create when the dashboard only ever existed on the deleted branch', async () => {
+      const onSaveToNewBranch = jest.fn();
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
+      });
+      // A dry-run "create" means the file was born on the (now deleted) branch and never merged —
+      // the recovery branch is cut from the configured branch, where the file doesn't exist, so an
+      // update there would fail with file-not-found.
+      setup(
+        { onSaveToNewBranch },
+        {
+          fileQuery: {
+            data: { ...defaultFileQueryReturn.data, resource: { action: 'create' } },
+          },
+        }
+      );
+
+      await clickOpenPullRequest();
+      await screen.findByText('This branch no longer exists');
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
+
+      expect(onSaveToNewBranch).toHaveBeenCalledWith({ isUnmergedDraft: true });
     });
 
     it('discards changes by clearing the scene then navigating to the saved dashboard', async () => {
@@ -451,13 +478,7 @@ describe('DashboardPreviewBanner', () => {
 
       await clickOpenPullRequest();
 
-      await waitFor(() =>
-        expect(windowOpenSpy).toHaveBeenCalledWith(
-          'https://github.com/org/repo/compare',
-          '_blank',
-          'noopener,noreferrer'
-        )
-      );
+      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
 
@@ -474,13 +495,7 @@ describe('DashboardPreviewBanner', () => {
 
       await clickOpenPullRequest();
 
-      await waitFor(() =>
-        expect(windowOpenSpy).toHaveBeenCalledWith(
-          'https://github.com/org/repo/compare',
-          '_blank',
-          'noopener,noreferrer'
-        )
-      );
+      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
 

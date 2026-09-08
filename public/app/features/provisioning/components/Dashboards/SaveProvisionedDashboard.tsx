@@ -15,6 +15,12 @@ export interface SaveProvisionedDashboardProps {
   saveAsCopy?: boolean;
   /** Recovery entry point: default the form to a brand-new branch (see useProvisionedDashboardData). */
   forceNewBranch?: boolean;
+  /**
+   * Recovery entry point: the dashboard was created on the deleted branch and never merged, so the
+   * file doesn't exist on the configured branch the recovery branch is cut from — save must create
+   * it rather than update it.
+   */
+  isUnmergedDraft?: boolean;
 }
 
 export function SaveProvisionedDashboard({
@@ -23,6 +29,7 @@ export function SaveProvisionedDashboard({
   dashboard,
   saveAsCopy,
   forceNewBranch,
+  isUnmergedDraft,
 }: SaveProvisionedDashboardProps) {
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy, forceNewBranch);
@@ -45,6 +52,7 @@ export function SaveProvisionedDashboard({
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
         forceNewBranch={forceNewBranch}
+        isUnmergedDraft={isUnmergedDraft}
       />
     </ProvisionedFormGate>
   );

@@ -744,12 +744,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveAsDashboardTemplate,
     onSaveSuccess,
     forceNewBranch,
+    isUnmergedDraft,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
     forceNewBranch?: boolean;
+    isUnmergedDraft?: boolean;
   }) {
     if (!this.state.isEditing) {
       return;
@@ -763,6 +765,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         saveDashboardTemplate,
         onSaveSuccess,
         forceNewBranch,
+        isUnmergedDraft,
         showVariablesWarning: this.hasVariableErrors(),
       }),
     });

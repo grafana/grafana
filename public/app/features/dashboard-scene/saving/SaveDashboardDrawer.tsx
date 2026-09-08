@@ -31,6 +31,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   onSaveSuccess?: () => void;
   /** Provisioned recovery: open the save form defaulted to a brand-new branch. */
   forceNewBranch?: boolean;
+  /** Provisioned recovery: the dashboard existed only on the deleted branch, so save must create the file. */
+  isUnmergedDraft?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -70,6 +72,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveVariables,
     saveRefresh,
     forceNewBranch,
+    isUnmergedDraft,
   } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
@@ -145,6 +148,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           drawer={model}
           saveAsCopy={saveAsCopy}
           forceNewBranch={forceNewBranch}
+          isUnmergedDraft={isUnmergedDraft}
         />
       );
     }

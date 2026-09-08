@@ -139,6 +139,7 @@ export function PreviewBannerViewPR({
               <Button
                 variant="primary"
                 icon="external-link-alt"
+                iconPlacement="right"
                 disabled={isCheckingBranch}
                 onClick={async () => {
                   const shouldOpen = await onOpenPullRequest();
@@ -146,9 +147,14 @@ export function PreviewBannerViewPR({
                     // The branch is gone — the caller shows recovery UI instead.
                     return;
                   }
-                  // Strict popup blockers can block a tab opened after the check — fall back to a plain link.
-                  const tab = window.open(textUtil.sanitizeUrl(linkUrl), '_blank', 'noopener,noreferrer');
-                  if (!tab) {
+                  // No `noopener` feature here: per spec it makes window.open return null even on
+                  // success, which would falsely trip the popup-blocked fallback. Detach the opener
+                  // on the handle instead to keep the tabnabbing protection.
+                  const tab = window.open(textUtil.sanitizeUrl(linkUrl), '_blank');
+                  if (tab) {
+                    tab.opener = null;
+                  } else {
+                    // Strict popup blockers can block a tab opened after the check — fall back to a plain link.
                     setPopupBlocked(true);
                   }
                 }}

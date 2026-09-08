@@ -66,6 +66,7 @@ export function SaveProvisionedDashboardForm({
   repository,
   saveAsCopy,
   forceNewBranch,
+  isUnmergedDraft,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -104,7 +105,10 @@ export function SaveProvisionedDashboardForm({
   } = methods;
 
   const path = watch('path');
-  const originalPath = isNew ? undefined : defaultValues.path;
+  // isUnmergedDraft: the dashboard was created on a now-deleted branch and never merged, so the file
+  // doesn't exist on the configured branch the recovery branch is cut from. Treat it as having no
+  // original path so the save issues a create — an update would fail with file-not-found.
+  const originalPath = isNew || isUnmergedDraft ? undefined : defaultValues.path;
   const isRename = Boolean(originalPath && path !== originalPath);
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);

@@ -201,7 +201,10 @@ describe('PreviewBannerViewPR', () => {
           resolvePreflight = resolve;
         })
       );
-      const openSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
+      // A successful open returns a window handle. No `noopener` feature may be passed (it would
+      // make window.open return null even on success), so the code must detach the opener itself.
+      const openedTab = { opener: window } as Window;
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(openedTab);
 
       render(
         <PreviewBannerViewPR
@@ -220,10 +223,14 @@ describe('PreviewBannerViewPR', () => {
       expect(openSpy).not.toHaveBeenCalled();
 
       resolvePreflight(true);
-      await waitFor(() =>
-        expect(openSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank', 'noopener,noreferrer')
-      );
+      await waitFor(() => expect(openSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
       expect(openSpy).toHaveBeenCalledTimes(1);
+      // Tabnabbing protection: the new tab must not keep a reference back to this window.
+      expect(openedTab.opener).toBeNull();
+
+      // A successful open must NOT trip the popup-blocked fallback — the button stays a button.
+      expect(screen.getByRole('button', { name: /Open pull request in GitHub/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Open pull request in GitHub/i })).not.toBeInTheDocument();
 
       openSpy.mockRestore();
     });

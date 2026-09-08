@@ -1052,6 +1052,61 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
   });
 
+  it('creates (not updates) in the deleted-branch recovery when the dashboard only existed on that branch', async () => {
+    // The dashboard was born on the (now deleted) branch and never merged, so the recovery branch —
+    // cut from the configured branch — doesn't have the file. An update (PUT) would fail with
+    // file-not-found on the backend; the save must issue a create (POST) instead.
+    let putCalled = false;
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, () => {
+        putCalled = true;
+        return HttpResponse.json({ message: 'file not found' }, { status: 404 });
+      }),
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const savedResource = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    };
+    const dashboard = makeNotDirtyDashboard();
+    // isNew is false (the preview scene has a k8s name), so the submit serializes via
+    // getSaveResourceFromSpec — mock it like the other update-path tests do.
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue(savedResource);
+
+    const { user } = setup({
+      dashboard,
+      isNew: false,
+      forceNewBranch: true,
+      isUnmergedDraft: true,
+      defaultValues: {
+        ref: 'dashboard/recovery-branch',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'branch',
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(request.url.searchParams.get('ref')).toBe('dashboard/recovery-branch');
+    // A create has no original to point back at.
+    expect(request.url.searchParams.get('originalPath')).toBeNull();
+    expect(putCalled).toBe(false);
+  });
+
   it('should properly handle read-only state for a repository without workflows', () => {
     setup({
       isNew: false,

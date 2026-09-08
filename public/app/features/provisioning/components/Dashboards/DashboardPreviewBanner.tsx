@@ -29,8 +29,10 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
   /**
    * Re-opens the save flow on the current scene so the user can commit their draft to a fresh
    * branch. Wired from the page (which holds the scene) so this component stays scene-agnostic.
+   * `isUnmergedDraft` is true when the dry-run classified the change as a create — the dashboard
+   * exists only on the (deleted) branch, so the recovery save must create the file, not update it.
    */
-  onSaveToNewBranch?: () => void;
+  onSaveToNewBranch?: (options: { isUnmergedDraft: boolean }) => void;
   /**
    * Abandons the in-memory draft on the current scene (exits edit mode / clears the dirty state) so
    * the unsaved-changes prompt doesn't block the subsequent navigation away. Scene-coupled, so it is
@@ -40,7 +42,7 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
 }
 
 interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {
-  onSaveToNewBranch?: () => void;
+  onSaveToNewBranch?: (options: { isUnmergedDraft: boolean }) => void;
   onDiscardChanges?: () => void;
 }
 
@@ -206,7 +208,10 @@ function DashboardPreviewBannerContent({
             variant="primary"
             onClick={() => {
               setBranchGone(false);
-              onSaveToNewBranch?.();
+              // A dry-run "create" means the file was born on the deleted branch and never merged —
+              // the recovery branch (cut from the configured branch) won't have it, so the save
+              // must issue a create; an update would fail with file-not-found.
+              onSaveToNewBranch?.({ isUnmergedDraft: resourceAction === 'create' });
             }}
           >
             {t('dashboard-scene.dashboard-preview-banner.branch-gone-save', 'Save to a new branch')}
