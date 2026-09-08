@@ -126,7 +126,7 @@ Users with the `Viewer` role can view provisioned resources. Their access to spe
 - Cannot push changes to open a pull request, migrate resources, or manage Git Sync repositories, regardless of folder permissions
 
 {{< admonition type="note" >}}
-Moving and deleting only checks the folder/dashboard permission - not the organization role. So a `Viewer` who's also granted Folder Editor/Admin or Dashboard Editor/Admin permission gets the same create, edit, move, and delete access listed for [Editor users](#editor-users), for that folder or dashboard. The organization role still gates push, migrate, and repository management - refer to [Job actions and required permissions](#job-actions-and-required-permissions) for the full breakdown.
+Moving and deleting only checks the folder/dashboard permission - not the organization role. So a `Viewer` who's also granted Folder Editor/Admin permission gets the same create, edit, move, and delete access listed for [Editor users](#editor-users), for that folder. A `Viewer` with only Dashboard-level Editor/Admin permission (no folder access) can edit and delete that dashboard the same way, but can't move it - moving needs create permission on the destination, which only a folder-level grant provides. The organization role still gates push, migrate, and repository management - refer to [Job actions and required permissions](#job-actions-and-required-permissions) for the full breakdown.
 {{< /admonition >}}
 
 ## Configure folder and dashboard permissions
@@ -287,7 +287,7 @@ The following applies for Git Sync:
 
 Git Sync operations run as jobs, but not all job actions are gated the same way:
 
-- **Move and delete** check only the `dashboards:*` / `folders:*` permissions on the resources being moved or deleted - the same permissions that apply without Git Sync. They don't require `provisioning.jobs:create`, so a `Viewer` with folder or dashboard Editor/Admin access can move and delete.
+- **Move and delete** check the `dashboards:*` / `folders:*` permissions on the resources being moved or deleted - the same permissions that apply without Git Sync. They don't require `provisioning.jobs:create`, so a `Viewer` with the right folder or dashboard access can do them without an `Editor` role. Move also needs create permission on the destination, which is inherently folder-scoped: a `Viewer` with only Dashboard-level Editor/Admin permission (no folder access) can delete that dashboard, but can't move it - there's no destination folder to check create against.
 - **Push, migrate, and fix folder metadata** require `provisioning.jobs:create`, which is only granted to `Editor` and `Admin`. These actions have no equivalent per-resource permission to check, so the organization role is what gates them.
 - **Manual sync (pull from Git) and orphan-resource cleanup** require `provisioning.repositories:write`, which is admin-only. This keeps Editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
 
@@ -303,7 +303,7 @@ Git Sync operations run as jobs, but not all job actions are gated the same way:
 
 ### Repository `subresource` access
 
-The repository API exposes several subresources. The following table shows the permission each one is gated on.
+The repository API exposes several `subresources`. The following table shows the permission each one is gated on.
 
 The `refs` subresource lists the repository's branches and commits, and two distinct flows legitimately need it:
 

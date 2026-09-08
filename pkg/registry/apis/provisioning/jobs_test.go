@@ -777,7 +777,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, nil)
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, nil, "", true)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 	})
@@ -793,7 +793,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, nil)
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, nil, "", true)
 		require.NoError(t, err)
 	})
 
@@ -806,7 +806,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"restricted/dashboard.json"}, nil)
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"restricted/dashboard.json"}, nil, "", true)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "authorize delete")
 	})
@@ -823,7 +823,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/"}, nil)
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/"}, nil, "", true)
 		require.NoError(t, err)
 	})
 
@@ -850,7 +850,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
 			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-		})
+		}, "", true)
 		require.NoError(t, err)
 	})
 
@@ -875,7 +875,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
 			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-		})
+		}, "", true)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 	})
@@ -905,7 +905,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, []provisioning.ResourceRef{
 			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-		})
+		}, "", true)
 		require.NoError(t, err)
 	})
 
@@ -919,7 +919,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		mockReader.On("Read", mock.Anything, "team-b/dash2.json", "").Return(testDashboardFileInfo(), nil).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dash1.json", "team-b/dash2.json"}, nil)
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dash1.json", "team-b/dash2.json"}, nil, "", true)
 		require.Error(t, err)
 	})
 
@@ -927,9 +927,24 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockRepo := repository.NewMockConfigRepository(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
-		err := c.authorizeDeleteJob(ctx, mockRepo, cfg, []string{"dashboard.json"}, nil)
+		err := c.authorizeDeleteJob(ctx, mockRepo, cfg, []string{"dashboard.json"}, nil, "", true)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
+	})
+
+	t.Run("path targeting a different branch falls back to editor gate", func(t *testing.T) {
+		// AuthorizeDeleteByPath has no concept of ref - it always reads from the
+		// configured branch - so a path-based delete against a different branch
+		// can't be safely authorized per-path and must require Editor instead.
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, nil, "feature-branch", true)
+		require.NoError(t, err)
 	})
 }
 
@@ -1070,6 +1085,72 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		})
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
+	})
+
+	t.Run("path targeting a different branch falls back to editor gate", func(t *testing.T) {
+		// AuthorizeMoveByPath has no concept of ref - it always reads from the
+		// configured branch - so a path-based move against a different branch
+		// can't be safely authorized per-path and must require Editor instead.
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+			Paths:      []string{"team-a/dashboard.json"},
+			TargetPath: "dest/",
+			Ref:        "feature-branch",
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("mixed authorized and unresolved refs only checks target for authorized kinds", func(t *testing.T) {
+		// The Folder ref below doesn't exist, so authorizeResourceRefs skips it
+		// and the worker will skip it too when resolving refs to paths - checking
+		// folders:create on the target for it would incorrectly deny a request
+		// over a ref that's never actually acted on.
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbUpdate
+		}), "folder-abc").Return(nil)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		clientsMock := resources.NewMockClientFactory(t)
+
+		dashDynClient := &mockDynamic{}
+		dashDynClient.On("Get", mock.Anything, "my-dash", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructured("my-dash", "folder-abc"), nil)
+
+		folderGVR := resources.FolderResource
+		folderNotFound := apierrors.NewNotFound(schema.GroupResource{Group: folderGVR.Group, Resource: folderGVR.Resource}, "missing-folder")
+		folderDynClient := &mockDynamic{}
+		folderDynClient.On("Get", mock.Anything, "missing-folder", metav1.GetOptions{}, []string(nil)).
+			Return(nil, folderNotFound)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: "dashboard.grafana.app", Kind: "Dashboard",
+		}).Return(dashDynClient, dashGVR, nil)
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: folderGVR.Group, Kind: "Folder",
+		}).Return(folderDynClient, folderGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+				{Name: "missing-folder", Kind: "Folder", Group: folderGVR.Group},
+			},
+			TargetPath: "dest/",
+		})
+		require.NoError(t, err)
 	})
 }
 

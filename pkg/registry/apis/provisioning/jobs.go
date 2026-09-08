@@ -342,7 +342,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
 		if spec.Delete != nil {
-			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources)
+			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources, spec.Delete.Ref, true)
 		}
 	case provisioning.JobActionMove:
 		if spec.Move != nil {
@@ -408,29 +408,39 @@ func wrapAuthzError(err error, format string, args ...any) error {
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
-// has the given verb permission on it. Refs that no longer exist, or that aren't
-// managed by repoName, are skipped - a ResourceRef only carries a name/kind/group,
+// has the given verb permission on it. Refs that no longer exist are skipped.
+//
+// When requireManaged is true, refs that aren't managed by repoName are also
+// skipped rather than authorized - a ResourceRef only carries a name/kind/group,
 // with nothing tying it to the repository the job was created against, so a ref
 // could otherwise name a resource the caller controls in a different repository
 // whose file path happens to collide with a protected path in this one. Skipping
 // mismatched refs here mirrors the same check the worker applies when it later
-// resolves the ref to a path (RepositoryResources.FindResourcePath).
+// resolves the ref to a path (RepositoryResources.FindResourcePath). Pass false
+// only for callers whose resources are legitimately unmanaged by this repository
+// (e.g. a selective migration's export inputs) and whose execution path doesn't
+// resolve refs to this repository's file paths, so the collision this guards
+// against doesn't apply.
 //
-// Returns the count of refs that were actually found, owned by repoName, and
-// authorized - callers use this to detect a request that named only nonexistent
-// or foreign-repository resources, which must not be treated as vacuously
-// authorized (see authorizeDeleteJob/authorizeMoveJob).
-func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace, repoName string, refs []provisioning.ResourceRef, verb, action string) (int, error) {
+// Returns the set of distinct GVRs among refs that were actually found, owned
+// (if required), and authorized. Callers use this to detect a request that named
+// only unusable resources, which must not be treated as vacuously authorized
+// (see authorizeDeleteJob/authorizeMoveJob), and to restrict any further
+// target-folder check to only the kinds that will actually be acted on (see
+// authorizeMoveJob's call to authorizeCreateInFolder) - a ref skipped here is
+// also skipped by the worker, so checking its target permission would
+// incorrectly deny requests that mix a usable ref with one that's ignored.
+func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace, repoName string, refs []provisioning.ResourceRef, verb, action string, requireManaged bool) (map[schema.GroupVersionResource]bool, error) {
 	if len(refs) == 0 {
-		return 0, nil
+		return nil, nil
 	}
 
 	clients, err := c.clients.Clients(ctx, namespace)
 	if err != nil {
-		return 0, fmt.Errorf("create clients for authorization: %w", err)
+		return nil, fmt.Errorf("create clients for authorization: %w", err)
 	}
 
-	found := 0
+	found := map[schema.GroupVersionResource]bool{}
 	for _, ref := range refs {
 		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
 		client, gvr, err := clients.ForKind(ctx, gvk)
@@ -451,8 +461,10 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			return found, fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
 		}
 
-		if manager, ok := meta.GetManagerProperties(); !ok || manager.Kind != utils.ManagerKindRepo || manager.Identity != repoName {
-			continue
+		if requireManaged {
+			if manager, ok := meta.GetManagerProperties(); !ok || manager.Kind != utils.ManagerKindRepo || manager.Identity != repoName {
+				continue
+			}
 		}
 
 		parsed := &resources.ParsedResource{
@@ -464,7 +476,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
 			return found, wrapAuthzError(err, "authorize %s %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
-		found++
+		found[gvr] = true
 	}
 	return found, nil
 }
@@ -552,8 +564,12 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 			// Export + pull (takeover) only; nothing is deleted from the instance.
 			return nil
 		case selective:
-			// Deletes only the chosen resources.
-			return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources)
+			// Deletes only the chosen resources. These are intentionally unmanaged
+			// by this repository (the migration exports them, then CleanResources
+			// removes only unmanaged resources), so requireManaged must be false
+			// here - unlike a real delete/move job, requiring manager ownership
+			// would reject every legitimate selective migration input.
+			return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources, "", false)
 		default:
 			// A full branch migration deletes every exported resource.
 			return c.authorizeDeleteAllSupported(ctx, repo, cfg)
@@ -583,9 +599,23 @@ func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo re
 // admin-only manual pull. Without this check, that full-sync side effect would be
 // reachable by anyone who can pass the per-path/resource checks below (trivially,
 // since there are none to check), rather than being gated like a real pull.
-func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef) error {
+//
+// requireManaged is threaded through to authorizeResourceRefs - see its doc.
+func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef, ref string, requireManaged bool) error {
 	if len(paths) == 0 && len(resources) == 0 {
 		return apierrors.NewBadRequest("delete jobs must target at least one path or resource")
+	}
+
+	// Path-based checks below (AuthorizeDeleteByPath) read file and folder
+	// identity from the repository's configured branch - ProvisioningAuthorizer
+	// has no concept of ref. If the request targets a different branch, that
+	// read can diverge from what the worker actually deletes there under the
+	// provisioning identity, so require Editor instead - the same protection
+	// this had before per-path checks became reachable by non-Editors.
+	// Resource-ref checks aren't affected: they authorize against the resource's
+	// live Grafana state, not git content at a specific ref.
+	if len(paths) > 0 && ref != "" && ref != cfg.Branch() {
+		return c.authorizeEditorJob(ctx, cfg)
 	}
 
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
@@ -599,7 +629,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 		}
 	}
 
-	found, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, resources, utils.VerbDelete, "delete")
+	found, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, resources, utils.VerbDelete, "delete", requireManaged)
 	if err != nil {
 		return err
 	}
@@ -608,7 +638,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 	// later), so a request naming only such resources must still be rejected here -
 	// otherwise it would authorize nothing and fall through to the same trivial
 	// success the empty-target check above guards against.
-	if len(paths) == 0 && found == 0 {
+	if len(paths) == 0 && len(found) == 0 {
 		return apierrors.NewBadRequest("delete jobs must target at least one existing path or resource")
 	}
 	return nil
@@ -623,6 +653,13 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 		return apierrors.NewBadRequest("move jobs must target at least one path or resource")
 	}
 
+	// See the identical guard in authorizeDeleteJob: path-based checks aren't
+	// ref-aware, so a request targeting a different branch than configured
+	// falls back to requiring Editor.
+	if len(opts.Paths) > 0 && opts.Ref != "" && opts.Ref != cfg.Branch() {
+		return c.authorizeEditorJob(ctx, cfg)
+	}
+
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -634,48 +671,30 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 		}
 	}
 
-	found, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, opts.Resources, utils.VerbUpdate, "move")
+	foundGVRs, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, opts.Resources, utils.VerbUpdate, "move", true)
 	if err != nil {
 		return err
 	}
-	if len(opts.Paths) == 0 && found == 0 {
+	if len(opts.Paths) == 0 && len(foundGVRs) == 0 {
 		return apierrors.NewBadRequest("move jobs must target at least one existing path or resource")
 	}
 
 	// authorizeResourceRefs only checks update on the source above. Path-based moves
 	// also require create on the target (AuthorizeMoveByPath), so resource-based moves
 	// need the equivalent target-folder check to avoid moving into a folder the user
-	// can't create in.
-	return c.authorizeMoveResourceRefsTarget(ctx, authorizer, cfg.Namespace, opts.Resources, opts.TargetPath)
+	// can't create in. Only check the GVRs that were actually found and authorized -
+	// a skipped ref is also skipped by the worker, so its target permission is moot.
+	return c.authorizeCreateInFolder(ctx, authorizer, foundGVRs, opts.TargetPath)
 }
 
-// authorizeMoveResourceRefsTarget checks create permission on the destination
-// folder itself for each resource-referenced move target. Unlike path-based moves,
-// there's no source file path to preserve a basename from - the worker resolves
-// each ref to a path and then joins it into opts.TargetPath the same way, so the
-// folder to check create on is opts.TargetPath directly (see AuthorizeCreateInFolder).
-func (c *jobsConnector) authorizeMoveResourceRefsTarget(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, targetPath string) error {
-	if len(refs) == 0 {
-		return nil
-	}
-
-	clients, err := c.clients.Clients(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("create clients for authorization: %w", err)
-	}
-
-	checked := map[schema.GroupVersionResource]bool{}
-	for _, ref := range refs {
-		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
-		_, gvr, err := clients.ForKind(ctx, gvk)
-		if err != nil {
-			return fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
-		}
-		if checked[gvr] {
-			continue
-		}
-		checked[gvr] = true
-
+// authorizeCreateInFolder checks create permission on the destination folder for
+// each GVR in gvrs, mirroring the target-folder check that AuthorizeMoveByPath
+// already performs for path-based moves. There's no source file path to preserve
+// a basename from for resource-ref moves - the worker resolves each ref to a path
+// and then joins it into targetPath the same way, so the folder to check create
+// on is targetPath directly (see AuthorizeCreateInFolder on the Authorizer).
+func (c *jobsConnector) authorizeCreateInFolder(ctx context.Context, authorizer resources.Authorizer, gvrs map[schema.GroupVersionResource]bool, targetPath string) error {
+	for gvr := range gvrs {
 		if err := authorizer.AuthorizeCreateInFolder(ctx, gvr, targetPath); err != nil {
 			return wrapAuthzError(err, "authorize move target %q", targetPath)
 		}
