@@ -180,7 +180,7 @@ export const ThemeComponentsInputSchema = z
 /** @beta */
 type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
 
-// The menu, tag and badge props are overridden to preserve types that zod inference can't reproduce
+// The menu is overridden to preserve types that zod inference can't reproduce
 /** @beta */
 export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu'>> & {
   menu: MenuComponentTokens;
