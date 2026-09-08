@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Grid, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
+
+import { HomeGrid } from '../HomeGrid';
 
 // Mirrors the RecommendationsView shell (heading row + two-column card grid) so the
 // section holds its space while the plugin list and data probes resolve.
@@ -17,7 +19,7 @@ export function RecommendationsSkeleton() {
       </Stack>
 
       <div className={styles.cards}>
-        <Grid gap={0} columns={{ xs: 1, md: 2 }}>
+        <HomeGrid columns={2} gap={0}>
           {[160, 120].map((contextWidth) => (
             <div key={contextWidth} className={styles.card}>
               <Stack direction="column" gap={2}>
@@ -28,7 +30,7 @@ export function RecommendationsSkeleton() {
               </Stack>
             </div>
           ))}
-        </Grid>
+        </HomeGrid>
       </div>
     </div>
   );

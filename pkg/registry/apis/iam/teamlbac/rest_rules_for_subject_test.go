@@ -134,6 +134,35 @@ func TestRulesForSubjectRESTPropagatesRuleReadErrors(t *testing.T) {
 	require.Nil(t, response)
 }
 
+func TestRulesForSubjectRESTConnectReturnsEmptyRulesWhenRuleDoesNotExist(t *testing.T) {
+	ruleGetter := getterFunc(func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+		return nil, apierrors.NewNotFound(iamv0.TeamLBACRuleInfo.GroupResource(), "prometheus.datasource-a")
+	})
+	unusedGetter := getterFunc(func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+		t.Fatal("team getter should not be called")
+		return nil, nil
+	})
+	unusedLister := listerFunc(func(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+		t.Fatal("team lister should not be called")
+		return nil, nil
+	})
+	handler := NewRulesForSubjectREST(ruleGetter, unusedGetter, unusedLister, tracing.NewNoopTracerService())
+	responder := &testResponder{}
+	httpHandler, err := handler.Connect(context.Background(), "prometheus.datasource-a", nil, responder)
+	require.NoError(t, err)
+
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "org-1"})
+	ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: subjectRequestParts("user", "user-a")})
+	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
+	httpHandler.ServeHTTP(httptest.NewRecorder(), req)
+
+	require.NoError(t, responder.err)
+	require.Equal(t, http.StatusOK, responder.status)
+	response, ok := responder.obj.(*iamv0.GetTeamLBACRulesForSubjectResponse)
+	require.True(t, ok)
+	require.Empty(t, response.TeamFilters)
+}
+
 func TestRulesForSubjectRESTValidatesSubject(t *testing.T) {
 	unusedGetter := getterFunc(func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
 		t.Fatal("storage should not be called")

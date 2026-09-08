@@ -120,15 +120,13 @@ func TestConnection(t *testing.T) {
 			conns = map[*natsclient.Conn]struct{}{}
 		)
 		for i := 0; i < 50; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				nc, err := c.get(context.Background())
 				require.NoError(t, err)
 				mu.Lock()
 				conns[nc] = struct{}{}
 				mu.Unlock()
-			}()
+			})
 		}
 		wg.Wait()
 

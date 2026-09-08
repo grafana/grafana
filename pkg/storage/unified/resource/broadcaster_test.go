@@ -349,9 +349,7 @@ func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
 	const n = 200
 	var wg sync.WaitGroup
 	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			cctx, ccancel := context.WithCancel(ctx)
 			// Cancel concurrently to race the two-phase Subscribe so that some
 			// callers take the ctx.Done() path after the subscription is queued.
@@ -361,7 +359,7 @@ func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
 				// Registered before the cancel landed; a real caller would clean up.
 				b.Unsubscribe(sub)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

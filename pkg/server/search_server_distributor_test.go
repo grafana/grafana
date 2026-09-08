@@ -206,15 +206,13 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for _, testServer := range testServers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
 				require.NoError(t, err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
