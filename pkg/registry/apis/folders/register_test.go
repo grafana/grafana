@@ -202,6 +202,13 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "should return folder not empty when folder contains variables",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 4, Resource: "variables", Group: "dashboard.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
 			name: "should return folder not empty when folder contains alertrules",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
 				{Count: 3, Resource: "alertrules", Group: "alerting.grafana.app"},

@@ -115,10 +115,8 @@ export function AdHocVariableForm({
         )}
 
         {config.featureToggles.dashboardUnifiedDrilldownControls &&
-          datasource &&
-          datasourceSupported &&
-          datasourceSupportsGroupBy &&
-          onEnableGroupByChange && (
+          onEnableGroupByChange &&
+          (!datasource || (datasourceSupported && datasourceSupportsGroupBy)) && (
             <Field
               label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
               description={t(

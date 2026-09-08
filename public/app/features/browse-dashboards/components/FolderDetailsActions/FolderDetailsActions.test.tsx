@@ -31,8 +31,8 @@ const StarredFoldersList = () => {
 };
 
 describe('FolderDetailsActions', () => {
-  // starredFoldersEnabled() gates the star button on these feature toggles plus the OpenFeature flag
-  testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+  // starredFoldersEnabled() gates the star button on this feature toggle plus the OpenFeature flag
+  testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
 
   beforeEach(() => {
     setTestFlags({ 'grafana.starredFolders': true });
