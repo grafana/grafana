@@ -832,7 +832,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			Message: []string{fmt.Sprintf("unable to delete repository: %s", err)},
 		}
 		patchOps := rc.healthPatchIfChanged(obj, deleteHealthStatus)
-		readyCondition := buildReadyConditionWithReason(deleteHealthStatus, classifyHookFailureReason(err))
+		// handleDelete builds the repository to run its finalizers, so the failure
+		// can be a secret-decrypt outage -- use the build classifier so that reads
+		// as a transient service issue, not an invalid spec.
+		readyCondition := buildReadyConditionWithReason(deleteHealthStatus, classifyBuildFailureReason(err))
 		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
 			obj.Status.Conditions, obj.GetGeneration(), readyCondition,
 		); conditionPatchOps != nil {
