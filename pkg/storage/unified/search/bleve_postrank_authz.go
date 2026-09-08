@@ -242,6 +242,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
 	selectFields []string,
+	fieldValueSchema *fieldValueResultSchema,
 	stats *resource.SearchStats,
 	response *resourcepb.ResourceSearchResponse,
 	trashAuthz *resource.TrashAuthorizer,
@@ -412,7 +413,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
-	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
+	return response, b.finalizePostFilter(ctx, response, page, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 }
 
@@ -581,6 +582,7 @@ func (b *bleveIndex) finalizePostFilter(
 	response *resourcepb.ResourceSearchResponse,
 	page search.DocumentMatchCollection,
 	selectFields []string,
+	fieldValueSchema *fieldValueResultSchema,
 	sort search.SortOrder,
 	req *resourcepb.ResourceSearchRequest,
 	firstRes *bleve.SearchResult,
@@ -627,11 +629,9 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	results, err := b.hitsToTable(ctx, selectFields, page, sort, req.Explain)
-	if err != nil {
+	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
 		return err
 	}
-	response.Results = results
 	if wantFacets {
 		// Counts are the exact authorized term counts within the bounded sample;
 		// see facetAggregator.build for why we don't extrapolate.

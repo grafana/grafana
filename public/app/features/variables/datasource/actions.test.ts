@@ -42,7 +42,6 @@ function toListItem(name: string, meta: ReturnType<typeof getMockPlugin>): DataS
     type: settings.type,
     name: settings.name,
     meta: settings.meta,
-    readOnly: settings.readOnly,
     isDefault: settings.isDefault ?? false,
   };
 }
