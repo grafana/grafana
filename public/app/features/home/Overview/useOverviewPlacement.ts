@@ -7,8 +7,8 @@ import { type OverviewCard, resolveOverviewCard } from './solutionGroups';
 export interface OverviewPlacement {
   /** Placed cards in `solutions` order; solutions with neither datasource nor offer are omitted. */
   cards: OverviewCard[];
-  /** Solutions whose placement is still resolving, in `solutions` order. */
-  pending: Solution[];
+  /** Solutions whose placement is still resolving. */
+  pendingCount: number;
 }
 
 /**
@@ -35,14 +35,17 @@ export function useOverviewPlacement(solutions: Solution[]): OverviewPlacement {
     };
   }, [solutions]);
 
-  return useMemo(
-    () => ({
-      cards: solutions.flatMap((solution) => {
-        const card = placed.get(solution);
-        return card ? [card] : [];
-      }),
-      pending: solutions.filter((solution) => !placed.has(solution)),
-    }),
-    [solutions, placed]
-  );
+  return useMemo(() => {
+    const cards: OverviewCard[] = [];
+    let pendingCount = 0;
+    for (const solution of solutions) {
+      const card = placed.get(solution);
+      if (card) {
+        cards.push(card);
+      } else if (!placed.has(solution)) {
+        pendingCount++;
+      }
+    }
+    return { cards, pendingCount };
+  }, [solutions, placed]);
 }

@@ -39,8 +39,11 @@ const HEALTH_QUERIES: Record<string, string> = {
 };
 
 // Single attempt inside the probe timeout; errors read as no data in the parallel scan.
-async function hasSyntheticChecks(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  const frames = await runInstantQueries({ checks: SM_CHECK_PROBE }, ds, PROBE_TIMEOUT_MS);
+async function hasSyntheticChecks(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  signal?: AbortSignal
+): Promise<boolean> {
+  const frames = await runInstantQueries({ checks: SM_CHECK_PROBE }, ds, PROBE_TIMEOUT_MS, false, signal);
   return (readScalar(frames, 'checks') ?? 0) > 0;
 }
 

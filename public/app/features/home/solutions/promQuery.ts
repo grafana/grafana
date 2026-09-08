@@ -1,4 +1,4 @@
-import { firstValueFrom, timeout } from 'rxjs';
+import { firstValueFrom, fromEvent, NEVER, of, takeUntil, timeout } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import {
@@ -68,7 +68,8 @@ async function runDatasourceQueries(
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   timeoutMs = 30_000,
-  partial = false
+  partial = false,
+  signal?: AbortSignal
 ): Promise<DataFrame[]> {
   const runner = createQueryRunner();
   try {
@@ -81,11 +82,15 @@ async function runDatasourceQueries(
       minInterval: null,
     });
     // If the runner never emits a terminal state (e.g. its internal datasource lookup rejects),
-    // time out instead of leaving callers' useAsync in a permanent loading state.
+    // time out instead of leaving callers' useAsync in a permanent loading state. An abort
+    // completes the stream empty; destroy() below then unsubscribes the query, which tears down
+    // its BackendSrv fetch (queued entry dropped, in-flight request cancelled).
+    const aborted = signal ? (signal.aborted ? of(null) : fromEvent(signal, 'abort')) : NEVER;
     const data = await firstValueFrom(
       runner.get().pipe(
         first((d) => d.state === LoadingState.Done || d.state === LoadingState.Error),
-        timeout(timeoutMs)
+        timeout(timeoutMs),
+        takeUntil(aborted)
       )
     );
     // Errors reject by default — `?? 0` readers would render a dropped refId as a real zero.
@@ -107,7 +112,8 @@ export async function runInstantQueries(
   queries: Record<string, string>,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   timeoutMs?: number,
-  partial = false
+  partial = false,
+  signal?: AbortSignal
 ): Promise<DataFrame[]> {
   const targets: PromQuery[] = Object.entries(queries).map(([refId, expr]) => ({
     refId,
@@ -115,7 +121,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs, partial);
+  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs, partial, signal);
 }
 
 /**

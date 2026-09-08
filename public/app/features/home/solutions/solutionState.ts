@@ -1,6 +1,9 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
-import { SIGNAL_BUDGET_MS, withTimeout } from './probeUtils';
+import { withTimeout } from './probeUtils';
+
+/** Hard ceiling on one signal's detection; past it the signal settles unknown. */
+export const SIGNAL_BUDGET_MS = 30_000;
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
 

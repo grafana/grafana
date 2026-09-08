@@ -25,17 +25,13 @@ import { HomeGrid } from './HomeGrid';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
-import { useOverviewPlacement } from './Overview/useOverviewPlacement';
+import { resolveOverviewCard } from './Overview/solutionGroups';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
-import { type Solution } from './solutions/types';
 import useHomeGreeting from './useHomeGreeting';
 import { useHomepageSolutions } from './useHomepageSolutions';
 
 const HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
-
-// Stable identity: the legacy homepage runs one empty placement effect and never re-runs it.
-const NO_SOLUTIONS: Solution[] = [];
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -68,8 +64,15 @@ export default function HomePage() {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const solutions = useHomepageSolutions();
   // Placement is the slow part of the page and needs nothing from the extensions gating the
-  // sections; owning it here starts it at mount and keeps it alive across the skeleton.
-  const placement = useOverviewPlacement(redesignEnabled ? solutions.solutions : NO_SOLUTIONS);
+  // sections: start it at mount so it runs under the skeleton. The overview reads the same
+  // memoized placements when it mounts, so nothing is probed twice.
+  useEffect(() => {
+    if (redesignEnabled) {
+      for (const solution of solutions.solutions) {
+        void resolveOverviewCard(solution);
+      }
+    }
+  }, [redesignEnabled, solutions]);
 
   const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageAssistant,
@@ -172,7 +175,7 @@ export default function HomePage() {
                   })}
 
                   <Recommendations solutions={solutions} />
-                  <Overview placement={placement} />
+                  <Overview solutions={solutions.solutions} />
 
                   <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}

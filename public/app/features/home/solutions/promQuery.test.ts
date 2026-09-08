@@ -148,6 +148,19 @@ describe('runInstantQueries', () => {
       jest.useRealTimers();
     }
   });
+
+  it('stops waiting and destroys the runner when the signal aborts', async () => {
+    mockCreateQueryRunner.mockReturnValue({ run, get: () => NEVER, cancel: jest.fn(), destroy });
+    const controller = new AbortController();
+
+    const assertion = expect(
+      runInstantQueries({ A: 'up' }, { uid: 'prom', type: 'prometheus' }, undefined, false, controller.signal)
+    ).rejects.toThrow();
+    controller.abort();
+
+    await assertion;
+    expect(destroy).toHaveBeenCalled();
+  });
 });
 
 it('rejects with a custom timeout when the runner never reaches a terminal state', async () => {

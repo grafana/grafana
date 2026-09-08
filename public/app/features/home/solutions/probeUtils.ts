@@ -40,15 +40,11 @@ export const PROBE_TTL_MS = 60_000;
 // ponytail: 3s /health cutoff (drilldown's) — suspected too tight for OPS-scale instances; revisit as follow-up.
 export const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
-/** Hard ceiling per signal; detectSignal reads it. */
-export const SIGNAL_BUDGET_MS = 30_000;
-
-// Batching bounds the fan-out. The solution scans run together and share the browser's per-host
-// connection pool, where a queued probe burns its timeout unsent; and the default datasource
-// (candidate 0) usually hits, so a first-batch hit leaves the second five unissued. Five is the
-// smallest batch that covers the cap in two rounds, and two rounds of (health + probe timeout)
-// fit SIGNAL_BUDGET_MS. A literal, not derived arithmetic: the fake-timer budget test fails if a
-// timeout change breaks the fit.
+// Batches bound the probes in flight across the scans. BackendSrv dispatches at most five data
+// requests at once (http2Enabled is false behind a load balancer) and every in-flight request
+// counts against those slots, so an unbounded fan-out starves the proxy-routed probes and card
+// stats, and a probe queued there burns its timeout unsent. Five covers MAX_PROBED_DATASOURCES in
+// two rounds that fit SIGNAL_BUDGET_MS.
 const PROBE_BATCH_SIZE = 5;
 
 // Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
@@ -75,10 +71,14 @@ export async function probeProxyGet<T>(
   uid: string,
   path: string,
   params: Record<string, unknown>,
-  timeoutMs = PROBE_TIMEOUT_MS
+  timeoutMs = PROBE_TIMEOUT_MS,
+  signal?: AbortSignal
 ): Promise<T> {
   const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), timeoutMs);
+  return withTimeout(
+    getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false, abortSignal: signal }),
+    timeoutMs
+  );
 }
 
 /** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */
@@ -179,23 +179,27 @@ export function resetProbeHealth(): void {
  * First candidate (priority order) whose probe confirms data, or null. Scans at most
  * MAX_PROBED_DATASOURCES candidates in batches of PROBE_BATCH_SIZE; each is probed once its own
  * /health is OK, and a hit returns as soon as every higher-priority candidate in its batch has
- * settled without one. Unhealthy candidates and probe errors read as no data.
+ * settled without one. Unhealthy candidates and probe errors read as no data. Lower-priority
+ * siblings are aborted on a hit; health checks are shared and never aborted.
  */
 export async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
-  hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
+  hasData: (ds: DataSourceInstanceListItem, signal: AbortSignal) => Promise<boolean>
 ): Promise<DataSourceInstanceListItem | null> {
   const capped = candidates.slice(0, MAX_PROBED_DATASOURCES);
   for (let i = 0; i < capped.length; i += PROBE_BATCH_SIZE) {
     const batch = capped.slice(i, i + PROBE_BATCH_SIZE);
+    const abort = new AbortController();
     const probes = batch.map((ds) =>
       isDatasourceHealthy(ds.uid)
-        .then((ok) => ok && hasData(ds))
+        .then((ok) => ok && !abort.signal.aborted && hasData(ds, abort.signal))
         .catch(() => false)
     );
-    // Awaited in priority order: a hit returns without waiting for lower-priority siblings.
+    // Awaited in priority order: a hit returns without waiting for lower-priority siblings and
+    // aborts them, so their queued requests never leave the browser.
     for (let j = 0; j < probes.length; j++) {
       if (await probes[j]) {
+        abort.abort();
         return batch[j];
       }
     }

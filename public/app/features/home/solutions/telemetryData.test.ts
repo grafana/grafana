@@ -10,6 +10,7 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
+import { lokiHasRecentLabels, resetLokiLabels } from './solutionDataProbes';
 import {
   fetchLogsActivity,
   fetchMetricsActivity,
@@ -69,6 +70,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockResolveBackendInstance.mockReset();
+  resetLokiLabels();
   mockProxyGet.mockReset();
   mockRunInstantQueries.mockReset();
   mockRunInstantQueries.mockResolvedValue([]);
@@ -137,7 +139,7 @@ describe('fetchLogsActivity', () => {
     const end = Date.now() * NS_IN_MS;
     const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * 1e9;
     const silent = { showErrorAlert: false };
-    expect(getResource).toHaveBeenCalledWith('labels', { start: statsStart, end }, silent);
+    expect(getResource).toHaveBeenCalledWith('labels', { start: end - DATA_LOOKBACK_HOURS * 3600 * 1e9, end }, silent);
     expect(getResource).toHaveBeenCalledWith(
       'index/volume',
       { query: '{service_name=~".+"}', start: statsStart, end, aggregateBy: 'labels', targetLabels: 'service_name' },
@@ -261,6 +263,23 @@ describe('fetchLogsActivity', () => {
     const activity = await fetchLogsActivity(loki);
 
     expect(activity.series).toBeNull();
+  });
+
+  it('reuses the label list the logs probe already fetched', async () => {
+    const getResource = jest.fn(async (path: string) =>
+      path === 'labels' ? { data: ['job'] } : { data: { result: [] } }
+    );
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    await expect(lokiHasRecentLabels(loki as DataSourceInstanceListItem)).resolves.toBe(true);
+    await fetchLogsActivity(loki);
+
+    expect(getResource.mock.calls.filter(([path]) => path === 'labels')).toHaveLength(1);
+    expect(getResource).toHaveBeenCalledWith(
+      'index/volume',
+      expect.objectContaining({ targetLabels: 'job' }),
+      expect.anything()
+    );
   });
 });
 
@@ -416,8 +435,7 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
-    expect(activity.names).toBeNull();
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.hosts).toBe(12);
     expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
 
@@ -485,7 +503,7 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.seriesSparkline).toBeNull();
     expect(mockRunRangeQuery).not.toHaveBeenCalled();
   });
@@ -537,8 +555,13 @@ describe('metrics telemetry', () => {
       DATA_LOOKBACK_HOURS,
       { uid: 'grafanacloud-usage', type: 'prometheus' }
     );
-    expect(activity.series).toBe(9_900_000);
-    expect(activity.names).toBeNull();
+    expect(activity.count).toEqual({ kind: 'series', value: 9_900_000 });
+    // A stack count makes the multi-second cardinality scan and the megabyte name list redundant.
+    expect(getResource).not.toHaveBeenCalledWith(
+      'api/v1/cardinality/label_values',
+      expect.anything(),
+      expect.anything()
+    );
     expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
     expect(activity.dataPointsPerMinute).toBe(5_160_000);
     expect(activity.seriesSparkline?.y.values).toEqual([30, 40]);
@@ -653,7 +676,7 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
       'series',
       'sum(prometheus_tsdb_head_series)',
@@ -691,7 +714,7 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.dataPointsPerMinute).toBeNull();
     expect(activity.seriesSparkline).toBeNull();
     expect(activity.hosts).toBe(12);
@@ -709,7 +732,7 @@ describe('metrics telemetry', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ series: 987, names: null });
+    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ count: { kind: 'series', value: 987 } });
     expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
   });
 
@@ -726,7 +749,7 @@ describe('metrics telemetry', () => {
     const promise = fetchMetricsActivity(prom);
     await jest.advanceTimersByTimeAsync(10_000);
 
-    await expect(promise).resolves.toMatchObject({ series: null, names: 2 });
+    await expect(promise).resolves.toMatchObject({ count: { kind: 'names', value: 2 } });
     expect(getResource).toHaveBeenCalledWith(
       'api/v1/label/__name__/values',
       { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
@@ -788,9 +811,8 @@ describe('metrics telemetry', () => {
     mockResolveBackendInstance.mockResolvedValue(null);
 
     await expect(fetchMetricsActivity(prom)).resolves.toEqual({
-      series: null,
+      count: null,
       dataPointsPerMinute: null,
-      names: null,
       hosts: null,
       seriesSparkline: null,
     });

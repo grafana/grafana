@@ -3,7 +3,14 @@ import { type BackendSrv, config, DataSourceWithBackend, getBackendSrv } from '@
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { resetProbeHealth } from './probeUtils';
-import { labelRecencyProbe, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
+import {
+  lokiHasRecentLabels,
+  lokiRecentLabels,
+  probeFound,
+  prometheusHasRecentMetrics,
+  resetLokiLabels,
+  tempoHasTraces,
+} from './solutionDataProbes';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -38,6 +45,7 @@ beforeEach(() => {
   mockInstance.mockReset();
   mockProxyGet.mockReset();
   resetProbeHealth();
+  resetLokiLabels();
   // Health checks share getBackendSrv().get: answer /health OK by default so every candidate is probed.
   mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
@@ -100,7 +108,7 @@ describe('probeFound', () => {
 
     expect(found?.name).toBe('healthy');
     expect(hasData).toHaveBeenCalledTimes(1);
-    expect(hasData).toHaveBeenCalledWith(expect.objectContaining({ uid: 'healthy' }));
+    expect(hasData).toHaveBeenCalledWith(expect.objectContaining({ uid: 'healthy' }), expect.any(AbortSignal));
   });
 
   it('never probes excluded uids', async () => {
@@ -111,32 +119,16 @@ describe('probeFound', () => {
 
     expect(found?.name).toBe('kept');
     expect(hasData).toHaveBeenCalledTimes(1);
-    expect(hasData).toHaveBeenCalledWith(expect.objectContaining({ uid: 'kept' }));
+    expect(hasData).toHaveBeenCalledWith(expect.objectContaining({ uid: 'kept' }), expect.any(AbortSignal));
   });
 });
 
-describe('labelRecencyProbe', () => {
-  it('queries Prometheus label metadata over the shared lookback in seconds', async () => {
-    const getResource = jest.fn().mockResolvedValue({ data: ['__name__'] });
-    mockInstance.mockResolvedValue(backendInstance(getResource));
-    const hasRecentLabels = labelRecencyProbe('api/v1/labels', (ms) => Math.floor(ms / 1000));
-
-    await expect(hasRecentLabels(datasource('prometheus'))).resolves.toBe(true);
-
-    const end = Math.floor(Date.now() / 1000);
-    expect(getResource).toHaveBeenCalledWith(
-      'api/v1/labels',
-      { start: end - 24 * 3600, end },
-      { showErrorAlert: false }
-    );
-  });
-
+describe('lokiHasRecentLabels', () => {
   it('queries Loki label metadata over the shared lookback in nanoseconds', async () => {
-    const getResource = jest.fn().mockResolvedValue({ data: [] });
+    const getResource = jest.fn().mockResolvedValue({ data: ['job', 'service_name'] });
     mockInstance.mockResolvedValue(backendInstance(getResource));
-    const hasRecentLabels = labelRecencyProbe('labels', (ms) => ms * 1e6);
 
-    await expect(hasRecentLabels(datasource('loki'))).resolves.toBe(false);
+    await expect(lokiHasRecentLabels(datasource('loki'))).resolves.toBe(true);
 
     const end = Date.now() * 1e6;
     expect(getResource).toHaveBeenCalledWith(
@@ -146,11 +138,28 @@ describe('labelRecencyProbe', () => {
     );
   });
 
+  it('reports no data on an empty list', async () => {
+    const getResource = jest.fn().mockResolvedValue({ data: null });
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+
+    await expect(lokiHasRecentLabels(datasource('loki'))).resolves.toBe(false);
+  });
+
   it('reports no data when the datasource cannot make resource calls', async () => {
     mockInstance.mockResolvedValue({} as never);
-    const hasRecentLabels = labelRecencyProbe('labels', (ms) => ms);
 
-    await expect(hasRecentLabels(datasource('loki'))).resolves.toBe(false);
+    await expect(lokiHasRecentLabels(datasource('loki'))).resolves.toBe(false);
+  });
+
+  it('shares one label request per datasource', async () => {
+    const getResource = jest.fn().mockResolvedValue({ data: ['job', 'service_name'] });
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+    const ds = datasource('loki');
+
+    await expect(lokiHasRecentLabels(ds)).resolves.toBe(true);
+    await expect(lokiRecentLabels(ds.uid)).resolves.toEqual(['job', 'service_name']);
+
+    expect(getResource).toHaveBeenCalledTimes(1);
   });
 });
 

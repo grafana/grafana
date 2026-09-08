@@ -10,10 +10,9 @@ import {
   MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
   resetProbeHealth,
-  SIGNAL_BUDGET_MS,
   withTimeout,
 } from './probeUtils';
-import { detectSignal } from './solutionState';
+import { detectSignal, SIGNAL_BUDGET_MS } from './solutionState';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -246,13 +245,36 @@ describe('findDatasourceWithData', () => {
     }
   });
 
-  it('returns a hit without waiting for a hung lower-priority sibling', async () => {
+  it('returns a hit without waiting for a hung lower-priority sibling and aborts it', async () => {
     const first = listItem({ uid: 'first', name: 'first' });
     const hung = listItem({ uid: 'hung', name: 'hung' });
-    const hasData = (ds: DataSourceInstanceListItem) =>
-      ds.uid === 'first' ? Promise.resolve(true) : new Promise<boolean>(() => {});
+    const signals = new Map<string, AbortSignal>();
+    const hasData = (ds: DataSourceInstanceListItem, signal: AbortSignal) => {
+      signals.set(ds.uid, signal);
+      return ds.uid === 'first' ? Promise.resolve(true) : new Promise<boolean>(() => {});
+    };
 
     await expect(findDatasourceWithData([first, hung], hasData)).resolves.toBe(first);
+    expect(signals.get('hung')?.aborted).toBe(true);
+  });
+
+  it('never probes a sibling whose health settles after the hit', async () => {
+    let resolveLateHealth: (value: { status: string }) => void = () => {};
+    const lateHealth = new Promise<{ status: string }>((resolve) => {
+      resolveLateHealth = resolve;
+    });
+    healthGetMock.mockImplementation((url: string) =>
+      url.includes('/late/') ? lateHealth : Promise.resolve({ status: 'OK' })
+    );
+    const first = listItem({ uid: 'first', name: 'first' });
+    const late = listItem({ uid: 'late', name: 'late' });
+    const hasData = jest.fn(async () => true);
+
+    await expect(findDatasourceWithData([first, late], hasData)).resolves.toBe(first);
+
+    resolveLateHealth({ status: 'OK' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(hasData).toHaveBeenCalledTimes(1);
   });
 
   it('reads a rejected probe as no data', async () => {
@@ -279,7 +301,7 @@ describe('findDatasourceWithData', () => {
 
     await expect(findDatasourceWithData([sick, healthy], hasData)).resolves.toBe(healthy);
     expect(hasData).toHaveBeenCalledTimes(1);
-    expect(hasData).toHaveBeenCalledWith(healthy);
+    expect(hasData).toHaveBeenCalledWith(healthy, expect.any(AbortSignal));
   });
 
   it('stops after the first batch that has data', async () => {
@@ -334,7 +356,7 @@ describe('findDatasourceWithData', () => {
       await jest.advanceTimersByTimeAsync(0);
 
       expect(hasData).toHaveBeenCalledTimes(1);
-      expect(hasData).toHaveBeenCalledWith(fast);
+      expect(hasData).toHaveBeenCalledWith(fast, expect.any(AbortSignal));
 
       await jest.advanceTimersByTimeAsync(2_000);
 

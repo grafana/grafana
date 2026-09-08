@@ -79,8 +79,11 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
 }
 
 // Single attempt inside the probe timeout; errors read as no data in the parallel scan.
-async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS);
+async function hasKubernetesNamespaces(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  signal?: AbortSignal
+): Promise<boolean> {
+  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS, false, signal);
   return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 

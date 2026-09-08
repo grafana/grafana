@@ -10,12 +10,13 @@ import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, us
 import { useStoredString } from 'app/core/hooks/useStored';
 
 import { ctaClicked } from '../analytics/main';
+import { type Solution } from '../solutions/types';
 
 import { GetStarted } from './GetStarted';
 import { SolutionGridSkeleton, Solutions } from './Solutions';
 import { groupOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
-import { type OverviewPlacement } from './useOverviewPlacement';
+import { useOverviewPlacement } from './useOverviewPlacement';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
 
@@ -30,14 +31,14 @@ interface Option {
 }
 
 interface OverviewProps {
-  placement: OverviewPlacement;
+  solutions: Solution[];
 }
 
-export function Overview({ placement }: OverviewProps) {
+export function Overview({ solutions }: OverviewProps) {
+  const { cards, pendingCount } = useOverviewPlacement(solutions);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const guides = useGuides();
-  const { cards, pending } = placement;
   const groups = useMemo(() => groupOverviewCards(cards), [cards]);
   // Get started is offered while guides load and once any exist; settled-empty guides drop it.
   const guidesOffered = !guides || guides.length > 0;
@@ -50,7 +51,7 @@ export function Overview({ placement }: OverviewProps) {
         content: (
           <Solutions
             cards={cards}
-            pendingCount={pending.length}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.all', 'No solutions were found.')}
           />
         ),
@@ -61,7 +62,7 @@ export function Overview({ placement }: OverviewProps) {
         content: (
           <Solutions
             cards={groups.attention}
-            pendingCount={pending.length}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.attention', 'No solutions need attention.')}
           />
         ),
@@ -72,7 +73,7 @@ export function Overview({ placement }: OverviewProps) {
         content: (
           <Solutions
             cards={groups.enabled}
-            pendingCount={pending.length}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.enabled', 'No enabled solutions with recent activity were found.')}
           />
         ),
@@ -83,7 +84,7 @@ export function Overview({ placement }: OverviewProps) {
         content: (
           <Solutions
             cards={groups.available}
-            pendingCount={pending.length}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.available', 'No available solutions to show yet.')}
           />
         ),
@@ -100,10 +101,10 @@ export function Overview({ placement }: OverviewProps) {
           ]
         : []),
     ],
-    [cards, pending, groups, guides, guidesOffered]
+    [cards, pendingCount, groups, guides, guidesOffered]
   );
   const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
-  const settled = pending.length === 0;
+  const settled = pendingCount === 0;
   const anyLive = cards.some((card) => card.kind === 'live');
   // The unset default is knowable once a live card exists or every solution settled; until then
   // nothing renders, since offers painted now could flip to Get started in front of the user.
@@ -207,7 +208,7 @@ export function Overview({ placement }: OverviewProps) {
         )}
       </Stack>
 
-      {decided ? option.content : <SolutionGridSkeleton count={cards.length + pending.length} />}
+      {decided ? option.content : <SolutionGridSkeleton count={cards.length + pendingCount} />}
     </Stack>
   );
 }

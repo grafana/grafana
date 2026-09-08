@@ -9,7 +9,6 @@ import { type Solution } from '../solutions/types';
 
 import { Overview } from './Overview';
 import { useGuides } from './useGuides';
-import { useOverviewPlacement } from './useOverviewPlacement';
 
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn() }));
 jest.mock('./useGuides', () => ({ useGuides: jest.fn() }));
@@ -29,7 +28,7 @@ const guide = {
 };
 
 function Harness({ solutions }: { solutions: Solution[] }) {
-  return <Overview placement={useOverviewPlacement(solutions)} />;
+  return <Overview solutions={solutions} />;
 }
 
 describe('Overview', () => {
