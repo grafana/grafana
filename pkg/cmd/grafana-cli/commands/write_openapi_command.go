@@ -71,11 +71,19 @@ func writeOpenAPICommand(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		if err := writeSpecFile(filepath.Join(output, v+".json"), oas); err != nil {
+		if err := writeSpecFile(filepath.Join(output, openAPISpecFilename(plugin, v)), oas); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func openAPISpecFilename(plugin definition.PluginDefinition, version string) string {
+	group := plugin.JSONData.ID
+	if plugin.Manifest != nil {
+		group = plugin.Manifest.Group
+	}
+	return group + "-" + version + ".json"
 }
 
 // ensureOutputDir prepares the directory the per-version specs are written to.

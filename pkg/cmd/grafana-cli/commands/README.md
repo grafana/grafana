@@ -24,16 +24,16 @@ grafana cli write-openapi ./app-sdk-manifest.json -o ./openapi
 ```
 
 ```
-Wrote openapi/v1alpha1.json for example.ext.grafana.app/v1alpha1
-Wrote openapi/v0alpha1.json for example.ext.grafana.app/v0alpha1
+Wrote openapi/example.ext.grafana.app-v1alpha1.json for example.ext.grafana.app/v1alpha1
+Wrote openapi/example.ext.grafana.app-v0alpha1.json for example.ext.grafana.app/v0alpha1
 ```
 
 **`-o` is required here, and it must name a directory.** A manifest target always renders
-every served version, one `<version>.json` per file — there is no way to name a single
-version or write to stdout. That is because a plugin serves more than its manifest
-declares: `v0alpha1` carries the settings API, and it is served alongside the manifest's
-own versions whether or not the manifest mentions it. Passing `-o spec.json` is refused
-rather than silently writing one of them.
+every served version, one `<group>-<version>.json` file per version — there is no way to
+name a single version or write to stdout. That is because a plugin serves more than its
+manifest declares: `v0alpha1` carries the settings API, and it is served alongside the
+manifest's own versions whether or not the manifest mentions it. Passing `-o spec.json` is
+refused rather than silently writing one of them.
 
 ### plugin.json is picked up when it is there
 

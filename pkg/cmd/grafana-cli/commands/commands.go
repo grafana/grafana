@@ -256,7 +256,7 @@ var Commands = []*cli.Command{
 			"config and reads a plugin.json beside it when there is one, or the id of an installed " +
 			"plugin, optionally with the version to render.\n\n" +
 			"   Naming one version writes one spec, to --output or to stdout. Otherwise every served " +
-			"version is written to the --output directory as <version>.json.",
+			"version is written to the --output directory as <group>-<version>.json.",
 		Action: writeOpenAPICommand,
 		Flags: []cli.Flag{
 			&cli.StringFlag{

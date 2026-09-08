@@ -7,9 +7,9 @@ that spec is built. The short version:
 grafana cli write-openapi ./dist/app-sdk-manifest.json -o ./specs
 ```
 
-writes one `<version>.json` per served version into `./specs`, using the same OpenAPI
-builder as `/openapi/v3/apis/<group>/<version>` — without starting the server, opening a
-database, or launching the plugin backend.
+writes one `<group>-<version>.json` file per served version into `./specs`, using the same
+OpenAPI builder as `/openapi/v3/apis/<group>/<version>` — without starting the server,
+opening a database, or launching the plugin backend.
 
 ## What you can point it at
 
