@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	repositoryDeletionPendingMetric  = "grafana_provisioning_repository_deletion_pending_seconds"
-	repositoryDeletionFailuresMetric = "grafana_provisioning_repository_deletion_failures_total"
+	repositoryDeletionPendingMetric = "grafana_provisioning_repository_deletion_pending_seconds"
+	repositoryDeletionsMetric       = "grafana_provisioning_repository_deletions_total"
+	repositoryDeletionErrorsMetric  = "grafana_provisioning_repository_deletion_errors_total"
 )
 
 func TestRepositoryDeletionMetrics_ObservePending(t *testing.T) {
@@ -29,30 +30,41 @@ func TestRepositoryDeletionMetrics_ObservePending(t *testing.T) {
 	assert.InDelta(t, (90 * time.Minute).Seconds(), histogram.GetSampleSum(), 0.001)
 }
 
-func TestRepositoryDeletionMetrics_RecordFailure(t *testing.T) {
+func TestRepositoryDeletionMetrics_RecordDeletion(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	metrics := registerRepositoryDeletionMetrics(reg)
 
-	metrics.recordFailure(deletionStageFinalizers)
-	metrics.recordFailure(deletionStageRemoveFinalizers)
-	metrics.recordFailure(deletionStageRemoveFinalizers)
+	metrics.recordDeletion()
+	metrics.recordDeletion()
 
-	assert.Equal(t, 1.0, deletionFailuresByStage(t, reg, deletionStageFinalizers))
-	assert.Equal(t, 2.0, deletionFailuresByStage(t, reg, deletionStageRemoveFinalizers))
+	assert.Equal(t, 2.0, counterValue(t, reg, repositoryDeletionsMetric))
+}
+
+func TestRepositoryDeletionMetrics_RecordError(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := registerRepositoryDeletionMetrics(reg)
+
+	metrics.recordError(deletionStageFinalizers)
+	metrics.recordError(deletionStageRemoveFinalizers)
+	metrics.recordError(deletionStageRemoveFinalizers)
+
+	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageFinalizers))
+	assert.Equal(t, 2.0, deletionErrorsByStage(t, reg, deletionStageRemoveFinalizers))
 }
 
 func TestRepositoryDeletionMetrics_NilSafe(t *testing.T) {
 	var metrics *repositoryDeletionMetrics
 	assert.NotPanics(t, func() {
 		metrics.observePending(time.Minute)
-		metrics.recordFailure(deletionStageFinalizers)
+		metrics.recordDeletion()
+		metrics.recordError(deletionStageFinalizers)
 	})
 }
 
-func deletionFailuresByStage(t *testing.T, reg *prometheus.Registry, stage string) float64 {
+func deletionErrorsByStage(t *testing.T, reg *prometheus.Registry, stage string) float64 {
 	t.Helper()
-	f, ok := gatherMetrics(t, reg)[repositoryDeletionFailuresMetric]
-	require.True(t, ok, "metric %s not found", repositoryDeletionFailuresMetric)
+	f, ok := gatherMetrics(t, reg)[repositoryDeletionErrorsMetric]
+	require.True(t, ok, "metric %s not found", repositoryDeletionErrorsMetric)
 	for _, m := range f.GetMetric() {
 		for _, l := range m.GetLabel() {
 			if l.GetName() == "stage" && l.GetValue() == stage {

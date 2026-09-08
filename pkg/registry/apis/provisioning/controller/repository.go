@@ -419,7 +419,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
 		if err != nil {
-			rc.deletionMetrics.recordFailure(deletionStageFinalizers)
+			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
 				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
@@ -444,17 +444,19 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			// repository in Terminating with its finalizers still attached. It is
 			// outside the finalizer SLO, so meter it here and record it on the
 			// status or it goes entirely unseen.
-			rc.deletionMetrics.recordFailure(deletionStageRemoveFinalizers)
+			rc.deletionMetrics.recordError(deletionStageRemoveFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
 				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
+		rc.deletionMetrics.recordDeletion()
 		return nil
 	} else {
 		logger.Info("no finalizers to process")
 	}
 
+	rc.deletionMetrics.recordDeletion()
 	return nil
 }
 

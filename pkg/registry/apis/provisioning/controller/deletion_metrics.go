@@ -6,8 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Deletion stages, used as the "stage" label on the failure counter so a
-// finalizer-processing failure is distinguishable from a failure to strip the
+// Deletion stages, used as the "stage" label on the error counter so a
+// finalizer-processing error is distinguishable from an error stripping the
 // finalizers off the object afterwards.
 const (
 	// deletionStageFinalizers is the finalizer.process() call that runs the
@@ -42,16 +42,18 @@ var repositoryDeletionPendingBuckets = []float64{
 
 // repositoryDeletionMetrics tracks the health of the repository delete path.
 //
-// Both series are aggregate (no per-repository/namespace label) so they stay
+// All series are aggregate (no per-repository/namespace label) so they stay
 // bounded in the multi-tenant operator; the per-repository "which repo is stuck"
-// view is carried by the deletion-status log line (see usage.LogRepositoryDeletionStatus).
-// They are re-emitted on every delete reconcile, so a repository that stays stuck
-// keeps observing its age and re-incrementing the failure counter at resync
-// cadence — the signal persists for as long as the repository is wedged rather
-// than firing once and going quiet.
+// view is carried by the "handle repository delete" log line. deletionsTotal and
+// errorsTotal pair up as a completed-vs-errored rate: deletionsTotal increments
+// once when a deletion finishes, while errorsTotal re-increments every failing
+// reconcile, so a repository that stays stuck keeps the error signal alive (and
+// its age climbing in pendingSeconds) at resync cadence rather than firing once
+// and going quiet.
 type repositoryDeletionMetrics struct {
 	pendingSeconds prometheus.Histogram
-	failuresTotal  *prometheus.CounterVec
+	deletionsTotal prometheus.Counter
+	errorsTotal    *prometheus.CounterVec
 }
 
 func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *repositoryDeletionMetrics {
@@ -60,13 +62,21 @@ func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *reposito
 		Help:    "Age of a repository still in Terminating, observed on each delete reconcile.",
 		Buckets: repositoryDeletionPendingBuckets,
 	})
-	failuresTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "grafana_provisioning_repository_deletion_failures_total",
-		Help: "Total number of repository delete-path failures, by stage.",
+	deletionsTotal := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "grafana_provisioning_repository_deletions_total",
+		Help: "Total number of repository deletions completed by the delete path.",
+	})
+	errorsTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "grafana_provisioning_repository_deletion_errors_total",
+		Help: "Total number of repository delete-path errors, by stage.",
 	}, []string{"stage"})
-	registry.MustRegister(pendingSeconds, failuresTotal)
+	registry.MustRegister(pendingSeconds, deletionsTotal, errorsTotal)
 
-	return &repositoryDeletionMetrics{pendingSeconds: pendingSeconds, failuresTotal: failuresTotal}
+	return &repositoryDeletionMetrics{
+		pendingSeconds: pendingSeconds,
+		deletionsTotal: deletionsTotal,
+		errorsTotal:    errorsTotal,
+	}
 }
 
 // observePending records how long a repository has been in Terminating. Called
@@ -82,10 +92,19 @@ func (m *repositoryDeletionMetrics) observePending(age time.Duration) {
 	m.pendingSeconds.Observe(age.Seconds())
 }
 
-// recordFailure counts a delete-path failure at the given stage.
-func (m *repositoryDeletionMetrics) recordFailure(stage string) {
+// recordDeletion counts a repository deletion that the delete path completed
+// (finalizers processed and removed, or nothing to do).
+func (m *repositoryDeletionMetrics) recordDeletion() {
 	if m == nil {
 		return
 	}
-	m.failuresTotal.WithLabelValues(stage).Inc()
+	m.deletionsTotal.Inc()
+}
+
+// recordError counts a delete-path error at the given stage.
+func (m *repositoryDeletionMetrics) recordError(stage string) {
+	if m == nil {
+		return
+	}
+	m.errorsTotal.WithLabelValues(stage).Inc()
 }

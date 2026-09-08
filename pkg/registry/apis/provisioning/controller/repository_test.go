@@ -496,7 +496,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	require.Error(t, err)
 	require.ErrorContains(t, err, "remove finalizers")
 	require.Greater(t, atomic.LoadInt32(&calls), int32(1), "should retry at least once before giving up")
-	assert.Equal(t, 1.0, deletionFailuresByStage(t, reg, deletionStageRemoveFinalizers))
+	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageRemoveFinalizers))
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {
