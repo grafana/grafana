@@ -1991,6 +1991,25 @@ describe('heatmapPathsSparse', () => {
       expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 66.5, 99, 15);
     });
 
+    it('sizes an all-zero histogram from the plot height and centers it', () => {
+      // Every cell is the ±1e-128 zero bucket, so there is no neighbor to take a
+      // height from and no populated side to bias towards — the two fallbacks the
+      // other tests never reach.
+      const data: SparseHeatmap = [
+        [100, 200],
+        [-1e-128, -1e-128],
+        [1e-128, 1e-128],
+        [5, 5],
+      ];
+      const { rect } = invoke(data);
+
+      // Height falls back to yDim/20 (100/20 = 5) less the 1px gap -> 4, and with
+      // buckets on neither side the band straddles: y = zeroPx(50) - 4/2 = 48.
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 48, 99, 4);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 48, 99, 4);
+      expect(rect).toHaveBeenCalledTimes(2);
+    });
+
     it('draws a wide zero-straddling bucket (NHCB) at its natural extent', () => {
       // cells 0,1: a real bucket spanning (-4, 4]; cells 2,3: a normal (4, 8].
       const data: SparseHeatmap = [
