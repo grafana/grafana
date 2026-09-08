@@ -44,8 +44,10 @@ type TokenConnection interface {
 	// ValidateToken checks that the stored token can authenticate requests
 	// right now, and reports when it stops working (zero when it never expires).
 	ValidateToken() (expiresAt time.Time, err error)
-	// GenerateConnectionToken mints a new connection-level token and returns it.
-	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)
+	// GenerateConnectionToken mints a new connection-level token and returns it
+	// together with when it expires (zero ExpiresAt when the token never expires),
+	// so the controller can persist the expiration on the connection status.
+	GenerateConnectionToken(ctx context.Context) (*ExpirableSecureValue, error)
 }
 
 // OAuthConnection is the interface implemented by all OAuth app connections.

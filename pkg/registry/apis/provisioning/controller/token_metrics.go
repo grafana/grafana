@@ -22,6 +22,12 @@ type connectionTokenMetrics struct {
 	generatedDuration  prometheus.Histogram
 	refreshReasonTotal *prometheus.CounterVec
 	timeToExpiry       prometheus.Histogram
+	// nearExpiring and expired mirror the repository counters: incremented every
+	// reconcile that observes a connection token within its refresh window / past
+	// expiration, from the persisted status.token.expiration, and re-emitted each
+	// resync while the condition holds.
+	nearExpiring prometheus.Counter
+	expired      prometheus.Counter
 }
 
 func registerConnectionTokenMetrics(reg prometheus.Registerer) *connectionTokenMetrics {
@@ -57,12 +63,26 @@ func registerConnectionTokenMetrics(reg prometheus.Registerer) *connectionTokenM
 	})
 	reg.MustRegister(timeToExpiry)
 
+	nearExpiring := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "grafana_provisioning_connection_tokens_near_expiring_total",
+		Help: "Number of reconciliations that observed a connection token within its refresh window (re-emitted each resync while the condition holds)",
+	})
+	reg.MustRegister(nearExpiring)
+
+	expired := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "grafana_provisioning_connection_tokens_expired_total",
+		Help: "Number of reconciliations that observed an already-expired connection token (re-emitted each resync while the condition holds)",
+	})
+	reg.MustRegister(expired)
+
 	return &connectionTokenMetrics{
 		generatedTotal:     generatedTotal,
 		generationErrors:   generationErrors,
 		generatedDuration:  generatedDuration,
 		refreshReasonTotal: refreshReasonTotal,
 		timeToExpiry:       timeToExpiry,
+		nearExpiring:       nearExpiring,
+		expired:            expired,
 	}
 }
 
@@ -96,6 +116,20 @@ func (m *connectionTokenMetrics) recordTimeToExpiry(seconds float64) {
 		seconds = 0
 	}
 	m.timeToExpiry.Observe(seconds)
+}
+
+func (m *connectionTokenMetrics) recordNearExpiring() {
+	if m == nil {
+		return
+	}
+	m.nearExpiring.Inc()
+}
+
+func (m *connectionTokenMetrics) recordExpired() {
+	if m == nil {
+		return
+	}
+	m.expired.Inc()
 }
 
 // repositoryTokenMetrics tracks token lifecycle events for repositories.

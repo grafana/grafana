@@ -16,7 +16,21 @@ func TestConnectionTokenMetrics_NilSafe(t *testing.T) {
 		m.recordGenerationError()
 		m.recordRefreshReason(refreshReasonMissing)
 		m.recordTimeToExpiry(300)
+		m.recordNearExpiring()
+		m.recordExpired()
 	})
+}
+
+func TestConnectionTokenMetrics_RecordExpiryStates(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := registerConnectionTokenMetrics(reg)
+
+	m.recordNearExpiring()
+	m.recordNearExpiring()
+	m.recordExpired()
+
+	assert.Equal(t, 2.0, counterValue(t, reg, "grafana_provisioning_connection_tokens_near_expiring_total"))
+	assert.Equal(t, 1.0, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
 }
 
 func TestRepositoryTokenMetrics_NilSafe(t *testing.T) {

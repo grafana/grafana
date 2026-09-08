@@ -1638,9 +1638,12 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			} else {
 				require.NoError(t, err)
-				assert.NotEmpty(t, token)
+				require.NotNil(t, token)
+				assert.NotEmpty(t, token.Token)
+				// GitHub App JWTs always carry an expiry.
+				assert.False(t, token.ExpiresAt.IsZero())
 				if tt.validateToken != nil {
-					tt.validateToken(t, token)
+					tt.validateToken(t, token.Token)
 				}
 			}
 		})
@@ -2187,7 +2190,7 @@ func TestNewConnectionWithCustomConfig(t *testing.T) {
 	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
 	require.NoError(t, err)
 
-	parsedToken, err := jwt.Parse(string(token), func(_ *jwt.Token) (any, error) {
+	parsedToken, err := jwt.Parse(string(token.Token), func(_ *jwt.Token) (any, error) {
 		return &key.PublicKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	require.NoError(t, err)

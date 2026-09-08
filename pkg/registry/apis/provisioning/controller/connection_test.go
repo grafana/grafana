@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -242,7 +243,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
 				// Token expires in 2 minutes - should trigger regeneration
 				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(2*time.Minute), nil)
-				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(&connection.ExpirableSecureValue{Token: "new-token"}, nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
@@ -540,7 +541,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
 				// Token expires in 9 minutes - with buffer of 10m10s (2*5m + 10s), this WILL trigger regeneration
 				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(9*time.Minute), nil)
-				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return("someToken", nil)
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(&connection.ExpirableSecureValue{Token: "someToken"}, nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
@@ -642,7 +643,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
 				// Token expires in 9 minutes - with buffer of 10m10s (2*5m + 10s), this WILL trigger regeneration
 				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(9*time.Minute), nil)
-				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(&connection.ExpirableSecureValue{Token: "new-token"}, nil)
 				// Health check is still performed as part of reconciliation even though ShouldCheckHealth returned false
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
@@ -909,7 +910,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
 				// Token is missing, so controller should generate it without checking its state
-				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(&connection.ExpirableSecureValue{Token: "new-token"}, nil)
 				// Health check should be performed after token generation
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).Return(
 					ConnectionHealthResultWithPatchOps{
@@ -997,7 +998,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
 				// Token is not usable - should trigger immediate regeneration
 				mockTokenConnection.EXPECT().ValidateToken().Return(time.Time{}, errors.New("invalid token"))
-				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(&connection.ExpirableSecureValue{Token: "new-token"}, nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
@@ -1099,7 +1100,7 @@ func TestConnectionController_process(t *testing.T) {
 				// Token expires in 2 minutes - should trigger regeneration attempt (within 5-minute window)
 				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(2*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
-					Return("", errors.New("token generation failed"))
+					Return(nil, errors.New("token generation failed"))
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
@@ -1190,7 +1191,7 @@ func TestConnectionController_process(t *testing.T) {
 
 				// Token is now zero (cleared), so it is regenerated without validity checks.
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
-					Return(common.RawSecureValue("new-token"), nil)
+					Return(&connection.ExpirableSecureValue{Token: "new-token"}, nil)
 
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
@@ -1435,3 +1436,63 @@ var _ listers.ConnectionLister = (*mockConnectionLister)(nil)
 
 // Ensure mockConnectionNamespaceLister implements listers.ConnectionNamespaceLister
 var _ listers.ConnectionNamespaceLister = (*mockConnectionNamespaceLister)(nil)
+
+// TestConnectionController_generateConnectionToken_ReturnsExpiry verifies the
+// generated token's expiration is threaded back so the reconcile can persist it.
+func TestConnectionController_generateConnectionToken_ReturnsExpiry(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	cc := &ConnectionController{tokenMetrics: registerConnectionTokenMetrics(reg)}
+
+	exp := time.Now().Add(10 * time.Minute)
+	mockConn := connection.NewMockTokenConnection(t)
+	mockConn.EXPECT().GenerateConnectionToken(mock.Anything).
+		Return(&connection.ExpirableSecureValue{Token: "tok", ExpiresAt: exp}, nil)
+
+	token, expiresAt, ops, err := cc.generateConnectionToken(context.Background(), mockConn)
+	require.NoError(t, err)
+	assert.Equal(t, common.RawSecureValue("tok"), token)
+	assert.True(t, exp.Equal(expiresAt))
+	require.Len(t, ops, 1)
+}
+
+// TestConnectionController_shouldGenerateToken_ExpiryCounters verifies that the
+// observed expiry state (from the persisted status.token.expiration) increments
+// the near-expiring / expired counters, mirroring the repository path. A nil
+// TokenConnection is fine: with an empty Secure.Token the method records the
+// expiry state and returns before it touches the connection.
+func TestConnectionController_shouldGenerateToken_ExpiryCounters(t *testing.T) {
+	resyncInterval := 5 * time.Minute // refresh buffer = 2*5m + 10s = 10m10s
+	lastUpdated := time.Now().Add(-time.Hour).UnixMilli()
+
+	tests := []struct {
+		name             string
+		expiration       int64 // epoch millis; 0 means non-expiring
+		wantNearExpiring float64
+		wantExpired      float64
+	}{
+		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 0, 1},
+		{"near expiring within refresh buffer", time.Now().Add(30 * time.Second).UnixMilli(), 1, 0},
+		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0, 0},
+		{"non-expiring", 0, 0, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			cc := &ConnectionController{
+				tokenMetrics:   registerConnectionTokenMetrics(reg),
+				resyncInterval: resyncInterval,
+			}
+			obj := &provisioning.Connection{
+				Status: provisioning.ConnectionStatus{
+					Token: provisioning.TokenStatus{LastUpdated: lastUpdated, Expiration: tt.expiration},
+				},
+			}
+
+			cc.shouldGenerateToken(context.Background(), obj, nil)
+
+			assert.Equal(t, tt.wantNearExpiring, counterValue(t, reg, "grafana_provisioning_connection_tokens_near_expiring_total"))
+			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
+		})
+	}
+}

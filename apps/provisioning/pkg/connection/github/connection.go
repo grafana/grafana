@@ -398,17 +398,21 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 
 // GenerateConnectionToken generates a JWT token for GitHub App authentication.
 // Implements the connection.TokenConnection interface.
-func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
+func (c *Connection) GenerateConnectionToken(_ context.Context) (*connection.ExpirableSecureValue, error) {
 	if !c.obj.Spec.IsGitHub() {
-		return "", errors.New("connection is not a GitHub connection")
+		return nil, errors.New("connection is not a GitHub connection")
 	}
 
+	// Compute the expiry before minting so it is never later than the JWT's own
+	// exp claim (GenerateJWTToken uses the same JWTExpirationMinutes window from its
+	// own slightly-later now); erring early means we refresh before, not after.
+	expiresAt := time.Now().Add(JWTExpirationMinutes * time.Minute)
 	token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return token, nil
+	return &connection.ExpirableSecureValue{Token: token, ExpiresAt: expiresAt}, nil
 }
 
 // ValidateToken checks the stored JWT. A token that does not parse with the

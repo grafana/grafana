@@ -120,13 +120,13 @@ func (c *oauthConnection) ListRepositories(ctx context.Context) ([]provisioning.
 // (e.g. GitLab) return a new one, which is stored as part of the token; when
 // absent the stored refresh token remains valid and is kept.
 // Implements the connection.TokenConnection interface.
-func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error) {
+func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connection.ExpirableSecureValue, error) {
 	stored, err := parseToken(c.token)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if stored.RefreshToken == "" {
-		return "", errors.New("no refresh token available; authorize the OAuth application again")
+		return nil, errors.New("no refresh token available; authorize the OAuth application again")
 	}
 
 	cfg := oauth2.Config{
@@ -137,14 +137,21 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (common.R
 
 	next, err := cfg.TokenSource(ctx, &oauth2.Token{RefreshToken: stored.RefreshToken}).Token()
 	if err != nil {
-		return "", fmt.Errorf("refresh access token: %w", err)
+		return nil, fmt.Errorf("refresh access token: %w", err)
 	}
 
 	if next.RefreshToken == "" {
 		next.RefreshToken = stored.RefreshToken
 	}
 
-	return marshalToken(next)
+	raw, err := marshalToken(next)
+	if err != nil {
+		return nil, err
+	}
+
+	// next.Expiry is zero when the provider does not return an expiry, which maps
+	// to a non-expiring token on the status.
+	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: next.Expiry}, nil
 }
 
 // ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
