@@ -39,6 +39,12 @@ type ConnectionUsageStatus struct {
 	// WebhookDisabled reports that webhook integration is turned off for this
 	// connection (Spec.Webhook.Disabled).
 	WebhookDisabled bool
+	// TokenLastUpdated is when the connection's token was last generated
+	// (status.token.lastUpdated), in epoch milliseconds; 0 when no token has been
+	// generated. now-TokenLastUpdated is the token age. Connections do not persist
+	// an expiration (it is re-derived live each reconcile), so there is no
+	// expiration counterpart here.
+	TokenLastUpdated int64
 }
 
 // LogConnectionUsageStatus emits the connection usage-status snapshot on logger.
@@ -68,12 +74,13 @@ func ConnectionUsageStatusFromConnection(conn *provisioning.Connection) Connecti
 	}
 
 	return ConnectionUsageStatus{
-		Type:            string(conn.Spec.Type),
-		CreatedAt:       createdAt,
-		UpdatedAt:       updatedAt,
-		Healthy:         conn.Status.Health.Healthy,
-		ReadyReason:     readyReason,
-		WebhookDisabled: conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled,
+		Type:             string(conn.Spec.Type),
+		CreatedAt:        createdAt,
+		UpdatedAt:        updatedAt,
+		Healthy:          conn.Status.Health.Healthy,
+		ReadyReason:      readyReason,
+		WebhookDisabled:  conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled,
+		TokenLastUpdated: conn.Status.Token.LastUpdated,
 	}
 }
 
@@ -88,5 +95,6 @@ func (s ConnectionUsageStatus) LogValues() []any {
 		"healthy", boolToInt(s.Healthy),
 		"readyReason", s.ReadyReason,
 		"webhookDisabled", boolToInt(s.WebhookDisabled),
+		"tokenLastUpdated", s.TokenLastUpdated,
 	}
 }

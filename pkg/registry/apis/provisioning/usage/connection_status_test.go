@@ -63,12 +63,13 @@ func TestConnectionUsageStatusFromConnection_AuthFailure(t *testing.T) {
 
 func TestConnectionUsageStatus_LogValues(t *testing.T) {
 	s := ConnectionUsageStatus{
-		Type:            string(provisioning.GitlabOAuthConnectionType),
-		CreatedAt:       1_500_000_000_000,
-		UpdatedAt:       1_550_000_000_000,
-		Healthy:         false,
-		ReadyReason:     provisioning.ReasonAuthenticationFailed,
-		WebhookDisabled: false,
+		Type:             string(provisioning.GitlabOAuthConnectionType),
+		CreatedAt:        1_500_000_000_000,
+		UpdatedAt:        1_550_000_000_000,
+		Healthy:          false,
+		ReadyReason:      provisioning.ReasonAuthenticationFailed,
+		WebhookDisabled:  false,
+		TokenLastUpdated: 1_600_000_000_000,
 	}
 
 	assert.Equal(t, []any{
@@ -78,5 +79,6 @@ func TestConnectionUsageStatus_LogValues(t *testing.T) {
 		"healthy", 0,
 		"readyReason", provisioning.ReasonAuthenticationFailed,
 		"webhookDisabled", 0,
+		"tokenLastUpdated", int64(1_600_000_000_000),
 	}, s.LogValues())
 }
