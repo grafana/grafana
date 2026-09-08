@@ -67,7 +67,7 @@ func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *reposito
 	})
 	deletionsTotal := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "grafana_provisioning_repository_deletions_total",
-		Help: "Total number of repository deletions completed by the delete path.",
+		Help: "Total number of repository deletions the controller completed by removing finalizers. A repository deleted with no finalizers is a no-op (nothing to clean up; GC removes it) and is not counted, keeping this paired with the finalizer errors in deletion_errors_total over the same population.",
 	})
 	errorsTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_provisioning_repository_deletion_errors_total",
