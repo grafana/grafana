@@ -20,7 +20,7 @@ import (
 
 func newTestLeases(t *testing.T) *lease.Manager {
 	t.Helper()
-	mgr := lease.NewManager(newBadgerKV(t), "test-holder", nil,
+	mgr := lease.NewManager(newBadgerKV(t), "test-holder", "test", nil,
 		lease.WithInternalMinTTL(time.Second), lease.WithGarbageCollectionDisabled)
 	t.Cleanup(mgr.Stop)
 	return mgr
@@ -324,7 +324,7 @@ func TestIngesterFlushUnderLease(t *testing.T) {
 	ctx := context.Background()
 	const day = "2026-06-23"
 
-	mgr := lease.NewManager(newBadgerKV(t), "holder-a", nil,
+	mgr := lease.NewManager(newBadgerKV(t), "holder-a", "test", nil,
 		lease.WithInternalMinTTL(time.Second), lease.WithGarbageCollectionDisabled)
 	t.Cleanup(mgr.Stop)
 

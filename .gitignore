@@ -8,7 +8,6 @@ awsconfig
 /dist
 /public/build
 /public/build-swagger
-/public/build-swagger-rspack
 /emails/dist
 /reports
 /e2e/tmp

@@ -221,7 +221,7 @@ jobs:
           git diff CHANGELOG.md
       - name: "Prettify CHANGELOG.md"
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
-        run: npx prettier --write CHANGELOG.md
+        run: node ./.grafana-main/.github/actions/changelog/sort.js && npx prettier --write CHANGELOG.md
       # Remove the main checkout before lerna runs so nx doesn't see duplicate plugin
       # package.json files across .grafana-main and the release-branch tree.
       - name: Remove main checkout before bump

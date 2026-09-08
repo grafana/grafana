@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -116,7 +117,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	meta.SetGeneration(2)
 	creationTimestamp := metav1.NewTime(time.Now())
 	meta.SetCreationTimestamp(creationTimestamp)
-	meta.SetCreatedBy(testUser.UID)
+	meta.SetCreatedBy("user:" + testUser.UID)
 	meta.SetDeprecatedInternalID(123) // nolint:staticcheck
 
 	reqContext := &contextmodel.ReqContext{
@@ -153,6 +154,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Equal(t, testUser.ID, result.Meta.UpdatedBy.Id)
 	require.Equal(t, testUser.Login, result.Meta.UpdatedBy.Name)
 	require.Equal(t, dtos.GetGravatarUrl(cfg, testUser.Email), result.Meta.UpdatedBy.AvatarUrl)
+	require.Equal(t, []string{testUser.UID}, userSvc.ListUsersByIdOrUidCalls[0].Uids)
 
 	// fmt.Printf("%s\n", result.Model)
 	require.JSONEq(t, `{
@@ -170,6 +172,36 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 		"transparent": true,
 		"type": "text"
 	}`, string(result.Model))
+
+	handler.folderService = &foldertest.FakeService{ExpectedError: folder.ErrAccessDenied}
+	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+	require.NoError(t, err)
+	require.Equal(t, testFolder.UID, result.FolderUID)
+	require.Empty(t, result.Meta.FolderName)
+	require.Zero(t, result.FolderID) // nolint:staticcheck
+
+	meta.SetFolder(ac.GeneralFolderUID)
+	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+	require.NoError(t, err)
+	require.Equal(t, ac.GeneralFolderUID, result.FolderUID)
+	require.Equal(t, dashboards.RootFolderName, result.Meta.FolderName)
+	require.Zero(t, result.FolderID) // nolint:staticcheck
+
+	// Missing creator metadata must not prevent a valid updater from being
+	// resolved. GetUsersFromMeta stops at an untyped/empty identity string.
+	updatedTimestamp := creationTimestamp.Add(time.Minute)
+	meta.SetCreatedBy("")
+	meta.SetUpdatedBy("user:" + testUser.UID)
+	meta.SetUpdatedTimestamp(&updatedTimestamp)
+	userSvc.ListUsersByIdOrUidCalls = nil
+
+	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+	require.NoError(t, err)
+	require.Zero(t, result.Meta.CreatedBy.Id)
+	require.Empty(t, result.Meta.CreatedBy.Name)
+	require.Equal(t, testUser.ID, result.Meta.UpdatedBy.Id)
+	require.Equal(t, testUser.Login, result.Meta.UpdatedBy.Name)
+	require.Equal(t, []string{testUser.UID}, userSvc.ListUsersByIdOrUidCalls[0].Uids)
 
 	dashboardsSvc.AssertExpectations(t)
 }
