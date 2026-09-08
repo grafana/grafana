@@ -259,135 +259,130 @@ function RecommendedCardSkeleton() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  // The recommendations HomeGrid goes two-column at the page's md breakpoint; the arrow, header
-  // line and pills flip with it.
-  const twoColumns = theme.breakpoints.container.up('md', 'page');
-
-  return {
-    pills: css({
-      [theme.breakpoints.container.down('md', 'page')]: {
-        order: 1,
-      },
-    }),
-    spacer: css({
-      flex: '1 1 0%',
-    }),
-    line: css({
-      [twoColumns]: {
-        background: theme.colors.border.medium,
-        height: '1px',
-      },
-    }),
-    cards: css({
-      background: theme.colors.background.canvas,
-      borderRadius: theme.shape.radius.default,
-      margin: theme.spacing(2, 0, 0),
-      overflow: 'hidden',
-    }),
-    card: css({
-      display: 'flex',
-      flexDirection: 'column',
-      padding: theme.spacing(3, 4),
-      position: 'relative',
-      minWidth: 0,
-    }),
-    recommended: css({
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        background: theme.colors.gradients.brandHorizontal,
-        opacity: 0.05,
-        pointerEvents: 'none',
-      },
-    }),
-    arrow: css({
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.circle,
-      border: `1px solid ${theme.colors.border.medium}`,
-      padding: theme.spacing(0.25),
-      lineHeight: 0,
+const getStyles = (theme: GrafanaTheme2) => ({
+  // The pills, header line and arrow flip with the recommendations HomeGrid at the page's md breakpoint.
+  pills: css({
+    [theme.breakpoints.container.down('md', 'page')]: {
+      order: 1,
+    },
+  }),
+  spacer: css({
+    flex: '1 1 0%',
+  }),
+  line: css({
+    [theme.breakpoints.container.up('md', 'page')]: {
+      background: theme.colors.border.medium,
+      height: '1px',
+    },
+  }),
+  cards: css({
+    background: theme.colors.background.canvas,
+    borderRadius: theme.shape.radius.default,
+    margin: theme.spacing(2, 0, 0),
+    overflow: 'hidden',
+  }),
+  card: css({
+    display: 'flex',
+    flexDirection: 'column',
+    padding: theme.spacing(3, 4),
+    position: 'relative',
+    minWidth: 0,
+  }),
+  recommended: css({
+    '&::before': {
+      content: '""',
       position: 'absolute',
-      zIndex: 1,
+      inset: 0,
+      background: theme.colors.gradients.brandHorizontal,
+      opacity: 0.05,
+      pointerEvents: 'none',
+    },
+  }),
+  arrow: css({
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.circle,
+    border: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(0.25),
+    lineHeight: 0,
+    position: 'absolute',
+    zIndex: 1,
+    left: '50%',
+    top: '100%',
+    transform: 'translate(-50%, -50%) rotate(90deg)',
+
+    [theme.breakpoints.container.up('md', 'page')]: {
+      top: theme.spacing(2),
+      left: '100%',
+      transform: 'translate(-50%, 0)',
+    },
+  }),
+  dot: css({
+    background: theme.colors.background.secondary,
+    lineHeight: 0,
+    padding: 0,
+    width: theme.spacing(1),
+    height: theme.spacing(1),
+    borderRadius: theme.shape.radius.pill,
+    position: 'relative',
+
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: '50%',
       left: '50%',
-      top: '100%',
-      transform: 'translate(-50%, -50%) rotate(90deg)',
+      transform: 'translate(-50%, -50%)',
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+    },
 
-      [twoColumns]: {
-        top: theme.spacing(2),
-        left: '100%',
-        transform: 'translate(-50%, 0)',
-      },
-    }),
-    dot: css({
-      background: theme.colors.background.secondary,
-      lineHeight: 0,
-      padding: 0,
-      width: theme.spacing(1),
-      height: theme.spacing(1),
-      borderRadius: theme.shape.radius.pill,
-      position: 'relative',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['background-color', 'width', 'height'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+  active: css({
+    '&, &::after': {
+      width: theme.spacing(3),
+    },
 
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: theme.spacing(2),
-        height: theme.spacing(2),
-      },
+    '&, &:hover, &:focus': {
+      background: theme.colors.text.maxContrast,
+      color: theme.colors.background.secondary,
+    },
+
+    '&:hover, &[data-paused]': {
+      height: theme.spacing(2),
+    },
+
+    '& > svg': {
+      margin: '0 auto',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'width', 'height'], {
+        transition: theme.transitions.create(['opacity'], {
           duration: theme.transitions.duration.short,
         }),
       },
-    }),
-    active: css({
-      '&, &::after': {
-        width: theme.spacing(3),
-      },
+    },
 
-      '&, &:hover, &:focus': {
-        background: theme.colors.text.maxContrast,
-        color: theme.colors.background.secondary,
-      },
-
-      '&:hover, &[data-paused]': {
-        height: theme.spacing(2),
-      },
-
+    '&:not(:hover):not([data-paused])': {
       '& > svg': {
-        margin: '0 auto',
-
-        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-          transition: theme.transitions.create(['opacity'], {
-            duration: theme.transitions.duration.short,
-          }),
-        },
+        opacity: 0,
       },
+    },
+  }),
+  outer: css({
+    overflow: 'hidden',
+    flex: 1,
+    margin: theme.spacing(2, 0, 0),
+  }),
+  inner: css({
+    display: 'flex',
+    // Fill the card cell so its CTA stays bottom-aligned with the existing card.
+    height: '100%',
 
-      '&:not(:hover):not([data-paused])': {
-        '& > svg': {
-          opacity: 0,
-        },
-      },
-    }),
-    outer: css({
-      overflow: 'hidden',
-      flex: 1,
-      margin: theme.spacing(2, 0, 0),
-    }),
-    inner: css({
-      display: 'flex',
-      // Fill the card cell so its CTA stays bottom-aligned with the existing card.
-      height: '100%',
-
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: theme.transitions.create(['transform']),
-      },
-    }),
-  };
-};
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: theme.transitions.create(['transform']),
+    },
+  }),
+});
