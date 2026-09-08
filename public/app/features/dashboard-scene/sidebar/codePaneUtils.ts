@@ -174,7 +174,7 @@ export function applyJsonToDashboard(
       return validation;
     }
 
-    const dto = buildDashboardWithAccessInfoFromScene(dashboard, spec, { metadataFields: 'minimal' });
+    const dto = buildDashboardWithAccessInfoFromScene(dashboard, spec);
 
     const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
     const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);

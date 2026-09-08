@@ -36,8 +36,6 @@ const applySpecPayloadSchema = z.object({
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
 
-// Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
-// importing it (avoids a circular import).
 type DashboardUrlSync = {
   retainEditPanelAcrossRebuild: (panelId: string) => void;
   updateFromUrl: (values: SceneObjectUrlValues) => void;
@@ -80,7 +78,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
-      const dto = buildDashboardWithAccessInfoFromScene(scene, spec, { metadataFields: 'full' });
+      const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
 
       const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
