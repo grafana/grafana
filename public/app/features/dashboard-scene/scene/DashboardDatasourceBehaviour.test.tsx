@@ -12,9 +12,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -1042,73 +1040,64 @@ describe('DashboardDatasourceBehaviour', () => {
     expect(spy).toHaveBeenCalled();
   });
 
-  it('Should re-run query after reprocess when the source panel only has plugin transformations', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
-    setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
-    try {
-      // An empty user list, so only the panel's plugin makes the transformer emit
-      const sourceTransformer = new SceneDataTransformer({
+  it('Should re-run query after reprocess when the source panel has no user transformations', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    // An empty user list still leaves a transformer that can reprocess on its own - a plugin's
+    // transformations resolving is one such trigger - so the behaviour has to watch it rather than
+    // fall through to the query runner.
+    const sourcePanel = new VizPanel({
+      title: 'Panel A',
+      pluginId: 'table',
+      key: 'panel-1',
+      $data: new SceneDataTransformer({
         transformations: [],
         $data: new SceneQueryRunner({
           datasource: { uid: 'grafana' },
           queries: [{ refId: 'A', queryType: 'randomWalk' }],
         }),
-      });
+      }),
+    });
 
-      const sourcePanel = new VizPanel({
-        title: 'Panel A',
-        pluginId: 'table',
-        key: 'panel-1',
-        // What a panel built from a save model carries with the flag on. No plugin here actually
-        // contributes: this behaviour only cares that the source *can* transform again without its
-        // query runner emitting.
-        applyPluginTransformations: true,
-        $data: sourceTransformer,
-      });
-
-      const dashboardDSPanel = new VizPanel({
-        title: 'Panel B',
-        pluginId: 'table',
-        key: 'panel-2',
-        $data: new SceneDataTransformer({
-          transformations: [],
-          $data: new SceneQueryRunner({
-            datasource: { uid: MIXED_DATASOURCE_NAME },
-            queries: [{ datasource: { uid: SHARED_DASHBOARD_QUERY }, refId: 'B', panelId: 1 }],
-            $behaviors: [new DashboardDatasourceBehaviour({})],
-          }),
+    const dashboardDSPanel = new VizPanel({
+      title: 'Panel B',
+      pluginId: 'table',
+      key: 'panel-2',
+      $data: new SceneDataTransformer({
+        transformations: [],
+        $data: new SceneQueryRunner({
+          datasource: { uid: MIXED_DATASOURCE_NAME },
+          queries: [{ datasource: { uid: SHARED_DASHBOARD_QUERY }, refId: 'B', panelId: 1 }],
+          $behaviors: [new DashboardDatasourceBehaviour({})],
         }),
-      });
+      }),
+    });
 
-      const scene = new DashboardScene({
-        title: 'hello',
-        uid: 'dash-1',
-        meta: { canEdit: true },
-        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
-      });
+    const scene = new DashboardScene({
+      title: 'hello',
+      uid: 'dash-1',
+      meta: { canEdit: true },
+      body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+    });
 
-      activateFullSceneTree(scene);
+    activateFullSceneTree(scene);
 
-      await new Promise((r) => setTimeout(r, 1));
+    await new Promise((r) => setTimeout(r, 1));
 
-      const spy = jest
-        .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
-        .mockImplementation();
+    const spy = jest
+      .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
+      .mockImplementation();
 
-      (sourcePanel.state.$data as SceneDataTransformer).setState({
-        data: {
-          state: LoadingState.Done,
-          series: [],
-          timeRange: getDefaultTimeRange(),
-          request: { requestId: 'new-request-id' } as DataQueryRequest,
-        },
-      });
+    (sourcePanel.state.$data as SceneDataTransformer).setState({
+      data: {
+        state: LoadingState.Done,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+        request: { requestId: 'new-request-id' } as DataQueryRequest,
+      },
+    });
 
-      expect(spy).toHaveBeenCalled();
-    } finally {
-      setTestFlags({});
-      consoleError.mockRestore();
-    }
+    expect(spy).toHaveBeenCalled();
   });
 
   describe('Cancel and streaming scenarios', () => {
