@@ -31,15 +31,19 @@ type renderJWT struct {
 }
 
 func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
-	if rs.perRequestRenderKeyProvider == nil {
+	start := time.Now()
+	var renderUser *RenderUser
+	var found bool
+	if rs.v2 != nil {
+		renderUser, found = rs.v2.GetRenderUser(ctx, key)
+	} else if rs.perRequestRenderKeyProvider == nil {
 		// Rendering is not configured. Just reject the token; it has no reasonable use here.
 		return nil, false
+	} else {
+		renderUser, found = rs.perRequestRenderKeyProvider.validate(ctx, key)
 	}
 
 	var from string
-	start := time.Now()
-
-	renderUser, found := rs.perRequestRenderKeyProvider.validate(ctx, key)
 	success := strconv.FormatBool(found)
 	metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
 

@@ -63,6 +63,10 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
+	// FlagRenderingServiceV2
+	// Uses the multi-tenant streaming rendering service implementation
+	FlagRenderingServiceV2 = "renderingServiceV2"
+
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"

@@ -5934,6 +5934,19 @@
     },
     {
       "metadata": {
+        "name": "renderingServiceV2",
+        "resourceVersion": "1788853293603",
+        "creationTimestamp": "2026-09-08T07:41:33Z"
+      },
+      "spec": {
+        "description": "Uses the multi-tenant streaming rendering service implementation",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportRenderBinding",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

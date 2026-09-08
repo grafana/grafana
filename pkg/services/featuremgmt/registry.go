@@ -160,6 +160,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: false, React: false}, // BE-only toggle
 		},
 		{
+			Name:        "renderingServiceV2",
+			Description: "Uses the multi-tenant streaming rendering service implementation",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: false, React: false}, // BE-only toggle
+		},
+		{
 			Name:        "faroDatasourceSelector",
 			Description: "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:       FeatureStagePublicPreview,

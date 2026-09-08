@@ -20,6 +20,7 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -47,9 +48,30 @@ type RenderingService struct {
 	Cfg                         *setting.Cfg
 	features                    featuremgmt.FeatureToggles
 	RemoteCacheService          *remotecache.RemoteCache
+	v2                          *v2Adapter
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache) (*RenderingService, error) {
+	logger := log.New("rendering")
+	if features.IsEnabledGlobally(featuremgmt.FlagRenderingServiceV2) { //nolint:staticcheck // rollout toggle
+		if cfg.RendererServerUrl != "" && features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) { //nolint:staticcheck // legacy rollout toggle
+			if err := validateRendererAuthToken(cfg, logger); err != nil {
+				return nil, err
+			}
+		}
+		adapter, err := newV2Adapter(cfg, cfgProvider, features, remoteCache)
+		if err != nil {
+			return nil, err
+		}
+		return &RenderingService{
+			Cfg:                cfg,
+			features:           features,
+			RemoteCacheService: remoteCache,
+			log:                logger,
+			v2:                 adapter,
+		}, nil
+	}
+
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
@@ -63,8 +85,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 			return nil, fmt.Errorf("failed to create directory %q: %w", f, err)
 		}
 	}
-
-	logger := log.New("rendering")
 
 	//  value used for domain attribute of renderKey cookie
 	var domain string
@@ -100,25 +120,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	if cfg.RendererServerUrl != "" {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
-			// only check if the renderer is configured otherwise we dont need to force changing the default.
-			if strings.TrimSpace(cfg.RendererAuthToken) == "" {
-				err := "Using an empty [rendering]renderer_token is not allowed, set it to another value. " +
-					"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
-				logger.Error(err)
-				return nil, fmt.Errorf("failed to start rendering service: %v", err)
+			if err := validateRendererAuthToken(cfg, logger); err != nil {
+				return nil, err
 			}
-
-			if cfg.RendererAuthToken == setting.DefaultRendererAuthToken {
-				if cfg.Env == setting.Dev {
-					logger.Warn("Using the default [rendering]renderer_token is not allowed for production settings, and Grafana will refuse to start.")
-				} else {
-					err := "Using the default [rendering]renderer_token is not allowed for production settings, set it to another value. " +
-						"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
-					logger.Error(err)
-					return nil, fmt.Errorf("failed to start rendering service: %v", err)
-				}
-			}
-
 			// overwrite the default key provider when we know we have a better way.
 			renderKeyProvider = &jwtRenderKeyProvider{
 				log:       logger,
@@ -190,7 +194,30 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	return s, nil
 }
 
+func validateRendererAuthToken(cfg *setting.Cfg, logger log.Logger) error {
+	if strings.TrimSpace(cfg.RendererAuthToken) == "" {
+		message := "Using an empty [rendering]renderer_token is not allowed, set it to another value. " +
+			"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
+		logger.Error(message)
+		return fmt.Errorf("failed to start rendering service: %s", message)
+	}
+	if cfg.RendererAuthToken != setting.DefaultRendererAuthToken {
+		return nil
+	}
+	if cfg.Env == setting.Dev {
+		logger.Warn("Using the default [rendering]renderer_token is not allowed for production settings, and Grafana will refuse to start.")
+		return nil
+	}
+	message := "Using the default [rendering]renderer_token is not allowed for production settings, set it to another value. " +
+		"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
+	logger.Error(message)
+	return fmt.Errorf("failed to start rendering service: %s", message)
+}
+
 func (rs *RenderingService) Run(ctx context.Context) error {
+	if rs.v2 != nil {
+		return rs.v2.Run(ctx)
+	}
 	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
 
@@ -236,10 +263,16 @@ func (rs *RenderingService) remoteAvailable() bool {
 }
 
 func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
+	if rs.v2 != nil {
+		return rs.v2.IsAvailable(ctx)
+	}
 	return rs.remoteAvailable()
 }
 
 func (rs *RenderingService) Version() string {
+	if rs.v2 != nil {
+		return rs.v2.Version()
+	}
 	rs.versionMutex.RLock()
 	defer rs.versionMutex.RUnlock()
 
@@ -247,6 +280,9 @@ func (rs *RenderingService) Version() string {
 }
 
 func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*RenderResult, error) {
+	if rs.v2 != nil {
+		return rs.v2.RenderErrorImage(theme, err)
+	}
 	if theme == "" {
 		theme = models.ThemeDark
 	}
@@ -277,6 +313,9 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 
 // Render calls the grafana image renderer and returns Grafana resource as PNG or PDF
 func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error) {
+	if rs.v2 != nil {
+		return rs.v2.Render(ctx, renderType, opts)
+	}
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
@@ -357,6 +396,9 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 }
 
 func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
+	if rs.v2 != nil {
+		return rs.v2.RenderCSV(ctx, opts)
+	}
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider

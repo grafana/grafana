@@ -25,6 +25,9 @@ var ErrUnknownCapability = errors.New("unknown capability")
 var ErrInvalidPluginVersion = errors.New("invalid plugin version")
 
 func (rs *RenderingService) HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error) {
+	if rs.v2 != nil {
+		return rs.v2.HasCapability(ctx, capability)
+	}
 	if !rs.IsAvailable(ctx) {
 		return CapabilitySupportRequestResult{IsSupported: false, SemverConstraint: ""}, ErrRenderUnavailable
 	}
@@ -58,6 +61,9 @@ func (rs *RenderingService) HasCapability(ctx context.Context, capability Capabi
 }
 
 func (rs *RenderingService) IsCapabilitySupported(ctx context.Context, capabilityName CapabilityName) error {
+	if rs.v2 != nil {
+		return rs.v2.IsCapabilitySupported(ctx, capabilityName)
+	}
 	capability, err := rs.HasCapability(ctx, capabilityName)
 	if err != nil {
 		return err

@@ -314,7 +314,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	renderingService, err := rendering.ProvideService(cfg, featureToggles, remoteCache)
+	renderingService, err := rendering.ProvideService(cfg, configProvider, featureToggles, remoteCache)
 	if err != nil {
 		return nil, err
 	}
@@ -1082,7 +1082,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	renderingService, err := rendering.ProvideService(cfg, featureToggles, remoteCache)
+	renderingService, err := rendering.ProvideService(cfg, configProvider, featureToggles, remoteCache)
 	if err != nil {
 		return nil, err
 	}

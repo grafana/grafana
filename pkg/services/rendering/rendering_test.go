@@ -12,11 +12,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func provideServiceForTest(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache) (*RenderingService, error) {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return ProvideService(cfg, provider, features, remoteCache)
+}
 
 func TestGetUrl(t *testing.T) {
 	path := "render/d-solo/5SdHCadmz/panel-tests-graph?orgId=1&from=1587390211965&to=1587393811965&panelId=5&width=1000&height=500&tz=Europe%2FStockholm"
@@ -282,19 +291,20 @@ func TestProvideService(t *testing.T) {
 	cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
 
 	t.Run("Default configuration values", func(t *testing.T) {
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
+		rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "", rs.Cfg.RendererServerUrl)
 		require.Equal(t, "", rs.rendererCallbackURL)
 		require.Equal(t, "", rs.domain)
+		require.Nil(t, rs.v2)
 	})
 
 	t.Run("RendererURL is set but not RendererCallbackUrl", func(t *testing.T) {
 		cfg.RendererServerUrl = "http://custom-renderer:8081"
 		cfg.RendererCallbackUrl = ""
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
+		rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererServerUrl)
@@ -306,7 +316,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = "http://custom-renderer:8081"
 		cfg.RendererCallbackUrl = "http://public-grafana.com/"
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
+		rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "http://custom-renderer:8081", rs.Cfg.RendererServerUrl)
@@ -318,7 +328,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "https://public-grafana.com/"
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
+		rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "", rs.Cfg.RendererServerUrl)
@@ -330,7 +340,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "https://public-grafana.com"
 
-		rs, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
+		rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, "", rs.Cfg.RendererServerUrl)
@@ -342,7 +352,7 @@ func TestProvideService(t *testing.T) {
 		cfg.RendererServerUrl = ""
 		cfg.RendererCallbackUrl = "http://public{grafana"
 
-		_, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil)
+		_, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(), nil)
 		require.Error(t, err)
 	})
 
@@ -358,13 +368,13 @@ func TestProvideService(t *testing.T) {
 
 			t.Run("in dev mode returns an error", func(t *testing.T) {
 				cfg.Env = setting.Dev
-				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				_, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
 				require.Error(t, err)
 			})
 
 			t.Run("in prod mode returns an error", func(t *testing.T) {
 				cfg.Env = setting.Prod
-				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				_, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
 				require.Error(t, err)
 			})
 		})
@@ -380,14 +390,14 @@ func TestProvideService(t *testing.T) {
 
 			t.Run("in dev mode does not return an error", func(t *testing.T) {
 				cfg.Env = setting.Dev
-				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
 				require.NoError(t, err)
 				require.NotNil(t, rs)
 			})
 
 			t.Run("in prod mode returns an error", func(t *testing.T) {
 				cfg.Env = setting.Prod
-				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				_, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
 				require.Error(t, err)
 			})
 		})
@@ -403,17 +413,54 @@ func TestProvideService(t *testing.T) {
 
 			t.Run("in dev mode does not return an error", func(t *testing.T) {
 				cfg.Env = setting.Env
-				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
 				require.NoError(t, err)
 				require.NotNil(t, rs)
 			})
 
 			t.Run("in prod mode does not return an error", func(t *testing.T) {
 				cfg.Env = setting.Prod
-				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
+				rs, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil)
 				require.NoError(t, err)
 				require.NotNil(t, rs)
 			})
 		})
 	})
+}
+
+func TestProvideServiceSelectsV2WithFeatureFlag(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AppURL = "https://grafana.example.com/"
+	cfg.RendererServerUrl = "https://renderer.example.com/render"
+	cfg.RendererAuthToken = "renderer-token"
+	cfg.RendererRenderKeyLifeTime = time.Minute
+	cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+	cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+	cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+
+	service, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(
+		featuremgmt.FlagRenderingServiceV2,
+		featuremgmt.FlagRenderAuthJWT,
+	), nil)
+	require.NoError(t, err)
+	require.NotNil(t, service.v2)
+	require.True(t, service.IsAvailable(context.Background()))
+}
+
+func TestProvideServiceV2PreservesRendererTokenSecurityChecks(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Env = setting.Prod
+	cfg.AppURL = "https://grafana.example.com/"
+	cfg.RendererServerUrl = "https://renderer.example.com/render"
+	cfg.RendererAuthToken = setting.DefaultRendererAuthToken
+	cfg.RendererRenderKeyLifeTime = time.Minute
+	cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+	cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+	cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+
+	_, err := provideServiceForTest(t, cfg, featuremgmt.WithFeatures(
+		featuremgmt.FlagRenderingServiceV2,
+		featuremgmt.FlagRenderAuthJWT,
+	), nil)
+	require.ErrorContains(t, err, "default [rendering]renderer_token")
 }
