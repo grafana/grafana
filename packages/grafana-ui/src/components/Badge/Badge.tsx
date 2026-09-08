@@ -88,7 +88,6 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       theme.flags.visualDesignRefresh && {
         padding: '1px 6px',
         borderRadius: theme.shape.radius.pill,
-        height: theme.spacing(3),
       }
     ),
     iconWrap: css({
