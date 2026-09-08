@@ -112,9 +112,9 @@ The `$values` variable is a table containing the labels and floating point value
 
 Each Ref IDs, such as `$values.A`, has the following properties
 
-| Property | Type            | Description                                                  |
-| -------- | --------------- | ------------------------------------------------------------ |
-| `Value`  | Float           | The value returned by the instant query or expression.       |
+| Property | Type            | Description                                                 |
+| -------- | --------------- | ----------------------------------------------------------- |
+| `Value`  | Float           | The value returned by the instant query or expression.      |
 | `Labels` | Key/value pairs | The labels associated with the instant query or expression. |
 
 To print labels from a specific query or expression, use its Ref ID and the `Labels` property:
