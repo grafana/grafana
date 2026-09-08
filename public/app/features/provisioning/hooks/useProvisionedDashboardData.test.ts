@@ -10,13 +10,12 @@ import {
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
-import { type SaveFormDraft } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardRepositoryView } from './useDashboardRepositoryView';
 import { RepoViewStatus } from './useGetResourceRepositoryView';
-import { useDefaultValues, useProvisionedDashboardData } from './useProvisionedDashboardData';
+import { getDefaultValues, useProvisionedDashboardData } from './useProvisionedDashboardData';
 
 const folderRepo: RepositoryView = {
   name: 'my-repo',
@@ -55,7 +54,8 @@ function readyView(repository?: RepositoryView, folderData?: Folder): DashboardR
     status: RepoViewStatus.Ready,
     repository,
     folder: folderData,
-    isLoading: false,
+    isHeld: false,
+    lookup: { status: RepoViewStatus.Ready },
     isNewSave: false,
     isProvisioned: Boolean(repository),
     isInstanceManaged: false,
@@ -68,7 +68,8 @@ function pendingView(status: RepoViewStatus, error?: unknown): DashboardReposito
   return {
     status,
     error,
-    isLoading: status === RepoViewStatus.Loading,
+    isHeld: false,
+    lookup: { status, error },
     isNewSave: false,
     isProvisioned: false,
     isInstanceManaged: false,
@@ -89,80 +90,82 @@ const storedMeta: DashboardMeta = {
   },
 };
 
-describe('useDefaultValues', () => {
-  it('returns Loading with null values while the repository is being resolved', () => {
-    const { result } = renderHook(() =>
-      useDefaultValues({
-        meta: storedMeta,
-        defaultTitle: 'Test Dashboard',
-        isNew: false,
-        view: pendingView(RepoViewStatus.Loading),
-      })
-    );
+const timestamp = '2023-01-01-abcde';
 
-    expect(result.current.status).toBe(RepoViewStatus.Loading);
-    expect(result.current.values).toBeNull();
+describe('getDefaultValues', () => {
+  it('returns Loading with null values while the repository is being resolved', () => {
+    const result = getDefaultValues({
+      meta: storedMeta,
+      defaultTitle: 'Test Dashboard',
+      isNew: false,
+      view: pendingView(RepoViewStatus.Loading),
+      timestamp,
+    });
+
+    expect(result.status).toBe(RepoViewStatus.Loading);
+    expect(result.values).toBeNull();
   });
 
   it('returns Error with the lookup error', () => {
     const error = new Error('Forbidden');
-    const { result } = renderHook(() =>
-      useDefaultValues({
-        meta: storedMeta,
-        defaultTitle: 'Test Dashboard',
-        isNew: false,
-        view: pendingView(RepoViewStatus.Error, error),
-      })
-    );
+    const result = getDefaultValues({
+      meta: storedMeta,
+      defaultTitle: 'Test Dashboard',
+      isNew: false,
+      view: pendingView(RepoViewStatus.Error, error),
+      timestamp,
+    });
 
-    expect(result.current.status).toBe(RepoViewStatus.Error);
-    expect(result.current.values).toBeNull();
-    expect(result.current.error).toBe(error);
+    expect(result.status).toBe(RepoViewStatus.Error);
+    expect(result.values).toBeNull();
+    expect(result.error).toBe(error);
   });
 
   it('returns Orphaned with null values and no error', () => {
-    const { result } = renderHook(() =>
-      useDefaultValues({
-        meta: storedMeta,
-        defaultTitle: 'Test Dashboard',
-        isNew: false,
-        view: pendingView(RepoViewStatus.Orphaned),
-      })
-    );
+    const result = getDefaultValues({
+      meta: storedMeta,
+      defaultTitle: 'Test Dashboard',
+      isNew: false,
+      view: pendingView(RepoViewStatus.Orphaned),
+      timestamp,
+    });
 
-    expect(result.current.status).toBe(RepoViewStatus.Orphaned);
-    expect(result.current.values).toBeNull();
-    expect(result.current.error).toBeUndefined();
+    expect(result.status).toBe(RepoViewStatus.Orphaned);
+    expect(result.values).toBeNull();
+    expect(result.error).toBeUndefined();
   });
 
   it('returns Error when the view is Ready without a repository', () => {
-    const { result } = renderHook(() =>
-      useDefaultValues({ meta: storedMeta, defaultTitle: 'Test Dashboard', isNew: false, view: readyView() })
-    );
+    const result = getDefaultValues({
+      meta: storedMeta,
+      defaultTitle: 'Test Dashboard',
+      isNew: false,
+      view: readyView(),
+      timestamp,
+    });
 
-    expect(result.current.status).toBe(RepoViewStatus.Error);
-    expect(result.current.values).toBeNull();
+    expect(result.status).toBe(RepoViewStatus.Error);
+    expect(result.values).toBeNull();
   });
 
   it('returns Ready with form values for a stored dashboard, keeping its annotated repo and path', () => {
-    const { result } = renderHook(() =>
-      useDefaultValues({
-        meta: storedMeta,
-        defaultTitle: 'Test Dashboard',
-        isNew: false,
-        view: readyView(folderRepo, folder('dashboards')),
-      })
-    );
+    const result = getDefaultValues({
+      meta: storedMeta,
+      defaultTitle: 'Test Dashboard',
+      isNew: false,
+      view: readyView(folderRepo, folder('dashboards')),
+      timestamp,
+    });
 
-    expect(result.current.status).toBe(RepoViewStatus.Ready);
-    expect(result.current.values).toMatchObject({
+    expect(result.status).toBe(RepoViewStatus.Ready);
+    expect(result.values).toMatchObject({
       repo: 'my-repo',
       title: 'Test Dashboard',
       path: 'dashboards/test.json',
       folder: { uid: 'test-folder' },
     });
-    expect(result.current.repository?.name).toBe('my-repo');
-    expect(result.current.isNew).toBe(false);
+    expect(result.repository?.name).toBe('my-repo');
+    expect(result.isNew).toBe(false);
   });
 
   it('targets the resolved repository, not a stale annotation, for a new save', () => {
@@ -171,25 +174,28 @@ describe('useDefaultValues', () => {
       k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'deleted-repo' } },
     };
 
-    const { result } = renderHook(() =>
-      useDefaultValues({ meta, defaultTitle: 'New Dashboard', isNew: true, view: readyView(folderRepo) })
-    );
+    const result = getDefaultValues({
+      meta,
+      defaultTitle: 'New Dashboard',
+      isNew: true,
+      view: readyView(folderRepo),
+      timestamp,
+    });
 
-    expect(result.current.values?.repo).toBe('my-repo');
-    expect(result.current.isNew).toBe(true);
+    expect(result.values?.repo).toBe('my-repo');
+    expect(result.isNew).toBe(true);
   });
 
   it('names a new save file after its title inside the resolved folder', () => {
-    const { result } = renderHook(() =>
-      useDefaultValues({
-        meta: { folderUid: 'test-folder' },
-        defaultTitle: 'New Dashboard',
-        isNew: true,
-        view: readyView(folderlessRepo, folder('team-a')),
-      })
-    );
+    const result = getDefaultValues({
+      meta: { folderUid: 'test-folder' },
+      defaultTitle: 'New Dashboard',
+      isNew: true,
+      view: readyView(folderlessRepo, folder('team-a')),
+      timestamp,
+    });
 
-    expect(result.current.values?.path).toBe('team-a/new-dashboard.json');
+    expect(result.values?.path).toBe('team-a/new-dashboard.json');
   });
 
   it('names a copy after the given title and ignores the source file path', () => {
@@ -202,17 +208,16 @@ describe('useDefaultValues', () => {
       },
     };
 
-    const { result } = renderHook(() =>
-      useDefaultValues({
-        meta,
-        defaultTitle: 'Existing Dashboard Copy',
-        saveAsCopy: true,
-        isNew: true,
-        view: readyView(folderlessRepo),
-      })
-    );
+    const result = getDefaultValues({
+      meta,
+      defaultTitle: 'Existing Dashboard Copy',
+      saveAsCopy: true,
+      isNew: true,
+      view: readyView(folderlessRepo),
+      timestamp,
+    });
 
-    expect(result.current.values).toMatchObject({
+    expect(result.values).toMatchObject({
       title: 'Existing Dashboard Copy',
       path: 'existing-dashboard-copy.json',
       repo: 'folderless-repo',
@@ -221,19 +226,27 @@ describe('useDefaultValues', () => {
   });
 
   it('drops the folder path prefix when a picked folder is cleared back to the repository root', () => {
-    const { result, rerender } = renderHook(
-      ({ meta, view }: { meta: DashboardMeta; view: DashboardRepositoryView }) =>
-        useDefaultValues({ meta, defaultTitle: 'New Dashboard', isNew: true, view }),
-      { initialProps: { meta: { folderUid: 'f1' }, view: readyView(folderlessRepo, folder('team-b')) } }
-    );
+    const inFolder = getDefaultValues({
+      meta: { folderUid: 'f1' },
+      defaultTitle: 'New Dashboard',
+      isNew: true,
+      view: readyView(folderlessRepo, folder('team-b')),
+      timestamp,
+    });
 
-    expect(result.current.values?.path).toBe('team-b/new-dashboard.json');
+    expect(inFolder.values?.path).toBe('team-b/new-dashboard.json');
 
-    rerender({ meta: { folderUid: '' }, view: readyView(folderlessRepo) });
+    const atRoot = getDefaultValues({
+      meta: { folderUid: '' },
+      defaultTitle: 'New Dashboard',
+      isNew: true,
+      view: readyView(folderlessRepo),
+      timestamp,
+    });
 
-    expect(result.current.status).toBe(RepoViewStatus.Ready);
-    expect(result.current.values?.repo).toBe('folderless-repo');
-    expect(result.current.values?.path).toBe('new-dashboard.json');
+    expect(atRoot.status).toBe(RepoViewStatus.Ready);
+    expect(atRoot.values?.repo).toBe('folderless-repo');
+    expect(atRoot.values?.path).toBe('new-dashboard.json');
   });
 });
 
@@ -288,12 +301,29 @@ describe('useProvisionedDashboardData', () => {
     expect(result.current.readOnly).toBe(false);
   });
 
-  it('seeds a new save from the draft parked on the drawer, filename included', () => {
+  it('keeps the same defaultValues object across re-renders whose inputs did not change', () => {
+    const dashboard = createDashboard();
+    const folderData = folder('dashboards');
+    // The view wrapper is rebuilt per render, as the hook that produces it does; its fields are stable
+    const { result, rerender } = renderHook(
+      () => useProvisionedDashboardData(dashboard, readyView(folderRepo, folderData)),
+      { wrapper }
+    );
+    const first = result.current.defaultValues;
+    expect(first).not.toBeNull();
+
+    rerender();
+
+    expect(result.current.defaultValues).toBe(first);
+  });
+
+  it('seeds a new save from the title and description handed over by the previous form, filename included', () => {
     const view = { ...readyView(folderlessRepo), isNewSave: true };
     const { result } = renderHook(
       () =>
         useProvisionedDashboardData(createDashboard({ folderUid: undefined, k8s: undefined }), view, {
-          draft: { title: 'Typed', description: 'Typed desc' },
+          title: 'Typed',
+          description: 'Typed desc',
         }),
       { wrapper }
     );
@@ -309,12 +339,12 @@ describe('useProvisionedDashboardData', () => {
   it('suffixes a copy once: the title parked by the form is final on re-resolution', () => {
     const view = { ...readyView(folderlessRepo), isNewSave: true };
     const { result, rerender } = renderHook(
-      ({ draft }: { draft?: SaveFormDraft }) =>
+      ({ title }: { title?: string }) =>
         useProvisionedDashboardData(createDashboard({ folderUid: undefined, k8s: undefined }), view, {
           saveAsCopy: true,
-          draft,
+          title,
         }),
-      { wrapper, initialProps: { draft: undefined } as { draft?: SaveFormDraft } }
+      { wrapper, initialProps: {} as { title?: string } }
     );
 
     expect(result.current.defaultValues).toMatchObject({
@@ -323,12 +353,26 @@ describe('useProvisionedDashboardData', () => {
     });
 
     // The form parks exactly what it shows; a folder pick recomputes the defaults from that
-    rerender({ draft: { title: 'Test Dashboard Copy' } });
+    rerender({ title: 'Test Dashboard Copy' });
 
     expect(result.current.defaultValues).toMatchObject({
       title: 'Test Dashboard Copy',
       path: 'test-dashboard-copy.json',
     });
+  });
+
+  it('keeps one filename timestamp across recomputes when there is no title to slugify', () => {
+    const dashboard = createDashboard({ folderUid: undefined, k8s: undefined, slug: undefined });
+    dashboard.setState({ title: '' });
+    const view = { ...readyView(folderlessRepo), isNewSave: true };
+    const { result, rerender } = renderHook(() => useProvisionedDashboardData(dashboard, view), { wrapper });
+
+    const path = result.current.defaultValues?.path;
+    expect(path).toMatch(/^new-dashboard-.+\.json$/);
+
+    rerender();
+
+    expect(result.current.defaultValues?.path).toBe(path);
   });
 
   describe('enforced branch name template', () => {

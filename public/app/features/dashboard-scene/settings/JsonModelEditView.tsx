@@ -14,6 +14,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
+import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -165,7 +166,8 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const [editorFormat, setSchemaEditorFormat] = useState<SchemaEditorFormat>('json');
 
   const dashboard = model.getDashboard();
-  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useDashboardRepositoryView(dashboard);
+  const { isProvisioned: isProvisionedNG, status: repoStatus } = useDashboardRepositoryView(dashboard);
+  const isResolvingRepo = repoStatus === RepoViewStatus.Loading;
   const saveModel = model.getSaveModel();
   const isV2Dashboard = isDashboardV2Spec(saveModel);
 

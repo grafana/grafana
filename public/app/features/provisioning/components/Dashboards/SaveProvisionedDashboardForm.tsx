@@ -19,6 +19,7 @@ import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { nextMetaAfterFolderPick } from 'app/features/dashboard-scene/saving/shared';
+import { useParkSaveFormDraft } from 'app/features/dashboard-scene/saving/useParkSaveFormDraft';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -53,8 +54,8 @@ export interface Props extends SaveProvisionedDashboardProps {
   canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
-  /** The picked folder has not resolved yet (loading, or a dead end), so the defaults still describe the previous one and saving must wait */
-  isReresolving?: boolean;
+  /** The view behind these defaults is held: the picked folder's lookup is still loading or dead-ended, so they describe the previous folder and saving must wait */
+  isHeld: boolean;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -67,7 +68,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
-  isReresolving,
+  isHeld,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -142,11 +143,7 @@ export function SaveProvisionedDashboardForm({
     }
   }, [defaultValues, reset, isNew, getValues, setValue]);
 
-  // Park what is typed as it changes rather than on unmount: React renders the form that takes
-  // over before this one's cleanup runs, so an unmount write would reach it one swap too late
-  useEffect(() => {
-    drawer.saveFormDraft = { title, description };
-  }, [drawer, title, description]);
+  useParkSaveFormDraft(drawer, title, description);
 
   const templateVars: CommitTemplateVars = {
     action: isNew ? 'create' : 'update',
@@ -615,7 +612,7 @@ export function SaveProvisionedDashboardForm({
                 isSubmitting ||
                 isValidating ||
                 isCreatingFolder ||
-                isReresolving
+                isHeld
               }
             >
               {request.isLoading || isSubmitting || isValidating

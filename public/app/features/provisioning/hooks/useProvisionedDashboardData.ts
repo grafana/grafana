@@ -1,10 +1,9 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useRef } from 'react';
+import { useMemo, useState } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { type SaveFormDraft } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { RepoViewStatus, type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
@@ -22,7 +21,7 @@ import { type ProvisionedDashboardFormData } from '../types/form';
 
 import { type DashboardRepositoryView } from './useDashboardRepositoryView';
 
-interface UseDefaultValuesParams {
+interface GetDefaultValuesParams {
   meta: DashboardMeta;
   defaultTitle: string;
   defaultDescription?: string;
@@ -30,9 +29,11 @@ interface UseDefaultValuesParams {
   saveAsCopy?: boolean;
   isNew: boolean;
   view: Pick<RepositoryViewData, 'repository' | 'folder' | 'status' | 'error'>;
+  /** Feeds the fallback filename for a save with no title to slugify; the caller keeps it stable across recomputes */
+  timestamp: string;
 }
 
-export function useDefaultValues({
+export function getDefaultValues({
   meta,
   defaultTitle,
   defaultDescription,
@@ -40,15 +41,11 @@ export function useDefaultValues({
   saveAsCopy,
   isNew,
   view: { repository, folder, status, error },
-}: UseDefaultValuesParams) {
+  timestamp,
+}: GetDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  // Minted once per form rather than per render: this feeds the fallback filename for a save with
-  // no title to slugify, and regenerating it would rewrite that filename on every recompute
-  const timestampRef = useRef<string>(undefined);
-  timestampRef.current ??= generateTimestamp();
-  const timestamp = timestampRef.current;
 
   if (status === RepoViewStatus.Loading) {
     return {
@@ -100,7 +97,7 @@ export function useDefaultValues({
       path: dashboardPath,
       // A new save targets whatever repository actually resolved: when the annotation hint missed,
       // the name it still carries is a repository that no longer exists
-      repo: (isNew ? repository.name : managerIdentity || repository.name) ?? '',
+      repo: isNew ? repository.name : managerIdentity || repository.name,
       comment: '',
       folder: {
         uid: meta.folderUid,
@@ -137,24 +134,65 @@ export interface ProvisionedDashboardData {
 export function useProvisionedDashboardData(
   dashboard: DashboardScene,
   view: DashboardRepositoryView,
-  options: { saveAsCopy?: boolean; draft?: SaveFormDraft } = {}
+  options: { saveAsCopy?: boolean; title?: string; description?: string } = {}
 ): ProvisionedDashboardData {
-  const { saveAsCopy, draft } = options;
-  const { meta, title, description } = dashboard.useState();
+  const { saveAsCopy, title, description } = options;
+  const { meta, title: dashboardTitle, description: dashboardDescription } = dashboard.useState();
+  const { repository, folder, status, error, isNewSave } = view;
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
+  // Minted once per form: it feeds the fallback filename for a save with no title to slugify, and a
+  // fresh one per recompute would rewrite that filename
+  const [timestamp] = useState(generateTimestamp);
+  // The caller's title is whatever the previous form showed, suffix included, so only a fresh copy gets one
+  const defaultTitle = title ?? (saveAsCopy ? `${dashboardTitle} Copy` : dashboardTitle);
+  const defaultDescription = description ?? dashboardDescription;
 
-  const defaultValuesResult = useDefaultValues({
-    meta,
-    // The draft is whatever the previous form showed, suffix included, so only a fresh copy gets one
-    defaultTitle: draft?.title ?? (saveAsCopy ? `${title} Copy` : title),
-    defaultDescription: draft?.description ?? description,
-    loadedFromRef,
-    saveAsCopy,
-    isNew: view.isNewSave,
-    view,
-  });
+  // `view` is rebuilt on every render of the lookup; only these fields feed the defaults. A fresh values
+  // object per render would re-run the form's reset effect on every drawer render
+  const defaultValuesResult = useMemo(
+    () =>
+      getDefaultValues({
+        meta,
+        defaultTitle,
+        defaultDescription,
+        loadedFromRef,
+        saveAsCopy,
+        isNew: isNewSave,
+        view: { repository, folder, status, error },
+        timestamp,
+      }),
+    [
+      meta,
+      defaultTitle,
+      defaultDescription,
+      loadedFromRef,
+      saveAsCopy,
+      isNewSave,
+      repository,
+      folder,
+      status,
+      error,
+      timestamp,
+    ]
+  );
+
+  const defaultValues = useMemo(() => {
+    if (defaultValuesResult.status !== RepoViewStatus.Ready) {
+      return null;
+    }
+    const { values, repository: resolvedRepository } = defaultValuesResult;
+    // When the branch name template is enforced, dashboard pushes must go through the branch workflow
+    // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
+    // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
+    // useBranchTemplate then fills the `ref`.
+    return values &&
+      shouldEnforceBranchTemplate(resolvedRepository, gitConventionsEnabled) &&
+      values.workflow !== 'branch'
+      ? { ...values, workflow: 'branch' as const }
+      : values;
+  }, [defaultValuesResult, gitConventionsEnabled]);
 
   if (defaultValuesResult.status !== RepoViewStatus.Ready) {
     return {
@@ -169,25 +207,14 @@ export function useProvisionedDashboardData(
     };
   }
 
-  const { values, isNew, repository } = defaultValuesResult;
-  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
-
-  // When the branch name template is enforced, dashboard pushes must go through the branch workflow
-  // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
-  // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
-  // useBranchTemplate then fills the `ref`.
-  const defaultValues =
-    values && shouldEnforceBranchTemplate(repository, gitConventionsEnabled) && values.workflow !== 'branch'
-      ? { ...values, workflow: 'branch' as const }
-      : values;
-
+  const { isNew, repository: resolvedRepository } = defaultValuesResult;
   return {
     defaultValues,
-    repository,
+    repository: resolvedRepository,
     loadedFromRef,
-    canPushToConfiguredBranch,
+    canPushToConfiguredBranch: getCanPushToConfiguredBranch(resolvedRepository),
     isNew,
-    readOnly: getIsReadOnlyRepo(repository),
+    readOnly: getIsReadOnlyRepo(resolvedRepository),
     repoDataStatus: defaultValuesResult.status,
   };
 }

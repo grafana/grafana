@@ -228,6 +228,32 @@ describe('useGetResourceRepositoryView', () => {
       expect(result.current.orphanedRepoName).toBe('deleted-repo');
     });
 
+    it('falls through to the folder when the named repository is gone and a folder target is given', () => {
+      setupMocks({
+        settingsItems: [repoView()],
+        folder: folderData({ [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'my-repo' }),
+      });
+
+      const { result } = renderHook(() =>
+        useGetResourceRepositoryView({ name: 'deleted-repo', folderName: 'nested-folder' })
+      );
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository?.name).toBe('my-repo');
+      expect(result.current.orphanedRepoName).toBeUndefined();
+    });
+
+    it('falls through to the folderless repository at the root when the named repository is gone', () => {
+      setupMocks({ settingsItems: [repoView({ name: 'root-repo', target: 'folderless' })] });
+
+      const { result } = renderHook(() =>
+        useGetResourceRepositoryView({ name: 'deleted-repo', includeFolderless: true })
+      );
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository?.name).toBe('root-repo');
+    });
+
     it('sets isInstanceManaged when an instance repo exists', () => {
       const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
       setupMocks({ settingsItems: [instanceRepo] });

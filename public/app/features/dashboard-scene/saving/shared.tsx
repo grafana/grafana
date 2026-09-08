@@ -7,6 +7,7 @@ import { Alert, Button } from '@grafana/ui';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { type Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
@@ -22,6 +23,14 @@ export interface DashboardChangeInfo {
   hasFolderChanges?: boolean;
   hasPredefinedVariablesChanges?: boolean;
   hasMigratedToV2?: boolean;
+}
+
+/**
+ * A dashboard that has never been saved: no uid and no k8s name yet. Not the save model's version: a
+ * previewed repo file reports version 0 while it already has a uid, and saving it updates the file
+ */
+export function isNewDashboard({ uid, meta }: Pick<DashboardSceneState, 'uid' | 'meta'>): boolean {
+  return !uid && !meta.k8s?.name;
 }
 
 export function isVersionMismatchError(error?: Error) {

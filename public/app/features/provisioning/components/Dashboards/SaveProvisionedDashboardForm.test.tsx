@@ -174,6 +174,7 @@ function setup(props: Partial<Props> = {}) {
     },
     readOnly: false,
     canPushToConfiguredBranch: true,
+    isHeld: false,
     ...props,
   };
 

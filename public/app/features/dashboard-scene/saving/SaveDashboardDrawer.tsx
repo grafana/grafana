@@ -1,16 +1,12 @@
-import { useRef } from 'react';
-
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Alert, Button, Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
-import { FormLoadingErrorAlert } from 'app/features/provisioning/components/Dashboards/FormLoadingErrorAlert';
+import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import {
-  type DashboardRepositoryView,
-  useDashboardRepositoryView,
-} from 'app/features/provisioning/hooks/useDashboardRepositoryView';
+import { type SaveTarget, SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
+import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -24,8 +20,7 @@ import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
-
-type SaveTarget = 'repository' | 'database';
+import { isNewDashboard } from './shared';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -42,7 +37,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveTarget?: SaveTarget;
 }
 
-/** Title and description typed into a save form, so a form swap can hand them to the next one */
+/** Title and description a save form shows, so a form swap can hand them to the next one */
 export interface SaveFormDraft {
   title?: string;
   description?: string;
@@ -50,17 +45,17 @@ export interface SaveFormDraft {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   /**
-   * Title/description typed into a save form, read once by the form that replaces it after a folder
-   * pick or target switch. Not scene state: it is written on every keystroke and read only on mount,
-   * so reactivity would just re-render the drawer (and re-diff the dashboard) per keystroke.
+   * Title/description a save form shows, parked by useParkSaveFormDraft as they change. Read by the
+   * form that replaces it after a folder pick or target switch, and on every render by the Git form's
+   * defaults so a recomputed filename tracks the live title. Not scene state: it changes per keystroke,
+   * and reactivity would re-render the drawer (and re-diff the dashboard) each time.
    */
   public saveFormDraft: SaveFormDraft | undefined;
 
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
-    const changeInfo = dashboard.getDashboardChanges();
     // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
-    const shouldRestoreMeta = changeInfo.isNew || Boolean(this.state.saveAsCopy);
+    const shouldRestoreMeta = Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state);
     dashboard.setState({
       overlay: undefined,
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
@@ -110,21 +105,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const liveView = useDashboardRepositoryView(dashboard, saveAsCopy);
-  const { isNewSave } = liveView;
-  // A folder pick re-runs the lookup. Hold the last settled view while it is in flight, and through a
-  // dead end (the picked folder's repository is gone, or its lookup failed): unmounting the form that is
-  // up would drop what the user typed, and its folder picker is the only way out of the dead end
-  const isDeadEnd =
-    isNewSave && (liveView.status === RepoViewStatus.Orphaned || liveView.status === RepoViewStatus.Error);
-  const settledView = useRef<DashboardRepositoryView | undefined>(undefined);
-  if (!liveView.isLoading && !(isDeadEnd && settledView.current)) {
-    settledView.current = liveView;
-  }
-  const view = settledView.current ?? liveView;
-  const isHolding = view !== liveView;
-  // The root of a folderless repository is the one place a new save can go either way
-  const canChooseTarget = isNewSave && !meta.folderUid && view.repository?.target === 'folderless';
+  const view = useDashboardRepositoryView(dashboard, saveAsCopy);
+  const { isNewSave } = view;
+  // The root of a folderless repository is the one place a new save can go either way. Every input is
+  // read off the settled view, so a folder pick still in flight cannot split the decision
+  const canChooseTarget = isNewSave && !view.folderUid && view.repository?.target === 'folderless';
   const target: SaveTarget =
     canChooseTarget && saveTarget ? saveTarget : view.isProvisioned ? 'repository' : 'database';
 
@@ -183,17 +168,16 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           drawer={model}
           saveAsCopy={saveAsCopy}
           view={view}
-          isReresolving={isHolding}
         />
       );
     }
 
     // First lookup of a new save: nothing settled to hold, so the form waits
-    if (view.isLoading) {
+    if (view.status === RepoViewStatus.Loading) {
       return <Spinner />;
     }
 
-    if (saveAsCopy || changeInfo.isNew) {
+    if (isNewSave) {
       return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
     }
 
@@ -209,44 +193,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
       <div style={{ display: showDiff ? 'none' : 'contents' }}>
         <Stack direction="column" gap={2}>
-          {isDeadEnd &&
-            isHolding &&
-            (liveView.status === RepoViewStatus.Orphaned ? (
-              <Alert
-                severity="warning"
-                title={t(
-                  'dashboard-scene.save-dashboard-drawer.folder-repo-missing-title',
-                  'The selected folder cannot be saved to'
-                )}
-              >
-                <Trans i18nKey="dashboard-scene.save-dashboard-drawer.folder-repo-missing-body">
-                  The provisioning repository managing this folder no longer exists. Choose a different folder or save
-                  at the repository root.
-                </Trans>
-              </Alert>
-            ) : (
-              <FormLoadingErrorAlert error={liveView.error} />
-            ))}
+          {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
           {renderForm()}
           {canChooseTarget && (
-            <div>
-              <Button
-                variant="secondary"
-                size="sm"
-                fill="text"
-                onClick={() => model.setState({ saveTarget: target === 'repository' ? 'database' : 'repository' })}
-              >
-                {target === 'repository' ? (
-                  <Trans i18nKey="dashboard-scene.save-dashboard-drawer.save-to-database">
-                    Save to Grafana database instead
-                  </Trans>
-                ) : (
-                  <Trans i18nKey="dashboard-scene.save-dashboard-drawer.save-to-git">
-                    Save to Git repository instead
-                  </Trans>
-                )}
-              </Button>
-            </div>
+            <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
           )}
         </Stack>
       </div>

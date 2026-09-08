@@ -9,7 +9,11 @@ import { getManagerIdentity, isManagedByRepository } from '../utils/managedResou
 import { getIsReadOnlyRepo } from '../utils/repository';
 
 interface GetResourceRepositoryArgs {
-  name?: string; // the repository name
+  /**
+   * The repository name. Given with folderName or includeFolderless it is a hint that yields to
+   * them when the repository is gone
+   */
+  name?: string;
   folderName?: string; // folder we are targeting
   skipQuery?: boolean;
   includeInstance?: boolean;
@@ -134,7 +138,7 @@ const useResourceRepositoryViewData = ({
 
   const items = settingsData?.items ?? [];
 
-  // Check for orphaned resource first: name specified but no matching repo
+  // A name resolves the repository directly
   if (name) {
     const repository = items.find((repo) => repo.name === name);
     const instanceRepo = items.find((repo) => repo.target === 'instance');
@@ -148,14 +152,17 @@ const useResourceRepositoryViewData = ({
       };
     }
 
-    // When name specified but no matching repository found = orphaned resource
-    return {
-      folder,
-      isInstanceManaged: Boolean(instanceRepo),
-      isReadOnlyRepo: false,
-      status: RepoViewStatus.Orphaned,
-      orphanedRepoName: name,
-    };
+    // Alone, a missing name is the orphaned dead end. With a folder target the name was only where a
+    // previewed or copied file came from, so the folder resolution below decides instead
+    if (!folderName && !includeFolderless) {
+      return {
+        folder,
+        isInstanceManaged: Boolean(instanceRepo),
+        isReadOnlyRepo: false,
+        status: RepoViewStatus.Orphaned,
+        orphanedRepoName: name,
+      };
+    }
   }
 
   if (!items.length) {

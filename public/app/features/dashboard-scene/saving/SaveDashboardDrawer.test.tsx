@@ -59,8 +59,8 @@ jest.mock('app/features/provisioning/hooks/useDashboardRepositoryView', () => {
 });
 
 jest.mock('app/features/provisioning/components/Dashboards/SaveProvisionedDashboard', () => ({
-  SaveProvisionedDashboard: ({ isReresolving }: { isReresolving: boolean }) => (
-    <div data-testid="provisioned-form" data-reresolving={String(isReresolving)} />
+  SaveProvisionedDashboard: ({ view }: { view: DashboardRepositoryView }) => (
+    <div data-testid="provisioned-form" data-held={String(view.isHeld)} />
   ),
 }));
 
@@ -427,14 +427,16 @@ describe('SaveDashboardDrawer', () => {
     };
 
     function view(overrides: Partial<DashboardRepositoryView> = {}): DashboardRepositoryView {
+      const status = overrides.status ?? RepoViewStatus.Ready;
       return {
-        status: RepoViewStatus.Ready,
-        isLoading: false,
+        status,
         isNewSave: true,
         isProvisioned: false,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
         isMissingRepo: false,
+        isHeld: false,
+        lookup: { status, error: overrides.error },
         ...overrides,
       };
     }
@@ -447,7 +449,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it("shows a spinner until a new dashboard's first lookup settles, then the save-as form", async () => {
-      let repoState = view({ isLoading: true, status: RepoViewStatus.Loading });
+      let repoState = view({ status: RepoViewStatus.Loading });
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
@@ -470,27 +472,6 @@ describe('SaveDashboardDrawer', () => {
       expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
     });
 
-    it('keeps the typed save-as form mounted while a folder pick re-runs the lookup', async () => {
-      let repoState = view();
-      jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
-
-      const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
-
-      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
-      await userEvent.clear(titleInput);
-      await userEvent.type(titleInput, 'Hello');
-
-      // Picking a folder restarts the lookup against a cold cache
-      repoState = view({ isLoading: true, status: RepoViewStatus.Loading });
-      act(() => {
-        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'some-folder' } });
-      });
-
-      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
-      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Hello');
-    });
-
     it('swaps to the provisioned form once the pick settles on a repository', async () => {
       let repoState = view();
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
@@ -506,7 +487,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'provisioned-folder' } });
       });
 
-      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-reresolving', 'false');
+      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-held', 'false');
     });
 
     it('holds the provisioned form with saving blocked while it re-resolves', async () => {
@@ -515,14 +496,19 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       openAndRender({ saveAsCopy: true });
-      expect(await screen.findByTestId('provisioned-form')).toHaveAttribute('data-reresolving', 'false');
+      expect(await screen.findByTestId('provisioned-form')).toHaveAttribute('data-held', 'false');
 
-      repoState = view({ isLoading: true, status: RepoViewStatus.Loading });
+      repoState = view({
+        isProvisioned: true,
+        repository: { ...folderlessRepo, target: 'folder' },
+        isHeld: true,
+        lookup: { status: RepoViewStatus.Loading },
+      });
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'some-folder' } });
       });
 
-      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-reresolving', 'true');
+      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-held', 'true');
       expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
     });
 
@@ -532,7 +518,7 @@ describe('SaveDashboardDrawer', () => {
         .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
 
       const { dashboard, openAndRender } = setup();
-      dashboard.setState({ version: 0 });
+      dashboard.setState({ uid: '', version: 0 });
       openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
@@ -547,6 +533,9 @@ describe('SaveDashboardDrawer', () => {
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
 
       // Inside a folder the folder decides, so there is nothing to choose
+      jest
+        .mocked(useDashboardRepositoryView)
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, folderUid: 'f1' }));
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f1' } });
       });
@@ -559,7 +548,7 @@ describe('SaveDashboardDrawer', () => {
         .mockReturnValue(view({ isProvisioned: true, repository: { ...folderlessRepo, target: 'folder' } }));
 
       const { dashboard, openAndRender } = setup();
-      dashboard.setState({ version: 0 });
+      dashboard.setState({ uid: '', version: 0 });
       openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
@@ -571,28 +560,94 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      dashboard.setState({ version: 0 });
+      dashboard.setState({ uid: '', version: 0 });
       openAndRender();
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
 
       // The picked folder is annotated with a repository that no longer exists
-      repoState = view({ status: RepoViewStatus.Orphaned, isMissingRepo: true });
+      repoState = view({
+        isProvisioned: true,
+        repository: folderlessRepo,
+        isHeld: true,
+        lookup: { status: RepoViewStatus.Orphaned },
+      });
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f2' } });
       });
 
-      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-reresolving', 'true');
+      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-held', 'true');
       expect(screen.getByText('The selected folder cannot be saved to')).toBeInTheDocument();
 
       // ...or its lookup failed outright
-      repoState = view({ status: RepoViewStatus.Error, error: new Error('boom'), isMissingRepo: true });
+      repoState = view({
+        isProvisioned: true,
+        repository: folderlessRepo,
+        isHeld: true,
+        lookup: { status: RepoViewStatus.Error, error: new Error('boom') },
+      });
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f3' } });
       });
 
-      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-reresolving', 'true');
+      expect(screen.getByTestId('provisioned-form')).toHaveAttribute('data-held', 'true');
       expect(screen.getByText('Error loading form')).toBeInTheDocument();
       expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument();
+    });
+
+    it('keeps the database form up while a folder picked in it resolves', async () => {
+      let repoState = view({ isProvisioned: true, repository: folderlessRepo });
+      jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
+
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ uid: '', version: 0 });
+      openAndRender();
+
+      expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'Typed');
+
+      // The pick lands in live meta before the lookup settles; the held root view must still decide
+      repoState = view({
+        isProvisioned: true,
+        repository: folderlessRepo,
+        isHeld: true,
+        lookup: { status: RepoViewStatus.Loading },
+      });
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f1' } });
+      });
+
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
+      expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+
+      repoState = view({ isProvisioned: false, folderUid: 'f1' });
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta } });
+      });
+
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
+      expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /instead$/ })).not.toBeInTheDocument();
+    });
+
+    it("warns when a new save's first lookup already dead-ends, and still offers the database form", async () => {
+      jest
+        .mocked(useDashboardRepositoryView)
+        .mockReturnValue(view({ status: RepoViewStatus.Orphaned, orphanedRepoName: 'ghost', isMissingRepo: true }));
+
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ uid: '', version: 0 });
+      openAndRender();
+
+      expect(
+        await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)
+      ).toBeInTheDocument();
+      expect(screen.getByText('The selected folder cannot be saved to')).toBeInTheDocument();
+      expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
     });
 
     it('titles a stored provisioned dashboard as provisioned, but never a new save', async () => {
@@ -610,7 +665,7 @@ describe('SaveDashboardDrawer', () => {
         .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
 
       const fresh = setup();
-      fresh.dashboard.setState({ version: 0 });
+      fresh.dashboard.setState({ uid: '', version: 0 });
       fresh.openAndRender();
       expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeInTheDocument();
 
@@ -624,7 +679,7 @@ describe('SaveDashboardDrawer', () => {
       const { dashboard, openAndRender } = setup();
 
       act(() => {
-        dashboard.setState({ version: 0, tags: ['my-tag'] });
+        dashboard.setState({ uid: '', version: 0, tags: ['my-tag'] });
       });
 
       openAndRender();

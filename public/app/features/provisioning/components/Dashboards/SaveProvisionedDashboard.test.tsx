@@ -4,7 +4,12 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -309,5 +314,19 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
 
     expect(screen.getByRole('textbox', { name: /^title$/i })).toHaveValue('My Dash Copy');
     expect(filename()).toBe('my-dash-copy.json');
+  });
+
+  it('resolves a new save whose manager annotation names a deleted repository from the root instead of dead-ending', async () => {
+    renderDrawer({
+      folderUid: undefined,
+      k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'ghost-repo' } },
+    });
+
+    // The Git form for the folderless root, not the database form and not an orphaned notice
+    expect(await screen.findByRole('textbox', { name: /^title$/i })).toBeInTheDocument();
+    expect(repositoryFolder()).toBe('');
+    await waitFor(() => expect(filename()).toBe('my-dash.json'));
+    expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument();
+    expect(screen.queryByText(/no longer exists/)).not.toBeInTheDocument();
   });
 });

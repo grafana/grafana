@@ -18,6 +18,7 @@ import {
   isNameExistsError,
   nextMetaAfterFolderPick,
 } from './shared';
+import { useParkSaveFormDraft } from './useParkSaveFormDraft';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -77,11 +78,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
     };
   }, []);
 
-  // Park what is typed as it changes rather than on unmount: React renders the form that takes
-  // over before this one's cleanup runs, so an unmount write would reach it one swap too late
-  useEffect(() => {
-    drawer.saveFormDraft = { title: formValues.title, description: formValues.description };
-  }, [drawer, formValues.title, formValues.description]);
+  useParkSaveFormDraft(drawer, formValues.title, formValues.description);
 
   const onFolderChange = useCallback(
     (uid: string | undefined, title: string | undefined) => {

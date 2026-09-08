@@ -18,13 +18,11 @@ export interface SaveProvisionedDashboardProps {
 
 interface Props extends SaveProvisionedDashboardProps {
   view: DashboardRepositoryView;
-  /** The picked folder has not resolved (loading, or a dead end), so the defaults still describe the previous one */
-  isReresolving: boolean;
 }
 
-export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy, view, isReresolving }: Props) {
+export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy, view }: Props) {
   const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    useProvisionedDashboardData(dashboard, view, { saveAsCopy, draft: drawer.saveFormDraft });
+    useProvisionedDashboardData(dashboard, view, { saveAsCopy, ...drawer.saveFormDraft });
 
   return (
     <ProvisionedFormGate
@@ -43,7 +41,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
-        isReresolving={isReresolving}
+        isHeld={view.isHeld}
       />
     </ProvisionedFormGate>
   );
