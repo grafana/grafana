@@ -1,7 +1,5 @@
-import { type SceneGridItemLike, VizPanel } from '@grafana/scenes';
+import { type SceneGridItemLike, type SceneObject, VizPanel } from '@grafana/scenes';
 
-import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type DashboardDropTarget } from '../../scene/types/DashboardDropTarget';
 import { moveElement } from '../element/moveElement';
 
@@ -14,6 +12,15 @@ interface MoveGridItemProps {
 }
 
 /**
+ * Checked structurally (rather than `instanceof AutoGridItem`/`DashboardGridItem`) to avoid
+ * importing those classes here: they pull in the whole dashboard-scene module graph, which
+ * loops back through DashboardScene -> DashboardLayoutOrchestrator -> this file.
+ */
+function isGridItemWithPanel(item: SceneObject | undefined): item is SceneGridItemLike & { state: { body: VizPanel } } {
+  return !!item && 'body' in item.state && item.state.body instanceof VizPanel;
+}
+
+/**
  * Moves a grid item from source to destination as a single undoable action.
  */
 export function moveGridItem({
@@ -23,13 +30,10 @@ export function moveGridItem({
   originalIndex,
   destinationIndex,
 }: MoveGridItemProps): void {
-  if (!(gridItem instanceof AutoGridItem || gridItem instanceof DashboardGridItem)) {
+  if (!isGridItemWithPanel(gridItem)) {
     return;
   }
   const panel = gridItem.state.body;
-  if (!(panel instanceof VizPanel)) {
-    return;
-  }
 
   moveElement({
     source,
@@ -39,7 +43,7 @@ export function moveGridItem({
     selectOnMove: false,
     perform: () => {
       const currentWrapper = panel.parent;
-      if (!(currentWrapper instanceof AutoGridItem || currentWrapper instanceof DashboardGridItem)) {
+      if (!isGridItemWithPanel(currentWrapper)) {
         return;
       }
       source.draggedGridItemOutside?.(currentWrapper);
@@ -47,7 +51,7 @@ export function moveGridItem({
     },
     undo: () => {
       const currentWrapper = panel.parent;
-      if (!(currentWrapper instanceof AutoGridItem || currentWrapper instanceof DashboardGridItem)) {
+      if (!isGridItemWithPanel(currentWrapper)) {
         return;
       }
       destination.draggedGridItemOutside?.(currentWrapper);
