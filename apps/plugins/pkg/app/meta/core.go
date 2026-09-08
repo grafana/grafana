@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 )
 
 const (
@@ -48,6 +49,9 @@ type CoreProviderOpts struct {
 	// so that the frontend can prepend a CDN domain. Set to true when running in
 	// standalone (MT apiserver) mode.
 	CDNAssets bool
+	// PluginSettings mirrors setting.Cfg.PluginSettings so core plugins marked
+	// [plugin.<id>] as_external = true are skipped during discovery.
+	PluginSettings config.PluginSettings
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
@@ -58,15 +62,21 @@ func NewCoreProvider(logger logging.Logger, opts CoreProviderOpts) (*CoreProvide
 		return nil, err
 	}
 
-	return NewCoreProviderWithTTL(logger, staticRootPath, opts.CDNAssets, defaultCoreTTL), nil
+	return NewCoreProviderWithTTLAndSettings(logger, staticRootPath, opts.CDNAssets, defaultCoreTTL, opts.PluginSettings), nil
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
 func NewCoreProviderWithTTL(logger logging.Logger, staticRootPath string, cdnAssets bool, ttl time.Duration) *CoreProvider {
+	return NewCoreProviderWithTTLAndSettings(logger, staticRootPath, cdnAssets, ttl, nil)
+}
+
+// NewCoreProviderWithTTLAndSettings creates a new CoreProvider that honors
+// [plugin.<id>] as_external = true from the provided PluginSettings.
+func NewCoreProviderWithTTLAndSettings(logger logging.Logger, staticRootPath string, cdnAssets bool, ttl time.Duration, pluginSettings config.PluginSettings) *CoreProvider {
 	return &CoreProvider{
 		loadedPlugins:  make(map[string]pluginsv0alpha1.MetaSpec),
 		ttl:            ttl,
-		loader:         createLoader(cdnAssets, staticRootPath),
+		loader:         createLoader(cdnAssets, staticRootPath, pluginSettings),
 		staticRootPath: staticRootPath,
 		logger:         logger,
 	}
@@ -152,11 +162,13 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 }
 
 // createLoader creates a loader service configured for core plugins.
-func createLoader(cdnAssets bool, staticRootPath string) pluginsLoader.Service {
-	cfg := &config.PluginManagementCfg{}
+func createLoader(cdnAssets bool, staticRootPath string, pluginSettings config.PluginSettings) pluginsLoader.Service {
+	cfg := &config.PluginManagementCfg{PluginSettings: pluginSettings}
 	d := discovery.New(cfg, discovery.Opts{
 		FilterFuncs: []discovery.FilterFunc{
-			// Allow all plugin types for core plugins
+			func(_ context.Context, c plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+				return pipeline.NewAsExternalStep(cfg).Filter(c, b)
+			},
 		},
 	})
 	b := bootstrap.New(cfg, bootstrap.Opts{

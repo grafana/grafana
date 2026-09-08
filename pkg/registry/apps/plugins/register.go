@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -61,6 +62,7 @@ func ProvideAppInstaller(
 		StaticRootPath: func() (string, error) {
 			return getStaticRootPath(cfgProvider, logger)
 		},
+		PluginSettings: pluginSettingsFromProvider(cfgProvider, logger),
 	})
 	if err != nil {
 		return nil, err
@@ -85,6 +87,15 @@ func ProvideAppInstaller(
 		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
+}
+
+func pluginSettingsFromProvider(cfgProvider configprovider.ConfigProvider, logger logging.Logger) config.PluginSettings {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		logger.Warn("Could not load plugin settings; as_external will not be honored by core meta discovery", "error", err)
+		return nil
+	}
+	return cfg.PluginSettings
 }
 
 func getStaticRootPath(cfgProvider configprovider.ConfigProvider, logger logging.Logger) (string, error) {
