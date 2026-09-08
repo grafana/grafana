@@ -9125,6 +9125,7 @@
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
+      "error-indicator": "Trace has errors",
       "errors": "Errors",
       "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
@@ -9143,10 +9144,12 @@
       "share-group": "Share",
       "share-tooltip": "Share and feedback",
       "start-time": "Start time",
+      "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": "Trace has client errors"
     },
     "trace-view": {
       "adaptive-traces-restored": {
