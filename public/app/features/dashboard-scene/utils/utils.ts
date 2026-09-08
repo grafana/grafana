@@ -1,7 +1,8 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -40,6 +41,8 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
+import { getVizPanelKeyForPanelId } from './utils-panels';
+
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 
@@ -48,19 +51,11 @@ const V1_PANEL_PROPERTIES = {
   COLLAPSED: 'collapsed',
 } as const;
 
-export function getVizPanelKeyForPanelId(panelId: number) {
-  return `panel-${panelId}`;
-}
-
 /**
  * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
-}
-
-export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
 /**
@@ -288,12 +283,12 @@ export function getDefaultPluginId(): string {
   return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
-export function getDefaultVizPanel(): VizPanel {
+export async function getDefaultVizPanel(): Promise<VizPanel> {
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
-  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+  const datasourceSettings = await getDataSourceInstanceSettings(null);
 
   return new VizPanel({
     title: newPanelTitle,
@@ -406,10 +401,6 @@ export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivat
  * Useful when rendering a scene object out of context of it's parent
  */
 export const activateInActiveParents = activateSceneObjectAndParentTree;
-
-export function getGridItemKeyForPanelId(panelId: number): string {
-  return `grid-item-${panelId}`;
-}
 
 export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);

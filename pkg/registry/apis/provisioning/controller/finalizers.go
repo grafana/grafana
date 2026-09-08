@@ -75,8 +75,7 @@ func (f *finalizer) process(ctx context.Context,
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
-			webhookRepo, ok := repo.(repository.WebhookRepository)
-			if ok {
+			if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
 				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome

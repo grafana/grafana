@@ -107,9 +107,9 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getLayoutForObject,
-  getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
@@ -1170,9 +1170,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return addNewRowTo(this.state.body);
   }
 
-  public onCreateNewPanel(): VizPanel {
+  public async onCreateNewPanel(): Promise<VizPanel> {
     const profiler = getDashboardSceneProfiler();
-    const vizPanel = getDefaultVizPanel();
+    const vizPanel = await getDefaultVizPanel();
     profiler.attachProfilerToPanel(vizPanel);
 
     this.addPanel(vizPanel);

@@ -141,6 +141,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
+	progress.SetTotal(ctx, len(changes))
 
 	for _, change := range changes {
 		if ctx.Err() != nil {
@@ -151,10 +152,29 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender))
+		fileInfo := e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender)
+		info.Changes = append(info.Changes, fileInfo)
+		progress.RecordDryRun(ctx, previewResult(fileInfo))
 	}
 
 	return info, nil
+}
+
+func previewResult(info fileChangeInfo) jobs.JobResourceResult {
+	action := info.Change.Action
+	if info.Error != "" && info.Parsed == nil {
+		action = repository.FileActionIgnored
+	}
+
+	result := jobs.NewPathOnlyResult(info.Change.Path).
+		WithAction(action).
+		WithPreviousPath(info.Change.PreviousPath)
+
+	if info.Parsed != nil && info.Parsed.Obj != nil {
+		result.WithGVK(info.Parsed.GVK).WithName(info.Parsed.Obj.GetName())
+	}
+
+	return result.Build()
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind

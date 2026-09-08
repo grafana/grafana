@@ -423,6 +423,23 @@ describe('<SignalExplorer />', () => {
       expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
     });
 
+    // Neither ref carries a uid, so only the type tells the two catalogs apart.
+    it('closes when a query with a type-only datasource ref moves to another Prometheus flavor', async () => {
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      const typeOnlyQuery = (type: string) => ({ refId: 'A', datasource: { type } }) as DataQuery;
+
+      const { user, rerender } = await setup([typeOnlyQuery('prometheus')]);
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await selectUpIn(user, 'A');
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+
+      rerender(explorer([typeOnlyQuery('grafana-amazonprometheus-datasource')]));
+
+      // Still expanded, so the panel closed on the catalog behind it rather than on the card.
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
     // A new range fetches a new catalog, which need not still hold the metric.
     it('closes when the time range changes', async () => {
       const { user, rerender } = await openCard('A');

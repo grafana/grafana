@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -24,6 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
+
+// stubPreviewProgress allows the progress bookkeeping Evaluate does for every
+// change, so cases that only care about the comment don't have to expect it.
+func stubPreviewProgress(progress *jobs.MockJobProgressRecorder) {
+	progress.On("SetTotal", mock.Anything, mock.Anything).Return().Maybe()
+	progress.On("RecordDryRun", mock.Anything, mock.Anything).Return().Maybe()
+}
 
 func TestCalculateChanges(t *testing.T) {
 	tests := []struct {
@@ -1389,6 +1397,7 @@ func TestCalculateChanges(t *testing.T) {
 			parser := resources.NewMockParser(t)
 			reader := repository.NewMockReader(t)
 			progress := jobs.NewMockJobProgressRecorder(t)
+			stubPreviewProgress(progress)
 			renderer := NewMockScreenshotRenderer(t)
 			parserFactory := resources.NewMockParserFactory(t)
 
@@ -1496,6 +1505,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -1559,6 +1569,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -1635,6 +1646,7 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process team/_folder.json").Return()
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -1720,6 +1732,7 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process team/_folder.json").Return()
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -1789,6 +1802,7 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(true)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process playlist.json").Return()
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -1824,6 +1838,7 @@ func TestEvaluate_StopsWhenContextIsCanceled(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
 		Internal: func(_ context.Context, _ string) string { return "http://host/" },
@@ -1893,6 +1908,7 @@ func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -2206,4 +2222,212 @@ func TestOrgIDForLinks(t *testing.T) {
 			require.Equal(t, tt.want, orgIDForLinks(tt.namespace))
 		})
 	}
+}
+
+// recordPreviewedResults captures every result Evaluate records, so tests can
+// assert on the job summary a pull request preview produces.
+func recordPreviewedResults(progress *jobs.MockJobProgressRecorder) *[]jobs.JobResourceResult {
+	recorded := &[]jobs.JobResourceResult{}
+	progress.On("SetTotal", mock.Anything, mock.Anything).Return()
+	progress.On("RecordDryRun", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		*recorded = append(*recorded, args.Get(1).(jobs.JobResourceResult))
+	}).Return()
+	return recorded
+}
+
+func dashboardObject(name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": resources.DashboardResource.GroupVersion().String(),
+			"kind":       dashboardKind,
+			"metadata":   map[string]interface{}{"name": name, "namespace": "x"},
+			"spec":       map[string]interface{}{"title": name},
+		},
+	}
+}
+
+// A preview applies nothing, but the job summary should still report which
+// resources the pull request would create, update and delete — that count is
+// what the duration histogram buckets on.
+func TestEvaluate_RecordsWhatThePullRequestWouldChange(t *testing.T) {
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	})
+
+	parser := resources.NewMockParser(t)
+	for _, tc := range []struct {
+		path string
+		ref  string
+		name string
+	}{
+		{"created.json", "ref", "uid-created"},
+		{"updated.json", "ref", "uid-updated"},
+		{"deleted.json", "base", "uid-deleted"},
+	} {
+		finfo := &repository.FileInfo{Path: tc.path, Ref: tc.ref, Data: []byte("xxxx")}
+		obj := dashboardObject(tc.name)
+		meta, _ := utils.MetaAccessor(obj)
+
+		reader.On("Read", mock.Anything, tc.path, tc.ref).Return(finfo, nil)
+		parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+			Info:           finfo,
+			Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+			GVK:            schema.GroupVersionKind{Group: dashboard.GROUP, Kind: dashboardKind},
+			Obj:            obj,
+			Meta:           meta,
+			DryRunResponse: obj,
+		}, nil)
+	}
+	// Reading the base revision drives the stripped-metadata check on updates only.
+	reader.On("Read", mock.Anything, "updated.json", "").Return(nil, repository.ErrFileNotFound)
+	// The unreadable file is the one that cannot be previewed at all.
+	reader.On("Read", mock.Anything, "broken.json", "ref").Return(nil, repository.ErrFileNotFound)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	recorded := recordPreviewedResults(progress)
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	_, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "created.json", Ref: "ref"},
+		{Action: repository.FileActionUpdated, Path: "updated.json", Ref: "ref"},
+		{Action: repository.FileActionDeleted, Path: "deleted.json", PreviousRef: "base"},
+		{Action: repository.FileActionCreated, Path: "broken.json", Ref: "ref"},
+	}, progress)
+	require.NoError(t, err)
+
+	require.Len(t, *recorded, 4)
+	for _, result := range *recorded {
+		require.NoError(t, result.Error(), "a preview must not fail the job")
+		require.NoError(t, result.Warning(), "a preview must not warn")
+	}
+
+	byPath := map[string]jobs.JobResourceResult{}
+	for _, result := range *recorded {
+		byPath[result.Path()] = result
+	}
+
+	require.Equal(t, repository.FileActionCreated, byPath["created.json"].Action())
+	require.Equal(t, "uid-created", byPath["created.json"].Name())
+	require.Equal(t, dashboardKind, byPath["created.json"].Kind())
+	require.Equal(t, dashboard.GROUP, byPath["created.json"].Group())
+
+	require.Equal(t, repository.FileActionUpdated, byPath["updated.json"].Action())
+	require.Equal(t, repository.FileActionDeleted, byPath["deleted.json"].Action())
+
+	// Unreadable: it counts as neither a change nor a failure.
+	require.Equal(t, repository.FileActionIgnored, byPath["broken.json"].Action())
+}
+
+// A file that parses successfully but fails its dry-run validation still
+// describes a real create/update/delete -- previewResult must not misclassify
+// it as Ignored (which would undercount the job summary as a Noop instead).
+// Only a file that was never parsed at all has a genuinely unknown action.
+func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	})
+
+	finfo := &repository.FileInfo{Path: "invalid.json", Ref: "ref", Data: []byte("xxxx")}
+	obj := dashboardObject("uid-invalid")
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader.On("Read", mock.Anything, "invalid.json", "ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info: finfo,
+		Repo: provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:  schema.GroupVersionKind{Group: dashboard.GROUP, Kind: dashboardKind},
+		Obj:  obj,
+		Meta: meta,
+		// No Client and no DryRunResponse: DryRun fails with "no client configured".
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	recorded := recordPreviewedResults(progress)
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "invalid.json", Ref: "ref"},
+	}, progress)
+	require.NoError(t, err)
+
+	require.Len(t, info.Changes, 1)
+	require.NotEmpty(t, info.Changes[0].Error, "dry-run failure should surface as a comment error")
+
+	require.Len(t, *recorded, 1)
+	require.Equal(t, repository.FileActionCreated, (*recorded)[0].Action(), "a dry-run failure is a real create, not Ignored")
+}
+
+// Only the first few files make it into the rendered comment table (see
+// changeInfo.DisplayedChanges in comment.go), but Evaluate itself still
+// evaluates and records every file — so the resources-dryrun bucket reflects
+// the whole diff, not just what the comment displays.
+func TestEvaluate_RecordsEveryFileForJobSummary(t *testing.T) {
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	})
+	// Deletions we cannot read still describe a resource the merge would remove.
+	reader.On("Read", mock.Anything, mock.Anything, "base").Return(nil, repository.ErrFileNotFound)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(resources.NewMockParser(t), nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	recorded := recordPreviewedResults(progress)
+
+	changes := make([]repository.VersionedFileChange, 0, 12)
+	for i := 0; i < 12; i++ {
+		changes = append(changes, repository.VersionedFileChange{
+			Action:      repository.FileActionDeleted,
+			Path:        fmt.Sprintf("dashboards/%d.json", i),
+			PreviousRef: "base",
+		})
+	}
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, changes, progress)
+	require.NoError(t, err)
+
+	require.Len(t, info.Changes, 12, "every file is evaluated")
+
+	require.Len(t, *recorded, 12, "every file in the diff is recorded")
+	require.Equal(t, "dashboards/11.json", (*recorded)[11].Path())
+	require.Equal(t, repository.FileActionDeleted, (*recorded)[11].Action())
 }
