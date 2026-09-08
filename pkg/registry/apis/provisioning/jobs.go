@@ -397,13 +397,22 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		}
 		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
-		if spec.Delete != nil {
-			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources, spec.Delete.Ref, true)
+		// Unlike push/migrate/fixFolderMetadata, delete has no unconditional
+		// Editor check above - its authorization *is* the per-path/resource
+		// checks in authorizeDeleteJob. A nil Delete must be rejected outright
+		// rather than silently falling through as authorized: the job would
+		// still be queued and only fail later, at the worker, having skipped
+		// authorization entirely.
+		if spec.Delete == nil {
+			return apierrors.NewBadRequest("delete jobs require spec.delete options")
 		}
+		return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources, spec.Delete.Ref, true)
 	case provisioning.JobActionMove:
-		if spec.Move != nil {
-			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
+		// See the identical reasoning in the Delete case above.
+		if spec.Move == nil {
+			return apierrors.NewBadRequest("move jobs require spec.move options")
 		}
+		return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
 	case provisioning.JobActionFixFolderMetadata:
 		// fixFolderMetadata has no path/resource-level checks of its own, so it must
 		// stay Editor-only now that job creation isn't gated on jobs:create up front.
@@ -668,12 +677,18 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 	// ref's *current* Grafana state - but the worker resolves that same ref to
 	// its current sourcePath and deletes that path from opts.Ref. If the
 	// request targets a different branch, either path can diverge from what
-	// actually gets deleted there under the provisioning identity, so require
-	// Editor instead - the same protection this had before these checks became
-	// reachable by non-Editors. Applies regardless of whether the target came
-	// from paths or resources.
+	// actually gets deleted there under the provisioning identity, so also
+	// require Editor - the same protection this had before these checks became
+	// reachable by non-Editors. This is additive, not a substitute: it must not
+	// return early on success, since that would skip the per-path/resource
+	// checks below entirely and let any Editor (including one with a
+	// restricted custom role) act on paths they otherwise have no permission
+	// on. Applies regardless of whether the target came from paths or
+	// resources.
 	if ref != "" && ref != cfg.Branch() {
-		return c.authorizeEditorJob(ctx, cfg)
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 	}
 
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
@@ -713,10 +728,15 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 
 	// See the identical guard in authorizeDeleteJob: neither the path-based nor
 	// the resource-ref-based check is ref-aware, so a request targeting a
-	// different branch than configured falls back to requiring Editor,
-	// regardless of whether the target came from paths or resources.
+	// different branch than configured also requires Editor, regardless of
+	// whether the target came from paths or resources. This is additive - it
+	// must not return early on success, or it would skip the per-path/resource
+	// checks below and let any Editor act on paths they otherwise have no
+	// permission on.
 	if opts.Ref != "" && opts.Ref != cfg.Branch() {
-		return c.authorizeEditorJob(ctx, cfg)
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 	}
 
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)

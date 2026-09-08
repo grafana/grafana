@@ -171,6 +171,32 @@ func TestValidateSingleJobAction(t *testing.T) {
 	}
 }
 
+// TestDeleteMoveRequireOptions covers a gap validateSingleJobAction doesn't:
+// Action: delete/move with a nil Delete/Move field passes validateSingleJobAction
+// (nothing is populated to conflict), but previously fell through authorizeJob's
+// switch silently as authorized - the job would be queued and only fail later,
+// at the worker, having skipped authorization entirely.
+func TestDeleteMoveRequireOptions(t *testing.T) {
+	cfg := newTestRepo("my-repo", "default")
+	c := &jobsConnector{}
+
+	t.Run("delete with nil options is rejected", func(t *testing.T) {
+		err := c.authorizeJob(context.Background(), nil, cfg, provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+	})
+
+	t.Run("move with nil options is rejected", func(t *testing.T) {
+		err := c.authorizeJob(context.Background(), nil, cfg, provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+	})
+}
+
 func TestFixFolderMetadataFeatureGate(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
@@ -998,36 +1024,78 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		assert.True(t, apierrors.IsBadRequest(err))
 	})
 
-	t.Run("path targeting a different branch falls back to editor gate", func(t *testing.T) {
+	t.Run("path targeting a different branch requires editor gate plus the usual per-path check", func(t *testing.T) {
 		// AuthorizeDeleteByPath has no concept of ref - it always reads from the
 		// configured branch - so a path-based delete against a different branch
-		// can't be safely authorized per-path and must require Editor instead.
+		// also requires Editor. This is additive: the per-path check still runs
+		// and still must pass.
 		editorChecker := auth.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
+		}), mock.AnythingOfType("string")).Return(nil)
 
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, nil, "feature-branch", true)
 		require.NoError(t, err)
 	})
 
-	t.Run("resource ref targeting a different branch also falls back to editor gate", func(t *testing.T) {
-		// authorizeResourceRefs authorizes the ref's *current* Grafana state, but
-		// the worker resolves it to its current sourcePath and deletes that path
-		// from the caller-supplied ref - which can be a different branch with
-		// unrelated content at that path. The guard must apply here too, not
-		// just for path-based targets, and without ever resolving the ref
-		// (no client/dynamic mocks set up - a regression would panic on a nil
-		// call rather than silently pass).
+	t.Run("editor gate on a different branch does not bypass a denied per-path check", func(t *testing.T) {
+		// The critical regression this guards against: being Editor must not
+		// short-circuit past the per-path check. An Editor with a restricted
+		// custom role that denies this specific path must still be denied,
+		// even on a different branch.
 		editorChecker := auth.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(forbidden)
 
 		mockReader := repository.NewMockReader(t)
-		c := &jobsConnector{access: accessMock}
+		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"restricted/dashboard.json"}, nil, "feature-branch", true)
+		require.Error(t, err)
+	})
+
+	t.Run("resource ref targeting a different branch requires editor gate plus the usual per-resource check", func(t *testing.T) {
+		// authorizeResourceRefs authorizes the ref's *current* Grafana state, but
+		// the worker resolves it to its current sourcePath and deletes that path
+		// from the caller-supplied ref - which can be a different branch with
+		// unrelated content at that path. The guard must apply here too, not
+		// just for path-based targets, and it's additive: the per-resource check
+		// still runs and still must pass.
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
+		}), "folder-abc").Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		clientsMock := resources.NewMockClientFactory(t)
+
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "my-dash", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructured("my-dash", "folder-abc"), nil)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: "dashboard.grafana.app", Kind: "Dashboard",
+		}).Return(dynClient, dashGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
 			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		}, "feature-branch", true)
@@ -1174,16 +1242,26 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		assert.True(t, apierrors.IsBadRequest(err))
 	})
 
-	t.Run("path targeting a different branch falls back to editor gate", func(t *testing.T) {
+	t.Run("path targeting a different branch requires editor gate plus the usual per-path check", func(t *testing.T) {
 		// AuthorizeMoveByPath has no concept of ref - it always reads from the
 		// configured branch - so a path-based move against a different branch
-		// can't be safely authorized per-path and must require Editor instead.
+		// also requires Editor. This is additive: the per-path check still runs
+		// and still must pass.
 		editorChecker := auth.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(nil).Once()
 
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
 			Paths:      []string{"team-a/dashboard.json"},
@@ -1193,19 +1271,62 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("resource ref targeting a different branch also falls back to editor gate", func(t *testing.T) {
-		// Same reasoning as the delete case: the worker resolves the ref to its
-		// current sourcePath and moves that path within the caller-supplied ref,
-		// which can be a different branch with unrelated content at that path.
-		// No client/dynamic mocks are set up, so a regression here would panic
-		// on a nil call rather than silently pass.
+	t.Run("editor gate on a different branch does not bypass a denied per-path check", func(t *testing.T) {
+		// The critical regression this guards against: being Editor must not
+		// short-circuit past the per-path check. An Editor with a restricted
+		// custom role that denies this specific path must still be denied,
+		// even on a different branch.
 		editorChecker := auth.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(forbidden).Once()
 
 		mockReader := repository.NewMockReader(t)
-		c := &jobsConnector{access: accessMock}
+		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+			Paths:      []string{"restricted/dashboard.json"},
+			TargetPath: "dest/",
+			Ref:        "feature-branch",
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("resource ref targeting a different branch requires editor gate plus the usual per-resource check", func(t *testing.T) {
+		// Same reasoning as the delete case: the worker resolves the ref to its
+		// current sourcePath and moves that path within the caller-supplied ref,
+		// which can be a different branch with unrelated content at that path.
+		// It's additive: the per-resource check still runs and still must pass.
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbUpdate
+		}), "folder-abc").Return(nil)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(cfg).Maybe()
+		clientsMock := resources.NewMockClientFactory(t)
+
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "my-dash", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructured("my-dash", "folder-abc"), nil)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: "dashboard.grafana.app", Kind: "Dashboard",
+		}).Return(dynClient, dashGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
 			Resources: []provisioning.ResourceRef{
 				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
