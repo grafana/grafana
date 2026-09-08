@@ -69,7 +69,8 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	}
 	storeProvider := store.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, experimentalKVOptions, hooksService, storeProvider, v)
+	stateStore := authz.ProvideNoopZanzanaReconcilerState()
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, experimentalKVOptions, hooksService, storeProvider, v, stateStore)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +115,7 @@ var ossBaseCLISet = wire.NewSet(
 
 var moduleServerSet = wire.NewSet(
 	NewModule,
-	ossBaseCLISet, tracing.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs,
+	ossBaseCLISet, tracing.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideNoopZanzanaReconcilerState,
 )
 
 var dashboardStatsSet = wire.NewSet(builders.ProvideDashboardStats, wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)))

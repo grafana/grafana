@@ -127,8 +127,9 @@ func TestEnsureNamespace_ShortCircuitsOnCachedNamespace(t *testing.T) {
 }
 
 func TestEnsureNamespace_ExistingStoreIsCachedWithoutReconcile(t *testing.T) {
-	// Store already exists → GetOrCreateStore and reconcile must be skipped,
-	// but the namespace should still be cached.
+	// Fallback behaviour for deployments with no state store: an existing store
+	// is the only signal available, so it is taken as reconciled and
+	// GetOrCreateStore and reconcile are skipped.
 	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{{ID: "store-1", Name: "existing-ns"}}}
 	r := newReconcilerForTest(srv, notFoundClientFactory{})
 

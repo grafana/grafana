@@ -53,6 +53,7 @@ var moduleServerSet = wire.NewSet(
 	sql.ProvideExperimentalKV,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
+	authz.ProvideNoopZanzanaReconcilerState,
 )
 
 var dashboardStatsSet = wire.NewSet(

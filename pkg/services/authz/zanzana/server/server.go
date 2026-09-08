@@ -74,25 +74,52 @@ type Server struct {
 	nsLimiterSize     int64
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector) (*Server, error) {
+// Option configures optional server dependencies.
+type Option func(*options)
+
+type options struct {
+	reconcilerState reconciler.StateStore
+}
+
+// WithReconcilerState gives the MT reconciler somewhere to record which
+// namespaces it has reconciled, so the knowledge survives a restart. Without
+// it the reconciler can only tell that a namespace has a store, which the
+// mutation hooks create without reconciling anything.
+func WithReconcilerState(store reconciler.StateStore) Option {
+	return func(o *options) {
+		o.reconcilerState = store
+	}
+}
+
+func newOptions(opts []Option) options {
+	var o options
+	for _, apply := range opts {
+		apply(&o)
+	}
+	return o
+}
+
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, opts ...Option) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, elector)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, elector, opts...)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector) (*Server, error) {
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, opts ...Option) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, elector)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, elector, opts...)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, opts ...Option) (*Server, error) {
+	serverOpts := newOptions(opts)
+
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -188,6 +215,12 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 	var mtReconciler zanzana.MTReconciler
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		if serverOpts.reconcilerState == nil {
+			logger.Warn("Reconciliation state will not be persisted; namespaces with an existing store " +
+				"are assumed to be reconciled, so permissions written by mutation hooks before the first " +
+				"reconciliation may be incomplete until the next reconciler interval")
+		}
+
 		mtReconciler = reconciler.NewReconciler(
 			s,
 			clientFactory,
@@ -204,6 +237,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			tracer,
 			reg,
 			elector,
+			serverOpts.reconcilerState,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()
