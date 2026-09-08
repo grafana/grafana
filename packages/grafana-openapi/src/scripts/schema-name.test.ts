@@ -82,6 +82,19 @@ describe('buildSchemaNameMap', () => {
     expect(names.get(provisioningResourceRef)).toBe('ProvisioningResourceRef');
   });
 
+  it('treats an import from a sibling group as imported, not as its own', () => {
+    // Every alerting group has 'alerting' in its path, so that label says nothing about
+    // which of them owns the schema.
+    const rulesMatcher = 'com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.Matcher';
+    const notificationsMatcher =
+      'com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.Matcher';
+
+    const names = buildSchemaNameMap([rulesMatcher, notificationsMatcher], 'notifications.alerting.grafana.app');
+
+    expect(names.get(rulesMatcher)).toBe('Matcher');
+    expect(names.get(notificationsMatcher)).toBe('AlertingnotificationsMatcher');
+  });
+
   it('qualifies a hand-registered short name with the group it is published under', () => {
     const names = buildSchemaNameMap(['SearchResults', searchSearchResults], 'dashboard.grafana.app');
 

@@ -42,10 +42,6 @@ export function simplifySchemaName(schemaName: string) {
 // Matches version segments like 'v1', 'v1beta1', 'v0alpha1'.
 const VERSION_REGEX = /^v\d+[a-zA-Z0-9]*$/;
 
-// Labels every Grafana API group shares, so they say nothing about which package a
-// schema belongs to.
-const IGNORED_GROUP_LABELS = new Set(['grafana', 'app']);
-
 /**
  * The path segments in front of the version, e.g.
  * 'com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults' gives
@@ -74,17 +70,18 @@ function isGrafanaPath(schemaName: string) {
 
 /**
  * Whether the schema belongs to the group the document describes, as opposed to being
- * imported from a shared package. Group and package names do not line up exactly -
- * 'correlations.grafana.app' is served from a package called 'correlation' - so a single
- * matching segment is enough.
+ * imported from another package. Only the group's own label counts, never the ones it
+ * shares with its siblings: 'alerting' appears in the path of every alerting group, so
+ * matching on it would make an import from a sibling group look local, and the same
+ * imported type would then be published under different names in different clients.
+ *
+ * The label is looked for anywhere in the path rather than in the package name alone,
+ * because the two do not line up exactly - 'correlations.grafana.app' is served from a
+ * package called 'correlation', below a directory called 'correlations'.
  */
 function belongsToGroup(schemaName: string, group: string) {
-  const labels = group
-    .split('.')
-    .filter((label) => label && !IGNORED_GROUP_LABELS.has(label))
-    .map((label) => label.toLowerCase());
-  const segments = new Set(packageSegments(schemaName).map((segment) => segment.toLowerCase()));
-  return labels.some((label) => segments.has(label));
+  const label = group.split('.')[0].toLowerCase();
+  return packageSegments(schemaName).some((segment) => segment.toLowerCase() === label);
 }
 
 /**
