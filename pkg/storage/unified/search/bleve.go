@@ -1280,7 +1280,11 @@ func (a *adaptiveBuildIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
+	// Copying the index to disk is work this batch caused, so it is reported
+	// rather than left unaccounted.
+	promoteStart := time.Now()
 	promoted, fileIndexName, cleanupDir, err := a.promote(a.bleveIndex)
+	a.recordPromotePhase(req.Path, time.Since(promoteStart))
 	if err != nil {
 		return err
 	}
@@ -1824,6 +1828,32 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
+	mapStart := time.Now()
+	batch, mapErr := b.mapBatch(req)
+	mapElapsed := time.Since(mapStart)
+	if mapErr != nil {
+		// The time still counts, so a batch that fails to map is not missing from
+		// the metrics.
+		b.recordBatchPhases(req.Path, mapElapsed, 0, 0, 0, false)
+		return mapErr
+	}
+
+	// The mutation count is part of writing the batch: it reads and writes the
+	// index's own data, so it belongs to the commit phase. Its failure does not
+	// unmake the write, so the bytes are reported on the batch alone.
+	commitStart := time.Now()
+	commitErr := b.index.Batch(batch)
+	err := commitErr
+	if err == nil {
+		err = b.addSnapshotMutationCount(int64(len(req.Items)))
+	}
+	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize(), len(req.Items), commitErr == nil)
+	return err
+}
+
+// mapBatch turns the request into a bleve batch, mapping each document onto the
+// index schema.
+func (b *bleveIndex) mapBatch(req *resource.BulkIndexRequest) (*bleve.Batch, error) {
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
 	droppedMarkers := 0
@@ -1831,7 +1861,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
-				return fmt.Errorf("missing document")
+				return nil, fmt.Errorf("missing document")
 			}
 
 			// An index built before these fields were mapped drops them, which would
@@ -1861,7 +1891,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case resource.ActionDelete:
 			batch.Delete(resource.SearchID(item.Key))
@@ -1877,10 +1907,33 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			"documents", droppedMarkers)
 	}
 
-	if err := b.index.Batch(batch); err != nil {
-		return err
+	return batch, nil
+}
+
+// recordPromotePhase reports what copying the index to disk cost, for the one
+// batch that crosses the threshold.
+func (a *adaptiveBuildIndex) recordPromotePhase(path string, d time.Duration) {
+	if a.bleveIndex == nil || a.indexMetrics == nil || path == "" {
+		return
 	}
-	return b.addSnapshotMutationCount(int64(len(req.Items)))
+	a.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhasePromote, path, a.key.Group, a.key.Resource).Add(d.Seconds())
+}
+
+// recordBatchPhases separates the CPU spent mapping documents onto the index
+// schema from the write that follows, so a slow index can be told apart from a
+// slow disk. Time counts whether or not the write succeeded, since it was
+// spent; documents and bytes count what the write accepted, which only the
+// index knows. An empty path means the caller is not measuring.
+func (b *bleveIndex) recordBatchPhases(path string, mapped, commit time.Duration, indexedBytes uint64, documents int, committed bool) {
+	if b.indexMetrics == nil || path == "" {
+		return
+	}
+	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseMap, path, b.key.Group, b.key.Resource).Add(mapped.Seconds())
+	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(commit.Seconds())
+	if committed {
+		b.indexMetrics.BuildDocuments.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(float64(documents))
+		b.indexMetrics.BuildIndexedBytes.WithLabelValues(path, b.key.Group, b.key.Resource).Add(float64(indexedBytes))
+	}
 }
 
 // mapsTrashFields reports whether this index can hold everything a deleted

@@ -935,6 +935,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
 /public/app/core/services/__mocks__/backend_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/backend_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/context_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/services/context_srv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/CorrelationsService.ts @grafana/datapro
 /public/app/core/services/echo/ @grafana/grafana-frontend-platform
@@ -951,6 +952,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
 /public/app/core/services/theme* @grafana/grafana-frontend-platform
+/public/app/core/services/userPermissions* @grafana/grafana-frontend-navigation @grafana/identity-access-team
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/factors.test.ts @grafana/dashboards-squad
 /public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform

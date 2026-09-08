@@ -473,7 +473,8 @@
     "linkify-it": "5.0.2",
     "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
     "axios": "1.18.1",
-    "pacote": "21.5.1"
+    "pacote": "21.5.1",
+    "brace-expansion@npm:5.0.6": "^5.0.9"
   },
   "workspaces": {
     "packages": [
