@@ -11,12 +11,10 @@ import {
   notificationsPermissions,
 } from './alertmanagerPermissions';
 
-// Page-level access predicates for the alerting section: one per page, each
-// answering "may this user see this page here and now" from permissions,
-// feature flags and config together. The navigation tree gates items on them,
-// and route guards can gate direct navigation on the same predicate so the two
-// can't drift apart. Kept as a leaf module (no ability-system imports): the nav
-// tree builder calls these during redux store creation.
+// Page-level access predicates for the alerting section, gating nav items and —
+// via the same predicate — route guards, so the two can't drift apart. Keep this
+// a leaf module: the nav tree builder calls these during redux store creation,
+// before the ability system is safe to touch.
 
 // TODO: migrate these to OpenFeature flags. They are legacy-only toggles, so
 // they live solely in the config.featureToggles map, which the multi-tenant
@@ -38,11 +36,8 @@ const stateHistoryServedByLoki = () => {
     : isStateHistoryBackend(stateHistory?.backend, 'loki');
 };
 
-// Permission sets shared by the page predicates below, reused from the ability
-// system's own sets so the two can't drift. They are supersets of the server's
-// nav gates: the ability sets include write and test actions the server's read
-// gate leaves out, which only matters for a custom role granting a write action
-// without the matching read.
+// Reused from the ability system's sets so the two can't drift. Slightly wider
+// than the server's nav gate, which asks for read actions only.
 const alertInstanceAccess = () =>
   hasAny(AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead);
 
@@ -50,8 +45,7 @@ const contactPointsPermissions = () =>
   hasAny(
     ...PERMISSIONS_CONTACT_POINTS,
     ...PERMISSIONS_TEMPLATES,
-    // The shared sets cover the Grafana-managed alertmanager only and omit the
-    // secrets read, so add what the server's nav gate also accepts
+    // Neither set covers external alertmanagers or the secrets read
     notificationsPermissions.read.external,
     AccessControlAction.AlertingReceiversReadSecrets
   );
