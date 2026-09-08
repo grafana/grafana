@@ -119,7 +119,7 @@ export const CustomOptionRendering: Story = {
     width: 40,
     value: undefined,
     options: Array.from({ length: 40 }, (_, index) => ({
-      label: `Service ${index + 1}`,
+      label: `Service ${index + 1}${index === 10 ? ' (this is a very long label to test overflow)' : ''}`,
       value: `service-${index + 1}`,
       group: index < 20 ? 'Core services' : 'Supporting services',
     })),
