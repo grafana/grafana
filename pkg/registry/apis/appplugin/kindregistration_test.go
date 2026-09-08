@@ -138,6 +138,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	t.Run("a kind claiming a taken resource is an error", func(t *testing.T) {
 		for _, plural := range []string{apppluginV0.APP_RESOURCE_NAME, "things"} {
 			b := testBuilder(t, &app.ManifestData{
+				Group: "example.ext.grafana.app",
 				Versions: []app.ManifestVersion{{
 					Name:   "v1",
 					Served: true,

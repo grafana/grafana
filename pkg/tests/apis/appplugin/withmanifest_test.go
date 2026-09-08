@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// Manifest APIs use the plugin ID as their group.
-const thingAPIVersion = testAppID + "/v1"
+// A manifest kind is served under the group the manifest declares, not the plugin id.
+const thingAPIVersion = testAppGroup + "/v1"
 
 // The manifest declares only v1, but a plugin's settings API must keep working
 // after a manifest ships, so v0alpha1 is served alongside the manifest versions.
@@ -33,7 +33,7 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 
 	helper := setupHelperWithManifest(t, rest.Mode5)
 
-	disco, err := helper.GetGroupVersionInfoJSON(testAppID)
+	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
 	require.JSONEq(t, `[
 		{
@@ -233,7 +233,7 @@ func TestIntegrationPluginManifestOpenAPIV2(t *testing.T) {
 
 	raw, err := result.Raw()
 	require.NoError(t, err)
-	require.Contains(t, string(raw), testAppID)
+	require.Contains(t, string(raw), testAppGroup)
 }
 
 // newThing is the body of a valid Thing, ready to be given a name.
@@ -256,7 +256,7 @@ func thingsClient(t *testing.T, helper *apis.K8sTestHelper) dynamic.ResourceInte
 		User:      helper.Org1.Admin,
 		Namespace: "default",
 		GVR: schema.GroupVersionResource{
-			Group:    testAppID,
+			Group:    testAppGroup,
 			Version:  "v1",
 			Resource: "things",
 		},
@@ -489,7 +489,7 @@ func TestIntegrationPluginManifestFolderScopedKind(t *testing.T) {
 		User:      helper.Org1.Admin,
 		Namespace: "default",
 		GVR: schema.GroupVersionResource{
-			Group:    testAppID,
+			Group:    testAppGroup,
 			Version:  "v1",
 			Resource: "widgets",
 		},
@@ -579,7 +579,7 @@ func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 
 	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagPluginStoreServiceLoading)
 
-	disco, err := helper.GetGroupVersionInfoJSON(testAppID)
+	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
 	require.Contains(t, disco, `"resource": "things"`)
 }
@@ -594,7 +594,7 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	client := helper.NewDiscoveryClient().RESTClient()
 	ctx := context.Background()
 
-	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppID + "/v1").DoRaw(ctx)
+	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppGroup + "/v1").DoRaw(ctx)
 	require.NoError(t, err)
 
 	// Parsed rather than string-matched: a failed Contains on the whole spec is
@@ -604,7 +604,7 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal(raw, &doc))
 
-	prefix := "/apis/" + testAppID + "/v1/namespaces/{namespace}/things"
+	prefix := "/apis/" + testAppGroup + "/v1/namespaces/{namespace}/things"
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
 
@@ -620,9 +620,9 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	// Widget declares no search fields, so it is not enrolled -- declaring them
 	// is what marks a kind as reviewed for search.
 	require.NotContains(t, doc.Paths,
-		"/apis/"+testAppID+"/v1/namespaces/{namespace}/widgets/search")
+		"/apis/"+testAppGroup+"/v1/namespaces/{namespace}/widgets/search")
 
-	route := "/apis/" + testAppID + "/v1/namespaces/default/things/thing-route/reload"
+	route := "/apis/" + testAppGroup + "/v1/namespaces/default/things/thing-route/reload"
 
 	// The route resolves its parent before dispatching, so an unknown object is
 	// a 404 and the plugin is never called. A 405 or 404 on the path itself
@@ -634,7 +634,7 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 		User:      helper.Org1.Admin,
 		Namespace: "default",
 		GVR: schema.GroupVersionResource{
-			Group:    testAppID,
+			Group:    testAppGroup,
 			Version:  "v1",
 			Resource: "things",
 		},

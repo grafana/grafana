@@ -235,14 +235,14 @@ func apiGroupForPlugin(plugin definition.PluginDefinition) string {
 	if plugin.Manifest != nil {
 		group := plugin.Manifest.Group
 
-		// For now, an explicit group must end with .ext.grafana.app|com
-		if strings.HasSuffix(group, ".ext.grafana.app") ||
-			strings.HasSuffix(group, ".ext.grafana.com") {
-			return group
+		// Unified storage only always-enforces RBAC on groups ending in
+		// .ext.grafana.app (alwaysEnforced in pkg/storage/unified/resource), so
+		// a group with any other suffix serves the plugin's kinds with no access
+		// check at all in the default configuration.
+		if !strings.HasSuffix(group, ".ext.grafana.app") {
+			panic(fmt.Sprintf("invalid manifest group %q for plugin %s: must end with .ext.grafana.app (otherwise RBAC never runs)", group, plugin.JSONData.ID))
 		}
-		if group != "" && group != plugin.JSONData.ID {
-			panic(fmt.Sprintf("invalid manifest group %q for plugin %s: must be empty or end with .ext.grafana.app or .ext.grafana.com", group, plugin.JSONData.ID))
-		}
+		return group
 	}
 	return plugin.JSONData.ID
 }

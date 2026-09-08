@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
 func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
@@ -160,5 +161,45 @@ func TestGetGroupVersionsFallback(t *testing.T) {
 		require.Equal(t, []schema.GroupVersion{
 			{Group: "example.ext.grafana.app", Version: apppluginV0.VERSION},
 		}, b.GetGroupVersions())
+	})
+}
+
+// The group decides where the plugin's whole API is served, and -- because
+// unified storage only always-enforces RBAC on .ext.grafana.app -- whether its
+// kinds are access checked at all.
+func TestAPIGroupForPlugin(t *testing.T) {
+	plugin := func(group string) definition.PluginDefinition {
+		d := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app"}}
+		if group != "" {
+			d.Manifest = &app.ManifestData{AppName: "example", Group: group}
+		}
+		return d
+	}
+
+	t.Run("a manifest group is served as declared", func(t *testing.T) {
+		require.Equal(t, "example.ext.grafana.app",
+			apiGroupForPlugin(plugin("example.ext.grafana.app")))
+	})
+
+	t.Run("no manifest falls back to the plugin id", func(t *testing.T) {
+		require.Equal(t, "example-app", apiGroupForPlugin(plugin("")))
+	})
+
+	t.Run("a manifest declaring no group is refused", func(t *testing.T) {
+		d := definition.PluginDefinition{
+			JSONData: plugins.JSONData{ID: "example-app"},
+			Manifest: &app.ManifestData{AppName: "example"},
+		}
+		require.Panics(t, func() { apiGroupForPlugin(d) })
+	})
+
+	t.Run("any other suffix is refused", func(t *testing.T) {
+		for _, group := range []string{
+			"example.ext.grafana.com", // RBAC is never enforced on this one
+			"example.grafana.app",
+			"example-app",
+		} {
+			require.Panics(t, func() { apiGroupForPlugin(plugin(group)) }, "group %q", group)
+		}
 	})
 }

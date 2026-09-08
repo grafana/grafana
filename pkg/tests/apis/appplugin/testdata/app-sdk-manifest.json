@@ -6,7 +6,7 @@
   },
   "spec": {
     "appName": "test-app-with-sdk-manifest",
-    "group": "test-app-with-backend",
+    "group": "test-app-with-backend.ext.grafana.app",
     "versions": [
       {
         "name": "v1",
