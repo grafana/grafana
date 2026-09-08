@@ -220,12 +220,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       // position (no-op for non-AutoGrid sources).
       this._commitSameLayoutReorder(sourceDropTarget, gridItem);
     } else if (gridItem && sourceDropTarget && effectiveDropTarget && sourceDropTarget !== effectiveDropTarget) {
-      moveGridItem({
-        source: sourceDropTarget,
-        destination: effectiveDropTarget,
-        gridItem,
-        originalIndex: sourceOriginalIndex,
-        destinationIndex: dropPosition ?? undefined,
+      // Defer is needed so the legacy grid's own native drag-stop handling finishes first.
+      setTimeout(() => {
+        moveGridItem({
+          source: sourceDropTarget,
+          destination: effectiveDropTarget,
+          gridItem,
+          originalIndex: sourceOriginalIndex,
+          destinationIndex: dropPosition ?? undefined,
+        });
       });
     } else if (!gridItem) {
       const warningMessage = 'No grid item to drag';

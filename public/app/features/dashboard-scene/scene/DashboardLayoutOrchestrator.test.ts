@@ -91,32 +91,42 @@ describe('DashboardLayoutOrchestrator', () => {
     });
 
     it('moves the item when dropped onto a different layout', () => {
-      const { orchestrator, tab1Manager, tab2Manager, gridItem } = setupWithTwoTabs();
-      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
+      jest.useFakeTimers();
+      try {
+        const { orchestrator, tab1Manager, tab2Manager, gridItem } = setupWithTwoTabs();
+        orchestrator.setState({ draggingGridItem: gridItem.getRef() });
 
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = tab1Manager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = tab2Manager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceOriginalIndex = 0;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._currentDropPosition = 2;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2Manager);
+        // @ts-expect-error - accessing private property for testing
+        orchestrator._sourceDropTarget = tab1Manager;
+        // @ts-expect-error - accessing private property for testing
+        orchestrator._lastDropTarget = tab2Manager;
+        // @ts-expect-error - accessing private property for testing
+        orchestrator._sourceOriginalIndex = 0;
+        // @ts-expect-error - accessing private property for testing
+        orchestrator._currentDropPosition = 2;
+        // @ts-expect-error - accessing private method for testing
+        orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2Manager);
 
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
+        // @ts-expect-error - accessing private method for testing
+        orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
 
-      expect(moveGridItemMock).toHaveBeenCalledTimes(1);
-      expect(moveGridItemMock).toHaveBeenCalledWith({
-        source: tab1Manager,
-        destination: tab2Manager,
-        gridItem,
-        originalIndex: 0,
-        destinationIndex: 2,
-      });
-      expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
+        // The cross-layout move is deferred (see _stopDraggingSync) so that the legacy grid's own
+        // native drag-stop handling finishes first.
+        expect(moveGridItemMock).not.toHaveBeenCalled();
+        jest.runAllTimers();
+
+        expect(moveGridItemMock).toHaveBeenCalledTimes(1);
+        expect(moveGridItemMock).toHaveBeenCalledWith({
+          source: tab1Manager,
+          destination: tab2Manager,
+          gridItem,
+          originalIndex: 0,
+          destinationIndex: 2,
+        });
+        expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('commits a reorder (not a move) when dropped on the tab bar between headers', () => {
