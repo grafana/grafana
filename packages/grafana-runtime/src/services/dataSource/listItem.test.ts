@@ -85,7 +85,6 @@ describe('getDataSourceInstanceListItem', () => {
       apiVersion: undefined,
       name: 'Alpha',
       meta: metas['test-db'],
-      readOnly: false,
       isDefault: false,
     });
   });

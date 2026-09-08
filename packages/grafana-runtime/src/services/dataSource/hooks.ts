@@ -108,9 +108,8 @@ export function useDataSourceInstanceSettings(
  * changes (compared by value, so inline objects are safe).
  *
  * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
- * metadata is needed — `item` carries `uid`, `type`, `name`, `meta`, `readOnly` and
- * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
- * demand.
+ * metadata is needed — `item` carries `uid`, `type`, `name`, `meta` and `isDefault`, and avoids
+ * depending on per-instance settings that will later be fetched on demand.
  *
  * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
  * type-only refs — yields `item: undefined` rather than the default data source. Template
