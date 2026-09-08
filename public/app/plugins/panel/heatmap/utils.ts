@@ -332,7 +332,7 @@ export function prepConfig(opts: PrepConfigOpts) {
                 hi = t;
               }
 
-              if (sparseZeroBucketOnly && Math.max(Math.abs(lo), Math.abs(hi)) <= t) {
+              if (sparseZeroBucketOnly && Math.max(Math.abs(lo), Math.abs(hi)) < t) {
                 // A lone exponential zero bucket (±epsilon): no real-magnitude bucket to
                 // anchor the threshold to, and no extent of its own to range over. Show
                 // a symmetric window around zero so the single band is visible instead

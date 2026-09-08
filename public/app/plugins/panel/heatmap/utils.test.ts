@@ -775,6 +775,18 @@ describe('prepConfig', () => {
         expect(result).toEqual([-2, 128]);
       });
 
+      it('gives a straddler reaching exactly the fallback threshold headroom', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        // (-1, 1] exactly fills the ±1 fallback window, so taking that window would
+        // render it flush against both axis edges. It snaps instead, like any other
+        // bound sitting on the threshold.
+        const { range, scaleKey, u } = buildYScaleWithFacets([-1], [1]);
+
+        const result = range(u, -1, 1, scaleKey);
+
+        expect(result).toEqual([-2, 2]);
+      });
+
       it('keeps the symmetric fallback window for a lone epsilon zero bucket', () => {
         config.featureToggles.heatmapNegativeLogBuckets = true;
         // ±1e-128 has no extent to range over, so snapping its bounds would pin the
