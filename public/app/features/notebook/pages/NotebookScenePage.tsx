@@ -10,6 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
+import { notebookAnalytics } from '../analytics/main';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
@@ -38,6 +39,7 @@ export function NotebookScenePage() {
         stateManager.loadNotebook(uid);
       } else if (isNew) {
         stateManager.newNotebook();
+        notebookAnalytics.newStarted('notebook_list');
       }
     }
 

@@ -7,10 +7,13 @@ import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 
+import { notebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
 import { NotebookPageStateManager } from './NotebookPageStateManager';
+
+jest.mock('../analytics/main', () => ({ notebookAnalytics: { loaded: jest.fn() } }));
 
 // The state manager dispatches the notebook query through the app store; route that dispatch to a
 // test store that carries the dashboard v2beta1 API so the RTK query actually runs.
@@ -63,6 +66,7 @@ function notebookResource(name = 'nb-1', generation = 1): Resource<NotebookSpec>
 describe('NotebookPageStateManager', () => {
   beforeEach(() => {
     testStore = createTestStore();
+    jest.mocked(notebookAnalytics.loaded).mockClear();
   });
 
   it('fetches the notebook and builds a NotebookScene', async () => {
@@ -240,6 +244,64 @@ describe('NotebookPageStateManager', () => {
 
     expect(manager.state.loadError).toBeUndefined();
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
+  });
+
+  describe('loaded event', () => {
+    it('fires once on a fresh load, reporting it was not cached', async () => {
+      setBackendSrv({
+        fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
+      } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+
+      expect(jest.mocked(notebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(notebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false);
+    });
+
+    it('fires again on a second navigation to a cached scene, reporting it was cached', async () => {
+      setBackendSrv({
+        fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
+      } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      await manager.loadNotebook('nb-1');
+
+      expect(jest.mocked(notebookAnalytics.loaded)).toHaveBeenCalledTimes(2);
+      expect(jest.mocked(notebookAnalytics.loaded)).toHaveBeenNthCalledWith(2, expect.anything(), true);
+    });
+
+    it('does not fire when a blank notebook adopts its own uid instead of being fetched', async () => {
+      const fetch = jest.fn();
+      setBackendSrv({ fetch } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const blank = manager.state.scene!;
+      blank.setState({ uid: 'nb-new' });
+
+      await manager.loadNotebook('nb-new');
+
+      expect(jest.mocked(notebookAnalytics.loaded)).not.toHaveBeenCalled();
+    });
+
+    it('fires only for the load that wins a superseded race', async () => {
+      setBackendSrv({
+        fetch: jest.fn((options: { url: string }) => {
+          const isSlow = options.url.endsWith('nb-slow');
+          return of(createFetchResponse(notebookResource(isSlow ? 'nb-slow' : 'nb-fast'))).pipe(delay(isSlow ? 50 : 0));
+        }),
+      } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const slow = manager.loadNotebook('nb-slow');
+      const fast = manager.loadNotebook('nb-fast');
+      await Promise.all([fast, slow]);
+
+      expect(jest.mocked(notebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
+      expect(manager.state.scene?.state.uid).toBe('nb-fast');
+    });
   });
 
   describe('newNotebook', () => {
