@@ -5,6 +5,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { type DashboardScene } from '../DashboardScene';
 import { VariableControls } from '../VariableControls';
+import { getPlanningGround } from '../planningGround';
 import { type DashboardPlanningState } from '../types/dashboard';
 
 import { PlanningBanner } from './PlanningBanner';
@@ -37,7 +38,9 @@ export function PlanningControls({
 
   return (
     <div className={styles.container}>
-      <PlanningBanner planning={planning} />
+      <div className={styles.banner}>
+        <PlanningBanner planning={planning} />
+      </div>
       {/*
        * `:empty` in the styles below, rather than asking whether there are visible variables here:
        * VariableControls already owns that rule (hidden variables, in-controls-menu variables,
@@ -55,17 +58,28 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1, 2),
-      // The hairline separates the plan's bar from the tinted canvas below it. The host
-      // (DashboardControlsChrome) is already sticky, so this edge is what the panels pass under.
+    }),
+    banner: css({
+      padding: theme.spacing(0, 2),
+      // The hairline is what the variables sit below, not what the canvas sits below: it separates
+      // the plan's chrome from the plan itself.
       borderBottom: `1px solid ${theme.colors.primary.borderTransparent}`,
     }),
+    /**
+     * On the plan's ground rather than the bar's background, because the variables belong to the
+     * dashboard being planned — they are part of what the user is approving, not part of the
+     * approve/discard chrome above them. Grouping them with the banner read as the opposite.
+     *
+     * The whole ground is shared with the canvas — colour and dot grid — so the strip reads as the
+     * top of the plan surface rather than a plain band above it, and so the two cannot drift.
+     */
     variables: css({
       display: 'flex',
       flexWrap: 'wrap',
       alignItems: 'flex-end',
       gap: theme.spacing(1),
+      padding: theme.spacing(1, 2),
+      ...getPlanningGround(theme),
       '&:empty': {
         display: 'none',
       },

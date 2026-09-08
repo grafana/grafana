@@ -23,6 +23,9 @@ export function PlanningBanner({ planning }: { planning: DashboardPlanningState 
     <div className={styles.banner}>
       <div className={styles.summary}>
         <Icon name="ai-sparkle" />
+        <span className={styles.planLabel}>
+          <Trans i18nKey="dashboard.planning-banner.plan-label">Plan</Trans>
+        </span>
         <span className={styles.planTitle}>{planTitle}</span>
         <span className={styles.panelCount}>
           <Trans
@@ -78,6 +81,20 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1),
       minWidth: 0,
+    }),
+    /**
+     * The banner names the mode in words, and until this it never used the word. The title, the
+     * panel count and the stake all describe the thing without ever saying what it is. A label
+     * rather than a prefix on the title, so a long title truncating cannot take it with it.
+     */
+    planLabel: css({
+      flexShrink: 0,
+      padding: theme.spacing(0, 0.75),
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.primary.transparent,
+      color: theme.colors.primary.text,
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
     planTitle: css({
       fontWeight: theme.typography.fontWeightMedium,

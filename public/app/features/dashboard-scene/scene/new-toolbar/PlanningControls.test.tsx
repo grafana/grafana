@@ -15,6 +15,7 @@ describe('PlanningControls', () => {
   it('shows the plan, the stake and the two actions', () => {
     setup();
 
+    expect(screen.getByText('Plan')).toBeInTheDocument();
     expect(screen.getByText('Prometheus overview')).toBeInTheDocument();
     expect(screen.getByText('3 panels')).toBeInTheDocument();
     expect(screen.getByText('Nothing saved yet')).toBeInTheDocument();

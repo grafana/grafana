@@ -27,6 +27,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
+import { getPlanningGround } from '../scene/planningGround';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardSidebarRenderer } from './DashboardSidebarRenderer';
@@ -303,12 +304,7 @@ function getStyles(theme: GrafanaTheme2) {
       // treatments below — it still says "plan" in the three cases they miss: a panel the user adds
       // by hand (no seeded data, so no badge), a plan whose panels are all below the fold, and a
       // plan with nothing in it at all.
-      backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.015),
-      backgroundImage: `radial-gradient(${theme.colors.border.medium} 1px, transparent 1px)`,
-      backgroundSize: '11px 11px',
-      // `local` attaches the grid to the content rather than the viewport, so it reads as a board
-      // the panels sit on instead of an overlay they slide under.
-      backgroundAttachment: 'local',
+      ...getPlanningGround(theme),
       boxShadow: `inset 0 0 0 1px ${theme.colors.primary.borderTransparent}`,
       '[data-viz-panel-key] section': {
         // Both halves matter. Grafana's panel border is border.weak — 12% opacity — and simply
