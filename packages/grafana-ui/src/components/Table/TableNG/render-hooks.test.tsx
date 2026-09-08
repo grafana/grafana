@@ -22,7 +22,7 @@ import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
 import { type TableCellTooltipProps } from './components/TableCellTooltip';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
 import {
   type ColumnBuildConfig,
   prepareFieldsForDisplay,
@@ -468,6 +468,22 @@ describe('useColumnBuilderFromFields', () => {
 
     const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
     expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome);
+    expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  it("also takes the first column's panel-edge inset off the width it hands that column", () => {
+    // Under `noPanelPadding` the first column is padded further in to line its content up with the
+    // panel title. That padding eats into the content box, so a width-driven cell (sparkline, bar
+    // gauge) sized against the full content width would render that much too wide and clip.
+    const hook = renderColumnBuilderHook({
+      filterResult: makeFilterResult(),
+      config: makeConfig({ firstColumnExtraPadding: FIRST_COLUMN_EXTRA_PADDING }),
+    });
+    const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
+
+    const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome - FIRST_COLUMN_EXTRA_PADDING);
+    // only the first column carries the inset
     expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
   });
 
