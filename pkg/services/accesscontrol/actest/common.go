@@ -30,16 +30,14 @@ func ConcurrentBatch(workers, count, size int, eachFn func(start, end int) error
 
 	// Launch all workers
 	for x := 0; x < workers; x++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for ck := range chunk {
 				if err := eachFn(ck.start, ck.end); err != nil {
 					ret <- err
 					return
 				}
 			}
-		}()
+		})
 	}
 
 	go func() {

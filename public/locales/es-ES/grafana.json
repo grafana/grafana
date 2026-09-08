@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valor fijo"
       },
-      "label": "Escalar",
+      "label-field": "",
       "label-limit": "Límite",
       "label-value": "Valor",
       "noOptionsMessage-no-fields-found": "No se han encontrado campos",
@@ -12490,6 +12490,9 @@
       "subtitle": "Reglas que determinan si una alerta se activará",
       "title": "Reglas de alerta"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Elige cómo notificar tus puntos de contacto cuando se dispara una instancia de alerta",
       "title": "Puntos de contacto"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Explorar"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Obtén información de seguimiento real del usuario",
       "title": "Interfaz"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Perfiles"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Visibilidad de las series"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Accesible",
         "label-dash": "Raya",

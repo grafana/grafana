@@ -172,7 +172,6 @@ export class GrafanaBootConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
-  pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
   pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';

@@ -8497,7 +8497,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Фиксированное значение"
       },
-      "label": "Скаляр",
+      "label-field": "",
       "label-limit": "Предельное значение",
       "label-value": "Значение",
       "noOptionsMessage-no-fields-found": "Поля не найдены",
@@ -12666,6 +12666,9 @@
       "subtitle": "Правила, определяющие, будет ли создано оповещение",
       "title": "Правила оповещения"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Выбор способов уведомления точек контакта при возникновении оповещения",
       "title": "Точки контакта"
@@ -12770,6 +12773,10 @@
     "explore": {
       "title": "Explore"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Получение аналитики из мониторинга реальных пользователей",
       "title": "Клиентская часть"
@@ -12850,6 +12857,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12880,6 +12891,10 @@
     },
     "profiles": {
       "title": "Профили"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -17019,6 +17034,8 @@
       "name-faceted-filter": "Видимость рядов"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Доступно",
         "label-dash": "Тире",
