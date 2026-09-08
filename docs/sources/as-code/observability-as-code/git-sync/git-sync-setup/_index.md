@@ -155,7 +155,7 @@ After creating the token, return to Grafana and fill in the following fields:
 
 {{< admonition type="note" >}}
 
-If the token loses access to the project, or was never scoped to it, Git Sync can't resolve the project ID and the connection fails with a `create gitlab client: permission denied` error. Make sure the token has project-level access, then reconnect the repository.
+If the token loses access to the project, or was never scoped to it, Git Sync can't resolve the project ID and the connection fails with a permission denied error. Make sure the token has project-level access, then reconnect the repository.
 
 {{< /admonition >}}
 
