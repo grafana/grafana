@@ -9,7 +9,7 @@ import {
   type TableBodyProps,
 } from 'react-table';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { type CallTreeNode } from './utils';
@@ -66,21 +66,16 @@ export function CallTreeTable({
   }, [availableWidth, shouldBeCompact, isCompact, setIsCompact]);
 
   const functionColumnMinWidth = getFunctionColumnWidth(availableWidth, isCompact);
-  const totalColumnWidth = headerGroups
-    .flatMap((headerGroup) => headerGroup.headers)
-    .find((column) => column.id === 'total')?.width;
-
-  const getPinnedColumnOffset = (columnId: string): number | undefined => {
-    if (columnId === 'total') {
-      return 0;
+  const pinnedColumnOffsets = new Map<string, number>();
+  for (const headerGroup of headerGroups) {
+    let rightOffset = 0;
+    for (const column of [...headerGroup.headers].reverse()) {
+      if (['self', 'total', 'totalPercent', 'totalPercentRight', 'diffPercent'].includes(column.id)) {
+        pinnedColumnOffsets.set(column.id, rightOffset);
+        rightOffset += column.totalWidth;
+      }
     }
-
-    if (columnId === 'self' && typeof totalColumnWidth === 'number') {
-      return totalColumnWidth;
-    }
-
-    return undefined;
-  };
+  }
 
   if (width < 3 || height < 3) {
     return null;
@@ -101,7 +96,7 @@ export function CallTreeTable({
               <tr key={key} {...headerGroupProps}>
                 {headerGroup.headers.map((column) => {
                   const { key: headerKey, ...headerProps } = column.getHeaderProps(column.getSortByToggleProps());
-                  const pinnedColumnOffset = getPinnedColumnOffset(column.id);
+                  const pinnedColumnOffset = pinnedColumnOffsets.get(column.id);
                   return (
                     <th
                       key={headerKey}
@@ -157,7 +152,7 @@ export function CallTreeTable({
                   const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
                   const isActionsColumn = cell.column.id === 'actions';
                   const isLabelColumn = cell.column.id === 'label';
-                  const pinnedColumnOffset = getPinnedColumnOffset(cell.column.id);
+                  const pinnedColumnOffset = pinnedColumnOffsets.get(cell.column.id);
                   return (
                     <td
                       key={cellKey}
@@ -293,13 +288,18 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     searchMatchRow: css({
-      backgroundColor: theme.colors.warning.transparent,
+      // Sticky cells inherit this color, so blend the highlight onto an opaque base.
+      backgroundColor: colorManipulator
+        .onBackground(theme.colors.warning.transparent, theme.colors.background.primary)
+        .toRgbString(),
       fontWeight: theme.typography.fontWeightMedium,
       '& > td:first-of-type': {
         boxShadow: `inset 3px 0 0 0 ${theme.colors.warning.main}`,
       },
       '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
+        backgroundColor: colorManipulator
+          .onBackground(theme.colors.emphasize(theme.colors.warning.transparent, 0.1), theme.colors.background.primary)
+          .toRgbString(),
       },
     }),
     td: css({
