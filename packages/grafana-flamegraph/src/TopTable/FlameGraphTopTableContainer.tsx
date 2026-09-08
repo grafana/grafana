@@ -86,6 +86,7 @@ const FlameGraphTopTableContainer = memo(
               onSandwich,
               theme,
               colorScheme,
+              Boolean(useTableNG),
               search,
               sandwichItem
             );
@@ -180,10 +181,11 @@ function buildTableDataFrame(
   onSandwich: (str?: string) => void,
   theme: GrafanaTheme2,
   colorScheme: ColorScheme | ColorSchemeDiff,
+  useTableNG: boolean,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
-  const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
+  const actionField: Field = createActionField(onSandwich, onSearch, useTableNG, search, sandwichItem);
 
   const symbolField: Field = {
     type: FieldType.string,
@@ -307,6 +309,7 @@ const actionColumnWidth = 61;
 function createActionField(
   onSandwich: (str?: string) => void,
   onSearch: (str: string) => void,
+  useTableNG: boolean,
   search?: string,
   sandwichItem?: string
 ): Field {
@@ -321,6 +324,7 @@ function createActionField(
           search={search}
           sandwichItem={sandwichItem}
           rowIndex={props.rowIndex}
+          useTableNG={useTableNG}
         />
       );
     },
@@ -353,6 +357,7 @@ type ActionCellProps = {
   sandwichItem?: string;
   onSearch: (symbol: string) => void;
   onSandwich: (symbol: string) => void;
+  useTableNG: boolean;
 };
 
 function ActionCell(props: ActionCellProps) {
@@ -361,28 +366,52 @@ function ActionCell(props: ActionCellProps) {
   const isSearched = props.search === `^${escapeStringForRegex(String(symbol))}$`;
   const isSandwiched = props.sandwichItem === symbol;
 
+  const searchButton = (
+    <IconButton
+      key="search"
+      className={styles.actionCellButton}
+      name={'search'}
+      variant={isSearched ? 'primary' : 'secondary'}
+      tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+      aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
+      onClick={() => {
+        props.onSearch(isSearched ? '' : symbol);
+      }}
+    />
+  );
+
+  const sandwichButton = (
+    <IconButton
+      key="sandwich"
+      className={styles.actionCellButton}
+      name={'gf-show-context'}
+      tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+      variant={isSandwiched ? 'primary' : 'secondary'}
+      aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+      onClick={() => {
+        props.onSandwich(isSandwiched ? undefined : symbol);
+      }}
+    />
+  );
+
+  // The legacy Table right-aligns numeric cells (this actions field is FieldType.number) by rendering its
+  // overflow container with direction: rtl, which flips the visual order of these two buttons to
+  // sandwich-then-search even though they're written search-then-sandwich below. TableNG doesn't do that
+  // right-align trick, so its custom cells render in DOM order — swap that order here for TableNG so both
+  // table implementations show the buttons in the same left-to-right order.
   return (
     <div className={styles.actionCellWrapper}>
-      <IconButton
-        className={styles.actionCellButton}
-        name={'search'}
-        variant={isSearched ? 'primary' : 'secondary'}
-        tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
-        aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
-        onClick={() => {
-          props.onSearch(isSearched ? '' : symbol);
-        }}
-      />
-      <IconButton
-        className={styles.actionCellButton}
-        name={'gf-show-context'}
-        tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
-        variant={isSandwiched ? 'primary' : 'secondary'}
-        aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
-        onClick={() => {
-          props.onSandwich(isSandwiched ? undefined : symbol);
-        }}
-      />
+      {props.useTableNG ? (
+        <>
+          {sandwichButton}
+          {searchButton}
+        </>
+      ) : (
+        <>
+          {searchButton}
+          {sandwichButton}
+        </>
+      )}
     </div>
   );
 }
