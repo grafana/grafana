@@ -9,11 +9,11 @@ import {
   type CrossDashboardVariablesDashboard,
 } from './DashboardCrossDashboardVariablesOptions';
 
-export class DashboardPredefinedVariablesPane extends SceneObjectBase {
-  public static Component = DashboardPredefinedVariablesPaneRenderer;
+export class DashboardCrossDashboardVariablesPane extends SceneObjectBase {
+  public static Component = DashboardCrossDashboardVariablesPaneRenderer;
 
   public getId() {
-    return 'predefined-variables' as const;
+    return 'cross-dashboard-variables' as const;
   }
 }
 
@@ -23,12 +23,14 @@ function isCrossDashboardVariablesDashboard(
   return 'refreshPredefinedVariables' in scene && 'serializer' in scene && 'managedResourceCannotBeEdited' in scene;
 }
 
-function DashboardPredefinedVariablesPaneRenderer({ model }: SceneComponentProps<DashboardPredefinedVariablesPane>) {
+function DashboardCrossDashboardVariablesPaneRenderer({
+  model,
+}: SceneComponentProps<DashboardCrossDashboardVariablesPane>) {
   // Prefer getDashboardSceneLike over getDashboardSceneFor(utils) — the utils import
   // closes a new circular dep through DashboardSidebarRenderer.
   const scene = getDashboardSceneLike(model);
   if (!isCrossDashboardVariablesDashboard(scene)) {
-    throw new Error('SceneObject root does not support predefined variable controls');
+    throw new Error('SceneObject root does not support cross-dashboard variable controls');
   }
 
   return (
