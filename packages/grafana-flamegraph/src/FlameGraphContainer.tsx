@@ -413,7 +413,7 @@ const LegacyContainer = ({
     body = flameGraph;
   } else if (selectedView === SelectedView.TopTable) {
     body = (
-      <div ref={heightFallback.measureRef} className={styles.tableContainer}>
+      <div ref={heightFallback.measureRef} className={styles.tableContainer} style={heightFallback.style}>
         {table}
       </div>
     );
@@ -422,7 +422,7 @@ const LegacyContainer = ({
       body = (
         <div className={styles.verticalContainer}>
           <div className={styles.verticalGraphContainer}>{flameGraph}</div>
-          <div ref={heightFallback.measureRef} className={styles.verticalTableContainer}>
+          <div ref={heightFallback.measureRef} className={styles.verticalTableContainer} style={heightFallback.style}>
             {table}
           </div>
         </div>
@@ -430,7 +430,7 @@ const LegacyContainer = ({
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          <div ref={heightFallback.measureRef} className={styles.horizontalTableContainer}>
+          <div ref={heightFallback.measureRef} className={styles.horizontalTableContainer} style={heightFallback.style}>
             {table}
           </div>
           <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
@@ -443,7 +443,7 @@ const LegacyContainer = ({
     // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
     // isn't already provided.
     <ThemeContext.Provider value={theme}>
-      <div ref={sizeRef} className={styles.container} style={heightFallback.style}>
+      <div ref={sizeRef} className={styles.container}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
             search={search}
@@ -582,6 +582,8 @@ const NewUIContainer = ({
     setFocusedItemIndexes,
     useTableNG,
     enableVirtualization,
+    heightFallbackRef: heightFallback.measureRef,
+    heightFallbackStyle: heightFallback.style,
   };
 
   let body;
@@ -661,7 +663,7 @@ const NewUIContainer = ({
 
   return (
     <ThemeContext.Provider value={theme}>
-      <div ref={sizeRef} className={styles.container} style={heightFallback.style}>
+      <div ref={sizeRef} className={styles.container}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
             enableNewUI={true}
@@ -699,9 +701,7 @@ const NewUIContainer = ({
           />
         )}
 
-        <div ref={heightFallback.measureRef} className={styles.body}>
-          {body}
-        </div>
+        <div className={styles.body}>{body}</div>
       </div>
     </ThemeContext.Provider>
   );

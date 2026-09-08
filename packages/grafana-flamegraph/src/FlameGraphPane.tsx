@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { escapeStringForRegex } from '@grafana/data';
 
@@ -34,6 +34,11 @@ type FlameGraphPaneProps = {
   useTableNG?: boolean;
   // Test-only escape hatch to disable top-table virtualization in jsdom.
   enableVirtualization?: boolean;
+  // Attached to this pane's table wrapper (not a persistent ancestor) so it fires fresh whenever the pane
+  // switches into a table view, and applied directly to that wrapper so an indefinite-height host doesn't
+  // leave the actual table with too little space. See useHeightFallback in FlameGraphContainer.
+  heightFallbackRef?: (node: HTMLDivElement | null) => void;
+  heightFallbackStyle?: CSSProperties;
 };
 
 const FlameGraphPane = ({
@@ -58,6 +63,8 @@ const FlameGraphPane = ({
   setSharedSandwichItem,
   useTableNG,
   enableVirtualization,
+  heightFallbackRef,
+  heightFallbackStyle,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
@@ -233,7 +240,7 @@ const FlameGraphPane = ({
   switch (paneView) {
     case PaneView.TopTable:
       content = (
-        <div className={styles.tableContainer}>
+        <div ref={heightFallbackRef} className={styles.tableContainer} style={heightFallbackStyle}>
           <FlameGraphTopTableContainer
             data={dataContainer}
             onSymbolClick={onSymbolClick}
@@ -295,7 +302,7 @@ const FlameGraphPane = ({
       break;
     case PaneView.CallTree:
       content = (
-        <div className={styles.tableContainer}>
+        <div ref={heightFallbackRef} className={styles.tableContainer} style={heightFallbackStyle}>
           <FlameGraphCallTreeContainer
             data={dataContainer}
             onSymbolClick={onCallTreeSymbolClick}
