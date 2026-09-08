@@ -94,7 +94,6 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	return results, nil
 }
 
-// nolint:gocyclo
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
@@ -102,7 +101,21 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		// Wrap via GetError so the status code/reason survives, letting callers
 		// classify transient search failures (e.g. 429/503) as retryable.
 		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
-	} else if result.Results == nil {
+	}
+
+	switch result.ResultFormat {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		return parseTableResults(result, offset)
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		return parseFieldValueResults(result, offset)
+	default:
+		return v0alpha1.SearchResults{}, fmt.Errorf("unsupported search result format %d", result.ResultFormat)
+	}
+}
+
+// nolint:gocyclo
+func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
+	if result.Results == nil {
 		return v0alpha1.SearchResults{}, nil
 	}
 
@@ -210,24 +223,102 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		sr.Hits[i] = *hit
 	}
 
-	// Add facet results
-	if result.Facet != nil {
-		sr.Facets = make(map[string]v0alpha1.FacetResult)
-		for k, v := range result.Facet {
-			sr.Facets[k] = v0alpha1.FacetResult{
-				Field:   v.Field,
-				Total:   v.Total,
-				Missing: v.Missing,
-				Terms:   make([]v0alpha1.TermFacet, len(v.Terms)),
-			}
-			for j, t := range v.Terms {
-				sr.Facets[k].Terms[j] = v0alpha1.TermFacet{
-					Term:  t.Term,
-					Count: t.Count,
-				}
-			}
-		}
+	sr.Facets = parseFacets(result.Facet)
+	return sr, nil
+}
+
+func parseFieldValueResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
+	sr := v0alpha1.SearchResults{
+		Offset:    offset,
+		TotalHits: result.TotalHits,
+		QueryCost: result.QueryCost,
+		MaxScore:  result.MaxScore,
+		Hits:      make([]v0alpha1.DashboardHit, len(result.Rows)),
 	}
 
+	for i, row := range result.Rows {
+		if row == nil || row.Key == nil {
+			return v0alpha1.SearchResults{}, fmt.Errorf("field-value search result row %d has no resource key", i)
+		}
+		values, err := resource.DecodeSearchValues(result.Fields, row)
+		if err != nil {
+			return v0alpha1.SearchResults{}, fmt.Errorf("decoding field-value search result row %d: %w", i, err)
+		}
+
+		fields := &common.Unstructured{}
+		for name, value := range values {
+			if _, ok := standardFields[name]; !ok {
+				fields.Set(name, jsonCompatibleValue(value))
+			}
+		}
+
+		hit := &v0alpha1.DashboardHit{
+			Resource: row.Key.Resource,
+			Name:     row.Key.Name,
+			Field:    fields,
+		}
+		if title, ok := values[resource.SEARCH_FIELD_TITLE].(string); ok {
+			hit.Title = title
+		} else {
+			hit.Title = "(no title)"
+		}
+		// The declarations determine these types; comma-ok keeps mixed-version responses from panicking.
+		hit.Folder, _ = values[resource.SEARCH_FIELD_FOLDER].(string)
+		hit.Description, _ = values[resource.SEARCH_FIELD_DESCRIPTION].(string)
+		hit.Tags, _ = values[resource.SEARCH_FIELD_TAGS].([]string)
+		hit.ManagedBy.ID, _ = values[resource.SEARCH_FIELD_MANAGER_ID].(string)
+		if managerKind, ok := values[resource.SEARCH_FIELD_MANAGER_KIND].(string); ok {
+			hit.ManagedBy.Kind = utils.ManagerKind(managerKind)
+		}
+		hit.OwnerReferences, _ = values[resource.SEARCH_FIELD_OWNER_REFERENCES].([]string)
+		if row.Score != nil {
+			hit.Score = row.GetScore()
+		}
+		sr.Hits[i] = *hit
+	}
+
+	sr.Facets = parseFacets(result.Facet)
 	return sr, nil
+}
+
+func parseFacets(facets map[string]*resourcepb.ResourceSearchResponse_Facet) map[string]v0alpha1.FacetResult {
+	if facets == nil {
+		return nil
+	}
+	out := make(map[string]v0alpha1.FacetResult, len(facets))
+	for name, facet := range facets {
+		out[name] = v0alpha1.FacetResult{
+			Field:   facet.Field,
+			Total:   facet.Total,
+			Missing: facet.Missing,
+			Terms:   make([]v0alpha1.TermFacet, len(facet.Terms)),
+		}
+		for i, term := range facet.Terms {
+			out[name].Terms[i] = v0alpha1.TermFacet{Term: term.Term, Count: term.Count}
+		}
+	}
+	return out
+}
+
+func jsonCompatibleValue(value any) any {
+	switch values := value.(type) {
+	case []string:
+		return sliceToAny(values)
+	case []int64:
+		return sliceToAny(values)
+	case []float64:
+		return sliceToAny(values)
+	case []bool:
+		return sliceToAny(values)
+	default:
+		return value
+	}
+}
+
+func sliceToAny[T any](values []T) []any {
+	out := make([]any, len(values))
+	for i, value := range values {
+		out[i] = value
+	}
+	return out
 }
