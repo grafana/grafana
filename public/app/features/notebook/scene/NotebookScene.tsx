@@ -26,6 +26,7 @@ import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookEditSession } from '../analytics/editSession';
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
@@ -59,7 +60,9 @@ export interface NotebookSceneState extends SceneObjectState {
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
-  public readonly editHistory = new NotebookEditHistory();
+  // Declared before `editHistory`, which is handed it: class fields initialise in order.
+  public readonly editSession = new NotebookEditSession();
+  public readonly editHistory = new NotebookEditHistory(this.editSession);
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;

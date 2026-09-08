@@ -15,12 +15,23 @@ export interface NotebookEditHistoryState {
   redoLabel?: string;
 }
 
+/**
+ * Told when an action is recorded or rolled back, so that something outside can count edits.
+ *
+ * The stacks themselves cannot be counted: `record` drops the oldest action once the undo stack is
+ * full, and `clear` empties both.
+ */
+export interface NotebookEditHistoryObserver {
+  onRecord(): void;
+  onDiscard(): void;
+}
+
 export class NotebookEditHistory extends StateManagerBase<NotebookEditHistoryState> {
   private undoStack: NotebookEditAction[] = [];
   private redoStack: NotebookEditAction[] = [];
   private redoStackBeforeRecord = new WeakMap<NotebookEditAction, NotebookEditAction[]>();
 
-  public constructor() {
+  public constructor(private readonly observer?: NotebookEditHistoryObserver) {
     super({ canUndo: false, canRedo: false });
   }
 
@@ -36,6 +47,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
       this.undoStack.shift();
     }
     this.redoStack = [];
+    this.observer?.onRecord();
     this.publishState();
   }
 
@@ -47,6 +59,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     this.undoStack.pop();
     this.redoStack = this.redoStackBeforeRecord.get(action) ?? this.redoStack;
     this.redoStackBeforeRecord.delete(action);
+    this.observer?.onDiscard();
     this.publishState();
   }
 

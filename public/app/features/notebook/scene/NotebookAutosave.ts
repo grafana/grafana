@@ -487,6 +487,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
       // somewhere to say it. A notebook whose spec cannot be built is not going to save.
       this.setState({ status: 'error', errorMessage: error instanceof Error ? error.message : String(error) });
+      this.scene.editSession.saveFailed();
       return;
     }
 
@@ -518,6 +519,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       .then(({ generation }) => {
         this.recordWritten(spec, serialized, panels);
         this.hasSavedOnce = true;
+        this.scene.editSession.saveLanded();
         this.setState({
           // Something can have changed while this was in flight, and reporting it saved would claim
           // content that has not been written.
@@ -539,6 +541,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           status: 'error',
           errorMessage: error instanceof Error ? error.message : String(error),
         });
+        this.scene.editSession.saveFailed();
       })
       .finally(() => {
         this.inFlight = false;
