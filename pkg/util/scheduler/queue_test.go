@@ -64,16 +64,14 @@ func TestQueue(t *testing.T) {
 
 		// Dequeue items
 		for i := 0; i < numItems; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 				defer cancel()
 				runnable, err := q.Dequeue(dequeueCtx)
 				require.NoError(t, err, "Dequeue should succeed")
 				require.NotNil(t, runnable, "Dequeued runnable should not be nil")
 				runnable()
-			}()
+			})
 		}
 
 		wg.Wait()
@@ -574,16 +572,14 @@ func TestQueue(t *testing.T) {
 
 		// Start a goroutine to dequeue and run the item
 		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 			runnable, err := q.Dequeue(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, runnable)
 			runnable()
-		}()
+		})
 
 		// Wait for the item to be processed
 		select {

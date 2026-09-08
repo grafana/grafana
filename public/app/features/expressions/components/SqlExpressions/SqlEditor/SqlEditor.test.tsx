@@ -2,12 +2,27 @@ import { render } from '@testing-library/react';
 
 import { SqlEditor } from './SqlEditor';
 
+let editorProps: Record<string, unknown> | undefined;
+
 jest.mock('@grafana/ui/unstable', () => ({
-  CodeMirrorEditor: () => <div className="cm-scroller" />,
+  CodeMirrorEditor: (props: Record<string, unknown>) => {
+    editorProps = props;
+    return <div className="cm-scroller" />;
+  },
   signatureHelp: jest.fn(),
 }));
 
 describe('SqlEditor', () => {
+  beforeEach(() => {
+    editorProps = undefined;
+  });
+
+  it('completes on space, so suggestions still open after FROM and in the SELECT list', () => {
+    render(<SqlEditor value="SELECT * FROM " onChange={jest.fn()} completionProvider={{ tables: () => [] }} />);
+
+    expect(editorProps?.completeOnSpace).toBe(true);
+  });
+
   it('contains horizontal overscroll within the editor', () => {
     render(<SqlEditor value="SELECT * FROM A" onChange={jest.fn()} />);
 

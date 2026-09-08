@@ -2666,7 +2666,9 @@
       "view-in-explore": "View in Explore"
     },
     "query-options": {
+      "apply-button": "Apply",
       "button-options": "Options",
+      "invalid-interval-error": "Invalid interval format. Examples: 1s, 5m, 1h",
       "label-time-range": "Time Range",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -3347,7 +3349,7 @@
         "view": "View"
       },
       "tabs": {
-        "alert-managers": "Alert managers",
+        "alert-managers": "Alertmanagers",
         "import": "Import"
       }
     },
@@ -6020,11 +6022,14 @@
     "notebook-layout": {
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
-      "pill": "Published Notebook",
       "tags": "Tags",
       "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
-      "time": "Time"
+      "time": "Time",
+      "title-edit": "Edit title",
+      "title-label": "Title",
+      "title-placeholder": "Add a title",
+      "title-required": "Please enter a title"
     },
     "on-create-new-row": {
       "new-row": {
@@ -8394,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
-      "label": "Scalar",
+      "label-field": "Field",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -9120,6 +9125,7 @@
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
+      "error-indicator": "Trace has errors",
       "errors": "Errors",
       "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
@@ -9138,10 +9144,12 @@
       "share-group": "Share",
       "share-tooltip": "Share and feedback",
       "start-time": "Start time",
+      "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": "Trace has client errors"
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9730,6 +9738,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "in a few seconds",
+        "fewSecondsPast": "a few seconds ago",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Day before yesterday",
           "previousFiscalQuarter": "Previous fiscal quarter",
@@ -12483,6 +12493,9 @@
       "subtitle": "Rules that determine whether an alert will fire",
       "title": "Alert rules"
     },
+    "alerting-notification-config": {
+      "subtitle": "Manage contact points, notification policies, templates, and time intervals"
+    },
     "alerting-receivers": {
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
@@ -12587,6 +12600,10 @@
     "explore": {
       "title": "Explore"
     },
+    "extensions": {
+      "subtitle": "Extend the UI of plugins and Grafana",
+      "title": "Extensions"
+    },
     "frontend": {
       "subtitle": "Gain real user monitoring insights",
       "title": "Frontend"
@@ -12667,6 +12684,10 @@
       "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
       "title": "Notebooks"
     },
+    "observability": {
+      "subtitle": "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
+      "title": "Observability"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12697,6 +12718,10 @@
     },
     "profiles": {
       "title": "Profiles"
+    },
+    "provisioning": {
+      "subtitle": "View and manage your provisioning connections",
+      "title": "Provisioning"
     },
     "recently-deleted": {
       "subtitle": "Deleted dashboards are kept for up to 12 months.",
@@ -12983,6 +13008,10 @@
       "delete-confirm-yes": "Delete",
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block",
+      "frame": {
+        "aria-label-collapsed": "Collapsed block: {{name}}",
+        "aria-label-panel": "Visualization block: {{name}}"
+      },
       "markdown": {
         "aria-label-editor": "Markdown",
         "format-bold": "B",
@@ -13006,6 +13035,13 @@
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
+    },
+    "panel-changes": {
+      "confirm-cancel": "Cancel",
+      "confirm-discard": "Discard",
+      "confirm-keep": "Keep",
+      "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
+      "confirm-title": "Unsaved panel changes"
     }
   },
   "notebooks": {
@@ -13092,7 +13128,6 @@
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
       "count-truncated_one": "First {{count}} notebook loaded",
       "count-truncated_other": "First {{count}} notebooks loaded",
-      "create-error": "Failed to create notebook",
       "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
@@ -13100,7 +13135,6 @@
       "load-error": "Failed to load notebooks",
       "loading": "Loading notebooks",
       "new-notebook": "New notebook",
-      "new-notebook-title": "New notebook",
       "no-results": "No notebooks found",
       "partial-load-error": "Some notebooks could not be loaded",
       "search-placeholder": "Search notebooks by title...",
@@ -13116,6 +13150,9 @@
       },
       "unknown-author": "Anonymous"
     },
+    "new": {
+      "default-title": "Notebook #{{token}}"
+    },
     "save-status": {
       "failed": "Save failed",
       "pending": "Unsaved changes",
@@ -13124,6 +13161,7 @@
       "saving": "Saving…"
     },
     "view": {
+      "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
       "mode-edit": "Edit",
       "mode-view": "View",
@@ -16583,11 +16621,12 @@
       "label": "Query"
     },
     "options": {
+      "max-rows": "Row limit",
+      "max-rows-description": "Rows of query data to render. High values can slow the panel, especially with complex HTML.",
       "render-mode": "Render mode"
     },
     "render": {
-      "handlebars-error": "Handlebars error: {{message}}",
-      "truncated": "Showing the first {{maxRows}} rows."
+      "handlebars-error": "Handlebars error: {{message}}"
     },
     "render-mode": {
       "once": "Once",
@@ -16753,6 +16792,8 @@
       "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
+      "description-dash-pattern": "Comma or space separated lengths. Example: 10, 20",
+      "label-dash-pattern": "Dash pattern",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Dash",
