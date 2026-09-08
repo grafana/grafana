@@ -172,6 +172,22 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		assert.Empty(t, provider.loadedPlugins)
 	})
 
+	t.Run("skips core plugin when as_external is true", func(t *testing.T) {
+		// Otherwise the metas endpoint keeps returning the core meta and the frontend
+		// loads the built-in chunk instead of the externalized plugin.
+		staticRootPath := filepath.Join(t.TempDir(), "public")
+		canvasDir := filepath.Join(staticRootPath, "app", "plugins", "panel", "canvas")
+		require.NoError(t, os.MkdirAll(canvasDir, 0750))
+		require.NoError(t, os.WriteFile(filepath.Join(canvasDir, "plugin.json"), []byte(`{"id":"canvas","name":"Canvas","type":"panel","info":{"version":""}}`), 0644))
+
+		provider := NewCoreProviderWithTTLAndSettings(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL, map[string]map[string]string{"canvas": {"as_external": "true"}})
+		require.NoError(t, provider.loadPlugins(ctx))
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "canvas"})
+
+		assert.Nil(t, result)
+		assert.ErrorIs(t, err, ErrMetaNotFound)
+	})
+
 	t.Run("returns no error when no plugins found", func(t *testing.T) {
 		tempDir := t.TempDir()
 		staticRootPath := filepath.Join(tempDir, "public")
