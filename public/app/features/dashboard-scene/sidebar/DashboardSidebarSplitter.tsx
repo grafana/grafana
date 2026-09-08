@@ -298,6 +298,18 @@ function getStyles(theme: GrafanaTheme2) {
      * scenes VizPanel renderer on the wrapper around it and is stable.
      */
     planningCanvas: css({
+      // The canvas is the largest surface on the page and said nothing. A tint one step off the
+      // dashboard ground plus a faint dot grid reads in peripheral vision, and — unlike the panel
+      // treatments below — it still says "plan" in the three cases they miss: a panel the user adds
+      // by hand (no seeded data, so no badge), a plan whose panels are all below the fold, and a
+      // plan with nothing in it at all.
+      backgroundColor: theme.colors.emphasize(theme.colors.background.canvas, 0.015),
+      backgroundImage: `radial-gradient(${theme.colors.border.medium} 1px, transparent 1px)`,
+      backgroundSize: '11px 11px',
+      // `local` attaches the grid to the content rather than the viewport, so it reads as a board
+      // the panels sit on instead of an overlay they slide under.
+      backgroundAttachment: 'local',
+      boxShadow: `inset 0 0 0 1px ${theme.colors.primary.borderTransparent}`,
       '[data-viz-panel-key] section': {
         // Both halves matter. Grafana's panel border is border.weak — 12% opacity — and simply
         // switching that to dashed is imperceptible, so the planning border also steps up to

@@ -36,6 +36,9 @@ export function PlanningBanner({ planning }: { planning: DashboardPlanningState 
             {'{{count}}'} panels
           </Trans>
         </span>
+        <span className={styles.stake}>
+          <Trans i18nKey="dashboard.planning-banner.nothing-saved">Nothing saved yet</Trans>
+        </span>
       </div>
       <ToolbarButtonRow alignment="right">
         <Button
@@ -67,7 +70,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'space-between',
       gap: theme.spacing(2),
       // No horizontal padding of its own: each host bar supplies it — the app chrome actions bar
-      // in the legacy toolbar, DashboardSceneRenderer's controls slot under dashboardNewLayouts.
+      // in the legacy toolbar, PlanningControls under dashboardNewLayouts.
       padding: theme.spacing(1, 0),
     }),
     summary: css({
@@ -85,6 +88,19 @@ function getStyles(theme: GrafanaTheme2) {
     panelCount: css({
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
+    }),
+    /**
+     * "Dismiss / Build" names the two actions but never the consequence, and the consequence is the
+     * part the user cannot infer: nothing has been saved and no dashboard exists yet. Stated the way
+     * Google Docs' Suggesting pill and GitHub's branch-state bars do it — the stake, not the mode.
+     */
+    stake: css({
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+      '&::before': {
+        content: '"\\00b7"',
+        margin: theme.spacing(0, 1),
+      },
     }),
   };
 }

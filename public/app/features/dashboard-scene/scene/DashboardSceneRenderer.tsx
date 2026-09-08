@@ -4,7 +4,6 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
@@ -15,7 +14,7 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/Sol
 
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { PlanningBanner } from './new-toolbar/PlanningBanner';
+import { PlanningControls } from './new-toolbar/PlanningControls';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -92,20 +91,19 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   /**
-   * A previewed plan has no queries, so the time picker and variable bar would be inert controls
-   * over nothing — they come back when the plan is built. What replaces them depends on where this
-   * dashboard keeps its actions: the new toolbar puts Save and friends in this very bar, so the
-   * plan's banner takes their place here; the legacy toolbar puts them in the app chrome, where
-   * NavToolbarActions swaps them instead, leaving this bar simply empty.
+   * A previewed plan replaces the dashboard's normal controls with its own: `PlanningControls`
+   * carries the plan's action bar and the plan's variables, and deliberately does not render
+   * `DashboardControls`, which also hosts save/settings/share. The time picker stays out — a plan's
+   * panels have no queries, so a time range would control nothing.
+   *
+   * Only the new toolbar routes through here. It keeps Save and friends in this very bar, so the
+   * plan's bar takes their place; the legacy toolbar keeps them in the app chrome, where
+   * NavToolbarActions swaps them instead and this bar stays empty.
    */
   function renderControls() {
     if (planning) {
-      // The banner carries no horizontal padding of its own, so give it the same insets
-      // DashboardControls uses — otherwise its buttons sit flush against the canvas edge.
       return config.featureToggles.dashboardNewLayouts ? (
-        <Box paddingX={2} paddingTop={1}>
-          <PlanningBanner planning={planning} />
-        </Box>
+        <PlanningControls dashboard={model} planning={planning} />
       ) : null;
     }
 

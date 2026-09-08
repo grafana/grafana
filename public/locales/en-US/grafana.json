@@ -6093,6 +6093,7 @@
     "planning-banner": {
       "build": "Build",
       "dismiss": "Dismiss",
+      "nothing-saved": "Nothing saved yet",
       "panel-count_one": "{{count}} panel",
       "panel-count_other": "{{count}} panels"
     },
