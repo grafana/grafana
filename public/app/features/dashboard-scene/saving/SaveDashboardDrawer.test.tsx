@@ -4,13 +4,14 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, type FetchError } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import {
   AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerKind,
   DENY_ALL_PREDEFINED,
   ManagerKind,
+  type MetaStatus,
 } from 'app/features/apiserver/types';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -257,6 +258,88 @@ describe('SaveDashboardDrawer', () => {
       const dataSent = saveDashboardMutationMock.mock.calls[1][0];
       expect(dataSent.overwrite).toEqual(true);
     });
+
+    it('Offers overwrite when the apiserver rejects the save with reason Conflict', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(409, {
+          reason: 'Conflict',
+          message: 'deprecatedInternalID=5 is already in use',
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('Someone else has updated this dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Save and overwrite')).toBeInTheDocument();
+    });
+
+    it('Lists each field level cause when the apiserver rejects the save as Invalid', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(422, {
+          reason: 'Invalid',
+          message: 'Dashboard.dashboard.grafana.app "my-uid" is invalid',
+          details: {
+            causes: [
+              { field: 'spec.title', message: 'title cannot be empty' },
+              { field: 'spec.panels[0].id', message: 'must be unique' },
+            ],
+          },
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('spec.title: title cannot be empty')).toBeInTheDocument();
+      expect(await screen.findByText('spec.panels[0].id: must be unique')).toBeInTheDocument();
+    });
+
+    it('Shows the server message rather than a blank alert for an unrecognised apiserver error', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(500, {
+          reason: 'InternalError',
+          message: 'failed to write to unified storage',
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('Failed to save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('failed to write to unified storage')).toBeInTheDocument();
+    });
+
+    it('Explains the failure when the apiserver denies permission to save', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(403, {
+          reason: 'Forbidden',
+          message: 'dashboards.dashboard.grafana.app is forbidden',
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('You do not have permission to save this dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('dashboards.dashboard.grafana.app is forbidden')).toBeInTheDocument();
+    });
   });
 
   describe('When a dashboard is managed by an external system', () => {
@@ -340,6 +423,41 @@ describe('SaveDashboardDrawer', () => {
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
       expect(dataSent.k8s).toBeUndefined();
+    });
+
+    it('Shows the server message rather than a blank alert when the copy cannot be saved', async () => {
+      const { openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(429, { reason: 'TooManyRequests', message: 'dashboard quota reached' }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('Failed to save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('dashboard quota reached')).toBeInTheDocument();
+    });
+
+    it('Lists each field level cause when the apiserver rejects the copy as Invalid', async () => {
+      const { openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(422, {
+          reason: 'Invalid',
+          message: 'Dashboard.dashboard.grafana.app "hello-copy" is invalid',
+          details: { causes: [{ field: 'metadata.name', message: 'uid too long, max 40 characters' }] },
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('metadata.name: uid too long, max 40 characters')).toBeInTheDocument();
     });
 
     it('restores meta on cancel after a Save As folder change', async () => {
@@ -504,10 +622,35 @@ describe('SaveDashboardDrawer', () => {
 
 interface MockBackendApiOptions {
   saveError: 'version-mismatch' | 'name-exists' | 'plugin-dashboard';
+  /** A verbatim rejection, so tests can use the real apiserver Status shape. */
+  rawError: FetchError;
+}
+
+/** Mirrors what the apiserver actually rejects a failed write with. */
+function k8sStatusError(status: number, overrides: Partial<MetaStatus>): FetchError<MetaStatus> {
+  return {
+    status,
+    statusText: 'Error',
+    config: { url: '/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/my-uid' },
+    data: {
+      kind: 'Status',
+      apiVersion: 'v1',
+      status: 'Failure',
+      code: status,
+      message: '',
+      ...overrides,
+    },
+  };
 }
 
 function mockSaveDashboard(options: Partial<MockBackendApiOptions> = {}) {
   saveDashboardMutationMock.mockClear();
+
+  if (options.rawError) {
+    saveDashboardMutationMock.mockResolvedValue({ error: options.rawError });
+
+    return;
+  }
 
   if (options.saveError) {
     saveDashboardMutationMock.mockResolvedValue({
