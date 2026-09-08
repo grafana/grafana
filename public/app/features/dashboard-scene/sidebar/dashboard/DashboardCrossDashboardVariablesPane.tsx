@@ -20,7 +20,9 @@ export class DashboardCrossDashboardVariablesPane extends SceneObjectBase {
 function isCrossDashboardVariablesDashboard(
   scene: ReturnType<typeof getDashboardSceneLike>
 ): scene is CrossDashboardVariablesDashboard {
-  return 'refreshPredefinedVariables' in scene && 'serializer' in scene && 'managedResourceCannotBeEdited' in scene;
+  return (
+    'setUseCrossDashboardVariables' in scene && 'serializer' in scene && 'managedResourceCannotBeEdited' in scene
+  );
 }
 
 function DashboardCrossDashboardVariablesPaneRenderer({
