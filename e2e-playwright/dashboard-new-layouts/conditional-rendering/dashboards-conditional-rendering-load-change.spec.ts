@@ -2,10 +2,9 @@ import { type Page } from '@playwright/test';
 
 import { type DashboardPage, type DashboardPageArgs } from '@grafana/plugin-e2e';
 
-import testDashboard from '../dashboards/DashboardWithAllConditionalRendering.json';
-
-import { test, expect } from './fixtures';
-import { expectRepeatedPanelTitlesToBe, flows } from './helpers';
+import testDashboard from '../../dashboards/DashboardWithAllConditionalRendering.json';
+import { test, expect } from '../fixtures';
+import { expectRepeatedPanelTitlesToBe, flows } from '../helpers';
 
 test.use({
   featureToggles: {
