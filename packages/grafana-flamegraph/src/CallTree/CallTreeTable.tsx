@@ -68,12 +68,16 @@ export function CallTreeTable({
   const functionColumnMinWidth = getFunctionColumnWidth(availableWidth, isCompact);
   const pinnedColumnOffsets = new Map<string, number>();
   for (const headerGroup of headerGroups) {
+    const functionColumnIndex = headerGroup.headers.findIndex((column) => column.id === 'label');
+    if (functionColumnIndex === -1) {
+      continue;
+    }
+
     let rightOffset = 0;
-    for (const column of [...headerGroup.headers].reverse()) {
-      if (['self', 'total', 'totalPercent', 'totalPercentRight', 'diffPercent'].includes(column.id)) {
-        pinnedColumnOffsets.set(column.id, rightOffset);
-        rightOffset += column.totalWidth;
-      }
+    for (let index = headerGroup.headers.length - 1; index > functionColumnIndex; index--) {
+      const column = headerGroup.headers[index];
+      pinnedColumnOffsets.set(column.id, rightOffset);
+      rightOffset += column.totalWidth;
     }
   }
 

@@ -186,13 +186,16 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(scrollContainer).toHaveStyle({ overflow: 'auto' });
 
     const columnHeaders = screen.getAllByRole('columnheader');
+    const colorBarHeader = columnHeaders[2];
     const selfHeader = columnHeaders[3];
     const totalHeader = columnHeaders[4];
+    expect(colorBarHeader).toHaveStyle({ position: 'sticky', right: '300px' });
     expect(selfHeader).toHaveStyle({ position: 'sticky', right: '150px' });
     expect(totalHeader).toHaveStyle({ position: 'sticky', right: '0px' });
 
     const firstDataRow = screen.getAllByRole('row')[1];
     const firstDataRowCells = within(firstDataRow).getAllByRole('cell');
+    expect(firstDataRowCells[2]).toHaveStyle({ position: 'sticky', right: '300px' });
     expect(firstDataRowCells[3]).toHaveStyle({ position: 'sticky', right: '150px' });
     expect(firstDataRowCells[4]).toHaveStyle({ position: 'sticky', right: '0px' });
 
@@ -215,7 +218,7 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(table!.querySelector('tbody')).toBeInTheDocument();
   });
 
-  it.each([800, 1600])('should pin comparison metrics at width %i', async (width) => {
+  it.each([800, 1600])('should pin comparison columns at width %i', async (width) => {
     mockBoundingClientRect({ width, height: 500 });
     const diffData = createDataFrame({
       fields: [
@@ -230,6 +233,13 @@ describe('FlameGraphCallTreeContainer', () => {
     await setup({ data: new FlameGraphDataContainer(diffData, { collapsing: true }) });
 
     const headers = screen.getAllByRole('columnheader');
+    if (width === 1600) {
+      expect(headers[2]).toHaveStyle({ position: 'sticky', right: '300px' });
+      for (const row of screen.getAllByRole('row').slice(1)) {
+        expect(within(row).getAllByRole('cell')[2]).toHaveStyle({ position: 'sticky', right: '300px' });
+      }
+    }
+
     for (const [name, right] of [
       ['Baseline', '200px'],
       ['Comparison', '100px'],
