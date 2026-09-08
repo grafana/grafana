@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 	"github.com/grafana/grafana/pkg/util"
@@ -132,6 +135,54 @@ func Test_expand(t *testing.T) {
 		results, err := expand(ctx, logger, "test", original, template.Data{}, nil, time.Now())
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{emptyLabelKeyPrefix: "value"}, results)
+	})
+}
+
+func Test_expandAnnotationsAndLabels_sizeCap(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+	result := eval.Result{Instance: data.Labels{}, EvaluatedAt: time.Now()}
+
+	newRule := func() *models.AlertRule {
+		return models.RuleGen.With(
+			models.RuleMuts.WithLabels(data.Labels{"big": strings.Repeat("a", 20)}),
+			models.RuleMuts.WithAnnotations(data.Labels{"summary": strings.Repeat("b", 20)}),
+		).GenerateRef()
+	}
+
+	t.Run("values within the cap are untouched", func(t *testing.T) {
+		lbs, anns := expandAnnotationsAndLabels(ctx, logger, newRule(), result, nil, nil, 100, nil)
+		require.Equal(t, strings.Repeat("a", 20), lbs["big"])
+		require.Equal(t, strings.Repeat("b", 20), anns["summary"])
+	})
+
+	t.Run("oversized values are truncated and counted per kind", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		stateMetrics := metrics.NewStateMetrics(reg)
+
+		lbs, anns := expandAnnotationsAndLabels(ctx, logger, newRule(), result, nil, nil, 10, stateMetrics)
+
+		require.Len(t, lbs["big"], 10)
+		require.Len(t, anns["summary"], 10)
+		require.Equal(t, float64(1), testutil.ToFloat64(stateMetrics.ClampedLabelStrings.WithLabelValues("label")))
+		require.Equal(t, float64(1), testutil.ToFloat64(stateMetrics.ClampedLabelStrings.WithLabelValues("annotation")))
+	})
+
+	t.Run("non-positive cap disables the clamp", func(t *testing.T) {
+		lbs, anns := expandAnnotationsAndLabels(ctx, logger, newRule(), result, nil, nil, 0, nil)
+		require.Equal(t, strings.Repeat("a", 20), lbs["big"])
+		require.Equal(t, strings.Repeat("b", 20), anns["summary"])
+	})
+
+	t.Run("truncation does not split a multi-byte rune", func(t *testing.T) {
+		rule := models.RuleGen.With(
+			models.RuleMuts.WithLabels(data.Labels{"emoji": strings.Repeat("é", 10)}), // 2 bytes each
+		).GenerateRef()
+
+		lbs, _ := expandAnnotationsAndLabels(ctx, logger, rule, result, nil, nil, 5, nil)
+
+		require.LessOrEqual(t, len(lbs["emoji"]), 5)
+		require.True(t, utf8.ValidString(lbs["emoji"]))
 	})
 }
 

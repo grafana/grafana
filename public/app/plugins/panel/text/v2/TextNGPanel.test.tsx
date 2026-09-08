@@ -308,6 +308,7 @@ describe('TextNGPanel', () => {
     });
 
     it('does not render the inline editor in view mode', () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
       const props = Object.assign({}, defaultProps, {
         options: { content: '# Hello', mode: TextMode.Markdown },
       });

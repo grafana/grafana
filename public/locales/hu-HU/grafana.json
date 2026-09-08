@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Rögzített érték"
       },
-      "label": "Skalár",
+      "label-field": "",
       "label-limit": "Korlát",
       "label-value": "Érték",
       "noOptionsMessage-no-fields-found": "Nem található mező",
@@ -12490,6 +12490,9 @@
       "subtitle": "Szabályok, amelyek meghatározzák, hogy egy riasztás elindul-e",
       "title": "Riasztási szabályok"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Válassza ki, hogyan kapjanak értesítést a kapcsolattartási pontjai, amikor egy riasztáspéldány aktiválódik",
       "title": "Kapcsolattartási pontok"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Explore"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Valós felhasználói megfigyelési információkra tehet szert",
       "title": "Frontend"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profilok"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Sorozat láthatósága"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Hozzáférhető",
         "label-dash": "Szaggatott",
