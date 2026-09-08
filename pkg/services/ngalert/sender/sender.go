@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 	"unicode"
-	"unicode/utf8"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -413,7 +413,7 @@ func (s *ExternalAlertmanager) clampLabelSet(lbls models.LabelSet, kind, alertNa
 	for k, v := range lbls {
 		if len(k) > maxSize {
 			s.logger.Warn("Dropping label/annotation with name exceeding size cap",
-				"kind", kind, "namePrefix", truncateUTF8(k, 64), "size", len(k), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
+				"kind", kind, "namePrefix", util.TruncateUTF8(k, 64), "size", len(k), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
 			s.manager.metrics.clampedStrings.WithLabelValues(kind, "name_dropped").Inc()
 			continue
 		}
@@ -421,23 +421,11 @@ func (s *ExternalAlertmanager) clampLabelSet(lbls models.LabelSet, kind, alertNa
 			s.logger.Warn("Truncating label/annotation value exceeding size cap",
 				"kind", kind, "name", k, "size", len(v), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
 			s.manager.metrics.clampedStrings.WithLabelValues(kind, "value_truncated").Inc()
-			v = truncateUTF8(v, maxSize)
+			v = util.TruncateUTF8(v, maxSize)
 		}
 		clamped[k] = v
 	}
 	return clamped
-}
-
-// truncateUTF8 truncates s to at most n bytes without splitting a multi-byte
-// rune; the Alertmanager API rejects invalid UTF-8 label values.
-func truncateUTF8(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	for n > 0 && !utf8.RuneStart(s[n]) {
-		n--
-	}
-	return s[:n]
 }
 
 // sanitizeLabelSet sanitizes all given LabelSet keys according to sanitizeLabelName.
