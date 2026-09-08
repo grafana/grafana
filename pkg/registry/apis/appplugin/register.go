@@ -70,9 +70,6 @@ type AppPluginRunnerOptions struct {
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
 
-	// Whether the generic search endpoints are served, read from the same
-	// settings the rest of the apiserver reads them from -- a manifest kind is
-	// searchable on the terms every other kind is.
 	SearchAPIEnabled bool
 	TrashAPIEnabled  bool
 
@@ -235,8 +232,17 @@ func RegisterAPIService(
 // apiGroupForPlugin returns the API group the plugin is served under: the group
 // declared in the manifest when it has one, otherwise the plugin id.
 func apiGroupForPlugin(plugin definition.PluginDefinition) string {
-	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
-		return plugin.Manifest.Group
+	if plugin.Manifest != nil {
+		group := plugin.Manifest.Group
+
+		// Unified storage only always-enforces RBAC on groups ending in
+		// .ext.grafana.app (alwaysEnforced in pkg/storage/unified/resource), so
+		// a group with any other suffix serves the plugin's kinds with no access
+		// check at all in the default configuration.
+		if !strings.HasSuffix(group, ".ext.grafana.app") {
+			panic(fmt.Sprintf("invalid manifest group %q for plugin %s: must end with .ext.grafana.app (otherwise RBAC never runs)", group, plugin.JSONData.ID))
+		}
+		return group
 	}
 	return plugin.JSONData.ID
 }
@@ -288,13 +294,25 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 	if b.manifest != nil {
 		registered := map[schema.GroupVersionKind]bool{}
-		addKind := func(gvk schema.GroupVersionKind) {
+		addKind := func(gvk schema.GroupVersionKind) error {
 			if registered[gvk] {
-				return
+				return nil
 			}
 			registered[gvk] = true
+			listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
+			// The settings kind and the metav1 types are registered in every
+			// served version above, and AddKnownTypeWithName panics when a GVK
+			// is already bound to a different Go type -- so a kind named
+			// Settings or Status would take the whole server down at startup.
+			for _, taken := range []schema.GroupVersionKind{gvk, listGVK} {
+				if scheme.Recognizes(taken) {
+					return fmt.Errorf("kind %s in %s claims the reserved kind name %q",
+						gvk.Kind, gvk.GroupVersion().String(), taken.Kind)
+				}
+			}
 			scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
-			scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
+			scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+			return nil
 		}
 
 		// Server-side apply uses the internal version to track managed fields.
@@ -305,8 +323,12 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			}
 			gv := schema.GroupVersion{Group: b.group, Version: version.Name}
 			for _, r := range version.Kinds {
-				addKind(gv.WithKind(r.Kind))
-				addKind(internalGV.WithKind(r.Kind))
+				if err := addKind(gv.WithKind(r.Kind)); err != nil {
+					return err
+				}
+				if err := addKind(internalGV.WithKind(r.Kind)); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -350,6 +372,10 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		return spec.MustCreateRef(name)
 	}, b.group, b.manifest)
 
+	// Resolved once for the whole manifest: storage options are keyed by
+	// resource, so every version of a kind has to register the same answer.
+	folderScoped := kindstore.FolderScopedResources(b.manifest)
+
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
 		storage[settingsRI.StoragePath()] = settingsStorage
@@ -380,9 +406,10 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 				for _, kind := range v.Kinds {
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
-						Scheme:              opts.Scheme,
-						OptsGetter:          opts.OptsGetter,
-						StorageOptsRegister: opts.StorageOptsRegister,
+						Scheme:                opts.Scheme,
+						OptsGetter:            opts.OptsGetter,
+						StorageOptsRegister:   opts.StorageOptsRegister,
+						FolderScopedResources: folderScoped,
 					}, defs)
 					if err != nil {
 						return err

@@ -11,12 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -50,7 +50,7 @@ func testAPIGroupOptions(t *testing.T, b *AppPluginAPIBuilder) (*genericapiserve
 	info := genericapiserver.NewDefaultAPIGroupInfo(b.group, scheme, metav1.ParameterCodec, codecs)
 	return &info, builder.APIGroupOptions{
 		Scheme:              scheme,
-		OptsGetter:          appinstaller.NewNoopRESTOptionsGetter(),
+		OptsGetter:          apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
 		MetricsRegister:     prometheus.NewRegistry(),
 		StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
 	}
@@ -65,14 +65,14 @@ func TestInstallSchema(t *testing.T) {
 	require.NoError(t, b.InstallSchema(scheme))
 
 	for _, version := range []string{"v0alpha1", "v1alpha1", "v2alpha1"} {
-		gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: version}
+		gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: version}
 		_, err := scheme.New(gv.WithKind("Settings"))
 		require.NoError(t, err, "settings are served in every version")
 	}
 
 	// v2alpha1 declares no kinds, so only the two versions that do are registered.
 	for _, version := range []string{"v0alpha1", "v1alpha1", runtime.APIVersionInternal} {
-		gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: version}
+		gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: version}
 		obj, err := scheme.New(gv.WithKind("TestKind"))
 		require.NoError(t, err, "version %s", version)
 		require.IsType(t, &unstructured.Unstructured{}, obj)
@@ -84,7 +84,7 @@ func TestInstallSchema(t *testing.T) {
 
 	// The preferred version has to come first, or discovery points clients at
 	// the wrong one.
-	require.Equal(t, "v1alpha1", scheme.PrioritizedVersionsForGroup("example.ext.grafana.com")[0].Version)
+	require.Equal(t, "v1alpha1", scheme.PrioritizedVersionsForGroup("example.ext.grafana.app")[0].Version)
 }
 
 func TestUpdateAPIGroupInfo(t *testing.T) {
@@ -117,10 +117,10 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		// Admission dispatch resolves the kind through this map, so a missing
 		// entry silently skips every hook the kind declared.
 		require.Contains(t, b.kinds, schema.GroupVersionResource{
-			Group: "example.ext.grafana.com", Version: "v1alpha1", Resource: "testkinds",
+			Group: "example.ext.grafana.app", Version: "v1alpha1", Resource: "testkinds",
 		})
 		require.NotContains(t, b.kinds, schema.GroupVersionResource{
-			Group: "example.ext.grafana.com", Version: "v2alpha1", Resource: "testkinds",
+			Group: "example.ext.grafana.app", Version: "v2alpha1", Resource: "testkinds",
 		})
 	})
 
@@ -138,6 +138,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	t.Run("a kind claiming a taken resource is an error", func(t *testing.T) {
 		for _, plural := range []string{apppluginV0.APP_RESOURCE_NAME, "things"} {
 			b := testBuilder(t, &app.ManifestData{
+				Group: "example.ext.grafana.app",
 				Versions: []app.ManifestVersion{{
 					Name:   "v1",
 					Served: true,
@@ -170,8 +171,95 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		require.NotNil(t, b.getter)
 
 		_, err := b.getter(context.Background(), schema.GroupVersionResource{
-			Group: "example.ext.grafana.com", Version: "v1alpha1", Resource: "nope",
+			Group: "example.ext.grafana.app", Version: "v1alpha1", Resource: "nope",
 		}, "x")
 		require.ErrorContains(t, err, "no storage registered for")
 	})
+}
+
+// The settings kind and the metav1 types are registered in every served
+// version, and the scheme panics on a double registration -- so a kind that
+// collides with one of them must be reported, not crash the whole server.
+func TestInstallSchemaRejectsReservedKindNames(t *testing.T) {
+	for _, kind := range []string{"Settings", "Status", "WatchEvent", "ListOptions", "HealthCheckResult"} {
+		t.Run(kind, func(t *testing.T) {
+			manifest := &app.ManifestData{
+				AppName:          "example",
+				Group:            "example.ext.grafana.app",
+				PreferredVersion: "v1alpha1",
+				Versions: []app.ManifestVersion{{
+					Name:   "v1alpha1",
+					Served: true,
+					Kinds: []app.ManifestVersionKind{{
+						Kind: kind, Plural: kind + "s", Scope: "Namespaced",
+					}},
+				}},
+			}
+			b := testBuilder(t, manifest)
+
+			require.NotPanics(t, func() {
+				err := b.InstallSchema(runtime.NewScheme())
+				require.ErrorContains(t, err, "reserved kind name")
+			})
+		})
+	}
+}
+
+// The list types are registered too, so a kind named after one is refused on
+// the same grounds.
+func TestInstallSchemaRejectsReservedListName(t *testing.T) {
+	manifest := &app.ManifestData{
+		AppName:          "example",
+		Group:            "example.ext.grafana.app",
+		PreferredVersion: "v1alpha1",
+		Versions: []app.ManifestVersion{{
+			Name:   "v1alpha1",
+			Served: true,
+			Kinds:  []app.ManifestVersionKind{{Kind: "SettingsList", Plural: "SettingsLists", Scope: "Namespaced"}},
+		}},
+	}
+	b := testBuilder(t, manifest)
+
+	require.NotPanics(t, func() {
+		err := b.InstallSchema(runtime.NewScheme())
+		require.ErrorContains(t, err, "reserved kind name")
+	})
+}
+
+// Storage options are keyed by GroupResource, which carries no version, so both
+// served versions of a kind register against the same key and whichever runs
+// last would otherwise decide the folder scope for both. A kind that requires a
+// folder in any served version requires one in all of them.
+func TestUpdateAPIGroupInfoFolderScopeIsConsistentAcrossVersions(t *testing.T) {
+	falseValue := false
+
+	manifest := &app.ManifestData{
+		AppName:          "example",
+		Group:            "example.ext.grafana.app",
+		PreferredVersion: "v1alpha1",
+		Versions: []app.ManifestVersion{
+			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"}, // folder scoped by default
+			}},
+			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+		},
+	}
+
+	b := testBuilder(t, manifest)
+	info, opts := testAPIGroupOptions(t, b)
+
+	registered := map[schema.GroupResource][]apistore.StorageOptions{}
+	opts.StorageOptsRegister = func(gr schema.GroupResource, so apistore.StorageOptions) {
+		registered[gr] = append(registered[gr], so)
+	}
+	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+
+	gr := schema.GroupResource{Group: "example.ext.grafana.app", Resource: "things"}
+	require.Len(t, registered[gr], 2, "both versions register against the shared resource")
+	for i, so := range registered[gr] {
+		require.True(t, so.EnableFolderSupport, "registration %d dropped folder support", i)
+		require.True(t, so.RequireFolder, "registration %d dropped the folder requirement", i)
+	}
 }

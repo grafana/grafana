@@ -103,6 +103,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
+  GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -694,6 +696,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginPathNesting`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginPathNesting", false, options).value;
 };
 
 /**

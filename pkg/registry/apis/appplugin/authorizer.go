@@ -35,13 +35,22 @@ func NewPluginAccessChecker(accessControl ac.AccessControl) PluginAccessChecker 
 }
 
 // clusterReadVerbs are the only verbs a user may run against a cluster-scoped
-// kind, and only one the manifest marks user readable.
-var clusterReadVerbs = map[string]bool{utils.VerbGet: true, utils.VerbList: true}
+// kind, and only one the manifest marks user readable. Watch is a read: the
+// reader role grants it, and without it no informer over the kind can start.
+var clusterReadVerbs = map[string]bool{
+	utils.VerbGet:   true,
+	utils.VerbList:  true,
+	utils.VerbWatch: true,
+}
 
 // kindPolicy is what authorizing a manifest kind needs to know about it.
 type kindPolicy struct {
 	clusterScoped bool
 	userReadable  bool
+	// customRoutes are the subresources the manifest mounts for this kind,
+	// unioned across its served versions -- the authorizer runs before the
+	// request is dispatched to one.
+	customRoutes map[string]bool
 }
 
 // kindPolicies indexes a manifest's kinds by the resource name they are served
@@ -61,13 +70,24 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 				continue // kindstore.New refuses these, so they have no resource
 			}
 			resource := strings.ToLower(kind.Plural)
-			if _, seen := policies[resource]; seen {
-				continue
+			policy, seen := policies[resource]
+			if !seen {
+				policy = kindPolicy{
+					clusterScoped: kind.Scope == kindstore.ClusterScope,
+					userReadable:  kind.UserReadable,
+					customRoutes:  map[string]bool{},
+				}
 			}
-			policies[resource] = kindPolicy{
-				clusterScoped: kind.Scope == kindstore.ClusterScope,
-				userReadable:  kind.UserReadable,
+			for path := range kind.Routes {
+				// Only the first segment can be a subresource, and manifestRoutes
+				// drops the ones that shadow a reserved subresource.
+				route, _, _ := strings.Cut(strings.TrimPrefix(path, "/"), "/")
+				if route == "" || reservedSubresources[route] {
+					continue
+				}
+				policy.customRoutes[route] = true
 			}
+			policies[resource] = policy
 		}
 	}
 	return policies
@@ -98,6 +118,13 @@ func (b *AppPluginAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 func (b *AppPluginAPIBuilder) authorizeKind(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	policy, ok := b.kindPolicies[attr.GetResource()]
 	if !ok || !policy.clusterScoped {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	// A custom route never reaches unified storage, so the plugin's app access
+	// -- already checked above -- is what authorizes it. The read-only rule
+	// below governs the objects the kind stores, not the routes it serves.
+	if policy.customRoutes[attr.GetSubresource()] {
 		return authorizer.DecisionAllow, "", nil
 	}
 

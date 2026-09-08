@@ -24,7 +24,7 @@ func testManifest(t *testing.T) *app.ManifestData {
 
 	return &app.ManifestData{
 		AppName:          "example",
-		Group:            "example.ext.grafana.com",
+		Group:            "example.ext.grafana.app",
 		PreferredVersion: "v1alpha1",
 		Versions: []app.ManifestVersion{
 			{

@@ -1,141 +1,91 @@
-# Admission hooks for app plugin kinds
+# Manifest-defined APIs for app plugins
 
-For app plugin authors declaring `admission` on a kind in their manifest, and for anyone
-changing how those hooks are dispatched. The short version: **a kind that declares both
-mutation and validation for the same operation gets one `AdmissionReview` call, not two,
-and that call happens in the mutating phase.**
+This package registers locally installed app plugins as Grafana API groups. In
+addition to the existing `Settings` resource, an app plugin can use its
+`app-sdk-manifest.json` to declare versions, kinds, schemas, custom routes,
+admission hooks, and roles.
 
-This is experimental. The v3 plugin protocol and this wiring can both change.
+This support is experimental. The manifest format and the plugin v3 protocol
+can still change.
 
-## Declaring the hooks
+## Enable manifest APIs
 
-Each kind version in the manifest carries an optional `admission` block, with a separate
-operation list per capability:
+Both feature toggles are required:
 
-```yaml
-kinds:
-  - kind: Thing
-    plural: things
-    scope: Namespaced
-    admission:
-      mutation:
-        operations: [CREATE]
-      validation:
-        operations: ["*"] # CREATE, UPDATE, DELETE
+```ini
+[feature_toggles]
+appplugins.loadAppManifest = true
+appplugins.registerAPIServer = true
 ```
 
-Both lists are **per operation**. A capability with no operations is the same as not
-declaring it at all. Nothing is called for a kind that declares neither.
+`appplugins.loadAppManifest` loads the manifest into the plugin definition.
+`appplugins.registerAPIServer` registers one API group for each local app
+plugin. A plugin without a manifest continues to serve only its settings API.
 
-Two operations never reach the plugin:
+## Registered resources
 
-- **CONNECT** has no representation in `AdmissionReviewRequest.Operation`. Declare it and
-  it is silently dropped. Connect traffic reaches plugins through custom routes instead.
-- **Subresource writes** (`/status`) are skipped entirely. The v3 request has no
-  subresource field, so the hook could not tell a status write from a write to the main
-  resource, and answering as if it were the main resource is worse than not answering.
+The API group is the manifest's `group`, falling back to the plugin ID when the
+manifest does not declare one. Only versions marked `served` are registered,
+with `preferredVersion` first in discovery. The existing `v0alpha1` settings
+API remains available even when the manifest does not declare that version.
 
-## One call, not two
+Each manifest kind is stored as an unstructured resource in unified storage.
+The registration honors:
 
-The v3 protocol has a single `AdmissionReview` RPC whose response carries both the
-allow/deny decision *and* the mutated object. Kubernetes-style mutating and validating
-webhooks are separate endpoints; this is not. So dispatch collapses to whichever phase
-comes first for that operation:
+- namespaced or cluster scope;
+- folder scoping for namespaced resources (enabled by default);
+- OpenAPI schema validation, pruning, and defaults;
+- a `/status` subresource when the schema declares `status`;
+- additional printer columns and server-side apply managed fields;
+- `/search` and `/trash` routes for eligible kinds; and
+- manifest-declared version routes and kind subresource routes, forwarded to
+  the plugin's v3 route service.
 
-| Declared for the operation | Reviewed in     | Plugin calls |
-| -------------------------- | --------------- | ------------ |
-| mutation + validation      | mutating phase  | 1            |
-| mutation only              | mutating phase  | 1            |
-| validation only            | validating phase| 1            |
-| neither                    | —               | 0            |
+The generated OpenAPI document replaces the generic unstructured request and
+response bodies with the schemas from the manifest. It is available at:
 
-A denial is enforced wherever the call happens, so a plugin that only declares mutation
-can still reject a request. That matches Kubernetes, where a mutating webhook may deny.
+```text
+/openapi/v3/apis/<group>/<version>
+```
 
-Because the gating is per operation, a kind that declares mutation on `CREATE` and
-validation on `CREATE`+`DELETE` is reviewed once in the mutating phase on create, and once
-in the validating phase on delete.
+For the SDK test plugin, the Swagger UI is:
 
-## What the plugin sees when both are configured
+```text
+http://localhost:3000/swagger?api=grafana-app-sdk-test-app-v1alpha1#/
+```
 
-This is the part worth understanding before you rely on a validation rule. The order for a
-create is:
+This change does not add the standalone `grafana cli write-openapi` command or
+the plugin router from the larger proof-of-concept branch.
 
-1. **Mutating admission** — the plugin is called, and its returned object is applied
-2. `kindstore.Store.Create` records **managedFields** for the request's field manager
-3. `Store.create` fills uid and creationTimestamp, and **generates the name** from `generateName`
-4. `rest.BeforeCreate` runs `PrepareForCreate` (**strips `status`**, sets `generation: 1`),
-   then the OpenAPI **schema validation**, then ObjectMeta validation
-5. **Validating admission** — skipped when the mutating phase already ran
-6. Persist
+Manifests are read from local plugins during startup; this package does not
+watch for manifest changes. The manifest's custom conversion capability is not
+dispatched by this implementation.
 
-Step 2 belongs to the generic create handler everywhere else, but that handler diffs
-against an empty object it asks the scheme for, and for a kind served as unstructured the
-scheme returns one with no apiVersion or kind — see `newFieldManager` in `kindstore`. A consequence
-of running it here instead: fields a mutation hook adds are owned by the request's field
-manager, where an in-tree mutation would leave them unowned.
+## Authorization
 
-The plugin's `object_bytes` is the object **as submitted** — step 1's input. Its verdict is
-therefore computed before its own mutation is applied, and before steps 3 and 4 happen at
-all. Three consequences:
+Requests must first pass the app plugin access check. Manifest roles are then
+registered as fixed Grafana roles for the kinds they name. When a manifest has
+no roles, default reader and writer roles are bound to the Viewer and Editor
+basic roles. Folder permissions still determine access to individual
+folder-scoped objects.
 
-- On a `generateName` create the plugin sees `metadata.name` empty. It cannot validate the
-  final name.
-- `status` is still on the body during `CREATE`. A rule like *"status must not be set on
-  create"* fires against the submitted object, not the stripped one.
-- Server-assigned uid and creationTimestamp are not visible.
+Cluster-scoped kinds are reserved for service identities unless the manifest
+marks them `userReadable`. End users can only `get` or `list` a user-readable
+cluster-scoped kind.
 
-If a kind needs the post-strategy view for an operation, declare **validation only** for
-that operation — then the call moves to step 5 and sees everything above. What you cannot
-have on a single operation is both a mutation hook and a post-strategy validation view.
-That is a property of having one RPC, not of this wiring.
+## Admission hooks
 
-### Schema validation is not weakened by the skip
+A kind can declare mutation and validation operations in its `admission`
+block. The plugin v3 protocol returns both the mutated object and the admission
+decision from one `AdmissionReview` call, so an operation that declares both is
+called once during the mutating phase. Validation-only operations are called
+during the validating phase.
 
-Step 4 runs strictly **after** the mutation and strictly **before** validating admission.
-A plugin that mutates its object into a shape the kind's OpenAPI schema rejects is still
-caught, by `validateAgainstSchema` in the kind store's REST strategy. Dropping the plugin's second call
-costs visibility, never enforcement.
+`CREATE`, `UPDATE`, `DELETE`, and `*` are supported. `CONNECT` and subresource
+writes are not sent to admission because the v3 request cannot represent the
+subresource. Plugin errors fail the request closed, warnings are returned to
+the client, and a mutation cannot change the object's identity or managed
+fields.
 
-The plugin is also on both sides of the exchange: it already knows what it is about to
-return, so validating its own output is an internal concern rather than something worth a
-second round trip.
-
-## Denials, warnings, and failures
-
-- **Denial.** `allowed: false`, or any `error` on the response, rejects the request. The
-  plugin's `code`, `reason`, `message`, and `details.causes` are carried onto the API
-  error. Returning `422` with field causes, `409`, or `429` with `retryAfterSeconds` all
-  work. A plugin that says nothing gets **403 Forbidden**, and any code below `400` is
-  raised to `400`, so a denial can never come back looking like a success or a redirect —
-  the same guard Kubernetes applies to webhook rejections.
-- **Warnings** are forwarded to the request's warning recorder and reach the client as
-  `Warning` headers.
-- **Failure is closed.** A kind that declares a hook cannot be written without it, so an
-  unreachable plugin or an unparsable mutation response fails the request rather than
-  admitting silently. A missing plugin client is caught at startup by `kindstore.New`, not
-  at request time.
-- **Identity is not mutable.** The mutated object's GVK, name, generateName, namespace,
-  uid, and resourceVersion are restored from the incoming object. By the time admission
-  runs, the request path and storage key are already derived from those, so a hook that
-  renamed the object would have it written under a key that no longer matched.
-  `managedFields` is restored for the same reason: on an update the generic handler writes
-  it *before* mutating admission, so a hook that rebuilds its object rather than editing
-  it would otherwise drop the ownership the request just recorded.
-
-## Where the code lives
-
-The review itself lives in `pkg/services/apiserver/kindstore`, alongside the rest of a
-manifest kind's storage: `MutateAdmission`, `ValidateAdmission`, `admissionReview`,
-`applyMutation`, and `admissionDenied` are `*kindstore.Store` methods, and the kind's
-declared operations are read off the manifest in `kindstore.New`.
-
-`AppPluginAPIBuilder.Mutate` and `.Validate` are the entry points, implementing
-`builder.APIGroupMutation` and `builder.APIGroupValidation`. They are thin routers: the
-admission chain registers per **GroupVersion**, while these hooks are per **resource**, so
-they look the target kind up in the `kinds` map built in `UpdateAPIGroupInfo`.
-
-Dispatching from the REST strategy instead is not an option worth revisiting:
-`PrepareForCreate` cannot return an error, `strategy.Validate` flattens everything to
-`422`, and `RESTDeleteStrategy` is `runtime.ObjectTyper` and nothing else — so DELETE has
-no strategy hook at all.
+Schema validation runs after mutation. A mutation that produces an object that
+does not match the manifest schema is rejected before it is stored.

@@ -43,6 +43,10 @@ type Options struct {
 	// StorageOptsRegister declares a resource's storage options, and has to be
 	// called before OptsGetter resolves that resource.
 	StorageOptsRegister apistore.StorageOptionsRegister
+	// FolderScopedResources is each resource's folder scope resolved across
+	// every served version, as [FolderScopedResources] computes it. A resource
+	// missing from the map falls back to the kind's own declaration.
+	FolderScopedResources map[string]bool
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -51,6 +55,35 @@ func IsFolderScoped(kind app.ManifestVersionKind) bool {
 	}
 	// namespaced resources are folder scoped by default
 	return kind.FolderScoped == nil || *kind.FolderScoped
+}
+
+// FolderScopedResources resolves each resource's folder scope across every
+// served version of the manifest.
+//
+// Storage options are keyed by GroupResource, which carries no version, so all
+// versions of a kind share one registration and whichever registered last would
+// otherwise decide for the rest. A resource is folder scoped when any served
+// version says so: a write through a version that dropped the requirement would
+// store an object with no folder, which the versions that require one cannot
+// account for.
+func FolderScopedResources(manifest *app.ManifestData) map[string]bool {
+	if manifest == nil {
+		return nil
+	}
+	out := map[string]bool{}
+	for _, version := range manifest.Versions {
+		if !version.Served {
+			continue
+		}
+		for _, kind := range version.Kinds {
+			if kind.Plural == "" {
+				continue // New refuses these, so they have no resource
+			}
+			resource := strings.ToLower(kind.Plural)
+			out[resource] = out[resource] || IsFolderScoped(kind)
+		}
+	}
+	return out
 }
 
 // Store applies a manifest kind's storage and REST strategies.
@@ -163,6 +196,9 @@ func New(
 
 	// Register before CompleteWithOptions resolves this resource.
 	folder := IsFolderScoped(kind)
+	if resolved, ok := opts.FolderScopedResources[gr.Resource]; ok {
+		folder = resolved
+	}
 	opts.StorageOptsRegister(gr, apistore.StorageOptions{
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
@@ -414,19 +450,19 @@ func (s *statusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.
 	}
 	s.restoreGVK(u)
 	s.pruneAndDefault(u)
+	status, hasStatus, _ := unstructured.NestedFieldNoCopy(u.Object, "status")
+	managedFields := u.GetManagedFields()
+
 	oldU, ok := old.(*unstructured.Unstructured)
 	if !ok {
 		return
 	}
-	if spec, found, _ := unstructured.NestedFieldNoCopy(oldU.Object, "spec"); found {
-		u.Object["spec"] = runtime.DeepCopyJSONValue(spec)
+	*u = *oldU.DeepCopy()
+	s.restoreGVK(u)
+	u.SetManagedFields(managedFields)
+	if hasStatus {
+		u.Object["status"] = runtime.DeepCopyJSONValue(status)
 	} else {
-		unstructured.RemoveNestedField(u.Object, "spec")
+		unstructured.RemoveNestedField(u.Object, "status")
 	}
-	// Mirrors the generic status strategy: the metadata a status write carries
-	// is whatever the caller read, not an edit it is entitled to make.
-	u.SetLabels(oldU.GetLabels())
-	u.SetAnnotations(oldU.GetAnnotations())
-	u.SetFinalizers(oldU.GetFinalizers())
-	u.SetOwnerReferences(oldU.GetOwnerReferences())
 }

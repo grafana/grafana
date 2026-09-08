@@ -930,11 +930,12 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 // capturePatcher captures all patch operations for inspection in tests.
 type capturePatcher struct {
 	ops []map[string]interface{}
+	err error
 }
 
 func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
 	c.ops = append(c.ops, patchOperations...)
-	return nil
+	return c.err
 }
 
 // findPatchOp returns the last captured op for path, matching JSON Patch's
@@ -1418,6 +1419,536 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			}
 		})
 	}
+}
+
+// TestRepositoryController_process_UserCausedDeleteFailure verifies that a
+// deletion blocked by credentials the user has to fix reports itself on
+// /status/health rather than as a controller error. The repository renders a
+// "Deleting" spinner for as long as it stays stuck and status.deleteError is
+// not rendered anywhere, so health is the only place the reason reaches the
+// user -- and returning an error would just re-log it at ERROR every pass.
+func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err, "a user-caused delete failure must not surface as a controller error")
+
+	healthPatch, ok := patcher.findPatchOp("/status/health")
+	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
+	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	require.True(t, ok)
+	assert.False(t, health.Healthy)
+	require.Len(t, health.Message, 1)
+	assert.Contains(t, health.Message[0], "unable to delete repository")
+	assert.Contains(t, health.Message[0], "permission denied")
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "conditions value should be []metav1.Condition")
+	var readyCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeReady {
+			readyCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, readyCond, "expected Ready condition to be present")
+	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
+}
+
+// TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
+// verifies that a deletion blocked by a non-user-caused, non-retryable error is
+// still surfaced on /status/health rather than only returned. A stuck deletion
+// is invisible to the user otherwise, and returning the error would re-log it at
+// ERROR on every resync without making progress, so process reports it on
+// health and returns nil.
+func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	// A generic build failure -- neither user-caused (auth) nor a retryable
+	// ServiceUnavailable -- so it exercises the "surface on status, return nil"
+	// branch.
+	buildErr := errors.New("create repository from configuration: boom")
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err, "a non-retryable delete failure must be surfaced on status, not returned and re-logged every resync")
+
+	healthPatch, ok := patcher.findPatchOp("/status/health")
+	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
+	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	require.True(t, ok)
+	assert.False(t, health.Healthy)
+	require.Len(t, health.Message, 1)
+	assert.Contains(t, health.Message[0], "unable to delete repository")
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "conditions value should be []metav1.Condition")
+	var readyCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeReady {
+			readyCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, readyCond, "expected Ready condition to be present")
+	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+}
+
+// TestRepositoryController_process_DeleteStatusPatchFailure verifies how a
+// failed status write during delete-error handling is surfaced to the
+// workqueue: the patch error is returned so the delete reason is re-attempted
+// rather than the key being forgotten, but a retryable original delete error is
+// preferred so it is never dropped just because the patch happened to fail with
+// something non-retryable.
+func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
+	patchErr := errors.New("apiserver rejected the status patch")
+
+	tests := []struct {
+		name                   string
+		buildErr               error
+		wantServiceUnavailable bool // true => the retryable original error is preferred; false => the patch error is returned
+		description            string
+	}{
+		{
+			name:                   "non-retryable delete error returns the patch error",
+			buildErr:               fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied),
+			wantServiceUnavailable: false,
+			description:            "a failed status patch must be returned so the delete reason is re-attempted",
+		},
+		{
+			name:                   "retryable delete error is preferred over the patch error",
+			buildErr:               fmt.Errorf("create repository: %w", apierrors.NewServiceUnavailable("git server down")),
+			wantServiceUnavailable: true,
+			description:            "a retryable delete error must not be dropped when the status patch also fails",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			now := metav1.Now()
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test-repo",
+					Namespace:         "default",
+					DeletionTimestamp: &now,
+					Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+			}
+
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+			mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+			mockFactory := repository.NewMockFactory(t)
+			mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildErr)
+
+			patcher := &capturePatcher{err: patchErr}
+			repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+			rc := &RepositoryController{
+				repos:         repoGetter,
+				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+				healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+				repoFactory:   mockFactory,
+				statusPatcher: patcher,
+				logger:        logging.DefaultLogger,
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			_, err := rc.process("default/test-repo")
+			require.Error(t, err, tt.description)
+			if tt.wantServiceUnavailable {
+				assert.True(t, apierrors.IsServiceUnavailable(err), tt.description)
+			} else {
+				require.ErrorIs(t, err, patchErr, tt.description)
+			}
+		})
+	}
+}
+
+// TestRepositoryController_process_UserCausedBuildFailure verifies that a Build
+// failure the user has to fix (revoked credentials, missing scope) is reported
+// through /status/health but not returned as a controller error. Returning one
+// re-logs it at ERROR on every pass, which spams the SLIs.
+func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-repo",
+			Namespace:  "default",
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err, "a user-caused build failure must not surface as a controller error")
+
+	healthPatch, ok := patcher.findPatchOp("/status/health")
+	require.True(t, ok, "the failure must still be surfaced on /status/health")
+	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	require.True(t, ok)
+	assert.False(t, health.Healthy)
+	require.Len(t, health.Message, 1)
+	assert.Contains(t, health.Message[0], "permission denied")
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True alongside the new unhealthy status")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "conditions value should be []metav1.Condition")
+	var readyCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeReady {
+			readyCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, readyCond, "expected Ready condition to be present")
+	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
+}
+
+// TestRepositoryController_process_RecordsReconcileErrorPhase drives process()
+// to fail at a stage other than delete/build/hook (quota) and asserts the
+// central recorder still counts it under the right phase -- proving the metric
+// is a complete reconciliation-error signal, not just the three swallowed paths.
+func TestRepositoryController_process_RecordsReconcileErrorPhase(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	// ObservedGeneration is 0, so a quota lookup failure is returned rather than
+	// falling back to cached limits.
+	quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+	quotaGetter.SetError(errors.New("quota service down"))
+
+	reg := prometheus.NewPedanticRegistry()
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:            repoGetter,
+		quotaGetter:      quotaGetter,
+		quotaChecker:     NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		statusPatcher:    &capturePatcher{},
+		reconcileMetrics: registerReconcileErrorMetrics(reg),
+		logger:           logging.DefaultLogger,
+		tracer:           tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.Error(t, err, "a quota lookup failure must be returned")
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseQuota, reconcileCauseSystem),
+		"the failure must be counted under the quota phase")
+}
+
+// TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure
+// verifies the returned system error takes precedence over a swallowed
+// user-caused one: a user-caused build failure is surfaced on status and returns
+// nil, but when the deferred status flush then fails, that returned patch error
+// must be counted as phase=status/cause=system -- not hidden behind the earlier
+// user classification, or an SLO excluding cause="user" would miss it.
+func TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Status:     provisioning.RepositoryStatus{ObservedGeneration: 1},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	reg := prometheus.NewPedanticRegistry()
+	patcher := &capturePatcher{err: errors.New("apiserver unavailable")}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:            repoGetter,
+		quotaGetter:      quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:     NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:      mockFactory,
+		statusPatcher:    patcher,
+		reconcileMetrics: registerReconcileErrorMetrics(reg),
+		logger:           logging.DefaultLogger,
+		tracer:           tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.Error(t, err, "the deferred status flush failure must be returned to the workqueue")
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseStatus, reconcileCauseSystem),
+		"the returned status-flush failure must be counted as system")
+	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseBuild, reconcileCauseUser),
+		"the swallowed user error must not be counted once a system error is returned")
+}
+
+func TestClassifyBuildFailureReason(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		// A secret that cannot be read (decrypt service/keeper/KMS outage) is a
+		// transient infra failure, not an invalid repository configuration.
+		{"decrypt failure is a service issue", fmt.Errorf("build: %w", repository.ErrSecretDecryptFailed), provisioning.ReasonServiceUnavailable},
+		{"auth failure still classified as auth", fmt.Errorf("build: %w", repository.ErrUnauthorized), provisioning.ReasonAuthenticationFailed},
+		{"k8s 503 is a service issue", apierrors.NewServiceUnavailable("secrets down"), provisioning.ReasonServiceUnavailable},
+		{"unrecognized build failure falls back to invalid spec", errors.New("bad url"), provisioning.ReasonInvalidSpec},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, classifyBuildFailureReason(tt.err))
+		})
+	}
+}
+
+func TestClassifyHookFailureReason(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"unauthorized", repository.ErrUnauthorized, provisioning.ReasonAuthenticationFailed},
+		{"permission denied wrapped", fmt.Errorf("execute deletion hooks: %w", repository.ErrPermissionDenied), provisioning.ReasonAuthenticationFailed},
+		{"repository server unavailable", repository.ErrServerUnavailable, provisioning.ReasonServiceUnavailable},
+		// A Kubernetes 503 (e.g. apiserver/finalizer request) must read as a
+		// service outage, not a config problem the user needs to fix.
+		{"kubernetes service unavailable", apierrors.NewServiceUnavailable("apiserver down"), provisioning.ReasonServiceUnavailable},
+		{"too many requests", repository.ErrTooManyRequests, provisioning.ReasonRateLimited},
+		{"generic falls back to invalid spec", errors.New("boom"), provisioning.ReasonInvalidSpec},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, classifyHookFailureReason(tt.err))
+		})
+	}
+}
+
+// TestRepositoryController_isUserCaused covers the wrap shapes the classification
+// actually has to see through in production. A provider wraps its own named
+// sentinel around the translated API error with a two-verb fmt.Errorf, and Build
+// plus process() each wrap that again -- so the auth error the decision rests on
+// sits several levels down, on the second branch of a multi-error.
+//
+// The chain is rebuilt here rather than imported: the provider that produces it
+// lives in an enterprise package the controller must not depend on.
+func TestRepositoryController_isUserCaused(t *testing.T) {
+	// Stands in for gitlab's ErrClientNotProjectScopedPermission.
+	errUnscoped := errors.New("gitlab client could not resolve its immutable projectID")
+	// Stands in for translateGitLabError's 401-with-expired-token shape.
+	errExpired := fmt.Errorf("authentication token has expired: %w", repository.ErrUnauthorized)
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "nil", err: nil, want: false},
+		{name: "unrelated error", err: errors.New("boom"), want: false},
+		{name: "bare permission denied", err: repository.ErrPermissionDenied, want: true},
+		{name: "bare unauthorized", err: repository.ErrUnauthorized, want: true},
+		{
+			name: "single wrap",
+			err:  fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied),
+			want: true,
+		},
+		{
+			name: "sentinel joined with permission denied",
+			err:  fmt.Errorf("%w: %w", errUnscoped, repository.ErrPermissionDenied),
+			want: true,
+		},
+		{
+			// The full chain: process() -> Build -> NewClient -> translateGitLabError.
+			name: "full build chain",
+			err: fmt.Errorf("unable to create repository from configuration: %w",
+				fmt.Errorf("create gitlab client: %w",
+					fmt.Errorf("%w: %w", errUnscoped, repository.ErrPermissionDenied))),
+			want: true,
+		},
+		{
+			// Same shape but carrying a 401 instead, which is itself already
+			// wrapped -- this is what the chain looks like if the provider ever
+			// wraps unauthorized the way it wraps permission denied today.
+			name: "sentinel joined with wrapped unauthorized",
+			err: fmt.Errorf("create gitlab client: %w",
+				fmt.Errorf("%w: %w", errUnscoped, errExpired)),
+			want: true,
+		},
+		{
+			// Guards the quieting logic against over-matching: the sentinel alone
+			// must not classify a failure as user-caused, or an outage wrapped in
+			// it would stop being reported as a controller error.
+			name: "sentinel joined with a non-auth error",
+			err: fmt.Errorf("create gitlab client: %w",
+				fmt.Errorf("%w: %w", errUnscoped, repository.ErrServerUnavailable)),
+			want: false,
+		},
+	}
+
+	rc := &RepositoryController{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, rc.isUserCaused(tt.err))
+		})
+	}
+}
+
+// TestRepositoryController_process_UnchangedHealthNotRewritten verifies that a
+// repeat of the same build failure does not rewrite /status/health. The patch
+// carries a fresh Checked timestamp, so writing it bumps the resourceVersion,
+// which the informer turns straight back into a reconcile -- rewriting an
+// identical status would spin for as long as the failure lasts.
+func TestRepositoryController_process_UnchangedHealthNotRewritten(t *testing.T) {
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-repo",
+			Namespace:  "default",
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			// Already reporting exactly what this pass would write.
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{buildErr.Error()},
+			},
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err)
+
+	_, ok := patcher.findPatchOp("/status/health")
+	assert.False(t, ok, "an unchanged health status must not be rewritten")
 }
 
 func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(t *testing.T) {

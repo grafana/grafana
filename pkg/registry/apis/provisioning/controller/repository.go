@@ -90,6 +90,7 @@ type RepositoryController struct {
 	quotaGetter                   quotas.QuotaGetter
 	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
+	reconcileMetrics              *reconcileErrorMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 }
@@ -123,6 +124,7 @@ func NewRepositoryController(
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 	quotaMetrics := registerRepositoryQuotaMetrics(registry)
+	reconcileMetrics := registerReconcileErrorMetrics(registry)
 
 	rc := &RepositoryController{
 		client:    provisioningClient,
@@ -158,6 +160,7 @@ func NewRepositoryController(
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
+		reconcileMetrics:              reconcileMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
@@ -727,6 +730,32 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
+	// phase tracks how far reconciliation has progressed so a failure is counted
+	// under the stage it occurred in. The user-caused paths that surface their
+	// error on status and return nil (build/delete/hook) can't rely on the
+	// returned error, so they stash it in swallowedErr/swallowedPhase.
+	//
+	// The deferred recorder counts exactly one failure per reconcile and prefers
+	// the error actually returned to the workqueue over a swallowed one: a
+	// swallowed user-caused failure can be followed by a returned system error
+	// (e.g. the deferred status flush failing) that the worker logs, and that
+	// system failure must appear in the metric as cause="system". Registered
+	// before the span defers so it runs last, after any deferred status flush has
+	// finalized err.
+	phase := reconcilePhaseSetup
+	var (
+		swallowedErr   error
+		swallowedPhase string
+	)
+	defer func() {
+		switch {
+		case err != nil:
+			rc.recordReconcileError(phase, err)
+		case swallowedErr != nil:
+			rc.recordReconcileError(swallowedPhase, swallowedErr)
+		}
+	}()
+
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return repoType, err
@@ -749,6 +778,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the informer.RepositoryGetter's concern, not the controller's.
+	phase = reconcilePhaseFetch
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
@@ -771,6 +801,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		attribute.String("repository.connection", obj.ConnectionName()),
 	)
 
+	phase = reconcilePhaseIdentity
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return repoType, err
@@ -779,7 +810,66 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	logger = logger.WithContext(ctx)
 
 	if obj.DeletionTimestamp != nil {
-		return repoType, rc.handleDelete(ctx, obj)
+		phase = reconcilePhaseDelete
+		err := rc.handleDelete(ctx, obj)
+		if err == nil {
+			return repoType, nil
+		}
+
+		// Surface the delete failure on status regardless of its cause. A stuck
+		// deletion is otherwise invisible to users (status.deleteError is not
+		// rendered anywhere) while it keeps showing the "Deleting" spinner, and a
+		// permanent failure re-logs at ERROR on every resync. Recording it on
+		// health -- with a reason classified the same way health-check failures are
+		// -- gives users the reason instead. The per-finalizer error metric is
+		// recorded inside finalizer.process independently of this return, so metric
+		// visibility on deletion errors is preserved either way.
+		// TODO: Write to a dedicated delete status once one is surfaced to users.
+		logger.Warn("unable to delete repository", "error", err)
+		deleteHealthStatus := provisioning.HealthStatus{
+			Healthy: false,
+			Error:   provisioning.HealthFailureHealth,
+			Checked: time.Now().UnixMilli(),
+			Message: []string{fmt.Sprintf("unable to delete repository: %s", err)},
+		}
+		patchOps := rc.healthPatchIfChanged(obj, deleteHealthStatus)
+		// handleDelete builds the repository to run its finalizers, so the failure
+		// can be a secret-decrypt outage -- use the build classifier so that reads
+		// as a transient service issue, not an invalid spec.
+		readyCondition := buildReadyConditionWithReason(deleteHealthStatus, classifyBuildFailureReason(err))
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+			obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+		); conditionPatchOps != nil {
+			patchOps = append(patchOps, conditionPatchOps...)
+		}
+
+		var patchErr error
+		if len(patchOps) > 0 {
+			if patchErr = rc.statusPatcher.Patch(ctx, obj, patchOps...); patchErr != nil {
+				logger.Error("failed to update repository health after delete error", "error", patchErr)
+			}
+		}
+
+		// Surface a retryable failure to the workqueue, preferring the original
+		// delete error so a retryable one is never dropped when the status patch
+		// happens to fail with something non-retryable. A failed status patch is
+		// returned too rather than swallowed, so the delete reason is re-attempted
+		// instead of the key being forgotten without ever reaching the user. Only
+		// a Kubernetes 503 fast-retries; anything else is re-attempted on the next
+		// informer resync while the finalizer stays stuck.
+		switch {
+		case apierrors.IsServiceUnavailable(err):
+			return repoType, err
+		case patchErr != nil:
+			// The status write itself failed: count it under the status phase.
+			phase = reconcilePhaseStatus
+			return repoType, patchErr
+		default:
+			// Swallowed after surfacing on status: stash it so the deferred
+			// recorder counts it, since it returns nil to the workqueue.
+			swallowedErr, swallowedPhase = err, reconcilePhaseDelete
+			return repoType, nil
+		}
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
@@ -797,6 +887,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
+	phase = reconcilePhaseQuota
 	newQuota, err := rc.resolveQuotaStatus(ctx, obj)
 	if err != nil {
 		return repoType, err
@@ -837,6 +928,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 	defer func() {
 		if patchErr := applyPatches(); patchErr != nil {
+			phase = reconcilePhaseStatus
 			logger.Error("failed to apply patches", "error", patchErr)
 			if err == nil {
 				err = patchErr
@@ -914,6 +1006,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	if shouldGenerateToken {
+		phase = reconcilePhaseToken
 		logger.Info("updating token for repository")
 
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
@@ -935,6 +1028,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		obj.Secure.Token.Create = token
 	}
 
+	phase = reconcilePhaseBuild
 	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
 	repo, err := rc.repoFactory.Build(buildCtx, obj)
 	buildSpan.End()
@@ -978,6 +1072,30 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
+			buildHealthStatus := provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{err.Error()},
+			}
+			patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, buildHealthStatus)...)
+
+			// Patch status so user can see errors
+			readyCondition := buildReadyConditionWithReason(buildHealthStatus, classifyBuildFailureReason(err))
+			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+			); conditionPatchOps != nil {
+				patchOperations = append(patchOperations, conditionPatchOps...)
+			}
+
+			if rc.isUserCaused(err) {
+				// Swallowed after surfacing on status: stash it so the deferred
+				// recorder counts it, since it returns nil to the workqueue.
+				swallowedErr, swallowedPhase = err, reconcilePhaseBuild
+				logger.Warn("unable to create repository from configuration, user-caused error", "error", err)
+				return repoType, nil
+			}
+
 			return repoType, fmt.Errorf("unable to create repository from configuration: %w", err)
 		}
 	}
@@ -987,6 +1105,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		if branchHandler.GetCurrentBranch() == "" {
 			logger.Info("given repository branch is empty, getting default branch")
 
+			phase = reconcilePhaseBranch
 			branchCtx, branchSpan := rc.tracer.Start(ctx, "provisioning.controller.get_default_branch", repoSpanAttrs(obj))
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
@@ -1029,6 +1148,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	// Run before processHooks to avoid attempting to hit webhooks if repo is already known to be unhealthy
+	phase = reconcilePhaseHealth
 	healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 	healthSpan.End()
@@ -1053,15 +1173,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 
 		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/health",
-			"value": healthStatus,
-		})
+		patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, healthStatus)...)
 	} else if len(healthResult.PatchOps) > 0 {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
 
+	phase = reconcilePhaseHook
 	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, accessible, shouldRotateWebhookSecret)
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
@@ -1072,7 +1189,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 	if hookErr != nil {
 		if rc.isUserCaused(hookErr) {
-			logger.Warn("repository hook failed with a user-facing error", "error", hookErr)
+			// Swallowed after surfacing on status: stash it so the deferred
+			// recorder counts it unless a later stage returns a system error.
+			swallowedErr, swallowedPhase = hookErr, reconcilePhaseHook
+			logger.Warn("repository hook failed with a user-caused error", "error", hookErr)
 		} else {
 			err = fmt.Errorf("process hooks: %w", hookErr)
 		}
@@ -1134,6 +1254,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// Apply all patch operations
 	if patchErr := applyPatches(); patchErr != nil {
+		phase = reconcilePhaseStatus
 		if err == nil {
 			err = patchErr
 		} else {
@@ -1149,6 +1270,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Is there are risk of race condition here?
 	// Trigger sync job after we have applied all patch operations
 	if syncOptions != nil {
+		phase = reconcilePhaseSync
 		if err := rc.addSyncJob(ctx, obj, syncOptions); err != nil {
 			return repoType, err
 		}
@@ -1162,25 +1284,36 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 // missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
 		repository.GetID(obj.Status.Webhook).IsEmpty()
 
-	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
+	hasHookChanges := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 	_, webhookCapable := repo.(repository.WebhookRepository)
-	hasWebhookToManage := webhookCapable && (len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty())
+	hasWebhookToManage := webhookCapable && webhookExpected(obj)
+	isInHookFailureCooldown := rc.healthChecker.inHookFailureCooldown(obj)
 
 	// Suppress the hook retry while the hook-failure cooldown is active, or while
 	// the repository just failed its health check (it's known inaccessible, so any
 	// create/update/delete call against it is doomed).
-	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoAccessible) {
-		shouldRunHooks = false
-		suppressed = true
+	if hasHookChanges && hasWebhookToManage && (isInHookFailureCooldown || !repoAccessible) {
+		suppressWebhooks = true
 	}
 
-	if shouldRunHooks {
+	suppressionMsg := "hooks were not suppressed"
+	if suppressWebhooks {
+		suppressionMsg = "hooks were suppressed"
+	}
+	logging.FromContext(ctx).Info(suppressionMsg,
+		"hasWebhookToManage", hasWebhookToManage,
+		"webhookCapable", webhookCapable,
+		"isInHookFailureCooldown", isInHookFailureCooldown,
+		"repoAccessible", repoAccessible,
+	)
+
+	if hasHookChanges && !suppressWebhooks {
 		hookOps, err = rc.runHooks(ctx, repo, obj)
 		if err != nil {
 			status := rc.healthChecker.recordFailure(provisioning.HealthFailureHook, err)
@@ -1209,18 +1342,56 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		}
 	}
 
-	return hookOps, nil, suppressed, nil
+	return hookOps, nil, suppressWebhooks, nil
+}
+
+func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
+	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
+		return nil
+	}
+
+	return []map[string]interface{}{{
+		"op":    "replace",
+		"path":  "/status/health",
+		"value": status,
+	}}
+}
+
+// recordReconcileError counts a reconcile failure for SLO tracking, classifying
+// it as user-caused (the user must fix it, e.g. revoked credentials) or
+// system-caused. User-caused failures are surfaced on status and not returned,
+// so this metric is how they stay visible; SLOs should alert on cause=system
+// and exclude cause=user.
+func (rc *RepositoryController) recordReconcileError(phase string, err error) {
+	cause := reconcileCauseSystem
+	if rc.isUserCaused(err) {
+		cause = reconcileCauseUser
+	}
+	rc.reconcileMetrics.RecordReconcileError(phase, cause)
 }
 
 // Returns errors that are due to user errors
 func (rc *RepositoryController) isUserCaused(err error) bool {
-	// List of errors that are user-facing errors and are left recorded on the repository
+	// List of errors that are user-caused errors and are left recorded on the repository
 	if errors.Is(err, repository.ErrUnauthorized) ||
 		errors.Is(err, repository.ErrPermissionDenied) {
 		return true
 	}
 
 	return false
+}
+
+// classifyBuildFailureReason maps a repository Build failure to a Ready condition
+// reason. Build constructs the client and decrypts the repository's secrets after
+// the spec has already passed admission validation, so a failure to read that
+// secret (decrypt service unreachable, keeper/KMS error) is a transient
+// infrastructure issue to retry -- not an invalid configuration for the user to
+// fix. Everything else falls back to the shared classification.
+func classifyBuildFailureReason(err error) string {
+	if errors.Is(err, repository.ErrSecretDecryptFailed) {
+		return provisioning.ReasonServiceUnavailable
+	}
+	return classifyHookFailureReason(err)
 }
 
 // classifyHookFailureReason maps a hook failure to a Ready condition reason,
@@ -1231,7 +1402,7 @@ func classifyHookFailureReason(err error) string {
 	switch {
 	case errors.Is(err, repository.ErrUnauthorized), errors.Is(err, repository.ErrPermissionDenied):
 		return provisioning.ReasonAuthenticationFailed
-	case errors.Is(err, repository.ErrServerUnavailable):
+	case errors.Is(err, repository.ErrServerUnavailable), apierrors.IsServiceUnavailable(err):
 		return provisioning.ReasonServiceUnavailable
 	case errors.Is(err, repository.ErrTooManyRequests):
 		return provisioning.ReasonRateLimited

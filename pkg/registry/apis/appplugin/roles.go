@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -19,23 +20,6 @@ import (
 // else grants that action -- a plugin cannot even declare it in plugin.json,
 // since plugin actions must carry the plugin id as their prefix -- so these
 // registrations are what make a plugin's kinds reachable at all.
-
-// rbacVerbs maps the Kubernetes verbs a manifest role may name onto the RBAC
-// verbs the authz service derives for an unmapped group. It mirrors k8sVerbMap
-// in pkg/services/authz/rbac: a verb translated differently there would name an
-// action no access check ever asks for.
-var rbacVerbs = map[string]string{
-	utils.VerbGet:              "get",
-	utils.VerbList:             "get",
-	utils.VerbWatch:            "get",
-	utils.VerbCreate:           "create",
-	utils.VerbUpdate:           "update",
-	utils.VerbPatch:            "update",
-	utils.VerbDelete:           "delete",
-	utils.VerbDeleteCollection: "delete",
-	utils.VerbGetPermissions:   "get_permissions",
-	utils.VerbSetPermissions:   "set_permissions",
-}
 
 var (
 	viewerVerbs = []string{utils.VerbGet, utils.VerbList, utils.VerbWatch}
@@ -94,6 +78,13 @@ func manifestRoleRegistrations(group, pluginName string, manifest *app.ManifestD
 	}
 
 	grants := roleGrants(group, manifest.RoleBindings)
+	if len(grants) == 0 {
+		// Every other degenerate case here warns; this one is the easiest to hit
+		// by omission and the hardest to spot, since the roles do get registered
+		// -- they just reach nobody until an administrator assigns them.
+		logging.DefaultLogger.Warn("manifest declares roles but binds none to a basic role; its kinds are unreachable by default",
+			"group", group)
+	}
 	out := make([]ac.RoleRegistration, 0, len(manifest.Roles))
 	// Sorted, so the same manifest always declares the same list.
 	for _, name := range slices.Sorted(maps.Keys(manifest.Roles)) {
@@ -204,7 +195,10 @@ func permissionsFor(group string, resources []string, verbs []string) []ac.Permi
 	actions := map[string]bool{}
 	for _, resource := range resources {
 		for _, verb := range verbs {
-			rbacVerb, ok := rbacVerbs[verb]
+			// The same table the authz service derives the action to check
+			// from, so a verb it translates differently cannot name an action
+			// no access check ever asks for.
+			rbacVerb, ok := rbac.ActionVerb(verb)
 			if !ok {
 				logging.DefaultLogger.Warn("skipping manifest role verb Grafana does not authorize",
 					"group", group, "resource", resource, "verb", verb)

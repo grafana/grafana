@@ -1,6 +1,7 @@
 package appplugin
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,7 +34,7 @@ func TestManifestKindOpenAPINames(t *testing.T) {
 
 	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind"}
 	name := kindstore.OpenAPIName(gvk)
-	require.Equal(t, "example.ext.grafana.com.v1alpha1.TestKind", name)
+	require.Equal(t, "example.ext.grafana.app.v1alpha1.TestKind", name)
 
 	def, ok := defs[name]
 	require.True(t, ok, "definition map must contain the kind's OpenAPI name, got keys: %v", keys(defs))
@@ -109,7 +110,7 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 
 	b.postProcessManifestKinds(oas, root, version)
 
-	kindName := "example.ext.grafana.com.v1alpha1.TestKind"
+	kindName := "example.ext.grafana.app.v1alpha1.TestKind"
 	expected := "#/components/schemas/" + kindName
 	for _, mt := range oas.Paths.Paths[base].Post.RequestBody.Content {
 		require.Equal(t, expected, mt.Schema.Ref.String())
@@ -149,6 +150,29 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 	for name := range oas.Components.Schemas {
 		require.NotContains(t, name, ".v0alpha1.", "other versions must not be injected into this version's spec")
 	}
+}
+
+func TestSetOperationResponseBodiesPreservesErrors(t *testing.T) {
+	kindRef := spec.MustCreateRef("#/components/schemas/example.Kind")
+	statusRef := spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status")
+	response := func(ref spec.Ref) *spec3.Response {
+		return &spec3.Response{ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
+			"application/json": {MediaTypeProps: spec3.MediaTypeProps{
+				Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}},
+			}},
+		}}}
+	}
+	op := &spec3.Operation{OperationProps: spec3.OperationProps{Responses: &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+			http.StatusOK:         response(statusRef),
+			http.StatusBadRequest: response(statusRef),
+		}},
+	}}}
+
+	setOperationResponseBodies(op, kindRef)
+
+	require.Equal(t, kindRef.String(), op.Responses.StatusCodeResponses[http.StatusOK].Content["application/json"].Schema.Ref.String())
+	require.Equal(t, statusRef.String(), op.Responses.StatusCodeResponses[http.StatusBadRequest].Content["application/json"].Schema.Ref.String())
 }
 
 func TestPostProcessManifestKindPostExample(t *testing.T) {
@@ -201,10 +225,10 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 }
 
 func TestSpecVersion(t *testing.T) {
-	b := &AppPluginAPIBuilder{group: "example.ext.grafana.com", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &AppPluginAPIBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
-	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.com/v1alpha1"}}}
+	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.app/v1alpha1"}}}
 	require.Equal(t, "v1alpha1", b.specVersion(oas))
 
 	// Falls back to the settings version when the title is missing or foreign
