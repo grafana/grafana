@@ -6,6 +6,7 @@ import {
   AnnoKeyGrantPermissions,
   type Resource,
   type ResourceClient,
+  type ResourceClientRequestOptions,
   type ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -134,4 +135,18 @@ export async function fetchDeletedDashboard<T>(
     fieldSelector: `metadata.name=${name}`,
   });
   return list.items.find((item) => item.metadata.name === name);
+}
+
+/**
+ * Callers that render the save failure in their own UI (the save drawer) pass
+ * `showErrorAlert: false` so the global error toast doesn't double-report it. Returns undefined
+ * when the caller didn't ask, to keep the request options out of the payload entirely.
+ */
+export function getRequestOptions(
+  command: Pick<SaveDashboardCommand<unknown>, 'showErrorAlert'>
+): ResourceClientRequestOptions | undefined {
+  if (command.showErrorAlert === undefined) {
+    return undefined;
+  }
+  return { showErrorAlert: command.showErrorAlert };
 }

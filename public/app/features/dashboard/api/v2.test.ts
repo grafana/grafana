@@ -260,6 +260,22 @@ describe('v2 dashboard API', () => {
       );
     });
 
+    it('should suppress the global error toast when the caller sets showErrorAlert false', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ ...defaultSaveCommand, showErrorAlert: false });
+
+      expect(mockPut.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
+    it('should suppress the global error toast on create when the caller sets showErrorAlert false', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ ...defaultSaveCommand, k8s: undefined, showErrorAlert: false });
+
+      expect(mockPost.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
     it('should handle empty string folderUid for root folder', async () => {
       const api = new K8sDashboardV2API();
       const saveCommand = {
