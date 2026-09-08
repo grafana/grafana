@@ -26,6 +26,7 @@ jobs:
       contents: read
     outputs:
       frontend-src: ${{ steps.detect-changes.outputs.frontend-src }}
+      base_sha: ${{ steps.resolve-base.outputs.sha }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -38,6 +39,17 @@ jobs:
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-bundle-size.yml
+
+      - name: Resolve PR merge base
+        id: resolve-base
+        if: steps.detect-changes.outputs.frontend-src == 'true'
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --filter=blob:none origin "$HEAD_SHA" "$BASE_SHA"
+          base_sha="$(git merge-base "$HEAD_SHA" "$BASE_SHA")"
+          echo "sha=$base_sha" >> "$GITHUB_OUTPUT"
 
   build:
     if: needs.detect-changes.outputs.frontend-src == 'true'
@@ -55,7 +67,7 @@ jobs:
       matrix:
         include:
           - target: base
-            commit: ${{ github.event.pull_request.base.sha }}
+            commit: ${{ needs.detect-changes.outputs.base_sha }}
           - target: pr
             commit: ${{ github.event.pull_request.head.sha }}
     steps:
