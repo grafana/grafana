@@ -3,12 +3,14 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -149,7 +151,11 @@ func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.
 		return true
 	}
 
-	if len(old.Message) != len(new.Message) {
+	if old.Error != new.Error {
+		return true
+	}
+
+	if !slices.Equal(old.Message, new.Message) {
 		return true
 	}
 
@@ -159,12 +165,6 @@ func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	}
 	if time.UnixMilli(new.Checked).Sub(time.UnixMilli(old.Checked)) > recent {
 		return true
-	}
-
-	for i, oldMsg := range old.Message {
-		if i >= len(new.Message) || oldMsg != new.Message[i] {
-			return true
-		}
 	}
 
 	return false
@@ -209,9 +209,15 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 
 	if hc.inHookFailureCooldown(cfg) {
 		logging.FromContext(ctx).Info("skipping health refresh while hook failure cooldown is active")
+		// No fresh test result to classify here, so keep whatever reason the
+		// Ready condition already carries rather than overwriting it.
+		reason := provisioning.ReasonInvalidSpec
+		if existing := meta.FindStatusCondition(cfg.Status.Conditions, provisioning.ConditionTypeReady); existing != nil {
+			reason = existing.Reason
+		}
 		return HealthResultWithPatchOps{
 			HealthStatus:   cfg.Status.Health,
-			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health, provisioning.ReasonInvalidSpec),
+			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health, reason),
 		}, nil
 	}
 
@@ -233,7 +239,7 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	return HealthResultWithPatchOps{
 		TestResults:    testResults,
 		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec),
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyTestResultReason(testResults)),
 		PatchOps:       patchOps,
 	}, nil
 }

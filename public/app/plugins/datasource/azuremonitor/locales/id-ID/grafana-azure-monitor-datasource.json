@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "API Batch",
+      "description-batch-api": "Menjalankan kueri pada beberapa sumber daya dalam satu permintaan, meningkatkan kinerja untuk dasbor besar. Memerlukan peran <2>Monitoring Reader</2> pada lingkup langganan di <6>metrics.monitor.azure.com</6>. <9>Biaya tambahan mungkin berlaku</9> di luar tier gratis.",
+      "label-enable-batch-api": "Aktifkan API Batch"
     },
     "config-editor": {
       "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini termasuk Secure Socks Proxy, batas waktu permintaan, dan cookie yang diteruskan.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Muat Langganan"
     },
     "dimension-fields": {
-      "aria-label-remove": "Hapus",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensi",
       "placeholder-field": "Bidang",
       "placeholder-operation": "Pengoperasian",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Namespace metrik"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Anda dapat memilih item dengan jenis sumber daya yang sama di berbagai langganan dan wilayah. Sumber daya di langganan atau wilayah yang berbeda akan dikueri melalui request terpisah, sehingga kegagalan pada satu request tidak memengaruhi request lainnya. Untuk memilih sumber daya dari jenis yang berbeda, hapus centang pada pilihan saat ini terlebih dahulu.",
+      "selection-notice-standard": "Anda dapat memilih item dengan jenis sumber daya dan lokasi yang sama. Untuk memilih sumber daya dari jenis atau lokasi yang berbeda, hapus centang pada pilihan saat ini terlebih dahulu."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Fitur"
     },
     "nested-row": {
       "text-loading": "Memuat..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Berhenti memuat setelah {{maxPages}} halaman; beberapa hasil mungkin dihilangkan.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Terjadi kesalahan saat meminta metadata dari Azure Monitor"

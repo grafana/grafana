@@ -10,6 +10,7 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -27,7 +28,6 @@ import {
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { getEditableElementFor } from './shared';
 import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
@@ -416,8 +416,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(target: SceneObject | undefined) {
-    const panel = getDefaultVizPanel();
+  public async addNewPanel(target: SceneObject | undefined) {
+    const panel = await getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
     if (target) {

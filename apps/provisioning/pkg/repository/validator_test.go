@@ -530,6 +530,25 @@ func TestValidator_Validate(t *testing.T) {
 				require.Contains(t, errors.ToAggregate().Error(), "cannot have no finalizers set on resources not marked for deletion")
 			},
 		},
+		{
+			// A resource marked for deletion legitimately has its finalizers
+			// removed, so the missing-finalizer check must be skipped for it.
+			name: "no finalizers allowed on resource marked for deletion",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
+						Finalizers:        []string{},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
 	}
 
 	mockFactory := NewMockFactory(t)
@@ -1145,4 +1164,73 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	err := admissionValidator.Validate(context.Background(), attr, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "duplicate repository")
+}
+
+func TestValidateCommitOptions(t *testing.T) {
+	tests := []struct {
+		name         string
+		commit       *provisioning.CommitOptions
+		expectedErrs []string
+	}{
+		{
+			name:   "no commit options",
+			commit: nil,
+		},
+		{
+			name:   "author override without signing",
+			commit: &provisioning.CommitOptions{AuthorName: "Sync Bot", AuthorEmail: "bot@example.com"},
+		},
+		{
+			name:   "signing without author override",
+			commit: &provisioning.CommitOptions{SigningMethod: provisioning.SSHSigningMethod, SignerName: "Bot Signer"},
+		},
+		{
+			name: "signer without a signing method",
+			commit: &provisioning.CommitOptions{
+				SignerName:     "Bot Signer",
+				SignerEmail:    "signer@example.com",
+				SignerIsAuthor: true,
+			},
+			expectedErrs: []string{"spec.commit.signerName", "spec.commit.signerEmail", "spec.commit.signerIsAuthor"},
+		},
+		{
+			name:         "signer as author without a signing method",
+			commit:       &provisioning.CommitOptions{SignerIsAuthor: true},
+			expectedErrs: []string{"spec.commit.signerIsAuthor"},
+		},
+		{
+			name: "author override with signing",
+			commit: &provisioning.CommitOptions{
+				AuthorName:    "Sync Bot",
+				AuthorEmail:   "bot@example.com",
+				SigningMethod: provisioning.SSHSigningMethod,
+			},
+			expectedErrs: []string{"spec.commit.authorName", "spec.commit.authorEmail"},
+		},
+		{
+			name: "author email override with signing",
+			commit: &provisioning.CommitOptions{
+				AuthorEmail:   "bot@example.com",
+				SigningMethod: provisioning.SSHSigningMethod,
+			},
+			expectedErrs: []string{"spec.commit.authorEmail"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			errs := validateCommitOptions(&provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Title:  "Test Repo",
+					Type:   provisioning.GitHubRepositoryType,
+					Commit: tt.commit,
+				},
+			})
+
+			require.Len(t, errs, len(tt.expectedErrs))
+			for i, expected := range tt.expectedErrs {
+				assert.Equal(t, expected, errs[i].Field)
+			}
+		})
+	}
 }

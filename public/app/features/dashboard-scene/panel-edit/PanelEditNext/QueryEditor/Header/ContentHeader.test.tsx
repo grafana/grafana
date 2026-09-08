@@ -1,11 +1,12 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type ScopedVars } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
+import { renderWithQueryEditorProvider } from '../testUtils';
 
-import { ContentHeader } from './ContentHeader';
+import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
 // Capture the picker props so we can assert how `current` and `scopedVars` are resolved.
 const mockDataSourcePicker = jest.fn();
@@ -17,9 +18,8 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   },
 }));
 
-// These read from QueryEditor context, which is out of scope for these prop-based wiring tests.
+// Reads from QueryEditor context, which is out of scope for these header wiring tests.
 jest.mock('./HeaderActions', () => ({ HeaderActions: () => null }));
-jest.mock('./EditableQueryName', () => ({ EditableQueryName: () => null }));
 
 const resolvedSettings: DataSourceInstanceSettings = {
   uid: '${metrics_source}',
@@ -78,5 +78,20 @@ describe('ContentHeader datasource picker', () => {
     renderHeader({ refId: 'A' }, { scopedVars });
 
     expect(pickerProps().scopedVars).toBe(scopedVars);
+  });
+});
+
+describe('ContentHeader query name', () => {
+  it('stays editable while a bulk selection is active', () => {
+    // The header describes the active card only, so a bulk selection elsewhere in the sidebar
+    // is no reason to lock renaming.
+    const query = { refId: 'A' };
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper />, {
+      queries: [query, { refId: 'B' }],
+      selectedQuery: query,
+      uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+    });
+
+    expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
   });
 });

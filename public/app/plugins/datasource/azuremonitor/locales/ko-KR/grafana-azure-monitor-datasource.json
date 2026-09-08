@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "기본 로그 활성화"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "배치 API",
+      "description-batch-api": "단일 요청에서 여러 리소스를 쿼리하여 대규모 대시보드의 성능을 향상시킵니다. <6>metrics.monitor.azure.com</6>의 구독 범위에서 <2>모니터링 리더</2> 역할이 필요합니다. 무료 티어를 초과하는 경우 추가 <9>비용이 부과될 수 있습니다</9>.",
+      "label-enable-batch-api": "배치 API 활성화"
     },
     "config-editor": {
       "description-additional-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. 여기에는 보안 Socks 프록시, 요청 시간 제한, 요청 위임(forwarded) 쿠키가 포함됩니다.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "구독 불러오기"
     },
     "dimension-fields": {
-      "aria-label-remove": "제거",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "차원",
       "placeholder-field": "필드",
       "placeholder-operation": "연산",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "메트릭 네임스페이스"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "구독 및 리전 전반에서 동일한 리소스 유형의 항목을 선택할 수 있습니다. 서로 다른 구독 또는 리전의 리소스는 별도의 요청으로 쿼리되며 각각 개별적으로 실패할 수 있습니다. 다른 리소스 유형의 리소스를 선택하려면 먼저 현재 선택 항목의 선택을 취소하세요.",
+      "selection-notice-standard": "동일한 리소스 유형 및 위치의 항목을 선택할 수 있습니다. 다른 리소스 유형 또는 위치의 리소스를 선택하려면 먼저 현재 선택 항목의 선택을 취소하세요."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "기능"
     },
     "nested-row": {
       "text-loading": "로딩 중..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "하나 이상의 열을 기준으로 결과를 오름차순 또는 내림차순으로 정렬합니다."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "{{maxPages}} 페이지 이후 로딩이 중지되어 일부 결과가 누락될 수 있습니다.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitor에서 메타데이터를 요청하는 동안 오류가 발생했습니다"

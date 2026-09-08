@@ -5,6 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { ElementSelectionContext, type ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
@@ -51,6 +52,14 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+function renderWithSelection(ui: React.ReactElement, selected: ElementSelectionContextItem[]) {
+  return render(
+    <ElementSelectionContext.Provider value={{ enabled: true, selected, onSelect: jest.fn(), onClear: jest.fn() }}>
+      {ui}
+    </ElementSelectionContext.Provider>
+  );
+}
 
 function buildTestScene(body?: DashboardScene['state']['body']) {
   const scene = new DashboardScene({
@@ -131,6 +140,30 @@ describe('CanvasGridAddActions', () => {
 
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.pastePanel));
       expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalled();
+    });
+  });
+
+  describe('multi-selection', () => {
+    function getControlsContainer() {
+      return screen
+        .getByTestId(selectors.components.CanvasGridAddActions.addPanel)
+        .closest('.dashboard-canvas-controls');
+    }
+
+    it('stays revealable when a single element is selected', () => {
+      const scene = buildTestScene();
+
+      renderWithSelection(<CanvasGridAddActions layoutManager={scene.state.body} />, [{ id: 'a' }]);
+
+      expect(getControlsContainer()).not.toHaveStyle({ visibility: 'hidden' });
+    });
+
+    it('is hidden with css (keeping its layout space) when multiple elements are selected', () => {
+      const scene = buildTestScene();
+
+      renderWithSelection(<CanvasGridAddActions layoutManager={scene.state.body} />, [{ id: 'a' }, { id: 'b' }]);
+
+      expect(getControlsContainer()).toHaveStyle({ visibility: 'hidden' });
     });
   });
 });

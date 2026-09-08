@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"slices"
@@ -262,9 +263,8 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		EvaluationDuration: 6 * time.Second,
 	})
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
@@ -2023,9 +2023,8 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc               string
@@ -2120,12 +2119,8 @@ func TestStaleResults(t *testing.T) {
 	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) data.Fingerprint {
 		t.Helper()
 		labels := data.Labels{}
-		for key, value := range rule.Labels {
-			labels[key] = value
-		}
-		for key, value := range result.Instance {
-			labels[key] = value
-		}
+		maps.Copy(labels, rule.Labels)
+		maps.Copy(labels, result.Instance)
 		lbls := models.InstanceLabels(labels)
 		return lbls.Fingerprint()
 	}
@@ -2287,9 +2282,8 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc          string
@@ -2435,9 +2429,8 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-	}
+	err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule.GetKeyWithGroup(), instances)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc          string
@@ -2598,12 +2591,8 @@ func stateSliceToMap(states []*state.State) map[data.Fingerprint]*state.State {
 
 func mergeLabels(a, b data.Labels) data.Labels {
 	result := make(data.Labels, len(a)+len(b))
-	for k, v := range a {
-		result[k] = v
-	}
-	for k, v := range b {
-		result[k] = v
-	}
+	maps.Copy(result, a)
+	maps.Copy(result, b)
 	return result
 }
 

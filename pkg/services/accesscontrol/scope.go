@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -187,12 +188,7 @@ type Wildcards []string
 
 // Contains check if wildcards contains scope
 func (wildcards Wildcards) Contains(scope string) bool {
-	for _, w := range wildcards {
-		if scope == w {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(wildcards, scope)
 }
 
 func isWildcard(scope string) bool {

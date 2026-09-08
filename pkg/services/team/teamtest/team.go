@@ -67,9 +67,6 @@ func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMem
 	return s.ExpectedMembers, s.ExpectedError
 }
 
-func (s *FakeService) RegisterDelete(query string) {
-}
-
 func (s *FakeService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
 	ids := make([]int64, 0, len(s.ExpectedTeamsByUser))
 	uids := make([]string, 0, len(s.ExpectedTeamsByUser))

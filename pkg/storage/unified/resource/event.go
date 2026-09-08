@@ -57,7 +57,9 @@ type WrittenEvent struct {
 	Key        *resourcepb.ResourceKey
 	PreviousRV int64
 
-	// The json payload (without resourceVersion)
+	// The json payload (without resourceVersion). May be nil on events produced
+	// by watch replay (see ListEventsSince): the resource server materialises the
+	// value lazily for those. Live events always carry it.
 	Value []byte
 
 	// Metadata

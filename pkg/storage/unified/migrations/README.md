@@ -1,213 +1,210 @@
 # Unified storage data migrations
 
-Automated migration system for moving Grafana resources from legacy SQL storage to unified storage.
+Automated migration of Grafana resources from legacy SQL tables to unified storage. Migrations run
+once at startup, per organization, and are validated before being recorded as complete.
 
-## Overview
+## Resources
 
-The migration system transfers resources from legacy SQL tables to Grafana's unified storage backend. It runs automatically during Grafana startup and validates data integrity after each migration.
+| Resource | Group | Legacy tables | Migrated by default |
+|---|---|---|---|
+| Folders | `folder.grafana.app` | `dashboard`, `dashboard_version`, `dashboard_provisioning` | yes |
+| Dashboards | `dashboard.grafana.app` | `dashboard`, `dashboard_version`, `dashboard_provisioning` | yes |
+| Playlists | `playlist.grafana.app` | `playlist`, `playlist_item` | yes |
+| Snapshots | `dashboard.grafana.app` | `dashboard_snapshot` | no |
+| Short URLs | `shorturl.grafana.app` | `short_url` | no |
+| Stars | `collections.grafana.app` | `star`, `user` | no |
+| Preferences | `preferences.grafana.app` | `preferences`, `user`, `team` | no |
+| Datasources | `datasource.grafana.app` | `data_source` | no |
+| Query cache configs | `querycaching.grafana.app` | `data_source_cache`, `data_source` | no |
 
-### Supported resources
-
-| Resource | API Group | Legacy table |
-|----------|-----------|--------------|
-| Folders | `folder.grafana.app` | `dashboard` |
-| Dashboards | `dashboard.grafana.app` | `dashboard` |
-| Playlists | `playlist.grafana.app` | `playlist` |
-| Short URLs | `shorturl.grafana.app` | `short_url` |
-| Datasources | `*.datasource.grafana.app` | `data_source` |
-| Query cache configs | `querycaching.grafana.app` | `data_source_cache` |
-| Preferences | `preferences.grafana.app` | `preferences` |
-| Stars | `collections.grafana.app` | `star` |
+Defaults come from `MigratedUnifiedResources` in [setting_unified_storage.go](../../../setting/setting_unified_storage.go)
+and can be overridden per resource with `enableMigration`.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│           Migration provider functions (per team)            │
-│    Each team defines a function returning a                  │
-│    MigrationDefinition for their resources.                  │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ MigrationDefinition
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    MigrationRegistry                        │
-│         Thread-safe registry of MigrationDefinitions         │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    MigrationRunner                          │
-│        (Executes per-organization migration logic)          │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-       ┌───────────────────┼───────────────────┐
-       ▼                   ▼                   ▼
-  UnifiedMigrator      Validators         BulkProcess API
-  (Stream legacy     (Validate after      (Write to unified
-   resources)         migration)           storage)
+```mermaid
+flowchart TD
+    subgraph teams["Owned by resource teams"]
+        REG["migration_registrar.go<br/><i>returns MigrationDefinition</i>"]
+        MF["migrator/<br/><i>MigratorFunc reading legacy SQL</i>"]
+    end
+
+    REG --> RG["MigrationRegistry"]
+    RG --> SVC["UnifiedStorageMigrationService<br/><i>startup entry point</i>"]
+    SVC --> RUN["MigrationRunner<br/><i>per-organization execution</i>"]
+
+    RUN --> LOCK["MigrationTableLocker"]
+    RUN --> UM["UnifiedMigrator"]
+    RUN --> VAL["Validators"]
+    RUN --> REN["MigrationTableRenamer"]
+
+    MF -.-> UM
+    UM --> US[("Unified storage<br/>BulkProcess + RebuildIndexes")]
+    VAL --> US
+    LOCK --> SQL[("Legacy SQL")]
+    REN --> SQL
+
+    RG --> SR["MigrationStatusReader<br/><i>legacy / dual-write / unified</i>"]
+    LOG[("unifiedstorage_migration_log")] --> SR
+    RUN --> LOG
+
+    classDef store fill:#e8f0fe,stroke:#4285f4,color:#1a1a1a
+    class US,SQL,LOG store
 ```
 
 ### Components
 
-- **`registry.go`**: Core type definitions (`MigrationDefinition`, `MigrationRegistry`, `ResourceInfo`, `MigratorFunc`, `Validator`, `ValidatorFactory`)
-- **`resource_migration.go`**: `MigrationRunner` (executes per-org logic) and `ResourceMigration` (SQL migration wrapper)
-- **`resources.go`**: Migration registration and config validation
-- **`migrator.go`**: `UnifiedMigrator` interface, BulkProcess streaming, and index rebuilding with retry
-- **`validator.go`**: `CountValidator` and `FolderTreeValidator` implementations
-- **`table_locker.go`**: `MigrationTableLocker` interface — locks legacy tables during migration
-- **`table_renamer.go`**: `MigrationTableRenamer` interface — renames legacy tables post-migration
-- **`status_reader.go`**: `MigrationStatusReader` — determines storage mode (Legacy/DualWrite/Unified) from migration log + config, with caching
-- **`contract/migrations.go`**: Shared interfaces (`UnifiedStorageMigrationService`, `MigrationStatusReader`) and `StorageMode` type, kept in a sub-package to avoid import cycles
-- **`service.go`**: `UnifiedStorageMigrationServiceImpl` — Wire-provided entry point that runs migrations on startup
+- [registry.go](registry.go) — `MigrationDefinition`, `ResourceInfo`, `MigratorFunc`, `Validator`, and the thread-safe `MigrationRegistry`
+- [service.go](service.go) — `UnifiedStorageMigrationServiceImpl`, the Wire-provided startup entry point
+- [resource_migration.go](resource_migration.go) — `MigrationRunner` (per-org logic) and `ResourceMigration` (SQL migration wrapper)
+- [resources.go](resources.go) — registration into the SQL migrator and `enableMigration` resolution
+- [migrator.go](migrator.go) — `UnifiedMigrator`: BulkProcess streaming and index rebuilds with backoff
+- [validator.go](validator.go) — `CountValidator` and `FolderTreeValidator`
+- [table_locker.go](table_locker.go) / [table_renamer.go](table_renamer.go) — locking legacy tables during migration and renaming them afterwards
+- [status_reader.go](status_reader.go) — resolves the storage mode for a resource from the migration log plus config, with caching
+- [contract/migrations.go](contract/migrations.go) — `StorageMode` and the interfaces consumers depend on, kept separate to avoid import cycles
 
-#### Migration registrars (owned by each team)
+### Registrars
 
-Every team follows the same convention: a `migration_registrar.go` file in the team's **root
-package** exposing a `Xxx**Migration**` factory function (not `MigrationDefinition`).
+Each team owns a `migration_registrar.go` in its root package exposing an `Xxx…Migration` factory,
+plus a `MigratorFunc` implementation in a `migrator/` (or existing `legacy/`) subpackage.
 
-- **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — folders and dashboards definition
-- **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
-- **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
-- **`pkg/registry/apis/datasource/migration_registrar.go`**: `DataSourceMigration` — datasources definition
-- **`pkg/registry/apps/querycaching/migration_registrar.go`**: `QueryCacheConfigMigration` — query cache configs definition
-- **`pkg/registry/apis/preferences/migration_registrar.go`**: `PreferencesMigration` — preferences definition
-- **`pkg/registry/apis/collections/migration_registrar.go`**: `StarsMigration` — stars definition
+| Package | Factory |
+|---|---|
+| [pkg/registry/apis/dashboard](../../../registry/apis/dashboard/migration_registrar.go) | `FoldersDashboardsMigration` |
+| [pkg/registry/apis/dashboard/snapshot](../../../registry/apis/dashboard/snapshot/migration_registrar.go) | `SnapshotMigration` |
+| [pkg/registry/apis/datasource](../../../registry/apis/datasource/migration_registrar.go) | `DataSourceMigration` |
+| [pkg/registry/apis/collections](../../../registry/apis/collections/migration_registrar.go) | `StarsMigration` |
+| [pkg/registry/apis/preferences](../../../registry/apis/preferences/migration_registrar.go) | `PreferencesMigration` |
+| [pkg/registry/apps/playlist](../../../registry/apps/playlist/migration_registrar.go) | `PlaylistMigration` |
+| [pkg/registry/apps/shorturl](../../../registry/apps/shorturl/migration_registrar.go) | `ShortURLMigration` |
+| [pkg/registry/apps/querycaching](../../../registry/apps/querycaching/migration_registrar.go) | `QueryCacheConfigMigration` |
 
-Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`). Preferences and collections keep their migrator implementation in the existing `legacy/` subpackage.
+All definitions are assembled in `ProvideMigrationRegistry` in [pkg/server/wire_helpers.go](../../../server/wire_helpers.go).
 
-## How migrations work
+## Migration flow
 
-### Migration flow
+```mermaid
+flowchart TD
+    START(["Grafana startup"]) --> ELIGIBLE{"Unified storage type<br/>and eligible target?"}
+    ELIGIBLE -- no --> DONE(["Skip, release GC gate"])
+    ELIGIBLE -- yes --> VALIDATE["Validate every MigratedUnifiedResources<br/>entry has a registered migration"]
+    VALIDATE --> ENABLED{"enableMigration<br/>for all resources<br/>in the definition?"}
+    ENABLED -- no --> DONE
+    ENABLED -- yes --> LOGGED{"Successful row in<br/>unifiedstorage_migration_log?"}
+    LOGGED -- yes --> DONE
+    LOGGED -- no --> GUARD{"Legacy dual-write marker<br/>says already on unified?"}
+    GUARD -- yes --> DONE
+    GUARD -- no --> EXISTS{"SkipWhenMissing and<br/>legacy table absent?"}
+    EXISTS -- yes --> DONE
+    EXISTS -- no --> LOCK["Lock legacy tables"]
 
-1. Grafana starts and `UnifiedStorageMigrationService.Run()` is called
-2. The service validates that all expected resources are registered in the `MigrationRegistry`
-3. For each `MigrationDefinition`, the system checks if `enableMigration = true` in the resource's config
-4. `MigrationRunner` executes for each organization:
-   - Reads resources from legacy SQL tables via team-owned `MigratorFunc` implementations
-   - Streams resources to unified storage via BulkProcess API
-   - Rebuilds search indexes (with exponential backoff retry)
-   - Runs validators to verify data integrity
-5. Renames legacy tables with `_legacy` suffix (if `RenameTables` is configured)
-6. Records migration result in `unifiedstorage_migration_log` table
+    LOCK --> ORG["For each organization"]
 
-### Per-organization execution
+    subgraph perorg["Per organization"]
+        direction TB
+        ORG --> STREAM["MigratorFunc streams rows<br/>into BulkProcess"]
+        STREAM --> INDEX["RebuildIndexes<br/><i>retried with backoff</i>"]
+        INDEX --> VER["Run validators"]
+    end
 
-Migrations run independently for each organization. The namespace comes from
-`types.OrgNamespaceFormatter`: `default` for org 1, and `org-{orgId}` for every other org.
-The migrator receives it via `opts.Namespace` — do not build the namespace string by hand.
+    VER --> RENAME["Rename legacy tables<br/>with _legacy suffix"]
+    RENAME --> RECORD["Record row in<br/>unifiedstorage_migration_log"]
+    RECORD --> DONE
+```
+
+Notes on the guards:
+
+- **Eligibility** — `cfg.ShouldRunMigrations()` requires the `unified` storage type and an `all` or `core`
+  target. The GC gate is released on every exit path so storage garbage collection can start.
+- **Enablement parity** — a definition covering several resources fails fast if `enableMigration` differs
+  between them; they must all be enabled or all disabled.
+- **Dual-write marker** — folders and dashboards only. Older Grafana versions recorded dual-write state in
+  `kv_store` (12.1+) or `<data_path>/dualwrite.json` (12.0). If it says the resources are already on unified
+  storage, the migration is skipped rather than wiping unified storage and repopulating it from SQL.
+- **Namespace** — comes from `types.OrgNamespaceFormatter` (`default` for org 1, `org-{orgId}` otherwise)
+  and reaches the migrator as `opts.Namespace`. Never build it by hand.
+- **Pre-migration delete** — BulkProcess deletes the whole collection before writing, in the same
+  transaction, so a failed migration rolls back and a re-run cannot duplicate data.
+- **SQLite fallback** — if the in-memory bulk write fails, the run is retried once with a parquet buffer.
+
+## Storage mode
+
+`MigrationStatusReader` is what consumers ask to decide where a resource lives. Resolution order:
+
+1. Successful migration log entry → `unified`
+2. Config `dualWriterMode` 1–3 → `dual-write`
+3. Config `dualWriterMode` 4–5 → `unified`
+4. Otherwise → `legacy`
+
+Results are cached (`storage_mode_cache_ttl`); a resolved `unified` is cached permanently. If the log table
+cannot be created at startup the reader falls back to config-only resolution and retries later.
+
+`ResourceInfo.FloorVersion` declares the oldest apiVersion that may exist in unified storage for a resource.
+The served-version guard uses it to prevent unregistering a version that migrated data still carries, which
+would make that data unservable. Datasources register one floor for `datasource.grafana.app`; it also covers
+the per-plugin subgroups.
 
 ## Legacy table rename
 
-After a successful migration, legacy tables can be renamed with a `_legacy` suffix to prevent stale writes from old pods during rolling upgrades. This is configured via the `RenameTables` field on `MigrationDefinition`.
+After a successful migration, legacy tables listed in `RenameTables` get a `_legacy` suffix so old pods
+cannot write to them during a rolling upgrade. Renaming is skipped when `disable_legacy_table_rename = true`
+or when `migration_locking = false` — the MySQL path needs the read lock to order the rename.
 
-### Configuration
+| Database | Lock | Rename |
+|---|---|---|
+| Postgres | `LOCK TABLE … IN SHARE MODE` on the migration session | `ALTER TABLE … RENAME TO` on the same session; Postgres upgrades the lock to `ACCESS EXCLUSIVE` |
+| MySQL | `LOCK TABLES … READ` on a dedicated connection | One `RENAME TABLE` per table on separate connections; DDL priority puts them ahead of pending DML when the lock is released |
+| SQLite | Shared transaction (single writer) | `ALTER TABLE … RENAME TO` on the same session |
 
-```go
-return migrations.MigrationDefinition{
-    // ...
-    RenameTables: []string{"playlist", "playlist_item"},
-}
-```
-
-Set `RenameTables` to the list of legacy SQL table names that should be renamed after migration. The rename appends `_legacy` to each table name (e.g., `playlist` becomes `playlist_legacy`). To disable renaming globally (e.g., during development), set `disable_legacy_table_rename = true` in the `[unified_storage]` config section.
-
-### Locking and atomicity
-
-The rename is designed to leave no gap where DML from old pods could sneak in between the migration completing and the table disappearing. The strategy varies by database:
-
-| Database | Lock | Rename                                                                                                                                                     |
-|------|------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Postgres** | `LOCK TABLE ... IN SHARE MODE` on the migration session (`sess`) | `ALTER TABLE ... RENAME TO` on same session — Postgres auto-upgrades the lock to `ACCESS EXCLUSIVE`                                                        |
-| **MySQL** | `LOCK TABLES ... READ` on a dedicated connection | Each table gets its own `RENAME TABLE` on a separate connection. When lock is released, MySQL DDL priority ensures renames execute before any pending DML. |
-| **SQLite** | Shared transaction (single writer) | `ALTER TABLE ... RENAME TO` on same session                                                                                                                |
-
-### Crash recovery
-
-**Postgres/SQLite**: The rename happens on `sess` within the framework's transaction.
-
-**MySQL**: DDL (`RENAME TABLE`) is non-transactional and auto-commits immediately on the separate connections.
-If a crash occurs before migration log is inserted, some tables might not have been renamed.
-- On the next startup `RecoverRenamedTables()` (called before the migration runs) restores any `_legacy` tables back to their original names, so the migration can re-run cleanly.
+On Postgres and SQLite the rename is part of the framework transaction. On MySQL, DDL auto-commits, so a
+crash can leave tables partially renamed; `RecoverRenamedTables()` runs before each migration and restores
+`_legacy` tables to their original names so the migration can re-run cleanly.
 
 ## Validators
 
-### CountValidator
+Validators run per organization after the index rebuild, and a failure fails the migration. Items the bulk
+API rejected are accounted for and do not fail validation on their own.
 
-Compares resource counts between legacy SQL and unified storage. Accounts for rejected items during validation. Uses direct table queries for SQLite and the `GetStats` API for other databases.
+- **`CountValidation`** — compares legacy row count with unified storage. `Where` scopes to the org,
+  `Distinct` counts unique values, and `Join` adds an inner join so orphaned rows the migrator skips are not
+  counted. Uses direct table queries on SQLite and `GetStats` elsewhere.
+- **`FolderTreeValidation`** — compares folder parent maps built from legacy and unified storage to confirm
+  the hierarchy survived.
 
-### FolderTreeValidator
+## Configuration
 
-Verifies folder parent-child relationships are preserved after migration by comparing parent maps built from both legacy and unified storage.
+Per resource, in `conf/defaults.ini` or custom config:
 
-## Monitoring
-
-### Log messages
-
-Successful migration:
-
-```
-info: storage.unified.migration_runner.{id} Starting migration for all organizations
-info: storage.unified.migration_runner.{id} Migration completed successfully for all organizations
-```
-
-Failed migration:
-
-```
-error: storage.unified.migration_runner.{id} Migration validation failed
+```ini
+[unified_storage.playlists.playlist.grafana.app]
+dualWriterMode = 0
+enableMigration = true
 ```
 
-### Migration status
+Equivalent env vars are supported: `GF_UNIFIED_STORAGE_PLAYLISTS_PLAYLIST_GRAFANA_APP_ENABLEMIGRATION`.
 
-Query the migration log table to check status:
+Global keys in `[unified_storage]`:
 
-```sql
-SELECT * FROM unifiedstorage_migration_log;
-```
+| Key | Default | Purpose |
+|---|---|---|
+| `migration_locking` | `true` | Lock legacy tables during migration. Disabling also disables the rename and risks data drift; only safe with a single instance and no other writers. |
+| `disable_legacy_table_rename` | `false` | Skip the `_legacy` rename, e.g. during development |
+| `rename_wait_deadline` | `1m` | How long MySQL waits for renames to queue behind the read lock |
+| `migration_cache_size_kb` | `1000000` | SQLite page cache during bulk inserts; prevents a cache spill deadlocking with the legacy read cursor |
+| `migration_parquet_buffer` | `false` | Buffer bulk writes through parquet |
+| `migration_chunked_writes` | `false` | Commit bulk writes in multiple transactions. Needs `migration_locking` for HA read isolation. |
+| `migration_chunk_max_bytes` | `256MiB` | Soft byte budget per chunk |
 
-## Development
+## Adding a new resource
 
-### Adding a new resource type
+### 1. Implement the migrator
 
-Follow these steps to add a new resource migration. Each team owns their
-migration definition function, keeping migration logic decentralized.
+Write a function matching `MigratorFunc` that reads your legacy table and sends resources to the stream.
+Buffer rows and close the cursor before streaming — `stream.Send` can be slow and holding a cursor open
+across it starves the connection pool. Paginate for large tables. Take the namespace from `opts.Namespace`.
 
-#### 1. Implement the migrator function
-
-Write a function matching the `MigratorFunc` signature that reads from your legacy
-SQL table and streams resources to unified storage:
-
-```go
-func (a *myAccess) MigrateMyResources(
-    ctx context.Context,
-    orgId int64,
-    opts MigrateOptions,
-    stream resourcepb.BulkStore_BulkProcessClient,
-) error {
-    // Buffer rows into a slice and close the cursor BEFORE streaming: the
-    // stream.Send gRPC calls can be slow, and holding a DB cursor open across
-    // them can starve the connection pool. Paginate for large tables.
-    rows, err := a.listResources(ctx, orgId)
-    if err != nil {
-        return err
-    }
-
-    for _, row := range rows {
-        // Build the resource protobuf and send it to the stream.
-        // Namespace comes from opts.Namespace (set per-org by the runner).
-        err := stream.Send(&resourcepb.BulkRequest{
-            // ... populate from legacy row, e.g. Key.Namespace: opts.Namespace
-        })
-        if err != nil {
-            return err
-        }
-    }
-    return nil
-}
-```
-
-#### 2. Define a migrator interface
-
-Define a small interface in a `migrator/` subpackage within your team's package:
+Expose it behind a small interface in a `migrator/` subpackage:
 
 ```go
 // pkg/registry/apps/myresource/migrator/migrator.go
@@ -223,34 +220,28 @@ func ProvideMyResourceMigrator(db legacysql.LegacyDatabaseProvider) MyResourceMi
 }
 ```
 
-#### 3. Create a migration definition function
+### 2. Create the migration definition
 
-Create a `migration_registrar.go` file in your team's package:
+Add `migration_registrar.go` to your team's root package:
 
 ```go
 package myresource
 
-import (
-    myresource "github.com/grafana/grafana/apps/myresource/pkg/apis/myresource/v1beta1"
-    "github.com/grafana/grafana/pkg/registry/apps/myresource/migrator"
-    "github.com/grafana/grafana/pkg/storage/unified/migrations"
-    "k8s.io/apimachinery/pkg/runtime/schema"
-)
-
-func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.MigrationDefinition {
-    gr := schema.GroupResource{
-        Group:    myresource.GROUP,
-        Resource: myresource.RESOURCE,
-    }
+func MyResourceMigration(m migrator.MyResourceMigrator) migrations.MigrationDefinition {
+    gr := schema.GroupResource{Group: myresourceV1.APIGroup, Resource: "myresources"}
 
     return migrations.MigrationDefinition{
         ID:          "myresources",
         MigrationID: "myresources migration",
         Resources: []migrations.ResourceInfo{
-            {GroupResource: gr, LockTables: []string{"my_resource_table"}},
+            {
+                GroupResource: gr,
+                LockTables:    []string{"my_resource_table"},
+                FloorVersion:  myresourceV1.APIVersion,
+            },
         },
         Migrators: map[schema.GroupResource]migrations.MigratorFunc{
-            gr: migrator.MigrateMyResources,
+            gr: m.MigrateMyResources,
         },
         Validators: []migrations.ValidatorFactory{
             migrations.CountValidation(gr, migrations.CountValidationOptions{
@@ -258,92 +249,51 @@ func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.Migrat
                 Where: "org_id = ?",
             }),
         },
-        // Rename legacy tables after successful migration to prevent stale writes.
-        RenameTables: []string{"my_resource_table"},
-        // Set to true if new deployments no longer create the legacy table.
-        // The migration will be skipped rather than failing when the table is absent.
+        RenameTables:    []string{"my_resource_table"},
         SkipWhenMissing: false,
     }
 }
 ```
 
-#### 4. Wire the migration
+`LockTables` must list every table the migrator reads. Set `SkipWhenMissing` when new deployments no longer
+create the legacy table, so a missing table skips the migration instead of failing it. Leave `RenameTables`
+empty while other code paths still read the legacy table. Set `ResourceGroupsFunc` only if the groups
+present in a namespace have to be discovered at runtime, as datasources do for per-plugin groups.
 
-Add your migration to the Wire dependency chain:
+### 3. Wire it up
 
-**a.** Add the migrator provider to `wire.go`:
+Add the migrator provider to your `wire.go`, register the definition in `ProvideMigrationRegistry`
+in [pkg/server/wire_helpers.go](../../../server/wire_helpers.go), then run `make gen-go`.
 
-```go
-myresourcemigrator.ProvideMyResourceMigrator,
-```
+### 4. Declare the resource in settings
 
-**b.** Register the definition in `provideMigrationRegistry` in `pkg/server/wire.go`:
-
-```go
-func provideMigrationRegistry(
-    dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
-    playlistMigrator playlistmigrator.PlaylistMigrator,
-    shortURLMigrator shorturlmigrator.ShortURLMigrator,
-    dataSourceMigrator dsmigrator.DataSourceMigrator,
-    myResourceMigrator myresourcemigrator.MyResourceMigrator, // <-- add parameter
-) *unifiedmigrations.MigrationRegistry {
-    r := unifiedmigrations.NewMigrationRegistry()
-    r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
-    r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
-    r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
-    r.Register(dsmigration.DataSourceMigration(dataSourceMigrator))
-    r.Register(myresource.MyResourceMigration(myResourceMigrator)) // <-- register
-    return r
-}
-```
-
-**c.** Regenerate wire: run `make gen-go` from the repository root.
-
-#### 5. Register the resource in settings
-
-Add your resource to `MigratedUnifiedResources` in
-`pkg/setting/setting_unified_storage.go`. This is **required**: startup validation
-(`resources.go`) fails if a map entry has no registered migration, and the map supplies the
-compiled-in `enableMigration` default. Define a constant, then add it to the map:
+Add a constant and a `MigratedUnifiedResources` entry in
+[setting_unified_storage.go](../../../setting/setting_unified_storage.go). This is required: startup
+validation fails if a map entry has no registered migration, and the map supplies the compiled-in
+`enableMigration` default.
 
 ```go
-const (
-    // ... existing constants ...
-    MyResource = "myresources.myresource.grafana.app" // "<plural>.<group>"
-)
+const MyResource = "myresources.myresource.grafana.app"
 
 var MigratedUnifiedResources = map[string]bool{
-    // ... existing entries ...
-    MyResource: false, // false = migration opt-in; true = enabled by default (Mode5)
+    MyResource: false,
 }
 ```
 
-To override at runtime (e.g. to enable the migration or set a dual-writer mode without
-changing the default), add a config section — in `conf/defaults.ini` or custom config:
+### Checklist
 
-```ini
-[unified_storage.myresources.myresource.grafana.app]
-dualWriterMode = 0
-enableMigration = true
-```
+- [ ] `MigratorFunc` implemented and tested, exposed through a `migrator/` interface
+- [ ] `migration_registrar.go` created with `LockTables`, `FloorVersion`, and at least a `CountValidation`
+- [ ] Migrator provider added to `wire.go` and registered in `ProvideMigrationRegistry`
+- [ ] `wire_gen.go` regenerated with `make gen-go`
+- [ ] `RenameTables` decided, and code audited for legacy table reads not behind the status reader
+- [ ] Resource added to `MigratedUnifiedResources`
+- [ ] Test case added to [testcases/](testcases/) and registered in `defaultMigrationTestCases()`
 
-#### Checklist
+### Adding a validator
 
-- [ ] Migrator function implemented and tested
-- [ ] Migrator interface defined in a `migrator/` subpackage
-- [ ] Migration definition function created in your team's package (`migration_registrar.go`)
-- [ ] Migrator provider added to `wire.go`
-- [ ] `provideMigrationRegistry` updated in `pkg/server/wire.go`
-- [ ] `wire_gen.go` regenerated (`make gen-go`)
-- [ ] Validators added (at minimum, `CountValidation`)
-- [ ] `RenameTables` configured (list of legacy tables to rename with `_legacy` suffix)
-  - [ ] Audit code for references to legacy tables that are not behind the dynamic storage reader
-- [ ] Resource added to `MigratedUnifiedResources` in `pkg/setting/setting_unified_storage.go` (constant + map entry)
-- [ ] Integration test case added to `testcases/` and registered via `NewXxxTestCase()` in `defaultMigrationTestCases()` (`migrator_test.go`)
-
-### Adding a new validator
-
-Create a `ValidatorFactory` function:
+Implement `Validator` and expose it as a `ValidatorFactory`, then add the factory to the `Validators` slice
+of your definition:
 
 ```go
 func MyValidation(resource schema.GroupResource) ValidatorFactory {
@@ -353,45 +303,13 @@ func MyValidation(resource schema.GroupResource) ValidatorFactory {
 }
 ```
 
-The validator must implement the `Validator` interface:
-
-```go
-type Validator interface {
-    Name() string
-    Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
-}
-```
-
-Add your validator factory to the `Validators` slice in your migration definition's
-`MigrationDefinition`.
-
 ## Testing
-
-### Pre-migration delete
-
-Before migrating each resource type, the migration system performs a **full delete** of all existing data for that resource in unified storage. This ensures a clean state and prevents duplicate or stale data. The delete happens within the same transaction as the migration write, so if the migration fails, the delete is rolled back.
-
-### Re-running a migration
-
-After a successful migration, a row is recorded in the `unifiedstorage_migration_log` table. On subsequent startups, Grafana checks this table and **skips** any migration that already has an entry.
-
-To re-run a migration (e.g., for testing), delete the corresponding row from the log table:
-
-```sql
--- View existing migration entries
-SELECT * FROM unifiedstorage_migration_log;
-
--- Delete a specific entry to allow re-running that migration
-DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'folders and dashboards migration';
-DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'playlists migration';
-DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'shorturls migration';
-```
-
-After removing the row, restart Grafana to trigger the migration again. Since the migration performs a full delete of the target resources before writing, re-running is safe and will not result in duplicate data.
 
 ### Test cases
 
-The `testcases/` package provides reusable test cases for each resource migration. Each test case implements the `ResourceMigratorTestCase` interface:
+Every resource owner maintains a test case in [testcases/](testcases/) implementing
+`ResourceMigratorTestCase`: it seeds representative legacy data in `Setup` and asserts the result in
+`Verify`.
 
 ```go
 type ResourceMigratorTestCase interface {
@@ -405,16 +323,31 @@ type ResourceMigratorTestCase interface {
 }
 ```
 
-Existing test cases:
+| Test case | File | Coverage |
+|---|---|---|
+| `NewFoldersAndDashboardsTestCase` | [folders_dashboards.go](testcases/folders_dashboards.go) | Nested folders, dashboards with library panels |
+| `NewPlaylistsTestCase` | [playlists.go](testcases/playlists.go) | Dashboard UID, tag, and mixed items |
+| `NewSnapshotsTestCase` | [snapshots.go](testcases/snapshots.go) | Dashboard snapshots |
+| `NewShortURLsTestCase` | [shorturls.go](testcases/shorturls.go) | Short URL entries |
+| `NewStarsTestCase` | [stars.go](testcases/stars.go) | Starred dashboards per user |
+| `NewPreferencesTestCase` | [preferences.go](testcases/preferences.go) | User, team, and org owners |
+| `NewDataSourceTestCase` | [datasources.go](testcases/datasources.go) | Secure JSON data. Skipped on SQLite. |
+| `NewQueryCacheConfigsTestCase` | [querycacheconfigs.go](testcases/querycacheconfigs.go) | Query cache config entries |
 
-| Test case | File | What it covers |
-|-----------|------|----------------|
-| `NewFoldersAndDashboardsTestCase` | `testcases/folders_dashboards.go` | Nested folders, dashboards with library panels |
-| `NewPlaylistsTestCase` | `testcases/playlists.go` | Playlists with dashboard UID, tag, and mixed items |
-| `NewShortURLsTestCase` | `testcases/shorturls.go` | Short URL entries |
-| `NewDataSourceTestCase` | `testcases/datasources.go` | Datasource entries with secure JSON data |
-| `NewQueryCacheConfigsTestCase` | `testcases/querycacheconfigs.go` | Query cache config entries |
-| `NewPreferencesTestCase` | `testcases/preferences.go` | Preferences (user/team/org owners) |
-| `NewStarsTestCase` | `testcases/stars.go` | Starred dashboards per user |
+They are shared by the suites in [migrator_test.go](migrator_test.go), which cover the default path, chunked
+writes, and the KV backend.
 
-Each resource owner is responsible for writing and maintaining a test case for their resource as part of the development process. When adding a new resource migration, create a corresponding test case in `testcases/` that sets up representative data via `Setup` and verifies it via `Verify`. Extend existing test cases to cover additional scenarios as needed (e.g., edge cases, specific field mappings, or error conditions).
+### Re-running a migration
+
+Delete the log row and restart Grafana. Re-running is safe: the bulk write deletes the collection first.
+
+```sql
+SELECT * FROM unifiedstorage_migration_log;
+DELETE FROM unifiedstorage_migration_log WHERE migration_id = 'playlists migration';
+```
+
+### Logs
+
+Migration progress is logged under `storage.unified.migration_runner.{id}`, and the bulk stream under
+`storage.unified.migrator`. `migration_status_reader_bootstrap_failures_total` counts failures to create the
+migration log table at startup.

@@ -473,7 +473,7 @@ const LogListComponent = ({
 
   const focusLogLine = useCallback(
     (log: LogListModel, align: Align = 'start') => {
-      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uniqueKey === log.uniqueKey);
       if (index >= 0) {
         debouncedScrollToItem(index, align);
       }

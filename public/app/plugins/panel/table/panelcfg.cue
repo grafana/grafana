@@ -36,6 +36,8 @@ composableKinds: PanelCfg: {
 					sortBy?: [...ui.TableSortByFieldState]
 					// Enable pagination on the table
 					enablePagination?: bool
+					// When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+					pageSize?: number
 					// Controls the height of the rows
 					cellHeight?: ui.TableCellHeight & (*"sm" | _)
 					// limits the maximum height of a row, if text wrapping or dynamic height is enabled

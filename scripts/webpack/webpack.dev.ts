@@ -49,7 +49,7 @@ export default (env: Env = {}) => {
     resolve: {
       alias: {
         // Packages linked for development need react to be resolved from the same location
-        react: env.react19 ? path.resolve('./node_modules/react-19') : path.resolve('./node_modules/react'),
+        react: path.resolve('./node_modules/react'),
 
         // This is required to correctly resolve react-router-dom when linking with
         //  local version of @grafana/scenes
@@ -92,7 +92,7 @@ export default (env: Env = {}) => {
         integrity: true,
         integrityHashes: ['sha384', 'sha512'],
         publicPath: true,
-        output: env.react19 ? 'assets-manifest-react19.json' : 'assets-manifest.json',
+        output: 'assets-manifest.json',
       }),
       new WebpackBar({
         color: '#eb7b18',

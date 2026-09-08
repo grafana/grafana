@@ -43,7 +43,8 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
 
   return (
     <Field
-      className={styles.fixMargin}
+      noMargin
+      className={styles.field}
       invalid={!inputValid}
       error={!inputValid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
       label={
@@ -90,8 +91,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  fixMargin: css({
-    marginBottom: 0,
+  field: css({
     minWidth: 0,
     flex: '1 1 0',
   }),

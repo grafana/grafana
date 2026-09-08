@@ -122,7 +122,7 @@ To create a dashboard, follow these steps:
 1. Click **Refresh** to query the data source.
 1. Select a suggested visualization or click **All visualizations** and select one from the full list.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-2-v13.0.png" max-width="300px" alt="Visualization selector" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestions-v13.2.png" max-width="300px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -146,7 +146,7 @@ To create a dashboard, follow these steps:
 1. Enter a title and description for the dashboard or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**
-1. Click **Back to dashboard**.
+1. Click **Back**.
 1. Click **Exit edit**.
 
 {{< /docs/list >}}
@@ -215,13 +215,16 @@ Your resizing changes persist until you change them.
 The **Content outline** provides a tree-like structure that shows you all the parts of the dashboard and their relationships to each other, including panels, rows, tabs, and variables.
 The outline also lets you quickly navigate the dashboard and is available in both view and edit modes (note that variables are only included in edit mode).
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v13.1.png" max-width="750px" alt="Dashboard with outline open" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v13.3.png" max-width="750px" alt="Dashboard with outline open" >}}
 
 To navigate the dashboard using the outline, follow these steps:
 
 1. Navigate to the dashboard you want to view or update.
 1. In the right toolbar, click the **Content outline** icon to open it.
-1. Expand the outline to find the part of the dashboard you want to view or update.
+1. Do one of the following:
+   - Expand the outline to find the part of the dashboard you want to view or update.
+   - Enter the name of the element in the outline search bar.
+
 1. Click the tree item to navigate that part of the dashboard.
 
 ### Edit a dashboard
@@ -236,14 +239,14 @@ To edit a dashboard, follow these steps:
    | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
    | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-   | Group panels           | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                                                                                                                                                                                                              |
+   | Group panels           | <p>Click **Add new element** and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                                                                                                                        |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard**, if needed.
+1. Click **Back**, if needed.
 1. Click **Exit edit**
 
 ## Panel layouts
@@ -266,6 +269,17 @@ There are default parameters to constrain the layout, and you can update these t
 - **Max columns**: Set a number up to 10.
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
 - **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options).
+
+If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
+
+- **Edit auto layout**: Adjust the layout configuration.
+- **Switch to custom layout**: Resize and position panels manually.
+
+If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
+
+For repeated panels, this interaction is available on the last panel in the group.
 
 ### Update panel layout
 
@@ -518,12 +532,5 @@ Click Apply to add the panel to the dashboard, then Save to persist your changes
 In most cases, yes.
 Building effective dashboards requires understanding how to query your data source so you can retrieve the information you want to visualize.
 Grafana provides visualization and editing tools, but the query syntax depends on the data source you're using.
-{{< /qa >}}
-{{< qa question="How do I organize panels in a dashboard?" >}}
-Grafana lets you organize panels by arranging them on the dashboard canvas, grouping them into rows or tabs, and resizing or repositioning them as needed.
-These layout options help you create dashboards that are easier to scan and navigate.
-{{< /qa >}}
-{{< qa question="How do I keep a dashboard organized as it grows?" >}}
-As dashboards become more complex, you can improve organization by grouping related content into rows or tabs, arranging panels into a logical layout, and using dashboard features such as variables and annotations to make dashboards easier to navigate and use.
 {{< /qa >}}
 {{< /qa-list >}}

@@ -1189,6 +1189,11 @@ export const versionedPages = {
         '11.1.0': 'data-testid QueryHistory',
       },
     },
+    QueryInspector: {
+      container: {
+        '13.2.0': 'data-testid explore query inspector',
+      },
+    },
   },
   SoloPanel: {
     url: {
@@ -1334,6 +1339,14 @@ export const versionedPages = {
       },
       jobsCard: {
         '13.2.0': 'data-testid Provisioning repository overview jobs card',
+      },
+    },
+    PreviewBanner: {
+      sourceBranchLink: {
+        '13.3.0': 'data-testid Provisioning preview banner source branch link',
+      },
+      targetBranchLink: {
+        '13.3.0': 'data-testid Provisioning preview banner target branch link',
       },
     },
   },

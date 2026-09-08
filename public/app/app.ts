@@ -1,8 +1,3 @@
-import 'symbol-observable';
-import 'regenerator-runtime/runtime';
-
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'file-saver';
 import 'jquery';
 
 import { createElement } from 'react';
@@ -44,15 +39,19 @@ import {
   setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  logError,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
+  getFeatureFlagClient,
+  FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
   setExpressionDataSourceInstance,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
   setPanelDataErrorView,
@@ -86,6 +85,8 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { navTreeInitialized } from './core/reducers/navBarTree';
+import { navIndexInitialized } from './core/reducers/navModel';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -95,11 +96,13 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -137,6 +140,7 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { dispatch } from './store/store';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -163,14 +167,13 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
-      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
-      // on the login page.
-      if (contextSrv.user.isSignedIn) {
-        try {
-          await initOpenFeature();
-        } catch (err) {
-          console.error('Failed to initialize OpenFeature provider', err);
-        }
+      // Capture any error generated to pass to Faro once available.
+      let openFeatureError: unknown;
+      try {
+        await initOpenFeature();
+      } catch (err) {
+        openFeatureError = err;
+        console.error('Failed to initialize OpenFeature provider', err);
       }
 
       const initI18nPromise = initializeI18n({
@@ -191,6 +194,12 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
+
+      // This needs to be done after the `initEchoSrv` since that initializes Faro.
+      if (openFeatureError) {
+        logError(new Error('Failed to initialize OpenFeature provider', { cause: openFeatureError }));
+      }
+
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
@@ -222,6 +231,7 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
+      setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
@@ -240,6 +250,20 @@ export class GrafanaApp {
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+
+      // The multi-tenant frontend service ships a reduced boot with no user
+      // permissions, so fetch them before anything permission-gated renders. The
+      // nav tree needs rebuilding either way: configureStore built it with an
+      // empty permission set, and its sections are permission-gated.
+      if (
+        isFrontendService() &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
+      ) {
+        await contextSrv.fetchUserPermissions();
+        dispatch(navTreeInitialized());
+        dispatch(navIndexInitialized());
+      }
+
       initExtensions();
 
       initAlerting();
@@ -300,11 +324,13 @@ export class GrafanaApp {
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
       setExpressionDataSourceInstance(expressionDatasource);
+      // eslint-disable-next-line @grafana/no-config-datasources -- boot data is the seed for the instance settings cache
       initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
       setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
+      // eslint-disable-next-line @grafana/no-config-datasources -- legacy DataSourceSrv is seeded from boot data
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();

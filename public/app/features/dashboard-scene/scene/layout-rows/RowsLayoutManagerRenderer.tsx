@@ -13,6 +13,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type RowItem } from './RowItem';
@@ -27,6 +28,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { hasCopiedRow } = useClipboardState();
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
+  const isMultiSelection = useIsMultiSelection();
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;
@@ -84,7 +86,13 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             ))}
             {dropProvided.placeholder}
             {isEditing && !isClone && (
-              <div className={cx(layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
+              <div
+                className={cx(
+                  layoutControlsStyles.controls,
+                  'dashboard-canvas-controls',
+                  isMultiSelection && layoutControlsStyles.controlsHidden
+                )}
+              >
                 <Button
                   icon="plus"
                   variant="secondary"

@@ -2,8 +2,11 @@ package reconciler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"iter"
+	"maps"
+	"net/http"
 	"sync"
 	"time"
 
@@ -11,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeStorage stubs the bits of resource.StorageBackend the reconciler uses.
@@ -26,6 +30,26 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	// onYield, if set, fires once per resource the ListModifiedSince
+	// iterator yields — lets tests observe iterator progress at each flush.
+	onYield func()
+
+	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
+	// -> title. An unset entry reads as NotFound.
+	folders map[string]string
+	readErr error
+}
+
+// setFolderTitle makes ReadResource resolve namespace/uid to title, so the
+// reconciler's (uncached) FolderTitleResolver can look it up.
+func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.folders == nil {
+		f.folders = map[string]string{}
+	}
+	f.folders[namespace+"/"+uid] = title
 }
 
 // emit synchronously delivers a watch event on the channel set up by
@@ -43,8 +67,22 @@ func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	panic("not implemented")
 }
-func (f *fakeStorage) ReadResource(context.Context, *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	panic("not implemented")
+
+// ReadResource backs FolderTitleResolver.Title. Titles are seeded via
+// setFolderTitle; anything else reads as NotFound, matching a folder that
+// doesn't exist rather than a real storage fault (use readErr for that).
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.readErr != nil {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
+	}
+	title, ok := f.folders[req.Key.Namespace+"/"+req.Key.Name]
+	if !ok {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+	}
+	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
+	return &resource.BackendReadResponse{Value: value}
 }
 func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	panic("not implemented")
@@ -103,10 +141,6 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	return out, nil
 }
 
-func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	panic("not implemented")
-}
-
 func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -142,6 +176,7 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
+	onYield := f.onYield
 	return latestRv, func(yield func(*resource.ModifiedResource, error) bool) {
 		for i, c := range matches {
 			if itemErr != nil && i == itemErrI {
@@ -149,6 +184,9 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 					return
 				}
 				continue
+			}
+			if onYield != nil {
+				onYield()
 			}
 			if !yield(c, nil) {
 				return
@@ -171,6 +209,10 @@ type fakeVector struct {
 	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
 	deleteErr    error
 
+	// onUpsert, if set, fires at the start of each upsert. Paired with
+	// fakeStorage.onYield to snapshot iterator progress at each flush.
+	onUpsert func()
+
 	lockUnavailable bool
 	lockAttempts    int
 	lockReleases    int
@@ -184,12 +226,16 @@ type fakeVector struct {
 
 	backfillJobs      []backfillJobCall
 	createBackfillErr error
+
+	counts    []vector.EmbeddingCount
+	countsErr error
 }
 
 type backfillJobCall struct {
-	Model      string
-	Resource   string
-	StoppingRV int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -211,6 +257,14 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
@@ -220,7 +274,7 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, _ []vector.VectorMeta, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.
@@ -249,6 +303,9 @@ func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
+	if f.onUpsert != nil {
+		f.onUpsert()
+	}
 	if f.upsertErrFn != nil {
 		if err := f.upsertErrFn(vs); err != nil {
 			return err
@@ -268,15 +325,17 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 	}
 	return nil
 }
-func (f *fakeVector) Delete(_ context.Context, ns, model, res, uid string) error {
+func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.deleteErr != nil {
-		return f.deleteErr
+		return 0, false, f.deleteErr
 	}
-	f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
-	delete(f.storedSubs, subsKey(ns, model, res, uid))
-	return nil
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
+		delete(f.storedSubs, subsKey(ns, model, res, uid))
+	}
+	return int64(len(sel.UIDs)), false, nil
 }
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()
@@ -289,6 +348,10 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
+func (f *fakeVector) UpdateMetadata(_ context.Context, _, _ string, _ *filter.Filter, _ json.RawMessage, _ []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }
@@ -297,9 +360,7 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 	defer f.mu.Unlock()
 	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[key] {
-		out[k] = v
-	}
+	maps.Copy(out, f.storedSubs[key])
 	if len(out) == 0 {
 		return nil, "", nil
 	}
@@ -307,6 +368,17 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 }
 func (f *fakeVector) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
+}
+func (f *fakeVector) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
+	return 0, false, nil
+}
+func (f *fakeVector) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
+}
+func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.counts, f.countsErr
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	f.mu.Lock()
@@ -340,14 +412,18 @@ func (f *fakeVector) EnsureResourcePartition(_ context.Context, res string) erro
 	f.ensuredPartitions = append(f.ensuredPartitions, res)
 	return nil
 }
-func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64) error {
+func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64, contentVersion int) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.createBackfillErr != nil {
 		return f.createBackfillErr
 	}
-	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV})
+	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV, ContentVersion: contentVersion})
 	return nil
+}
+
+func (f *fakeVector) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	return false, nil
 }
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
@@ -369,6 +445,9 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 		defer f.mu.Unlock()
 		f.lockReleases++
 	}, true, nil
+}
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // fakeBackfiller records that Run was invoked and blocks until ctx is

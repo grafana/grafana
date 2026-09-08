@@ -8,7 +8,7 @@ import {
   API_VERSION,
   type RoutingTree,
   type RoutingTreeRoute,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 

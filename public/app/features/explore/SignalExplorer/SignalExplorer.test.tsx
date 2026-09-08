@@ -1,29 +1,54 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 
-import { type DataSourceApi, type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import {
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type TimeRange,
+} from '@grafana/data';
+import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
 import { type ContentOutlineItemContextProps } from '../ContentOutline/ContentOutlineContext';
 
 import { SignalExplorer } from './SignalExplorer';
+import { useMetricCatalog } from './data/useMetricCatalog';
 
 jest.mock('../ContentOutline/ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
 
-const makeSettings = (uid: string, type: string, name: string) =>
-  ({
-    uid,
-    type,
-    name,
-    meta: { id: type, info: { logos: { small: `${type}.svg` } } },
-  }) as unknown as DataSourceInstanceSettings;
+// Mocked so an expanded card's metric list needs no Prometheus behind it.
+jest.mock('./data/useMetricCatalog');
 
+const useMetricCatalogMock = jest.mocked(useMetricCatalog);
+
+const makeMeta = (id: string) =>
+  ({
+    id,
+    name: id,
+    type: 'datasource',
+    info: { logos: { small: `${id}.svg`, large: `${id}.svg` } },
+  }) as unknown as DataSourcePluginMeta;
+
+const makeSettings = (uid: string, type: string, name: string) =>
+  ({ uid, type, name, meta: makeMeta(type) }) as unknown as DataSourceInstanceSettings;
+
+// The component resolves a card's datasource from the instance list and its logo from the
+// datasource plugin metas, so both of the real caches behind those hooks are seeded here. No
+// legacy `DataSourceSrv` is registered: the new APIs' fallback to it stays inert, so a seeding
+// gap surfaces as an unresolved card instead of being papered over by legacy resolution.
 const datasources: Record<string, DataSourceInstanceSettings> = {
-  'prom-uid': makeSettings('prom-uid', 'prometheus', 'gdev-prometheus'),
-  'loki-uid': makeSettings('loki-uid', 'loki', 'gdev-loki'),
+  'gdev-prometheus': makeSettings('prom-uid', 'prometheus', 'gdev-prometheus'),
+  'gdev-loki': makeSettings('loki-uid', 'loki', 'gdev-loki'),
+  'gdev-amp': makeSettings('amp-uid', 'grafana-amazonprometheus-datasource', 'gdev-amp'),
+};
+
+const pluginMetas: Record<string, DataSourcePluginMeta> = {
+  prometheus: makeMeta('prometheus'),
+  loki: makeMeta('loki'),
+  'grafana-amazonprometheus-datasource': makeMeta('grafana-amazonprometheus-datasource'),
 };
 
 const scrollerMock = document.createElement('div');
@@ -32,26 +57,26 @@ const promQuery = (refId: string, expr = ''): DataQuery =>
   ({ refId, datasource: { uid: 'prom-uid', type: 'prometheus' }, expr }) as DataQuery;
 
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
-const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi) => (
+const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi, range: TimeRange = timeRange) => (
   <SignalExplorer
     queries={queries}
     paneDatasource={paneDatasource}
-    timeRange={timeRange}
+    timeRange={range}
     scroller={scrollerMock}
     toggleButton={<button type="button">Collapse outline</button>}
   />
 );
 
-const setup = (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
-  scrollerMock.scroll = jest.fn();
+const seedDataSources = () => {
+  setDataSourceInstanceSettings(datasources, 'gdev-prometheus');
+  setDatasourcePluginMetas(pluginMetas);
+};
 
-  setDataSourceSrv({
-    getInstanceSettings(ref?: string | { uid?: string }) {
-      const uid = typeof ref === 'string' ? ref : ref?.uid;
-      return uid ? datasources[uid] : undefined;
-    },
-  } as unknown as DataSourceSrv);
+const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
+  scrollerMock.scroll = jest.fn();
+  seedDataSources();
 
   // Query rows register themselves as children of the Queries outline item.
   const queryChildren: ContentOutlineItemContextProps[] = queries.map((query) => ({
@@ -81,28 +106,41 @@ const setup = (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
     ],
   });
 
+  const rendered = render(explorer(queries, paneDatasource));
+
+  // Both datasource hooks resolve a few promise turns after the first paint. Settling them here
+  // keeps those state updates inside act() and means the assertions below see resolved cards.
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+
   return {
     user: userEvent.setup(),
-    ...render(explorer(queries, paneDatasource)),
+    ...rendered,
   };
 };
 
 describe('<SignalExplorer />', () => {
-  it('renders the header with the injected toggle button', () => {
-    setup([]);
+  beforeEach(() => {
+    useMetricCatalogMock.mockReset().mockReturnValue({ metrics: [], loading: false });
+  });
+
+  it('renders the header with the injected toggle button', async () => {
+    await setup([]);
 
     expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
   });
 
-  it('renders an empty state when there are no queries', () => {
-    setup([]);
+  it('renders an empty state when there are no queries', async () => {
+    await setup([]);
 
     expect(screen.getByText('Add a query to browse its datasource.')).toBeInTheDocument();
   });
 
-  it('renders one card per query, labelled with its own datasource in a Mixed pane', () => {
-    setup([
+  it('renders one card per query, labelled with its own datasource in a Mixed pane', async () => {
+    await setup([
       { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
       { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } },
     ]);
@@ -113,15 +151,38 @@ describe('<SignalExplorer />', () => {
     expect(screen.getByRole('button', { name: 'Jump to query B (gdev-loki)' })).toBeInTheDocument();
   });
 
-  it('falls back to the pane datasource for queries without their own ref', () => {
-    setup([{ refId: 'A' }], { uid: 'prom-uid', type: 'prometheus' } as DataSourceApi);
+  it('resolves a query that names its datasource instead of carrying its uid', async () => {
+    await setup([{ refId: 'A', datasource: { uid: 'gdev-loki', type: 'loki' } }]);
+
+    // The name, not the 'loki' type the label falls back to when the ref resolves to nothing.
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' })).toBeInTheDocument();
+  });
+
+  it('labels a card with its datasource type until the datasource list resolves', async () => {
+    seedDataSources();
+    render(explorer([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]));
+
+    // The list is async, so the first paint only has the ref's own fields to label the card with.
+    expect(screen.getByRole('button', { name: 'Jump to query A (prometheus)' })).toBeInTheDocument();
+
+    expect(await screen.findByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+  });
+
+  it('takes a card logo from the plugin meta of the datasource type', async () => {
+    await setup([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]);
+
+    expect(screen.getByTestId('signal-card-A').querySelector('img')).toHaveAttribute('src', 'loki.svg');
+  });
+
+  it('falls back to the pane datasource for queries without their own ref', async () => {
+    await setup([{ refId: 'A' }], { uid: 'prom-uid', type: 'prometheus' } as DataSourceApi);
 
     expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
   });
 
-  it('only makes Prometheus cards expandable', () => {
-    setup([
+  it('only makes Prometheus cards expandable', async () => {
+    await setup([
       { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
       { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } },
     ]);
@@ -130,14 +191,14 @@ describe('<SignalExplorer />', () => {
     expect(screen.queryByRole('button', { name: 'Expand datasource explorer for query B' })).not.toBeInTheDocument();
   });
 
-  it('treats Prometheus flavors as expandable', () => {
-    setup([{ refId: 'A', datasource: { uid: 'amp-uid', type: 'grafana-amazonprometheus-datasource' } }]);
+  it('treats Prometheus flavors as expandable', async () => {
+    await setup([{ refId: 'A', datasource: { uid: 'amp-uid', type: 'grafana-amazonprometheus-datasource' } }]);
 
     expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
   });
 
   it('reveals the metrics explorer when a Prometheus card is expanded', async () => {
-    const { user } = setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
+    const { user } = await setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
@@ -146,7 +207,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('collapses a card again without affecting the others', async () => {
-    const { user } = setup([
+    const { user } = await setup([
       { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
       { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' } },
     ]);
@@ -163,7 +224,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('keeps multiple cards expanded independently', async () => {
-    const { user } = setup([
+    const { user } = await setup([
       { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
       { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' } },
     ]);
@@ -175,8 +236,8 @@ describe('<SignalExplorer />', () => {
     expect(screen.getAllByRole('button', { expanded: true })).toHaveLength(2);
   });
 
-  it('relabels a card when its query switches datasource', () => {
-    const { rerender } = setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
+  it('relabels a card when its query switches datasource', async () => {
+    const { rerender } = await setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
     expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
 
     rerender(explorer([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]));
@@ -186,7 +247,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('keeps an expanded card intact while its query is being edited', async () => {
-    const { user, rerender } = setup([promQuery('A')]);
+    const { user, rerender } = await setup([promQuery('A')]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
     await user.type(screen.getByPlaceholderText('Search metrics'), 'node_cpu');
@@ -201,7 +262,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('scrolls to the query row when a card is clicked', async () => {
-    const { user } = setup([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]);
+    const { user } = await setup([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]);
 
     await user.click(screen.getByRole('button', { name: /^Jump to query A/ }));
 
@@ -209,7 +270,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('forgets a deleted query, so a new one reusing its refId is not already expanded', async () => {
-    const { user, rerender } = setup([promQuery('A'), promQuery('B')]);
+    const { user, rerender } = await setup([promQuery('A'), promQuery('B')]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
@@ -223,7 +284,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('forgets an expanded card when its query moves to a datasource with no explorer', async () => {
-    const { user, rerender } = setup([promQuery('A')]);
+    const { user, rerender } = await setup([promQuery('A')]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
 
@@ -235,7 +296,7 @@ describe('<SignalExplorer />', () => {
   });
 
   it('keeps the remaining cards expanded when another query is deleted', async () => {
-    const { user, rerender } = setup([promQuery('A'), promQuery('B'), promQuery('C')]);
+    const { user, rerender } = await setup([promQuery('A'), promQuery('B'), promQuery('C')]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query C' }));
@@ -248,7 +309,7 @@ describe('<SignalExplorer />', () => {
   it('does nothing when a card has no query row to scroll to', async () => {
     // The outline mock only registers rows for the queries passed to setup, so a card
     // added afterwards has nothing to scroll to.
-    const { user, rerender } = setup([]);
+    const { user, rerender } = await setup([]);
     rerender(explorer([{ refId: 'Z', datasource: { uid: 'loki-uid', type: 'loki' } }]));
 
     await user.click(screen.getByRole('button', { name: /^Jump to query Z/ }));
@@ -257,10 +318,147 @@ describe('<SignalExplorer />', () => {
   });
 
   it('expanding a card does not also jump to its query, since the chevron does not bubble', async () => {
-    const { user } = setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
+    const { user } = await setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
 
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
 
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
+  });
+
+  // One panel for the whole sidebar, so one metric at a time across every card.
+  describe('metric detail panel', () => {
+    const catalog = [{ name: 'up', type: 'gauge' as const, help: 'Whether the target is reachable.' }];
+
+    const openCard = async (refId: string) => {
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      const rendered = await setup([promQuery('A'), promQuery('B')]);
+      await rendered.user.click(screen.getByRole('button', { name: `Expand datasource explorer for query ${refId}` }));
+      return rendered;
+    };
+
+    // Scoped to the card: both offer `up` once open, with the same accessible name.
+    const selectUpIn = (user: UserEvent, refId: string) =>
+      user.click(
+        within(screen.getByTestId(`signal-card-${refId}`)).getByRole('button', { name: 'Show details for up' })
+      );
+
+    it('stays out of the sidebar until a metric is selected', async () => {
+      const { user } = await openCard('A');
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+
+      await selectUpIn(user, 'A');
+
+      const panel = screen.getByTestId('metric-detail-panel');
+      expect(panel).toHaveTextContent('up');
+      expect(panel).toHaveTextContent('Whether the target is reachable.');
+      expect(panel).toHaveTextContent('GAUGE');
+    });
+
+    // Two cards can point at different instances, where one name carries different metadata.
+    it('names the query the metric was selected from', async () => {
+      const { user } = await openCard('B');
+
+      await selectUpIn(user, 'B');
+
+      expect(screen.getByTestId('metric-detail-panel')).toHaveTextContent('Query B');
+    });
+
+    it('closes when the same metric is selected again', async () => {
+      const { user } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      await selectUpIn(user, 'A');
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    it('closes on request', async () => {
+      const { user } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      await user.click(screen.getByRole('button', { name: 'Close metric details' }));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    it('closes when the card the metric was selected from collapses', async () => {
+      const { user } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    it('stays open when another card collapses', async () => {
+      const { user } = await openCard('A');
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+      await selectUpIn(user, 'A');
+
+      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query B' }));
+
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+    });
+
+    it('closes when the query the metric was selected from is deleted', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      rerender(explorer([promQuery('B')]));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // The refId survives here; only the catalog underneath changes.
+    it('closes when the query the metric was selected from moves to another datasource', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      const ampQuery = {
+        refId: 'A',
+        datasource: { uid: 'amp-uid', type: 'grafana-amazonprometheus-datasource' },
+      } as DataQuery;
+      rerender(explorer([ampQuery, promQuery('B')]));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // Neither ref carries a uid, so only the type tells the two catalogs apart.
+    it('closes when a query with a type-only datasource ref moves to another Prometheus flavor', async () => {
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      const typeOnlyQuery = (type: string) => ({ refId: 'A', datasource: { type } }) as DataQuery;
+
+      const { user, rerender } = await setup([typeOnlyQuery('prometheus')]);
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await selectUpIn(user, 'A');
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+
+      rerender(explorer([typeOnlyQuery('grafana-amazonprometheus-datasource')]));
+
+      // Still expanded, so the panel closed on the catalog behind it rather than on the card.
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // A new range fetches a new catalog, which need not still hold the metric.
+    it('closes when the time range changes', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      rerender(explorer([promQuery('A'), promQuery('B')], undefined, otherTimeRange));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // Explore rebuilds the range object every refresh tick, and the catalog does not refetch for it.
+    it('stays open across a refresh that re-resolves the same relative range', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      const refreshed = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+      rerender(explorer([promQuery('A'), promQuery('B')], undefined, refreshed));
+
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+    });
   });
 });

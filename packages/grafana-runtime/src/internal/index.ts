@@ -10,6 +10,7 @@
  *
  */
 
+export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
@@ -78,6 +79,10 @@ export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
 
-export { initDataSourceInstanceSettings, syncDataSourceInstanceSettings } from '../services/dataSource/settings';
+export {
+  initDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
+} from '../services/dataSource/settings';
 export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';

@@ -157,9 +157,14 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.TimeInterval{
-			Name: name,
+		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
+	}
+	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
+		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
+		for _, interval := range intervals {
+			m[interval.UID] = interval
 		}
+		return m
 	}
 
 	identifier := "dupe"
@@ -171,9 +176,9 @@ func TestTimeIntervals(t *testing.T) {
 		name            string
 		existing        []v1.TimeInterval
 		incoming        []v1.TimeInterval
-		expected        []v1.TimeInterval
+		expected        map[v1.ResourceUID]v1.TimeInterval
 		expectedRenames map[string]string
-		expectedAdded   []string
+		expectedAdded   []v1.ResourceUID
 	}{
 		{
 			name: "should append copies of incoming to existing time intervals",
@@ -185,14 +190,17 @@ func TestTimeIntervals(t *testing.T) {
 				ti("mti3"),
 				ti("ti4"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("mti1"),
 				ti("ti2"),
 				ti("mti3"),
 				ti("ti4"),
-			},
+			),
 			expectedRenames: map[string]string{},
-			expectedAdded:   []string{"mti3", "ti4"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("mti3"),
+				v1.TimeIntervalUID("ti4"),
+			},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -204,17 +212,20 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti2"),
 				ti("mti1"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("mti1"),
 				ti("ti2"),
-				ti("ti2" + suffix),
-				ti("mti1" + suffix),
-			},
+				ti("ti2"+suffix),
+				ti("mti1"+suffix),
+			),
 			expectedRenames: map[string]string{
 				"ti2":  "ti2" + suffix,
 				"mti1": "mti1" + suffix,
 			},
-			expectedAdded: []string{"ti2" + suffix, "mti1" + suffix},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti2" + suffix),
+				v1.TimeIntervalUID("mti1" + suffix),
+			},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -226,17 +237,20 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti1"),
 				ti("ti1" + suffix),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("ti1"),
-				ti("ti1" + suffix),
-				ti("ti1" + suffix + "_01"),
-				ti("ti1" + suffix + suffix),
-			},
+				ti("ti1"+suffix),
+				ti("ti1"+suffix+"_01"),
+				ti("ti1"+suffix+suffix),
+			),
 			expectedRenames: map[string]string{
 				"ti1" + suffix: "ti1" + suffix + suffix,
 				"ti1":          "ti1" + suffix + "_01",
 			},
-			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + suffix},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti1" + suffix + "_01"),
+				v1.TimeIntervalUID("ti1" + suffix + suffix),
+			},
 		},
 		{
 			name: "should rename dupe among incoming",
@@ -247,15 +261,18 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti2"),
 				ti("ti2"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("ti2"),
-				ti("ti2" + suffix),
-				ti("ti2" + suffix + "_01"),
-			},
+				ti("ti2"+suffix),
+				ti("ti2"+suffix+"_01"),
+			),
 			expectedRenames: map[string]string{
 				"ti2": "ti2" + suffix + "_01",
 			},
-			expectedAdded: []string{"ti2" + suffix, "ti2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti2" + suffix),
+				v1.TimeIntervalUID("ti2" + suffix + "_01"),
+			},
 		},
 		{
 			name: "should ensure uniqueness across existing and incoming",
@@ -268,30 +285,34 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti1"),
 				ti("ti2"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("ti1"),
-				ti("ti1" + suffix),
-				ti("ti1" + suffix + "_01"),
-				ti("ti1" + suffix + "_02"),
+				ti("ti1"+suffix),
+				ti("ti1"+suffix+"_01"),
+				ti("ti1"+suffix+"_02"),
 				ti("ti2"),
-			},
+			),
 			expectedRenames: map[string]string{
 				"ti1": "ti1" + suffix + "_02",
 			},
-			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + "_02", "ti2"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti1" + suffix + "_01"),
+				v1.TimeIntervalUID("ti1" + suffix + "_02"),
+				v1.TimeIntervalUID("ti2"),
+			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var existingNames, incomingNames []string
 			for _, r := range tc.existing {
-				existingNames = append(existingNames, r.Name)
+				existingNames = append(existingNames, r.Title)
 			}
 			for _, r := range tc.incoming {
-				incomingNames = append(incomingNames, r.Name)
+				incomingNames = append(incomingNames, r.Title)
 			}
 
-			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existing, tc.incoming, identifier)
+			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(toMap(tc.existing...), tc.incoming, identifier)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
@@ -299,12 +320,12 @@ func TestTimeIntervals(t *testing.T) {
 			// check that existing and incoming lists are not changed
 			var names []string
 			for _, r := range tc.existing {
-				names = append(names, r.Name)
+				names = append(names, r.Title)
 			}
 			assert.Equal(t, existingNames, names)
 			names = nil
 			for _, r := range tc.incoming {
-				names = append(names, r.Name)
+				names = append(names, r.Title)
 			}
 			assert.Equal(t, incomingNames, names)
 		})

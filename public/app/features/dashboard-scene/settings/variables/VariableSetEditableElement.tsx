@@ -21,7 +21,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
       typeName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
-      icon: 'x',
+      icon: 'gf-variable',
       instanceName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
     };
   }

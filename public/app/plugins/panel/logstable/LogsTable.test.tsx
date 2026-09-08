@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import {
   type AbsoluteTimeRange,
   CoreApp,
+  type DataQueryRequest,
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
@@ -20,6 +21,7 @@ import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana
 import { defaultTableOptions } from '@grafana/schema';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
+import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -29,6 +31,11 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
+
+jest.mock('app/features/logs/utils', () => ({
+  ...jest.requireActual('app/features/logs/utils'),
+  downloadLogs: jest.fn(),
+}));
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -131,17 +138,13 @@ const setUp = (
 
 describe('LogsTable', () => {
   let origResizeObserver = global.ResizeObserver;
-  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let jestScrollIntoView = jest.fn();
 
   beforeAll(() => {
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
   });
 
   beforeEach(() => {
-    jestScrollIntoView = jest.fn();
     origResizeObserver = global.ResizeObserver;
-    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
       callback: unknown;
@@ -152,13 +155,10 @@ describe('LogsTable', () => {
       unobserve() {}
       disconnect() {}
     };
-
-    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
-    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
   });
 
   it('should render', async () => {
@@ -199,6 +199,37 @@ describe('LogsTable', () => {
           order: LogsSortOrder.Ascending,
         })
       );
+    });
+
+    it('downloads from the raw frame when displayed fields exclude the log body', async () => {
+      // Regression: organizeFields removes body from data.series for display. Download must use the
+      // raw frame — dataFrameToLogsModel needs body — or the export is empty.
+      const downloadLogsMock = jest.mocked(downloadLogs);
+      downloadLogsMock.mockClear();
+
+      const { container } = setUp(undefined, {
+        showControls: true,
+        allowDownload: true,
+        displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level'],
+      });
+
+      await waitFor(() => expect(screen.getByLabelText('Download logs')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(Array.from(headers).map((h) => h.textContent)).toEqual(['timestamp', 'level']);
+
+      await userEvent.click(screen.getByLabelText('Download logs'));
+      await userEvent.click(await screen.findByText('json'));
+
+      expect(downloadLogsMock).toHaveBeenCalledTimes(1);
+      expect(downloadLogsMock).toHaveBeenCalledWith(DownloadFormat.Json, expect.any(Array), expect.anything(), [
+        LOGS_DATAPLANE_TIMESTAMP_NAME,
+        'level',
+      ]);
+
+      const rows = downloadLogsMock.mock.calls[0][1];
+      expect(rows.map((row) => row.entry)).toEqual(['log 1', 'log 2']);
+      expect(rows[0].dataFrame.fields.some((field) => field.name === LOGS_DATAPLANE_BODY_NAME)).toBe(true);
     });
   });
 
@@ -393,6 +424,43 @@ describe('LogsTable', () => {
       });
 
       expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
+    });
+  });
+
+  describe('Loki time column tooltip', () => {
+    const lokiTooltip =
+      "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right.";
+
+    it('shows a tooltip on the timestamp column when the query uses Loki', async () => {
+      const { container } = setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'loki' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.getByRole('button', { name: lokiTooltip })).toBeInTheDocument();
+      const timestampHeader = Array.from(container.querySelectorAll('[role="columnheader"]')).find((header) =>
+        header.textContent?.includes('timestamp')
+      );
+      expect(timestampHeader).toContainElement(screen.getByRole('button', { name: lokiTooltip }));
+    });
+
+    it('does not show a timestamp tooltip for other data sources', async () => {
+      setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'elasticsearch' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.queryByRole('button', { name: lokiTooltip })).not.toBeInTheDocument();
     });
   });
 });

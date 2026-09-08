@@ -1,5 +1,4 @@
 import Feature from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import Point from 'ol/geom/Point';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -9,15 +8,9 @@ import { Fill, Stroke, Style, Circle } from 'ol/style';
 import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData } from '@grafana/data';
 
-enum ShowTime {
+export enum ShowTime {
   From = 'from',
   To = 'to',
 }
@@ -52,12 +45,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
    * @param options
    * @param theme
    */
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<DayNightConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultConfig,
