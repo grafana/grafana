@@ -222,6 +222,20 @@ describe('DefaultGridLayoutManager', () => {
 
       expect(gridRow.state.children.length).toBe(3);
     });
+
+    it('Should carry over the plugin transformations opt-in', () => {
+      // The duplicate is built from live panel state rather than from a save model, which is why
+      // this is the one panel-building path that does not read the rollout flag itself.
+      const { manager, grid } = setup();
+      const gItem = grid.state.children[0] as DashboardGridItem;
+      gItem.state.body.setState({ applyPluginTransformations: true });
+
+      manager.duplicatePanel(gItem.state.body);
+
+      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
+
+      expect(newGridItem.state.body.state.applyPluginTransformations).toBe(true);
+    });
   });
 
   describe('duplicate', () => {

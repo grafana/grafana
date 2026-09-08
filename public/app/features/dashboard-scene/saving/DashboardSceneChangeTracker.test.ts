@@ -1,4 +1,4 @@
-import { SceneObjectStateChangedEvent } from '@grafana/scenes';
+import { SceneDataTransformer, type SceneObjectState, SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type CorsWorker } from 'app/core/utils/CorsWorker';
 import * as createDetectChangesWorker from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
@@ -62,6 +62,29 @@ describe('DashboardSceneChangeTracker', () => {
     expect(postMessage).toHaveBeenCalledWith({
       initial: { title: 'initial dashboard' },
       changed: { title: 'updated dashboard' },
+    });
+  });
+
+  describe('isUpdatingPersistedState', () => {
+    // An earlier test in this file stubs the method being tested here.
+    beforeEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('treats a transformations change as a change to persisted state', () => {
+      const transformer = new SceneDataTransformer({ transformations: [] });
+      const partialUpdate = { transformations: [{ id: 'reduce', options: {} }] } as Partial<SceneObjectState>;
+
+      expect(
+        DashboardSceneChangeTracker.isUpdatingPersistedState(
+          new SceneObjectStateChangedEvent({
+            prevState: { transformations: [] } as SceneObjectState,
+            newState: partialUpdate as SceneObjectState,
+            partialUpdate,
+            changedObject: transformer,
+          })
+        )
+      ).toBe(true);
     });
   });
 });

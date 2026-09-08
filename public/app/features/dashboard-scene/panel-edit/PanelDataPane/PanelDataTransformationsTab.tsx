@@ -1,11 +1,14 @@
-import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import {
+  type DataFrame,
+  type DataTransformerConfig,
+  type PanelData,
+  type ResolvedSystemTransformations,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   type SceneComponentProps,
@@ -16,18 +19,27 @@ import {
   type SceneQueryRunner,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Tab } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
+import { getResolvedSystemTransformations } from '../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
+import {
+  type TransformationConfigs,
+  useTransformedFrames,
+} from '../PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
+import { SystemTransformationRows } from './SystemTransformationRows';
+import { TransformationsActions } from './TransformationsActions';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
+
+const NO_FRAMES: DataFrame[] = [];
 
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
   reportInteraction('grafana_panel_transformations_clicked', {
@@ -74,25 +86,53 @@ export class PanelDataTransformationsTab
     transformer.setState({ transformations });
     transformer.reprocessTransformations();
   }
+
+  public getResolvedSystemTransformations(): ResolvedSystemTransformations {
+    return getResolvedSystemTransformations(this.getDataTransformer());
+  }
+}
+
+/**
+ * The query result with the plugin's *prepended* transformations applied.
+ */
+function useSystemTransformedData(
+  sourceData: PanelData | undefined,
+  systemTransformations: TransformationConfigs
+): PanelData | undefined {
+  const series = useTransformedFrames(systemTransformations, sourceData?.series ?? NO_FRAMES);
+
+  return useMemo(() => {
+    if (!sourceData || systemTransformations.length === 0) {
+      return sourceData;
+    }
+
+    return { ...sourceData, series };
+  }, [sourceData, systemTransformations, series]);
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
-  const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
+  // No `useMemo`: the provider's memo already makes this identity stable.
+  const { prepend: systemPrepend, append: systemAppend } = model.getResolvedSystemTransformations();
+
+  const editorData = useSystemTransformedData(sourceData.data, systemPrepend);
+
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return Array.isArray(transformsWrongType)
-      ? transformsWrongType.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
+    const all = Array.isArray(transformsWrongType) ? transformsWrongType : [];
+
+    return all.filter(
+      (t): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+    );
   }, [transformsWrongType]);
 
+  // What the picker judges a transformation's applicability against has to be what the row it adds
+  // will receive: the prepended stage and every user transformation
+  const drawerSeries = useTransformedFrames(transformations, editorData?.series ?? NO_FRAMES);
+
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -124,7 +164,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     [model, transformations]
   );
 
-  if (!data || !sourceData.data) {
+  if (!data || !editorData) {
     return;
   }
 
@@ -139,73 +179,35 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         closeDrawer();
       }}
       isOpen={drawerOpen}
-      series={data.series}
+      series={drawerSeries}
     />
   );
 
-  if (transformations.length < 1) {
-    return (
-      <>
+  const hasUserTransformations = transformations.length > 0;
+
+  return (
+    <>
+      <SystemTransformationRows transformations={systemPrepend} position="prepend" />
+      {hasUserTransformations ? (
+        <TransformationsEditor data={editorData} transformations={transformations} model={model} />
+      ) : (
+        // Uneditable transforms are functionally empty to the user
         <EmptyTransformationsMessage
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
-          data={sourceData.data.series}
+          data={editorData.series}
           datasourceUid={sourceData.datasource?.uid}
           queries={sourceData.queries}
         />
-        {transformationsDrawer}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
-      <ButtonGroup>
-        <Button
-          icon="plus"
-          variant="secondary"
-          onClick={openDrawer}
-          data-testid={selectors.components.Transforms.addTransformationButton}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-            Add another transformation
-          </Trans>
-        </Button>
-        <Button
-          data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-          className={styles.removeAll}
-          icon="times"
-          variant="secondary"
-          onClick={() => setConfirmModalOpen(true)}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-            Delete all transformations
-          </Trans>
-        </Button>
-      </ButtonGroup>
-      <ConfirmModal
-        isOpen={confirmModalOpen}
-        title={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-          'Delete all transformations?'
-        )}
-        body={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-          'By deleting all transformations, you will go back to the main selection screen.'
-        )}
-        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
-        onConfirm={() => {
-          reportInteraction('grafana_panel_transformations_clicked', {
-            context: 'transformations_list',
-            action: 'delete_all',
-          });
-          model.onChangeTransformations([]);
-          setConfirmModalOpen(false);
-        }}
-        onDismiss={() => setConfirmModalOpen(false)}
-      />
+      )}
+      <SystemTransformationRows transformations={systemAppend} position="append" />
+      {hasUserTransformations && (
+        <TransformationsActions
+          onAddTransformation={openDrawer}
+          onDeleteAll={() => model.onChangeTransformations([])}
+        />
+      )}
       {transformationsDrawer}
     </>
   );
@@ -276,12 +278,6 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     </DragDropContext>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  removeAll: css({
-    marginLeft: theme.spacing(2),
-  }),
-});
 
 interface TransformationsTabProps extends PanelDataTabHeaderProps {
   model: PanelDataTransformationsTab;

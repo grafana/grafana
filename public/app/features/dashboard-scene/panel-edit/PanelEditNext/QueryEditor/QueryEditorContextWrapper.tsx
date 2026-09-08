@@ -7,6 +7,7 @@ import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
+import { NO_SYSTEM_TRANSFORMATIONS, getResolvedSystemTransformations } from '../../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
@@ -301,12 +302,17 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
+  const systemTransformations = dataTransformer
+    ? getResolvedSystemTransformations(dataTransformer)
+    : NO_SYSTEM_TRANSFORMATIONS;
+
   const panelState = useMemo(() => {
     return {
       panel,
       transformations,
+      systemTransformations,
     };
-  }, [panel, transformations]);
+  }, [panel, transformations, systemTransformations]);
 
   const typeConfig = useMemo(() => getQueryEditorTypeConfig(theme), [theme]);
 

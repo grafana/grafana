@@ -18,11 +18,11 @@ import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteract
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
-  SceneDataTransformer,
   sceneGraph,
   type SceneObject,
   SceneObjectBase,
   type SceneObjectRef,
+  SceneDataTransformer,
   SceneQueryRunner,
   SceneTimeRange,
   sceneUtils,
