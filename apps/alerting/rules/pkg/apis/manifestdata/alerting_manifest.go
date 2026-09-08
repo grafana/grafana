@@ -1165,6 +1165,7 @@ var appManifestData = app.ManifestData{
 										Enum: []interface{}{
 											"In",
 											"NotIn",
+											"All",
 										},
 									},
 								},
@@ -1575,6 +1576,7 @@ var appManifestData = app.ManifestData{
 										Enum: []interface{}{
 											"In",
 											"NotIn",
+											"All",
 										},
 									},
 								},

@@ -3955,7 +3955,8 @@
             "type": "string",
             "enum": [
               "In",
-              "NotIn"
+              "NotIn",
+              "All"
             ]
           },
           "values": {
@@ -4323,7 +4324,8 @@
             "type": "string",
             "enum": [
               "In",
-              "NotIn"
+              "NotIn",
+              "All"
             ]
           },
           "values": {

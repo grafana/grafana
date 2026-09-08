@@ -47,6 +47,11 @@ func TestResponseBodyMatchesGenericSearchResults(t *testing.T) {
 	}
 }
 
+func TestFilterOperatorsIncludeGenericAllOperator(t *testing.T) {
+	assert.Equal(t, "All", string(model.ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
+	assert.Equal(t, "All", string(model.ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
+}
+
 // assertSameJSONShape compares the JSON shape of two Go types: the same property
 // names at every level, and a compatible value shape for each.
 func assertSameJSONShape(t *testing.T, want, got any) {

@@ -1146,6 +1146,7 @@ spec:
               enum:
               - In
               - NotIn
+              - All
               type: string
             values:
               items:
@@ -1395,6 +1396,7 @@ spec:
               enum:
               - In
               - NotIn
+              - All
               type: string
             values:
               items:

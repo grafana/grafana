@@ -1324,7 +1324,7 @@ export type ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf = {
 };
 export type ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf = {
   field: string;
-  operator: 'In' | 'NotIn';
+  operator: 'In' | 'NotIn' | 'All';
   values: string[];
 };
 export type ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf = {
@@ -1559,7 +1559,7 @@ export type ListRecordingRuleSearchRulesV0Alpha1SearchExistsLeaf = {
 };
 export type ListRecordingRuleSearchRulesV0Alpha1SearchFilterLeaf = {
   field: string;
-  operator: 'In' | 'NotIn';
+  operator: 'In' | 'NotIn' | 'All';
   values: string[];
 };
 export type ListRecordingRuleSearchRulesV0Alpha1SearchRangeLeaf = {

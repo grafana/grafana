@@ -3652,7 +3652,7 @@
           },
           "operator": {
             "type": "string",
-            "enum": ["In", "NotIn"]
+            "enum": ["In", "NotIn", "All"]
           },
           "values": {
             "type": "array",
@@ -3973,7 +3973,7 @@
           },
           "operator": {
             "type": "string",
-            "enum": ["In", "NotIn"]
+            "enum": ["In", "NotIn", "All"]
           },
           "values": {
             "type": "array",

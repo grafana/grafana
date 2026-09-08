@@ -37,7 +37,7 @@ package search
 // #SearchFilterLeaf matches a single field against a set of values.
 #SearchFilterLeaf: {
 	field:    string
-	operator: "In" | "NotIn"
+	operator: "In" | "NotIn" | "All"
 	values: [...string]
 }
 

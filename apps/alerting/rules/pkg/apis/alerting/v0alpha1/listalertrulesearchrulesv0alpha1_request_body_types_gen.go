@@ -200,6 +200,7 @@ type ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator string
 const (
 	ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorIn    ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator = "In"
 	ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorNotIn ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator = "NotIn"
+	ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll   ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator = "All"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperator.
