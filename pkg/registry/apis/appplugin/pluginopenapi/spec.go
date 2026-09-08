@@ -1,11 +1,10 @@
 // Package pluginopenapi renders the OpenAPI v3 spec an app plugin's API server
 // serves, without starting Grafana.
 //
-// The spec is built from the same builder, scheme and post-processors the
-// running server uses, so the output matches what
-// /openapi/v3/apis/{pluginID}/{version} returns. Only the pieces that show up
-// in the spec are wired: storage, plugin clients and access control are stubbed
-// out, so nothing connects to a database or to the plugin backend.
+// The spec is built from the same builder, scheme, and post-processors the
+// running server uses. Runtime dependencies such as storage, plugin clients,
+// and access control are stubbed, so rendering does not connect to a database
+// or plugin backend.
 package pluginopenapi
 
 import (
@@ -59,15 +58,15 @@ func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error
 	return servedVersions(b.GetGroupVersions()), nil
 }
 
-// newBuilder wires the API builder with everything a request would need left
-// out: nothing here is called, it only describes.
+// newBuilder uses offline substitutes for dependencies that are required to
+// register routes but are only called while serving requests.
 func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
 	if plugin.JSONData.ID == "" {
 		return nil, fmt.Errorf("plugin is missing an id")
 	}
 	return appplugin.NewAppPluginAPIBuilder(
 		plugin,
-		nil, // health+resource subresources are described by the spec, never called
+		nil, // only used when serving health and resource subresource requests
 		offlineClientV3{},
 		nil, // plugin context is only needed to call the backend
 		nil, // no decrypter: reading secrets is a request time concern
@@ -75,9 +74,8 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		offlineSearchClient{},
 		appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
-			// A rendered spec should describe what a default server serves, and
-			// both endpoints are on unless an operator turns them off. Which
-			// kinds actually get them is still the manifest's decision.
+			// Generated specs always enable search and trash route registration.
+			// searchroutes still applies its per-kind eligibility rules.
 			SearchAPIEnabled: true,
 			TrashAPIEnabled:  true,
 		},
@@ -93,8 +91,8 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		return nil, err
 	}
 
-	// The served versions, preferred version first. They all share the group the
-	// plugin is served under, which is the manifest group when it declares one.
+	// All served versions share the plugin's API group. A manifest can override
+	// the default group derived from the plugin ID.
 	gvs := b.GetGroupVersions()
 	group := gvs[0].Group
 	if version == "" {
@@ -132,9 +130,8 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		opts.BuildVersion,
 		builder.ProvideDefaultBuildHandlerChainFuncFromBuilders(),
 		gvs,
-		// The server always adds these (through
-		// appinstaller.BuildOpenAPIDefGetter) and they replace some of the
-		// shared meta definitions, so the spec only matches with them in place.
+		// The server adds these through appinstaller.BuildOpenAPIDefGetter. They
+		// replace shared metadata definitions used by app plugin schemas.
 		[]common.GetOpenAPIDefinitions{appsdkapiserver.GetCommonOpenAPIDefinitions},
 		prometheus.NewRegistry(),
 		apiResourceConfig,
@@ -166,9 +163,8 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 	return buildSpec(server, serverConfig, gv)
 }
 
-// buildSpec renders one group version's spec, the same way the server's
-// /openapi/v3 endpoint does. See routes.OpenAPI.InstallV3 upstream: it builds a
-// spec per registered web service, and each group version has exactly one.
+// buildSpec renders one group version using the registered web services, as the
+// server's /openapi/v3 endpoint does.
 func buildSpec(
 	server *genericapiserver.GenericAPIServer,
 	serverConfig *genericapiserver.RecommendedConfig,
@@ -185,12 +181,8 @@ func buildSpec(
 		return nil, fmt.Errorf("no resources are served under %s", root)
 	}
 
-	oas, err := builder3.BuildOpenAPISpecFromRoutes(
+	return builder3.BuildOpenAPISpecFromRoutes(
 		restfuladapter.AdaptWebServices(services), serverConfig.OpenAPIV3Config)
-	if err != nil {
-		return nil, err
-	}
-	return oas, nil
 }
 
 func servedVersions(gvs []schema.GroupVersion) []string {

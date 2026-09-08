@@ -10,7 +10,7 @@ import (
 )
 
 // A manifest on its own is enough to render from: the app name stands in for
-// the plugin id, and the manifest group is what the APIs are served under.
+// the plugin ID, and the manifest group is what the APIs are served under.
 func TestLoadManifestStandalone(t *testing.T) {
 	plugin, err := LoadManifest(context.Background(), "testdata/standalone/app-sdk-manifest.json")
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestLoadManifestStandalone(t *testing.T) {
 }
 
 // A built plugin has its plugin.json beside the manifest, and that is where the
-// plugin id comes from, but the APIs are still served under the manifest group.
+// plugin ID comes from, but the APIs are still served under the manifest group.
 func TestLoadManifestBesidePluginJSON(t *testing.T) {
 	plugin, err := LoadManifest(context.Background(), "testdata/plugin/app-sdk-manifest.json")
 	require.NoError(t, err)

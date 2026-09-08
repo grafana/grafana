@@ -2,10 +2,9 @@
 
 Renders the OpenAPI v3 spec an app plugin's API server serves, without starting Grafana.
 
-It is the offline equivalent of downloading `/openapi/v3/apis/<pluginID>/<version>` from a
-running server: the same builder, the same schemas, the same routes. Use it to commit a
-spec alongside a plugin, to generate clients in a plugin's build, or to review what a
-manifest change does to the API before shipping it.
+It uses the same rendering pipeline as `/openapi/v3/apis/<group>/<version>` on a running
+server. Use it to commit a spec alongside a plugin, generate clients in a plugin's build,
+or review what a manifest change does to the API before shipping it.
 
 ```
 grafana cli write-openapi <manifest.json | pluginID[/version]> [-o <path>]
@@ -25,24 +24,24 @@ grafana cli write-openapi ./app-sdk-manifest.json -o ./openapi
 ```
 
 ```
-Wrote openapi/v1alpha1.json for example.ext.grafana.app/v1alpha1
-Wrote openapi/v0alpha1.json for example.ext.grafana.app/v0alpha1
+Wrote openapi/example.ext.grafana.app-v1alpha1.json for example.ext.grafana.app/v1alpha1
+Wrote openapi/example.ext.grafana.app-v0alpha1.json for example.ext.grafana.app/v0alpha1
 ```
 
 **`-o` is required here, and it must name a directory.** A manifest target always renders
-every served version, one `<version>.json` per file — there is no way to name a single
-version or write to stdout. That is because a plugin serves more than its manifest
-declares: `v0alpha1` carries the settings API, and it is served alongside the manifest's
-own versions whether or not the manifest mentions it. Passing `-o spec.json` is refused
-rather than silently writing one of them.
+every served version, one `<group>-<version>.json` file per version — there is no way to
+name a single version or write to stdout. That is because a plugin serves more than its
+manifest declares: `v0alpha1` carries the settings API, and it is served alongside the
+manifest's own versions whether or not the manifest mentions it. Passing `-o spec.json` is
+refused rather than silently writing one of them.
 
 ### plugin.json is picked up when it is there
 
 If a `plugin.json` sits in the same directory as the manifest — which is what a built
-plugin looks like — it is loaded too, and the spec then matches what a real server serving
-that plugin returns: the plugin's id, description, version, and settings schema.
+plugin looks like — it is loaded too. The rendered spec then includes the plugin's id,
+description, version, and settings schema.
 
-Without it, the manifest's `appName` stands in for the plugin id and the settings API falls
+Without it, the manifest's `appName` stands in for the plugin ID and the settings API falls
 back to its defaults. The manifest kinds are identical either way, so a manifest on its own
 is fine for reviewing a schema change; point at a built plugin directory's manifest when
 the spec is a deliverable.
@@ -143,6 +142,10 @@ directly rather than through one.
 JSON, indented two spaces, with `<` `>` `&` left unescaped so the Kubernetes descriptions
 stay readable in a diff. Written to the file or directory `-o` names, or to stdout when a
 single version was named and `-o` was not.
+
+Generated specs always enable search and trash route registration, regardless of whether
+those routes are disabled in a particular Grafana configuration. The usual per-kind
+eligibility rules still apply.
 
 Rendering to stdout suppresses the console log so the spec is the only thing on it; the
 same messages still go to the log file.

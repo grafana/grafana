@@ -7,18 +7,17 @@ that spec is built. The short version:
 grafana cli write-openapi ./dist/app-sdk-manifest.json -o ./specs
 ```
 
-writes one `<version>.json` per served version into `./specs`, each identical to what a
-running Grafana serves at `/openapi/v3/apis/<group>/<version>` — without starting the
-server, opening a database, or launching the plugin backend.
+writes one `<group>-<version>.json` file per served version into `./specs`, using the same
+OpenAPI builder as `/openapi/v3/apis/<group>/<version>` — without starting the server,
+opening a database, or launching the plugin backend.
 
 ## What you can point it at
 
 **A manifest file.** No Grafana config is read and no plugin needs to be installed, so this
 works inside a plugin's own build. When a `plugin.json` sits in the same directory — what a
-built plugin looks like — it is loaded too, and the spec matches the server exactly. Without
-it, the manifest's `appName` stands in for the plugin id and the plugin version is absent
-from `info.x-grafana-plugin`. Everything else is the same document — the APIs are served
-under the group the manifest declares either way.
+built plugin looks like — it is loaded too. Without it, the manifest's `appName` stands in
+for the plugin ID and the plugin version is absent from `info.x-grafana-plugin`. The APIs
+are served under the group declared by the manifest either way.
 
 **An installed plugin's id**, optionally with a version:
 
@@ -29,6 +28,9 @@ grafana cli --config conf/custom.ini --homepath "$PWD" \
 
 The plugin is found the way the server finds it — the plugin paths in the config file, plus
 the CLI's `--pluginsDir` — so point `--config` at the config the server uses.
+
+The command target is the plugin ID. The HTTP endpoint is keyed by API group, which is the
+group declared in the manifest when one is present and may differ from the plugin ID.
 
 ## Where it writes
 
@@ -53,11 +55,16 @@ or not its manifest mentions the version.
 4. `builder3.BuildOpenAPISpecFromRoutes` over the group version's web service, which is what
    `routes.OpenAPI.InstallV3` does for each `/openapi/v3/apis/...` endpoint.
 
-Because step 3 registers storage it never reads, the spec describes the API as unified
-storage serves it. That is the one known difference from a running server: on a deployment
-where the settings resource is still served from legacy storage, the server's `v0alpha1`
-spec carries two fewer unused component schemas (`WatchEvent` and `RawExtension`), because
-legacy storage cannot watch. No path refers to them in either spec.
+## Deliberate rendering choices
+
+The generated contract always enables search and trash route registration. This is
+independent of the `enable_search_api` and `enable_trash_api` settings of the Grafana
+installation used to locate a plugin. The usual per-kind eligibility rules still apply.
+
+Step 3 also describes the API as unified storage serves it. On a deployment where the
+settings resource still uses legacy storage, the generated `v0alpha1` spec carries two
+additional unused component schemas (`WatchEvent` and `RawExtension`), because legacy
+storage cannot watch. No path refers to them in either spec.
 
 ## Keeping it honest
 
@@ -66,7 +73,7 @@ to compare. With a plugin installed and `appplugins.registerAPIServer` on:
 
 ```sh
 curl -s -u admin:admin \
-  http://localhost:3000/openapi/v3/apis/<pluginID>/<version> | python3 -m json.tool --indent 2 > server.json
+  http://localhost:3000/openapi/v3/apis/<group>/<version> | python3 -m json.tool --indent 2 > server.json
 grafana cli --config conf/custom.ini --homepath "$PWD" write-openapi <pluginID>/<version> -o cli.json
 diff <(python3 -m json.tool --indent 2 cli.json) server.json
 ```
@@ -74,5 +81,5 @@ diff <(python3 -m json.tool --indent 2 cli.json) server.json
 The CLI output is indented because it is read and diffed by people; the HTTP response is
 not, so both sides need normalizing before the diff means anything.
 
-Rendering from the manifest instead (`write-openapi ./dist/app-sdk-manifest.json -o ./specs`)
-produces the same bytes, as long as the `plugin.json` is beside it.
+When comparing output, account for the deliberate rendering choices above and normalize
+formatting as shown.

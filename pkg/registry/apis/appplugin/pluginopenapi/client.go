@@ -13,10 +13,8 @@ import (
 
 var _ v3.ClientV3 = offlineClientV3{}
 
-// offlineClientV3 stands in for the plugin backend. A kind that declares
-// admission capabilities is refused a nil client, and the spec describes the
-// custom routes this client would serve, so it has to exist -- but rendering a
-// spec never starts the plugin.
+// offlineClientV3 satisfies dependencies used by admission, conversion, and
+// custom routes without starting the plugin backend.
 type offlineClientV3 struct{}
 
 func (offlineClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest, ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
@@ -35,10 +33,8 @@ var errOffline = apierrors.NewServiceUnavailable("the plugin backend is not runn
 
 var _ resourcepb.ResourceIndexClient = offlineSearchClient{}
 
-// offlineSearchClient stands in for the search index. The kinds that serve
-// /search and /trash are described only when a plugin's API server has an index
-// client, so rendering needs one to describe them -- but nothing here is asked
-// a question.
+// offlineSearchClient allows search and trash routes to be registered without
+// connecting to the search index.
 type offlineSearchClient struct{}
 
 func (offlineSearchClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {

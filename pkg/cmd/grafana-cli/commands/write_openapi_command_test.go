@@ -2,10 +2,16 @@ package commands
 
 import (
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
 func TestWriteOpenAPIArgs(t *testing.T) {
@@ -128,4 +134,31 @@ func TestLooksLikePath(t *testing.T) {
 	} {
 		require.False(t, looksLikePath(target), target)
 	}
+}
+
+func TestWriteOpenAPIInputRejectsDirectory(t *testing.T) {
+	dir, err := os.MkdirTemp(".", "write-openapi-")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, os.RemoveAll(dir)) })
+
+	target := filepath.Base(dir)
+	_, _, _, err = writeOpenAPIInput(writeOpenAPIContext(t, []string{"test-app"}), target, "") //nolint:dogsled
+	require.ErrorContains(t, err, "is a directory; pass the manifest file inside it")
+}
+
+func TestOpenAPISpecFilename(t *testing.T) {
+	t.Run("uses manifest group", func(t *testing.T) {
+		plugin := definition.PluginDefinition{
+			JSONData: plugins.JSONData{ID: "example-app"},
+			Manifest: &app.ManifestData{Group: "example.ext.grafana.app"},
+		}
+
+		require.Equal(t, "example.ext.grafana.app-v1alpha1.json", openAPISpecFilename(plugin, "v1alpha1"))
+	})
+
+	t.Run("uses plugin ID without manifest", func(t *testing.T) {
+		plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app"}}
+
+		require.Equal(t, "example-app-v0alpha1.json", openAPISpecFilename(plugin, "v0alpha1"))
+	})
 }
