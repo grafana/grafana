@@ -19,13 +19,17 @@ import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-time
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 
 const mockGetInstanceSettings = jest.fn();
+const mockGetDataSourceInstance = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: mockGetInstanceSettings,
-  }),
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref?: unknown, scopedVars?: unknown) => mockGetDataSourceInstance(ref, scopedVars),
+  getDataSourceInstanceSettings: (ref?: unknown, scopedVars?: unknown) => mockGetInstanceSettings(ref, scopedVars),
 }));
 
 // Mutable state object for the mock queryRunner
@@ -52,6 +56,8 @@ const mockQueryRunner = {
   },
   setState: jest.fn(),
   runQueries: jest.fn(),
+  // onActivate subscribes to datasource changes; return an unsubscribable so activation works.
+  subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
 } as unknown as SceneQueryRunner;
 
 // Mockable getDashboardSceneFor for localStorage tests
@@ -236,6 +242,21 @@ describe('PanelDataPaneNext', () => {
 
         const lastCall = (mockPanel.setState as jest.Mock).mock.calls.at(-1)[0];
         expect(lastCall.$timeRange).toBeUndefined();
+      });
+
+      it('should preserve compareWith when updating other query options', () => {
+        mockPanel.setState({ $timeRange: new PanelTimeRange({ compareWith: '1d' }) });
+
+        dataPane.onQueryOptionsChange({
+          dataSource: { type: 'test', uid: 'test' },
+          queries: [],
+          maxDataPoints: 100,
+          timeRange: { from: undefined, shift: undefined },
+        });
+
+        const lastCall = (mockPanel.setState as jest.Mock).mock.calls.at(-1)[0];
+        expect(lastCall.$timeRange).toBeInstanceOf(PanelTimeRange);
+        expect((lastCall.$timeRange.state as PanelTimeRangeState).compareWith).toBe('1d');
       });
 
       it('should set hideTimeOverride on PanelTimeRange', () => {
@@ -503,36 +524,60 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
-    it('should assign the default datasource when the panel datasource is Mixed', () => {
+    it('should assign the default datasource when the panel datasource is Mixed', async () => {
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      // Resolve the configured default through the real activation path (resolveDefaultDatasourceRef)
+      // rather than stubbing defaultDatasourceRef into state, so a regression there fails this test.
+      mockGetDataSourceInstance.mockResolvedValue({});
+      mockGetInstanceSettings.mockImplementation((ref: unknown) =>
+        ref === config.defaultDatasource ? defaultDsSettings : promDsSettings
+      );
+
+      dataPane.activate();
+      // Let onActivate's async work (resolveDefaultDatasourceRef + loadDatasource) settle
+      // before overriding dsSettings, so loadDatasource can't clobber the override.
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       dataPane.setState({ dsSettings: mixedDsSettings });
 
-      const originalDefault = config.defaultDatasource;
-      config.defaultDatasource = 'gdev-testdata';
+      const refId = dataPane.addQuery();
 
-      mockGetInstanceSettings.mockImplementation((ref: string) => {
-        if (ref === 'gdev-testdata') {
-          return defaultDsSettings;
-        }
-        return undefined;
+      expect(refId).toBe('B');
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: expect.arrayContaining([
+          expect.objectContaining({
+            refId: 'B',
+            datasource: getDataSourceRef(defaultDsSettings),
+          }),
+        ]),
       });
+    });
 
-      try {
-        const refId = dataPane.addQuery();
+    it('should leave the new query datasource undefined in Mixed mode when the default cannot be resolved', async () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
 
-        expect(refId).toBe('B');
-        expect(mockQueryRunner.setState).toHaveBeenCalledWith({
-          queries: expect.arrayContaining([
-            expect.objectContaining({
-              refId: 'B',
-              datasource: getDataSourceRef(defaultDsSettings),
-            }),
-          ]),
-        });
-      } finally {
-        config.defaultDatasource = originalDefault;
-      }
+      // The configured default resolves to nothing, so resolveDefaultDatasourceRef leaves
+      // defaultDatasourceRef unset. addQuery in Mixed mode must then leave the query's
+      // datasource undefined (inherit the panel ds) rather than stamping a stale ref.
+      mockGetDataSourceInstance.mockResolvedValue({});
+      mockGetInstanceSettings.mockReturnValue(undefined);
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      dataPane.activate();
+      // Let onActivate's async work settle so defaultDatasourceRef reflects the (missing) default.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      dataPane.setState({ dsSettings: mixedDsSettings });
+
+      const refId = dataPane.addQuery();
+
+      expect(refId).toBe('B');
+      const setStateCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(([args]) => args.queries);
+      const newQuery = setStateCall![0].queries.find((q: DataQuery) => q.refId === refId);
+      expect(newQuery?.datasource).toBeUndefined();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should preserve a caller-supplied datasource (e.g. expressions)', () => {
@@ -688,7 +733,9 @@ describe('PanelDataPaneNext', () => {
 
     const callResolveDatasourceRef = () =>
       (
-        testDataPane as unknown as { resolveDatasourceRef: () => ReturnType<typeof getDataSourceRef> | undefined }
+        testDataPane as unknown as {
+          resolveDatasourceRef: () => Promise<ReturnType<typeof getDataSourceRef> | undefined>;
+        }
       ).resolveDatasourceRef();
 
     beforeEach(() => {
@@ -707,21 +754,21 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
-    it('should return the localStorage datasource ref when it is available and resolvable', () => {
+    it('should return the localStorage datasource ref when it is available and resolvable', async () => {
       mockGetLastUsed.mockReturnValue({ datasourceUid: promSettings.uid });
       mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;
         return uid === promSettings.uid ? promSettings : undefined;
       });
 
-      const result = callResolveDatasourceRef();
+      const result = await callResolveDatasourceRef();
 
       expect(mockGetLastUsed).toHaveBeenCalledWith('test-dashboard-uid');
       expect(result).toEqual(getDataSourceRef(promSettings));
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should return the default datasource ref when the localStorage UID is stale (not found in registry)', () => {
+    it('should return the default datasource ref when the localStorage UID is stale (not found in registry)', async () => {
       mockGetLastUsed.mockReturnValue({ datasourceUid: 'deleted-or-renamed-uid' });
       mockGetInstanceSettings.mockImplementation((ref: string) => {
         // Stale UID resolves to nothing; default resolves correctly.
@@ -731,13 +778,13 @@ describe('PanelDataPaneNext', () => {
         return undefined;
       });
 
-      const result = callResolveDatasourceRef();
+      const result = await callResolveDatasourceRef();
 
       expect(result).toEqual(getDataSourceRef(defaultSettings));
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should return the default datasource ref when there is no localStorage entry for this dashboard', () => {
+    it('should return the default datasource ref when there is no localStorage entry for this dashboard', async () => {
       mockGetLastUsed.mockReturnValue(undefined);
       mockGetInstanceSettings.mockImplementation((ref: string) => {
         if (ref === config.defaultDatasource) {
@@ -746,27 +793,27 @@ describe('PanelDataPaneNext', () => {
         return undefined;
       });
 
-      const result = callResolveDatasourceRef();
+      const result = await callResolveDatasourceRef();
 
       expect(result).toEqual(getDataSourceRef(defaultSettings));
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should return undefined when queryRunner already has a datasource set', () => {
+    it('should return undefined when queryRunner already has a datasource set', async () => {
       mockQueryRunnerState.datasource = { uid: 'already-set-uid', type: 'prometheus' };
 
-      const result = callResolveDatasourceRef();
+      const result = await callResolveDatasourceRef();
 
       expect(result).toBeUndefined();
       expect(mockGetLastUsed).not.toHaveBeenCalled();
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should return undefined when the first query already has an explicit datasource', () => {
+    it('should return undefined when the first query already has an explicit datasource', async () => {
       mockQueryRunnerState.datasource = undefined;
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
-      const result = callResolveDatasourceRef();
+      const result = await callResolveDatasourceRef();
 
       // loadDatasource will infer the datasource from queries[0] — no need to resolve here.
       expect(result).toBeUndefined();
@@ -774,12 +821,12 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
-    it('should use the dashboard uid as the localStorage key (empty string for unsaved dashboards)', () => {
+    it('should use the dashboard uid as the localStorage key (empty string for unsaved dashboards)', async () => {
       mockGetDashboardSceneFor.mockReturnValue({ state: { uid: '' } });
       mockGetLastUsed.mockReturnValue(undefined);
       mockGetInstanceSettings.mockReturnValue(defaultSettings);
 
-      const result = callResolveDatasourceRef();
+      const result = await callResolveDatasourceRef();
 
       expect(mockGetLastUsed).toHaveBeenCalledWith('');
       // Falls back to default — editor should still open, not break
@@ -814,15 +861,13 @@ describe('PanelDataPaneNext', () => {
 
         const defaultDatasource = { uid: defaultSettings.uid, type: defaultSettings.type };
 
-        jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
-          get: jest.fn().mockResolvedValue(defaultDatasource),
-          getInstanceSettings: jest.fn().mockImplementation((ref: string | { uid?: string }) => {
-            const uid = typeof ref === 'string' ? ref : ref?.uid;
-            return uid === defaultSettings.uid || ref === config.defaultDatasource ? defaultSettings : undefined;
-          }),
+        mockGetDataSourceInstance.mockResolvedValue(defaultDatasource);
+        mockGetInstanceSettings.mockImplementation((ref: string | { uid?: string }) => {
+          const uid = typeof ref === 'string' ? ref : ref?.uid;
+          return uid === defaultSettings.uid || ref === config.defaultDatasource ? defaultSettings : undefined;
         });
 
-        const resolvedRef = callResolveDatasourceRef();
+        const resolvedRef = await callResolveDatasourceRef();
         await callLoadDatasource(resolvedRef);
 
         expect(testDataPane.state.datasource).toBe(defaultDatasource);
@@ -837,12 +882,10 @@ describe('PanelDataPaneNext', () => {
 
         mockGetLastUsed.mockReturnValue({ datasourceUid: promSettings.uid });
 
-        jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
-          get: jest.fn().mockResolvedValue(promDatasource),
-          getInstanceSettings: jest.fn().mockReturnValue(promSettings),
-        });
+        mockGetDataSourceInstance.mockResolvedValue(promDatasource);
+        mockGetInstanceSettings.mockReturnValue(promSettings);
 
-        const resolvedRef = callResolveDatasourceRef();
+        const resolvedRef = await callResolveDatasourceRef();
         await callLoadDatasource(resolvedRef);
 
         expect(testDataPane.state.datasource).toBe(promDatasource);
@@ -902,19 +945,14 @@ describe('PanelDataPaneNext', () => {
     const promDatasource = { uid: 'prom-uid', type: 'prometheus' };
     const defaultDatasource = { uid: 'default-uid', type: 'testdata' };
 
-    let mockGet: jest.Mock;
     let testDataPane: PanelDataPaneNext;
 
     const callLoadDatasource = () =>
       (testDataPane as unknown as { loadDatasource: () => Promise<void> }).loadDatasource();
 
     beforeEach(() => {
-      mockGet = jest.fn();
-
-      jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
-        get: mockGet,
-        getInstanceSettings: mockGetInstanceSettings,
-      });
+      mockGetDataSourceInstance.mockReset();
+      mockGetInstanceSettings.mockReset();
 
       jest
         .spyOn(require('app/features/datasources/components/picker/utils'), 'storeLastUsedDataSourceInLocalStorage')
@@ -927,7 +965,7 @@ describe('PanelDataPaneNext', () => {
 
     it('should load the datasource and set state when everything resolves correctly', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
-      mockGet.mockResolvedValue(promDatasource);
+      mockGetDataSourceInstance.mockResolvedValue(promDatasource);
       mockGetInstanceSettings.mockReturnValue(promSettings);
 
       await callLoadDatasource();
@@ -944,7 +982,7 @@ describe('PanelDataPaneNext', () => {
       const resolvesWithScope = (ref: { uid?: string } | undefined, scopedVars: unknown) =>
         ref?.uid === variableRef.uid && Boolean((scopedVars as { __sceneObject?: unknown } | undefined)?.__sceneObject);
 
-      mockGet.mockImplementation((ref: { uid?: string } | undefined, scopedVars: unknown) =>
+      mockGetDataSourceInstance.mockImplementation((ref: { uid?: string } | undefined, scopedVars: unknown) =>
         resolvesWithScope(ref, scopedVars)
           ? Promise.resolve(promDatasource)
           : Promise.reject(new Error('Datasource not found'))
@@ -966,7 +1004,7 @@ describe('PanelDataPaneNext', () => {
         'storeLastUsedDataSourceInLocalStorage'
       );
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
-      mockGet.mockResolvedValue(promDatasource);
+      mockGetDataSourceInstance.mockResolvedValue(promDatasource);
       mockGetInstanceSettings.mockReturnValue(promSettings);
 
       await callLoadDatasource();
@@ -977,7 +1015,7 @@ describe('PanelDataPaneNext', () => {
     it('should fall back to the default datasource when the primary load throws', async () => {
       mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
 
-      mockGet.mockImplementation((ref: { uid?: string }) => {
+      mockGetDataSourceInstance.mockImplementation((ref: { uid?: string }) => {
         if (ref?.uid === 'deleted-uid') {
           return Promise.reject(new Error('Datasource not found'));
         }
@@ -998,7 +1036,7 @@ describe('PanelDataPaneNext', () => {
     it('should not call queryRunner.setState in the fallback path (avoids triggering a second loadDatasource via the subscription)', async () => {
       mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
 
-      mockGet.mockImplementation((ref: { uid?: string }) => {
+      mockGetDataSourceInstance.mockImplementation((ref: { uid?: string }) => {
         if (ref?.uid === 'deleted-uid') {
           return Promise.reject(new Error('Datasource not found'));
         }
@@ -1015,7 +1053,7 @@ describe('PanelDataPaneNext', () => {
 
     it('should attempt the default fallback when get() succeeds but getInstanceSettings() returns undefined', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
-      mockGet.mockResolvedValue(promDatasource);
+      mockGetDataSourceInstance.mockResolvedValue(promDatasource);
       // Settings missing from registry — e.g. plugin not registered
       mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;
@@ -1026,8 +1064,8 @@ describe('PanelDataPaneNext', () => {
       });
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      // mockGet resolves for both primary and default
-      mockGet.mockImplementation((ref: { uid?: string } | string | undefined) => {
+      // mockGetDataSourceInstance resolves for both primary and default
+      mockGetDataSourceInstance.mockImplementation((ref: { uid?: string } | string | undefined) => {
         const uid = typeof ref === 'string' ? ref : (ref as { uid?: string })?.uid;
         return uid === 'prom-uid' ? Promise.resolve(promDatasource) : Promise.resolve(defaultDatasource);
       });
@@ -1044,7 +1082,7 @@ describe('PanelDataPaneNext', () => {
     it('should set dsError and clear datasource when both primary and default fail', async () => {
       mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
       const primaryError = new Error('Primary DS not found');
-      mockGet.mockRejectedValue(primaryError);
+      mockGetDataSourceInstance.mockRejectedValue(primaryError);
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       await callLoadDatasource();
@@ -1058,7 +1096,7 @@ describe('PanelDataPaneNext', () => {
     it('should handle a Mixed panel datasource and reflect meta.mixed in state', async () => {
       mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
       const mixedDatasource = { uid: '-- Mixed --', type: 'mixed' };
-      mockGet.mockResolvedValue(mixedDatasource);
+      mockGetDataSourceInstance.mockResolvedValue(mixedDatasource);
       mockGetInstanceSettings.mockReturnValue(mixedSettings);
 
       await callLoadDatasource();
@@ -1074,7 +1112,7 @@ describe('PanelDataPaneNext', () => {
 
       await callLoadDatasource();
 
-      expect(mockGet).not.toHaveBeenCalled();
+      expect(mockGetDataSourceInstance).not.toHaveBeenCalled();
       expect(testDataPane.state.datasource).toBeUndefined();
       expect(testDataPane.state.dsSettings).toBeUndefined();
       expect(testDataPane.state.dsError).toBeUndefined();
@@ -1083,12 +1121,12 @@ describe('PanelDataPaneNext', () => {
     it('should use queries[0].datasource when queryRunner.state.datasource is null', async () => {
       mockQueryRunnerState.datasource = undefined;
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
-      mockGet.mockResolvedValue(promDatasource);
+      mockGetDataSourceInstance.mockResolvedValue(promDatasource);
       mockGetInstanceSettings.mockReturnValue(promSettings);
 
       await callLoadDatasource();
 
-      expect(mockGet).toHaveBeenCalledWith(
+      expect(mockGetDataSourceInstance).toHaveBeenCalledWith(
         { uid: 'prom-uid', type: 'prometheus' },
         expect.objectContaining({ __sceneObject: expect.anything() })
       );
@@ -1156,17 +1194,13 @@ describe('PanelDataPaneNext', () => {
       name: 'Prometheus 2',
     };
 
-    let mockGet: jest.Mock;
     let testDataPane: PanelDataPaneNext;
 
     beforeEach(() => {
+      mockGetDataSourceInstance.mockReset();
+      mockGetInstanceSettings.mockReset();
       // Default: return an empty DS api object. Tests that need getDefaultQuery override this.
-      mockGet = jest.fn().mockResolvedValue({});
-
-      jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
-        get: mockGet,
-        getInstanceSettings: mockGetInstanceSettings,
-      });
+      mockGetDataSourceInstance.mockResolvedValue({});
 
       testDataPane = new PanelDataPaneNext({
         panelRef: { resolve: () => mockPanel } as SceneObjectRef<VizPanel>,
@@ -1275,7 +1309,7 @@ describe('PanelDataPaneNext', () => {
       const lokiApi = {
         getDefaultQuery: jest.fn().mockReturnValue({ logQL: '', maxLines: 1000 }),
       };
-      mockGet.mockResolvedValue(lokiApi);
+      mockGetDataSourceInstance.mockResolvedValue(lokiApi);
 
       mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;
@@ -1312,7 +1346,7 @@ describe('PanelDataPaneNext', () => {
       await testDataPane.changeDataSource({ uid: 'prom-uid-2', type: 'prometheus' }, 'A');
 
       // getDefaultQuery should NOT have been called (same type, no default query reset)
-      expect(mockGet).not.toHaveBeenCalled();
+      expect(mockGetDataSourceInstance).not.toHaveBeenCalled();
 
       const setStateCall = (mockQueryRunner.setState as jest.Mock).mock.calls.find(([args]) => args.queries);
       const queryA = setStateCall![0].queries.find((q: DataQuery) => q.refId === 'A');
@@ -1384,7 +1418,7 @@ describe('PanelDataPaneNext', () => {
       // First call: look up the new target (loki). Second call: look up the previous query DS (prom).
       // The type mismatch triggers shouldUseDefaultQuery=true, which calls get() — which then rejects.
       mockGetInstanceSettings.mockReturnValueOnce(lokiSettings).mockReturnValueOnce(promSettings);
-      mockGet.mockRejectedValue(new Error('Plugin not found'));
+      mockGetDataSourceInstance.mockRejectedValue(new Error('Plugin not found'));
 
       await testDataPane.changeDataSource({ uid: 'loki-uid', type: 'loki' }, 'A');
 
@@ -1500,16 +1534,12 @@ describe('PanelDataPaneNext', () => {
       name: 'Prometheus 2',
     };
 
-    let mockGet: jest.Mock;
     let testDataPane: PanelDataPaneNext;
 
     beforeEach(() => {
-      mockGet = jest.fn().mockResolvedValue({});
-
-      jest.spyOn(require('@grafana/runtime'), 'getDataSourceSrv').mockReturnValue({
-        get: mockGet,
-        getInstanceSettings: mockGetInstanceSettings,
-      });
+      mockGetDataSourceInstance.mockReset();
+      mockGetInstanceSettings.mockReset();
+      mockGetDataSourceInstance.mockResolvedValue({});
 
       testDataPane = new PanelDataPaneNext({
         panelRef: { resolve: () => mockPanel } as SceneObjectRef<VizPanel>,
@@ -1570,7 +1600,7 @@ describe('PanelDataPaneNext', () => {
       ];
 
       const lokiApi = { getDefaultQuery: jest.fn().mockReturnValue({ logQL: '', maxLines: 1000 }) };
-      mockGet.mockResolvedValue(lokiApi);
+      mockGetDataSourceInstance.mockResolvedValue(lokiApi);
 
       mockGetInstanceSettings.mockImplementation((ref: { uid?: string } | string) => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;

@@ -7,12 +7,14 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func TestPluginInstall_ShouldUpdate(t *testing.T) {
@@ -67,6 +69,30 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 			},
 			expectUpdate: true,
 		},
+		{
+			name: "dependencies not yet applied",
+			modifyInstall: func(pi *PluginInstall) {
+				pi.Dependencies = []string{"dependency-panel"}
+			},
+			expectUpdate: true,
+		},
+		{
+			name: "dependencies match applied annotation",
+			modifyInstall: func(pi *PluginInstall) {
+				pi.Dependencies = []string{"dependency-panel", "other-panel"}
+			},
+			modifyExisting: func(existing *pluginsv0alpha1.Plugin) {
+				existing.Annotations[AppliedDependenciesAnnotation] = "other-panel,dependency-panel"
+			},
+			expectUpdate: false,
+		},
+		{
+			name: "stale applied dependencies",
+			modifyExisting: func(existing *pluginsv0alpha1.Plugin) {
+				existing.Annotations[AppliedDependenciesAnnotation] = "dependency-panel"
+			},
+			expectUpdate: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -95,6 +121,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 		expectedCreates int
 		expectedUpdates int
 		expectError     bool
+		validateUpdate  func(*testing.T, *pluginsv0alpha1.Plugin)
 	}{
 		{
 			name: "creates plugin when not found",
@@ -128,6 +155,40 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				},
 			},
 			expectedUpdates: 1,
+		},
+		{
+			name: "updates plugin while preserving existing metadata",
+			install: &PluginInstall{
+				ID:      "dependency-panel",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "org-1",
+					Name:            "dependency-panel",
+					ResourceVersion: "8",
+					Labels: map[string]string{
+						"plugins.grafana.app/dependency": "true",
+					},
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation:              SourceDependencyPlugin,
+						"plugins.grafana.app/dependency-parents":   "parent-app",
+						"plugins.grafana.app/applied-dependencies": "nested-panel",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: "latest",
+				},
+			},
+			expectedUpdates: 1,
+			validateUpdate: func(t *testing.T, updated *pluginsv0alpha1.Plugin) {
+				require.Equal(t, "true", updated.Labels["plugins.grafana.app/dependency"])
+				require.Equal(t, "parent-app", updated.Annotations["plugins.grafana.app/dependency-parents"])
+				require.Equal(t, "nested-panel", updated.Annotations["plugins.grafana.app/applied-dependencies"])
+				require.Equal(t, SourcePluginStore, updated.Annotations[PluginInstallSourceAnnotation])
+			},
 		},
 		{
 			name: "skips create when plugin matches",
@@ -208,6 +269,9 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				require.Equal(t, []string{tt.existing.ResourceVersion}, receivedResourceVersions)
 				require.Len(t, updatedPlugins, 1)
 				require.Equal(t, tt.install.Version, updatedPlugins[0].Spec.Version)
+				if tt.validateUpdate != nil {
+					tt.validateUpdate(t, updatedPlugins[0])
+				}
 			}
 		})
 	}
@@ -449,6 +513,31 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 				require.Equal(t, "my-namespace", p.Namespace)
 				require.Equal(t, "my-plugin", p.Name)
 				require.Equal(t, "my-plugin", p.Spec.Id)
+			},
+		},
+		{
+			name: "dependencies are stamped as applied-dependencies annotation",
+			install: PluginInstall{
+				ID:           "plugin-1",
+				Version:      "1.0.0",
+				Source:       SourcePluginStore,
+				Dependencies: []string{"dependency-panel", "other-panel"},
+			},
+			namespace: "org-1",
+			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
+				require.Equal(t, "dependency-panel,other-panel", p.Annotations[AppliedDependenciesAnnotation])
+			},
+		},
+		{
+			name: "no dependencies leaves applied-dependencies annotation unset",
+			install: PluginInstall{
+				ID:      "plugin-1",
+				Version: "1.0.0",
+				Source:  SourcePluginStore,
+			},
+			namespace: "org-1",
+			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
+				require.NotContains(t, p.Annotations, AppliedDependenciesAnnotation)
 			},
 		},
 	}
@@ -723,14 +812,16 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 
 func TestInstallRegistrar_Unregister(t *testing.T) {
 	tests := []struct {
-		name          string
-		namespace     string
-		pluginName    string
-		source        Source
-		existing      *pluginsv0alpha1.Plugin
-		existingErr   error
-		expectedCalls int
-		expectError   bool
+		name            string
+		namespace       string
+		pluginName      string
+		source          Source
+		existing        *pluginsv0alpha1.Plugin
+		existingErr     error
+		expectedCalls   int
+		expectedUpdates int
+		expectError     bool
+		validateUpdate  func(*testing.T, *pluginsv0alpha1.Plugin)
 	}{
 		{
 			name:       "successfully deletes plugin with matching source",
@@ -813,12 +904,68 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 			},
 			expectedCalls: 1,
 		},
+		{
+			name:       "demotes plugin with dependency parents instead of deleting",
+			namespace:  "org-1",
+			pluginName: "dependency-panel",
+			source:     SourcePluginStore,
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "org-1",
+					Name:            "dependency-panel",
+					ResourceVersion: "12",
+					Labels: map[string]string{
+						"plugins.grafana.app/dependency": "true",
+					},
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourcePluginStore,
+						DependencyParentsAnnotation:   "parent-app",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: "2.0.0",
+				},
+			},
+			expectedCalls:   0,
+			expectedUpdates: 1,
+			validateUpdate: func(t *testing.T, updated *pluginsv0alpha1.Plugin) {
+				require.Equal(t, SourceDependencyPlugin, updated.Annotations[PluginInstallSourceAnnotation])
+				require.Equal(t, DependencyPluginVersion, updated.Spec.Version)
+				require.Equal(t, "parent-app", updated.Annotations[DependencyParentsAnnotation])
+				require.Equal(t, "true", updated.Labels["plugins.grafana.app/dependency"])
+			},
+		},
+		{
+			name:       "skips demote when plugin is already a dependency install",
+			namespace:  "org-1",
+			pluginName: "dependency-panel",
+			source:     SourceDependencyPlugin,
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "org-1",
+					Name:      "dependency-panel",
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation: SourceDependencyPlugin,
+						DependencyParentsAnnotation:   "parent-app",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: DependencyPluginVersion,
+				},
+			},
+			expectedCalls:   0,
+			expectedUpdates: 0,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			deleteCalls := 0
+			updateCalls := 0
+			var updatedPlugins []*pluginsv0alpha1.Plugin
 
 			fakeClient := &fakePluginInstallClient{
 				getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
@@ -837,6 +984,11 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 					}
 					return nil
 				},
+				updateFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+					updateCalls++
+					updatedPlugins = append(updatedPlugins, obj)
+					return obj, nil
+				},
 			}
 
 			registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
@@ -844,11 +996,507 @@ func TestInstallRegistrar_Unregister(t *testing.T) {
 			err := registrar.Unregister(ctx, tt.namespace, tt.pluginName, tt.source)
 
 			require.Equal(t, tt.expectedCalls, deleteCalls)
+			require.Equal(t, tt.expectedUpdates, updateCalls)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
+			if tt.validateUpdate != nil {
+				require.Len(t, updatedPlugins, 1)
+				tt.validateUpdate(t, updatedPlugins[0])
+			}
+		})
+	}
+}
+
+func TestInstallRegistrar_SyncNamespace(t *testing.T) {
+	newRecord := func(name, id, version, source string) pluginsv0alpha1.Plugin {
+		return pluginsv0alpha1.Plugin{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:       "org-1",
+				Name:            name,
+				ResourceVersion: "5",
+				Annotations: map[string]string{
+					PluginInstallSourceAnnotation: source,
+				},
+			},
+			Spec: pluginsv0alpha1.PluginSpec{
+				Id:      id,
+				Version: version,
+			},
+		}
+	}
+
+	type counters struct {
+		lists, creates, updates, deletes int
+		gets                             []string
+	}
+
+	// newListsClient serves the given lists in order (repeating the last) and
+	// serves Get from the most recently listed snapshot.
+	newListsClient := func(c *counters, lists ...[]pluginsv0alpha1.Plugin) *fakePluginInstallClient {
+		return &fakePluginInstallClient{
+			listAllFunc: func(context.Context, string, resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
+				items := lists[min(c.lists, len(lists)-1)]
+				c.lists++
+				return &pluginsv0alpha1.PluginList{Items: items}, nil
+			},
+			getFunc: func(_ context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+				c.gets = append(c.gets, identifier.Name)
+				items := lists[min(c.lists, len(lists))-1]
+				for i := range items {
+					if items[i].Name == identifier.Name {
+						return items[i].DeepCopy(), nil
+					}
+				}
+				return nil, errorsK8s.NewNotFound(pluginGroupResource(), identifier.Name)
+			},
+			createFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+				c.creates++
+				return obj, nil
+			},
+			updateFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+				c.updates++
+				return obj, nil
+			},
+			deleteFunc: func(context.Context, resource.Identifier, resource.DeleteOptions) error {
+				c.deletes++
+				return nil
+			},
+		}
+	}
+
+	t.Run("an in-sync namespace needs only the list", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c, []pluginsv0alpha1.Plugin{
+			newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+			newRecord("plugin-2", "plugin-2", "2.0.0", SourcePluginStore),
+			newRecord("child-plugin", "child-plugin", "1.0.0", SourceChildPlugin),
+			newRecord("dependency-panel", "dependency-panel", DependencyPluginVersion, SourceDependencyPlugin),
+		})
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		registerSkips := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped"))
+		unregisterSkips := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped"))
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+			{ID: "plugin-2", Version: "2.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, 1, c.lists)
+		require.Empty(t, c.gets)
+		require.Zero(t, c.creates+c.updates+c.deletes)
+		require.Equal(t, float64(2), testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped"))-registerSkips)
+		require.Equal(t, float64(2), testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped"))-unregisterSkips)
+	})
+
+	t.Run("re-lists after a write and keeps still-valid skips", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-gone", "plugin-gone", "1.0.0", SourcePluginStore),
+				newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+				newRecord("plugin-2", "plugin-2", "2.0.0", SourcePluginStore),
+			},
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+				newRecord("plugin-2", "plugin-2", "2.0.0", SourcePluginStore),
+			},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		registerSkips := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped"))
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+			{ID: "plugin-2", Version: "2.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-gone"}, c.gets)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.deletes)
+		require.Zero(t, c.creates+c.updates)
+		// skips are counted on the first pass only
+		require.Equal(t, float64(2), testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped"))-registerSkips)
+	})
+
+	t.Run("re-registers a skipped plugin the hooks rewrote", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-1", "plugin-1", "0.9.0", SourcePluginStore),
+				newRecord("plugin-2", "plugin-2", "2.0.0", SourcePluginStore),
+			},
+			// the write to plugin-1 cascaded and rewrote plugin-2
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+				newRecord("plugin-2", "plugin-2", "0.1.0", SourcePluginStore),
+			},
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+				newRecord("plugin-2", "plugin-2", "2.0.0", SourcePluginStore),
+			},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+			{ID: "plugin-2", Version: "2.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1", "plugin-2"}, c.gets)
+		require.Equal(t, 3, c.lists)
+		require.Equal(t, 2, c.updates)
+	})
+
+	t.Run("re-unregisters a skipped record the hooks rewrote", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-gone", "plugin-gone", "1.0.0", SourcePluginStore),
+				newRecord("child-plugin", "child-plugin", "1.0.0", SourceChildPlugin),
+			},
+			// deleting plugin-gone cascaded and reassigned child-plugin's source
+			[]pluginsv0alpha1.Plugin{
+				newRecord("child-plugin", "child-plugin", "1.0.0", SourcePluginStore),
+			},
+			nil,
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-gone", "child-plugin"}, c.gets)
+		require.Equal(t, 3, c.lists)
+		require.Equal(t, 2, c.deletes)
+	})
+
+	t.Run("converges when a later pass's write cascades again", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-gone", "plugin-gone", "1.0.0", SourcePluginStore),
+				newRecord("child-plugin", "child-plugin", "1.0.0", SourceChildPlugin),
+				newRecord("panel-b", "panel-b", "1.0.0", SourcePluginStore),
+			},
+			// deleting plugin-gone flipped child-plugin's source
+			[]pluginsv0alpha1.Plugin{
+				newRecord("child-plugin", "child-plugin", "1.0.0", SourcePluginStore),
+				newRecord("panel-b", "panel-b", "1.0.0", SourcePluginStore),
+			},
+			// deleting child-plugin cascaded and deleted desired panel-b
+			nil,
+			[]pluginsv0alpha1.Plugin{
+				newRecord("panel-b", "panel-b", "1.0.0", SourcePluginStore),
+			},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "panel-b", Version: "1.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-gone", "child-plugin", "panel-b"}, c.gets)
+		require.Equal(t, 4, c.lists)
+		require.Equal(t, 2, c.deletes)
+		require.Equal(t, 1, c.creates)
+	})
+
+	t.Run("errors after the pass limit when the namespace never settles", func(t *testing.T) {
+		c := &counters{}
+		// the record reappears in every list, so every pass deletes it again
+		fakeClient := newListsClient(c, []pluginsv0alpha1.Plugin{
+			newRecord("plugin-gone", "plugin-gone", "1.0.0", SourcePluginStore),
+		})
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.ErrorContains(t, err, "did not converge")
+		require.ErrorContains(t, err, "plugin-gone")
+		require.Equal(t, maxSyncNamespacePasses, c.lists)
+		require.Equal(t, maxSyncNamespacePasses, c.deletes)
+	})
+
+	t.Run("demotes an unregistered record that other plugins depend on", func(t *testing.T) {
+		withParents := newRecord("dep-panel", "dep-panel", "1.0.0", SourcePluginStore)
+		withParents.Annotations[DependencyParentsAnnotation] = "parent-app"
+		demoted := newRecord("dep-panel", "dep-panel", DependencyPluginVersion, SourceDependencyPlugin)
+		demoted.Annotations[DependencyParentsAnnotation] = "parent-app"
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{withParents},
+			[]pluginsv0alpha1.Plugin{demoted},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"dep-panel"}, c.gets)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.updates)
+		require.Zero(t, c.deletes)
+	})
+
+	t.Run("a record with a matching id but a different name is not a cache hit", func(t *testing.T) {
+		alias := newRecord("alias", "plugin-1", "1.0.0", SourcePluginStore)
+		created := newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore)
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{alias},
+			[]pluginsv0alpha1.Plugin{alias, created},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.creates)
+	})
+
+	t.Run("re-lists after a concurrent update conflict", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", "0.9.0", SourcePluginStore)},
+			[]pluginsv0alpha1.Plugin{newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore)},
+		)
+		fakeClient.updateFunc = func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+			c.updates++
+			return nil, errorsK8s.NewConflict(pluginGroupResource(), obj.Name, errors.New("resource version mismatch"))
+		}
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.updates)
+	})
+
+	t.Run("ignores records with an empty id", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c, []pluginsv0alpha1.Plugin{{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "org-1", Name: "weird-record"},
+			Spec:       pluginsv0alpha1.PluginSpec{Version: "1.0.0"},
+		}})
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.NoError(t, err)
+		require.Equal(t, 1, c.lists)
+		require.Empty(t, c.gets)
+	})
+
+	t.Run("re-lists after a concurrent create conflict", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			nil,
+			// another writer created the record between the list and the read
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+			},
+		)
+		fakeClient.createFunc = func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+			c.creates++
+			return nil, errorsK8s.NewAlreadyExists(pluginGroupResource(), obj.Name)
+		}
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.creates)
+	})
+
+	t.Run("re-reads and updates when the listed record differs", func(t *testing.T) {
+		listed := newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore)
+		fresh := listed.DeepCopy()
+		fresh.ResourceVersion = "6"
+		updated := newRecord("plugin-1", "plugin-1", "2.0.0", SourcePluginStore)
+		getCalls, listCalls := 0, 0
+		var updateResourceVersions []string
+		fakeClient := &fakePluginInstallClient{
+			listAllFunc: func(context.Context, string, resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
+				listCalls++
+				if listCalls == 1 {
+					return &pluginsv0alpha1.PluginList{Items: []pluginsv0alpha1.Plugin{listed}}, nil
+				}
+				return &pluginsv0alpha1.PluginList{Items: []pluginsv0alpha1.Plugin{updated}}, nil
+			},
+			getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+				getCalls++
+				return fresh.DeepCopy(), nil
+			},
+			updateFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+				updateResourceVersions = append(updateResourceVersions, opts.ResourceVersion)
+				return obj, nil
+			},
+		}
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, 1, getCalls)
+		require.Equal(t, 2, listCalls)
+		require.Equal(t, []string{"6"}, updateResourceVersions)
+	})
+
+	t.Run("the fresh read wins when the record changed after the list", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c, []pluginsv0alpha1.Plugin{
+			newRecord("plugin-1", "plugin-1", "0.9.0", SourcePluginStore),
+		})
+		// the record was updated between the list and the read
+		fakeClient.getFunc = func(_ context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+			c.gets = append(c.gets, identifier.Name)
+			fresh := newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore)
+			return &fresh, nil
+		}
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 1, c.lists)
+		require.Zero(t, c.updates)
+	})
+
+	t.Run("creates when no record is listed", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			nil,
+			[]pluginsv0alpha1.Plugin{
+				newRecord("plugin-1", "plugin-1", "1.0.0", SourcePluginStore),
+			},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
+			{ID: "plugin-1", Version: "1.0.0", Source: SourcePluginStore},
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.creates)
+	})
+
+	t.Run("re-reads before unregistering when the record name differs from its id", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c, []pluginsv0alpha1.Plugin{
+			newRecord("alias", "plugin-x", "1.0.0", SourceChildPlugin),
+		})
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.NoError(t, err)
+		// Unregister reads by the id, finds nothing, and writes nothing
+		require.Equal(t, []string{"plugin-x"}, c.gets)
+		require.Equal(t, 1, c.lists)
+		require.Zero(t, c.deletes)
+	})
+
+	t.Run("re-reads before unregistering when the record has no source annotation", func(t *testing.T) {
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "org-1", Name: "plugin-1"},
+				Spec:       pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
+			}},
+			nil,
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"plugin-1"}, c.gets)
+		require.Equal(t, 2, c.lists)
+		require.Equal(t, 1, c.deletes)
+	})
+
+	t.Run("returns the list error", func(t *testing.T) {
+		fakeClient := &fakePluginInstallClient{
+			listAllFunc: func(context.Context, string, resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
+				return nil, errorsK8s.NewInternalError(errors.New("list failed"))
+			},
+		}
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil)
+		require.Error(t, err)
+	})
+}
+
+// TestInstallRegistrar_UnregisterIsNoOpImpliesNoWrite pins the SyncNamespace
+// skip invariant: a record unregisterIsNoOp accepts must produce zero writes.
+func TestInstallRegistrar_UnregisterIsNoOpImpliesNoWrite(t *testing.T) {
+	records := []*pluginsv0alpha1.Plugin{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:   "org-1",
+				Name:        "plugin-1",
+				Annotations: map[string]string{PluginInstallSourceAnnotation: SourceChildPlugin},
+			},
+			Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:   "org-1",
+				Name:        "plugin-2",
+				Annotations: map[string]string{PluginInstallSourceAnnotation: SourceDependencyPlugin},
+			},
+			Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-2", Version: DependencyPluginVersion},
+		},
+		// a foreign-source record with dependency parents must not be demoted:
+		// the source check runs before the demote inside Unregister
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "org-1",
+				Name:      "plugin-3",
+				Annotations: map[string]string{
+					PluginInstallSourceAnnotation: SourceChildPlugin,
+					DependencyParentsAnnotation:   "parent-app",
+				},
+			},
+			Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-3", Version: "1.0.0"},
+		},
+	}
+
+	for _, record := range records {
+		t.Run(record.Name, func(t *testing.T) {
+			writes := 0
+			fakeClient := &fakePluginInstallClient{
+				getFunc: func(context.Context, resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
+					return record.DeepCopy(), nil
+				},
+				createFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
+					writes++
+					return obj, nil
+				},
+				updateFunc: func(_ context.Context, obj *pluginsv0alpha1.Plugin, _ resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+					writes++
+					return obj, nil
+				},
+				deleteFunc: func(context.Context, resource.Identifier, resource.DeleteOptions) error {
+					writes++
+					return nil
+				},
+			}
+			registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+			require.True(t, registrar.unregisterIsNoOp(record, SourcePluginStore))
+			require.NoError(t, registrar.Unregister(context.Background(), "org-1", record.Spec.Id, SourcePluginStore))
+			require.Zero(t, writes)
 		})
 	}
 }

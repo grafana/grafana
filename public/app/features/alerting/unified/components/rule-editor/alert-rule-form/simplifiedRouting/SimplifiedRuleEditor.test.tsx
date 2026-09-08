@@ -163,10 +163,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
     // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
     server.use(
-      http.get('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () => {
+      http.get('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers', () => {
         return HttpResponse.json({
           kind: 'ReceiverList',
-          apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+          apiVersion: 'notifications.alerting.grafana.app/v1beta1',
           metadata: {},
           items: [
             {
@@ -225,7 +225,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   describe('switch modes enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode'] });
+    testWithFeatureToggles({ enable: ['alertingNotificationsStepMode'] });
 
     it('can create the new grafana-managed rule with default modes', async () => {
       const contactPointName = 'lotsa-emails';

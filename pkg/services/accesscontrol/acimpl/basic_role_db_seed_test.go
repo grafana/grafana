@@ -24,7 +24,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideService(sql)
 
 	svc := ProvideOSSService(

@@ -463,7 +463,10 @@ describe('NewProvisionedFolderForm', () => {
 });
 
 describe('NewProvisionedFolderForm commit message template', () => {
+  let capturedRequest: { url: URL; body: unknown } | null = null;
+
   beforeEach(() => {
+    capturedRequest = null;
     setTestFlags({ 'provisioning.gitConventions': true });
   });
 
@@ -490,5 +493,41 @@ describe('NewProvisionedFolderForm commit message template', () => {
     const comment = await screen.findByRole('textbox', { name: /comment/i });
     await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
     expect(comment).not.toHaveAttribute('readonly');
+  });
+
+  it('sends the enforced template branch as ref when creating a folder', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
+      })
+    );
+
+    const { user } = setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          workflows: ['write', 'branch'],
+          branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/enforced-folder' },
+        },
+        // useProvisionedFolderFormData switches this to the branch workflow under enforcement.
+        initialValues: { ...mockHookData.initialValues!, workflow: 'branch' },
+      }
+    );
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'Enforced Folder');
+
+    // The branch field is read-only and pre-filled from the template.
+    const branch = await screen.findByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(branch).toHaveValue('grafana/enforced-folder'));
+
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-folder');
   });
 });

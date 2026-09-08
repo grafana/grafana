@@ -3,16 +3,17 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
-
-	claims "github.com/grafana/authlib/types"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -125,22 +126,27 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver  accesscontrol.ActionResolver
-	cache           *localcache.CacheService
-	cfg             *setting.Cfg
-	features        featuremgmt.FeatureToggles
-	log             log.Logger
-	registrations   accesscontrol.RegistrationList
-	rolesMu         sync.RWMutex
-	roles           map[string]*accesscontrol.RoleDTO
-	store           accesscontrol.Store
-	seeder          *seeding.Seeder
-	permRegistry    permreg.PermissionRegistry
-	isInitialized   bool
-	sql             db.DB
-	serverLock      *serverlock.ServerLockService
-	singleFlight    singleflight.Group
-	zanzanaResolver *ZanzanaPermissionResolver
+	actionResolver        accesscontrol.ActionResolver
+	cache                 *localcache.CacheService
+	cfg                   *setting.Cfg
+	features              featuremgmt.FeatureToggles
+	log                   log.Logger
+	registrations         accesscontrol.RegistrationList
+	rolesMu               sync.RWMutex
+	roles                 map[string]*accesscontrol.RoleDTO
+	store                 accesscontrol.Store
+	seeder                *seeding.Seeder
+	permRegistry          permreg.PermissionRegistry
+	isInitialized         bool
+	sql                   db.DB
+	serverLock            *serverlock.ServerLockService
+	singleFlight          singleflight.Group
+	userPermissionsClient accesscontrol.UserPermissionsClient
+	zanzanaResolver       *ZanzanaPermissionResolver
+}
+
+func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
+	s.userPermissionsClient = client
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -157,6 +163,36 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx)) {
+		if s.userPermissionsClient == nil {
+			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
+		}
+		return s.userPermissionsClient.GetUserPermissions(ctx, user, options)
+	}
+	return s.getLocalUserPermissions(ctx, user, options)
+}
+
+// GetLocalUserPermissions evaluates effective local permissions without delegating back to AuthZ.
+func (s *Service) GetLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.GetLocalUserPermissions")
+	defer span.End()
+
+	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+	defer timer.ObserveDuration()
+
+	return s.getLocalUserPermissions(ctx, user, options)
+}
+
+func (s *Service) getLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	permissions, err := s.GetRBACUserPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+}
+
+func (s *Service) GetRBACUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	var permissions []accesscontrol.Permission
 	var err error
 
@@ -170,7 +206,27 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	return s.zanzanaResolver.MergeCurrentUser(ctx, user, permissions, s.log), nil
+	return permissions, nil
+}
+
+func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
+	if s.zanzanaResolver == nil {
+		return legacy
+	}
+	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
+	}
+
+	zPerms, err := s.getCachedPermissions(ctx, accesscontrol.GetZanzanaUserPermissionCacheKey(user),
+		func(ctx context.Context) ([]accesscontrol.Permission, error) {
+			return s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user)
+		}, options)
+	if err != nil {
+		s.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+
+	return MergeUserPermissions(legacy, zPerms)
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -416,11 +472,23 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 		return permissions, nil
 	}
 
-	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+	// ReloadCache forces a fresh computation, so bypass the read-coalescing
+	// re-check and always recompute under the lock.
+	if options.ReloadCache {
+		if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+			return nil, err
+		}
+		return permissions, nil
+	}
+
+	// Coalesce concurrent misses for the same key: callers that block on the lock
+	// reuse the value the winner computed instead of each re-running getPermissionsFn.
+	value, err := s.cache.GetOrExclusiveSet(key, getValue, cacheTTL)
+	if err != nil {
 		return nil, err
 	}
 
-	return permissions, nil
+	return value.([]accesscontrol.Permission), nil
 }
 
 func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -474,6 +542,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	s.cache.ExclusiveDelete(accesscontrol.GetZanzanaUserPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -928,9 +997,7 @@ func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.
 
 	// Return a copy to avoid external modifications
 	rolesCopy := make(map[string]*accesscontrol.RoleDTO, len(s.roles))
-	for k, v := range s.roles {
-		rolesCopy[k] = v
-	}
+	maps.Copy(rolesCopy, s.roles)
 	return rolesCopy
 }
 

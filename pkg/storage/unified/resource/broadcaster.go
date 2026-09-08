@@ -65,7 +65,6 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 	}
 	b := &broadcaster[T]{
 		shouldTerminate: ctx.Done(),
-		cache:           newRingBuffer[T](defaultCacheSize),
 		subscribe:       make(chan *subscription[T], internalChanSize),
 		unsubscribe:     make(chan (<-chan T), internalChanSize),
 		subs:            make(map[<-chan T]*subscription[T]),
@@ -86,6 +85,9 @@ type subscription[T any] struct {
 	resource string // metric label for subscriber-attributed metrics
 	ch       chan T
 	overflow []T // pending items when channel is full, nil when not overflowing
+	// ready is closed by stream() once the subscription is registered, so that
+	// Subscribe only returns after live events are guaranteed to be delivered.
+	ready chan struct{}
 }
 
 type broadcaster[T any] struct {
@@ -96,7 +98,6 @@ type broadcaster[T any] struct {
 
 	// subscription management
 
-	cache           ringBuffer[T]
 	subscribe       chan *subscription[T]
 	unsubscribe     chan (<-chan T)
 	subs            map[<-chan T]*subscription[T]
@@ -119,10 +120,9 @@ func (b *broadcaster[T]) eventResource(item T) string {
 }
 
 const (
-	subscriptionResultOK           = "ok"
-	subscriptionResultCtxCanceled  = "ctx_canceled"
-	subscriptionResultTerminated   = "terminated"
-	subscriptionResultReplayFailed = "replay_failed"
+	subscriptionResultOK          = "ok"
+	subscriptionResultCtxCanceled = "ctx_canceled"
+	subscriptionResultTerminated  = "terminated"
 
 	unsubscriptionReasonClient      = "client"
 	unsubscriptionReasonOverflowCap = "overflow_cap"
@@ -133,12 +133,7 @@ const (
 	// internalChanSize is the buffer for internal subscribe/unsubscribe coordination channels.
 	internalChanSize = 100
 
-	// defaultCacheSize is the ring buffer size for replaying recent events to new subscribers.
-	defaultCacheSize = 500
-
 	// watchChanSize is the per-subscriber event delivery channel buffer.
-	// Must be larger than defaultCacheSize so that readInto never fills the
-	// channel completely, leaving headroom for new events.
 	watchChanSize = 1000
 
 	// defaultOverflowCap is the maximum number of items in a subscriber's overflow
@@ -154,7 +149,7 @@ const (
 )
 
 func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
-	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize), ready: make(chan struct{})}
 
 	select {
 	case <-ctx.Done(): // client canceled
@@ -163,8 +158,19 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (
 	case <-b.terminated: // no more data
 		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
 		return nil, io.EOF
-	case b.subscribe <- sub: // success submitting subscription
+	case b.subscribe <- sub: // submitted subscription, wait for it to be registered
+	}
+
+	select {
+	case <-sub.ready: // registered; live events will now be delivered
 		return sub.ch, nil
+	case <-ctx.Done(): // client canceled before registration
+		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultCtxCanceled).Inc()
+		b.Unsubscribe(sub.ch)
+		return nil, ctx.Err()
+	case <-b.terminated: // broadcaster stopped before registration
+		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
+		return nil, io.EOF
 	}
 }
 
@@ -220,13 +226,8 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	}()
 
 	addSubscriber := func(sub *subscription[T]) {
-		// send initial batch of cached items
-		if !b.cache.readInto(sub.ch) {
-			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultReplayFailed).Inc()
-			close(sub.ch)
-			return
-		}
 		b.subs[sub.ch] = sub
+		close(sub.ready)
 		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
 		b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
 	}
@@ -258,7 +259,6 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 				return
 			}
 			b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
-			b.cache.add(item)
 
 			var slow []<-chan T
 			for _, sub := range b.subs {
@@ -320,44 +320,4 @@ func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 	b.metrics.Subscribers.WithLabelValues(sub.resource).Dec()
 	b.metrics.UnsubscriptionsTotal.WithLabelValues(sub.resource, reason).Inc()
 	close(sub.ch)
-}
-
-// ringBuffer is a fixed-size circular buffer. It is not safe for concurrent
-// use — the broadcaster's single stream() goroutine is the only caller.
-type ringBuffer[T any] struct {
-	buf  []T
-	zero int // index of the oldest item
-	len  int // number of items currently stored
-}
-
-func newRingBuffer[T any](size int) ringBuffer[T] {
-	if size <= 0 {
-		size = defaultCacheSize
-	}
-	return ringBuffer[T]{
-		buf: make([]T, size),
-	}
-}
-
-func (r *ringBuffer[T]) add(item T) {
-	i := (r.zero + r.len) % len(r.buf)
-	r.buf[i] = item
-	if r.len < len(r.buf) {
-		r.len++
-	} else {
-		r.zero = (r.zero + 1) % len(r.buf)
-	}
-}
-
-// readInto sends all cached items to dst without blocking. Returns true if all
-// items were sent, false if dst's buffer was full (slow consumer).
-func (r *ringBuffer[T]) readInto(dst chan T) bool {
-	for i := 0; i < r.len; i++ {
-		select {
-		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
-		default:
-			return false
-		}
-	}
-	return true
 }

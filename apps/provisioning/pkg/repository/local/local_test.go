@@ -74,7 +74,7 @@ func TestLocalResolver(t *testing.T) {
 				Path: tempDir,
 			},
 		},
-	}, resolver)
+	}, resolver, nil)
 
 	// Verify we can read the tree
 	tree, err := repo.ReadTree(context.Background(), "")
@@ -131,7 +131,7 @@ func TestLocal(t *testing.T) {
 						Path: tc.Path,
 					},
 				},
-			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
 
 			assert.Equal(t, tc.ExpectedPath, r.path, "expected path to be resolved")
 			// Validation is now handled by the validator function, not the repository instance
@@ -156,7 +156,7 @@ func TestLocal(t *testing.T) {
 						Path: tc.Path,
 					},
 				},
-			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
+			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"}, nil)
 
 			require.Empty(t, r.path, "no path should be resolved")
 
@@ -237,7 +237,7 @@ func TestLocalRepository_Test(t *testing.T) {
 						Path: tc.path,
 					},
 				},
-			}, resolver)
+			}, resolver, nil)
 
 			// If we're testing a valid path, set it to our test path
 			if tc.path != "" {
@@ -811,6 +811,33 @@ func TestLocalRepository_Write(t *testing.T) {
 			data:        []byte("content with ref"),
 			comment:     "test write with ref",
 			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+		{
+			// Folder/dashboard titles flow into the path unsanitized during export;
+			// a traversal must not be able to write outside the repository root.
+			name: "path traversal should fail",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "../../../etc/evil.json",
+			data:        []byte("pwned"),
+			comment:     "test path traversal",
+			expectedErr: apierrors.NewBadRequest("the path '../../../etc/evil.json' escapes the repository root"),
 		},
 	}
 

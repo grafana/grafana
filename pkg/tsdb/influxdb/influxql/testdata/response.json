@@ -1,1 +1,0 @@
-{"results":[{"series":[{"name":"cpu.upc","columns":["time","mean","sum"],"tags":{"datacenter":"America","dc.region.name":"Northeast","cluster-name":"Cluster","/cluster/name/":"Cluster/","@cluster@name@":"Cluster@"},"values":[[111,222,333]]}]}]}

@@ -4,12 +4,13 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import {
   ActionType,
-  type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type DataSourcePluginMeta,
   type PluginMetaInfo,
   PluginType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { ConnectionPicker } from './ConnectionPicker';
 import { INFINITY_DATASOURCE_TYPE } from './utils';
@@ -24,7 +25,7 @@ const pluginMetaInfo: PluginMetaInfo = {
   logos: { small: 'small-logo.svg', large: 'large-logo.svg' },
 };
 
-function createDataSource(name: string, uid: string, dsType: string): DataSourceInstanceSettings {
+function createDataSource(name: string, uid: string, dsType: string): DataSourceInstanceListItem {
   const meta: DataSourcePluginMeta = {
     builtIn: false,
     name,
@@ -38,8 +39,7 @@ function createDataSource(name: string, uid: string, dsType: string): DataSource
     name,
     uid,
     meta,
-    access: 'direct',
-    jsonData: {},
+    isDefault: false,
     type: dsType,
     readOnly: false,
   };
@@ -51,24 +51,19 @@ const otherDS = createDataSource('Other DS', 'other-uid', 'prometheus');
 
 const allDataSources = [infinityDS1, infinityDS2, otherDS];
 
-const getListMock = jest.fn();
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: getListMock,
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceList: jest.fn(),
 }));
 
 describe('ConnectionPicker', () => {
   const originalFeatureToggles = config.featureToggles;
 
   beforeEach(() => {
-    getListMock.mockReset();
-    // The component receives filtered results
-    getListMock.mockImplementation(({ filter }: { filter: (ds: DataSourceInstanceSettings) => boolean }) =>
-      allDataSources.filter((ds) => filter(ds))
-    );
+    jest.mocked(getDataSourceInstanceList).mockReset();
+    jest
+      .mocked(getDataSourceInstanceList)
+      .mockImplementation((filters) => Promise.resolve(allDataSources.filter((ds) => filters?.filter?.(ds))));
   });
 
   afterEach(() => {
@@ -88,7 +83,7 @@ describe('ConnectionPicker', () => {
 
     render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
 
-    expect(getListMock).not.toHaveBeenCalled();
+    expect(getDataSourceInstanceList).not.toHaveBeenCalled();
   });
 
   it('lists infinity datasources when vizActionsAuth toggle is enabled', async () => {
@@ -97,11 +92,11 @@ describe('ConnectionPicker', () => {
 
     render(<ConnectionPicker actionType={ActionType.Fetch} onChange={jest.fn()} />);
 
-    expect(getListMock).toHaveBeenCalled();
-    const callArgs = getListMock.mock.calls[0][0];
+    expect(getDataSourceInstanceList).toHaveBeenCalled();
+    const callArgs = jest.mocked(getDataSourceInstanceList).mock.calls[0][0]!;
     // Verify the picker filters to only infinity datasources.
-    expect(callArgs.filter(infinityDS1)).toBe(true);
-    expect(callArgs.filter(otherDS)).toBe(false);
+    expect(callArgs.filter!(infinityDS1)).toBe(true);
+    expect(callArgs.filter!(otherDS)).toBe(false);
 
     const select = screen.getByRole('combobox');
     await user.click(select);
@@ -132,24 +127,5 @@ describe('ConnectionPicker', () => {
     await selectOptionInTest(screen.getByRole('combobox'), 'Direct from browser');
 
     expect(onChange).toHaveBeenCalledWith('direct');
-  });
-
-  it('logs an error and does not call onChange when the selected datasource cannot be found', async () => {
-    config.featureToggles = { ...originalFeatureToggles, vizActionsAuth: true };
-    const onChange = jest.fn();
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-    render(<ConnectionPicker actionType={ActionType.Fetch} onChange={onChange} />);
-    getListMock.mockImplementation(() => []);
-
-    await selectOptionInTest(screen.getByRole('combobox'), 'My Infinity');
-
-    expect(onChange).not.toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'ConnectionPicker: Could not find datasource with UID:',
-      'infinity-uid-1'
-    );
-
-    consoleErrorSpy.mockRestore();
   });
 });

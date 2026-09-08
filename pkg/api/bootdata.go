@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -42,9 +41,7 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 		return
 	}
 
-	ofClient := openfeature.NewDefaultClient()
-	autoLoginFlagEnabled := ofClient.Boolean(c.Req.Context(), featuremgmt.FlagFrontendServiceSSOAutoLogin, false, openfeature.TransactionContext(c.Req.Context()))
-	if autoLoginFlagEnabled && !c.IsSignedIn {
+	if !c.IsSignedIn {
 		data.AutoLoginRedirectURL = hs.getAutoLoginRedirectURL(c)
 	}
 
@@ -85,7 +82,7 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 
 	// Assets
 	hash.Reset()
-	dto, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
+	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.ResolveBuildDir(c.Req.Context()), hs.Cfg, hs.License)
 	if err == nil && dto != nil {
 		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
 		_, _ = hash.Write([]byte(dto.Dark))
@@ -137,46 +134,14 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		return nil, err
 	}
 
-	apps := make(map[string]*plugins.AppDTO, 0)
-	for _, ap := range availablePlugins[plugins.TypeApp] {
-		apps[ap.Plugin.ID] = hs.newAppDTO(
-			c.Req.Context(),
-			ap.Plugin,
-			ap.Settings,
-		)
-	}
+	apps := hs.getFSApps(c, availablePlugins[plugins.TypeApp])
 
 	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
 	}
 
-	panels := make(map[string]plugins.PanelDTO)
-	for _, ap := range availablePlugins[plugins.TypePanel] {
-		panel := ap.Plugin
-		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
-			continue
-		}
-
-		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			Suggestions:     panel.Suggestions,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			Angular:         panel.Angular,
-			LoadingStrategy: panel.LoadingStrategy,
-			Translations:    panel.Translations,
-		}
-	}
+	panels := hs.getFSPanels(c, availablePlugins[plugins.TypePanel])
 
 	frontendSettings.Apps = apps
 	frontendSettings.Datasources = dataSources
@@ -210,9 +175,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.RendererAvailable = hs.RenderService.IsAvailable(c.Req.Context())
 	frontendSettings.RendererVersion = hs.RenderService.Version()
 
-	frontendSettings.Oauth = hs.getEnabledOAuthProviders()
-	frontendSettings.SamlEnabled = hs.samlEnabled()
-	frontendSettings.SamlName = hs.samlName()
+	frontendSettings.Oauth = hs.getEnabledOAuthProviders(c.Req.Context())
+	frontendSettings.SamlEnabled = hs.samlEnabled(c.Req.Context())
+	frontendSettings.SamlName = hs.samlName(c.Req.Context())
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.
 	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
@@ -222,7 +187,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		return info.SkipOrgRoleSync
 	}
 
-	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
+	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(c.Req.Context())
+	if err != nil {
+		hs.log.Error("Failed to load OAuth providers", "error", err)
+		oauthProviders = map[string]*social.OAuthInfo{}
+	}
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
 		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
 		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
@@ -415,6 +384,56 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	}
 
 	return dataSources, nil
+}
+
+func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels map[string]*availablePluginDTO) map[string]plugins.PanelDTO {
+	c, span := hs.injectSpan(c, "api.getFSPanels")
+	defer span.End()
+
+	panels := make(map[string]plugins.PanelDTO)
+	for _, ap := range availablePanels {
+		panel := ap.Plugin
+		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+			continue
+		}
+
+		panels[panel.ID] = plugins.PanelDTO{
+			ID:              panel.ID,
+			Name:            panel.Name,
+			AliasIDs:        panel.AliasIDs,
+			Info:            panel.Info,
+			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BaseURL:         panel.BaseURL,
+			SkipDataQuery:   panel.SkipDataQuery,
+			Suggestions:     panel.Suggestions,
+			HideFromList:    panel.HideFromList,
+			ReleaseState:    string(panel.State),
+			Signature:       string(panel.Signature),
+			Sort:            getPanelSort(panel.ID),
+			Angular:         panel.Angular,
+			LoadingStrategy: panel.LoadingStrategy,
+			Translations:    panel.Translations,
+		}
+	}
+
+	return panels
+}
+
+func (hs *HTTPServer) getFSApps(c *contextmodel.ReqContext, availableApps map[string]*availablePluginDTO) map[string]*plugins.AppDTO {
+	c, span := hs.injectSpan(c, "api.getFSApps")
+	defer span.End()
+
+	apps := make(map[string]*plugins.AppDTO, 0)
+	for _, ap := range availableApps {
+		apps[ap.Plugin.ID] = hs.newAppDTO(
+			c.Req.Context(),
+			ap.Plugin,
+			ap.Settings,
+		)
+	}
+
+	return apps
 }
 
 func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
@@ -615,9 +634,14 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	return pluginSettings, nil
 }
 
-func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
+func (hs *HTTPServer) getEnabledOAuthProviders(ctx context.Context) map[string]any {
 	providers := make(map[string]any)
-	for key, oauth := range hs.SocialService.GetOAuthInfoProviders() {
+	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(ctx)
+	if err != nil {
+		hs.log.Error("Failed to load OAuth providers", "error", err)
+		return providers
+	}
+	for key, oauth := range oauthProviders {
 		providers[key] = map[string]string{
 			"name": oauth.Name,
 			"icon": oauth.Icon,

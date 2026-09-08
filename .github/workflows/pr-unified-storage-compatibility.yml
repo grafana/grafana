@@ -5,6 +5,10 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -26,7 +30,7 @@ jobs:
 
       - name: Detect changes
         id: changed-files
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files_yaml: |
             # pkg/server/** is intentionally not in api_layer: it hosts the
@@ -55,6 +59,10 @@ jobs:
               - '!pkg/storage/unified/apistore/**'
               - '!pkg/storage/unified/federated/**'
               - '!pkg/storage/unified/*.go'
+              # migration test files and fixtures don't ship in the storage/search
+              # server binary, so they can't break cross-version compatibility
+              - '!pkg/storage/unified/migrations/**/*_test.go'
+              - '!pkg/storage/unified/migrations/testcases/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.api_layer_any_changed == 'true' && steps.changed-files.outputs.unified_storage_any_changed == 'true'

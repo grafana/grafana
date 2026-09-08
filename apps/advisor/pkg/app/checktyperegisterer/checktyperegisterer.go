@@ -22,6 +22,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
+// CheckTypeSyncer syncs the CheckType resources stored in a namespace with
+// the in-process check registry, creating, updating and deleting CheckTypes
+// as needed.
+type CheckTypeSyncer interface {
+	RegisterCheckTypesInNamespace(ctx context.Context, logger logging.Logger, namespace string) error
+}
+
 // Runner is a "runnable" app used to be able to expose and API endpoint
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.

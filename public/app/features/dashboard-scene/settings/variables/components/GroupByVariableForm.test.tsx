@@ -157,7 +157,7 @@ describe('GroupByVariableForm', () => {
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
-    const combobox = screen.getByRole('combobox');
+    const combobox = screen.getByRole('combobox', { name: 'Default value' });
     await user.click(combobox);
     await user.click(await screen.findByRole('option', { name: 'job' }));
     expect(mockOnDefaultValueChange).toHaveBeenCalledWith([expect.objectContaining({ label: 'job', value: 'job' })]);
@@ -189,7 +189,7 @@ describe('GroupByVariableForm', () => {
       onDefaultValueChange: mockOnDefaultValueChange,
     });
 
-    const combobox = screen.getByRole('combobox');
+    const combobox = screen.getByRole('combobox', { name: 'Default value' });
     await user.click(combobox);
 
     expect(await screen.findByRole('option', { name: 'job' })).toBeInTheDocument();

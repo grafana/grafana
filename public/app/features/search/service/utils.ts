@@ -1,7 +1,11 @@
 import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
 import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
+import {
+  isSharedWithMe,
+  isVirtualStarredFolder,
+  isVirtualTeamFolder,
+} from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -93,6 +97,10 @@ export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: bool
     return 'user-arrows';
   }
 
+  if (item && isVirtualStarredFolder(item.uid)) {
+    return 'favorite';
+  }
+
   if (item && isVirtualTeamFolder(item.uid)) {
     return 'users-alt';
   }
@@ -132,6 +140,7 @@ export function queryResultToViewItem(
     kind: parseKindString(item.kind),
     uid: item.uid,
     title: item.name,
+    description: item.description,
     url: item.url,
     tags: item.tags ?? [],
     managedBy: managedByStr,

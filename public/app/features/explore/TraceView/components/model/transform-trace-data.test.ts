@@ -303,7 +303,7 @@ describe('transformTraceData() pruned span detection', () => {
     expect(agg.durationMinNs).toBe(4_000_000);
   });
 
-  // The Number.isNaN guard drops a non-numeric value rather than writing NaN into a number field.
+  // The Number.isFinite guard drops a non-numeric value rather than writing NaN into a number field.
   // The span is still detected as a summary (is_summary is unaffected) and sibling numeric values
   // are still extracted.
   it('drops a non-numeric aggregation value instead of storing NaN', () => {
@@ -317,13 +317,17 @@ describe('transformTraceData() pruned span detection', () => {
     expect(agg.durationMinNs).toBe(4_000_000);
   });
 
-  // Number() coerces null/boolean/empty-string to a misleading 0 or 1, which a bare NaN check
-  // would let through; the type guard must reject these. (Copilot review, 2026-06-11)
+  // Number() coerces null/boolean/empty-string to a misleading 0 or 1, and "Infinity" / an
+  // out-of-range exponent to a non-finite Infinity, which a bare NaN check would let through; the
+  // finite guard must reject all of these. A non-finite spanCount would make the minimap's total
+  // weight infinite and its step/height math collapse to 0/NaN. (Copilot reviews, 2026-06-11, 2026-07-14)
   it.each([
     ['null', null],
     ['boolean false', false],
     ['boolean true', true],
     ['empty string', ''],
+    ['Infinity string', 'Infinity'],
+    ['out-of-range exponent string', '1e400'],
   ])('drops a %s span_count instead of coercing it to 0/1', (_label, bad) => {
     const fixture = structuredClone(summaryDefaultsOnly);
     const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;

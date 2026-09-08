@@ -1,0 +1,61 @@
+syntax = "proto3";
+package resource;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
+
+// WatchNotification is the metadata-only envelope published on a NATS resource
+// subject when a resource changes. It is the wire contract shared by publishers
+// and consumers of the resource watch.
+//
+// It carries only the version-agnostic metadata needed to identify what
+// changed, never the object body: a single publisher announces a change once,
+// and each consumer materializes the object by issuing a GET (or Search) at the
+// API version it needs. Because the object is re-fetched on the consumer side,
+// the wire format is version-agnostic and there is no per-version fan-out.
+//
+// This is deliberately distinct from WatchEvent (in resource.proto), which
+// streams the full object bytes over the gRPC ResourceStore.Watch RPC. The
+// notification only signals that a change happened.
+message WatchNotification {
+  // Type is the kind of change the notification announces. The values mirror
+  // the verbs of WatchEvent.Type (and k8s.io/apimachinery watch.EventType) so a
+  // consumer can map them onto a watch stream without translation. Only real
+  // changes are announced, so there is no BOOKMARK or ERROR here.
+  enum Type {
+    UNKNOWN = 0;
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+  }
+
+  // The event type
+  Type type = 1;
+
+  // Resource Group
+  string group = 2;
+
+  // The resource type
+  string resource = 3;
+
+  // Namespace (tenant)
+  string namespace = 4;
+
+  // Resource identifier (unique within namespace+group+resource)
+  string name = 5;
+
+  // ResourceVersion of the change, as issued by the unified storage that wrote
+  // it. It is meaningful only for equality/ordering as understood by the
+  // issuing storage, not as an arithmetic quantity.
+  int64 resource_version = 6;
+
+  // The name of the folder in metadata
+  // +optional
+  string folder = 7;
+
+  // ResourceVersion of the immediately previous state of this resource, as
+  // issued by the writing storage. Lets consumers reconstruct the prior object
+  // (e.g. the body of a deleted resource) without a separate lookup. 0 when
+  // unknown (e.g. a create).
+  // +optional
+  int64 previous_resource_version = 8;
+}

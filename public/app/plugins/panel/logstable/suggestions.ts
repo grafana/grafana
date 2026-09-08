@@ -4,7 +4,7 @@ import {
   VisualizationSuggestionScore,
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
 
@@ -25,7 +25,7 @@ function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSu
 export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, TableFieldConfig> = (
   dataSummary
 ) => {
-  if (!config.featureToggles.logsTablePanelNG) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.LogsTablePanelNG, false)) {
     return;
   }
   const score = getTableSuggestionScore(dataSummary);

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type Worker struct {
@@ -60,12 +59,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	opts := *job.Spec.Delete
 	paths := opts.Paths
-	start := time.Now()
-	outcome := utils.ErrorOutcome
-	resourcesDeleted := 0
-	defer func() {
-		w.metrics.RecordJob(string(provisioning.JobActionDelete), outcome, resourcesDeleted, time.Since(start).Seconds())
-	}()
 
 	progress.SetTotal(ctx, len(paths)+len(opts.Resources))
 	progress.StrictMaxErrors(1) // Fail fast on any error during deletion
@@ -136,11 +129,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 	}
 
-	outcome = utils.SuccessOutcome
-	jobStatus := progress.Complete(ctx, nil)
-	for _, summary := range jobStatus.Summary {
-		resourcesDeleted += int(summary.Delete)
-	}
+	// Finalize the progress recorder. The job metric is recorded by the driver from
+	// the job's final status, so the returned status is not needed here.
+	progress.Complete(ctx, nil)
 
 	return nil
 }

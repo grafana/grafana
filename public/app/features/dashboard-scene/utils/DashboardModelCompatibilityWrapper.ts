@@ -15,7 +15,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
+import { findVizPanelByKey } from './utils';
+import { getVizPanelKeyForPanelId } from './utils-panels';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -119,14 +120,6 @@ export class DashboardModelCompatibilityWrapper {
     return time.getTimeZone();
   }
 
-  public sharedTooltipModeEnabled() {
-    return this._getSyncMode() > 0;
-  }
-
-  public sharedCrosshairModeOnly() {
-    return this._getSyncMode() === 1;
-  }
-
   private _getSyncMode() {
     if (this._scene.state.$behaviors) {
       for (const behavior of this._scene.state.$behaviors) {
@@ -175,8 +168,6 @@ export class DashboardModelCompatibilityWrapper {
   public canEditAnnotations(dashboardUID?: string) {
     return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
   }
-
-  public panelInitialized() {}
 
   public destroy() {
     this.events.removeAllListeners();

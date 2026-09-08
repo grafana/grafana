@@ -40,6 +40,8 @@ Trend visualizations support all visual styles and options available in the [tim
 - No multi-timezone x-axis
 - No ability to change the dashboard time range using drag-selection
 
+Trend visualizations require at least two numeric fields. The x-field must use ascending numeric values. If the values aren't ascending, Grafana shows an error. When multiple frames or queries exist, you should use a [join transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/) on the x-fields to produce a single frame.
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -50,7 +52,7 @@ Trend visualizations support all visual styles and options available in the [tim
 
 ### X axis options
 
-In the **X field** option, select a field that contains increasing numeric values.
+In the **X field** option, select a numeric field that contains ascending values.
 
 ### Tooltip options
 
@@ -62,7 +64,7 @@ In the **X field** option, select a field that contains increasing numeric value
 
 ### Graph styles options
 
-The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
+The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options). These options apply to numeric-x series.
 
 {{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

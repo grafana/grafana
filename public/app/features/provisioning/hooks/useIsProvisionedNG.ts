@@ -10,7 +10,7 @@ export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
 
   const { repository, isInstanceManaged } = useGetResourceRepositoryView({ folderName });
 
-  if (!config.featureToggles.provisioning) {
+  if (!config.provisioningEnabled) {
     return false;
   }
   return dashboard.isManagedRepository() || Boolean(repository) || isInstanceManaged;

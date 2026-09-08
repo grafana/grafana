@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -286,10 +285,7 @@ func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.
 	logger := log.NewNopLogger()
 	var ff featuremgmt.FeatureToggles
 	if enableImported {
-		ff = featuremgmt.WithFeatures(
-			featuremgmt.FlagAlertingMultiplePolicies,
-			featuremgmt.FlagAlertingImportAlertmanagerAPI,
-		)
+		ff = featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	}
 	return NewService(store, logger, ff, validation.ValidateProvenanceRelaxed), store
 }
@@ -340,9 +336,7 @@ func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []v1.InhibitionRule)
 		},
 		Receivers: []*definition.PostableApiReceiver{
 			{
-				Receiver: definitions.Receiver{
-					Name: "default",
-				},
+				Name: "default",
 			},
 		},
 	}

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { RuleFormType } from 'app/features/alerting/unified/types/rule-form';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';

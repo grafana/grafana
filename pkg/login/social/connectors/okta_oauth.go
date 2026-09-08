@@ -12,13 +12,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ social.SocialConnector = (*SocialOkta)(nil)
@@ -47,18 +47,25 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialOkta {
+func NewOktaProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (*SocialOkta, error) {
+	base, err := newSocialBaseWithCache(social.OktaProviderName, ctx, orgRoleMapper, info, features, cfgProvider, cache)
+	if err != nil {
+		return nil, err
+	}
+
 	provider := &SocialOkta{
-		SocialBase: newSocialBaseWithCache(social.OktaProviderName, orgRoleMapper, info, features, cfg, cache),
+		SocialBase: base,
 	}
 
 	if info.UseRefreshToken {
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -98,7 +105,9 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.OktaProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.OktaProviderName, newInfo); err != nil {
+		return err
+	}
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
@@ -115,6 +124,7 @@ func (claims *OktaClaims) extractEmail() string {
 }
 
 func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	logger := s.log.FromContext(ctx)
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
@@ -181,7 +191,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	if !s.info.SkipOrgRoleSync {
 		directlyMappedRole, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, groups)
 		if err != nil {
-			s.log.Warn("Failed to extract role", "err", err)
+			logger.Warn("Failed to extract role", "err", err)
 		}
 
 		if s.info.AllowAssignGrafanaAdmin {
@@ -190,39 +200,43 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 
 		externalOrgs, err := s.extractOrgs(data.rawJSON)
 		if err != nil {
-			s.log.Warn("Failed to extract orgs", "err", err)
+			logger.Warn("Failed to extract orgs", "err", err)
 			return nil, err
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, directlyMappedRole)
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, externalOrgs, directlyMappedRole)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
-		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		logger.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return userInfo, nil
 }
 
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
+	logger := s.log.FromContext(ctx)
 	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info response", "url", s.info.ApiUrl, "error", err)
+		logger.Debug("Error getting user info response", "url", s.info.ApiUrl, "error", err)
 		return fmt.Errorf("error getting user info response: %w", err)
 	}
 	data.rawJSON = rawUserInfoResponse.Body
 
 	err = json.Unmarshal(data.rawJSON, data)
 	if err != nil {
-		s.log.Debug("Error decoding user info response", "raw_json", data.rawJSON, "error", err)
+		logger.Debug("Error decoding user info response", "raw_json", data.rawJSON, "error", err)
 		data.rawJSON = []byte{}
 		return fmt.Errorf("error decoding user info response: %w", err)
 	}
 
-	s.log.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)
+	logger.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)
 	return nil
 }
 

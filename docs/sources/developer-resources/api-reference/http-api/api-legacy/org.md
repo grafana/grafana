@@ -29,6 +29,33 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
+### Current Organization endpoints
+
+| Method | Summary                                                                                                         | URI                    |
+| ------ | --------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| GET    | [Get current Organization](#get-current-organization)                                                           | /api/org/              |
+| GET    | [Get all users within the current organization](#get-all-users-within-the-current-organization)                 | /api/org/users         |
+| GET    | [Get all users within the current organization (lookup)](#get-all-users-within-the-current-organization-lookup) | /api/org/users/lookup  |
+| PATCH  | [Updates the given user](#updates-the-given-user)                                                               | /api/org/users/:userId |
+| DELETE | [Delete user in current organization](#delete-user-in-current-organization)                                     | /api/org/users/:userId |
+| PUT    | [Update current Organization](#update-current-organization)                                                     | /api/org               |
+| POST   | [Add a new user to the current organization](#add-a-new-user-to-the-current-organization)                       | /api/org/users         |
+
+### Admin Organizations endpoints
+
+| Method | Summary                                                       | URI                            |
+| ------ | ------------------------------------------------------------- | ------------------------------ |
+| GET    | [Get Organization by Id](#get-organization-by-id)             | /api/orgs/:orgId               |
+| GET    | [Get Organization by Name](#get-organization-by-name)         | /api/orgs/name/:orgName        |
+| POST   | [Create Organization](#create-organization)                   | /api/orgs                      |
+| GET    | [Search all Organizations](#search-all-organizations)         | /api/orgs                      |
+| PUT    | [Update Organization](#update-organization)                   | /api/orgs/:orgId               |
+| DELETE | [Delete Organization](#delete-organization)                   | /api/orgs/:orgId               |
+| GET    | [Get Users in Organization](#get-users-in-organization)       | /api/orgs/:orgId/users         |
+| POST   | [Add User in Organization](#add-user-in-organization)         | /api/orgs/:orgId/users         |
+| PATCH  | [Update Users in Organization](#update-users-in-organization) | /api/orgs/:orgId/users/:userId |
+| DELETE | [Delete User in Organization](#delete-user-in-organization)   | /api/orgs/:orgId/users/:userId |
+
 ## Current Organization API
 
 ### Get current Organization
@@ -49,7 +76,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -85,7 +112,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -131,7 +158,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/users/lookup HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -167,7 +194,7 @@ See note in the [introduction](#organization-api) for an explanation.
 PATCH /api/org/users/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "role": "Viewer",
@@ -201,7 +228,7 @@ See note in the [introduction](#organization-api) for an explanation.
 DELETE /api/org/users/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -231,7 +258,7 @@ See note in the [introduction](#organization-api) for an explanation.
 PUT /api/org HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name":"Main Org."
@@ -267,7 +294,7 @@ See note in the [introduction](#organization-api) for an explanation.
 POST /api/org/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "role": "Admin",

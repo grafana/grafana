@@ -88,3 +88,14 @@ export const reportExperimentView = (id: string, group: string, variant: string)
     },
   });
 };
+
+/**
+ * Subscribe to a named interaction event. Fires synchronously every time
+ * {@link reportInteraction} is called with a matching name.
+ *
+ * @returns unsubscribe function
+ * @public
+ */
+export const onInteraction = (name: string, callback: (properties: Record<string, unknown>) => void): (() => void) => {
+  return getEchoSrv().onInteraction(name, callback);
+};

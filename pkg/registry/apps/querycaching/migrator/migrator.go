@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	apiGroup   = "querycaching.grafana.app"
-	apiVersion = "v1beta1"
-	resource   = "querycacheconfigs"
+	APIGroup   = "querycaching.grafana.app"
+	APIVersion = "v1beta1"
+	Resource   = "querycacheconfigs"
 )
 
 //go:embed query_querycacheconfigs.sql
@@ -71,7 +71,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
 			body, err := json.Marshal(queryCacheConfigObject{
-				TypeMeta:   metav1.TypeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
+				TypeMeta:   metav1.TypeMeta{APIVersion: APIGroup + "/" + APIVersion, Kind: "QueryCacheConfig"},
 				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(time.Unix(row.createdEpoch, 0))},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
@@ -90,8 +90,8 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			if err = stream.Send(&resourcepb.BulkRequest{
 				Key: &resourcepb.ResourceKey{
 					Namespace: opts.Namespace,
-					Group:     apiGroup,
-					Resource:  resource,
+					Group:     APIGroup,
+					Resource:  Resource,
 					Name:      name,
 				},
 				Value:  body,

@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { addSettingsSection, clearSettingsExtensions } from './extensions';
+import { addSettingsSection } from './extensions';
 import { useSettingsPageNav } from './navigation';
 
 describe('useSettingsPageNav', () => {
@@ -16,6 +16,15 @@ describe('useSettingsPageNav', () => {
   const defaultPreloadedState = {
     navIndex: mockNavIndex,
   };
+  const unregisterSections: Array<() => void> = [];
+
+  function registerSettingsSection(section: Parameters<typeof addSettingsSection>[0]) {
+    unregisterSections.push(addSettingsSection(section));
+  }
+
+  afterEach(() => {
+    unregisterSections.splice(0).forEach((unregisterSection) => unregisterSection());
+  });
 
   it('should return settings page nav with alertmanager child when no extensions are present', () => {
     const wrapper = getWrapper({
@@ -47,18 +56,14 @@ describe('useSettingsPageNav', () => {
   });
 
   it('should include extensions when added via addSettingsSection', () => {
-    // Clear any existing extensions
-    clearSettingsExtensions();
-
-    // Add two extensions
-    addSettingsSection({
+    registerSettingsSection({
       id: 'enrichment',
       text: 'Enrichment',
       url: '/alerting/admin/enrichment',
       icon: 'star',
     });
 
-    addSettingsSection({
+    registerSettingsSection({
       id: 'notifications',
       text: 'Notifications',
       url: '/alerting/admin/notifications',

@@ -1,0 +1,229 @@
+import { css } from '@emotion/css';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { useCallback, useMemo } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
+import { type SceneDataLayerProvider } from '@grafana/scenes';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+
+import { edit } from '../../actions/utils/edit';
+import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
+import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
+
+import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
+import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
+
+const ID_VISIBLE_LIST = 'annotations-list-visible';
+const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
+const ID_HIDDEN_LIST = 'annotations-list-hidden';
+
+const DROPPABLE_TO_PLACEMENT: Record<string, { isHidden: boolean; placement?: 'inControlsMenu' }> = {
+  [ID_VISIBLE_LIST]: { isHidden: false, placement: undefined },
+  [ID_CONTROLS_MENU_LIST]: { isHidden: false, placement: 'inControlsMenu' },
+  [ID_HIDDEN_LIST]: { isHidden: true, placement: undefined },
+};
+
+export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+  const { annotationLayers } = dataLayerSet.useState();
+  const { visible, controlsMenu, hidden } = useMemo(
+    () => partitionAnnotationsByDisplay(annotationLayers),
+    [annotationLayers]
+  );
+
+  const annotationActions = toDraggableListItemActions<DashboardAnnotationsDataLayer>(
+    selectSidebarObject,
+    duplicateAnnotation,
+    deleteAnnotation
+  );
+
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      const { source, destination } = result;
+      if (!destination) {
+        return;
+      }
+
+      const isSameList = source.droppableId === destination.droppableId;
+      if (isSameList && source.index === destination.index) {
+        return;
+      }
+
+      const currentLayers = dataLayerSet.state.annotationLayers;
+      const lists: Record<string, DashboardAnnotationsDataLayer[]> = {
+        [ID_VISIBLE_LIST]: [...visible],
+        [ID_CONTROLS_MENU_LIST]: [...controlsMenu],
+        [ID_HIDDEN_LIST]: [...hidden],
+      };
+
+      const sourceList = lists[source.droppableId];
+      const destList = isSameList ? sourceList : lists[destination.droppableId];
+
+      const [moved] = sourceList.splice(source.index, 1);
+      destList.splice(destination.index, 0, moved);
+
+      const oldState = {
+        isHidden: moved.state.isHidden,
+        placement: moved.state.placement,
+        query: { ...moved.state.query },
+      };
+
+      const { isHidden, placement } = DROPPABLE_TO_PLACEMENT[destination.droppableId];
+      const newState = {
+        isHidden,
+        placement,
+        query: { ...moved.state.query, hide: isHidden, placement },
+      };
+
+      edit({
+        source: dataLayerSet,
+        description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
+        perform: () => {
+          moved.setState(newState);
+          dataLayerSet.setState({
+            annotationLayers: [...lists[ID_VISIBLE_LIST], ...lists[ID_CONTROLS_MENU_LIST], ...lists[ID_HIDDEN_LIST]],
+          });
+        },
+        undo: () => {
+          moved.setState(oldState);
+          dataLayerSet.setState({ annotationLayers: currentLayers });
+        },
+      });
+    },
+    [dataLayerSet, visible, controlsMenu, hidden]
+  );
+
+  return (
+    <>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <DraggableList
+          items={visible}
+          droppableId={ID_VISIBLE_LIST}
+          title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
+          renderItemLabel={renderItemLabel}
+          {...annotationActions}
+        />
+        <DraggableList
+          items={controlsMenu}
+          droppableId={ID_CONTROLS_MENU_LIST}
+          title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
+          renderItemLabel={renderItemLabel}
+          {...annotationActions}
+        />
+        <DraggableList
+          items={hidden}
+          droppableId={ID_HIDDEN_LIST}
+          title={t('dashboard.sidebar.annotations.title-hidden', 'Hidden')}
+          renderItemLabel={renderItemLabel}
+          {...annotationActions}
+        />
+      </DragDropContext>
+    </>
+  );
+}
+
+const renderItemLabel = (a: DashboardAnnotationsDataLayer) => <AnnotationName annotation={a} />;
+
+function duplicateAnnotation(a: DashboardAnnotationsDataLayer) {
+  new AnnotationEditableElement(a).onDuplicate();
+}
+
+function deleteAnnotation(a: DashboardAnnotationsDataLayer) {
+  new AnnotationEditableElement(a).onConfirmDelete();
+}
+
+function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLayer }) {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+  const { name: annoName, query } = annotation.useState();
+
+  const name = useMemo(() => {
+    if (query.enable === false) {
+      return (
+        <span className={styles.muted}>
+          <Trans i18nKey="dashboard.sidebar.annotations.name-disabled" values={{ annoName }}>
+            (Disabled) {'{{annoName}}'}
+          </Trans>
+        </span>
+      );
+    }
+    if (query.builtIn) {
+      return (
+        <span className={styles.muted}>
+          <Trans i18nKey="dashboard.sidebar.annotations.name-builtin" values={{ annoName }}>
+            {'{{annoName}}'} (Built-in)
+          </Trans>
+        </span>
+      );
+    }
+    return annoName;
+  }, [annoName, query.builtIn, query.enable, styles.muted]);
+
+  return (
+    <>
+      <span
+        className={styles.color}
+        style={{
+          backgroundColor: theme.visualization.getColorByName(query.iconColor),
+        }}
+      />
+      <span data-testid="annotation-name">{name}</span>
+    </>
+  );
+}
+
+export function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+  const onClickAddAnnotation = useBuildAddAnnotation(dataLayerSet);
+
+  return (
+    <SidebarAddButton
+      onAdd={onClickAddAnnotation}
+      tooltip={t('dashboard.sidebar.annotations.add-annotation-query', 'Add annotation query')}
+      dataTestId={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
+    />
+  );
+}
+
+export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerProvider[]) {
+  const {
+    visible = [],
+    controlsMenu = [],
+    hidden = [],
+  } = partitionSceneObjects(
+    annotationLayers.filter((a) => a instanceof DashboardAnnotationsDataLayer),
+    (a) => {
+      if (a.state.isHidden) {
+        return 'hidden';
+      }
+      if (a.state.placement === 'inControlsMenu') {
+        return 'controlsMenu';
+      }
+      return 'visible';
+    }
+  );
+  return { visible, controlsMenu, hidden };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    color: css({
+      display: 'inline-block',
+      width: theme.spacing(1),
+      height: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.text.primary,
+      marginRight: theme.spacing(0.5),
+    }),
+    muted: css({
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+      '&:hover': {
+        color: theme.colors.text.link,
+      },
+    }),
+  };
+}

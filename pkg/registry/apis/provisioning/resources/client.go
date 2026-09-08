@@ -3,14 +3,17 @@ package resources
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -143,21 +146,14 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 	return false
 }
 
-// folderGVR builds the GVR for the folder API at the given version.
-func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
+// folderVersionlessGVR builds a versionless GVR for the folder API. The concrete
+// version is resolved at runtime via API discovery (the server's preferred version),
+// so provisioning works on any instance regardless of which folder versions are enabled.
+func folderVersionlessGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    FolderResource.Group,
-		Version:  folderAPIVersion,
 		Resource: FolderResource.Resource,
-	}
-}
-
-// FolderGVKForVersion returns a GVK for the folder API at the given version.
-func FolderGVKForVersion(version string) schema.GroupVersionKind {
-	return schema.GroupVersionKind{
-		Group:   FolderKind.Group,
-		Version: version,
-		Kind:    FolderKind.Kind,
+		// Version intentionally empty: resolved via discovery.
 	}
 }
 
@@ -181,8 +177,9 @@ type clientFactory struct {
 type ResourceClients interface {
 	ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
 	ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
-	// Folder returns a dynamic client for the folder API at the given version.
-	Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
+	// Folder returns a dynamic client for the folder API. The version is resolved
+	// via discovery (the server's preferred version); the resolved GVK is returned.
+	Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
 	User(ctx context.Context) (dynamic.ResourceInterface, error)
 	// SupportedResources returns the resources that can be fully managed from the UI:
 	// the static base set plus any extra resources registered with the client factory.
@@ -217,6 +214,17 @@ func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
 			p.initErr = fmt.Errorf("get rest config: %w", e)
 			return
 		}
+
+		// Wrap the transport with otelhttp so outbound requests carry W3C trace
+		// context. Without this the operator's writes to the apiserver (resource
+		// creates, folder ensures, job status updates) are leaf spans with no
+		// children — the apiserver has no incoming traceparent to continue the
+		// trace. The gRPC search path already propagates via its own interceptor.
+		// Copy first: GetRestConfig returns a shared config used by other clients.
+		restConfig = rest.CopyConfig(restConfig)
+		restConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return otelhttp.NewTransport(rt)
+		})
 
 		p.dynamic, e = dynamic.NewForConfig(restConfig)
 		if e != nil {
@@ -456,8 +464,8 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	return info.client, info.gvk, nil
 }
 
-func (c *resourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	return c.ForResource(ctx, folderGVR(folderAPIVersion))
+func (c *resourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderVersionlessGVR())
 }
 
 func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
@@ -506,8 +514,8 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	return resourceClients.ForResource(ctx, gvr)
 }
 
-func (c *multiResourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	return c.ForResource(ctx, folderGVR(folderAPIVersion))
+func (c *multiResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderVersionlessGVR())
 }
 
 func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {

@@ -24,16 +24,15 @@ func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
 				Name: "test-drain",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		close(processingStarted)
 		<-processCh
 		processed.Store(true)
-		return nil
+		return "", nil
 	}
 
 	rc.queue.Add("test/repo")
@@ -81,13 +80,12 @@ func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 				Name: "test-drain-timeout",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 200 * time.Millisecond,
 	}
 
 	// processFn blocks forever to simulate a stuck reconciliation
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		close(processingStarted)
 		select {}
 	}
@@ -128,15 +126,14 @@ func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 				Name: "test-shutdown-ordering",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		close(processingStarted)
 		<-processCh
-		return nil
+		return "", nil
 	}
 
 	rc.queue.Add("test/ordering")
@@ -182,7 +179,6 @@ func TestConnectionController_Run_DrainWaitsForInFlight(t *testing.T) {
 				Name: "test-connection-drain",
 			},
 		),
-		connSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -239,7 +235,6 @@ func TestConnectionController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 				Name: "test-connection-drain-timeout",
 			},
 		),
-		connSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 200 * time.Millisecond,
 	}
@@ -286,7 +281,6 @@ func TestConnectionController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 				Name: "test-connection-shutdown-ordering",
 			},
 		),
-		connSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}

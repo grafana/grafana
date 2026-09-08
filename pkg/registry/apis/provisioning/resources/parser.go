@@ -138,6 +138,11 @@ type ParsedResource struct {
 	// Client that can talk to this resource
 	Client dynamic.ResourceInterface
 
+	// FolderScoped reports whether this resource's kind carries the folder annotation
+	// (i.e. lives in folders). Org-scoped kinds such as playlists are not folder-scoped
+	// and must never have a folder annotation stamped onto them.
+	FolderScoped bool
+
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
@@ -196,11 +201,19 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		}
 	}
 
-	// Remove the internal dashboard UID,version and id if they exist
+	// Remove the internal dashboard UID, version and id if they exist. The
+	// deprecated internal ID is likewise owned by the storage layer, not the
+	// repository file, so strip its label too. Otherwise a repo-authored ID
+	// would ride a create straight past the uniqueness guard, which relies on
+	// an eventually-consistent search index and so lets duplicate IDs through
+	// when several dashboards are created within a single sync operation. With
+	// the label cleared, storage mints a fresh unique ID on create and restores
+	// the previous value on update.
 	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" {
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "uid")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "version")
 		unstructured.RemoveNestedField(parsed.Obj.Object, "spec", "id") // now managed as a label
+		unstructured.RemoveNestedField(parsed.Obj.Object, "metadata", "labels", utils.LabelKeyDeprecatedInternalID)
 	}
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
@@ -250,7 +263,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// are contained in folders. Org-scoped resources (those not folder-scoped in the
 	// configured supported set) must not have a folder annotation stamped onto them:
 	// it would be meaningless and possibly dangling.
-	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
+	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
+	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}
 

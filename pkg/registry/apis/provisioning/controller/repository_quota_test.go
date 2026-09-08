@@ -13,6 +13,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
@@ -150,7 +151,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
 			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			checker := NewRepositoryQuotaChecker(mockRepoLister)
+			checker := NewRepositoryQuotaChecker(informer.NewCachedRepositoryGetter(mockRepoLister))
 
 			quotaStatus := provisioning.QuotaStatus{
 				MaxRepositories:           tt.maxRepos,
@@ -264,7 +265,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
 			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			checker := NewRepositoryQuotaChecker(mockRepoLister)
+			checker := NewRepositoryQuotaChecker(informer.NewCachedRepositoryGetter(mockRepoLister))
 
 			quotaStatus := provisioning.QuotaStatus{
 				MaxRepositories:           tt.maxRepos,

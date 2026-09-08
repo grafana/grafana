@@ -15,7 +15,10 @@
         "pr_notify": true,
         "pr_weekly": true,
         "fr_notify": true,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "issue_notify": true,
+        "issue_weekly": true,
+        "agent_review": false
       }
     },
     {
@@ -32,7 +35,10 @@
         "pr_notify": false,
         "pr_weekly": true,
         "fr_notify": false,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "issue_notify": false,
+        "issue_weekly": true,
+        "agent_review": false
       }
     },
     {
@@ -50,7 +56,10 @@
         "pr_notify": true,
         "pr_weekly": true,
         "fr_notify": true,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "issue_notify": true,
+        "issue_weekly": true,
+        "agent_review": false
       }
     },
     {
@@ -70,7 +79,10 @@
         "pr_notify": true,
         "pr_weekly": true,
         "fr_notify": true,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "issue_notify": true,
+        "issue_weekly": true,
+        "agent_review": false
       }
     },
     {
@@ -90,7 +102,10 @@
         "pr_notify": true,
         "pr_weekly": true,
         "fr_notify": true,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "issue_notify": true,
+        "issue_weekly": true,
+        "agent_review": true
       }
     },
     {
@@ -112,7 +127,10 @@
         "pr_notify": true,
         "pr_weekly": true,
         "fr_notify": true,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "issue_notify": true,
+        "issue_weekly": true,
+        "agent_review": false
       }
     }
   ]

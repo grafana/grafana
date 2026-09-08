@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -35,7 +34,6 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -680,15 +678,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var userID int64
-	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
-		userID = id
-	}
-
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
 	homePage := hs.Cfg.HomePage
 
-	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	preference, err := hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
@@ -710,7 +702,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		return response.Error(http.StatusNotFound, "No custom home dashboard configured", nil)
 	}
 
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
@@ -737,12 +729,6 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	// injected access shape so that frontend can use the same translator it
 	// already consumes (/dto format)
 	if isK8sDashboardResource(doc) {
-		// Getting-started panel injection still runs against the spec body so
-		// v0/v1 resources behave the same as classic home dashboards if the
-		// existing guards in addGettingStartedPanelToHomeDashboard allow it.
-		if spec, ok := doc.CheckGet("spec"); ok {
-			hs.addGettingStartedPanelToHomeDashboard(c, spec)
-		}
 		doc.Set("access", map[string]any{
 			"canSave":   false,
 			"canShare":  false,
@@ -758,8 +744,6 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	dash.Meta.CanEdit = c.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
 	dash.Dashboard = doc
-
-	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return response.JSON(http.StatusOK, &dash)
 }
@@ -787,36 +771,6 @@ func isK8sDashboardResource(doc *simplejson.Json) bool {
 		return false
 	}
 	return true
-}
-
-func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqContext, dash *simplejson.Json) {
-	ctx, span := tracer.Start(c.Req.Context(), "api.addGettingStartedPanelToHomeDashboard")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	// We only add this getting started panel for Admins who have not dismissed it,
-	// and if a custom default home dashboard hasn't been configured
-	if !c.HasUserRole(org.RoleAdmin) ||
-		c.HasHelpFlag(user.HelpFlagGettingStartedPanelDismissed) ||
-		hs.Cfg.DefaultHomeDashboardPath != "" {
-		return
-	}
-
-	panels := dash.Get("panels").MustArray()
-
-	newpanel := simplejson.NewFromAny(map[string]any{
-		"type": "gettingstarted",
-		"id":   123123,
-		"gridPos": map[string]any{
-			"x": 0,
-			"y": 3,
-			"w": 24,
-			"h": 9,
-		},
-	})
-
-	panels = append(panels, newpanel)
-	dash.Set("panels", panels)
 }
 
 // swagger:route GET /dashboards/uid/{uid}/versions dashboards versions getDashboardVersionsByUID

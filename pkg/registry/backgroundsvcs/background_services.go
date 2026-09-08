@@ -3,12 +3,14 @@ package backgroundsvcs
 import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -22,13 +24,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/ofrep"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
@@ -80,13 +85,19 @@ func ProvideBackgroundServiceRegistry(
 	noopGlobalRoleSeeder *accesscontrol.NoopGlobalRoleSeeder,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
+	natsServer *infranats.Server,
+	natsPublisher *infranats.PublisherService,
+	natsSubscriber *infranats.SubscriberService,
 	sqlStore *sqlstore.SQLStore,
+	folderReconciler *folderreconcile.Reconciler,
+	folderUIDRepair *libraryelements.FolderUIDRepairService,
+	ssoSettingsBackfill *iamsso.SSOSettingsBackfill,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
-	_ cloudmigration.Service, _ authnimpl.Registration,
+	_ cloudmigration.Service, _ authnimpl.Registration, _ *ofrep.APIBuilder,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -105,6 +116,9 @@ func ProvideBackgroundServiceRegistry(
 		statsCollector,
 		tracing,
 		remoteCache,
+		natsServer,
+		natsPublisher,
+		natsSubscriber,
 		secretsService,
 		StorageService,
 		grpcServerProvider,
@@ -132,6 +146,9 @@ func ProvideBackgroundServiceRegistry(
 		installSync,
 		zanzanaService,
 		sqlStore,
+		folderReconciler,
+		folderUIDRepair,
+		ssoSettingsBackfill,
 	)
 }
 

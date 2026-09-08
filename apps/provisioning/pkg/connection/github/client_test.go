@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 )
 
@@ -125,7 +126,7 @@ func TestGithubClient_GetApp(t *testing.T) {
 			),
 			token:   "invalid-token",
 			wantApp: conngh.App{},
-			wantErr: conngh.ErrAuthentication,
+			wantErr: connection.ErrAuthentication,
 		},
 		{
 			name: "not found error",
@@ -793,7 +794,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			repo:           "private-repo",
 			wantToken:      conngh.InstallationToken{},
 			wantErr:        true,
-			errContains:    conngh.ErrAuthentication.Error(),
+			errContains:    connection.ErrAuthentication.Error(),
 		},
 		{
 			name: "installation not found",

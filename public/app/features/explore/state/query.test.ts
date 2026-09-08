@@ -109,6 +109,19 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref?: DataSourceRef | string) => {
+    if (!ref) {
+      return Promise.resolve(datasources[0]);
+    }
+
+    return Promise.resolve(
+      datasources.find((ds) => (typeof ref === 'string' ? ds.uid === ref : ds.uid === ref.uid)) || datasources[0]
+    );
+  },
+}));
+
 function setupQueryResponse(state: StoreState) {
   const leftDatasourceInstance = assertIsDefined(state.explore.panes.left!.datasourceInstance);
 

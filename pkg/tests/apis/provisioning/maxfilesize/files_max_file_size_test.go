@@ -2,7 +2,6 @@ package maxfilesize
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,11 +25,10 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 
 	const repo = "max-file-size-raw-read"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	smallReadme := []byte("# small README\n")
@@ -88,15 +86,13 @@ func TestIntegrationProvisioning_MaxFileSize_RawRead(t *testing.T) {
 // rejected before the resource is parsed or persisted.
 func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repo = "max-file-size-write"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	// A minimal but well-formed dashboard JSON, padded to exceed the cap.
@@ -119,7 +115,7 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 		SubResource("files", "huge.json").
 		Body(oversized).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx).StatusCode(&statusCode)
+		Do(t.Context()).StatusCode(&statusCode)
 
 	require.Error(t, result.Error(), "oversized POST should be rejected")
 	require.Equal(t, http.StatusRequestEntityTooLarge, statusCode,
@@ -130,19 +126,18 @@ func TestIntegrationProvisioning_MaxFileSize_Write(t *testing.T) {
 
 // TestIntegrationProvisioning_MaxFileSize_Pull exercises the sync-side
 // enforcement: a pull job over a repository that contains a file larger than
-// [provisioning] max_file_size completes with state=error, recording a
-// per-file error for the oversized file. Under-cap files in the same
-// repository are still applied successfully.
+// [provisioning] max_file_size completes with state=warning, recording a
+// per-file warning for the oversized file rather than failing the whole job.
+// Under-cap files in the same repository are still applied successfully.
 func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "max-file-size-pull"
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo,
-		LocalPath:              helper.ProvisioningPath,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repo,
+		LocalPath:  helper.ProvisioningPath,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	smallDashboard := common.DashboardJSON("small-dash", "Small Dashboard", 1)
@@ -176,20 +171,22 @@ func TestIntegrationProvisioning_MaxFileSize_Pull(t *testing.T) {
 	jobObj := &provisioning.Job{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
 
-	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
-		"pull should end in error state when a file exceeds max_file_size; job: %+v", jobObj.Status)
-	require.NotEmpty(t, jobObj.Status.Errors,
-		"pull should record a per-file error for the oversized file")
+	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+		"pull should end in warning state when a file exceeds max_file_size; job: %+v", jobObj.Status)
+	require.Empty(t, jobObj.Status.Errors,
+		"an oversized file must not fail the pull with a hard error")
+	require.NotEmpty(t, jobObj.Status.Warnings,
+		"pull should record a per-file warning for the oversized file")
 
 	var foundOversized bool
-	for _, e := range jobObj.Status.Errors {
-		if strings.Contains(e, "huge.json") && strings.Contains(e, "max allowed") {
+	for _, w := range jobObj.Status.Warnings {
+		if strings.Contains(w, "huge.json") && strings.Contains(w, "max allowed") {
 			foundOversized = true
 			break
 		}
 	}
 	require.True(t, foundOversized,
-		"expected an error mentioning huge.json and the size cap; errors=%v", jobObj.Status.Errors)
+		"expected a warning mentioning huge.json and the size cap; warnings=%v", jobObj.Status.Warnings)
 
 	// Under-cap files in the same repository are still applied — the cap is
 	// enforced per file, not per sync.

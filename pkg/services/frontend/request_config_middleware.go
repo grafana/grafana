@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"fmt"
+	"maps"
 	"net/http"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -49,41 +51,44 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			}
 
 			if fullFrontendSettingsEnabled && requestConfig.FullFrontendSettings != nil {
-				requestConfig.FullFrontendSettings.Namespace = request.NamespaceValue(ctx)
+				namespace := request.NamespaceValue(ctx)
+				requestConfig.FullFrontendSettings.Namespace = namespace
+
+				// Merge the per-request OpenFeature evaluation context into the base
+				// context already on the settings, so the frontend can evaluate feature
+				// flags with the same context. Per-request values take precedence.
+				evalCtx := openfeature.TransactionContext(ctx)
+				openFeatureContext := make(map[string]string, len(requestConfig.FullFrontendSettings.OpenFeatureContext)+len(evalCtx.Attributes())+1)
+				maps.Copy(openFeatureContext, requestConfig.FullFrontendSettings.OpenFeatureContext)
+				for key, value := range evalCtx.Attributes() {
+					if str, ok := value.(string); ok {
+						openFeatureContext[key] = str
+					} else {
+						openFeatureContext[key] = fmt.Sprintf("%v", value)
+					}
+				}
+
+				// Explicitly set namespace
+				openFeatureContext["namespace"] = namespace
+				requestConfig.FullFrontendSettings.OpenFeatureContext = openFeatureContext
 			}
 
-			// Fetch tenant-specific configuration if the feature toggle is enabled and namespace is present
-			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
-
-			if settingsService != nil && settingsEnabled {
+			// Fetch tenant-specific configuration if the settings service is configured and namespace is present
+			if settingsService != nil {
 				namespace, ok := request.NamespaceFrom(ctx)
 
 				if ok && namespace != "" {
 					// Fetch tenant overrides for relevant sections only
-					sourceFilterEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceSettingsSourceFilter, false, openfeature.TransactionContext(ctx))
-
-					var sourceExpression metav1.LabelSelectorRequirement
-					if sourceFilterEnabled {
-						sourceExpression = metav1.LabelSelectorRequirement{
-							Key:      "source",
-							Operator: metav1.LabelSelectorOpIn,
-							Values:   []string{"us"},
-						}
-					} else {
-						// don't return values from defaults.ini as they conflict with the service's own defaults
-						sourceExpression = metav1.LabelSelectorRequirement{
-							Key:      "source",
-							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{"defaults"},
-						}
-					}
-
 					selector := metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{{
 							Key:      "section",
 							Operator: metav1.LabelSelectorOpIn,
 							Values:   []string{"security", "analytics"},
-						}, sourceExpression},
+						}, {
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"us"},
+						}},
 					}
 
 					settings, err := settingsService.ListAsIni(ctx, selector)

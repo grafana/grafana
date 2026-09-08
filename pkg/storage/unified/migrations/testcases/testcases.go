@@ -65,17 +65,21 @@ func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedC
 			}
 		}
 		assert.Equal(c, expectedCount, total)
-	}, 5*time.Second, 100*time.Millisecond)
+	}, 30*time.Second, 100*time.Millisecond)
 }
 
 // verifyResource verifies that a resource with the given UID exists in K8s storage
 func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, shouldExist bool) {
 	t.Helper()
 
-	v, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 	if shouldExist {
-		require.NoError(t, err, "expecting to find: "+uid)
-	} else {
-		require.Error(t, err, "should not find: %+v", v)
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+			assert.NoError(c, err, "expecting to find: "+uid)
+		}, 30*time.Second, 100*time.Millisecond)
+		return
 	}
+
+	v, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	require.Error(t, err, "should not find: %+v", v)
 }

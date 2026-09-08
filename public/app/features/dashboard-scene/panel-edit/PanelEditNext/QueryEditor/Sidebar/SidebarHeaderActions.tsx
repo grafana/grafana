@@ -57,11 +57,11 @@ export function SidebarHeaderActions({
 function getStyles(theme: GrafanaTheme2) {
   return {
     header: css({
-      background: theme.colors.background.secondary,
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(5),
       display: 'flex',
       alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     inner: css({
       display: 'flex',

@@ -1,7 +1,7 @@
 import { DataSourceWithBackend } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type VizPanel } from '@grafana/scenes';
 import { supportedDatasources } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { getQueryRunnerFor } from '../../utils/utils';
@@ -13,7 +13,7 @@ export const getUnsupportedDashboardDatasources = async (types: string[]): Promi
     if (!supportedDatasources.has(type)) {
       unsupportedDS.add(type);
     } else {
-      const ds = await getDatasourceSrv().get(type);
+      const ds = await getDataSourceInstance(type);
       if (!(ds instanceof DataSourceWithBackend)) {
         unsupportedDS.add(type);
       }

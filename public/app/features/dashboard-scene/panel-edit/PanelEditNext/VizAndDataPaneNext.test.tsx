@@ -9,7 +9,7 @@ import { buildPanelEditScene } from '../PanelEditor';
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
@@ -46,7 +46,6 @@ function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext) {
     scene: {
       panel: { Component: MockPanelComponent },
       tableView: { Component: MockPanelComponent },
-      controls: null,
       dataPane,
       dashboard: {},
     },
@@ -103,24 +102,13 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('data-pane-content')).toBeInTheDocument();
     });
-  });
 
-  describe('when panel has controls', () => {
-    it('renders the controls', () => {
-      const MockControls = { Component: () => <div data-testid="panel-controls" /> };
-      const base = buildMockLayout(undefined);
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue({
-        ...base,
-        scene: { ...base.scene, controls: MockControls as unknown as typeof base.scene.controls },
-      });
-      render(<VizAndDataPaneNext model={panelEditor} />);
-      expect(screen.getByTestId('panel-controls')).toBeInTheDocument();
-    });
+    it('renders the query editor banner when enabled', () => {
+      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
 
-    it('does not render controls when absent', () => {
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(undefined));
       render(<VizAndDataPaneNext model={panelEditor} />);
-      expect(screen.queryByTestId('panel-controls')).not.toBeInTheDocument();
+
+      expect(screen.getByTestId('query-editor-banner')).toBeInTheDocument();
     });
   });
 });

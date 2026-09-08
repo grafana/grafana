@@ -168,6 +168,7 @@ func toProtoListOptions(opts ListOptions) *storev1.ListOptions {
 		Scopes:         opts.Scopes,
 		ScopesMatchAny: opts.ScopesMatchAny,
 		CreatedBy:      opts.CreatedBy,
+		Deleted:        storev1.DeletedFilter(opts.Deleted),
 	}
 }
 
@@ -189,14 +190,16 @@ func fromProtoListOptions(opts *storev1.ListOptions) ListOptions {
 		Scopes:         opts.Scopes,
 		ScopesMatchAny: opts.ScopesMatchAny,
 		CreatedBy:      opts.CreatedBy,
+		Deleted:        DeletedFilter(opts.Deleted),
 	}
 }
 
 // toProtoTagListOptions converts TagListOptions to proto TagListOptions
 func toProtoTagListOptions(opts TagListOptions) *storev1.TagListOptions {
 	return &storev1.TagListOptions{
-		Prefix: opts.Prefix,
-		Limit:  int32(opts.Limit),
+		Prefix:   opts.Prefix,
+		Contains: opts.Contains,
+		Limit:    int32(opts.Limit),
 	}
 }
 
@@ -207,8 +210,9 @@ func fromProtoTagListOptions(opts *storev1.TagListOptions) TagListOptions {
 	}
 
 	return TagListOptions{
-		Prefix: opts.Prefix,
-		Limit:  int(opts.Limit),
+		Prefix:   opts.Prefix,
+		Contains: opts.Contains,
+		Limit:    int(opts.Limit),
 	}
 }
 
@@ -281,6 +285,10 @@ func toProtoAnnotation(anno *annotationV0.Annotation) *storev1.Annotation {
 	if anno.Spec.PanelID != nil {
 		protoAnno.Spec.PanelId = anno.Spec.PanelID
 	}
+	if anno.DeletionTimestamp != nil {
+		deletedAt := anno.DeletionTimestamp.UnixMilli()
+		protoAnno.DeletedAt = &deletedAt
+	}
 
 	return protoAnno
 }
@@ -301,6 +309,11 @@ func fromProtoAnnotation(protoAnno *storev1.Annotation) *annotationV0.Annotation
 
 	if protoAnno.CreatedBy != "" {
 		anno.SetCreatedBy(protoAnno.CreatedBy)
+	}
+
+	if protoAnno.DeletedAt != nil {
+		ts := metav1.NewTime(time.UnixMilli(*protoAnno.DeletedAt))
+		anno.DeletionTimestamp = &ts
 	}
 
 	if protoAnno.Spec != nil {

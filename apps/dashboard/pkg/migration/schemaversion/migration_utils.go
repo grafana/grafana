@@ -20,6 +20,16 @@ func GetStringValue(m map[string]interface{}, key string, defaultValue ...string
 	return ""
 }
 
+func GetStringValueOrNil(m map[string]interface{}, key string) *string {
+	if value, ok := m[key]; ok {
+		if s, ok := value.(string); ok {
+			return &s
+		}
+	}
+
+	return nil
+}
+
 // GetBoolValue safely extracts a boolean value from a map, returning false if not found or not a boolean
 func GetBoolValue(m map[string]interface{}, key string) bool {
 	if value, ok := m[key]; ok {
@@ -101,6 +111,38 @@ func IsArray(value interface{}) bool {
 	}
 	_, ok := value.([]interface{})
 	return ok
+}
+
+// collectPanelsIncludingRows returns every panel in the dashboard, looking both
+// at the top-level "panels" array and inside each legacy "rows" entry's "panels"
+// array. Migrations that run before V16 (which hoists row panels to the top
+// level) must use this so they also process panels still nested in rows.
+func collectPanelsIncludingRows(dashboard map[string]interface{}) []map[string]interface{} {
+	var result []map[string]interface{}
+
+	appendPanels := func(value interface{}) {
+		panels, ok := value.([]interface{})
+		if !ok {
+			return
+		}
+		for _, p := range panels {
+			if panel, ok := p.(map[string]interface{}); ok {
+				result = append(result, panel)
+			}
+		}
+	}
+
+	appendPanels(dashboard["panels"])
+
+	if rows, ok := dashboard["rows"].([]interface{}); ok {
+		for _, r := range rows {
+			if row, ok := r.(map[string]interface{}); ok {
+				appendPanels(row["panels"])
+			}
+		}
+	}
+
+	return result
 }
 
 // AngularPanelMigrations maps deprecated Angular panel types to their modern equivalents.

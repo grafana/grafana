@@ -9,15 +9,20 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 )
+
+// jobClaimExpiry is how long a job claim is considered valid before the cleanup
+// controller treats it as abandoned. The lease renewal interval must stay well
+// below this so a worker renews several times before its claim goes stale;
+// otherwise a single delayed renewal can let a running job be reaped and
+// re-run by another worker.
+const jobClaimExpiry = 60 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -40,19 +45,8 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller for insert notifications
-	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
-	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
-	jobController, err := controller.NewJobController(jobInformer)
-	if err != nil {
-		return fmt.Errorf("failed to create job controller: %w", err)
-	}
-
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -68,14 +62,29 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 			jobInterval:          controllerCfg.jobInterval,
 			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
-			folderAPIVersion:     controllerCfg.folderAPIVersion,
 		},
 		jobStore,
 		jobHistoryWriter,
-		jobController.InsertNotifications(),
 	)
 	if err != nil {
 		return fmt.Errorf("build driver: %w", err)
+	}
+
+	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
+	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
+	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
+	// informer's periodic resync/re-list is the driver's only recovery path for
+	// unclaimed jobs (rolled-back claims, dropped keys, missed notifications), so
+	// the handler must be registered before the informer runs: the NATS-backed
+	// source has no cache to replay for late handlers.
+	//
+	// The jobs informer resyncs on job_interval (default 30s) rather than the
+	// controllers' resync_interval, preserving the job pickup cadence (and config
+	// key) of the polling design this replaced.
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
+	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
+	if err != nil {
+		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	var wg sync.WaitGroup
@@ -90,10 +99,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		logger.Info("job driver stopped")
 	}()
 
-	// Start informers
-	go jobInformerFactory.Start(ctx.Done())
+	// Start the informer and wait for its cache to sync.
+	go jobInformer.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), jobInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
 
@@ -128,7 +137,6 @@ type jobQueueControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
-	folderAPIVersion     string
 }
 
 func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
@@ -138,15 +146,22 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
+
+	// The jobs informer resyncs on jobInterval and that resync is the driver's
+	// only recovery path for unclaimed jobs. A non-positive value would disable
+	// the apiserver informer's resync entirely (and fall back to an unrelated
+	// default under NATS), so clamp it to the default instead.
+	jobInterval := operatorSec.Key("job_interval").MustDuration(30 * time.Second)
+	if jobInterval <= 0 {
+		jobInterval = 30 * time.Second
+	}
 
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
-		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
-		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
-		folderAPIVersion:     folderAPIVersion,
+		jobInterval:          jobInterval,
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
 	}, nil
 }

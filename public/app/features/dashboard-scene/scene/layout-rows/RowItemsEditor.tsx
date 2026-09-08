@@ -3,19 +3,21 @@ import { Checkbox } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { getGroupSelectedCategory } from '../layouts-shared/GroupSelectedActions';
+
 import { type RowItems } from './RowItems';
 
-export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
+export function getSidebarOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
   const categoryId = 'rows-options';
   const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.row.header.title', 'Row header'),
+      title: t('dashboard.sidebar.row.header.title', 'Row header'),
       id: `${categoryId}-row-header`,
       render: () => <RowHeaderCheckboxMulti model={model} />,
     })
   );
 
-  return [options];
+  return [getGroupSelectedCategory(model.getRows()), options];
 }
 
 function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
@@ -35,7 +37,7 @@ function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
 
   return (
     <Checkbox
-      label={t('dashboard.edit-pane.row.header.hide', 'Hide')}
+      label={t('dashboard.sidebar.row.header.hide', 'Hide')}
       value={value}
       indeterminate={indeterminate}
       onChange={() => model.onHeaderHiddenToggle(value, indeterminate)}

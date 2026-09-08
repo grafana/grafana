@@ -404,6 +404,7 @@ export type DashboardQueryOptionsSpec = {
   timeCompare?: string;
   timeFrom?: string;
   timeShift?: string;
+  timeTo?: string;
 };
 export type DashboardMatcherConfig = {
   /** The matcher id. This is used to find the matcher implementation from registry. */
@@ -481,6 +482,8 @@ export type DashboardAction = {
 export type DashboardFieldColor = {
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
+  /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
+  gradientColorTo?: string;
   /** The main color scheme mode. */
   mode: string;
   /** Some visualizations need to know how to assign a series color from by value color schemes. */
@@ -547,6 +550,8 @@ export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type DashboardThresholdsConfig = {
   mode: string;
@@ -627,9 +632,12 @@ export type DashboardVizConfigKind = {
 };
 export type DashboardPanelSpec = {
   data: DashboardQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: DashboardDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: DashboardVizConfigKind;
@@ -691,6 +699,7 @@ export type DashboardAutoGridRepeatOptions = {
 export type DashboardAutoGridLayoutItemSpec = {
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   element: DashboardElementReference;
+  fitContent?: boolean;
   repeat?: DashboardAutoGridRepeatOptions;
 };
 export type DashboardAutoGridLayoutItemKind = {
@@ -701,8 +710,14 @@ export type DashboardAutoGridLayoutSpec = {
   columnWidth?: number;
   columnWidthMode: string;
   fillScreen?: boolean;
+  fitContent?: boolean;
   items: DashboardAutoGridLayoutItemKind[];
+  matchRowHeights?: boolean;
   maxColumnCount?: number;
+  maxHeight?: number;
+  maxHeightMode?: string;
+  minHeight?: number;
+  minHeightMode?: string;
   rowHeight?: number;
   rowHeightMode: string;
 };

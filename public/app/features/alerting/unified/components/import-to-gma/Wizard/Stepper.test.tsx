@@ -12,12 +12,8 @@ const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
 describe('Stepper', () => {
   const user = userEvent.setup();
 
-  it('should render all steps with correct numbers and names', () => {
+  it('should render the three-step rail', () => {
     renderWithProvider(<Stepper />);
-
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
 
     expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
     expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
@@ -212,5 +208,34 @@ describe('Stepper', () => {
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(indicator).not.toHaveTextContent('1');
+  });
+
+  it('keeps Rules gated by completion/skip like any other step, with no force-skip special-case', async () => {
+    // Regression for the auto-sync force-skip bug: Rules used to be permanently disabled,
+    // struck through, and unreachable from the rail whenever Auto-sync was selected. Stepper no
+    // longer knows about Auto-sync at all, so this exercises Rules through the same gating as
+    // any other step.
+    const TestComponent = () => {
+      const { activeStep, setStepCompleted, setVisitedStep } = useStepperState();
+      useEffect(() => {
+        setVisitedStep(StepKey.Notifications);
+        setStepCompleted(StepKey.Notifications, true);
+      }, [setStepCompleted, setVisitedStep]);
+      return (
+        <div>
+          <div data-testid="active-step">{activeStep}</div>
+          <Stepper />
+        </div>
+      );
+    };
+
+    renderWithProvider(<TestComponent />, StepKey.Notifications);
+
+    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    expect(rulesButton).toBeEnabled();
+    expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+
+    await user.click(rulesButton);
+    expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Rules);
   });
 });

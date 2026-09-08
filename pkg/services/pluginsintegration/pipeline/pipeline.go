@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
@@ -45,7 +44,7 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service)
 
 func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, ap pluginassets.Provider, cdn *pluginscdn.Service) *bootstrap.Bootstrap {
 	disableAlertingForTempoDecorateFunc := func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		if p.ID == coreplugin.Tempo && !cfg.Features.TempoAlertingEnabled {
+		if p.ID == "tempo" && !cfg.Features.TempoAlertingEnabled {
 			p.Alerting = false
 		}
 		return p, nil

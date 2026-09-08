@@ -66,7 +66,7 @@
         null,
         null,
         null,
-        null,
+        0,
         321,
         null
       ],
@@ -86,7 +86,7 @@
         null,
         null,
         null,
-        null,
+        0,
         123,
         "repo"
       ],

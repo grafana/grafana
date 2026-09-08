@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -30,8 +31,8 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
-		ssoSettingsStore = ProvideStore(sqlStore)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		ssoSettingsStore = ProvideStore(legacysql.NewDatabaseProvider(sqlStore))
 
 		template := models.SSOSettings{
 			Settings: map[string]any{"enabled": true},
@@ -91,8 +92,8 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
-		ssoSettingsStore = ProvideStore(sqlStore)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		ssoSettingsStore = ProvideStore(legacysql.NewDatabaseProvider(sqlStore))
 	}
 
 	t.Run("insert a new SSO setting successfully", func(t *testing.T) {
@@ -268,8 +269,8 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
-		ssoSettingsStore = ProvideStore(sqlStore)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		ssoSettingsStore = ProvideStore(legacysql.NewDatabaseProvider(sqlStore))
 	}
 
 	t.Run("returns every SSO settings successfully", func(t *testing.T) {
@@ -332,8 +333,8 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
-		ssoSettingsStore = ProvideStore(sqlStore)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		ssoSettingsStore = ProvideStore(legacysql.NewDatabaseProvider(sqlStore))
 	}
 
 	t.Run("soft deletes the settings successfully", func(t *testing.T) {

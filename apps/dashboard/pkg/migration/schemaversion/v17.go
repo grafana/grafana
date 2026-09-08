@@ -52,6 +52,20 @@ func V17(_ context.Context, dashboard map[string]interface{}) error {
 		}
 
 		migrateMinSpanToMaxPerRow(panel)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(panel["panels"]) {
+			continue
+		}
+		nestedPanels := panel["panels"].([]interface{})
+
+		for _, np := range nestedPanels {
+			nestedPanel, ok := np.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			migrateMinSpanToMaxPerRow(nestedPanel)
+		}
 	}
 
 	return nil

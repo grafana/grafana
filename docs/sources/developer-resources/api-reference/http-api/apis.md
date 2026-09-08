@@ -19,45 +19,53 @@ menuTitle: API Structure
 weight: 01
 ---
 
-# The new API structure in Grafana
+# The new HTTP API structure in Grafana
 
 {{< admonition type="note" >}}
 Available in Grafana 12 and later.
 {{< /admonition >}}
 
-Grafana 13 marks the deprecation of legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`), a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning.
+This document explains how Grafana structures the `/apis` HTTP APIs, which use a Kubernetes-style API layer with a standardized structure and consistent versioning. Read on to understand request paths, versions, namespaces, and common response fields when you migrate from legacy `/api` endpoints or work with new APIs.
+
+## Before you begin
+
+Before you begin, ensure you have the following:
+
+- **Grafana version:** Use Grafana 12 or later.
+- **API access:** Make sure you can send HTTP requests to your Grafana instance.
+- **Legacy API context:** Know which legacy `/api` endpoints you want to replace if you're planning a migration.
 
 ## Migrate from legacy `api` endpoints
 
-**Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
+Grafana 13 deprecates legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`). **Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
 
-Note that while Grafana is working on migrating existing APIs to the new `/apis` model, currently there may not be an exact match to the legacy API you're using.
-
-For more information refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration) documentation.
+For more information, refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
 
 ## API structure
+
+Grafana APIs use a common path format and a common response shape.
 
 ### API path
 
 All Grafana APIs follow this standardized format:
 
-```
-/apis/<group>/<version>/namespaces/<namespace>/<resource>[/<name>]
+```text
+/apis/<GROUP>/<VERSION>/namespaces/<NAMESPACE>/<RESOURCE>[/<NAME>]
 ```
 
-Where the final `/<name>` segment is used for operations on individual resources (like Get, Update, Delete) and omitted for collection operations (like List, Create).
+Replace the placeholders with values for your API group, version, namespace, resource, and optional resource name. Use the final `/<NAME>` segment for operations on individual resources such as get, update, or delete. Omit it for collection operations such as list or create.
 
 ### API response format
 
 All Grafana API responses follow this structure:
 
-```
+```json
 {
-  "kind": "<kind>",
-  "apiVersion": "<group>/<version>",
+  "kind": "<KIND>",
+  "apiVersion": "<GROUP>/<VERSION>",
   "metadata": {
-    "name": "<name>",
-    "namespace": "<namespace>",
+    "name": "<NAME>",
+    "namespace": "<NAMESPACE>",
     "uid": "db323171-c78a-42fa-be98-16a3d799a779",
     "resourceVersion": "1758777451428472",
     "generation": 10,
@@ -70,15 +78,19 @@ All Grafana API responses follow this structure:
 }
 ```
 
+Replace the placeholders with the values returned by the resource you request.
+
 ## Understand the components
+
+Each part of the path and response has a specific purpose.
 
 ### Group (`<group>`)
 
-Groups organize related functionality into logical collections. For example `dashboard.grafana.app` will be used for all dashboard-related operations.
+Groups organize related functionality into logical collections. For example, `dashboard.grafana.app` is used for dashboard-related operations.
 
 ### Version (`<version>`)
 
-These APIs will also uses semantic versioning with three stability levels:
+Grafana APIs use semantic versioning with three stability levels:
 
 | Level | Format     | Description                                                                 | Use Case                 | Enabled By Default? |
 | ----- | ---------- | --------------------------------------------------------------------------- | ------------------------ | ------------------- |
@@ -99,32 +111,34 @@ While beta versions are no longer considered experimental like alpha versions, t
 
 #### GA
 
-GA versions are enabled by default, and can be treated as completely stable. The only changes that can be made to these APIs are bug fixes,
-and any other changes should instead result in a new published version of the API.
+GA versions are enabled by default, and can be treated as completely stable. The only changes that can be made to these APIs are bug fixes, and any other changes should instead result in a new published version of the API.
 
 ### Namespace (`<namespace>`)
 
 Namespaces isolate resources within your Grafana instance. The format varies by deployment type:
 
-#### OSS & On-Premise Grafana
+#### OSS and on-premise Grafana
 
-- Default organization (org 1): `default`
-- Additional organizations: `org-<org_id>`
+- **Default organization:** Use `default` for organization 1.
+- **Additional organizations:** Use `org-<ORG_ID>`.
 
 #### Grafana Cloud
 
-- Format: `stacks-<stack_id>`
-- Your instance ID is the `stack_id`. You can find this value by either:
-  - Going to grafana.com, clicking on your stack, and selecting "Details" on your Grafana instance
-  - Accessing the /swagger page in your cloud instance, where the namespace will be automatically populated on the relevant endpoints
+- **Format:** Use `stacks-<STACK_ID>`.
+- **Instance ID:** Your instance ID is the `STACK_ID`.
+
+You can find the instance ID in the following places:
+
+- **Grafana Cloud portal:** Go to `grafana.com`, open your stack, and select **Details** for your Grafana instance.
+- **Swagger UI:** Open the `/swagger` page in your Grafana Cloud instance, where the namespace is automatically populated for the relevant endpoints.
 
 ### Resource (`<resource>`)
 
-The resource type you want to interact with, such as:
+The resource is the type you want to interact with. Common examples include the following:
 
-- `dashboards`
-- `playlists`
-- `folders`
+- **Dashboards:** Use `dashboards`.
+- **Playlists:** Use `playlists`.
+- **Folders:** Use `folders`.
 
 ### Kind (`<kind>`)
 
@@ -133,11 +147,11 @@ For example, the `dashboards` resource has a kind of `Dashboard`.
 
 ### Name (`<name>`)
 
-The `<name>` is the unique identifier for a specific instance of a resource within its namespace and resource type. `<name>` is distinct from the metadata.uid field. The URL path will always use the metadata.name.
+The `<name>` is the unique identifier for a specific instance of a resource within its namespace and resource type. `<name>` is distinct from the `metadata.uid` field. The URL path always uses `metadata.name`.
 
 For example, to get a dashboard defined as:
 
-```
+```json
 {
   "kind": "Dashboard",
   "apiVersion": "dashboard.grafana.app/v1",
@@ -172,8 +186,8 @@ A value that changes whenever any part of the resource changes, including metada
 
 Use this field for:
 
-- Change detection
-- Optimistic concurrency control
+- **Change detection:** Track whether the resource has changed.
+- **Optimistic concurrency control:** Prevent overwriting a newer version of the resource.
 
 #### Generation
 
@@ -190,11 +204,9 @@ A map of key-value pairs.
 
 Common annotations include:
 
-- `grafana.app/createdBy` / `grafana.app/updatedBy`: Identifies who created or last updated the resource.
-  Format: `<user-type>:<uid>` (for example, user:u000000839)
-- `grafana.app/folder`: If the resource supports folders, contains the folder UID the object belongs to.
-- `grafana.app/updatedTimestamp`: Timestamp of the last update, formatted as RFC 3339 UTC
-  (for example, `2026-01-23T05:17:31Z`).
+- **`grafana.app/createdBy` and `grafana.app/updatedBy`:** Identify who created or last updated the resource. Use the format `<USER_TYPE>:<UID>`, for example `user:u000000839`.
+- **`grafana.app/folder`:** If the resource supports folders, this contains the folder UID that the object belongs to.
+- **`grafana.app/updatedTimestamp`:** Stores the last update time as an RFC 3339 UTC timestamp, for example `2026-01-23T05:17:31Z`.
 
 #### Labels
 
@@ -202,4 +214,12 @@ An optional map of key-value pairs for organizing and selecting resources.
 
 ### Spec
 
-The spec field describes the desired state of the resource. Its structure is specific to the resource type and API version. Refer to the Swagger / OpenAPI documentation for the exact schema of each resource’s spec.
+The spec field describes the desired state of the resource. Its structure depends on the resource type and API version. Refer to the Swagger or OpenAPI documentation for the exact schema for a resource's spec.
+
+## Related resources
+
+Use the following resources to keep working with Grafana APIs:
+
+- **Migration guide:** Refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
+- **HTTP API reference:** Refer to [HTTP API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/).
+- **Swagger UI:** Open the `/swagger` page in your Grafana instance to inspect endpoint schemas and try requests.

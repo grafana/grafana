@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -41,7 +42,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgSvc := populateDB(t, db, cfg)
 
 	dashSvc := &dashboards.FakeDashboardService{}
@@ -150,14 +151,14 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	t.Helper()
 
-	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, _ := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(), nil,
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	correlationsSvc := correlationstest.New(db, cfg, bus)
+	correlationsSvc := correlationstest.New(context.Background(), db, cfg, bus)
 
 	c := make([]correlations.Correlation, 2)
 	for i := range c {

@@ -1,7 +1,7 @@
 import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import type { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import type { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -211,7 +211,7 @@ export function policyFilter(rule: PromRuleDTO, filterState: RulesFilter): boole
       return false;
     }
 
-    const isDefaultPolicyFilter = filterState.policy === USER_DEFINED_TREE_NAME;
+    const isDefaultPolicyFilter = isDefaultRoutingTreeName(filterState.policy);
 
     if (isDefaultPolicyFilter) {
       if (!ruleUsesDefaultPolicy(rule.notificationSettings)) {

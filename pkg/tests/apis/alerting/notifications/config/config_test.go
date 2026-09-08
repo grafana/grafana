@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,12 +31,20 @@ import (
 // singletonID is the only valid identifier for the per-org Config singleton.
 var singletonID = resource.Identifier{
 	Namespace: apis.DefaultNamespace,
-	Name:      alertingnotifv0alpha1.ConfigSingletonName,
+	Name:      alertingnotifv1beta1.ConfigSingletonName,
 }
 
 // configGVR is the GroupVersionResource for the Config kind, used by the raw
 // dynamic client below.
 var configGVR = schema.GroupVersionResource{
+	Group:    alertingnotifv1beta1.APIGroup,
+	Version:  alertingnotifv1beta1.APIVersion,
+	Resource: "configs",
+}
+
+// configGVRV0alpha1 addresses the pre-promotion version, which is still served
+// (non-storage) for backward compatibility.
+var configGVRV0alpha1 = schema.GroupVersionResource{
 	Group:    alertingnotifv0alpha1.APIGroup,
 	Version:  alertingnotifv0alpha1.APIVersion,
 	Resource: "configs",
@@ -59,9 +69,9 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 
 func ptr[T any](v T) *T { return &v }
 
-func newConfigClient(t *testing.T, user apis.User) *alertingnotifv0alpha1.ConfigClient {
+func newConfigClient(t *testing.T, user apis.User) *alertingnotifv1beta1.ConfigClient {
 	t.Helper()
-	client, err := alertingnotifv0alpha1.NewConfigClientFromGenerator(user.GetClientRegistry())
+	client, err := alertingnotifv1beta1.NewConfigClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 	return client
 }
@@ -76,7 +86,7 @@ func rawConfigClient(t *testing.T, user apis.User) dynamic.ResourceInterface {
 }
 
 // rawUpdate PUTs cfg via the dynamic client (create-on-update capable).
-func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingnotifv0alpha1.Config) (*alertingnotifv0alpha1.Config, error) {
+func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingnotifv1beta1.Config) (*alertingnotifv1beta1.Config, error) {
 	t.Helper()
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(cfg)
 	require.NoError(t, err)
@@ -84,7 +94,7 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingn
 	if err != nil {
 		return nil, err
 	}
-	out := &alertingnotifv0alpha1.Config{}
+	out := &alertingnotifv1beta1.Config{}
 	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(res.Object, out))
 	return out, nil
 }
@@ -92,27 +102,38 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingn
 // newConfig builds a Config resource with the given name. ExternalAlertmanagerSync
 // is left unset, which is always valid (clearing/omitting is never rejected by
 // the admission validator).
-func newConfig(name string) *alertingnotifv0alpha1.Config {
-	return &alertingnotifv0alpha1.Config{
+func newConfig(name string) *alertingnotifv1beta1.Config {
+	return &alertingnotifv1beta1.Config{
 		TypeMeta: v1.TypeMeta{
-			Kind:       alertingnotifv0alpha1.ConfigKind().Kind(),
-			APIVersion: alertingnotifv0alpha1.GroupVersion.Identifier(),
+			Kind:       alertingnotifv1beta1.ConfigKind().Kind(),
+			APIVersion: alertingnotifv1beta1.GroupVersion.Identifier(),
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: apis.DefaultNamespace,
 			Name:      name,
 		},
-		Spec: alertingnotifv0alpha1.ConfigSpec{},
+		Spec: alertingnotifv1beta1.ConfigSpec{},
 	}
 }
 
-// seedSingleton creates the "default" singleton (admins may create it) so tests
-// that operate on an existing object have one. Creating from scratch — via both
-// POST and the PUT upsert — is covered explicitly by TestIntegrationConfigCreate.
+// seedSingleton brings the "default" singleton into existence the way production
+// does — by driving the sync worker's flag-on-but-unconfigured pass, which seeds
+// it. Human create is denied, so this is the only way to get an existing object
+// for the read/update tests. The pass is re-run until the singleton is readable to
+// absorb boot-time ordering (the seed pass skips an org until its Alertmanager has
+// been created) and unified-storage read-after-write lag.
 func seedSingleton(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper) {
 	t.Helper()
-	_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-	require.NoError(t, err)
+	moa := helper.GetEnv().Server.HTTPServer.AlertNG.MultiOrgAlertmanager
+	require.NotNil(t, moa, "MultiOrgAlertmanager must be wired in the test env")
+	adminClient := newConfigClient(t, helper.Org1.Admin)
+	require.Eventually(t, func() bool {
+		if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
+			return false
+		}
+		_, err := adminClient.Get(ctx, singletonID)
+		return err == nil
+	}, 30*time.Second, 500*time.Millisecond, "sync worker did not seed the Config singleton")
 }
 
 func requireForbidden(t *testing.T, err error, msgContains string) {
@@ -122,15 +143,6 @@ func requireForbidden(t *testing.T, err error, msgContains string) {
 	if msgContains != "" {
 		require.Contains(t, err.Error(), msgContains)
 	}
-}
-
-// requireSingletonRejection asserts the admission validator rejected a write for
-// violating the singleton-name rule. The status code isn't pinned because the
-// message is the stable contract.
-func requireSingletonRejection(t *testing.T, err error) {
-	t.Helper()
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "singleton")
 }
 
 // configWildcardPermission grants the given Config actions over the all-uid
@@ -147,7 +159,9 @@ func configWildcardPermission(actions ...string) resourcepermissions.SetResource
 
 // TestIntegrationConfigAccessControl pins down the custom authorizer behavior:
 //   - get/list gated by configs:get (read), granted to Viewer and Admin.
-//   - create/patch/update gated by configs:update, granted to Admin only.
+//   - patch/update gated by configs:update, granted to Admin only.
+//   - create is service-identity only: forbidden for every human (the singleton is
+//     seeded by the sync worker).
 //   - delete/deletecollection is rejected for everyone ("cannot be deleted").
 //   - /status writes require the service-identity-only configs/status:update and
 //     are forbidden for every human, including Admin.
@@ -192,7 +206,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 				t.Run("can get the singleton", func(t *testing.T) {
 					got, err := client.Get(ctx, singletonID)
 					require.NoError(t, err)
-					require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, got.Name)
+					require.Equal(t, alertingnotifv1beta1.ConfigSingletonName, got.Name)
 				})
 				t.Run("can list configs", func(t *testing.T) {
 					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -212,30 +226,23 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 
 			if tc.canUpdate {
 				t.Run("can update the singleton", func(t *testing.T) {
-					_, err := client.Update(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.UpdateOptions{})
+					_, err := client.Update(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.UpdateOptions{})
 					require.NoError(t, err)
 				})
 			} else {
 				t.Run("is forbidden to update the singleton", func(t *testing.T) {
-					_, err := client.Update(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.UpdateOptions{})
+					_, err := client.Update(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.UpdateOptions{})
 					requireForbidden(t, err, "")
 				})
 			}
 
-			// create is gated by the update permission. The singleton already exists
-			// (seeded), so an update-holder gets AlreadyExists while a user without
-			// update is forbidden.
-			if tc.canUpdate {
-				t.Run("create returns AlreadyExists (singleton already created)", func(t *testing.T) {
-					_, err := client.Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-					require.Truef(t, errors.IsAlreadyExists(err), "expected AlreadyExists but got: %v", err)
-				})
-			} else {
-				t.Run("is forbidden to create", func(t *testing.T) {
-					_, err := client.Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-					requireForbidden(t, err, "")
-				})
-			}
+			// create is service-identity only: every human is forbidden regardless of
+			// update permission. The singleton is brought into existence by the sync
+			// worker; humans only read/update the seeded object.
+			t.Run("is forbidden to create", func(t *testing.T) {
+				_, err := client.Create(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.CreateOptions{})
+				requireForbidden(t, err, "seeded automatically")
+			})
 
 			t.Run("is forbidden to delete", func(t *testing.T) {
 				err := client.Delete(ctx, singletonID, resource.DeleteOptions{})
@@ -243,7 +250,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 			})
 
 			t.Run("is forbidden to write status", func(t *testing.T) {
-				_, err := client.UpdateStatus(ctx, singletonID, alertingnotifv0alpha1.ConfigStatus{
+				_, err := client.UpdateStatus(ctx, singletonID, alertingnotifv1beta1.ConfigStatus{
 					ObservedGeneration: ptr(int64(1)),
 				}, resource.UpdateOptions{})
 				requireForbidden(t, err, "")
@@ -252,51 +259,25 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 	}
 }
 
-// TestIntegrationConfigCreate verifies an admin can bring the singleton into
-// existence from scratch via both supported paths — a POST create and a PUT
-// upsert (create-on-update, the path a GitOps apply uses). Each subtest uses a
-// fresh server because the singleton cannot be deleted once created.
+// TestIntegrationConfigCreate verifies that humans cannot bring the singleton into
+// existence — it is seeded by the sync worker, and human create is denied on every
+// path. A POST is rejected by the authorizer (verb=create); a PUT upsert to the
+// missing object is re-authorized by the apiserver as create and rejected the same
+// way. Each subtest uses a fresh server so the singleton does not yet exist.
 func TestIntegrationConfigCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
-	t.Run("via POST create", func(t *testing.T) {
+	t.Run("POST create is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
-		got, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-		require.NoError(t, err)
-		require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, got.Name)
+		_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv1beta1.ConfigSingletonName), resource.CreateOptions{})
+		requireForbidden(t, err, "seeded automatically")
 	})
 
-	t.Run("via PUT upsert (create-on-update)", func(t *testing.T) {
+	t.Run("PUT upsert (create-on-update) is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
-		got, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingnotifv0alpha1.ConfigSingletonName))
-		require.NoError(t, err)
-		require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, got.Name)
-	})
-}
-
-// TestIntegrationConfigSingleton verifies the singleton admission validator: the
-// only valid name is "default". A non-default name is rejected on both the
-// create and the update (upsert) paths.
-func TestIntegrationConfigSingleton(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-	helper := getTestHelper(t)
-	admin := helper.Org1.Admin
-	adminClient := newConfigClient(t, admin)
-
-	t.Run("update with a non-default name is rejected as a singleton violation", func(t *testing.T) {
-		_, err := rawUpdate(t, ctx, admin, newConfig("not-the-singleton"))
-		requireSingletonRejection(t, err)
-	})
-
-	// create is allowed for admins (gated by the update permission), so a
-	// non-default create reaches the admission validator and is rejected for
-	// violating the singleton-name rule — same as the update path above.
-	t.Run("create with a non-default name is rejected as a singleton violation", func(t *testing.T) {
-		_, err := adminClient.Create(ctx, newConfig("not-the-singleton"), resource.CreateOptions{})
-		requireSingletonRejection(t, err)
+		_, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingnotifv1beta1.ConfigSingletonName))
+		requireForbidden(t, err, "")
 	})
 }
 
@@ -321,8 +302,8 @@ func TestIntegrationConfigValidator(t *testing.T) {
 	seedSingleton(t, ctx, helper)
 
 	t.Run("setting a non-existent datasource UID is rejected", func(t *testing.T) {
-		cfg := newConfig(alertingnotifv0alpha1.ConfigSingletonName)
-		cfg.Spec.ExternalAlertmanagerSync = &alertingnotifv0alpha1.ConfigV0alpha1SpecExternalAlertmanagerSync{
+		cfg := newConfig(alertingnotifv1beta1.ConfigSingletonName)
+		cfg.Spec.ExternalAlertmanagerSync = &alertingnotifv1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{
 			DatasourceUid: ptr("does-not-exist-uid"),
 		}
 		_, err := adminClient.Update(ctx, cfg, resource.UpdateOptions{})
@@ -330,9 +311,40 @@ func TestIntegrationConfigValidator(t *testing.T) {
 	})
 
 	t.Run("clearing the datasource UID is allowed", func(t *testing.T) {
-		cfg := newConfig(alertingnotifv0alpha1.ConfigSingletonName)
+		cfg := newConfig(alertingnotifv1beta1.ConfigSingletonName)
 		cfg.Spec.ExternalAlertmanagerSync = nil
 		_, err := adminClient.Update(ctx, cfg, resource.UpdateOptions{})
 		require.NoError(t, err)
+	})
+}
+
+// TestIntegrationConfigServesV0alpha1 covers the backward-compatibility half of
+// the v1beta1 promotion: v1beta1 is the storage version, but clients pinned to
+// v0alpha1 must keep reading the same object. The list case additionally
+// exercises the hand-registered ConfigList conversion (the app-sdk only
+// generates item-level conversions) — see registerListConversions in
+// pkg/registry/apps/alerting/notifications/register.go.
+func TestIntegrationConfigServesV0alpha1(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	seedSingleton(t, ctx, helper)
+
+	client := helper.Org1.Admin.ResourceClient(t, configGVRV0alpha1).Namespace(apis.DefaultNamespace)
+	wantAPIVersion := alertingnotifv0alpha1.GroupVersion.Identifier()
+
+	t.Run("get returns the singleton as v0alpha1", func(t *testing.T) {
+		got, err := client.Get(ctx, alertingnotifv0alpha1.ConfigSingletonName, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, wantAPIVersion, got.GetAPIVersion())
+	})
+
+	t.Run("list returns items as v0alpha1", func(t *testing.T) {
+		list, err := client.List(ctx, v1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, wantAPIVersion, list.Items[0].GetAPIVersion())
+		require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, list.Items[0].GetName())
 	})
 }

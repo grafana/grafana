@@ -3,6 +3,7 @@ import memoizeOne from 'memoize-one';
 import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
@@ -16,6 +17,7 @@ import { type ShareLinkConfiguration } from '../../features/dashboard-scene/shar
 import { notifyApp } from '../reducers/appNotification';
 
 import { copyStringToClipboard } from './explore';
+import { isOnPrem } from './isOnPrem';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
@@ -23,9 +25,16 @@ function buildHostUrl() {
 
 export function buildShortUrl(k8sShortUrl: ShortURL) {
   const key = k8sShortUrl.metadata.name;
-  const orgId = k8sShortUrl.metadata.namespace;
   const hostUrl = buildHostUrl();
-  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  // The resource namespace is not the org ID — it is `default`, `org-<id>` or
+  // `stacks-<id>`. On-prem is multi-org, so carry the current user's org ID in
+  // the query param; Cloud doesn't support multi-org, so the param would just
+  // be noise (`orgId=1`) and is omitted.
+  if (isOnPrem()) {
+    const orgId = config.bootData.user.orgId;
+    return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  }
+  return `${hostUrl}/goto/${key}`;
 }
 
 function getRelativeURLPath(url: string) {
@@ -44,7 +53,7 @@ const createShortLinkLegacy = async (path: string): Promise<string> => {
 // this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
 export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    if (config.featureToggles.useKubernetesShortURLsAPI) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.UseKubernetesShortURLsAPI, false)) {
       // Use RTK API - it handles caching/failures/retries automatically
       const result = await dispatch(
         shortURLAPIv1beta1.endpoints.createShortUrl.initiate({

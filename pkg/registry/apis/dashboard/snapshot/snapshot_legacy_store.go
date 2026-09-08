@@ -62,12 +62,24 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 		return nil, false, err
 	}
 
+	// Snapshots are org-scoped, but lookups by key are global. Reject deletes that
+	// target a snapshot owned by a different org than the caller's namespace, and
+	// return NotFound (rather than a distinct error) so the endpoint does not become
+	// a cross-org existence oracle.
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+	if snap.OrgID != ns.OrgID {
+		return nil, false, s.ResourceInfo.NewNotFound(name)
+	}
+
 	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
-	// path format, so the new-API branch extracts the domain and rebuilds the URL with
-	// the deleteKey. The legacy-API branch passes the stored URL through to
-	// DeleteExternalDashboardSnapshot, which rebuilds internally.
+	// path format (e.g. created with externalSnapshotsK8SAPIPush in the opposite
+	// state), so each branch extracts the host and rebuilds the URL with the
+	// deleteKey in its own expected format.
 	if snap.ExternalDeleteURL != "" {
-		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
 			parsed, err := url.Parse(snap.ExternalDeleteURL)
 			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
 				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
@@ -78,7 +90,7 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 				return nil, false, err
 			}
 		} else {
-			if err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL); err != nil {
+			if err := deleteExternalSnapshotLegacy(snap.ExternalDeleteURL); err != nil {
 				return nil, false, err
 			}
 		}
@@ -101,6 +113,16 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 				DeleteKey: deleteKey,
 			})
 			if err != nil {
+				return &dashV0.SnapshotList{}, nil
+			}
+			// Lookups by deleteKey are global; scope the result to the caller's org so
+			// this branch (used by the delete-by-key route) cannot resolve a snapshot
+			// owned by another org.
+			ns, err := request.NamespaceInfoFrom(ctx, true)
+			if err != nil {
+				return nil, err
+			}
+			if snap.OrgID != ns.OrgID {
 				return &dashV0.SnapshotList{}, nil
 			}
 			return &dashV0.SnapshotList{

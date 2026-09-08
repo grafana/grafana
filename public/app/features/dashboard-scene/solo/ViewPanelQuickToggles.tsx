@@ -28,6 +28,7 @@ export function ViewPanelQuickToggles({ panel, plugin }: Props) {
       instanceState: panel.getPanelContext().instanceState,
       currentOptions: options,
       currentFieldConfig: fieldConfig,
+      reportInteractionUI: 'view-panel',
     });
 
     const toggles: OptionsPaneItemDescriptor[] = [];
