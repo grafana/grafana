@@ -72,7 +72,7 @@ jobs:
             goos: windows
             goarch: arm64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Setup Go
@@ -124,7 +124,7 @@ jobs:
             goos: windows
             goarch: arm64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Get GitHub App token
@@ -158,7 +158,7 @@ jobs:
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-go

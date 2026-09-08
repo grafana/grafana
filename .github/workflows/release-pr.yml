@@ -133,14 +133,14 @@ jobs:
             echo "WORK_BRANCH=release/${RUN_NUMBER}/${VERSION}"
           } >> "$GITHUB_ENV"
       - name: Checkout Grafana target branch #checkout the target branch to base the release branch on
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.get-writer-app-token.outputs.token }} # used only for fetching; commits go via kminehart API
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
           fetch-depth: 0
       - name: Checkout Grafana (main)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           token: ${{ github.token }}
           ref: main

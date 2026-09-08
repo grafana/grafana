@@ -60,7 +60,7 @@ jobs:
             echo "💻 **Run locally:** \`yarn test:coverage:by-codeowner <codeowner>\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
         codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           path: './pr'
           persist-credentials: false
@@ -149,7 +149,7 @@ jobs:
 
       - name: Checkout main branch
         if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.detect-changes.outputs.main-sha }}
           path: './main'

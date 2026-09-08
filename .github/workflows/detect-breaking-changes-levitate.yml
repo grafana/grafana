@@ -28,7 +28,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           path: './pr'
           persist-credentials: false
@@ -69,12 +69,12 @@ jobs:
 
     steps:
       # We need to check out the PR's branch to get actions from the same branch, so if they change in a PR this action can pick up those changes
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           path: './pr'
           persist-credentials: false
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
@@ -116,7 +116,7 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -197,7 +197,7 @@ jobs:
         with:
           github_app: grafana-pr-automation
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
