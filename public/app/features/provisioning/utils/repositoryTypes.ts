@@ -100,6 +100,17 @@ export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterp
   return type === 'github' || type === 'githubEnterprise';
 };
 
+// Providers that support app-based authentication through provisioning connections.
+export const supportsConnections = (
+  type?: RepoType
+): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+};
+
+export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+};
+
 /**
  * Get repository configurations ordered by provider type priority:
  * 1. Git providers first (github, gitlab, bitbucket) - excludes pure git

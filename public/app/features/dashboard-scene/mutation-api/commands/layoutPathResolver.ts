@@ -11,6 +11,7 @@ import { type RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { type TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { getGroupDepth, MAX_NESTING_DEPTH } from '../../scene/layouts-shared/nestingRestrictions';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
 type GroupType = 'rows' | 'tabs';
@@ -166,57 +167,34 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
 }
 
 /**
- * Returns true if any direct child of a group layout has an inner layout
- * that is itself a group (RowsLayoutManager or TabsLayoutManager).
- */
-function hasNestedGroups(layout: DashboardLayoutManager): boolean {
-  if (layout instanceof RowsLayoutManager) {
-    return layout.state.rows.some(
-      (r) => r.state.layout instanceof RowsLayoutManager || r.state.layout instanceof TabsLayoutManager
-    );
-  }
-  if (layout instanceof TabsLayoutManager) {
-    return layout.state.tabs.some(
-      (t) => t.state.layout instanceof RowsLayoutManager || t.state.layout instanceof TabsLayoutManager
-    );
-  }
-  return false;
-}
-
-/**
  * Validate that adding a group layout (rows/tabs) at the given path
  * won't violate nesting rules:
- *  - Max 2 layers of group nesting (root group + one nested group)
- *  - No same-type nesting (tabs-in-tabs, rows-in-rows)
+ *  - Max MAX_NESTING_DEPTH layers of group nesting
+ *  - Tabs cannot be nested directly inside tabs (deeper nesting like tabs > rows > tabs is fine)
  */
 export function validateNesting(parentPath: string, addingType: GroupType, targetLayout: DashboardLayoutManager): void {
   const segments = parsePathSegments(parentPath);
 
-  // Already 2+ segments deep -- adding another group would exceed the limit
-  if (segments.length >= 2) {
+  const isAlreadyTargetType =
+    (addingType === 'rows' && targetLayout instanceof RowsLayoutManager) ||
+    (addingType === 'tabs' && targetLayout instanceof TabsLayoutManager);
+
+  // Appending an item to an existing group of the same type doesn't add a nesting layer
+  if (isAlreadyTargetType) {
+    return;
+  }
+
+  // The new group becomes the direct layout of the last segment's item
+  if (addingType === 'tabs' && segments.length > 0 && segments[segments.length - 1].type === 'tabs') {
+    throw new Error(`Cannot add tabs at "${parentPath}": tabs cannot be nested directly inside tabs.`);
+  }
+
+  // Wrapping the target layout in a new group adds one layer on top of everything nested inside it
+  const resultingDepth = segments.length + 1 + getGroupDepth(targetLayout);
+  if (resultingDepth > MAX_NESTING_DEPTH) {
     throw new Error(
-      `Cannot add ${addingType} at "${parentPath}": maximum nesting depth (2 group layers) would be exceeded.`
+      `Cannot add ${addingType} at "${parentPath}": maximum nesting depth (${MAX_NESTING_DEPTH} group layers) would be exceeded.`
     );
-  }
-
-  // 1 segment deep -- check for same-type nesting
-  if (segments.length === 1 && segments[0].type === addingType) {
-    throw new Error(`Cannot add ${addingType} inside ${addingType}: same-type nesting is not allowed.`);
-  }
-
-  // Root level -- if conversion is needed and target already has nested groups,
-  // wrapping it would create 3 layers
-  if (segments.length === 0) {
-    const isAlreadyTargetType =
-      (addingType === 'rows' && targetLayout instanceof RowsLayoutManager) ||
-      (addingType === 'tabs' && targetLayout instanceof TabsLayoutManager);
-
-    if (!isAlreadyTargetType && hasNestedGroups(targetLayout)) {
-      throw new Error(
-        `Cannot add ${addingType} at root: the current layout already contains nested groups, ` +
-          `which would exceed the maximum nesting depth (2 group layers).`
-      );
-    }
   }
 }
 

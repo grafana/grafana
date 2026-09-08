@@ -48,7 +48,7 @@ export function PullRequestOptionsSection<T extends FieldValues>({
 
   // Dashboard previews currently apply only to GitHub and require image rendering to be allowed.
   const showDashboardPreviews = Boolean(
-    repoType === 'github' && dashboardPreviewName && checkImageRenderingAllowed(settings.data)
+    isGitHubBased(repoType) && dashboardPreviewName && checkImageRenderingAllowed(settings.data)
   );
 
   if (!gitConventionsEnabled && !showDashboardPreviews) {

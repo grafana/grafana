@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"runtime"
 	"slices"
@@ -198,9 +199,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	resp := backend.NewQueryDataResponse()
 	reqCtx := contexthandler.FromContext(ctx)
 	for result := range rchan {
-		for refId, dataResponse := range result.responses {
-			resp.Responses[refId] = dataResponse
-		}
+		maps.Copy(resp.Responses, result.responses)
 		if reqCtx != nil {
 			for k, v := range result.header {
 				for _, val := range v {
@@ -457,8 +456,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			"from", timeRange.GetFromAsMsEpoch(),
 			"to", timeRange.GetToAsMsEpoch(),
 			"interval", pq.query.Interval.Milliseconds(),
-			"max_data_points", pq.query.MaxDataPoints,
-			"query", string(modelJSON))
+			"max_data_points", pq.query.MaxDataPoints)
 	}
 
 	return req, req.validateRequest(ctx)

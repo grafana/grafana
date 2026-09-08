@@ -143,7 +143,7 @@ func ProvideService(
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency)
+	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency(cfg.UnifiedAlerting.IsEnabled()))
 
 	httpClientS3, err := httpClientProvider.New()
 	if err != nil {

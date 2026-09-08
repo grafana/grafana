@@ -4,6 +4,7 @@ import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/interna
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { getDashboardTemplatesTab } from '../enterprise-components/DashboardTemplatesTabExtension';
+import { canReadDashboardTemplates } from '../utils/templatePermissions';
 
 interface TemplateDashboardsAvailability {
   /** The first available `grafana-testdata-datasource`, used to power the Grafana-provisioned templates. */
@@ -24,7 +25,10 @@ interface TemplateDashboardsAvailability {
  * renders nothing.
  */
 export function useTemplateDashboardsAvailability(): TemplateDashboardsAvailability {
-  const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null;
+  // Custom templates require the `dashboardtemplates:read` RBAC permission: without it the user
+  // cannot list templates (the API denies it), so the tab/entry points must not be offered.
+  const showCustomTemplates =
+    useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null && canReadDashboardTemplates();
 
   // Skip the lookup entirely when the Grafana-provisioned path is disabled — passing `undefined`
   // returns the full list, which is wasted work since we'd discard the result.

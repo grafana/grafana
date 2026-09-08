@@ -21,7 +21,7 @@ type Severity = QueryResultMetaNotice['severity'];
 
 interface InspectableEntry {
   severity: Severity;
-  title: string;
+  title?: string;
   content: string;
   link?: string;
   // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
@@ -60,7 +60,7 @@ function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | 
   for (const error of errors ?? []) {
     entries.push({
       severity: 'error',
-      title: error.message ?? error.data?.message ?? SEVERITY_LABELS.error(),
+      title: error.message ?? error.data?.message,
       content: formatError(error),
       isCode: true,
     });
@@ -121,7 +121,7 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
           className={styles.toggle}
           onClick={() => setIsOpen((open) => !open)}
           aria-expanded={isOpen}
-          aria-label={entry.title}
+          aria-label={entry.title ?? SEVERITY_LABELS[entry.severity]()}
         >
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} className={styles.chevron} />
           <Icon name={getSeverityIcon(entry.severity)} className={styles[entry.severity]} />
@@ -135,7 +135,10 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
       {isOpen && (
         <div className={styles.body}>
           {entry.isCode ? (
-            <pre className={styles.code}>{entry.content}</pre>
+            <>
+              {entry.title && <div className={styles.message}>{entry.title}</div>}
+              <pre className={styles.code}>{entry.content}</pre>
+            </>
           ) : (
             // renderMarkdown sanitizes its output, so this is safe to set as HTML.
             <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: renderMarkdown(entry.content) }} />
@@ -196,6 +199,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1.5, 1.5, 1.5, 4.5),
+  }),
+  message: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    wordBreak: 'break-word',
+    marginBottom: theme.spacing(1),
   }),
   code: css({
     margin: 0,

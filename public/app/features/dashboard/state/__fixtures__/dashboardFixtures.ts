@@ -1,12 +1,4 @@
-import {
-  type AnnotationQuery,
-  type Dashboard,
-  defaultDashboardCursorSync,
-  defaultVariableModel,
-  type Panel,
-  type RowPanel,
-  type VariableModel,
-} from '@grafana/schema';
+import { type Dashboard, defaultDashboardCursorSync, type Panel, type RowPanel } from '@grafana/schema';
 import { type GetVariables } from 'app/features/variables/state/selectors';
 import { type DashboardMeta } from 'app/types/dashboard';
 
@@ -33,27 +25,5 @@ export function createPanelSaveModel(panelInput: Partial<Panel | RowPanel> = {})
   return {
     type: 'timeseries',
     ...panelInput,
-  };
-}
-
-export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQuery>): AnnotationQuery {
-  // @ts-expect-error
-  return {
-    datasource: {
-      type: 'foo',
-      uid: 'bar',
-    },
-    enable: true,
-    type: 'anno',
-    ...annotationInput,
-  };
-}
-
-export function createVariableJSONFixture(annotationInput: Partial<VariableModel>): VariableModel {
-  return {
-    ...defaultVariableModel,
-    name: 'foo.variable',
-    type: 'constant',
-    ...annotationInput,
   };
 }

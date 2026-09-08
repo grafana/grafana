@@ -11,11 +11,13 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,6 +27,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -52,6 +55,7 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
+	natsSubscriber        nats.Subscriber
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
@@ -93,7 +97,6 @@ type ControllerConfig struct {
 // dashboards_server_url =
 // folders_server_url =
 // aggregated_server_url =
-// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -103,6 +106,16 @@ type ControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
+// connection_types =
+// [nats]
+// # when enabled, the informers take their watch from NATS instead of the
+// # apiserver watch; operators use an external NATS (no embedded server).
+// enabled =
+// mode = external
+// client_urls =
+// token =
+// subscriber_credentials_file =
+// tls_enabled =
 func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
@@ -110,8 +123,12 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry:       registry,
-		Settings:       cfg,
+		registry: registry,
+		Settings: cfg,
+		// Operators run against an external NATS (no embedded server), so a nil
+		// server yields a config that dials the configured client URLs. The
+		// subscriber connects lazily and is a no-op transport when NATS is disabled.
+		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
@@ -316,6 +333,10 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
+	// Propagate W3C trace context on Job updates and Repository/Connection status
+	// patches; otherwise they are leaf spans with no children on the apiserver side.
+	wrapWithTracing(config)
+
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
@@ -324,6 +345,15 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	c.provisioningClient = provisioningClient
 
 	return provisioningClient, nil
+}
+
+// wrapWithTracing wraps the rest config transport with otelhttp so outbound
+// requests carry W3C trace context. It composes with any existing WrapTransport
+// (e.g. the token-exchange wrapper) rather than replacing it.
+func wrapWithTracing(config *rest.Config) {
+	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return otelhttp.NewTransport(rt)
+	})
 }
 
 func (c *ControllerConfig) ResyncInterval() time.Duration {
@@ -481,7 +511,12 @@ func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
 		enabledTypes[extra.Type()] = struct{}{}
 	}
 
-	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras)
+	tracer, err := c.Tracer()
+	if err != nil {
+		return nil, err
+	}
+
+	repositoryFactory, err := repository.ProvideFactory(enabledTypes, extras, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("create repository factory: %w", err)
 	}
@@ -501,13 +536,17 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return nil, err
 	}
 
-	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.ConnectionType]struct{})
-	for _, extra := range extras {
-		enabledTypes[extra.Type()] = struct{}{}
+	types := c.Settings.ProvisioningConnectionTypes
+	if len(types) == 0 {
+		types = defaultConnectionTypes(extras)
 	}
 
-	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	tracer, err := c.Tracer()
+	if err != nil {
+		return nil, err
+	}
+
+	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("create connection factory: %w", err)
 	}
@@ -568,6 +607,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
+	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -584,17 +624,21 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
+				webhook = webhooks.ProvideWebhooks(
+					provisioningAppURL,
+					c.Registry(),
+					webhooks.NewConfiguredRateLimiter(
+						provisioningSec.Key("webhook_rate_limit_rps").MustInt(0),
+						provisioningSec.Key("webhook_trusted_ip_header").MustString(""),
+					),
+				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, repository.NewIncrementalSyncPolicy(
-				resources.IsFolderMetadataEnabled(c.Settings),
-				provisioningSec.Key("max_incremental_changes").MustInt(100),
-			), allowInsecure))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
@@ -604,7 +648,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if len(permittedPrefixes) == 0 {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
-			extras = append(extras, local.Extra(homePath, permittedPrefixes))
+			extras = append(extras, local.Extra(homePath, permittedPrefixes, operationMetrics))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
@@ -637,6 +681,7 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
+		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
 	}
 
 	c.connectionExtras = extras
@@ -729,4 +774,14 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
+}
+
+func defaultConnectionTypes(extras []connection.Extra) []string {
+	types := []string{string(provisioning.GithubConnectionType)}
+	for _, extra := range extras {
+		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
+			types = append(types, string(extra.Type()))
+		}
+	}
+	return types
 }

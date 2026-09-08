@@ -462,6 +462,10 @@ type InitTestDBOpt struct {
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
+//
+// Deprecated: use NewTestStore with WithMigrator instead. It gives each test
+// an isolated, temporary database instead of sharing one database with
+// truncation between tests. New calls fail lint (staticcheck SA1019).
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
@@ -474,6 +478,11 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 }
 
 // InitTestDB initializes the test DB.
+//
+// Deprecated: use NewTestStore instead. It gives each test an isolated,
+// temporary database instead of sharing one database with truncation between
+// tests, which also allows tests to run in parallel. New calls fail lint
+// (staticcheck SA1019).
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)

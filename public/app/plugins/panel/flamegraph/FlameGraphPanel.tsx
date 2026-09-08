@@ -1,6 +1,7 @@
 import { CoreApp, type PanelProps } from '@grafana/data';
 import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
+import { useTheme2 } from '@grafana/ui';
 
 import { type Options } from './types';
 
@@ -13,6 +14,7 @@ function interaction(name: string, context: Record<string, string | number> = {}
 }
 
 export const FlameGraphPanel = (props: PanelProps<Options>) => {
+  const theme = useTheme2();
   const wrongFields = checkFields(props.data.series[0]);
   if (wrongFields) {
     return (
@@ -24,7 +26,7 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
     <FlameGraph
       data={props.data.series[0]}
       stickyHeader={false}
-      getTheme={() => config.theme2}
+      getTheme={() => theme}
       showFlameGraphOnly={props.options?.showFlameGraphOnly ?? false}
       onTableSymbolClick={() => interaction('table_item_selected')}
       onViewSelected={(view: string) => interaction('view_selected', { view })}

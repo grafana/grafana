@@ -36,7 +36,7 @@ export function defaultScopesServices() {
   const dashboardService = new ScopesDashboardsService(client);
   const selectorService = new ScopesSelectorService(client, dashboardService);
   return {
-    scopesService: new ScopesService(selectorService, dashboardService, locationService),
+    scopesService: new ScopesService(selectorService, dashboardService, locationService, client),
     scopesSelectorService: selectorService,
     scopesDashboardsService: dashboardService,
     client,

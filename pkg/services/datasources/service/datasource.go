@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -387,6 +390,13 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return nil, err
 		}
 	}
+	if cmd.JsonData == nil {
+		cmd.JsonData = simplejson.New()
+	}
+	// Run after the store assigns the final UID so the minted ID matches what is inserted.
+	cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+		awsexternalid.BeforeSave(ctx, uid, s.cfg, nil, jsonData)
+	}
 
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -668,6 +678,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				return err
 			}
 		}
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+		existingJSON := dataSource.JsonData
+		cmd.BeforeSave = func(ctx context.Context, uid string, jsonData *simplejson.Json) {
+			awsexternalid.BeforeSave(ctx, uid, s.cfg, existingJSON, jsonData)
+		}
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
@@ -853,9 +870,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		opts.CustomOptions = ds.JsonDataMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
 		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
-		for k, v := range opts.CustomOptions {
-			deepJsonDataCopy[k] = v
-		}
+		maps.Copy(deepJsonDataCopy, opts.CustomOptions)
 		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
 	}
 	if ds.BasicAuth {

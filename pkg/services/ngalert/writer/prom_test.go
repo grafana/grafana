@@ -2,6 +2,7 @@ package writer
 
 import (
 	"context"
+	"maps"
 	"math"
 	"math/rand/v2"
 	"net"
@@ -65,9 +66,7 @@ func TestPointsFromFrames(t *testing.T) {
 				for i, point := range points {
 					v := extractValue(t, frames, series[i], tc.frameType)
 					expectedLabels := map[string]string{"extra": "label"}
-					for k, v := range series[i] {
-						expectedLabels[k] = v
-					}
+					maps.Copy(expectedLabels, series[i])
 					require.Equal(t, expectedLabels, point.Labels)
 					require.Equal(t, "test", point.Name)
 					require.Equal(t, now, point.Metric.T)
@@ -267,6 +266,24 @@ func TestPrometheusWriter_Write(t *testing.T) {
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
+		require.NotErrorIs(t, err, ErrNonRetryableWrite)
+	})
+
+	t.Run("a 429 response is classified as rate limited", func(t *testing.T) {
+		msg := "too many requests"
+		clientErr := testClientWriteError{
+			statusCode: http.StatusTooManyRequests,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRateLimited)
+		require.NotErrorIs(t, err, ErrUnexpectedWriteFailure)
 		require.NotErrorIs(t, err, ErrNonRetryableWrite)
 	})
 }

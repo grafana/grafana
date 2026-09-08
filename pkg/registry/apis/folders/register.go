@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -80,6 +81,11 @@ type FolderAPIBuilder struct {
 	cascadeConfigProvider apiserver.RestConfigProvider
 	dashboardSvc          *dynamic.NamespaceableResourceInterface
 	dashboardSvcMu        sync.Mutex
+	variableSvc           *dynamic.NamespaceableResourceInterface
+	variableSvcMu         sync.Mutex
+	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
+	// delete. Nil in MT (NewAPIService), where that cleanup is handled elsewhere.
+	contentsDeleter FolderContentsDeleter
 }
 
 // dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
@@ -109,6 +115,31 @@ func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.Namesp
 	return b.dashboardSvc, nil
 }
 
+func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	if b.cascadeConfigProvider == nil {
+		return b.variableSvc, nil
+	}
+
+	b.variableSvcMu.Lock()
+	defer b.variableSvcMu.Unlock()
+
+	if b.variableSvc != nil {
+		return b.variableSvc, nil
+	}
+
+	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(dashV2beta1.VariableResourceInfo.GroupVersionResource())
+	b.variableSvc = &client
+	return b.variableSvc, nil
+}
+
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -118,6 +149,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	unified resource.ResourceClient,
 	zanzanaClient zanzana.Client,
 	restConfigProvider apiserver.RestConfigProvider,
+	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
 		accessClient:         accessClient,
@@ -126,6 +158,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
+		contentsDeleter:      contentsDeleter,
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -143,13 +176,14 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		accessClient:           ac,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
 		resourcePermissionsSvc: resourcePermissionsSvc,
 		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
+		variableSvc:            variableSvc,  // injected so cascade delete can remove variables in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
@@ -247,7 +281,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
-	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient)
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage

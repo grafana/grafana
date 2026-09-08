@@ -323,3 +323,23 @@ func TestSeriesName(t *testing.T) {
 		})
 	}
 }
+
+func TestAsDataFramesDoesNotMutateSharedFrame(t *testing.T) {
+	// A passthrough expression (e.g. `$A`) returns its input's Values verbatim, so the "B" result
+	// shares the same underlying *data.Frame as the "A" result. Labeling one result's frames must
+	// not change the RefID of the other's (which previously happened because AsDataFrames mutated
+	// the shared frame in place and the results map is iterated in a non-deterministic order).
+	shared := data.NewFrame("", data.NewField("value", nil, []float64{1}))
+	shared.RefID = "A"
+
+	aValues := Values{Number{Frame: shared}}
+	bValues := Values{Number{Frame: shared}}
+
+	aFrames := aValues.AsDataFrames("A")
+	bFrames := bValues.AsDataFrames("B")
+
+	require.Equal(t, "A", aFrames[0].RefID)
+	require.Equal(t, "B", bFrames[0].RefID)
+	// Relabeling "B" must not have mutated the frame shared with (and returned for) "A".
+	require.Equal(t, "A", shared.RefID)
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -14,10 +15,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
+	"k8s.io/utils/ptr"
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -60,6 +64,17 @@ func toAPIError(err error, name string) error {
 	}
 }
 
+// goneError builds the 410 Gone returned when a caller reads or updates a
+// soft-deleted annotation, letting clients tell a tombstone from a missing one.
+func goneError(name string) error {
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusGone,
+		Reason:  metav1.StatusReasonGone,
+		Message: fmt.Sprintf("annotation %q has been deleted", name),
+	}}
+}
+
 var (
 	_ rest.Scoper               = (*k8sRESTAdapter)(nil)
 	_ rest.SingularNameProvider = (*k8sRESTAdapter)(nil)
@@ -89,10 +104,9 @@ type k8sRESTAdapter struct {
 
 	// retentionTTL bounds how far in the past an annotation's time may be,
 	// matching the cleanup window so we don't accept data that would be
-	// immediately purged.
+	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
-	tracer  trace.Tracer
 	metrics *Metrics
 	logger  log.Logger
 }
@@ -135,16 +149,30 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 
 func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err) }()
 
-	opts := ListOptions{}
-	if err := parseFieldSelector(options.FieldSelector, &opts); err != nil {
+	ff, err := parseFieldSelector(options.FieldSelector)
+	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
+	}
+	lf, err := parseLabelSelector(options.LabelSelector)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+
+	opts := ListOptions{
+		// from field selector
+		DashboardUID: ff.DashboardUID,
+		PanelID:      ff.PanelID,
+		From:         ff.From,
+		To:           ff.To,
+		// from label selector
+		LegacyID: lf.LegacyID,
 	}
 
 	opts.Limit = 100
@@ -182,7 +210,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -204,6 +232,11 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, apierrors.NewNotFound(annotationGR, name)
 	}
 
+	// Surface the tombstone only after authz so 410 does not leak existence.
+	if annotation.DeletionTimestamp != nil {
+		return nil, goneError(name)
+	}
+
 	return annotation, nil
 }
 
@@ -213,12 +246,16 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	options *metav1.CreateOptions,
 ) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
@@ -271,13 +308,17 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (out runtime.Object, created bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
@@ -323,6 +364,15 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, apierrors.NewForbidden(annotationGR, resource.Name, fmt.Errorf("insufficient permissions"))
 	}
 
+	// Surface the tombstone only after authz, so 410 does not leak existence.
+	if existing.DeletionTimestamp != nil {
+		return nil, false, goneError(name)
+	}
+
+	if err := validateUpdate(existing, resource); err != nil {
+		return nil, false, err
+	}
+
 	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
 	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
 	if _, ok := GetLegacyData(resource); !ok {
@@ -340,13 +390,17 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -369,53 +423,95 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, apierrors.NewForbidden(annotationGR, name, fmt.Errorf("insufficient permissions"))
 	}
 
+	// Deleting an already-tombstoned annotation is a no-op
+	if annotation.DeletionTimestamp != nil {
+		return nil, false, nil
+	}
+
 	if err := s.store.Delete(ctx, namespace, name); err != nil {
 		return nil, false, toAPIError(err, name)
 	}
 	return nil, false, nil
 }
 
-// parseFieldSelector translates K8s field selectors into Store ListOptions.
-func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
+// fieldFilters holds the filters derived from a K8s field selector.
+type fieldFilters struct {
+	DashboardUID string
+	PanelID      int64
+	From         int64
+	To           int64
+}
+
+// labelFilters holds the filters derived from a K8s label selector.
+type labelFilters struct {
+	LegacyID int64
+}
+
+// parseFieldSelector translates K8s field selectors into field filters.
+func parseFieldSelector(fs fields.Selector) (fieldFilters, error) {
+	var f fieldFilters
 	if fs == nil {
-		return nil
+		return f, nil
 	}
 	for _, r := range fs.Requirements() {
 		if r.Operator != selection.Equals && r.Operator != selection.DoubleEquals {
-			return fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field)
+			return f, fmt.Errorf("unsupported operator %s for %s (only = or == supported)", r.Operator, r.Field)
 		}
 		switch r.Field {
 		case "spec.dashboardUID":
-			opts.DashboardUID = r.Value
+			f.DashboardUID = r.Value
 		case "spec.panelID":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
+				return f, fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
 			}
-			opts.PanelID = v
+			f.PanelID = v
 		case "spec.time":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid time value %q: %w", r.Value, err)
+				return f, fmt.Errorf("invalid time value %q: %w", r.Value, err)
 			}
-			opts.From = v
+			f.From = v
 		case "spec.timeEnd":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
+				return f, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
-			opts.To = v
-		case "metadata.legacyID":
-			v, err := strconv.ParseInt(r.Value, 10, 64)
-			if err != nil {
-				return fmt.Errorf("invalid legacyID value %q: %w", r.Value, err)
-			}
-			opts.LegacyID = v
+			f.To = v
 		default:
-			return fmt.Errorf("unsupported field selector: %s", r.Field)
+			return f, fmt.Errorf("unsupported field selector: %s", r.Field)
 		}
 	}
-	return nil
+	return f, nil
+}
+
+// parseLabelSelector translates K8s label selectors into label filters.
+func parseLabelSelector(ls labels.Selector) (labelFilters, error) {
+	var f labelFilters
+	if ls == nil {
+		return f, nil
+	}
+	requirements, _ := ls.Requirements()
+	for _, r := range requirements {
+		if r.Operator() != selection.Equals && r.Operator() != selection.DoubleEquals {
+			return f, fmt.Errorf("unsupported operator %s for %s (only = or == supported)", r.Operator(), r.Key())
+		}
+		switch r.Key() {
+		case LabelKeyLegacyID:
+			value, ok := r.Values().PopAny()
+			if !ok {
+				return f, fmt.Errorf("missing value for label selector %s", r.Key())
+			}
+			v, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return f, fmt.Errorf("invalid legacyID value %q: %w", value, err)
+			}
+			f.LegacyID = v
+		default:
+			return f, fmt.Errorf("unsupported label selector: %s", r.Key())
+		}
+	}
+	return f, nil
 }
 
 func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error {
@@ -427,7 +523,7 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 		return err
 	}
 
-	return validateNames(anno)
+	return validateMetadata(anno)
 }
 
 func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
@@ -438,18 +534,41 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	return nil
 }
 
+// validateUpdate rejects updates that attempt to modify immutable fields
+func validateUpdate(existing, updated *annotationV0.Annotation) error {
+	if existing.Spec.Time != updated.Spec.Time {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.TimeEnd, updated.Spec.TimeEnd) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.DashboardUID, updated.Spec.DashboardUID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: dashboardUID is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.PanelID, updated.Spec.PanelID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: panelID is immutable", ErrInvalidInput))
+	}
+	return nil
+}
+
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	if anno.Spec.Time <= 0 {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
-	maxPast := now.Add(-s.retentionTTL).UnixMilli()
 
 	if anno.Spec.Time > maxFuture {
 		return apierrors.NewBadRequest(
 			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
 	}
-	if anno.Spec.Time < maxPast {
-		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+	if s.retentionTTL > 0 {
+		maxPast := now.Add(-s.retentionTTL).UnixMilli()
+		if anno.Spec.Time < maxPast {
+			return apierrors.NewBadRequest(
+				fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+		}
 	}
 
 	// If timeEnd is set, validate it's after time and within future bounds
@@ -466,9 +585,12 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 	return nil
 }
 
-func validateNames(anno *annotationV0.Annotation) error {
+func validateMetadata(anno *annotationV0.Annotation) error {
 	if anno.Name == "" && anno.GenerateName == "" {
 		return apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+	if anno.DeletionTimestamp != nil {
+		return apierrors.NewBadRequest("metadata.deletionTimestamp cannot be set on create")
 	}
 
 	return nil

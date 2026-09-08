@@ -71,7 +71,7 @@ const getWrapper = ({
    * Conditional router - either a MemoryRouter or just a Fragment
    */
   const PotentialRouter = renderWithRouter
-    ? ({ children }: PropsWithChildren) => <Router history={history}>{children}</Router>
+    ? ({ children }: PropsWithChildren) => <Router history={locationService.getHistory()}>{children}</Router>
     : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
 
   const PotentialCompatRouter = renderWithRouter ? CompatRouter : Fragment;

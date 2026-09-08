@@ -31,6 +31,8 @@ const (
 	SearchSnapshotDataSection     = "search/snapshot-data"
 	StatsDailySection             = "stats/daily"
 	StatsAggregatesSection        = "stats/aggregates"
+	NATSPeersSection              = "nats/peers"
+	VersionPolicySection          = "apiserver/versionpolicy"
 )
 
 // validSaveSections is the set of sections accepted by SqlKV.Save.
@@ -44,6 +46,8 @@ var validSaveSections = map[string]bool{
 	SearchSnapshotDataSection:     true,
 	StatsDailySection:             true,
 	StatsAggregatesSection:        true,
+	NATSPeersSection:              true,
+	VersionPolicySection:          true,
 }
 
 var _ KV = &SqlKV{}
@@ -129,6 +133,10 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "resource_stats_daily"
 	case StatsAggregatesSection:
 		tableName = "resource_stats_aggregates"
+	case NATSPeersSection:
+		tableName = "nats_discovery_peers"
+	case VersionPolicySection:
+		tableName = "resource_version_policy"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -550,9 +558,15 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
+// maxBatchDeleteKeys bounds a DELETE's IN list.
+const maxBatchDeleteKeys = 200
+
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
+	}
+	if len(keys) >= maxBatchDeleteKeys {
+		return fmt.Errorf("batch delete of %d keys exceeds max %d; caller must chunk", len(keys), maxBatchDeleteKeys-1)
 	}
 
 	qb, err := k.getQueryBuilder(section)

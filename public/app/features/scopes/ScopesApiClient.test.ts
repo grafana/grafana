@@ -29,6 +29,12 @@ jest.mock('app/api/clients/scope/v0alpha1', () => ({
       getFindScopeNavigationsResults: {
         initiate: jest.fn(),
       },
+      getFindDefaultScope: {
+        initiate: jest.fn(),
+      },
+    },
+    util: {
+      upsertQueryData: jest.fn((endpoint, arg, data) => ({ type: 'upsert', endpoint, arg, data })),
     },
   },
 }));
@@ -36,6 +42,21 @@ jest.mock('app/api/clients/scope/v0alpha1', () => ({
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn((action) => action),
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+const { getFeatureFlagClient } = jest.requireMock('@grafana/runtime/internal') as {
+  getFeatureFlagClient: jest.Mock;
+};
+
+const mockFeatureFlag = (key: string, value: boolean) => {
+  getFeatureFlagClient.mockReturnValue({
+    getBooleanValue: (flagKey: string, defaultValue: boolean) => (flagKey === key ? value : defaultValue),
+  });
+};
 
 describe('ScopesApiClient', () => {
   let apiClient: ScopesApiClient;
@@ -283,6 +304,84 @@ describe('ScopesApiClient', () => {
 
       // Validate: returns undefined for non-existent node
       expect(result).toBeUndefined();
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('fetchDefaultScope', () => {
+    it('returns undefined when grafana.useDefaultScopesEndpoint is off (no API call)', async () => {
+      mockFeatureFlag('grafana.useDefaultScopesEndpoint', false);
+
+      const result = await apiClient.fetchDefaultScope();
+
+      expect(result).toBeUndefined();
+      expect(scopeAPIv0alpha1.endpoints.getFindDefaultScope.initiate).not.toHaveBeenCalled();
+    });
+
+    it('returns the scope name and seeds the getScope cache when the flag is on', async () => {
+      mockFeatureFlag('grafana.useDefaultScopesEndpoint', true);
+
+      const envelopeScope = {
+        metadata: { name: 'gdev-shoe-org' },
+        spec: { title: 'Shoe organization', filters: [] },
+      };
+      const findSubscription = createMockSubscription({ data: { scope: envelopeScope, message: 'default' } });
+      (scopeAPIv0alpha1.endpoints.getFindDefaultScope.initiate as jest.Mock).mockReturnValue(findSubscription);
+
+      const result = await apiClient.fetchDefaultScope();
+
+      expect(result).toBe('gdev-shoe-org');
+      expect(scopeAPIv0alpha1.util.upsertQueryData).toHaveBeenCalledWith(
+        'getScope',
+        { name: 'gdev-shoe-org' },
+        envelopeScope
+      );
+    });
+
+    it('returns undefined and does not seed when the envelope is missing metadata.name', async () => {
+      mockFeatureFlag('grafana.useDefaultScopesEndpoint', true);
+
+      const findSubscription = createMockSubscription({
+        data: { scope: { spec: { title: 'no metadata' } } },
+      });
+      (scopeAPIv0alpha1.endpoints.getFindDefaultScope.initiate as jest.Mock).mockReturnValue(findSubscription);
+
+      const result = await apiClient.fetchDefaultScope();
+
+      expect(result).toBeUndefined();
+      expect(scopeAPIv0alpha1.util.upsertQueryData).not.toHaveBeenCalled();
+    });
+
+    it('returns undefined and does not seed when the response lacks a scope', async () => {
+      mockFeatureFlag('grafana.useDefaultScopesEndpoint', true);
+
+      const findSubscription = createMockSubscription({ data: { message: 'no default' } });
+      (scopeAPIv0alpha1.endpoints.getFindDefaultScope.initiate as jest.Mock).mockReturnValue(findSubscription);
+
+      const result = await apiClient.fetchDefaultScope();
+
+      expect(result).toBeUndefined();
+      expect(scopeAPIv0alpha1.util.upsertQueryData).not.toHaveBeenCalled();
+    });
+
+    it('returns undefined on a Status error response', async () => {
+      mockFeatureFlag('grafana.useDefaultScopesEndpoint', true);
+
+      const errorResponse = {
+        kind: 'Status',
+        apiVersion: 'v1',
+        status: 'Failure',
+        message: 'forbidden',
+        code: 403,
+      };
+      const findSubscription = createMockSubscription({ data: errorResponse });
+      (scopeAPIv0alpha1.endpoints.getFindDefaultScope.initiate as jest.Mock).mockReturnValue(findSubscription);
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const result = await apiClient.fetchDefaultScope();
+
+      expect(result).toBeUndefined();
+      expect(scopeAPIv0alpha1.util.upsertQueryData).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });
   });

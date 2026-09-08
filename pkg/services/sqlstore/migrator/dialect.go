@@ -85,6 +85,8 @@ type Dialect interface {
 	IsDeadlock(err error) bool
 	Lock(LockCfg) error
 	Unlock(LockCfg) error
+	// SupportsAdvisoryLocks returns whether Lock and Unlock actually lock anything.
+	SupportsAdvisoryLocks() bool
 
 	GetDBName(string) (string, error)
 
@@ -375,6 +377,10 @@ func (b *BaseDialect) Lock(_ LockCfg) error {
 
 func (b *BaseDialect) Unlock(_ LockCfg) error {
 	return nil
+}
+
+func (b *BaseDialect) SupportsAdvisoryLocks() bool {
+	return false
 }
 
 func (b *BaseDialect) OrderBy(order string) string {

@@ -52,6 +52,9 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaCorrelationv0alpha1,
 					SelectableFields: []string{
 						"spec.source.name",
+						"spec.source.group",
+						"spec.target.name",
+						"spec.target.group",
 					},
 				},
 			},

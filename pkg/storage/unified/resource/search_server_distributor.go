@@ -159,6 +159,24 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 	return client.(*RingClient).Client.VectorSearch(ctx, r)
 }
 
+// HybridSearch needs the namespace's local bleve index for its lexical
+// leg, so it routes namespace-sticky like Search — not random like
+// VectorSearch (pgvector is reachable from any pod).
+func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
+	defer span.End()
+
+	var ns string
+	if r.Key != nil {
+		ns = r.Key.Namespace
+	}
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, ns, "HybridSearch")
+	if err != nil {
+		return nil, err
+	}
+	return client.HybridSearch(ctx, r)
+}
+
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.RebuildIndexes")
 	defer span.End()
@@ -196,10 +214,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
@@ -207,13 +222,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
-			if err != nil {
-				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
-				return
-			}
-
-			if rsp.Error != nil {
-				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+			if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %w", inst.Id, err)
 				return
 			}
 
@@ -223,7 +233,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			responseCh <- rsp
-		}()
+		})
 	}
 
 	wg.Wait()

@@ -1,19 +1,11 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
-import { useLocalStorage } from 'react-use';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
+import { useStoredBoolean } from 'app/core/hooks/useStored';
+import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 const FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY = 'grafana.feature-control.accessible';
 const FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY = 'grafana.feature-control.open';
-
-const useStoredBoolean = (key: string, initialValue: boolean): [boolean, (value: boolean) => void] => {
-  const [value, setValue] = useLocalStorage<boolean>(key, initialValue, {
-    raw: false,
-    serializer: (value: boolean) => value.toString(),
-    deserializer: (value: string) => value === 'true',
-  });
-  return [value ?? false, useCallback((nextValue: boolean) => setValue(nextValue), [setValue])];
-};
 
 export type FeatureControlContextType = {
   /** Whether the feature control button is in the toolbar */
@@ -34,8 +26,33 @@ export const FeatureControlContext = createContext<FeatureControlContextType>({
 export const useFeatureControlContext = () => useContext(FeatureControlContext);
 
 export const FeatureControlContextProvider = ({ children }: { children: ReactNode }) => {
-  const [isAccessible, setIsAccessible] = useStoredBoolean(FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY, false);
-  const [isOpen, setIsOpen] = useStoredBoolean(FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY, false);
+  const previewAssetsActive = Boolean(getPreviewAssetsFolder());
+  const [storedIsAccessible, setStoredIsAccessible] = useStoredBoolean(
+    FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY,
+    previewAssetsActive
+  );
+  const [storedIsOpen, setStoredIsOpen] = useStoredBoolean(FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY, previewAssetsActive);
+
+  // Ignore persisted dismissals on the first render of a preview session, but
+  // clear the override when the user changes either value during that session.
+  const [forceAccessible, setForceAccessible] = useState(previewAssetsActive);
+  const [forceOpen, setForceOpen] = useState(previewAssetsActive);
+  const isAccessible = forceAccessible || storedIsAccessible;
+  const isOpen = forceOpen || storedIsOpen;
+  const setIsAccessible = useCallback(
+    (value: boolean) => {
+      setForceAccessible(false);
+      setStoredIsAccessible(value);
+    },
+    [setStoredIsAccessible]
+  );
+  const setIsOpen = useCallback(
+    (value: boolean) => {
+      setForceOpen(false);
+      setStoredIsOpen(value);
+    },
+    [setStoredIsOpen]
+  );
 
   useEffect(() => {
     const syncForcedState = () => {

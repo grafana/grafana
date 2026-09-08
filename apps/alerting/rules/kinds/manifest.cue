@@ -14,6 +14,7 @@ manifest: {
 				recordingRulev0alpha1,
 				ruleSequencev0alpha1,
 			]
+			routes: searchRoutes
 		}
 	}
 	roles: {}

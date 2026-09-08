@@ -435,7 +435,7 @@ describe('getDashboardChanges', () => {
   });
 });
 
-describe('getDashboardChanges with adHocFilterDefaultValues', () => {
+describe('getDashboardChanges with dashboardUnifiedDrilldownControls', () => {
   const makeDashboardWithAdhoc = (filters: AdHocVariableFilter[]): Dashboard => {
     return {
       id: 1,
@@ -451,12 +451,12 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
   };
 
   afterEach(() => {
-    config.featureToggles.adHocFilterDefaultValues = false;
+    config.featureToggles.dashboardUnifiedDrilldownControls = false;
   });
 
   describe('when feature flag is enabled', () => {
     beforeEach(() => {
-      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
     });
 
     it('should not report variable value changes when only origin filters differ', () => {
@@ -532,7 +532,7 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
 
   describe('when feature flag is disabled', () => {
     beforeEach(() => {
-      config.featureToggles.adHocFilterDefaultValues = false;
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
     });
 
     it('should not report variable value changes when only origin filters differ', () => {
@@ -711,5 +711,187 @@ describe('getRawDashboardV2Changes - section variables', () => {
     expect(getCurrentValue(row?.spec.variables)).toBe('dev');
     expect(result.hasVariableValueChanges).toBe(true);
     expect(result.hasChanges).toBe(false);
+  });
+});
+
+describe('getRawDashboardV2Changes - custom variable query persistence', () => {
+  const makeV2Dashboard = ({
+    query,
+    currentValue,
+    currentText = currentValue,
+    valuesFormat = 'csv',
+    includeAll = false,
+  }: {
+    query: string;
+    currentValue: string | string[];
+    currentText?: string | string[];
+    valuesFormat?: 'csv' | 'json';
+    includeAll?: boolean;
+  }): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Crosshair',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '5m',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [
+      {
+        kind: 'CustomVariable',
+        spec: {
+          name: 'custom0',
+          query,
+          current: { text: currentText, value: currentValue },
+          options: [],
+          multi: Array.isArray(currentValue),
+          includeAll,
+          hide: 'dontHide',
+          skipUrlSync: false,
+          allowCustomValue: true,
+          valuesFormat,
+        },
+      },
+    ],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: { items: [] },
+    },
+  });
+
+  it('appends current value to CustomVariable query when saving variable defaults', () => {
+    const initial = makeV2Dashboard({ query: 'custom0', currentValue: 'foo' });
+    const changed = makeV2Dashboard({ query: 'custom0', currentValue: 'bar' });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('bar');
+      expect(variable.spec.query).toBe('custom0,bar');
+    }
+  });
+
+  it('preserves CSV label : value when appending a labeled current selection', () => {
+    const initial = makeV2Dashboard({ query: 'Prod : prod', currentValue: 'prod', currentText: 'Prod' });
+    const changed = makeV2Dashboard({
+      query: 'Prod : prod',
+      currentValue: 'staging',
+      currentText: 'Staging',
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.query).toBe('Prod : prod,Staging : staging');
+    }
+  });
+
+  it('does not rewrite a malformed JSON query when saving variable defaults', () => {
+    const malformedQuery = '[{invalid json';
+    const initial = makeV2Dashboard({
+      query: malformedQuery,
+      currentValue: 'foo',
+      valuesFormat: 'json',
+    });
+    const changed = makeV2Dashboard({
+      query: malformedQuery,
+      currentValue: 'bar',
+      valuesFormat: 'json',
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('bar');
+      expect(variable.spec.query).toBe(malformedQuery);
+    }
+  });
+
+  it('does not rewrite a JSON query when the current value is already present', () => {
+    // Non-canonical formatting + an extra field that parse/map would drop.
+    const formattedQuery = '[\n  { "text": "Foo", "value": "foo", "selected": true }\n]';
+    const initial = makeV2Dashboard({
+      query: formattedQuery,
+      currentValue: 'bar',
+      valuesFormat: 'json',
+    });
+    const changed = makeV2Dashboard({
+      query: formattedQuery,
+      currentValue: 'foo',
+      currentText: 'Foo',
+      valuesFormat: 'json',
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('foo');
+      expect(variable.spec.query).toBe(formattedQuery);
+    }
+  });
+
+  it('appends current value to a JSON CustomVariable query when saving variable defaults', () => {
+    const query = '[{"text":"Foo","value":"foo"}]';
+    const initial = makeV2Dashboard({
+      query,
+      currentValue: 'foo',
+      valuesFormat: 'json',
+    });
+    const changed = makeV2Dashboard({
+      query,
+      currentValue: 'bar',
+      currentText: 'Bar',
+      valuesFormat: 'json',
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('bar');
+      expect(variable.spec.query).toBe('[{"value":"foo","text":"Foo"},{"value":"bar","text":"Bar"}]');
+    }
+  });
+
+  it('does not append $__all as a literal option when All is selected', () => {
+    const initial = makeV2Dashboard({
+      query: 'foo,bar',
+      currentValue: 'foo',
+      includeAll: true,
+    });
+    const changed = makeV2Dashboard({
+      query: 'foo,bar',
+      currentValue: '$__all',
+      currentText: 'All',
+      includeAll: true,
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('$__all');
+      expect(variable.spec.query).toBe('foo,bar');
+    }
   });
 });

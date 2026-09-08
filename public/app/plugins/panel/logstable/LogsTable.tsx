@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -11,10 +12,12 @@ import {
   type PanelData,
   type PanelProps,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
+import { getSuggestedFieldsFromLogList } from 'app/features/logs/components/fieldSelector/suggestedFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { LogListModel } from 'app/features/logs/components/panel/processing';
 import {
@@ -75,6 +78,7 @@ export const LogsTable = ({
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const styles = useStyles2(getStyles, height, width);
   const { app } = usePanelContext();
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -86,6 +90,12 @@ export const LogsTable = ({
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
+  const timeColumnHeaderTooltip = isLokiDataSource(data, rawTableFrame)
+    ? t(
+        'explore.logs-table.loki-time-sort-tooltip',
+        "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
+      )
+    : undefined;
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
@@ -213,7 +223,13 @@ export const LogsTable = ({
   );
 
   // Extract fields transform
-  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables });
+  const { extractedFrame } = useExtractFields({
+    rawTableFrame,
+    fieldConfig,
+    timeZone,
+    replaceVariables,
+    loadingState: data.state,
+  });
 
   // Organize fields transform
   const { organizedFrame } = useOrganizeFields({
@@ -226,6 +242,7 @@ export const LogsTable = ({
     onPermalinkClick: isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick,
     options,
     fieldConfig,
+    timeColumnHeaderTooltip,
   });
 
   // Build panel data
@@ -256,16 +273,26 @@ export const LogsTable = ({
   const logRows = useMemo(() => {
     const logs = rawTableFrame
       ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
-          (logRow) =>
-            new LogListModel(logRow, {
-              escape: false,
-              timeZone,
-              wrapLogMessage: true,
-            })
+          (logRow, index) =>
+            new LogListModel(
+              logRow,
+              {
+                escape: false,
+                timeZone,
+                wrapLogMessage: true,
+              },
+              index
+            )
         )
       : null;
     return logs ?? [];
   }, [panelData.request?.targets, rawTableFrame, timeZone]);
+
+  const getSuggestedFields = useCallback(
+    (_dataFrame: DataFrame, displayedColumns: string[], defaultColumns: string[] = []) =>
+      getSuggestedFieldsFromLogList(logRows, displayedColumns, defaultColumns, otelLogsFormattingEnabled),
+    [logRows, otelLogsFormattingEnabled]
+  );
 
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
@@ -292,7 +319,11 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {renderTable && containerElement && (
-        <LogDetailsContextProvider enableLogDetails={options.enableLogDetails ?? true} logs={logRows}>
+        <LogDetailsContextProvider
+          enableLogDetails={options.enableLogDetails ?? true}
+          logs={logRows}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
+        >
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
@@ -307,6 +338,7 @@ export const LogsTable = ({
               handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
             }
             onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
+            getSuggestedFields={getSuggestedFields}
           />
 
           <TableNGWrap
@@ -329,6 +361,7 @@ export const LogsTable = ({
             onChangeTimeRange={onChangeTimeRange}
             onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
+            rawDataFrame={rawTableFrame}
           />
 
           <LogsTableDetails
@@ -343,6 +376,20 @@ export const LogsTable = ({
     </div>
   );
 };
+
+function isLokiDataSource(data: PanelData, frame: DataFrame | null): boolean {
+  const targets = data.request?.targets;
+  if (!targets?.length) {
+    return false;
+  }
+
+  const matchingQuery = frame?.refId ? targets.find((query) => query.refId === frame.refId) : undefined;
+  if (matchingQuery) {
+    return matchingQuery.datasource?.type === 'loki';
+  }
+
+  return targets.some((query) => query.datasource?.type === 'loki');
+}
 
 const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {

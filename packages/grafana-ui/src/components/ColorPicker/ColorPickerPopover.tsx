@@ -118,8 +118,8 @@ export const ColorPickerPopover = <T extends CustomPickersDescriptor>(props: Pro
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     colorPickerPopover: css({
-      borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
+      borderRadius: theme.shape.radius.lg,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       background: theme.colors.background.elevated,
       padding: theme.spacing(0.5),
       border: `1px solid ${theme.colors.border.weak}`,
@@ -132,11 +132,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
-    }),
-    colorPickerPopoverTabs: css({
-      display: 'flex',
-      width: '100%',
-      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
     }),
   };
 };

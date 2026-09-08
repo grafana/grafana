@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
+import { store } from '@grafana/data';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 
 export interface LogDetailsContextData {
@@ -8,8 +9,10 @@ export interface LogDetailsContextData {
   detailsDisplayed: (rowIndex: number) => boolean;
   enableLogDetails: boolean;
   logs: LogListModel[];
+  prettifyDetailsJSON: boolean;
   replaceDetails: (log: LogListModel) => void;
   setCurrentLog: (log: LogListModel) => void;
+  setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   showDetails: LogListModel[];
   toggleDetails: (log: number | LogListModel) => void;
 }
@@ -20,8 +23,10 @@ export const emptyContextData: LogDetailsContextData = {
   detailsDisplayed: () => false,
   enableLogDetails: false,
   logs: [],
+  prettifyDetailsJSON: true,
   replaceDetails: () => {},
   setCurrentLog: () => {},
+  setPrettifyDetailsJSON: () => {},
   showDetails: [],
   toggleDetails: () => {},
 };
@@ -40,11 +45,30 @@ export interface Props {
   children?: ReactNode;
   enableLogDetails: boolean;
   logs: LogListModel[];
+  logOptionsStorageKey?: string;
+  prettifyDetailsJSON?: boolean;
 }
 
-export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: Props) => {
+export const LogDetailsContextProvider = ({
+  children,
+  enableLogDetails,
+  logs,
+  logOptionsStorageKey,
+  prettifyDetailsJSON: prettifyDetailsJSONProp,
+}: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
+  const [prettifyDetailsJSON, setPrettifyDetailsJSONState] = useState(
+    prettifyDetailsJSONProp ??
+      (logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyDetailsJSON`, true) : true)
+  );
+
+  // Sync prettifyDetailsJSON
+  useEffect(() => {
+    if (prettifyDetailsJSONProp !== undefined) {
+      setPrettifyDetailsJSONState(prettifyDetailsJSONProp);
+    }
+  }, [prettifyDetailsJSONProp]);
 
   // Sync show details
   useEffect(() => {
@@ -116,6 +140,16 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
     [currentLog, enableLogDetails, showDetails]
   );
 
+  const setPrettifyDetailsJSON = useCallback(
+    (prettifyDetailsJSON: boolean) => {
+      setPrettifyDetailsJSONState(prettifyDetailsJSON);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.prettifyDetailsJSON`, prettifyDetailsJSON);
+      }
+    },
+    [logOptionsStorageKey]
+  );
+
   return (
     <LogDetailsContext.Provider
       value={{
@@ -124,8 +158,10 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
         detailsDisplayed,
         enableLogDetails,
         logs,
+        prettifyDetailsJSON,
         replaceDetails,
         setCurrentLog,
+        setPrettifyDetailsJSON,
         showDetails,
         toggleDetails,
       }}

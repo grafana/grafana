@@ -1,7 +1,7 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
-function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
+export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
   const hash = djb2(name.toLowerCase());
   return Math.abs(hash % colors.length);
@@ -18,9 +18,15 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
   return getTagColor(index, theme);
 }
 
+/**
+ * Returns the background and text colors for a tag badge from the palette in the active theme
+ * (`theme.components.tag.colors`).
+ * @param index index into the palette. Wrapped with modulo, so any number is valid — indexes
+ * beyond the end of the palette cycle back around to the start.
+ */
 export function getTagColor(index: number, theme?: GrafanaTheme2) {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const { background, text } = colors[index];
+  const { background, text } = colors[Math.abs(index % colors.length)];
 
   const result = { background, text };
 

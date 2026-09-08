@@ -12,7 +12,9 @@ import (
 	"sync"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -29,6 +31,11 @@ const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
 	defaultDrainOnShutdown  = true
+
+	// DefaultMaxLabelStringSize is the default byte cap applied to any single
+	// label/annotation name or value forwarded to an Alertmanager. The
+	// prometheus stringlabels encoder panics on strings larger than 16 MiB.
+	DefaultMaxLabelStringSize = 1 << 22 // 4 MiB
 )
 
 // ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
@@ -61,6 +68,9 @@ type ExternalAMcfg struct {
 type ExternalAMOptions struct {
 	Options
 	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
+	// MaxLabelStringSize caps the byte length of any single label/annotation
+	// name or value. A non-positive value disables the clamp.
+	MaxLabelStringSize int
 }
 
 type Option func(*ExternalAMOptions)
@@ -85,6 +95,15 @@ func WithUTF8Labels() Option {
 			}
 			return labels.New(ls...)
 		}
+	}
+}
+
+// WithMaxLabelStringSize overrides the byte cap applied to label/annotation
+// names and values. The default is [DefaultMaxLabelStringSize]; a non-positive
+// value disables the clamp.
+func WithMaxLabelStringSize(size int) Option {
+	return func(opts *ExternalAMOptions) {
+		opts.MaxLabelStringSize = size
 	}
 }
 
@@ -145,6 +164,7 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 			Registerer:      reg,
 			DrainOnShutdown: defaultDrainOnShutdown,
 		},
+		MaxLabelStringSize: DefaultMaxLabelStringSize,
 	}
 
 	for _, opt := range opts {
@@ -356,14 +376,68 @@ func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerCo
 }
 
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
+	alertName := alert.Labels[model.AlertNameLabel]
+	ruleUID := alert.Labels[alertingModels.RuleUIDLabel]
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.options.sanitizeLabelSetFn(alert.Labels),
-		Annotations:  s.options.sanitizeLabelSetFn(alert.Annotations),
+		Labels:       s.options.sanitizeLabelSetFn(s.clampLabelSet(alert.Labels, "label", alertName, ruleUID)),
+		Annotations:  s.options.sanitizeLabelSetFn(s.clampLabelSet(alert.Annotations, "annotation", alertName, ruleUID)),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
 		GeneratorURL: alert.GeneratorURL.String(),
 	}
+}
+
+// clampLabelSet bounds every name and value to MaxLabelStringSize so labels.New
+// cannot hit the prometheus stringlabels panic on strings larger than 16 MiB.
+// Oversized values are truncated; oversized names are dropped, since truncating
+// names risks key collisions.
+func (s *ExternalAlertmanager) clampLabelSet(lbls models.LabelSet, kind, alertName, ruleUID string) models.LabelSet {
+	maxSize := s.options.MaxLabelStringSize
+	if maxSize <= 0 {
+		return lbls
+	}
+
+	needsClamp := false
+	for k, v := range lbls {
+		if len(k) > maxSize || len(v) > maxSize {
+			needsClamp = true
+			break
+		}
+	}
+	if !needsClamp {
+		return lbls
+	}
+
+	clamped := make(models.LabelSet, len(lbls))
+	for k, v := range lbls {
+		if len(k) > maxSize {
+			s.logger.Warn("Dropping label/annotation with name exceeding size cap",
+				"kind", kind, "namePrefix", truncateUTF8(k, 64), "size", len(k), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
+			s.manager.metrics.clampedStrings.WithLabelValues(kind, "name_dropped").Inc()
+			continue
+		}
+		if len(v) > maxSize {
+			s.logger.Warn("Truncating label/annotation value exceeding size cap",
+				"kind", kind, "name", k, "size", len(v), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
+			s.manager.metrics.clampedStrings.WithLabelValues(kind, "value_truncated").Inc()
+			v = truncateUTF8(v, maxSize)
+		}
+		clamped[k] = v
+	}
+	return clamped
+}
+
+// truncateUTF8 truncates s to at most n bytes without splitting a multi-byte
+// rune; the Alertmanager API rejects invalid UTF-8 label values.
+func truncateUTF8(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // sanitizeLabelSet sanitizes all given LabelSet keys according to sanitizeLabelName.

@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"maps"
 	"math/rand"
 	"net/url"
 	"testing"
@@ -119,9 +120,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Annotations)+1)
-					for k, v := range alertState.Annotations {
-						expected[k] = v
-					}
+					maps.Copy(expected, alertState.Annotations)
 					expected["__value_string__"] = expectedValueString
 
 					require.Equal(t, expected, result.Annotations)
@@ -140,9 +139,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Annotations)+1)
-					for k, v := range alertState.Annotations {
-						expected[k] = v
-					}
+					maps.Copy(expected, alertState.Annotations)
 					expected[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
 					expected[alertingModels.ImageURLAnnotation] = alertState.Image.URL
 
@@ -161,9 +158,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Annotations)+1)
-					for k, v := range alertState.Annotations {
-						expected[k] = v
-					}
+					maps.Copy(expected, alertState.Annotations)
 
 					require.Equal(t, expected, result.Annotations)
 				})
@@ -199,6 +194,20 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 			})
 
+			t.Run("should strip labels and annotations with an empty name or value", func(t *testing.T) {
+				alertState := randomTransition(eval.Normal, tc.state)
+				alertState.Labels[""] = "empty-name-label"
+				alertState.Labels["empty-value-label"] = ""
+				alertState.Annotations = randomMapOfStrings()
+				alertState.Annotations[""] = "empty-name-annotation"
+				alertState.Annotations["empty-value-annotation"] = ""
+				result := StateToPostableAlert(alertState, appURL)
+				require.NotContains(t, result.Labels, "")
+				require.NotContains(t, result.Labels, "empty-value-label")
+				require.NotContains(t, result.Annotations, "")
+				require.NotContains(t, result.Annotations, "empty-value-annotation")
+			})
+
 			switch tc.state {
 			case eval.NoData:
 				t.Run("should keep existing labels and change name", func(t *testing.T) {
@@ -210,9 +219,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Labels)+1)
-					for k, v := range alertState.Labels {
-						expected[k] = v
-					}
+					maps.Copy(expected, alertState.Labels)
 					expected[model.AlertNameLabel] = NoDataAlertName
 					expected[Rulename] = alertName
 
@@ -239,9 +246,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Labels)+1)
-					for k, v := range alertState.Labels {
-						expected[k] = v
-					}
+					maps.Copy(expected, alertState.Labels)
 					expected[model.AlertNameLabel] = ErrorAlertName
 					expected[Rulename] = alertName
 

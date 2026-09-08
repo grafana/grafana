@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // newTestAdapter builds a k8sRESTAdapter with the observability deps wired to
@@ -34,7 +33,6 @@ func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolde
 		store:          store,
 		accessClient:   ac,
 		folderResolver: resolver,
-		tracer:         tracing.InitializeTracerForTest(),
 		logger:         log.NewNopLogger(),
 		metrics:        ProvideMetrics(nil),
 		// use a large retention window in case of long-running tests.

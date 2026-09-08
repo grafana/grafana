@@ -1,4 +1,4 @@
-import { DragDropContext, type DragStart, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { PureComponent, type ReactNode } from 'react';
 
 import {
@@ -13,10 +13,11 @@ import {
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
@@ -45,10 +46,16 @@ export interface Props {
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
-  queryLibraryRef?: string;
-  onCancelQueryLibraryEdit?: () => void;
+  editSavedQueryRef?: string;
+  onExitQueryLibraryEdit?: () => void;
+  addingSavedQuery?: boolean;
+  onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
   panelRef?: SceneObjectRef<VizPanel>;
+  /** refId of a row to scroll into view once it renders (e.g. a freshly added query). */
+  scrollToRefId?: string;
+  /** Called after the row identified by scrollToRefId has been scrolled into view. */
+  onScrollIntoView?: () => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -188,18 +195,8 @@ export class QueryEditorRows extends PureComponent<Props> {
     );
   }
 
-  onDragStart = (result: DragStart) => {
-    const { queries, dsSettings } = this.props;
-
-    reportInteraction('query_row_reorder_started', {
-      startIndex: result.source.index,
-      numberOfQueries: queries.length,
-      datasourceType: dsSettings.type,
-    });
-  };
-
   onDragEnd = (result: DropResult) => {
-    const { queries, onQueriesChange, dsSettings } = this.props;
+    const { queries, onQueriesChange } = this.props;
 
     if (!result || !result.destination) {
       return;
@@ -207,13 +204,8 @@ export class QueryEditorRows extends PureComponent<Props> {
 
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
+
     if (startIndex === endIndex) {
-      reportInteraction('query_row_reorder_canceled', {
-        startIndex,
-        endIndex,
-        numberOfQueries: queries.length,
-        datasourceType: dsSettings.type,
-      });
       return;
     }
 
@@ -222,12 +214,7 @@ export class QueryEditorRows extends PureComponent<Props> {
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
 
-    reportInteraction('query_row_reorder_ended', {
-      startIndex,
-      endIndex,
-      numberOfQueries: queries.length,
-      datasourceType: dsSettings.type,
-    });
+    trackReorder('query', { silent: true });
   };
 
   render() {
@@ -246,10 +233,14 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryOpenChanged,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
-      queryLibraryRef,
-      onCancelQueryLibraryEdit,
+      editSavedQueryRef,
+      onExitQueryLibraryEdit,
+      addingSavedQuery,
+      onCancelAddSavedQuery,
       isOpen,
       panelRef,
+      scrollToRefId,
+      onScrollIntoView,
     } = this.props;
 
     // Scene scope for resolving section-scoped (row/tab) datasource variables, which live on a
@@ -259,7 +250,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       : undefined;
 
     return (
-      <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
+      <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
@@ -296,9 +287,13 @@ export class QueryEditorRows extends PureComponent<Props> {
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
-                      queryLibraryRef={queryLibraryRef}
-                      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+                      editSavedQueryRef={editSavedQueryRef}
+                      onExitQueryLibraryEdit={onExitQueryLibraryEdit}
+                      addingSavedQuery={addingSavedQuery}
+                      onCancelAddSavedQuery={onCancelAddSavedQuery}
                       isOpen={isOpen}
+                      scrollIntoView={scrollToRefId !== undefined && query.refId === scrollToRefId}
+                      onScrollIntoView={onScrollIntoView}
                     />
                   );
 

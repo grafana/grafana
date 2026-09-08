@@ -2,11 +2,13 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, renderLimitedComponents } from '@grafana/runtime';
 import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
+import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';
@@ -24,6 +26,9 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
   const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
+  const { components } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.UserProfileMenu,
+  });
 
   if (!node) {
     return null;
@@ -45,6 +50,12 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
             label={t('navigation.rss-button', 'Latest from the blog')}
           />
         )}
+        {renderLimitedComponents({
+          props: {},
+          components,
+          limit: 1,
+          pluginId: SETUPGUIDE_PLUGIN_ID,
+        })}
         {!config.auth.disableSignoutMenu && (
           <>
             <Menu.Divider />

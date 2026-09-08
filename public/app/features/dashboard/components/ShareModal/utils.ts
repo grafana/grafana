@@ -201,4 +201,5 @@ export const shareDashboardType: {
   publicDashboard: 'public_dashboard',
   inviteUser: 'invite_user',
   image: 'image',
+  downloadDiagnostics: 'download_diagnostics',
 };

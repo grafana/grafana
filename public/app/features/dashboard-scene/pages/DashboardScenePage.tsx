@@ -4,7 +4,6 @@ import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -20,7 +19,8 @@ import {
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
-import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+import { SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
@@ -30,6 +30,8 @@ import { DashboardConversionWarningBanner } from '../components/DashboardConvers
 import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
 import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
 import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
+import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
+import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
@@ -44,8 +46,9 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
-  const isCustomDashboardTemplatesEnabled =
-    useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null;
+  // Custom templates also require the dashboardtemplates:read RBAC permission (the API denies
+  // listing without it), matching useTemplateDashboardsAvailability's showCustomTemplates.
+  const { showCustomTemplates } = useTemplateDashboardsAvailability();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -121,6 +124,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [route, slug, type, uid]);
 
   if (!dashboard) {
+    if (loadError?.messageId === SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID) {
+      return <ScriptedDashboardsDisabledPage />;
+    }
+
     return loadError ? (
       <DashboardPageError
         error={loadError}
@@ -152,6 +159,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
+      <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
       <DashboardTemplateSavedBanner />
@@ -159,7 +167,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
-      {isCustomDashboardTemplatesEnabled && <TemplateDashboardModal />}
+      {showCustomTemplates && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}

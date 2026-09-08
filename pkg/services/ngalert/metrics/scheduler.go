@@ -180,9 +180,9 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_rule_evaluations_missed_total",
-				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
+				Help:      "The total number of rule evaluations missed, labelled by reason (e.g. a slow rule evaluation, or the state cache not yet being warmed).",
 			},
-			[]string{"org", "name"},
+			[]string{"org", "name", "reason"},
 		),
 		SimplifiedEditorRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{

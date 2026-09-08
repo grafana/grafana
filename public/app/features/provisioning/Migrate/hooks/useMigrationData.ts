@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
+import { isAppGeneratedResource } from '../../utils/managedResource';
 import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
 
 /**
@@ -32,6 +33,13 @@ export function resourceKey(resource: MigratableResource): string {
 export interface FolderRow {
   uid: string;
   title: string;
+  /**
+   * Titles of the ancestor folders above this one, outermost first and excluding
+   * the folder itself. Shown as a breadcrumb so folders that share a name (e.g.
+   * two "Team" subfolders in different parents) can be told apart. Empty for
+   * root-level folders, the synthetic General row, and non-folder synthetic rows.
+   */
+  path: string[];
   /** Number of unmanaged resources directly in this folder. */
   resourceCount: number;
   /**
@@ -66,27 +74,56 @@ function syntheticFolderUid(kind: ResourceKindInfo): string {
 }
 
 /**
+ * Walks the parent chain of a folder and returns its ancestor titles, outermost
+ * first and excluding the folder itself. Missing ancestors (a parent not present
+ * in the listed folders) end the walk; a `seen` guard keeps a malformed cyclic
+ * parent reference from looping forever.
+ */
+function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): string[] {
+  // Collected innermost-first while walking up, then reversed once so the walk
+  // stays linear (unshift-per-step would be O(depth²)).
+  const titles: string[] = [];
+  const seen = new Set<string>([uid]);
+  let parentUid = folderByUid.get(uid)?.parentUid;
+  while (parentUid && !seen.has(parentUid)) {
+    seen.add(parentUid);
+    const parent = folderByUid.get(parentUid);
+    if (!parent) {
+      break;
+    }
+    titles.push(parent.title);
+    parentUid = parent.parentUid;
+  }
+  return titles.reverse();
+}
+
+/**
  * Joins the enumerated resources into the per-folder table the UI renders.
  * Folder-scoped kinds nest under the folder that directly contains them (and
  * roll up at the root into a synthetic "General" row); non-folder kinds get one
  * synthetic folder row per kind. Already-managed resources are dropped — the
- * migrate backend only takes unmanaged ones. Folders with nothing to migrate are
- * left out entirely.
+ * migrate backend only takes unmanaged ones. App-generated resources (e.g. the
+ * SLO app's dashboards/folders) are dropped too: the backend export skips them,
+ * so offering them as selectable here would let a user pick resources that never
+ * actually migrate. Folders with nothing to migrate are left out entirely.
  */
 function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[] {
-  const folderTitle = new Map(folders.map((folder) => [folder.uid, folder.title]));
+  const folderByUid = new Map(
+    folders.filter((folder) => !isAppGeneratedResource(folder.uid)).map((folder) => [folder.uid, folder])
+  );
   const directByFolder = new Map<string, MigratableResource[]>();
   const rootResources: MigratableResource[] = [];
   const syntheticRows: FolderRow[] = [];
 
   for (const { kind, raw } of results) {
-    const unmanaged = raw.filter((r) => !r.managed);
+    const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid));
 
     if (!kind.folderScoped) {
       if (unmanaged.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
           title: kind.pluralLabel(),
+          path: [],
           resourceCount: unmanaged.length,
           directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind })),
         });
@@ -113,7 +150,8 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
   for (const [uid, directResources] of directByFolder) {
     rows.push({
       uid,
-      title: folderTitle.get(uid) ?? uid,
+      title: folderByUid.get(uid)?.title ?? uid,
+      path: ancestorTitles(uid, folderByUid),
       resourceCount: directResources.length,
       directResources,
     });
@@ -122,6 +160,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.migrate.general-folder-title', 'General (root resources)'),
+      path: [],
       resourceCount: rootResources.length,
       directResources: rootResources,
     });

@@ -1,6 +1,6 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
-import { isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/expressionRef';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
@@ -37,6 +37,8 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
+  ref = normalizeEmptyRef(ref);
+
   if (isExpressionReference(ref)) {
     const expressionDs = getExpressionDataSourceInstance();
     if (!expressionDs) {
@@ -48,15 +50,24 @@ export async function getDataSourceInstance(
   }
 
   try {
-    const settings = await getDataSourceInstanceSettings(ref, scopedVars);
+    let settings = await getDataSourceInstanceSettings(ref, scopedVars);
     if (!settings) {
       throw new Error(`Datasource ${describeRef(ref)} was not found`);
     }
 
-    // When ref is a template variable, settings.uid is the raw variable string
-    // (e.g. "${datasource}"). Use the resolved uid as the cache key so repeated
-    // calls for the same variable don't create duplicate instances.
-    const cacheUid = settings.rawRef?.uid ?? settings.uid;
+    // When ref is a template variable, the settings keep the variable string in uid/name
+    // (e.g. "${datasource}") with the resolved uid in rawRef — correct for the settings API,
+    // but a plugin instance built from them would carry the variable as its identity. Legacy
+    // DatasourceSrv.get() interpolates and returns the concrete instance, so re-resolve
+    // through rawRef and construct/cache from the concrete settings.
+    if (settings.rawRef && settings.rawRef.uid !== settings.uid) {
+      settings = await getDataSourceInstanceSettings(settings.rawRef);
+      if (!settings) {
+        throw new Error(`Datasource ${describeRef(ref)} was not found`);
+      }
+    }
+
+    const cacheUid = settings.uid;
 
     const cached = getCachedPlugin(cacheUid);
     if (cached) {
@@ -82,6 +93,22 @@ export async function getDataSourceInstance(
   } catch (err) {
     return getDataSourceInstanceFallback(ref, scopedVars, err);
   }
+}
+
+// Legacy DataSourceSrv.get() treats an empty ref ('' or { uid: '' }) as "default datasource"
+// (or a type-only lookup when ref.type is set). getDataSourceInstanceSettings only does this
+// for null/undefined, so normalize here to keep getDataSourceInstance in parity with get().
+function normalizeEmptyRef(ref: DataSourceRef | string | null | undefined): DataSourceRef | string | null | undefined {
+  if (ref === '') {
+    return undefined;
+  }
+  if (typeof ref === 'object' && ref !== null && ref.uid === '') {
+    // Keep the object only when a type-only lookup is possible; otherwise this is a plain
+    // "default datasource" request (same as an empty string), and normalizing to undefined
+    // lets describeRef report 'default' instead of 'unknown' if resolution fails.
+    return ref.type ? { ...ref, uid: undefined } : undefined;
+  }
+  return ref;
 }
 
 async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInstanceSettings): Promise<DataSourceApi> {

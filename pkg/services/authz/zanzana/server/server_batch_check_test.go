@@ -55,6 +55,23 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["check1"].GetAllowed())
 	})
 
+	t.Run("pipe in correlation id is rejected by OpenFGA", func(t *testing.T) {
+		// OpenFGA validates CorrelationId against ^[\w\d-]{1,36}$; '|' fails
+		items := []*authzv1.BatchCheckItem{
+			newItem("newFolder|get", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		_, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.Error(t, err)
+
+		// '-' separator satisfies the regex; the request succeeds.
+		items = []*authzv1.BatchCheckItem{
+			newItem("newFolder-get", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Contains(t, res.GetResults(), "newFolder-get")
+	})
+
 	t.Run("multiple items with mixed permissions", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // user:1 has access
@@ -357,14 +374,14 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["user-create"].GetAllowed())
 	})
 
-	t.Run("user:21 (team admin) create on their team is allowed via per-object team create", func(t *testing.T) {
+	t.Run("user:21 (team admin) create on their team is denied: team create is group_resource only", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("team-create", utils.VerbCreate, teamGroup, teamResource, "", "", "admin-team"),
 		}
 		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:21", items))
 		require.NoError(t, err)
 		require.Len(t, res.GetResults(), 1)
-		assert.True(t, res.GetResults()["team-create"].GetAllowed())
+		assert.False(t, res.GetResults()["team-create"].GetAllowed())
 	})
 
 	t.Run("subresource create on a user is allowed via resource_create", func(t *testing.T) {

@@ -1,0 +1,64 @@
+name: Label community champion issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  label:
+    name: Add community/champion label if author is a known champion
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # checkout the curated list
+      issues: write   # add the community/champion label
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/community-champions.json
+
+      - name: Check author and label if champion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ ! -f ".github/community-champions.json" ]; then
+            echo "::notice::No community-champions.json found, skipping"
+            exit 0
+          fi
+
+          IS_CHAMPION=$(node -e "
+            const data = JSON.parse(require('fs').readFileSync('.github/community-champions.json', 'utf-8'));
+            const list = Array.isArray(data.champions) ? data.champions : [];
+            const author = process.env.ISSUE_AUTHOR || '';
+            const match = list.some(h => typeof h === 'string' && h.toLowerCase() === author.toLowerCase());
+            process.stdout.write(match ? 'true' : 'false');
+          ")
+
+          echo "Author: $ISSUE_AUTHOR | Champion: $IS_CHAMPION"
+
+          if [ "$IS_CHAMPION" != "true" ]; then
+            echo "Not a champion, skipping label"
+            exit 0
+          fi
+
+          LABELS=$(gh api "repos/$REPO/issues/$ISSUE_NUMBER" --jq '[.labels[].name] | join(",")')
+          if echo "$LABELS" | grep -q "community/champion"; then
+            echo "Already labeled community/champion, skipping"
+            exit 0
+          fi
+
+          # Ensure the label exists. Create only if missing; no-op (and no overwrite) if it already exists.
+          gh label create "community/champion" \
+            --color "FFD700" \
+            --description "Issue opened by a community champion" \
+            --repo "$REPO" 2>/dev/null || true
+
+          echo "Adding community/champion label"
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-label "community/champion"

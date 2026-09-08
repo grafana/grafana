@@ -28,7 +28,7 @@ type DataSourceMigrator interface {
 	// PluginGroups resolves the distinct per-plugin GroupResources for the given
 	// namespace, including stale groups from unified storage, for bulk stream
 	// pre-authorization.
-	PluginGroups(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error)
+	PluginGroups(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error)
 }
 
 var logger = log.New("storage.unified.datasource.migrator")
@@ -196,7 +196,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 	return nil
 }
 
-func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error) {
+func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error) {
 	dsList, err := m.getter(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -226,19 +226,21 @@ func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string,
 // that currently hold datasource data in the given namespace. This ensures
 // stale groups (migrated previously but since deleted from legacy) are included
 // in the bulk collection so their data is cleaned up on re-migration.
-func storageGroupsForDatasources(ctx context.Context, namespace string, client resource.SearchClient) ([]schema.GroupResource, error) {
-	resp, err := client.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: namespace})
+//
+// It uses discovery (ListStoredResources) rather than GetStats: only the
+// group/resource identities are needed, not counts, and discovery avoids
+// building search indexes during migration.
+func storageGroupsForDatasources(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error) {
+	resp, err := client.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{
+		Namespace: namespace,
+		Resource:  "datasources",
+	})
 	if err != nil {
-		return nil, fmt.Errorf("getting storage stats: %w", err)
+		return nil, fmt.Errorf("listing stored datasource resources: %w", err)
 	}
-	if resp.Error != nil {
-		return nil, fmt.Errorf("getting storage stats: %s", resp.Error.Message)
-	}
-	var result []schema.GroupResource
-	for _, s := range resp.Stats {
-		if s.Resource == "datasources" {
-			result = append(result, schema.GroupResource{Group: s.Group, Resource: s.Resource})
-		}
+	result := make([]schema.GroupResource, 0, len(resp.Items))
+	for _, item := range resp.Items {
+		result = append(result, schema.GroupResource{Group: item.Group, Resource: item.Resource})
 	}
 	return result, nil
 }

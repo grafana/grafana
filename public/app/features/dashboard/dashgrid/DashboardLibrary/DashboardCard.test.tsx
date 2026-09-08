@@ -2,9 +2,14 @@ import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { type AssistantHook, useAssistant } from '@grafana/assistant';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
-import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
+import {
+  createMockCustomTemplateDashboard,
+  createMockGnetDashboard,
+  createMockPluginDashboard,
+} from './utils/test-utils';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
@@ -82,14 +87,14 @@ describe('DashboardCard', () => {
     expect(screen.getByText('My custom description')).toBeInTheDocument();
   });
 
-  it('should render fallback text when description is empty', () => {
+  it('should not render a description when it is empty', () => {
     const dashboard = createMockPluginDashboard({ description: '' });
     render(
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
     expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
-    expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
+    expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
   });
 
   describe('Button interactions', () => {
@@ -664,7 +669,7 @@ describe('DashboardCard', () => {
 
   describe('Custom template kind', () => {
     it('should render exactly one heading containing the title', () => {
-      const dashboard = createMockGnetDashboard({ description: 'A custom template description' });
+      const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
       render(
         <DashboardCard
           title="My Custom Template"
@@ -678,8 +683,8 @@ describe('DashboardCard', () => {
       expect(headings).toHaveLength(1);
     });
 
-    it('should render the description inside the rectangle, not in the bottom section', () => {
-      const dashboard = createMockGnetDashboard({ description: 'A custom template description' });
+    it('should render the description in the bottom section', () => {
+      const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
       render(
         <DashboardCard
           title="My Custom Template"
@@ -694,8 +699,8 @@ describe('DashboardCard', () => {
       expect(descriptions[0]).toHaveTextContent('A custom template description');
     });
 
-    it('should not render the "No preview available" placeholder', () => {
-      const dashboard = createMockGnetDashboard();
+    it('should render the "No preview available" placeholder when there is no image', () => {
+      const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
           title="My Custom Template"
@@ -705,11 +710,32 @@ describe('DashboardCard', () => {
         />
       );
 
+      expect(screen.getByText('No preview available')).toBeInTheDocument();
+    });
+
+    it('should render the preview image alongside the title and description in the bottom section', () => {
+      const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+          imageUrl="https://example.com/preview.png"
+        />
+      );
+
+      expect(screen.getByRole('img', { name: 'My Custom Template' })).toHaveAttribute(
+        'src',
+        'https://example.com/preview.png'
+      );
+      expect(screen.getByRole('heading', { name: 'My Custom Template' })).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('A custom template description');
       expect(screen.queryByText('No preview available')).not.toBeInTheDocument();
     });
 
     it('should render "Created by:" line with creator name when createdByName is provided', () => {
-      const dashboard = createMockGnetDashboard();
+      const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
           title="My Custom Template"
@@ -725,7 +751,7 @@ describe('DashboardCard', () => {
     });
 
     it('should not render "Created by:" line when createdByName is undefined', () => {
-      const dashboard = createMockGnetDashboard();
+      const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
           title="My Custom Template"
@@ -757,7 +783,7 @@ describe('DashboardCard', () => {
       render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           kind="custom_dashboard_template"
         />
@@ -769,26 +795,28 @@ describe('DashboardCard', () => {
       );
     });
 
-    it('should render Edit button when onEdit is provided', () => {
+    it('should show Edit in the actions menu when onEdit is provided', async () => {
       const mockOnEdit = jest.fn();
-      render(
+      const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           onEdit={mockOnEdit}
           kind="custom_dashboard_template"
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Edit template: My Custom Template' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Edit template: My Custom Template' })).toBeInTheDocument();
     });
 
     it('should render tags when provided', () => {
       render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           kind="custom_dashboard_template"
           tags={['observability', 'team-a']}
@@ -799,8 +827,8 @@ describe('DashboardCard', () => {
       expect(screen.getByText('team-a')).toBeInTheDocument();
     });
 
-    it('should fall back to "No description available" when description is empty', () => {
-      const dashboard = createMockGnetDashboard({ description: '' });
+    it('should not render a description when a custom template has none', () => {
+      const dashboard = createMockCustomTemplateDashboard({ description: '' });
       render(
         <DashboardCard
           title="My Custom Template"
@@ -810,32 +838,80 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
+      expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
     });
 
-    it('should call onEdit when the Edit button is clicked', async () => {
+    it('should call onEdit when the Edit menu item is clicked', async () => {
       const mockOnEdit = jest.fn();
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           onEdit={mockOnEdit}
           kind="custom_dashboard_template"
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Edit template: My Custom Template' }));
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Edit template: My Custom Template' }));
 
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
       expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
+    it('should confirm in place before calling onDelete', async () => {
+      const mockOnDelete = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockCustomTemplateDashboard()}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Delete template: My Custom Template' }));
+
+      // The confirmation replaces this card's content; onDelete must not fire until confirmed.
+      expect(screen.getByText('Delete this template?')).toBeInTheDocument();
+      expect(mockOnDelete).not.toHaveBeenCalled();
+
+      await user.type(await screen.findByTestId(selectors.pages.ConfirmModal.input), 'Delete');
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+      expect(mockOnDelete).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
+    it('should not call onDelete when the deletion is cancelled', async () => {
+      const mockOnDelete = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockCustomTemplateDashboard()}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Delete template: My Custom Template' }));
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(mockOnDelete).not.toHaveBeenCalled();
+      // The card returns to its normal state.
+      expect(screen.getByRole('button', { name: 'Use template: My Custom Template' })).toBeInTheDocument();
     });
 
     it('should call onClick when the primary "Use template" button is clicked', async () => {
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           kind="custom_dashboard_template"
         />

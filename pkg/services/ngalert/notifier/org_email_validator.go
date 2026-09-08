@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	alertingModels "github.com/grafana/alerting/models"
+	emailV0 "github.com/grafana/alerting/receivers/email/v0mimir1"
 	emailv1 "github.com/grafana/alerting/receivers/email/v1"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -25,7 +26,7 @@ type OrgMembershipLookup interface {
 
 type EmailIntegrationValidator interface {
 	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
-	ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error
 }
 
 // OrgUserEmailValidator gates email address validation against org membership.
@@ -41,46 +42,80 @@ func NewEmailValidator(orgSvc OrgMembershipLookup, enabled bool) EmailIntegratio
 	return &NoopOrgEmailValidator{}
 }
 
-func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
-	if integration.Config.Type() != schema.EmailType || integration.Config.Version != schema.V1 { // TODO: support v0
+func (v *OrgUserEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
+	if integration.Config.Type() != schema.EmailType {
 		return nil
 	}
-	cfg, err := IntegrationToIntegrationConfig(integration)
+	// Decrypt secure settings into a clone so the version parsers can read them as plain settings.
+	decrypted := integration.Clone()
+	if err := decrypted.Decrypt(decryptFn); err != nil {
+		return fmt.Errorf("failed to decrypt integration secure settings: %w", err)
+	}
+	cfg, err := IntegrationToIntegrationConfig(decrypted)
 	if err != nil {
 		return fmt.Errorf("failed to convert integration to integration config: %w", err)
 	}
 	return v.ValidateIntegrationConfig(ctx, orgID, cfg, logger)
 }
 
+// ValidateIntegrationConfig checks the integration's email addresses against org membership.
+// It expects any secure settings to already be decrypted into integration.Settings.
 func (v *OrgUserEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
-	if integration.Type != schema.EmailType || integration.Version != schema.V1 { // TODO: support v0
+	if integration.Type != schema.EmailType {
 		return nil
 	}
-	cfg, err := emailv1.NewConfig(integration.Settings, nil)
-	if err != nil {
-		return fmt.Errorf("failed to parse email settings: %w", err)
+	var addrs []*mail.Address
+	switch integration.Version {
+	case schema.V1:
+		cfg, err := emailv1.NewConfig(integration.Settings, nil)
+		if err != nil {
+			return fmt.Errorf("failed to parse email settings: %w", err)
+		}
+		addrs = make([]*mail.Address, 0, len(cfg.Addresses))
+		for _, address := range cfg.Addresses {
+			if address == "" {
+				continue
+			}
+			if strings.Contains(address, "{{") {
+				return fmt.Errorf("templates in email addresses are not allowed when validating against organization members")
+			}
+			addr, err := mail.ParseAddress(address)
+			if err != nil {
+				return fmt.Errorf("failed to parse email address %q: %w", address, err)
+			}
+			addrs = append(addrs, addr)
+		}
+	case schema.V0mimir1:
+		// Secure settings are already decrypted into the settings by the caller, so no decryption
+		// is needed here. v0mimir1's NewConfig dereferences the decrypt func unconditionally (unlike
+		// v1's), so pass a no-op that returns the fallback rather than nil, which would panic.
+		noDecrypt := func(_, fallback string) (string, bool) { return fallback, false }
+		cfg, err := emailV0.NewConfig(integration.Settings, noDecrypt)
+		if err != nil {
+			return fmt.Errorf("failed to parse email settings: %w", err)
+		}
+		if strings.Contains(cfg.To, "{{") {
+			return fmt.Errorf("templates in email addresses are not allowed when validating against organization members")
+		}
+		addrs, err = mail.ParseAddressList(cfg.To)
+		if err != nil {
+			return fmt.Errorf("parse 'to' addresses: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported email integration version: %s", integration.Version)
 	}
 
 	// pending maps lowercase email to its original display form.
 	// It doubles as a dedup set and tracks which addresses haven't been matched yet.
-	pending := make(map[string]string, len(cfg.Addresses))
-	emails := make([]string, 0, len(cfg.Addresses))
-	for _, address := range cfg.Addresses {
-		if address == "" {
+	pending := make(map[string]string, len(addrs))
+	emails := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		lower := strings.ToLower(addr.Address)
+		if _, ok := pending[lower]; ok {
 			continue
 		}
-		if strings.Contains(address, "{{") {
-			return fmt.Errorf("templates in email addresses are not allowed when validating against organization members")
-		}
-		addr, err := mail.ParseAddress(address)
-		if err != nil {
-			return fmt.Errorf("failed to parse email address %q: %w", address, err)
-		}
-		lower := strings.ToLower(addr.Address)
-		if _, ok := pending[lower]; !ok {
-			pending[lower] = addr.Address
-			emails = append(emails, lower)
-		}
+		pending[lower] = addr.Address
+		emails = append(emails, lower)
 	}
 
 	if len(emails) == 0 {
@@ -112,6 +147,6 @@ func (v *NoopOrgEmailValidator) ValidateIntegrationConfig(_ context.Context, _ i
 	return nil
 }
 
-func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ int64, _ models.Integration, _ log.Logger) error {
+func (v *NoopOrgEmailValidator) ValidateIntegration(_ context.Context, _ int64, _ models.Integration, _ models.DecryptFn, _ log.Logger) error {
 	return nil
 }

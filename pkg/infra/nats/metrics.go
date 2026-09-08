@@ -1,6 +1,7 @@
 package nats
 
 import (
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -18,6 +19,7 @@ type connectionMetrics struct {
 	disconnects         prometheus.Counter
 	connectionErrors    prometheus.Counter
 	disconnectedSeconds prometheus.Histogram
+	asyncErrors         *prometheus.CounterVec
 }
 
 func newConnectionMetrics(role connRole) connectionMetrics {
@@ -45,7 +47,7 @@ func newConnectionMetrics(role connRole) connectionMetrics {
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      prefix + "connection_errors_total",
-			Help:      "Total number of NATS asynchronous connection errors.",
+			Help:      "Total number of failed NATS connect attempts.",
 		}),
 		// Observed when the connection is re-established: the length of each outage
 		// is exactly the window during which this node relies on the polling
@@ -57,11 +59,24 @@ func newConnectionMetrics(role connRole) connectionMetrics {
 			Help:      "Duration of NATS disconnections, observed when the connection reconnects.",
 			Buckets:   []float64{0.5, 1, 2, 5, 10, 30, 60, 120, 300},
 		}),
+		asyncErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      prefix + "async_errors_total",
+			Help:      "NATS asynchronous errors reported on the connection, by group, resource and classified error.",
+		}, []string{"group", "resource", "error"}),
 	}
 }
 
+func (m connectionMetrics) recordAsyncError(sub *natsclient.Subscription, err error) {
+	if err == nil {
+		return
+	}
+	m.asyncErrors.WithLabelValues(asyncErrorLabels(sub, err)).Inc()
+}
+
 func (m connectionMetrics) collectors() []prometheus.Collector {
-	return []prometheus.Collector{m.connectionStatus, m.reconnects, m.disconnects, m.connectionErrors, m.disconnectedSeconds}
+	return []prometheus.Collector{m.connectionStatus, m.reconnects, m.disconnects, m.connectionErrors, m.disconnectedSeconds, m.asyncErrors}
 }
 
 // publisherMetrics covers the publisher connection plus its publish counters.
@@ -71,8 +86,8 @@ type publisherMetrics struct {
 	publishErrors     prometheus.Counter
 }
 
-func newPublisherMetrics(reg prometheus.Registerer) *publisherMetrics {
-	m := &publisherMetrics{
+func newPublisherMetrics() *publisherMetrics {
+	return &publisherMetrics{
 		connectionMetrics: newConnectionMetrics(rolePublisher),
 		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -87,10 +102,10 @@ func newPublisherMetrics(reg prometheus.Registerer) *publisherMetrics {
 			Help:      "Total number of NATS publish errors.",
 		}),
 	}
+}
 
-	reg.MustRegister(append(m.collectors(), m.messagesPublished, m.publishErrors)...)
-
-	return m
+func (m *publisherMetrics) collectors() []prometheus.Collector {
+	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.
@@ -99,11 +114,10 @@ type subscriberMetrics struct {
 	messagesReceived prometheus.Counter
 	subscribeErrors  prometheus.Counter
 	handlerDuration  prometheus.Histogram
-	slowConsumers    prometheus.Counter
 }
 
-func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
-	m := &subscriberMetrics{
+func newSubscriberMetrics() *subscriberMetrics {
+	return &subscriberMetrics{
 		connectionMetrics: newConnectionMetrics(roleSubscriber),
 		messagesReceived: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -119,7 +133,7 @@ func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
 		}),
 		// Time spent in the message handler, the leading indicator of a slow
 		// consumer: a handler that lags lets the client-side buffer fill until the
-		// broker drops messages (slowConsumers below).
+		// broker drops messages (asyncErrors, error="slow_consumer").
 		handlerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
@@ -127,19 +141,11 @@ func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
 			Help:      "Time spent processing a received message in the subscriber handler.",
 			Buckets:   prometheus.DefBuckets,
 		}),
-		// Slow-consumer async errors are connection-wide (NATS cannot attribute the
-		// dropped messages to a single logical subscriber), so this is unlabeled.
-		slowConsumers: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "subscriber_slow_consumers_total",
-			Help:      "Total number of NATS slow-consumer errors (messages dropped because the client could not keep up).",
-		}),
 	}
+}
 
-	reg.MustRegister(append(m.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)...)
-
-	return m
+func (m *subscriberMetrics) collectors() []prometheus.Collector {
+	return append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration)
 }
 
 // serverMetrics covers the embedded NATS server. It is registered only in

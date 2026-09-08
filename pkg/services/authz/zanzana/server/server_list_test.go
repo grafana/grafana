@@ -204,12 +204,12 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.True(t, res.GetAll())
 	})
 
-	t.Run("user:21 (team admin) listing teams with create returns the admined team", func(t *testing.T) {
-		// teams keep a per-object `create`, so this lists the admined team rather than empty.
+	t.Run("user:21 (team admin) listing teams with create returns empty: team create is group_resource only", func(t *testing.T) {
+		// teams have no per-object `create`; admin of a team does not make it "creatable".
 		res, err := server.List(newContextWithNamespace(), newCreateList("user:21", teamGroup, teamResource))
 		require.NoError(t, err)
 		assert.False(t, res.GetAll())
-		assert.Contains(t, res.GetItems(), "admin-team")
+		assert.NotContains(t, res.GetItems(), "admin-team")
 	})
 
 	t.Run("user:1 listing teams with create returns empty, not error", func(t *testing.T) {
@@ -464,12 +464,12 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.True(t, res.GetAll())
 	})
 
-	t.Run("user:21 (team admin) listing teams with create returns the admined team", func(t *testing.T) {
-		// teams keep a per-object `create`, so this lists the admined team rather than empty.
+	t.Run("user:21 (team admin) listing teams with create returns empty: team create is group_resource only", func(t *testing.T) {
+		// teams have no per-object `create`; admin of a team does not make it "creatable".
 		res, err := server.List(newContextWithNamespace(), newCreateList("user:21", teamGroup, teamResource))
 		require.NoError(t, err)
 		assert.False(t, res.GetAll())
-		assert.Contains(t, res.GetItems(), "admin-team")
+		assert.NotContains(t, res.GetItems(), "admin-team")
 	})
 
 	t.Run("user:1 listing teams with create returns empty, not error", func(t *testing.T) {

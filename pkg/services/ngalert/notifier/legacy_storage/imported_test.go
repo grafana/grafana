@@ -68,7 +68,7 @@ receivers:
   - name: dupe-receiver
 `
 		extra := extraConfig(dupeConfig)
-		expectedDedupSuffix := extra.Identifier
+		expectedDedupSuffix := "_" + extra.Identifier
 		rev := getConfigRevisionForTest(withExtraConfig(extra))
 		imported, err = rev.Imported()
 		require.NoError(t, err)
@@ -151,7 +151,7 @@ receivers:
   - name: r1
 `
 		extra := extraConfig(dupeConfig)
-		expectedDedupSuffix := extra.Identifier
+		expectedDedupSuffix := "_" + extra.Identifier
 		rev := getConfigRevisionForTest(withExtraConfig(extra))
 
 		imported, err := rev.Imported()
@@ -231,7 +231,7 @@ mute_time_intervals:
   - name: mute-interval-1
 `
 		extra := extraConfig(dupeConfig)
-		expectedDedupSuffix := extra.Identifier
+		expectedDedupSuffix := "_" + extra.Identifier
 		rev := getConfigRevisionForTest(withExtraConfig(extra))
 
 		imported, err := rev.Imported()

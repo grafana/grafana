@@ -89,10 +89,12 @@ export function Migrate() {
     );
   }
 
-  // Migration writes to a repository's configured branch, so it needs a repo
-  // with the `write` workflow — matching the guard in the drawer. Without one,
-  // the table footer surfaces a connect action instead of a dead button.
-  const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
+  // Migration needs somewhere to write to. Offer the migrate flow whenever a
+  // repository is connected — even one that can't currently push — and let the
+  // drawer's repository picker disable the un-pushable ones and explain how to
+  // enable them. Only when nothing is connected does the footer fall back to a
+  // connect action instead of a dead button.
+  const hasRepo = (repos ?? []).length > 0;
   // `allSelected` reflects whether every migratable folder in the table is
   // picked, including any synthetic per-kind folder. The select-all checkbox
   // itself is scoped to the search-filtered rows inside the table.
@@ -154,7 +156,7 @@ export function Migrate() {
           {/* Migrating everything is stats-driven and doesn't need the resource
               list, so keep it reachable even when the list failed to load. */}
           {hasUnmanaged &&
-            (hasWriteRepo ? (
+            (hasRepo ? (
               <Button variant="primary" icon="upload" onClick={() => setDrawerScope('all')}>
                 <Trans i18nKey="provisioning.migrate.migrate-everything">Migrate everything</Trans>
               </Button>
@@ -176,7 +178,7 @@ export function Migrate() {
                   { kinds: failedKinds.map((kind) => kind.pluralLabel()).join(', ') }
                 )}
                 {hasUnmanaged &&
-                  (hasWriteRepo ? (
+                  (hasRepo ? (
                     <Button variant="secondary" icon="upload" onClick={() => setDrawerScope('all')}>
                       <Trans i18nKey="provisioning.migrate.migrate-everything">Migrate everything</Trans>
                     </Button>
@@ -200,7 +202,7 @@ export function Migrate() {
             // resources so an incomplete list never migrates un-shown kinds.
             onMigrateSelected={() => setDrawerScope(migrateAllUnmanaged ? 'all' : 'selected')}
             submitDisabled={!canSubmit}
-            canMigrate={hasWriteRepo}
+            canMigrate={hasRepo}
             connectAction={<ConnectRepositoryButton items={repos ?? []} />}
           />
         </Stack>

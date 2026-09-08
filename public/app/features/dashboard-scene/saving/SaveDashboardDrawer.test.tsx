@@ -1,4 +1,4 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { act, screen, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
@@ -6,12 +6,18 @@ import { byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyManagerKind,
+  DENY_ALL_PREDEFINED,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
@@ -27,6 +33,11 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
     validateNewDashboardName: () => true,
   },
+}));
+
+// Monaco can't boot web workers in jsdom
+jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
+  MonacoDiffEditor: () => <div data-testid="schema-diff-editor" />,
 }));
 
 const saveDashboardMutationMock = jest.fn();
@@ -144,6 +155,25 @@ describe('SaveDashboardDrawer', () => {
       expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
     });
 
+    it('Should keep form state when switching between Details and Changes tabs', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
+
+      openAndRender();
+
+      await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange));
+      const message = await screen.findByLabelText('message');
+      await userEvent.type(message, 'my save note');
+
+      await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
+      expect(screen.getByLabelText('message')).not.toBeVisible();
+
+      await userEvent.click(screen.getByRole('tab', { name: /Details/ }));
+      expect(screen.getByLabelText('message')).toBeVisible();
+      expect(screen.getByLabelText('message')).toHaveValue('my save note');
+    });
+
     it('When refresh changed show save refresh option', async () => {
       const { dashboard, openAndRender } = setup();
 
@@ -186,7 +216,7 @@ describe('SaveDashboardDrawer', () => {
 
       await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
-      expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
+      expect(await screen.findByTestId('schema-diff-editor')).toBeInTheDocument();
     });
 
     it('Can save', async () => {
@@ -231,11 +261,11 @@ describe('SaveDashboardDrawer', () => {
 
   describe('When a dashboard is managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('It should show the changes tab if the resource can be edited', async () => {
@@ -309,6 +339,120 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
+      expect(dataSent.k8s).toBeUndefined();
+    });
+
+    it('restores meta on cancel after a Save As folder change', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: { folderUid: 'original-folder', folderTitle: 'Original' },
+      });
+      const initialFolderUid = dashboard.getInitialState()?.meta.folderUid;
+
+      const drawer = openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      act(() => {
+        dashboard.setState({
+          meta: {
+            ...dashboard.state.meta,
+            folderUid: 'other-folder',
+            folderTitle: 'Other',
+          },
+        });
+      });
+      expect(dashboard.state.meta.folderUid).toBe('other-folder');
+
+      act(() => {
+        drawer.onClose();
+      });
+
+      expect(dashboard.state.overlay).toBeUndefined();
+      expect(dashboard.state.meta.folderUid).toBe(initialFolderUid);
+    });
+
+    it('Should persist predefined-variable denylist annotations', async () => {
+      const denyList = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: denyList,
+            },
+          },
+        },
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.k8s).toEqual({
+        annotations: { [AnnoKeyIgnorePredefinedVariables]: denyList },
+      });
+      expect(dataSent.k8s?.name).toBeUndefined();
+    });
+  });
+
+  describe('Tags', () => {
+    it('Should send the tags set on a new dashboard before its first save', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      act(() => {
+        dashboard.setState({ version: 0, tags: ['my-tag'] });
+      });
+
+      openAndRender();
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Copy tags')).not.toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual(['my-tag']);
+    });
+
+    it('Should drop the source tags when saving a copy with Copy tags off', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      act(() => {
+        dashboard.setState({ tags: ['my-tag'] });
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual([]);
+    });
+
+    it('Should add the source tags when saving a copy with Copy tags on', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      act(() => {
+        dashboard.setState({ tags: ['my-tag'] });
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Copy tags'));
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual(['my-tag']);
     });
   });
 

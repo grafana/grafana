@@ -116,6 +116,26 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 			require.Equal(t, "", *replaced.Spec.Timezone, "PUT must clear timezone it omitted")
 		}
 	})
+
+	t.Run("merged preferences via resource-shaped GET", func(t *testing.T) {
+		admin := helper.Org1.Admin
+		adminName := "user-" + admin.Identity.GetIdentifier()
+		putResult := putUserPrefsK8s(t, helper, admin, adminName, fmt.Sprintf(`{"metadata": {"name": "%s"}, "spec": {"theme":"aubergine"}}`, adminName))
+		require.NoError(t, putResult.Error())
+
+		client := admin.RESTClient(t, &preferences.GroupVersion)
+		raw, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
+			"namespaces", "default",
+			"preferences", "merged").Do(context.Background()).Raw()
+		require.NoError(t, err, "GET preferences/merged: %s", string(raw))
+
+		out := &preferences.Preferences{}
+		require.NoError(t, json.Unmarshal(raw, out))
+		require.NotNil(t, out.Spec.Theme)
+		require.Equal(t, "aubergine", *out.Spec.Theme, "user preference must win in the merged view")
+		require.Contains(t, out.Annotations[preferences.APIGroup+"/source"], adminName,
+			"merged response must record the user preferences as a source")
+	})
 }
 
 func putUserPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, user apis.User, name string, body string) rest.Result {

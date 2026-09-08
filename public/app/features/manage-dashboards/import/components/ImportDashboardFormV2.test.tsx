@@ -236,4 +236,36 @@ describe('ImportDashboardFormV2', () => {
 
     expect(folderPicker).toHaveValue('some-folder');
   });
+
+  it('renders section constant with scope description and scoped form key', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [],
+      constants: [
+        {
+          name: 'environment',
+          label: 'Environment',
+          info: 'Specify a string constant',
+          value: 'production',
+          type: InputType.Constant,
+        },
+        {
+          name: 'environment',
+          label: 'Environment',
+          info: 'Specify a string constant',
+          value: 'staging',
+          type: InputType.Constant,
+          path: '/rows/0',
+          scopeLabel: 'Row: Servers',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    expect(screen.getAllByText('Environment')).toHaveLength(2);
+    expect(screen.getByText('Row: Servers')).toBeInTheDocument();
+    expect(document.querySelector('input[name="constant-dashboard-environment"]')).toBeInTheDocument();
+    expect(document.querySelector('input[name="constant-_rows_0-environment"]')).toBeInTheDocument();
+  });
 });

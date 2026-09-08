@@ -52,6 +52,19 @@ func (session *Session) str2Time(col *core.Column, data string) (outTime time.Ti
 			x, err = time.ParseInLocation("2006-01-02 15:04:05.9999999 Z07:00", sdata, parseLoc)
 			//session.engine.logger.Debugf("time(3) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
 		}
+		if err != nil {
+			legacyTime := sdata
+			if monotonicClock := strings.Index(legacyTime, " m="); monotonicClock >= 0 {
+				legacyTime = legacyTime[:monotonicClock]
+			}
+			x, err = time.ParseInLocation("2006-01-02 15:04:05.999999999 -0700 MST", legacyTime, parseLoc)
+			if err != nil {
+				parts := strings.Fields(legacyTime)
+				if len(parts) == 4 && parts[2] == parts[3] {
+					x, err = time.ParseInLocation("2006-01-02 15:04:05.999999999 -0700", strings.Join(parts[:3], " "), parseLoc)
+				}
+			}
+		}
 	} else if len(sdata) == 19 && strings.Contains(sdata, "-") {
 		x, err = time.ParseInLocation("2006-01-02 15:04:05", sdata, parseLoc)
 		//session.engine.logger.Debugf("time(4) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)

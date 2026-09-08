@@ -286,11 +286,11 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:21 (team admin) create check on their team is allowed via per-object team create", func(t *testing.T) {
-		// teams keep a per-object `create` granted to admins, so this resolves allowed.
+	t.Run("user:21 (team admin) create check on their team is denied: team create is group_resource only", func(t *testing.T) {
+		// teams have no per-object `create`; being admin of a team does not grant creating it.
 		res, err := server.Check(newContextWithNamespace(), newReq("user:21", utils.VerbCreate, teamGroup, teamResource, "", "", "admin-team"))
 		require.NoError(t, err)
-		assert.True(t, res.GetAllowed())
+		assert.False(t, res.GetAllowed())
 	})
 
 	// Subresource `create` must still resolve even though the base `create` relation does not
@@ -325,6 +325,89 @@ func TestIntegrationServerCheck(t *testing.T) {
 
 	t.Run("team subresource set_permissions is denied, not errored", func(t *testing.T) {
 		res, err := server.Check(newContextWithNamespace(), newReq("user:1", utils.VerbSetPermissions, teamGroup, teamResource, statusSubresource, "", "1"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+}
+
+func TestIntegrationServerCheckGenericDatasourceCreate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
+	newReq := func(verb, group, resource, subresource, name string) *authzv1.CheckRequest {
+		return &authzv1.CheckRequest{
+			Namespace:   namespace,
+			Subject:     "user:u1",
+			Verb:        verb,
+			Group:       group,
+			Resource:    resource,
+			Subresource: subresource,
+			Name:        name,
+		}
+	}
+
+	t.Run("allows the granted query subresource", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, datasourceGroup, datasourceResource, datasourceQuerySubresource, "ds-1",
+		))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("denies another datasource UID", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, datasourceGroup, datasourceResource, datasourceQuerySubresource, "ds-2",
+		))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("subresource query tuple does not grant reading the datasource", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbGet, datasourceGroup, datasourceResource, "", "ds-1",
+		))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("subresource query tuple does not grant creating the datasource", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, datasourceGroup, datasourceResource, "", "ds-1",
+		))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("denies another group", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, "prometheus.datasource.grafana.app", datasourceResource, datasourceQuerySubresource, "ds-1",
+		))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("denies another resource", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, datasourceGroup, "connections", datasourceQuerySubresource, "ds-1",
+		))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("denies another subresource", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, datasourceGroup, datasourceResource, "metadata", "ds-1",
+		))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("does not grant group-wide datasource create", func(t *testing.T) {
+		res, err := server.Check(newContextWithNamespace(), newReq(
+			utils.VerbCreate, datasourceGroup, datasourceResource, "", "",
+		))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
 	})

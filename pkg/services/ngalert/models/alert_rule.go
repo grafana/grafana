@@ -962,16 +962,12 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Annotations != nil {
 		result.Annotations = make(map[string]string, len(alertRule.Annotations))
-		for s, s2 := range alertRule.Annotations {
-			result.Annotations[s] = s2
-		}
+		maps.Copy(result.Annotations, alertRule.Annotations)
 	}
 
 	if alertRule.Labels != nil {
 		result.Labels = make(map[string]string, len(alertRule.Labels))
-		for s, s2 := range alertRule.Labels {
-			result.Labels[s] = s2
-		}
+		maps.Copy(result.Labels, alertRule.Labels)
 	}
 
 	if alertRule.Record != nil {
@@ -1127,8 +1123,9 @@ type ListAlertRulesQuery struct {
 	// DataSourceUIDs allows searching for alert rules using data sources
 	// that match any of the given UIDs exactly (case sensitive).
 	DataSourceUIDs []string
-	// SearchTitle allows searching for alert rules that contain
-	// the given string in their title (case insensitive)
+	// SearchTitle allows searching for alert rules whose title contains every
+	// whitespace-separated term of the given string, in any order (case
+	// insensitive).
 	SearchTitle string
 	// SearchRuleGroup allows searching for alert rules in groups that contain
 	// the given string in their name (case insensitive)

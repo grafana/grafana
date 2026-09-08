@@ -2,12 +2,14 @@ package common
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,6 +44,7 @@ const (
 )
 
 var (
+	KindNotebooks       string = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
 	KindUsers           string = iamv0.UserKind().GroupVersionResource().Resource
 	KindServiceAccounts string = iamv0.ServiceAccountKind().GroupVersionResource().Resource
@@ -141,11 +144,11 @@ var RelationsSubresourceTyped = []string{
 	RelationSubresourceDelete,
 }
 
-// RelationsTeam are the relations valid on type "team". Teams keep a per-object `create`
-// (granted to admins), unlike user / service-account.
+// RelationsTeam are the relations valid on type "team". Like user / service-account, teams
+// have no per-object `create`: creation is governed by the group_resource (the team does not
+// exist yet, so a `create` tuple can't target a specific team object).
 var RelationsTeam = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationGet,
-	RelationCreate,
 	RelationUpdate,
 	RelationDelete,
 	RelationGetPermissions,
@@ -243,12 +246,7 @@ func IsSubresourceRelation(relation string) bool {
 }
 
 func isValidRelation(relation string, valid []string) bool {
-	for _, r := range valid {
-		if r == relation {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(valid, relation)
 }
 
 func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {

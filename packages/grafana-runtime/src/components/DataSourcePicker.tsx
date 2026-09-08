@@ -1,5 +1,5 @@
 // Libraries
-import { memo, useEffect, useState } from 'react';
+import { type ComponentType, memo, useEffect, useState } from 'react';
 
 // Components
 import {
@@ -14,7 +14,7 @@ import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/u
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from './../utils/expressionRef';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -51,13 +51,43 @@ export interface DataSourcePickerProps {
   isLoading?: boolean;
 }
 
+type DataSourcePickerComponentType = ComponentType<DataSourcePickerProps>;
+
+let DataSourcePickerComponent: DataSourcePickerComponentType | undefined;
+
+/**
+ * Used to bootstrap the DataSourcePicker during application start, so the
+ * picker exposed to plugins renders the core Grafana implementation.
+ *
+ * @internal
+ */
+export function setDataSourcePicker(component: DataSourcePickerComponentType | undefined) {
+  DataSourcePickerComponent = component;
+}
+
 /**
  * Component to be able to select a datasource from the list of installed and enabled
  * datasources in the current Grafana instance.
  *
  * @internal
  */
-export const DataSourcePicker = memo(function DataSourcePicker({
+export function DataSourcePicker(props: DataSourcePickerProps) {
+  if (DataSourcePickerComponent) {
+    return <DataSourcePickerComponent {...props} />;
+  }
+
+  return <LegacyDataSourcePicker {...props} />;
+}
+
+/**
+ * The original Select-based data source picker implementation. Rendered by
+ * {@link DataSourcePicker} when no implementation has been set via
+ * {@link setDataSourcePicker}, and by core Grafana when the
+ * `grafana.unifiedDataSourcePicker` feature toggle is disabled.
+ *
+ * @internal
+ */
+export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
   onChange,
   current = null,
   hideTextValue,

@@ -29,6 +29,11 @@ func (m *mockService) NewStorage(gr schema.GroupResource, legacy rest.Storage, s
 	return nil, fmt.Errorf("not implemented")
 }
 
+// ValidateServedVersions implements Service.
+func (m *mockService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
+	return nil
+}
+
 // ReadFromUnified implements Service.
 func (m *mockService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	return m.status.ReadUnified, nil

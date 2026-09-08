@@ -67,6 +67,12 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 // Grant permissions to the created resource
 export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
+// Attribution of provisioning jobs to the identity that triggered them
+export const AnnoKeyProvisioningAuthor = 'provisioning.grafana.app/author';
+export const AnnoKeyProvisioningAuthorEmail = 'provisioning.grafana.app/authorEmail';
+export const AnnoKeyProvisioningAuthorId = 'provisioning.grafana.app/authorId';
+export const AnnoKeyProvisioningAuthorOrigin = 'provisioning.grafana.app/authorOrigin';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
@@ -85,6 +91,25 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
 /** Not intended to be used in production, we will be removing this in short-term future */
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
+
+/**
+ * JSON annotation listing predefined (global/folder) variables to exclude from injection.
+ * Value shape: a JSON array of strings (sentinels and/or exact variable names).
+ * Absent or `["*"]` → inject none (opt-out by default).
+ * `[]` → inject all (explicit opt-in). As-code must set this key to opt in; omitting it does not inject.
+ *
+ * Kept as a denylist (not allowlist) so “all except X” stays `["X"]` / sentinels. An allowlist
+ * would require listing every other name, and new org/folder variables would not appear until
+ * each dashboard’s list was updated.
+ */
+export const AnnoKeyIgnorePredefinedVariables = 'grafana.app/ignorePredefinedVariables';
+
+/** Denylist sentinel: exclude all predefined variables. */
+export const DENY_ALL_PREDEFINED = '*';
+/** Denylist sentinel: exclude all org-global predefined variables. */
+export const DENY_ALL_GLOBAL_PREDEFINED = 'global:*';
+/** Denylist sentinel: exclude all folder-scoped predefined variables. */
+export const DENY_ALL_FOLDER_PREDEFINED = 'folder:*';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -124,6 +149,8 @@ type GrafanaClientAnnotations = {
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+
+  [AnnoKeyIgnorePredefinedVariables]?: string;
 };
 
 // Labels

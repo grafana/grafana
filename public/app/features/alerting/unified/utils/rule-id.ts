@@ -32,6 +32,8 @@ import {
   rulerRuleType,
 } from './rules';
 
+const collator = new Intl.Collator();
+
 export function fromRulerRule(
   ruleSourceName: string,
   namespace: string,
@@ -348,6 +350,14 @@ export function hashQuery(query: string) {
   // Convert `{{.field}}` to "{{.field}}"
   query = query.replace(/`([^`]*)`/g, '"$1"');
 
+  // Mimir re-serializes the expression when exposing it via the Prometheus rules API, which drops
+  // trailing commas and empty label selectors that are legal in hand-written ruler YAML. Both have
+  // to go before hashing, or a ruler `expr` and its Prometheus `query` fingerprint differently.
+  // Convert `metric{foo="bar",}` to `metric{foo="bar"}`
+  query = query.replace(/,(?=})/g, '');
+  // Convert `metric{}` to `metric`
+  query = query.replace(/{}/g, '');
+
   // remove quotes, brackets, parentheses, backslashes, and backticks
   query = query.replace(/['"()\[\]\\`]/g, '');
 
@@ -356,7 +366,7 @@ export function hashQuery(query: string) {
 }
 
 function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
-  return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+  return JSON.stringify(Object.entries(item || {}).sort((a, b) => collator.compare(a[0], b[0])));
 }
 
 export function ruleIdentifierToRuleSourceName(identifier: RuleIdentifier): string {

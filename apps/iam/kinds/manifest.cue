@@ -22,6 +22,7 @@ v0alpha1: {
 		teamlbacrulev0alpha1,
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1,
+		authInfov0alpha1,
 	]
 
 	routes: {
@@ -123,4 +124,6 @@ v0alpha1: {
 	created: int64
 	score:   float64
 	accessControl?: {[string]: bool}
+	// Auth module identifiers the user is externally synced with.
+	externalAuthModules?: [...string]
 }
