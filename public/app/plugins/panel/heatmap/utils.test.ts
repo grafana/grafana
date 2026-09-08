@@ -1999,25 +1999,139 @@ describe('heatmapPathsSparse', () => {
 });
 
 describe('findSymlogBounds', () => {
-  it('reports no non-positive buckets for a purely positive histogram', () => {
-    expect(findSymlogBounds([1, 4], [4, 16])).toEqual({ hasNonPositive: false, smallestMagnitude: 1 });
+  // ±epsilon zero bucket emitted by OTel exponential histograms.
+  const ZERO_LO = -1e-128;
+  const ZERO_HI = 1e-128;
+
+  describe('hasNonPositive detection', () => {
+    it('is false for purely positive buckets', () => {
+      const yMin = [0.957, 1.915, 4];
+      const yMax = [1, 2, 5];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(false);
+    });
+
+    it('is true when a zero-straddling bucket is present', () => {
+      const yMin = [ZERO_LO, 0.957];
+      const yMax = [ZERO_HI, 1];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
+    });
+
+    it('is true when a negative bucket is present', () => {
+      const yMin = [-2, -1];
+      const yMax = [-1.5, -0.5];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
+    });
+
+    it('is true when a bucket boundary sits exactly at zero', () => {
+      const yMin = [0, 2];
+      const yMax = [1.5, 3];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
+    });
   });
 
-  it('finds the smallest magnitude across negative and positive sides', () => {
-    // Buckets (-4,-1] and (1,4]: innermost real boundary on each side is 1.
-    expect(findSymlogBounds([-4, 1], [-1, 4])).toEqual({ hasNonPositive: true, smallestMagnitude: 1 });
+  describe('smallestMagnitude', () => {
+    it('is the smallest positive boundary for purely positive buckets', () => {
+      const yMin = [0.957, 1.915, 4];
+      const yMax = [1, 2, 5];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('skips the zero-straddling bucket and uses the first real bucket boundary', () => {
+      const yMin = [ZERO_LO, 0.957, 1.915];
+      const yMax = [ZERO_HI, 1, 2];
+
+      // The straddler's ±1e-128 bounds must not collapse the threshold.
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('spans both sides when no zero bucket is present', () => {
+      // Buckets (-4,-1] and (1,4]: innermost real boundary on each side is 1.
+      expect(findSymlogBounds([-4, 1], [-1, 4])).toEqual({ hasNonPositive: true, smallestMagnitude: 1 });
+    });
+
+    it('uses the closest-to-zero boundary across both sides (symmetric)', () => {
+      const yMin = [-2, -1, ZERO_LO, 0.957, 1.915];
+      const yMax = [-1.915, -0.957, ZERO_HI, 1, 2];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('uses the negative side when it is closer to zero than the positive side', () => {
+      // Regression: the smallest positive bucket has been dropped, so the
+      // innermost real boundary lives on the negative side (-0.957). The
+      // threshold must follow it, otherwise that negative bucket would fall
+      // inside the linear strip with no separating line above it.
+      const yMin = [-1, ZERO_LO, 1.915];
+      const yMax = [-0.957, ZERO_HI, 2];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('uses the positive side when it is closer to zero than the negative side', () => {
+      const yMin = [-2, ZERO_LO, 0.957];
+      const yMax = [-1.915, ZERO_HI, 1];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('handles negative-only buckets', () => {
+      const yMin = [-2, -1];
+      const yMax = [-1.5, -0.5];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.5);
+    });
+
+    it('uses the upper bound when a bucket starts exactly at zero', () => {
+      const yMin = [0, 2];
+      const yMax = [1.5, 3];
+
+      // lo === 0 contributes nothing (zero has no magnitude); hi === 1.5 wins.
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(1.5);
+    });
+
+    it('is null when only the zero-straddling bucket is populated', () => {
+      const yMin = [ZERO_LO];
+      const yMax = [ZERO_HI];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBeNull();
+    });
   });
 
-  it('skips the straddling zero bucket so it does not collapse the threshold', () => {
-    // Zero bucket (-eps,+eps] plus a real (1,4] bucket.
-    expect(findSymlogBounds([-1e-9, 1], [1e-9, 4])).toEqual({ hasNonPositive: true, smallestMagnitude: 1 });
-  });
+  describe('edge cases', () => {
+    it('treats a bucket with both bounds at zero as having no magnitude', () => {
+      expect(findSymlogBounds([0], [0])).toEqual({ hasNonPositive: true, smallestMagnitude: null });
+    });
 
-  it('returns null magnitude when the only bucket is the zero bucket', () => {
-    // All data in the (skipped) zero bucket: non-positive present, but no
-    // real-magnitude boundary to anchor a symlog threshold to.
-    expect(findSymlogBounds([-1e-9], [1e-9])).toEqual({ hasNonPositive: true, smallestMagnitude: null });
-    expect(findSymlogBounds([0], [0])).toEqual({ hasNonPositive: true, smallestMagnitude: null });
+    it('returns no bounds for empty input', () => {
+      expect(findSymlogBounds([], [])).toEqual({ hasNonPositive: false, smallestMagnitude: null });
+    });
+
+    it('ignores infinite tail-bucket boundaries', () => {
+      // NHCB unbounded tails: (-Inf, 0.5] and (4, +Inf].
+      const yMin = [-Infinity, 0.5, 1, 4];
+      const yMax = [0.5, 1, 4, Infinity];
+
+      expect(findSymlogBounds(yMin, yMax)).toEqual({ hasNonPositive: false, smallestMagnitude: 0.5 });
+    });
+
+    it('ignores non-numeric values', () => {
+      const yMin = [null, 'x', 0.957, undefined];
+      const yMax = [undefined, 1, 2, null] as unknown[];
+
+      expect(findSymlogBounds(yMin as unknown[], yMax)).toEqual({ hasNonPositive: false, smallestMagnitude: 0.957 });
+    });
+
+    it('tolerates yMin and yMax arrays of differing lengths', () => {
+      const yMin = [ZERO_LO, 0.957];
+      const yMax = [ZERO_HI, 1, 2];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
   });
 });
 
@@ -2721,134 +2835,6 @@ describe('Regression tests', () => {
       const yMaxValues = [0.1, 0.5, 1.0];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
       expect(factor).toBe(1);
-    });
-  });
-});
-
-describe('findSymlogBounds', () => {
-  // ±epsilon zero bucket emitted by OTel exponential histograms.
-  const ZERO_LO = -1e-128;
-  const ZERO_HI = 1e-128;
-
-  describe('hasNonPositive detection', () => {
-    it('is false for purely positive buckets', () => {
-      const yMin = [0.957, 1.915, 4];
-      const yMax = [1, 2, 5];
-
-      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(false);
-    });
-
-    it('is true when a zero-straddling bucket is present', () => {
-      const yMin = [ZERO_LO, 0.957];
-      const yMax = [ZERO_HI, 1];
-
-      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
-    });
-
-    it('is true when a negative bucket is present', () => {
-      const yMin = [-2, -1];
-      const yMax = [-1.5, -0.5];
-
-      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
-    });
-
-    it('is true when a bucket boundary sits exactly at zero', () => {
-      const yMin = [0, 2];
-      const yMax = [1.5, 3];
-
-      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
-    });
-  });
-
-  describe('smallestMagnitude', () => {
-    it('is the smallest positive boundary for purely positive buckets', () => {
-      const yMin = [0.957, 1.915, 4];
-      const yMax = [1, 2, 5];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
-    });
-
-    it('skips the zero-straddling bucket and uses the first real bucket boundary', () => {
-      const yMin = [ZERO_LO, 0.957, 1.915];
-      const yMax = [ZERO_HI, 1, 2];
-
-      // The straddler's ±1e-128 bounds must not collapse the threshold.
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
-    });
-
-    it('uses the closest-to-zero boundary across both sides (symmetric)', () => {
-      const yMin = [-2, -1, ZERO_LO, 0.957, 1.915];
-      const yMax = [-1.915, -0.957, ZERO_HI, 1, 2];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
-    });
-
-    it('uses the negative side when it is closer to zero than the positive side', () => {
-      // Regression: the smallest positive bucket has been dropped, so the
-      // innermost real boundary lives on the negative side (-0.957). The
-      // threshold must follow it, otherwise that negative bucket would fall
-      // inside the linear strip with no separating line above it.
-      const yMin = [-1, ZERO_LO, 1.915];
-      const yMax = [-0.957, ZERO_HI, 2];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
-    });
-
-    it('uses the positive side when it is closer to zero than the negative side', () => {
-      const yMin = [-2, ZERO_LO, 0.957];
-      const yMax = [-1.915, ZERO_HI, 1];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
-    });
-
-    it('handles negative-only buckets', () => {
-      const yMin = [-2, -1];
-      const yMax = [-1.5, -0.5];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.5);
-    });
-
-    it('uses the upper bound when a bucket starts exactly at zero', () => {
-      const yMin = [0, 2];
-      const yMax = [1.5, 3];
-
-      // lo === 0 contributes nothing (zero has no magnitude); hi === 1.5 wins.
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(1.5);
-    });
-
-    it('is null when only the zero-straddling bucket is populated', () => {
-      const yMin = [ZERO_LO];
-      const yMax = [ZERO_HI];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBeNull();
-    });
-  });
-
-  describe('edge cases', () => {
-    it('returns no bounds for empty input', () => {
-      expect(findSymlogBounds([], [])).toEqual({ hasNonPositive: false, smallestMagnitude: null });
-    });
-
-    it('ignores infinite tail-bucket boundaries', () => {
-      // NHCB unbounded tails: (-Inf, 0.5] and (4, +Inf].
-      const yMin = [-Infinity, 0.5, 1, 4];
-      const yMax = [0.5, 1, 4, Infinity];
-
-      expect(findSymlogBounds(yMin, yMax)).toEqual({ hasNonPositive: false, smallestMagnitude: 0.5 });
-    });
-
-    it('ignores non-numeric values', () => {
-      const yMin = [null, 'x', 0.957, undefined];
-      const yMax = [undefined, 1, 2, null] as unknown[];
-
-      expect(findSymlogBounds(yMin as unknown[], yMax)).toEqual({ hasNonPositive: false, smallestMagnitude: 0.957 });
-    });
-
-    it('tolerates yMin and yMax arrays of differing lengths', () => {
-      const yMin = [ZERO_LO, 0.957];
-      const yMax = [ZERO_HI, 1, 2];
-
-      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
     });
   });
 });
