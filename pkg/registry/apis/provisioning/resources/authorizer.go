@@ -523,6 +523,20 @@ func (a *ProvisioningAuthorizer) getTargetFolderID(ctx context.Context, targetPa
 // of AuthorizeMoveByPath's file-move check, for callers that already know the
 // resource kind (e.g. from a ResourceRef) instead of needing to read a source
 // file to determine it.
+//
+// Reuses getTargetFolderID (the same Dir-of-targetPath resolution
+// AuthorizeMoveByPath's file-move check uses), which is a deliberate choice, not
+// an oversight: opts.TargetPath commonly names a folder that doesn't exist in
+// Grafana yet (the move creates it), and permission cascading requires the
+// folder hierarchy to already be recorded in Grafana - checking a not-yet-created
+// folder's own ID can never cascade from an ancestor's permission, so it would
+// incorrectly deny a user who only has permission on an existing ancestor.
+// Checking one level up trades that for the reverse imprecision (a user scoped
+// only to the exact nested destination, which does already exist, is denied) -
+// this is the same trade-off AuthorizeMoveByPath already makes for path-based
+// moves. Fixing both cases correctly needs resolving the nearest *existing*
+// ancestor rather than a fixed one-level-up, which is a bigger change than a
+// single-caller fix.
 func (a *ProvisioningAuthorizer) AuthorizeCreateInFolder(ctx context.Context, gvr schema.GroupVersionResource, targetPath string) error {
 	targetFolderID, err := a.getTargetFolderID(ctx, targetPath)
 	if err != nil {

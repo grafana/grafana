@@ -408,22 +408,34 @@ func wrapAuthzError(err error, format string, args ...any) error {
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
-// has the given verb permission on it. Resources that no longer exist are skipped.
-func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, verb, action string) error {
+// has the given verb permission on it. Refs that no longer exist, or that aren't
+// managed by repoName, are skipped - a ResourceRef only carries a name/kind/group,
+// with nothing tying it to the repository the job was created against, so a ref
+// could otherwise name a resource the caller controls in a different repository
+// whose file path happens to collide with a protected path in this one. Skipping
+// mismatched refs here mirrors the same check the worker applies when it later
+// resolves the ref to a path (RepositoryResources.FindResourcePath).
+//
+// Returns the count of refs that were actually found, owned by repoName, and
+// authorized - callers use this to detect a request that named only nonexistent
+// or foreign-repository resources, which must not be treated as vacuously
+// authorized (see authorizeDeleteJob/authorizeMoveJob).
+func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace, repoName string, refs []provisioning.ResourceRef, verb, action string) (int, error) {
 	if len(refs) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	clients, err := c.clients.Clients(ctx, namespace)
 	if err != nil {
-		return fmt.Errorf("create clients for authorization: %w", err)
+		return 0, fmt.Errorf("create clients for authorization: %w", err)
 	}
 
+	found := 0
 	for _, ref := range refs {
 		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
 		client, gvr, err := clients.ForKind(ctx, gvk)
 		if err != nil {
-			return fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
+			return found, fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
 		}
 
 		obj, err := client.Get(ctx, ref.Name, metav1.GetOptions{})
@@ -431,12 +443,16 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			if apierrors.IsNotFound(err) {
 				continue
 			}
-			return wrapAuthzError(err, "authorize %s resource %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
+			return found, wrapAuthzError(err, "authorize %s resource %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
 
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
-			return fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
+			return found, fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
+		}
+
+		if manager, ok := meta.GetManagerProperties(); !ok || manager.Kind != utils.ManagerKindRepo || manager.Identity != repoName {
+			continue
 		}
 
 		parsed := &resources.ParsedResource{
@@ -446,10 +462,11 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			GVR:      gvr,
 		}
 		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
-			return wrapAuthzError(err, "authorize %s %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
+			return found, wrapAuthzError(err, "authorize %s %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
+		found++
 	}
-	return nil
+	return found, nil
 }
 
 // authorizeAdminJob checks that the requesting user has admin privileges.
@@ -582,7 +599,19 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 		}
 	}
 
-	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, resources, utils.VerbDelete, "delete")
+	found, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, resources, utils.VerbDelete, "delete")
+	if err != nil {
+		return err
+	}
+	// Resources that don't exist, or aren't managed by this repository, are skipped
+	// above rather than rejected outright (matching how the worker resolves them
+	// later), so a request naming only such resources must still be rejected here -
+	// otherwise it would authorize nothing and fall through to the same trivial
+	// success the empty-target check above guards against.
+	if len(paths) == 0 && found == 0 {
+		return apierrors.NewBadRequest("delete jobs must target at least one existing path or resource")
+	}
+	return nil
 }
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
@@ -605,8 +634,12 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 		}
 	}
 
-	if err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbUpdate, "move"); err != nil {
+	found, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, opts.Resources, utils.VerbUpdate, "move")
+	if err != nil {
 		return err
+	}
+	if len(opts.Paths) == 0 && found == 0 {
+		return apierrors.NewBadRequest("move jobs must target at least one existing path or resource")
 	}
 
 	// authorizeResourceRefs only checks update on the source above. Path-based moves
@@ -616,9 +649,11 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 	return c.authorizeMoveResourceRefsTarget(ctx, authorizer, cfg.Namespace, opts.Resources, opts.TargetPath)
 }
 
-// authorizeMoveResourceRefsTarget checks create permission at the destination folder
-// for each resource-referenced move target, mirroring the target-folder check that
-// AuthorizeMoveByPath already performs for path-based moves.
+// authorizeMoveResourceRefsTarget checks create permission on the destination
+// folder itself for each resource-referenced move target. Unlike path-based moves,
+// there's no source file path to preserve a basename from - the worker resolves
+// each ref to a path and then joins it into opts.TargetPath the same way, so the
+// folder to check create on is opts.TargetPath directly (see AuthorizeCreateInFolder).
 func (c *jobsConnector) authorizeMoveResourceRefsTarget(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, targetPath string) error {
 	if len(refs) == 0 {
 		return nil

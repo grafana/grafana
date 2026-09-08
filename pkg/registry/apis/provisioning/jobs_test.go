@@ -854,7 +854,11 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("ResourceRef not found is skipped", func(t *testing.T) {
+	t.Run("ResourceRef not found alone is rejected", func(t *testing.T) {
+		// A request naming only a resource that no longer exists must not be
+		// treated as vacuously authorized - that would authorize nothing while
+		// still passing the empty-target check above (since resources is
+		// non-empty on paper), letting an unrelated caller through.
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		clientsMock := resources.NewMockClientFactory(t)
@@ -870,6 +874,36 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+	})
+
+	t.Run("ResourceRef not found is skipped alongside an authorized path", func(t *testing.T) {
+		// The not-found resource shouldn't block an otherwise-valid request that
+		// also targets a real path - bulk operations shouldn't fail entirely just
+		// because one item was already removed elsewhere.
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
+		clientsMock := resources.NewMockClientFactory(t)
+
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "missing-dash")
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "missing-dash", metav1.GetOptions{}, []string(nil)).Return(nil, notFound)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, mock.Anything).Return(dynClient, dashGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, []provisioning.ResourceRef{
 			{Name: "missing-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		})
 		require.NoError(t, err)
@@ -967,6 +1001,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		}), mock.AnythingOfType("string")).Return(nil)
 
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(cfg).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
 		dynClient := &mockDynamic{}
@@ -1000,6 +1035,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		}), mock.AnythingOfType("string")).Return(forbidden)
 
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(cfg).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
 		dynClient := &mockDynamic{}
@@ -1037,6 +1073,9 @@ func TestAuthorizeMoveJob(t *testing.T) {
 	})
 }
 
+// makeUnstructured builds a resource owned by the "my-repo" repository (the name
+// every caller here uses via newTestRepo), so it passes the manager-identity
+// check in authorizeResourceRefs.
 func makeUnstructured(name, folder string) *unstructured.Unstructured {
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -1048,9 +1087,14 @@ func makeUnstructured(name, folder string) *unstructured.Unstructured {
 			},
 		},
 	}
-	if folder != "" {
-		obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folder})
+	annotations := map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+		utils.AnnoKeyManagerIdentity: "my-repo",
 	}
+	if folder != "" {
+		annotations[utils.AnnoKeyFolder] = folder
+	}
+	obj.SetAnnotations(annotations)
 	return obj
 }
 

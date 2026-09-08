@@ -291,17 +291,17 @@ Git Sync operations run as jobs, but not all job actions are gated the same way:
 - **Push, migrate, and fix folder metadata** require `provisioning.jobs:create`, which is only granted to `Editor` and `Admin`. These actions have no equivalent per-resource permission to check, so the organization role is what gates them.
 - **Manual sync (pull from Git) and orphan-resource cleanup** require `provisioning.repositories:write`, which is admin-only. This keeps Editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
 
-| Job action                          | Required permission                                                                         | Who can run it                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Move dashboards/folders             | `dashboards:write` on the source, `dashboards:create` / `folders:create` on the destination | Anyone with the required folder/dashboard permission      |
-| Delete dashboards/folders           | `dashboards:delete` / `folders:delete` on the resources being deleted                       | Anyone with the required folder/dashboard permission      |
-| Push changes / open pull request    | `provisioning.jobs:create` plus read on the resources being pushed                          | Editors and Admins                                        |
-| Migrate resources                   | `provisioning.jobs:create` plus read/write on the affected resource types                   | Editors and Admins with the required resource permissions |
-| Fix folder metadata                 | `provisioning.jobs:create`                                                                  | Editors and Admins                                        |
-| Manual sync (pull from Git)         | `provisioning.repositories:write`                                                           | Admins only                                               |
-| Release / delete orphaned resources | `provisioning.repositories:write`                                                           | Admins only                                               |
+| Job action                          | Required permission                                                                                           | Who can run it                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Move dashboards/folders             | `dashboards:write` / `folders:write` on the source, `dashboards:create` / `folders:create` on the destination | Anyone with the required folder/dashboard permission      |
+| Delete dashboards/folders           | `dashboards:delete` / `folders:delete` on the resources being deleted                                         | Anyone with the required folder/dashboard permission      |
+| Push changes / open pull request    | `provisioning.jobs:create` plus read on the resources being pushed                                            | Editors and Admins                                        |
+| Migrate resources                   | `provisioning.jobs:create` plus read/write on the affected resource types                                     | Editors and Admins with the required resource permissions |
+| Fix folder metadata                 | `provisioning.jobs:create`                                                                                    | Editors and Admins                                        |
+| Manual sync (pull from Git)         | `provisioning.repositories:write`                                                                             | Admins only                                               |
+| Release / delete orphaned resources | `provisioning.repositories:write`                                                                             | Admins only                                               |
 
-### Repository subresource access
+### Repository `subresource` access
 
 The repository API exposes several subresources. The following table shows the permission each one is gated on.
 
@@ -312,7 +312,7 @@ The `refs` subresource lists the repository's branches and commits, and two dist
 
 Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
 
-| Subresource                      | Purpose                                              | Required permission                                                                                                                                       | Who can access it       |
+| `Subresource`                    | Purpose                                              | Required permission                                                                                                                                       | Who can access it       |
 | -------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | `files`                          | Read and write provisioned resource files            | Authenticated access, then standard `dashboards:*` / `folders:*` checks                                                                                   | All authenticated users |
 | `jobs` (create)                  | Create a move, delete, push, migrate, and so on, job | Authenticated access; the specific action decides the permission - refer to [Job actions and required permissions](#job-actions-and-required-permissions) | All authenticated users |
