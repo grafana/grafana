@@ -13,6 +13,18 @@
       "title": "Normal Panel"
     },
     {
+      "id": 7,
+      "type": "graph",
+      "title": "Panel with falsy repeatByRow",
+      "repeatByRow": false
+    },
+    {
+      "id": 8,
+      "type": "graph",
+      "title": "Panel with falsy repeatPanelId",
+      "repeatPanelId": 0
+    },
+    {
       "id": 4,
       "type": "row",
       "title": "Row with repeated panels",
@@ -26,6 +38,12 @@
           "id": 6,
           "type": "graph",
           "title": "Normal nested panel"
+        },
+        {
+          "id": 9,
+          "type": "graph",
+          "title": "Nested panel with falsy repeatPanelId",
+          "repeatPanelId": 0
         }
       ]
     }

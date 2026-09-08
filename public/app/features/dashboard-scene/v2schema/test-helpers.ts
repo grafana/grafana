@@ -17,7 +17,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { type VizPanelLinks } from '../scene/PanelLinks';
 import { type TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getLibraryPanelBehavior, getQueryRunnerFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (
   initialState: Partial<T>

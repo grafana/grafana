@@ -208,6 +208,9 @@ export function applyJsonToDashboard(
     }
 
     dashboard.setState({ ...newState, isDirty: true });
+    // Dashboard state is replaced in place losing all edit-only properties.
+    // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
+    dashboard.state.body.editModeChanged?.(true);
 
     dashboard.publishEvent(
       new DashboardEditActionEvent({
