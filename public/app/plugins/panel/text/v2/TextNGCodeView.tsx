@@ -29,7 +29,7 @@ export function TextNGCodeView({
   height = '100%',
   transparent,
 }: TextNGCodeViewProps) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, transparent);
   const theme = useTheme2();
   const editorTheme = useMemo(
     () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
@@ -72,7 +72,7 @@ export function TextNGCodeView({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
   // Mirrors the CodeMirror theme
   loadingFallback: css({
     margin: 0,
@@ -83,7 +83,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.code.fontSize,
     lineHeight: theme.typography.code.lineHeight,
     color: theme.components.input.text,
-    backgroundColor: theme.components.input.background,
+    backgroundColor: transparent ? 'transparent' : theme.components.input.background,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
   }),
