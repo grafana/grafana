@@ -8,6 +8,7 @@ import (
 type State struct {
 	StateUpdateDuration   prometheus.Histogram
 	StateFullSyncDuration prometheus.Histogram
+	ClampedLabelStrings   *prometheus.CounterVec
 	r                     prometheus.Registerer
 }
 
@@ -36,6 +37,15 @@ func NewStateMetrics(r prometheus.Registerer) *State {
 				Help:      "The duration of fully synchronizing the state with the database.",
 				Buckets:   []float64{0.01, 0.1, 1, 2, 5, 10, 60},
 			},
+		),
+		ClampedLabelStrings: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "state_clamped_label_strings_total",
+				Help:      "Total number of expanded label/annotation values truncated before being written into alert state, by kind (label or annotation).",
+			},
+			[]string{"kind"},
 		),
 	}
 }
