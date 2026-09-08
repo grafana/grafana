@@ -33,7 +33,7 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { invalidateVariablesAfterFolderDelete } from '../../variables-management/api';
+import { invalidateVariablesAfterFolderDelete } from '../../variables-management/cache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
 import { getFolderURL } from '../utils/dashboards';

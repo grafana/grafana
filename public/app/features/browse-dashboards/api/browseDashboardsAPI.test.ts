@@ -19,7 +19,7 @@ import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
-import * as variablesManagementAPI from 'app/features/variables-management/api';
+import * as variablesManagementCache from 'app/features/variables-management/cache';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 import { type ThunkDispatch } from 'app/types/store';
@@ -269,7 +269,7 @@ describe('browseDashboardsAPI', () => {
 
   it('invalidates the variables list after deleting a folder', async () => {
     const store = createTestStore();
-    const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
 
     try {
       server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
@@ -286,7 +286,7 @@ describe('browseDashboardsAPI', () => {
 
   it('does not invalidate the variables list when deleting a folder fails', async () => {
     const store = createTestStore();
-    const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
 
     try {
       server.use(
@@ -604,7 +604,7 @@ describe('browseDashboardsAPI', () => {
 
     it('invalidates the variables list after bulk-deleting folders', async () => {
       const store = createTestStore();
-      const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
 
       try {
         server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
