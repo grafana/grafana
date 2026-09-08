@@ -3349,7 +3349,7 @@
         "view": "View"
       },
       "tabs": {
-        "alert-managers": "Alert managers",
+        "alert-managers": "Alertmanagers",
         "import": "Import"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "Controls menu",
         "title-hidden": "Hidden"
       },
+      "cross-dashboard-variables": {
+        "description": "Choose which global and folder-scoped variables this dashboard receives.",
+        "empty-folder": "No folder variables in this folder.",
+        "empty-global": "No global variables in this organization.",
+        "folder-section": "Folder",
+        "global-section": "Global",
+        "load-error": "Could not load global and folder variables.",
+        "pane-header": "Cross-dashboard variables",
+        "select-all-folder": "All folder",
+        "select-all-global": "All global",
+        "title": "Cross-dashboard",
+        "tooltip": "Choose global and folder variables"
+      },
       "dashboard-options": {
         "annotations": "Annotations",
         "description": "Description",
@@ -6416,17 +6429,6 @@
           "empty": "(empty)",
           "no-title": "<no title>"
         }
-      },
-      "predefined-variables": {
-        "all": "All",
-        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
-        "folder": "Folder",
-        "global": "Global",
-        "label": "Predefined variables",
-        "none": "None",
-        "pane-header": "Predefined variables",
-        "title": "Predefined variables",
-        "tooltip": "Choose which global and folder variables this dashboard receives"
       },
       "redo": "Redo",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
       "save-warning": "Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
     },
+    "cross-dashboard-variables": {
+      "label-all": "All",
+      "label-none": "None"
+    },
     "custom-variable-form": {
       "custom-options": "Custom options",
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Close"
-    },
-    "predefined-variables": {
-      "label-all": "All",
-      "label-custom": "Custom",
-      "label-folder": "Folder",
-      "label-global": "Global",
-      "label-none": "None"
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
@@ -8399,7 +8398,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
-      "label": "Scalar",
+      "label-field": "Field",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -9125,6 +9124,7 @@
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
+      "error-indicator": "Trace has errors",
       "errors": "Errors",
       "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
@@ -9143,10 +9143,12 @@
       "share-group": "Share",
       "share-tooltip": "Share and feedback",
       "start-time": "Start time",
+      "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": "Trace has client errors"
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -12490,6 +12492,9 @@
       "subtitle": "Rules that determine whether an alert will fire",
       "title": "Alert rules"
     },
+    "alerting-notification-config": {
+      "subtitle": "Manage contact points, notification policies, templates, and time intervals"
+    },
     "alerting-receivers": {
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
@@ -12594,6 +12599,10 @@
     "explore": {
       "title": "Explore"
     },
+    "extensions": {
+      "subtitle": "Extend the UI of plugins and Grafana",
+      "title": "Extensions"
+    },
     "frontend": {
       "subtitle": "Gain real user monitoring insights",
       "title": "Frontend"
@@ -12674,6 +12683,10 @@
       "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
       "title": "Notebooks"
     },
+    "observability": {
+      "subtitle": "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
+      "title": "Observability"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12717,10 @@
     },
     "profiles": {
       "title": "Profiles"
+    },
+    "provisioning": {
+      "subtitle": "View and manage your provisioning connections",
+      "title": "Provisioning"
     },
     "recently-deleted": {
       "subtitle": "Deleted dashboards are kept for up to 12 months.",
@@ -16603,11 +16620,12 @@
       "label": "Query"
     },
     "options": {
+      "max-rows": "Row limit",
+      "max-rows-description": "Rows of query data to render. High values can slow the panel, especially with complex HTML.",
       "render-mode": "Render mode"
     },
     "render": {
-      "handlebars-error": "Handlebars error: {{message}}",
-      "truncated": "Showing the first {{maxRows}} rows."
+      "handlebars-error": "Handlebars error: {{message}}"
     },
     "render-mode": {
       "once": "Once",
@@ -16773,6 +16791,8 @@
       "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
+      "description-dash-pattern": "Comma or space separated lengths. Example: 10, 20",
+      "label-dash-pattern": "Dash pattern",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Dash",
