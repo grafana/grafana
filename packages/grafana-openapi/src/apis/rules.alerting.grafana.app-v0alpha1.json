@@ -253,6 +253,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -1231,6 +1237,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },

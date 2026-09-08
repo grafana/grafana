@@ -69,5 +69,8 @@ func (l *listIter) Next() bool {
 		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.group, &l.resource, &l.name, &l.folder, &l.value)
 		return true
 	}
+	if l.err == nil {
+		l.err = l.rows.Err()
+	}
 	return false
 }

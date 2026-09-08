@@ -142,7 +142,7 @@ func ProvideEmbeddedZanzanaElector(cfg *setting.Cfg, features featuremgmt.Featur
 		return nil, fmt.Errorf("KV lease leader election requires unified storage KV backend")
 	}
 
-	le, err := kvlease.New(kvStore, cfg.ZanzanaReconciler.LeaderElection, log.New("zanzana.mt-reconciler"), reg)
+	le, err := kvlease.New(kvStore, cfg.ZanzanaReconciler.LeaderElection, "zanzana_reconciler", log.New("zanzana.mt-reconciler"), reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KV lease elector: %w", err)
 	}

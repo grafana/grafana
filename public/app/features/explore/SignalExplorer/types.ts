@@ -16,6 +16,6 @@ export interface MetricInfo {
  */
 export interface MetricSelection {
   refId: string;
-  dsUid?: string;
+  dsKey: string;
   metric: MetricInfo;
 }

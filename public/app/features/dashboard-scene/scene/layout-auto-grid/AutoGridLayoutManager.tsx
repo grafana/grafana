@@ -23,13 +23,8 @@ import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/A
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import {
-  forceRenderChildren,
-  getDashboardSceneFor,
-  getGridItemKeyForPanelId,
-  getVizPanelKeyForPanelId,
-  useDashboard,
-} from '../../utils/utils';
+import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
