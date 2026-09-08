@@ -32,11 +32,10 @@ export interface NotebookLoadedProperties extends EventProperty {
 }
 
 /**
- * Where a notebook came from, shared by every event that has to name a surface. `NOTEBOOK_LIST` is
- * the blank route reached from the list's create button. `EXPLORE` and `DASHBOARD_PANEL` are the two
- * callers of the add-panel modal, which creates a notebook outright rather than opening a blank one,
- * so only `created` sends those. `ASSISTANT` and `WORKSPACE` are reserved for entry points that do
- * not exist yet, so nothing carries them.
+ * The surface a notebook came from, for every event that has to name one. `EXPLORE` and
+ * `DASHBOARD_PANEL` are the two callers of the add-panel modal, which creates a notebook outright
+ * instead of opening a blank one, so only `created` sends them. Nothing sends `ASSISTANT` or
+ * `WORKSPACE` yet.
  */
 export const NOTEBOOK_ENTRY_POINT = {
   NOTEBOOK_LIST: 'notebook_list',
@@ -60,4 +59,26 @@ export interface NotebookCreatedProperties extends EventProperty {
   source: NotebookEntryPoint;
   /** Cells in the notebook at the moment it was created, excluding the trailing empty editor block. */
   cell_count: number;
+}
+
+/**
+ * The surface a delete was confirmed on. `NOTEBOOK_LIST` is spelled as it is in
+ * `NOTEBOOK_ENTRY_POINT`, so one page reads the same across events. The two lists still differ:
+ * explore can create a notebook but not delete one, and a toolbar can delete one but not create it.
+ */
+export const NOTEBOOK_DELETE_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  NOTEBOOK_TOOLBAR: 'notebook_toolbar',
+} as const;
+
+export type NotebookDeleteSource = (typeof NOTEBOOK_DELETE_SOURCE)[keyof typeof NOTEBOOK_DELETE_SOURCE];
+
+export interface NotebookDeletedProperties extends EventProperty {
+  /**
+   * Identifier and join key for this notebook. Its size comes from the last `loaded` for this uid, and
+   * how long it survived from the `created` for this uid.
+   */
+  notebook_uid: string;
+  /** Which surface the delete was confirmed on. */
+  source: NotebookDeleteSource;
 }

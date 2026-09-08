@@ -5,6 +5,8 @@ import { type NotebookScene } from '../scene/NotebookScene';
 import { readNotebookShape } from './shape';
 import {
   type NotebookCreatedProperties,
+  type NotebookDeletedProperties,
+  type NotebookDeleteSource,
   type NotebookEntryPoint,
   type NotebookLoadedProperties,
   type NotebookNewStartedProperties,
@@ -21,6 +23,9 @@ const createNewStartedEvent = createNotebookEvent<NotebookNewStartedProperties>(
 
 /** Fired the moment a notebook first exists: autosave's first write, or the add-panel modal's create route. */
 const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('created');
+
+/** Fired once a delete has actually landed, from either the list row menu or the notebook's own toolbar. */
+const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
 
 /**
  * Every notebook event, so a call site reads as analytics rather than as a stray helper. The
@@ -56,5 +61,9 @@ export const notebookAnalytics = {
 
   created(notebookUid: string, source: NotebookEntryPoint, cellCount: number): void {
     createCreatedEvent({ notebook_uid: notebookUid, source, cell_count: cellCount });
+  },
+
+  deleted(notebookUid: string, source: NotebookDeleteSource): void {
+    createDeletedEvent({ notebook_uid: notebookUid, source });
   },
 };

@@ -2,6 +2,9 @@ import { t } from '@grafana/i18n';
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
+import { notebookAnalytics } from '../analytics/main';
+import { type NotebookDeleteSource } from '../analytics/types';
+
 /**
  * Deletes a notebook and reports the outcome, for the two places that offer it: the list's row menu
  * and the notebook page's own toolbar.
@@ -12,14 +15,17 @@ import { useAppNotification } from 'app/core/copy/appNotification';
  *
  * Resolves to whether the delete succeeded rather than throwing, so a caller can close its modal
  * either way and only navigate on success.
+ *
+ * The surface is given once, at the hook, because it belongs to the caller rather than to each delete.
  */
-export function useDeleteNotebook() {
+export function useDeleteNotebook(source: NotebookDeleteSource) {
   const [deleteNotebook, { isLoading }] = useDeleteNotebookMutation();
   const notifyApp = useAppNotification();
 
   const remove = async (uid: string, title: string): Promise<boolean> => {
     try {
       await deleteNotebook({ name: uid }).unwrap();
+      notebookAnalytics.deleted(uid, source);
       notifyApp.success(t('notebooks.delete.success', 'Notebook deleted'), title);
       return true;
     } catch (error) {
