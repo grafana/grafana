@@ -11,18 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
 
-// pluginJSONFile sits beside the manifest in a built plugin.
 const pluginJSONFile = "plugin.json"
 
 // LoadManifest reads an app-sdk manifest file into the definition the spec is
 // rendered from.
 //
 // A plugin's APIs are served under the group its manifest declares, but the
-// settings API is described by the plugin's own metadata and schema. So when a
-// plugin.json sits in the same directory -- which is what a built plugin looks
-// like -- it is loaded too, and the spec then matches what a server serving that
-// plugin would return. Without it the manifest's app name stands in for the
-// plugin id, and the settings API falls back to its defaults.
+// settings API also depends on the plugin's metadata and schema. When a
+// plugin.json sits beside the manifest, LoadManifest loads the complete plugin
+// definition. Otherwise, the manifest's app name stands in for the plugin ID
+// and the settings API uses its defaults.
 func LoadManifest(ctx context.Context, path string) (definition.PluginDefinition, error) {
 	var plugin definition.PluginDefinition
 
@@ -47,7 +45,7 @@ func LoadManifest(ctx context.Context, path string) (definition.PluginDefinition
 	}
 	if plugin.JSONData.ID == "" {
 		if manifest.AppName == "" {
-			return plugin, fmt.Errorf("%s: manifest has no appName, and there is no %s to take a plugin id from",
+			return plugin, fmt.Errorf("%s: manifest has no appName, and there is no %s to take a plugin ID from",
 				filepath.Base(path), pluginJSONFile)
 		}
 		plugin.JSONData = plugins.JSONData{
@@ -61,8 +59,8 @@ func LoadManifest(ctx context.Context, path string) (definition.PluginDefinition
 	return plugin, nil
 }
 
-// loadPluginDir reads a built plugin the way the server reads it, so the
-// definition carries the same plugin.json, schemas and manifest.
+// loadPluginDir reads a built plugin the way the server reads it, including its
+// plugin.json, schemas, and conventional manifest.
 func loadPluginDir(ctx context.Context, dir string) (definition.PluginDefinition, error) {
 	found, err := definition.LoadPluginDefinition(ctx,
 		singleSource{sources.NewUnsafeLocalSource(plugins.ClassExternal, []string{dir})},
@@ -72,8 +70,8 @@ func loadPluginDir(ctx context.Context, dir string) (definition.PluginDefinition
 		return definition.PluginDefinition{}, err
 	}
 	if len(found) == 0 {
-		// The directory holds a plugin.json the loader would not take, which
-		// says more than a spec rendered from defaults would.
+		// A present but unloadable plugin.json is an error; silently falling back
+		// would omit metadata and schemas from the generated spec.
 		return definition.PluginDefinition{}, fmt.Errorf("%s in %s could not be loaded", pluginJSONFile, dir)
 	}
 	return found[0], nil

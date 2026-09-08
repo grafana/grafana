@@ -26,8 +26,8 @@ import (
 )
 
 // writeOpenAPICommand renders the OpenAPI v3 spec an app plugin's API server
-// serves, without starting Grafana. It is the offline equivalent of
-// GET /openapi/v3/apis/{pluginID}/{version} on a running server.
+// serves, without starting Grafana. It uses the same rendering pipeline as
+// GET /openapi/v3/apis/{group}/{version} on a running server.
 func writeOpenAPICommand(c *cli.Context) error {
 	target, output, err := writeOpenAPIArgs(c)
 	if err != nil {
@@ -92,8 +92,8 @@ func ensureOutputDir(path string) error {
 }
 
 // writeOpenAPIInput resolves the target into the plugin to render, the single
-// version to render (empty for all of them), and the options that make the
-// output match a server's.
+// version to render (empty for all of them), and the options that affect the
+// rendered document.
 //
 // A manifest file is read on its own, with no Grafana config involved, so this
 // works in a plugin's build with no Grafana installed. A plugin id is looked up
@@ -103,28 +103,27 @@ func writeOpenAPIInput(c *cli.Context, target, output string) (definition.Plugin
 	var empty definition.PluginDefinition
 
 	info, statErr := os.Stat(target)
-	switch {
-	case statErr == nil && !info.IsDir():
+	if statErr == nil {
+		if info.IsDir() {
+			return empty, "", pluginopenapi.Options{}, cli.Exit(fmt.Sprintf(
+				"%s is a directory; pass the manifest file inside it", target), 1)
+		}
 		plugin, err := pluginopenapi.LoadManifest(c.Context, target)
 		return plugin, "", pluginopenapi.Options{BuildVersion: setting.BuildVersion}, err
+	}
 
-	// A target typed as a path is answered as a path. Falling through to the
-	// plugin lookup would report a missing plugin named after part of the path.
-	case !looksLikePath(target):
-	case statErr != nil:
+	// Preserve the filesystem error for a path. Treating it as a plugin target
+	// would report a misleading missing-plugin error instead.
+	if looksLikePath(target) {
 		return empty, "", pluginopenapi.Options{}, statErr
-	default:
-		return empty, "", pluginopenapi.Options{}, cli.Exit(fmt.Sprintf(
-			"%s is a directory; pass the manifest file inside it", target), 1)
 	}
 
 	pluginID, version, _ := strings.Cut(target, "/")
 
 	args := strings.Split(c.String("configOverrides"), " ")
 	if output == "" {
-		// Loading the config logs to the console, which is stdout, and that is
-		// where the spec goes when no output path was given. The file log mode
-		// is on by default, so the same messages are still recorded.
+		// Keep configuration logs off stdout when stdout is reserved for the
+		// rendered spec. File logging remains enabled by default.
 		args = append(args, "cfg:log.mode=file")
 	}
 	cmd := &utils.ContextCommandLine{Context: c}
@@ -172,7 +171,6 @@ func writeSpecFile(path string, oas *spec3.OpenAPI) error {
 	if err := f.Close(); err != nil {
 		return err
 	}
-	// Title is the group version the spec was rendered for.
 	logger.Infof("Wrote %s for %s\n", path, oas.Info.Title)
 	return nil
 }

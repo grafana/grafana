@@ -2,6 +2,8 @@ package commands
 
 import (
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -128,4 +130,14 @@ func TestLooksLikePath(t *testing.T) {
 	} {
 		require.False(t, looksLikePath(target), target)
 	}
+}
+
+func TestWriteOpenAPIInputRejectsDirectory(t *testing.T) {
+	dir, err := os.MkdirTemp(".", "write-openapi-")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, os.RemoveAll(dir)) })
+
+	target := filepath.Base(dir)
+	_, _, _, err = writeOpenAPIInput(writeOpenAPIContext(t, []string{"test-app"}), target, "")
+	require.ErrorContains(t, err, "is a directory; pass the manifest file inside it")
 }
