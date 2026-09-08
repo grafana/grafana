@@ -18,7 +18,6 @@ func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr Life
 	a.cleanupCancel = cancel
 
 	a.cleanupWg.Go(func() {
-
 		ticker := time.NewTicker(cleanupInterval)
 		defer ticker.Stop()
 

@@ -215,7 +215,6 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 	for _, inst := range rs.Instances {
 		wg.Go(func() {
-
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)

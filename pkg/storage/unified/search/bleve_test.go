@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -2391,7 +2392,6 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	const searchConcurrency = 25
 	for i := range searchConcurrency {
 		wg.Go(func() {
-
 			for ctx.Err() == nil {
 				select {
 				case <-ctx.Done():
@@ -2473,7 +2473,6 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 	const searchConcurrency = 25
 	for range searchConcurrency {
 		wg.Go(func() {
-
 			prevRV := int64(0)
 			for ctx.Err() == nil {
 				// We use t.Context() here to avoid getting errors from context cancellation.
@@ -2529,7 +2528,6 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	const searchConcurrency = 10
 	for range searchConcurrency {
 		wg.Go(func() {
-
 			var collectedRVs []int64
 			for ctx.Err() == nil {
 				attemptedUpdates.Add(1)
