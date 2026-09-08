@@ -192,32 +192,17 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
 
-    // Only reset position/size and clear draggingKey if the orchestrator didn't drop the item onto
-    // a different layout (or commit an in-grid reorder itself). For those cases, the orchestrator
-    // calls endExternalDrag() once it's done, to prevent flickering where the item would
-    // momentarily appear at wrong position (CSS vars cleared but draggingKey still set = absolute
-    // positioning with no position). Whether the drop landed elsewhere, and reordering the panels
-    // when it didn't, is the orchestrator's call to make, not this layout's.
-    const orchestrator = getLayoutOrchestratorFor(this);
-    if (!orchestrator?.isDroppedElsewhere()) {
-      this._resetPanelPositionAndSize();
-      this.setState({ draggingKey: undefined });
-    }
+    // The orchestrator's drop decision (same-grid reorder or cross-layout move) has already been
+    // committed by the time this runs — everything in _stopDraggingSync is synchronous now, so
+    // there's no async gap during which resetting here could show the item at the wrong position.
+    this._resetPanelPositionAndSize();
+    this.setState({ draggingKey: undefined });
 
     document.body.classList.remove('dashboard-draggable-transparent-selection');
 
     if (this.state.draggedChildren) {
       this.setState({ draggedChildren: undefined });
     }
-  }
-
-  /**
-   * Called by the orchestrator after a cross-layout drag ends and the item has been moved.
-   * Cleans up the drag state that was preserved during the cross-layout drop.
-   */
-  public endExternalDrag(): void {
-    this._resetPanelPositionAndSize();
-    this.setState({ draggingKey: undefined });
   }
 
   // Handle inside drag moves

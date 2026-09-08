@@ -4,7 +4,7 @@ import { VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
+import { type DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -246,34 +246,6 @@ describe('DashboardLayoutOrchestrator', () => {
     });
   });
 
-  describe('isDroppedElsewhere', () => {
-    it('should return false when not dragging', () => {
-      const { orchestrator } = setup();
-
-      expect(orchestrator.isDroppedElsewhere()).toBe(false);
-    });
-
-    it('should return false when source and target are the same', () => {
-      const { orchestrator } = setup();
-
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._droppedElsewhere = false;
-
-      expect(orchestrator.isDroppedElsewhere()).toBe(false);
-    });
-
-    it('should return true once the orchestrator has decided the drop landed on a different layout', () => {
-      const { orchestrator } = setup();
-
-      // Set by _stopDraggingSync itself when it commits a cross-layout move - not derived from
-      // _sourceDropTarget/_lastDropTarget, which get cleared as part of the same cleanup.
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._droppedElsewhere = true;
-
-      expect(orchestrator.isDroppedElsewhere()).toBe(true);
-    });
-  });
-
   describe('getItemLabel (via state)', () => {
     it('should extract panel title from AutoGridItem', () => {
       const panel = new VizPanel({
@@ -457,32 +429,6 @@ async function stopDragging(
   orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
 
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
-}
-
-function setup() {
-  const panel = new VizPanel({
-    title: 'Panel A',
-    key: 'panel-1',
-    pluginId: 'table',
-  });
-
-  const gridItem = new AutoGridItem({
-    key: 'grid-item-1',
-    body: panel,
-  });
-
-  const manager = new AutoGridLayoutManager({
-    layout: new AutoGridLayout({ children: [gridItem] }),
-  });
-
-  const orchestrator = new DashboardLayoutOrchestrator();
-
-  new DashboardScene({
-    body: manager,
-    layoutOrchestrator: orchestrator,
-  });
-
-  return { orchestrator, manager, gridItem, panel };
 }
 
 function setupAutoGrid() {

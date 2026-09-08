@@ -120,8 +120,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _lastHoveredAutoGridItemKey: string | null = null;
   /** Original child index of the dragged item before it was detached from its source layout */
   private _sourceOriginalIndex: number | null = null;
-  /** Whether the drag that just ended dropped the item onto a different layout than it started in */
-  private _droppedElsewhere = false;
   private _tabDragState: TabDragState | undefined;
   /** Stored pointerup handler for new-panel drag so we can remove it */
   private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
@@ -153,15 +151,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._cleanupDragState();
       this._dragCallbacks = null;
     };
-  }
-
-  /**
-   * Returns true if the drag operation that just ended dropped the item onto a different layout
-   * than where it started. Used by AutoGridLayout to know whether to clear draggingKey itself
-   * or let the orchestrator do it once it has finished moving the item (avoids a flicker).
-   */
-  public isDroppedElsewhere(): boolean {
-    return this._droppedElsewhere;
   }
 
   public startDraggingSync(
@@ -225,38 +214,24 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // tab bar area between tab headers. Cancel the drop so the panel either
     // stays in place or returns to its source layout.
     if (effectiveDropTarget instanceof TabsLayoutManager) {
-      this._droppedElsewhere = false;
       this._clearDropPosition();
       this._lastDropTarget?.setIsDropTarget?.(false);
-      if (sourceDropTarget instanceof AutoGridLayoutManager) {
-        this._commitSameLayoutReorder(sourceDropTarget, gridItem);
-        sourceDropTarget.state.layout.endExternalDrag();
-      }
+      // If the item was re-ordered in place before dropping on the tab bar, keep the last
+      // position (no-op for non-AutoGrid sources).
+      this._commitSameLayoutReorder(sourceDropTarget, gridItem);
     } else if (gridItem && sourceDropTarget && effectiveDropTarget && sourceDropTarget !== effectiveDropTarget) {
-      this._droppedElsewhere = true;
-      setTimeout(() => {
-        moveGridItem({
-          source: sourceDropTarget,
-          destination: effectiveDropTarget,
-          gridItem,
-          originalIndex: sourceOriginalIndex,
-          destinationIndex: dropPosition ?? undefined,
-        });
-
-        if (sourceDropTarget instanceof AutoGridLayoutManager) {
-          sourceDropTarget.state.layout.endExternalDrag();
-        }
+      moveGridItem({
+        source: sourceDropTarget,
+        destination: effectiveDropTarget,
+        gridItem,
+        originalIndex: sourceOriginalIndex,
+        destinationIndex: dropPosition ?? undefined,
       });
     } else if (!gridItem) {
-      this._droppedElsewhere = false;
       const warningMessage = 'No grid item to drag';
       console.warn(warningMessage);
       logWarning(warningMessage);
     } else if (sourceDropTarget) {
-      // Dropped back within the source layout: commit whatever reorder the drag preview
-      // (draggedChildren) settled on as a single undoable move. AutoGridLayout itself no longer
-      // needs to know whether the drop landed elsewhere — that's exactly what this branch decides.
-      this._droppedElsewhere = false;
       this._clearDropPosition();
       this._lastDropTarget?.setIsDropTarget?.(false);
       this._commitSameLayoutReorder(sourceDropTarget, gridItem);
