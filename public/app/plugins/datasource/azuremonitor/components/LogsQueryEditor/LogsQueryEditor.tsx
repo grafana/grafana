@@ -152,15 +152,7 @@ const LogsQueryEditor = ({
       const cleared = setLogTier(query, undefined);
       onChange(setKustoQuery(cleared, ''));
     }
-  }, [
-    searchLogsEnabled,
-    basicLogsEnabled,
-    auxiliaryLogsEnabled,
-    onChange,
-    query,
-    selectedTier,
-    showBasicLogsToggle,
-  ]);
+  }, [searchLogsEnabled, basicLogsEnabled, auxiliaryLogsEnabled, onChange, query, selectedTier, showBasicLogsToggle]);
 
   useEffect(() => {
     const hasRawKql = !!query.azureLogAnalytics?.query;

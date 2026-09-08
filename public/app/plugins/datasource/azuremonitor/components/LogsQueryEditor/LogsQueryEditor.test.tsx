@@ -922,9 +922,7 @@ describe('LogsQueryEditor', () => {
 
     it('renders an info Alert when picking a Basic-plan table from an Analytics query and reverts on click', async () => {
       const mockDatasource = createMockDatasource();
-      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest
-        .fn()
-        .mockResolvedValue(buildSchemaWithPlans());
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
       // getWorkspaceTablePlan is invoked by the existing fetchAllPlans effect but
       // the schema we provide already has `plan` set, so the in-place mutation is a no-op.
       // @ts-ignore: forcibly attach for test
@@ -971,9 +969,7 @@ describe('LogsQueryEditor', () => {
 
       // onChange is invoked with basicLogsQuery cleared back to false (Analytics tier)
       await waitFor(() => {
-        const revertedCall = onChange.mock.calls.find(
-          (call) => call[0]?.azureLogAnalytics?.basicLogsQuery === false
-        );
+        const revertedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.basicLogsQuery === false);
         expect(revertedCall).toBeDefined();
         expect(revertedCall![0].azureLogAnalytics.logTier).toBeUndefined();
       });

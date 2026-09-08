@@ -91,10 +91,7 @@ export const MonitorConfig = (props: Props) => {
       <ConfigSection title={t('components.monitor-config.title-features', 'Features')}>
         <Stack direction="column" gap={4}>
           <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
-          <AuxiliaryLogsToggle
-            options={options.jsonData}
-            onAuxiliaryLogsEnabledChange={onAuxiliaryLogsEnabledChange}
-          />
+          <AuxiliaryLogsToggle options={options.jsonData} onAuxiliaryLogsEnabledChange={onAuxiliaryLogsEnabledChange} />
           {batchFlagEnabled && (
             <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
           )}
