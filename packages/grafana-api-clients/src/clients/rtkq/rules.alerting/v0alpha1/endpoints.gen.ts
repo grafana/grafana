@@ -1271,31 +1271,26 @@ export type ListAlertRuleSearchRulesV0Alpha1SearchResultResource = {
   resource: string;
 };
 export type ListAlertRuleSearchRulesV0Alpha1SearchResultHit = {
-  /** fields holds the JSON values for the requested (or default) fields.
-    Deliberately an open object rather than a per-kind union: the generic
-    endpoint returns the field values unstructured, so declaring them here
-    would make the schema narrow now and widen at migration. */
+  /** Open to match the generic endpoint's unstructured field values. */
   fields?: {
     [key: string]: any;
   };
   resource: ListAlertRuleSearchRulesV0Alpha1SearchResultResource;
+  /** Present only when a text query was evaluated. */
   score?: number;
 };
 export type ListAlertRuleSearchRulesV0Alpha1TotalHitsRelation = 'eq' | 'lte';
 export type ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata = {
-  /** continue is an opaque token for the next page. Clients must not inspect or
-    construct it. */
+  /** Opaque next-page token; clients must not construct it. */
   continue?: string;
-  /** totalHits counts the rules matching the query. Always read it together
-    with totalHitsRelation, which says whether the count is exact. */
+  /** Interpret with totalHitsRelation, not as an exact count unconditionally. */
   totalHits: number;
   totalHitsRelation: ListAlertRuleSearchRulesV0Alpha1TotalHitsRelation;
 };
 export type ListAlertRuleSearchRulesV0Alpha1Response = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
-  /** facets holds term counts per requested facet field. Counts are computed
-    over a bounded sample window, so they are best-effort. */
+  /** Counts use a bounded sample and are best-effort. */
   facets?: {
     [key: string]: ListAlertRuleSearchRulesV0Alpha1FacetValue[];
   };
@@ -1341,32 +1336,28 @@ export type ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf = {
   value: string;
 };
 export type ListAlertRuleSearchRulesV0Alpha1SearchWhereNode = {
-  /** Combinators. */
   and?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
   exists?: ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf;
   filter?: ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf;
   not?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
   or?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
   range?: ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf;
-  /** Leaves. */
   text?: ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf;
 };
 export type ListAlertRuleSearchRulesV0Alpha1RequestBody = {
   apiVersion?: string;
-  /** continue is an opaque paging token from a previous page. */
+  /** Opaque token from the previous page. */
   continue?: string;
-  /** facetLimit caps the number of terms returned per facet, for every entry in
-    facets. Zero uses the server default; larger values are clamped. */
+  /** Per-facet term limit. Zero uses the default; larger values are clamped. */
   facetLimit?: number;
   facets?: string[];
   fields?: string[];
   kind?: string;
   labelSelector?: ListAlertRuleSearchRulesV0Alpha1SearchLabelSelector;
-  /** limit is the page size. Zero uses the default; larger values are clamped. */
+  /** Page size. Zero uses the default; larger values are clamped. */
   limit?: number;
   sort?: ListAlertRuleSearchRulesV0Alpha1SearchSortField[];
-  /** where is the search predicate tree. Omitting it matches every rule of the
-    kind, subject to labelSelector and per-rule authorisation. */
+  /** Omitted where matches all authorised rules satisfying labelSelector. */
   where?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
 };
 export type StatusCause = {
@@ -1506,31 +1497,26 @@ export type ListRecordingRuleSearchRulesV0Alpha1SearchResultResource = {
   resource: string;
 };
 export type ListRecordingRuleSearchRulesV0Alpha1SearchResultHit = {
-  /** fields holds the JSON values for the requested (or default) fields.
-    Deliberately an open object rather than a per-kind union: the generic
-    endpoint returns the field values unstructured, so declaring them here
-    would make the schema narrow now and widen at migration. */
+  /** Open to match the generic endpoint's unstructured field values. */
   fields?: {
     [key: string]: any;
   };
   resource: ListRecordingRuleSearchRulesV0Alpha1SearchResultResource;
+  /** Present only when a text query was evaluated. */
   score?: number;
 };
 export type ListRecordingRuleSearchRulesV0Alpha1TotalHitsRelation = 'eq' | 'lte';
 export type ListRecordingRuleSearchRulesV0Alpha1SearchResultsMetadata = {
-  /** continue is an opaque token for the next page. Clients must not inspect or
-    construct it. */
+  /** Opaque next-page token; clients must not construct it. */
   continue?: string;
-  /** totalHits counts the rules matching the query. Always read it together
-    with totalHitsRelation, which says whether the count is exact. */
+  /** Interpret with totalHitsRelation, not as an exact count unconditionally. */
   totalHits: number;
   totalHitsRelation: ListRecordingRuleSearchRulesV0Alpha1TotalHitsRelation;
 };
 export type ListRecordingRuleSearchRulesV0Alpha1Response = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
-  /** facets holds term counts per requested facet field. Counts are computed
-    over a bounded sample window, so they are best-effort. */
+  /** Counts use a bounded sample and are best-effort. */
   facets?: {
     [key: string]: ListRecordingRuleSearchRulesV0Alpha1FacetValue[];
   };
@@ -1576,32 +1562,28 @@ export type ListRecordingRuleSearchRulesV0Alpha1SearchTextLeaf = {
   value: string;
 };
 export type ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode = {
-  /** Combinators. */
   and?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode[];
   exists?: ListRecordingRuleSearchRulesV0Alpha1SearchExistsLeaf;
   filter?: ListRecordingRuleSearchRulesV0Alpha1SearchFilterLeaf;
   not?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode;
   or?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode[];
   range?: ListRecordingRuleSearchRulesV0Alpha1SearchRangeLeaf;
-  /** Leaves. */
   text?: ListRecordingRuleSearchRulesV0Alpha1SearchTextLeaf;
 };
 export type ListRecordingRuleSearchRulesV0Alpha1RequestBody = {
   apiVersion?: string;
-  /** continue is an opaque paging token from a previous page. */
+  /** Opaque token from the previous page. */
   continue?: string;
-  /** facetLimit caps the number of terms returned per facet, for every entry in
-    facets. Zero uses the server default; larger values are clamped. */
+  /** Per-facet term limit. Zero uses the default; larger values are clamped. */
   facetLimit?: number;
   facets?: string[];
   fields?: string[];
   kind?: string;
   labelSelector?: ListRecordingRuleSearchRulesV0Alpha1SearchLabelSelector;
-  /** limit is the page size. Zero uses the default; larger values are clamped. */
+  /** Page size. Zero uses the default; larger values are clamped. */
   limit?: number;
   sort?: ListRecordingRuleSearchRulesV0Alpha1SearchSortField[];
-  /** where is the search predicate tree. Omitting it matches every rule of the
-    kind, subject to labelSelector and per-rule authorisation. */
+  /** Omitted where matches all authorised rules satisfying labelSelector. */
   where?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode;
 };
 export type RuleSequenceRuleUid = string;

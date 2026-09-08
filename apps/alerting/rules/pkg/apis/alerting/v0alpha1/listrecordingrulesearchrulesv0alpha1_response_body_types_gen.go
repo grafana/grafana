@@ -2,15 +2,11 @@
 
 package v0alpha1
 
-// #SearchResultsMetadata carries the paging token and total authorised match
-// count.
 // +k8s:openapi-gen=true
 type ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata struct {
-	// continue is an opaque token for the next page. Clients must not inspect or
-	// construct it.
+	// Opaque next-page token; clients must not construct it.
 	Continue *string `json:"continue,omitempty"`
-	// totalHits counts the rules matching the query. Always read it together
-	// with totalHitsRelation, which says whether the count is exact.
+	// Interpret with totalHitsRelation, not as an exact count unconditionally.
 	TotalHits         int64                                                 `json:"totalHits"`
 	TotalHitsRelation ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation `json:"totalHitsRelation"`
 }
@@ -25,9 +21,7 @@ func (ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata) OpenAPIModelNam
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata"
 }
 
-// #TotalHitsRelation says how totalHits relates to the real number of matching
-// rules the caller may see: "eq" when it is exact, "lte" when it is an upper
-// bound because authorisation was applied after the search ranked its results.
+// "eq" means exact; "lte" means totalHits is an upper bound after authorisation.
 // +k8s:openapi-gen=true
 type ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation string
 
@@ -41,16 +35,12 @@ func (ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation) OpenAPIModelName() 
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation"
 }
 
-// #SearchResultHit is a single match: its identity, an optional relevance score
-// (present only when a text query was evaluated), and the requested fields.
 // +k8s:openapi-gen=true
 type ListRecordingRuleSearchRulesV0alpha1SearchResultHit struct {
 	Resource ListRecordingRuleSearchRulesV0alpha1SearchResultResource `json:"resource"`
-	Score    *float64                                                 `json:"score,omitempty"`
-	// fields holds the JSON values for the requested (or default) fields.
-	// Deliberately an open object rather than a per-kind union: the generic
-	// endpoint returns the field values unstructured, so declaring them here
-	// would make the schema narrow now and widen at migration.
+	// Present only when a text query was evaluated.
+	Score *float64 `json:"score,omitempty"`
+	// Open to match the generic endpoint's unstructured field values.
 	Fields map[string]interface{} `json:"fields,omitempty"`
 }
 
@@ -66,8 +56,7 @@ func (ListRecordingRuleSearchRulesV0alpha1SearchResultHit) OpenAPIModelName() st
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultHit"
 }
 
-// #SearchResultResource is the full identity of a hit. The namespace is implicit
-// from the URL and omitted.
+// Namespace is implicit in the URL.
 // +k8s:openapi-gen=true
 type ListRecordingRuleSearchRulesV0alpha1SearchResultResource struct {
 	Group    string `json:"group"`
@@ -86,7 +75,6 @@ func (ListRecordingRuleSearchRulesV0alpha1SearchResultResource) OpenAPIModelName
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultResource"
 }
 
-// #FacetValue is a single facet term and its count.
 // +k8s:openapi-gen=true
 type ListRecordingRuleSearchRulesV0alpha1FacetValue struct {
 	Value string `json:"value"`
@@ -107,8 +95,7 @@ func (ListRecordingRuleSearchRulesV0alpha1FacetValue) OpenAPIModelName() string 
 type ListRecordingRuleSearchRulesV0alpha1Body struct {
 	Metadata ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata `json:"metadata"`
 	Items    []ListRecordingRuleSearchRulesV0alpha1SearchResultHit     `json:"items"`
-	// facets holds term counts per requested facet field. Counts are computed
-	// over a bounded sample window, so they are best-effort.
+	// Counts use a bounded sample and are best-effort.
 	Facets map[string][]ListRecordingRuleSearchRulesV0alpha1FacetValue `json:"facets,omitempty"`
 }
 

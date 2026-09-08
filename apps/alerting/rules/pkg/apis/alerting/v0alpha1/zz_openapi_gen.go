@@ -1020,7 +1020,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1Body(ref 
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "listMeta is intentionally omitted: #SearchResults carries its own metadata (continue, totalHits).",
+				Description: "SearchResults supplies its own metadata; omit listMeta.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"metadata": {
@@ -1043,7 +1043,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1Body(ref 
 					},
 					"facets": {
 						SchemaProps: spec.SchemaProps{
-							Description: "facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort.",
+							Description: "Counts use a bounded sample and are best-effort.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -1075,8 +1075,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1FacetValu
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#FacetValue is a single facet term and its count.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"value": {
 						SchemaProps: spec.SchemaProps{
@@ -1139,7 +1138,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1Response(
 					},
 					"facets": {
 						SchemaProps: spec.SchemaProps{
-							Description: "facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort.",
+							Description: "Counts use a bounded sample and are best-effort.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -1171,8 +1170,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1SearchRes
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultHit is a single match: its identity, an optional relevance score (present only when a text query was evaluated), and the requested fields.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"resource": {
 						SchemaProps: spec.SchemaProps{
@@ -1182,13 +1180,14 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1SearchRes
 					},
 					"score": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Description: "Present only when a text query was evaluated.",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"fields": {
 						SchemaProps: spec.SchemaProps{
-							Description: "fields holds the JSON values for the requested (or default) fields. Deliberately an open object rather than a per-kind union: the generic endpoint returns the field values unstructured, so declaring them here would make the schema narrow now and widen at migration.",
+							Description: "Open to match the generic endpoint's unstructured field values.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -1214,7 +1213,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1SearchRes
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultResource is the full identity of a hit. The namespace is implicit from the URL and omitted.",
+				Description: "Namespace is implicit in the URL.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"group": {
@@ -1256,19 +1255,18 @@ func schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1SearchRes
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultsMetadata carries the paging token and total authorised match count.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"continue": {
 						SchemaProps: spec.SchemaProps{
-							Description: "continue is an opaque token for the next page. Clients must not inspect or construct it.",
+							Description: "Opaque next-page token; clients must not construct it.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"totalHits": {
 						SchemaProps: spec.SchemaProps{
-							Description: "totalHits counts the rules matching the query. Always read it together with totalHitsRelation, which says whether the count is exact.",
+							Description: "Interpret with totalHitsRelation, not as an exact count unconditionally.",
 							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int64",
@@ -1314,7 +1312,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Body(
 					},
 					"facets": {
 						SchemaProps: spec.SchemaProps{
-							Description: "facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort.",
+							Description: "Counts use a bounded sample and are best-effort.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -1346,8 +1344,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Facet
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#FacetValue is a single facet term and its count.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"value": {
 						SchemaProps: spec.SchemaProps{
@@ -1410,7 +1407,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Respo
 					},
 					"facets": {
 						SchemaProps: spec.SchemaProps{
-							Description: "facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort.",
+							Description: "Counts use a bounded sample and are best-effort.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -1442,8 +1439,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Searc
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultHit is a single match: its identity, an optional relevance score (present only when a text query was evaluated), and the requested fields.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"resource": {
 						SchemaProps: spec.SchemaProps{
@@ -1453,13 +1449,14 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Searc
 					},
 					"score": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Description: "Present only when a text query was evaluated.",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"fields": {
 						SchemaProps: spec.SchemaProps{
-							Description: "fields holds the JSON values for the requested (or default) fields. Deliberately an open object rather than a per-kind union: the generic endpoint returns the field values unstructured, so declaring them here would make the schema narrow now and widen at migration.",
+							Description: "Open to match the generic endpoint's unstructured field values.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -1485,7 +1482,7 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Searc
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultResource is the full identity of a hit. The namespace is implicit from the URL and omitted.",
+				Description: "Namespace is implicit in the URL.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"group": {
@@ -1527,19 +1524,18 @@ func schema_pkg_apis_alerting_v0alpha1_ListRecordingRuleSearchRulesV0alpha1Searc
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultsMetadata carries the paging token and total authorised match count.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"continue": {
 						SchemaProps: spec.SchemaProps{
-							Description: "continue is an opaque token for the next page. Clients must not inspect or construct it.",
+							Description: "Opaque next-page token; clients must not construct it.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"totalHits": {
 						SchemaProps: spec.SchemaProps{
-							Description: "totalHits counts the rules matching the query. Always read it together with totalHitsRelation, which says whether the count is exact.",
+							Description: "Interpret with totalHitsRelation, not as an exact count unconditionally.",
 							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int64",

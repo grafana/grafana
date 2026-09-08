@@ -14,17 +14,7 @@ import (
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 )
 
-// The rule search routes advertise their request and response schemas from the
-// alerting app's own manifest, generated from CUE, while the handler speaks the
-// generic search.grafana.app Go types. Two descriptions of one contract, and
-// nothing about a mismatch would fail to compile: the CUE could gain a field the
-// handler ignores, or lose one the handler emits, and the OpenAPI would simply be
-// wrong.
-//
-// So compare the two JSON shapes structurally. When one of these fails, the fix
-// is to bring the CUE in apps/alerting/rules/kinds back in line with
-// pkg/apis/search/v0alpha1 -- not to relax the test.
-
+// CUE-generated schemas must match the generic Go contract despite separate types.
 func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 	for name, generated := range map[string]any{
 		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1RequestBody{},
@@ -52,8 +42,6 @@ func TestFilterOperatorsIncludeGenericAllOperator(t *testing.T) {
 	assert.Equal(t, "All", string(model.ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
 }
 
-// assertSameJSONShape compares the JSON shape of two Go types: the same property
-// names at every level, and a compatible value shape for each.
 func assertSameJSONShape(t *testing.T, want, got any) {
 	t.Helper()
 	for _, problem := range compareShapes(reflect.TypeOf(want), reflect.TypeOf(got), "") {
@@ -61,25 +49,18 @@ func assertSameJSONShape(t *testing.T, want, got any) {
 	}
 }
 
-// typePair identifies one comparison, so a recursive type is only walked once.
 type typePair struct {
 	want, got reflect.Type
 }
 
-// compareShapes compares the JSON shape of two Go types: the same property names
-// at every level, and a compatible value shape for each.
 func compareShapes(want, got reflect.Type, path string) []string {
 	return compare(want, got, path, map[typePair]bool{})
 }
 
-// compare walks the two types together. seen records the pairs already being
-// compared: the where tree is recursive (a node holds nodes), so without it this
-// would descend forever.
 func compare(want, got reflect.Type, path string, seen map[typePair]bool) []string {
 	want, got = deref(want), deref(got)
 
-	// Revisiting a pair adds nothing: the shapes are compared structurally, so a
-	// second look at the same two types reaches the same answer.
+	// Stop cycles in recursive where nodes without skipping sibling comparisons.
 	pair := typePair{want: want, got: got}
 	if seen[pair] {
 		return nil
@@ -87,8 +68,6 @@ func compare(want, got reflect.Type, path string, seen map[typePair]bool) []stri
 	seen[pair] = true
 	defer delete(seen, pair)
 
-	// An open object on either side accepts anything, which is the point of it:
-	// the generic contract returns a hit's fields unstructured.
 	if isOpenObject(want) || isOpenObject(got) {
 		if !isOpenObject(want) || !isOpenObject(got) {
 			return []string{fmt.Sprintf("%s: one side is an open object (%s) and the other is not (%s)", at(path), got, want)}
@@ -131,8 +110,6 @@ func compareStructs(want, got reflect.Type, path string, seen map[typePair]bool)
 	return problems
 }
 
-// jsonFields maps a struct's JSON property names to their types, flattening
-// embedded structs so an inline metav1.TypeMeta reads as apiVersion and kind.
 func jsonFields(t reflect.Type) map[string]reflect.Type {
 	out := map[string]reflect.Type{}
 	for i := 0; i < t.NumField(); i++ {
@@ -142,8 +119,6 @@ func jsonFields(t reflect.Type) map[string]reflect.Type {
 		}
 		tag := f.Tag.Get("json")
 		name := strings.Split(tag, ",")[0]
-		// An embedded struct with no name of its own (or an explicit ",inline")
-		// contributes its own fields at this level.
 		if f.Anonymous && (name == "" || strings.Contains(tag, "inline")) {
 			for k, v := range jsonFields(deref(f.Type)) {
 				out[k] = v
@@ -158,8 +133,6 @@ func jsonFields(t reflect.Type) map[string]reflect.Type {
 	return out
 }
 
-// isOpenObject reports whether the type carries arbitrary JSON: the generic
-// contract's Unstructured wrapper, or a plain map to any.
 func isOpenObject(t reflect.Type) bool {
 	if t.Name() == "Unstructured" {
 		return true
@@ -167,9 +140,7 @@ func isOpenObject(t reflect.Type) bool {
 	return t.Kind() == reflect.Map && t.Elem().Kind() == reflect.Interface
 }
 
-// jsonKind reduces a Go type to the JSON value shape it marshals to, so a named
-// enum string and a plain string compare equal, as do int64 and float64 fields
-// that only differ in Go.
+// Compare wire types, ignoring Go enum names and numeric representations.
 func jsonKind(t reflect.Type) string {
 	switch t.Kind() {
 	case reflect.String:
@@ -232,14 +203,10 @@ func at(path string) string {
 	return path
 }
 
-// InlineFixture stands in for metav1.TypeMeta in the test below: an exported
-// struct embedded inline, whose fields have to flatten into the parent.
 type InlineFixture struct {
 	A string `json:"a"`
 }
 
-// TestJSONShapeComparison guards the comparison itself: a test that cannot fail
-// is worse than no test, and every assertion above rests on this function.
 func TestJSONShapeComparison(t *testing.T) {
 	type inner struct {
 		A string `json:"a"`
@@ -280,8 +247,6 @@ func TestJSONShapeComparison(t *testing.T) {
 		assert.Empty(t, compareShapes(reflect.TypeOf(plain{}), reflect.TypeOf(enum{}), ""))
 	})
 
-	// This is how metav1.TypeMeta reaches the envelope: embedded and inline on the
-	// generic type, spelled out as apiVersion and kind on the generated one.
 	t.Run("flattens an inline embedded struct", func(t *testing.T) {
 		type embedded struct {
 			InlineFixture `json:",inline"`
@@ -350,9 +315,6 @@ func TestJSONShapeComparison(t *testing.T) {
 		assert.Contains(t, problems[0], "inner.a")
 	})
 
-	// The where tree is recursive: a node holds nodes. Walking it without tracking
-	// which pairs are already in flight descends forever, which is a hang and an
-	// out-of-memory rather than a failing assertion.
 	t.Run("terminates on a recursive type", func(t *testing.T) {
 		type node struct {
 			And  []node  `json:"and,omitempty"`
@@ -369,7 +331,6 @@ func TestJSONShapeComparison(t *testing.T) {
 		}
 	})
 
-	// Recursion has to terminate without hiding a real mismatch inside the cycle.
 	t.Run("still reports a mismatch inside a recursive type", func(t *testing.T) {
 		type want struct {
 			And  []want  `json:"and,omitempty"`
