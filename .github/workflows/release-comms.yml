@@ -151,9 +151,8 @@ jobs:
     needs:
       - setup
       - create_release_tag
-    # create_release_tag is skipped, not failed, on a workflow_dispatch run; the default `needs`
-    # condition would treat that as blocking, so check failure()/cancelled() explicitly instead.
-    if: ${{ !failure() && !cancelled() }}
+    # Run unless setup was skipped or something actually failed/cancelled — a skipped create_release_tag is fine.
+    if: ${{ !failure() && !cancelled() && needs.setup.result == 'success' }}
     permissions:
       contents: write
       id-token: write

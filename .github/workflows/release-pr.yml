@@ -180,6 +180,9 @@ jobs:
           previous: ${{inputs.previous_version}}
           # The release tag doesn't exist yet at this point; diff against the release branch instead.
           target: ${{ env.RELEASE_BRANCH }}
+          # target is a branch name now, not semver-parseable; give the action a real version
+          # string to look up the previous release tag from when previous_version isn't set.
+          version: v${{ env.VERSION }}
           output_file: changelog_items.md
           github_token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Patch CHANGELOG.md
