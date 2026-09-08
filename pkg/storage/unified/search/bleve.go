@@ -3010,7 +3010,9 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	}
 
 	// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
-	searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_SCORE) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	}
 	queryFields := b.resolveQueryFields(req.QueryFields)
 
 	for _, field := range queryFields {
