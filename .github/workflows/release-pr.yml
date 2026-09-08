@@ -288,3 +288,14 @@ jobs:
             -H "${WORK_BRANCH}" \
             --title "Release: $VERSION" \
             --body "These code changes must be merged after a release is complete"
+      # Publishes the branch name so external callers don't have to reconstruct it themselves.
+      - name: Publish release PR branch name
+        run: |
+          mkdir -p .release-pr-artifact
+          printf '%s' "$WORK_BRANCH" > .release-pr-artifact/branch.txt
+      - name: Upload release PR branch artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: release-pr-branch
+          path: .release-pr-artifact/branch.txt
+          retention-days: 14
