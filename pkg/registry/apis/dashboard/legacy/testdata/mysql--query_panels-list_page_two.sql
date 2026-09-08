@@ -6,5 +6,5 @@ SELECT p.id, p.uid, p.folder_uid,
   LEFT OUTER JOIN `grafana`.`user` AS created_user ON p.created_by = created_user.id
   LEFT OUTER JOIN `grafana`.`user` AS updated_user ON p.updated_by = updated_user.id
   WHERE p.org_id = 1
-    AND p.id > 4
+    AND p.id < 4
   ORDER BY p.id DESC

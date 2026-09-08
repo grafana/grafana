@@ -135,6 +135,53 @@ func TestServeRootDocsWithETag(t *testing.T) {
 	}
 }
 
+func TestGroupFromPath(t *testing.T) {
+	cases := []struct {
+		path      string
+		wantGroup string
+	}{
+		{"/apis/dashboard.grafana.app", "dashboard.grafana.app"},
+		{"/apis/dashboard.grafana.app/v1alpha1/dashboards", "dashboard.grafana.app"},
+		{"/apis/dashboard.grafana.app/", "dashboard.grafana.app"},
+		// no single group to attribute the bare /apis root to
+		{"/apis", ""},
+		{"/apis/", ""},
+		// not under /apis at all
+		{"/openapi/v3", ""},
+		{"/healthz", ""},
+		{"", ""},
+		// prefix collision, not a real /apis boundary
+		{"/apisfoo", ""},
+		// arbitrary, client-controlled -- GroupFromPath doesn't validate
+		// against known backends, callers must check KnownGroup themselves
+		{"/apis/whatever-a-client-sends", "whatever-a-client-sends"},
+	}
+	for _, tc := range cases {
+		if got := GroupFromPath(tc.path); got != tc.wantGroup {
+			t.Errorf("GroupFromPath(%q) = %q, want %q", tc.path, got, tc.wantGroup)
+		}
+	}
+}
+
+func TestKnownGroup(t *testing.T) {
+	s := withGroups("dashboard.grafana.app", "folder.grafana.app")
+
+	cases := []struct {
+		group string
+		want  bool
+	}{
+		{"dashboard.grafana.app", true},
+		{"folder.grafana.app", true},
+		{"unknown.grafana.app", false},
+		{"", false},
+	}
+	for _, tc := range cases {
+		if got := s.KnownGroup(tc.group); got != tc.want {
+			t.Errorf("KnownGroup(%q) = %v, want %v", tc.group, got, tc.want)
+		}
+	}
+}
+
 func TestParseOpenAPIGroupVersionPath(t *testing.T) {
 	cases := []struct {
 		path        string

@@ -29,13 +29,11 @@ func TestValidation(t *testing.T) {
 			input:  []string{strings.Repeat("0", 254)},
 			expect: []string{"name is too long"},
 		}, {
-			name:   "reserved",
-			input:  []string{"search", "TRASH", "History", "QuErY"},
-			expect: []string{"name is reserved"},
-		}, {
 			name: "ok",
 			input: []string{
 				"hello",
+				"trash", // reserved for new resources, but still a readable name
+				"search",
 				strings.Repeat("0", 253), // very long starts with number
 				"hello-world",
 				"hello.world",
@@ -232,4 +230,18 @@ func TestValidation(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestIsReservedName(t *testing.T) {
+	for _, name := range []string{"search", "TRASH", "History", "QuErY"} {
+		require.Equal(t, []string{"name is reserved"}, validation.IsReservedName(name), "input: %s", name)
+	}
+
+	for _, name := range []string{"hello", "trash-old", "searching", "my.query", ""} {
+		require.Nil(t, validation.IsReservedName(name), "input: %s", name)
+	}
+
+	// Reserved names have to stay valid so data already saved under them can
+	// still be read, moved or deleted.
+	require.Nil(t, validation.IsValidGrafanaName("trash"))
 }

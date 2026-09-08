@@ -508,6 +508,8 @@
 "alter permission.kind to length 80"
 "add datasource_type column to permission table"
 "Expand role.uid length to 253"
+"add user_role role_id org_id index"
+"add team_role role_id org_id index"
 "populate datasource_type in permission table for uid-scoped datasource permissions"
 "create query_history table v1"
 "add index query_history.org_id-created_by-datasource_uid"

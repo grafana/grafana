@@ -43,8 +43,11 @@ func (b *APIBuilder) Setup(m *k8smux.PathRecorderMux) {
 	r := mux.NewRouter()
 	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags").HandlerFunc(b.allFlagsHandler)
 	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.oneFlagHandler)
+	r.Methods(http.MethodPost).Path("/apis/features.grafana.app/v0alpha1/namespaces/{namespace}/ofrep/v1/evaluate/flags").HandlerFunc(b.allFlagsHandler)
+	r.Methods(http.MethodPost).Path("/apis/features.grafana.app/v0alpha1/namespaces/{namespace}/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.oneFlagHandler)
 
 	m.HandlePrefix("/ofrep/", r)
+	m.HandlePrefix("/apis/features.grafana.app/", r)
 }
 
 // grafanaHTTPHandler adapts an OFREP http.HandlerFunc to Grafana's router. It injects the
@@ -85,6 +88,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	r = r.WithContext(ctx)
+	logger := b.logger.FromContext(ctx)
 
 	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
@@ -100,11 +104,11 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(w, r)
+		evalCtx, err := b.readEvalContext(ctx, w, r)
 		if err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-			b.logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
+			logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
 			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
@@ -113,10 +117,11 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug, "flag", flagKey)
+			logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug, "flag", flagKey)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
+		logger.Debug("serving flag evaluation request", "handler", "oneFlagHandler", "flag", flagKey, "authenticated", isAuthedReq, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
 		return
 	}
@@ -129,16 +134,17 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	r = r.WithContext(ctx)
+	logger := b.logger.FromContext(ctx)
 
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(w, r)
+		evalCtx, err := b.readEvalContext(ctx, w, r)
 		if err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
-			b.logger.Error(bodyReadFailureMsg, "error", err)
+			logger.Error(bodyReadFailureMsg, "error", err)
 			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
@@ -147,10 +153,11 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
+			logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
+		logger.Debug("serving flag evaluation request", "handler", "allFlagsHandler", "authenticated", isAuthedReq, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 		b.proxyAllFlagReq(ctx, isAuthedReq, authNamespace, w, r)
 		return
 	}

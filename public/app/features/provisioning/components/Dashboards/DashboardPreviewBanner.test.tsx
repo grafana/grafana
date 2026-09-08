@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceObjects, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -66,6 +66,7 @@ interface FileQueryData {
     compareURL?: string;
   };
   resource?: {
+    action?: ResourceObjects['action'];
     existing?: {
       metadata?: {
         name?: string;
@@ -201,6 +202,12 @@ describe('DashboardPreviewBanner', () => {
         screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
+
+    it('returns null while the file query is loading', () => {
+      setup({}, { fileQuery: { data: {}, isLoading: true, error: null } });
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
   });
 
   describe('when banner renders content', () => {
@@ -250,6 +257,30 @@ describe('DashboardPreviewBanner', () => {
         })
       ).toBeInTheDocument();
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+
+    it('uses resource.action for the title so an edit without a PR URL is not labelled as created', () => {
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ref: 'feature-branch',
+              urls: defaultFileQueryReturn.data.urls,
+              resource: { action: 'update' },
+            },
+            isLoading: false,
+            error: null,
+          },
+        }
+      );
+
+      expect(
+        screen.getByRole('status', {
+          name: 'A resource has been updated in a branch in GitHub.',
+        })
+      ).toBeInTheDocument();
+      expect(screen.queryByText('A new resource has been created in a branch in GitHub.')).not.toBeInTheDocument();
     });
 
     it('renders a link to the saved dashboard when it already exists in Grafana', () => {

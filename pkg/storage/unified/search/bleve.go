@@ -1280,7 +1280,11 @@ func (a *adaptiveBuildIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
+	// Copying the index to disk is work this batch caused, so it is reported
+	// rather than left unaccounted.
+	promoteStart := time.Now()
 	promoted, fileIndexName, cleanupDir, err := a.promote(a.bleveIndex)
+	a.recordPromotePhase(req.Path, time.Since(promoteStart))
 	if err != nil {
 		return err
 	}
@@ -1753,7 +1757,7 @@ type bleveIndex struct {
 
 	indexMetrics     *resource.BleveIndexMetrics
 	updateLatency    prometheus.Histogram
-	updatedDocuments prometheus.Summary
+	updatedDocuments prometheus.Histogram
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
@@ -1824,6 +1828,32 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
+	mapStart := time.Now()
+	batch, mapErr := b.mapBatch(req)
+	mapElapsed := time.Since(mapStart)
+	if mapErr != nil {
+		// The time still counts, so a batch that fails to map is not missing from
+		// the metrics.
+		b.recordBatchPhases(req.Path, mapElapsed, 0, 0, 0, false)
+		return mapErr
+	}
+
+	// The mutation count is part of writing the batch: it reads and writes the
+	// index's own data, so it belongs to the commit phase. Its failure does not
+	// unmake the write, so the bytes are reported on the batch alone.
+	commitStart := time.Now()
+	commitErr := b.index.Batch(batch)
+	err := commitErr
+	if err == nil {
+		err = b.addSnapshotMutationCount(int64(len(req.Items)))
+	}
+	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize(), len(req.Items), commitErr == nil)
+	return err
+}
+
+// mapBatch turns the request into a bleve batch, mapping each document onto the
+// index schema.
+func (b *bleveIndex) mapBatch(req *resource.BulkIndexRequest) (*bleve.Batch, error) {
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
 	droppedMarkers := 0
@@ -1831,7 +1861,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
-				return fmt.Errorf("missing document")
+				return nil, fmt.Errorf("missing document")
 			}
 
 			// An index built before these fields were mapped drops them, which would
@@ -1861,7 +1891,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case resource.ActionDelete:
 			batch.Delete(resource.SearchID(item.Key))
@@ -1877,10 +1907,33 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			"documents", droppedMarkers)
 	}
 
-	if err := b.index.Batch(batch); err != nil {
-		return err
+	return batch, nil
+}
+
+// recordPromotePhase reports what copying the index to disk cost, for the one
+// batch that crosses the threshold.
+func (a *adaptiveBuildIndex) recordPromotePhase(path string, d time.Duration) {
+	if a.bleveIndex == nil || a.indexMetrics == nil || path == "" {
+		return
 	}
-	return b.addSnapshotMutationCount(int64(len(req.Items)))
+	a.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhasePromote, path, a.key.Group, a.key.Resource).Add(d.Seconds())
+}
+
+// recordBatchPhases separates the CPU spent mapping documents onto the index
+// schema from the write that follows, so a slow index can be told apart from a
+// slow disk. Time counts whether or not the write succeeded, since it was
+// spent; documents and bytes count what the write accepted, which only the
+// index knows. An empty path means the caller is not measuring.
+func (b *bleveIndex) recordBatchPhases(path string, mapped, commit time.Duration, indexedBytes uint64, documents int, committed bool) {
+	if b.indexMetrics == nil || path == "" {
+		return
+	}
+	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseMap, path, b.key.Group, b.key.Resource).Add(mapped.Seconds())
+	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(commit.Seconds())
+	if committed {
+		b.indexMetrics.BuildDocuments.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(float64(documents))
+		b.indexMetrics.BuildIndexedBytes.WithLabelValues(path, b.key.Group, b.key.Resource).Add(float64(indexedBytes))
+	}
 }
 
 // mapsTrashFields reports whether this index can hold everything a deleted
@@ -2515,10 +2568,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
-		// An index built before deleted documents were being kept holds none, so trash
-		// would read as empty when it is really unavailable until the index rebuilds.
-		if !b.keepsDeletedDocuments && b.wantsDeletedDocuments {
-			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
+		// An index that does not keep deleted documents cannot distinguish an empty
+		// trash from unavailable trash, so fail instead of returning a misleading result.
+		if !b.keepsDeletedDocuments {
+			message := "trash is not available for this resource because indexing deleted documents is disabled"
+			if b.wantsDeletedDocuments {
+				message = "trash is not available for this resource until its search index has been rebuilt"
+			}
+			return nil, resource.NewServiceUnavailableError(message)
 		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t
@@ -2974,8 +3031,8 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	if strings.Contains(req.Query, "*") {
 		// Wildcard query is expensive, should be used with caution.
 		// When QueryFields is set, search across each named field (only Name is
-		// used; Type and Boost are ignored because bleve wildcards don't support
-		// analyzers or meaningful relevance scoring).
+		// used; Boost is ignored because bleve wildcards don't support analyzers
+		// or meaningful relevance scoring).
 		// When QueryFields is empty, default to title.
 		if len(req.QueryFields) > 0 {
 			for _, field := range req.QueryFields {
@@ -3092,7 +3149,6 @@ func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRe
 			out = append(out, titleQueryFields()...)
 			continue
 		}
-		// Type is dropped: the query comes from the field's mapping.
 		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
 			Name:  resolveFieldName(b.fields, f.Name),
 			Boost: f.Boost,
@@ -3396,7 +3452,11 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 	return ok && kf.filterable
 }
 
-// Convert a "requirement" into a bleve query
+// Convert a "requirement" into a bleve query.
+//
+// Combining rules for several values: "=" is an AND, so the field must hold
+// every value, while "in" is an OR, so at least one is enough. The numeric path
+// (numberOrBoolSetQuery) follows the same rules.
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
 	// Boolean and numeric fields are indexed in their native form, which a term
 	// or match query cannot reach, so they take a separate path.
@@ -3489,8 +3549,7 @@ func numberOrBoolQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query
 	}
 }
 
-// Combining rules follow the string path: "=" with several values is an AND,
-// "in" is an OR.
+// Combining rules follow the string path, see requirementQuery.
 func numberOrBoolSetQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
 	op := selection.Operator(req.Operator)
 	if op == selection.DoubleEquals && len(req.Values) != 1 {

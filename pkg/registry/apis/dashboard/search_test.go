@@ -1418,6 +1418,23 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		})
 	}
 
+	t.Run("names the logical title field once", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("query=cpu")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		names := make([]string, 0, len(result.QueryFields))
+		for _, f := range result.QueryFields {
+			names = append(names, f.Name)
+		}
+		// The stored forms of the title and their weights are the server's business.
+		assert.Equal(t, []string{"title"}, names)
+	})
+
 	t.Run("panel title search asks for the panel_title field", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
 		require.NoError(t, err)

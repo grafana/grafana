@@ -160,7 +160,33 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
             ]
           : [notebookListTag],
     }),
+
+    /**
+     * The distinct values of one field across every notebook the query matches, for a caller
+     * populating a filter or a picker. Asks for a single row because the rows are not wanted: a facet
+     * is aggregated over the match set rather than over the page returned.
+     *
+     * Its own endpoint rather than a flag on the search above, and deliberately tagged with nothing.
+     * The search provides the `Notebook` type because it is a list that writes must refresh; the
+     * generated notebook mutations invalidate that type in bulk, so sharing it would have every write
+     * refetch this. A caller holding this open for the length of an editing session would then re-ask
+     * on every autosave, for options it may never show. Fetched once per mount instead, which for a
+     * dropdown of suggestions is the right staleness.
+     */
+    notebookFieldFacet: build.query<SearchResults, { field: string; limit: number }>({
+      query: ({ field, limit }) => ({
+        url: '/notebooks/search',
+        method: 'POST',
+        body: {
+          apiVersion: SEARCH_API_VERSION,
+          kind: SEARCH_QUERY_KIND,
+          facets: [field],
+          facetLimit: limit,
+          limit: 1,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useSearchNotebooksInfiniteQuery } = notebookSearchAPI;
+export const { useSearchNotebooksInfiniteQuery, useNotebookFieldFacetQuery } = notebookSearchAPI;
