@@ -8497,7 +8497,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Stała wartość"
       },
-      "label": "Skalar",
+      "label-field": "",
       "label-limit": "Limit",
       "label-value": "Wartość",
       "noOptionsMessage-no-fields-found": "Nie znaleziono pól",
@@ -12666,6 +12666,9 @@
       "subtitle": "Reguły określające, czy alert zostanie uruchomiony",
       "title": "Reguły alertu"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Wybierz sposób powiadamiania punktów kontaktowych o wystąpieniu alertu",
       "title": "Punkty kontaktowe"
@@ -12770,6 +12773,10 @@
     "explore": {
       "title": "Eksploruj"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Uzyskaj faktyczny wgląd w monitorowanie użytkowników",
       "title": "Front-end"
@@ -12850,6 +12857,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12880,6 +12891,10 @@
     },
     "profiles": {
       "title": "Profile"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -17019,6 +17034,8 @@
       "name-faceted-filter": "Widoczność szeregu"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Dostępne",
         "label-dash": "Myślnik",

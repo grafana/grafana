@@ -8350,7 +8350,7 @@
       "fixed-value-options": {
         "label-fixed-values": "固定值"
       },
-      "label": "純量",
+      "label-field": "",
       "label-limit": "限制",
       "label-value": "數值",
       "noOptionsMessage-no-fields-found": "未找到欄位",
@@ -12402,6 +12402,9 @@
       "subtitle": "決定是否觸發警報的規則",
       "title": "警報規則"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "選擇當警報執行個體觸發時，通知聯絡點的方式",
       "title": "聯絡點"
@@ -12506,6 +12509,10 @@
     "explore": {
       "title": "探索"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "獲得真正的使用者監控深入解析",
       "title": "前端"
@@ -12586,6 +12593,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12616,6 +12627,10 @@
     },
     "profiles": {
       "title": "個人資料"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16650,6 +16665,8 @@
       "name-faceted-filter": "序列可見性"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "可存取",
         "label-dash": "虛線",

@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valor fixo"
       },
-      "label": "Escalar",
+      "label-field": "",
       "label-limit": "Limite",
       "label-value": "Valor",
       "noOptionsMessage-no-fields-found": "Nenhum campo encontrado",
@@ -12490,6 +12490,9 @@
       "subtitle": "Regras que determinam se um alerta disparará",
       "title": "Regras de alerta"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Escolha como notificar seus pontos de contato quando um alerta disparar",
       "title": "Pontos de contato"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Explorar"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Ganhe dicas reais de monitoramento de usuários",
       "title": "Front-end"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Perfis"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Visibilidade de série"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Acessível",
         "label-dash": "Tracejado",
