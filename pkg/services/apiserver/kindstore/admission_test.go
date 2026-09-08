@@ -282,6 +282,25 @@ func TestMutatingAdmission(t *testing.T) {
 	})
 }
 
+// A delete review carries only the stored object, so there is nothing to mutate
+// in place. A hook that handles every operation with one code path still echoes
+// an object back, and applying it would fail every DELETE with a 500.
+func TestMutatingAdmissionOnDelete(t *testing.T) {
+	mutated, err := json.Marshal(map[string]any{"spec": map[string]any{"title": "after"}})
+	require.NoError(t, err)
+
+	client := &reviewClient{rsp: allowed(mutated)}
+	s := admissionTestStore(client, []app.AdmissionOperation{app.AdmissionOperationAny}, nil)
+
+	old := testObject()
+	require.NoError(t, s.MutateAdmission(context.Background(),
+		attributes(nil, old, admission.Delete, "")))
+
+	require.Equal(t, 1, client.call, "the hook is still consulted")
+	require.Equal(t, "before", old.Object["spec"].(map[string]any)["title"],
+		"the stored object is left alone")
+}
+
 func TestAdmissionDenial(t *testing.T) {
 	t.Run("a bare denial is reported as forbidden", func(t *testing.T) {
 		rsp := &pluginv3.AdmissionReviewResponse{}

@@ -34,7 +34,7 @@ func TestManifestKindOpenAPINames(t *testing.T) {
 
 	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind"}
 	name := kindstore.OpenAPIName(gvk)
-	require.Equal(t, "example.ext.grafana.com.v1alpha1.TestKind", name)
+	require.Equal(t, "example.ext.grafana.app.v1alpha1.TestKind", name)
 
 	def, ok := defs[name]
 	require.True(t, ok, "definition map must contain the kind's OpenAPI name, got keys: %v", keys(defs))
@@ -110,7 +110,7 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 
 	b.postProcessManifestKinds(oas, root, version)
 
-	kindName := "example.ext.grafana.com.v1alpha1.TestKind"
+	kindName := "example.ext.grafana.app.v1alpha1.TestKind"
 	expected := "#/components/schemas/" + kindName
 	for _, mt := range oas.Paths.Paths[base].Post.RequestBody.Content {
 		require.Equal(t, expected, mt.Schema.Ref.String())
@@ -225,10 +225,10 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 }
 
 func TestSpecVersion(t *testing.T) {
-	b := &AppPluginAPIBuilder{group: "example.ext.grafana.com", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &AppPluginAPIBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
-	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.com/v1alpha1"}}}
+	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.app/v1alpha1"}}}
 	require.Equal(t, "v1alpha1", b.specVersion(oas))
 
 	// Falls back to the settings version when the title is missing or foreign

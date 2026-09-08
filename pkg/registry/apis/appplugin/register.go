@@ -70,9 +70,6 @@ type AppPluginRunnerOptions struct {
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
 
-	// Whether the generic search endpoints are served, read from the same
-	// settings the rest of the apiserver reads them from -- a manifest kind is
-	// searchable on the terms every other kind is.
 	SearchAPIEnabled bool
 	TrashAPIEnabled  bool
 
@@ -235,8 +232,17 @@ func RegisterAPIService(
 // apiGroupForPlugin returns the API group the plugin is served under: the group
 // declared in the manifest when it has one, otherwise the plugin id.
 func apiGroupForPlugin(plugin definition.PluginDefinition) string {
-	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
-		return plugin.Manifest.Group
+	if plugin.Manifest != nil {
+		group := plugin.Manifest.Group
+
+		// For now, an explicit group must end with .ext.grafana.app|com
+		if strings.HasSuffix(group, ".ext.grafana.app") ||
+			strings.HasSuffix(group, ".ext.grafana.com") {
+			return group
+		}
+		if group != "" {
+			panic(fmt.Sprintf("invalid manifest group %q for plugin %s: must be empty or end with .ext.grafana.app or .ext.grafana.com", group, plugin.JSONData.ID))
+		}
 	}
 	return plugin.JSONData.ID
 }
@@ -288,13 +294,25 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 	if b.manifest != nil {
 		registered := map[schema.GroupVersionKind]bool{}
-		addKind := func(gvk schema.GroupVersionKind) {
+		addKind := func(gvk schema.GroupVersionKind) error {
 			if registered[gvk] {
-				return
+				return nil
 			}
 			registered[gvk] = true
+			listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
+			// The settings kind and the metav1 types are registered in every
+			// served version above, and AddKnownTypeWithName panics when a GVK
+			// is already bound to a different Go type -- so a kind named
+			// Settings or Status would take the whole server down at startup.
+			for _, taken := range []schema.GroupVersionKind{gvk, listGVK} {
+				if scheme.Recognizes(taken) {
+					return fmt.Errorf("kind %s in %s claims the reserved kind name %q",
+						gvk.Kind, gvk.GroupVersion().String(), taken.Kind)
+				}
+			}
 			scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
-			scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
+			scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+			return nil
 		}
 
 		// Server-side apply uses the internal version to track managed fields.
@@ -305,8 +323,12 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			}
 			gv := schema.GroupVersion{Group: b.group, Version: version.Name}
 			for _, r := range version.Kinds {
-				addKind(gv.WithKind(r.Kind))
-				addKind(internalGV.WithKind(r.Kind))
+				if err := addKind(gv.WithKind(r.Kind)); err != nil {
+					return err
+				}
+				if err := addKind(internalGV.WithKind(r.Kind)); err != nil {
+					return err
+				}
 			}
 		}
 	}

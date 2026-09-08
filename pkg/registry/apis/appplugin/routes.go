@@ -40,6 +40,27 @@ const (
 // route may not claim them.
 var reservedSubresources = map[string]bool{"status": true}
 
+// dropUnservableMethods removes the operations the route mounter has no case
+// for. Left in the spec, addRouteFromSpec rejects them and the error aborts
+// apiserver startup -- one plugin's manifest would take down every group. The
+// returned props are a copy, so the loaded manifest is untouched.
+func dropUnservableMethods(props spec3.PathProps, warn func(method string)) (spec3.PathProps, bool) {
+	for _, m := range []struct {
+		method string
+		op     **spec3.Operation
+	}{
+		{http.MethodHead, &props.Head},
+		{http.MethodTrace, &props.Trace},
+		{http.MethodOptions, &props.Options},
+	} {
+		if *m.op != nil {
+			warn(m.method)
+			*m.op = nil
+		}
+	}
+	return props, len(builder.GetPathOperations(&props)) > 0
+}
+
 func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	if b.manifest == nil {
 		return nil
@@ -66,6 +87,13 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		if root, _, _ := strings.Cut(path, "/"); reserved[root] {
 			logging.DefaultLogger.Warn("skipping manifest route that shadows a resource path",
 				"group", gv.Group, "version", gv.Version, "path", path)
+			return
+		}
+		props, served := dropUnservableMethods(props, func(method string) {
+			logging.DefaultLogger.Warn("skipping manifest route method the apiserver cannot serve",
+				"group", gv.Group, "version", gv.Version, "path", path, "method", method)
+		})
+		if !served {
 			return
 		}
 		*dst = append(*dst, builder.APIRouteHandler{
@@ -107,6 +135,13 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 			if path == "" || reservedSubresources[path] {
 				logging.DefaultLogger.Warn("skipping manifest kind route that shadows a subresource",
 					"group", gv.Group, "version", gv.Version, "kind", kind.Kind, "path", path)
+				continue
+			}
+			props, served := dropUnservableMethods(props, func(method string) {
+				logging.DefaultLogger.Warn("skipping manifest kind route method the apiserver cannot serve",
+					"group", gv.Group, "version", gv.Version, "kind", kind.Kind, "path", path, "method", method)
+			})
+			if !served {
 				continue
 			}
 			*dst = append(*dst, builder.APIRouteHandler{

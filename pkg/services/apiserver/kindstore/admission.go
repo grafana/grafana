@@ -71,6 +71,13 @@ func (s *Store) MutateAdmission(ctx context.Context, a admission.Attributes) err
 	if len(raw) == 0 {
 		return nil // the hook left the object unchanged
 	}
+	// A delete review carries only the stored object, so there is nothing to
+	// mutate in place. A hook that handles every operation with one code path
+	// still echoes an object back, and failing the request over it would break
+	// DELETE for the kind entirely.
+	if a.GetOperation() == admission.Delete {
+		return nil
+	}
 	return s.applyMutation(a.GetObject(), raw)
 }
 

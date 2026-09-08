@@ -9,7 +9,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-const testRoleGroup = "example.ext.grafana.com"
+const testRoleGroup = "example.ext.grafana.app"
 
 // actions is the list a registration grants, which is all that decides whether
 // unified storage lets a request through.

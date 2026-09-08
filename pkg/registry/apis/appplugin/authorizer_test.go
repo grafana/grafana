@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -80,8 +81,10 @@ func TestGetAuthorizer(t *testing.T) {
 func TestGetAuthorizerManifestKinds(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
-		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope},
-		app.ManifestVersionKind{Kind: "Setting", Plural: "Settings", Scope: kindstore.ClusterScope, UserReadable: true},
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope,
+			Routes: map[string]spec3.PathProps{"/rotate": {Post: &spec3.Operation{}}}},
+		app.ManifestVersionKind{Kind: "Setting", Plural: "Settings", Scope: kindstore.ClusterScope, UserReadable: true,
+			Routes: map[string]spec3.PathProps{"/reload": {Post: &spec3.Operation{}}}},
 	)
 
 	b := &AppPluginAPIBuilder{
@@ -121,6 +124,31 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 		{
 			name:     "a user-readable cluster-scoped kind cannot be written",
 			attr:     authorizer.AttributesRecord{Resource: "settings", Verb: "update"},
+			decision: authorizer.DecisionDeny,
+			reason:   "verb not permitted for cluster-scoped resource",
+		},
+		{
+			// Without this an informer over the kind cannot start, and the watch
+			// the reader role grants is dead.
+			name:     "a user-readable cluster-scoped kind can be watched",
+			attr:     authorizer.AttributesRecord{Resource: "settings", Verb: "watch"},
+			decision: authorizer.DecisionAllow,
+		},
+		{
+			// The route is served by the plugin, not unified storage, so app
+			// access is what authorizes it -- the read-only rule does not apply.
+			name:     "a custom route on a cluster-scoped kind is reachable",
+			attr:     authorizer.AttributesRecord{Resource: "settings", Subresource: "reload", Verb: "create"},
+			decision: authorizer.DecisionAllow,
+		},
+		{
+			name:     "a custom route is reachable on a kind users cannot read",
+			attr:     authorizer.AttributesRecord{Resource: "secrets", Subresource: "rotate", Verb: "create"},
+			decision: authorizer.DecisionAllow,
+		},
+		{
+			name:     "a subresource the manifest does not declare is still refused",
+			attr:     authorizer.AttributesRecord{Resource: "settings", Subresource: "status", Verb: "update"},
 			decision: authorizer.DecisionDeny,
 			reason:   "verb not permitted for cluster-scoped resource",
 		},

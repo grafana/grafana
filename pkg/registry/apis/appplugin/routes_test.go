@@ -71,15 +71,15 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	}
 
 	// Cluster routes mount at the group-version root, namespaced ones under namespaces
-	require.Contains(t, registered, "GET /apis/example.ext.grafana.com/v1alpha1/foobar")
-	require.Contains(t, registered, "GET /apis/example.ext.grafana.com/v1alpha1/namespaces/{namespace}/foobar")
-	require.Contains(t, registered, "GET /apis/example.ext.grafana.com/v2alpha1/namespaces/{namespace}/example")
+	require.Contains(t, registered, "GET /apis/example.ext.grafana.app/v1alpha1/foobar")
+	require.Contains(t, registered, "GET /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/foobar")
+	require.Contains(t, registered, "GET /apis/example.ext.grafana.app/v2alpha1/namespaces/{namespace}/example")
 
 	// The generic subresource a namespaced kind gets. /trash is built from the
 	// same resource name and is the route most likely to collide with it once it
 	// is wired up, which is what the duplicate check above is guarding.
-	require.Contains(t, registered, "POST /apis/example.ext.grafana.com/v1alpha1/namespaces/{namespace}/testkinds/search")
-	require.NotContains(t, registered, "POST /apis/example.ext.grafana.com/v1alpha1/namespaces/{namespace}/testkinds/trash",
+	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search")
+	require.NotContains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/trash",
 		"trash is not wired up to search yet")
 }
 
@@ -99,7 +99,7 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
 	}
 
-	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"})
+	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
 
 	paths := func(handlers []builder.APIRouteHandler) []string {
@@ -115,11 +115,60 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 	// With an index client the kind serves /search itself, which is what the
 	// manifest's own /testkinds/search would have collided with.
 	b.search = stubIndexClient{}
-	routes = b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"})
+	routes = b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
 	require.Equal(t, []string{
 		"foobar", "testkinds/search", "testkinds/{name}/reload",
 	}, paths(routes.Namespace), "the manifest route was dropped, so /search is mounted once")
+}
+
+// The route mounter has no case for HEAD, TRACE or OPTIONS, and the error it
+// returns for one aborts apiserver startup for every group -- so a manifest
+// that declares one loses that method, not the server.
+func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
+	manifest := testManifest(t)
+	op := &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "unservable"}}
+	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}
+	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op}
+	manifest.Versions[1].Kinds[0].Routes["/kindhead"] = spec3.PathProps{Head: op}
+
+	b := &AppPluginAPIBuilder{
+		group:      manifest.Group,
+		manifest:   manifest,
+		pluginJSON: plugins.JSONData{ID: "example-app"},
+	}
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+	routes := b.GetAPIRoutes(gv)
+	require.NotNil(t, routes)
+
+	byPath := map[string]*spec3.PathProps{}
+	for _, h := range slices.Concat(routes.Namespace, routes.Root) {
+		byPath[h.Path] = h.Spec
+	}
+
+	// A route left with no servable method at all is dropped entirely.
+	require.NotContains(t, byPath, "headonly")
+	require.NotContains(t, byPath, "testkinds/{name}/kindhead")
+
+	// A route that also declares a servable method keeps only that one.
+	mixed, ok := byPath["mixed"]
+	require.True(t, ok, "the GET half is still served")
+	require.NotNil(t, mixed.Get)
+	require.Nil(t, mixed.Options)
+	require.Nil(t, mixed.Trace)
+
+	// Every mounted operation is one addRouteFromSpec has a case for.
+	for path, props := range byPath {
+		for method := range builder.GetPathOperations(props) {
+			require.Contains(t,
+				[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete},
+				method, "path %s", path)
+		}
+	}
+
+	// The loaded manifest is shared with the rest of the server, so dropping a
+	// method must not edit it.
+	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options)
 }
 
 // A plugin without a manifest has no custom routes at all.
@@ -160,7 +209,7 @@ func TestGetAPIRoutesSkipsUnservedVersions(t *testing.T) {
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 	}
 
-	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v2alpha1"}))
+	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v2alpha1"}))
 }
 
 // Kind routes are subresources of one object, so they mount under {name} and
@@ -188,7 +237,7 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 	}
-	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"})
+	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
 
 	byPath := map[string]builder.APIRouteHandler{}
@@ -256,7 +305,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 		search:     stubIndexClient{},
 		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
 	}
-	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"})
+	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
 
 	checked := []string{}
@@ -289,10 +338,10 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 }
 
 func TestRouteHandlerRouteInfo(t *testing.T) {
-	gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"}
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 	newBuilder := func(client v3.ClientV3, get getter) *AppPluginAPIBuilder {
 		return &AppPluginAPIBuilder{
-			group:      "example.ext.grafana.com",
+			group:      "example.ext.grafana.app",
 			pluginJSON: plugins.JSONData{ID: "example-app"},
 			clientV3:   client,
 			getter:     get,
@@ -307,7 +356,7 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		// A version route has no parent, so storage is never consulted.
 		newBuilder(client, nil).routeHandler(gv, "", "foobar")(httptest.NewRecorder(), req)
 
-		require.Equal(t, "example.ext.grafana.com", client.req.GetGroup())
+		require.Equal(t, "example.ext.grafana.app", client.req.GetGroup())
 		require.Equal(t, "v1alpha1", client.req.GetVersion())
 		require.Equal(t, "org-2", client.req.GetNamespace())
 		require.Equal(t, "foobar", client.req.GetPath())
@@ -319,7 +368,7 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 	t.Run("kind routes carry the parent object", func(t *testing.T) {
 		client := &fakeRouteClient{}
 		stored := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "example.ext.grafana.com/v1alpha1",
+			"apiVersion": "example.ext.grafana.app/v1alpha1",
 			"kind":       "TestKind",
 			"metadata": map[string]any{
 				"name":            "thing-1",
@@ -487,7 +536,7 @@ func (o *unencodableObject) DeepCopyObject() runtime.Object { return o }
 // a custom resource definition does. These are that package's rules, asserted
 // here because mounting them is this builder's job.
 func TestSearchRouteGates(t *testing.T) {
-	gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"}
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 
 	newBuilder := func(opts AppPluginRunnerOptions) *AppPluginAPIBuilder {
 		manifest := testManifest(t)

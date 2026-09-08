@@ -38,7 +38,7 @@ func testManifest(t *testing.T) *app.ManifestData {
 	return &app.ManifestData{
 		AppName:          "example",
 		AppDisplayName:   "Example",
-		Group:            "example.ext.grafana.com",
+		Group:            "example.ext.grafana.app",
 		PreferredVersion: "v1alpha1",
 		Versions: []app.ManifestVersion{
 			{
@@ -111,9 +111,9 @@ func TestGetGroupVersions(t *testing.T) {
 	}
 
 	require.Equal(t, []schema.GroupVersion{
-		{Group: "example.ext.grafana.com", Version: "v1alpha1"},
-		{Group: "example.ext.grafana.com", Version: "v0alpha1"},
-		{Group: "example.ext.grafana.com", Version: "v2alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v1alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v0alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v2alpha1"},
 	}, b.GetGroupVersions())
 }
 
@@ -131,9 +131,9 @@ func TestGetGroupVersionsAlwaysServesSettingsVersion(t *testing.T) {
 	}
 
 	require.Equal(t, []schema.GroupVersion{
-		{Group: "example.ext.grafana.com", Version: "v1alpha1"},
-		{Group: "example.ext.grafana.com", Version: "v2alpha1"},
-		{Group: "example.ext.grafana.com", Version: apppluginV0.VERSION},
+		{Group: "example.ext.grafana.app", Version: "v1alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v2alpha1"},
+		{Group: "example.ext.grafana.app", Version: apppluginV0.VERSION},
 	}, b.GetGroupVersions(), "the settings version is appended last so it stays non-preferred")
 }
 
@@ -158,7 +158,7 @@ func TestGetGroupVersionsFallback(t *testing.T) {
 			pluginJSON: plugins.JSONData{ID: "example-app"},
 		}
 		require.Equal(t, []schema.GroupVersion{
-			{Group: "example.ext.grafana.com", Version: apppluginV0.VERSION},
+			{Group: "example.ext.grafana.app", Version: apppluginV0.VERSION},
 		}, b.GetGroupVersions())
 	})
 }
