@@ -22,7 +22,7 @@ import (
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
-var version = "9.2.0"
+var version = "10.2.0"
 var commit = bootstrap.DefaultCommitValue
 var enterpriseCommit = bootstrap.DefaultCommitValue
 var buildBranch = "main"
