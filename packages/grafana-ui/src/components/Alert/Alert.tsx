@@ -3,6 +3,7 @@ import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { palette } from '@grafana/data/unstable';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -87,9 +88,9 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
             <Box paddingY={1} flex={1} minWidth="50%">
-              <Text color="primary" weight="medium">
-                {title}
-              </Text>
+              <div className={styles.title}>
+                <Text weight="medium">{title}</Text>
+              </div>
               {children && <div className={styles.content}>{children}</div>}
             </Box>
             <Stack alignItems="center" wrap="wrap">
@@ -135,6 +136,24 @@ const getIconFromSeverity = (severity: AlertVariant): IconName => {
   }
 };
 
+type AlertColors = { title: string; content: string; border: string };
+
+/** Visual refresh dark mode, where the alert sits on a 950 background: title = 50, content = 100, border = 900 */
+const darkAlertColors: Record<AlertVariant, AlertColors> = {
+  error: { title: palette.red50, content: palette.red100, border: palette.red900 },
+  warning: { title: palette.amber50, content: palette.amber100, border: palette.amber900 },
+  success: { title: palette.sage50, content: palette.sage100, border: palette.sage900 },
+  info: { title: palette.blue50, content: palette.blue100, border: palette.blue900 },
+};
+
+/** Visual refresh light mode, where the alert sits on a 50 background: title = 800, content = 700, border = 200 */
+const lightAlertColors: Record<AlertVariant, AlertColors> = {
+  error: { title: palette.red800, content: palette.red700, border: palette.red200 },
+  warning: { title: palette.amber800, content: palette.amber700, border: palette.amber200 },
+  success: { title: palette.sage800, content: palette.sage700, border: palette.sage200 },
+  info: { title: palette.blue800, content: palette.blue700, border: palette.blue200 },
+};
+
 const getStyles = (
   theme: GrafanaTheme2,
   severity: AlertVariant,
@@ -144,6 +163,11 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
+  const refreshColors = theme.flags.visualDesignRefresh
+    ? theme.isDark
+      ? darkAlertColors[severity]
+      : lightAlertColors[severity]
+    : undefined;
 
   return {
     wrapper: css({
@@ -163,14 +187,21 @@ const getStyles = (
         borderRadius: theme.shape.radius.lg,
         zIndex: -1,
       },
+
+      // Box takes its border color from a theme token and accepts no className, so the
+      // refreshed border is applied to it from here
+      ...(refreshColors && { '> div': { borderColor: refreshColors.border } }),
     }),
     icon: css({
       color: color.text,
       position: 'relative',
       top: '-1px',
     }),
+    title: css({
+      color: refreshColors?.title ?? theme.colors.text.primary,
+    }),
     content: css({
-      color: theme.colors.text.primary,
+      color: refreshColors?.content ?? theme.colors.text.primary,
       paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
