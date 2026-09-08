@@ -6314,6 +6314,8 @@
         "global-section": "Global",
         "load-error": "Could not load global and folder variables.",
         "pane-header": "Cross-dashboard variables",
+        "select-all-folder": "All folder",
+        "select-all-global": "All global",
         "title": "Cross-dashboard",
         "tooltip": "Choose global and folder variables"
       },
@@ -7038,9 +7040,6 @@
     },
     "cross-dashboard-variables": {
       "label-all": "All",
-      "label-custom": "Custom",
-      "label-folder": "Folder",
-      "label-global": "Global",
       "label-none": "None"
     },
     "custom-variable-form": {

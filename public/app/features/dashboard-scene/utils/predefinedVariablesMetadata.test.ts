@@ -5,20 +5,20 @@ describe('formatPredefinedVariablesAnnotationLabel', () => {
     expect(formatPredefinedVariablesAnnotationLabel(undefined)).toBe('None');
   });
 
-  it('labels both-all as All', () => {
-    expect(formatPredefinedVariablesAnnotationLabel('{"global":"all","folder":"all"}')).toBe('All');
+  it('labels both-all as All / All', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"all","folder":"all"}')).toBe('All / All');
   });
 
-  it('labels both-none as None', () => {
-    expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"none"}')).toBe('None');
+  it('labels both-none as None / None', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"none"}')).toBe('None / None');
   });
 
-  it('labels global-only as Global', () => {
-    expect(formatPredefinedVariablesAnnotationLabel('{"global":"all","folder":"none"}')).toBe('Global');
+  it('labels global-all as All / None', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"all","folder":"none"}')).toBe('All / None');
   });
 
-  it('labels folder-only as Folder', () => {
-    expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"all"}')).toBe('Folder');
+  it('labels folder-all as None / All', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"all"}')).toBe('None / All');
   });
 
   it('labels name lists with the picked names', () => {
@@ -26,5 +26,9 @@ describe('formatPredefinedVariablesAnnotationLabel', () => {
     expect(formatPredefinedVariablesAnnotationLabel('{"global":["region","env"],"folder":["cluster"]}')).toBe(
       'env, region / cluster'
     );
+  });
+
+  it('labels unparsable annotation as None', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{not-json')).toBe('None');
   });
 });

@@ -11,9 +11,10 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import {
-  isScopeNameSelected,
+  isPredefinedNameSelected,
   parseUseCrossDashboardVariables,
-  toggleScopeName,
+  setScopeAll,
+  toggleSelectionName,
   writeUseCrossDashboardVariables,
   type PredefinedVariableScope,
   type UseCrossDashboardVariables,
@@ -78,11 +79,24 @@ export function updateDashboardScopeVariable(
     global: 'none' as const,
     folder: 'none' as const,
   };
+  persistSelection(dashboard, toggleSelectionName(current, scope, name, checked, allNamesInScope));
+  DashboardInteractions.predefinedVariableToggled({ scope, checked });
+}
+
+export function updateDashboardScopeAll(
+  dashboard: PredefinedVariablesDashboard,
+  scope: PredefinedVariableScope,
+  checked: boolean
+) {
+  const current = parseUseCrossDashboardVariables(readAnnotationMap(dashboard)) ?? {
+    global: 'none' as const,
+    folder: 'none' as const,
+  };
   persistSelection(dashboard, {
     ...current,
-    [scope]: toggleScopeName(current[scope], name, checked, allNamesInScope),
+    [scope]: setScopeAll(checked),
   });
-  DashboardInteractions.predefinedVariableToggled({ scope, name, checked });
+  DashboardInteractions.predefinedVariableToggled({ scope, checked });
 }
 
 interface Props {
@@ -235,11 +249,23 @@ function ScopeCheckboxSection({
           </Text>
         ) : (
           <ul className={styles.list}>
+            <li className={styles.listItem}>
+              <Checkbox
+                label={
+                  scope === 'global'
+                    ? t('dashboard.sidebar.cross-dashboard-variables.select-all-global', 'All global')
+                    : t('dashboard.sidebar.cross-dashboard-variables.select-all-folder', 'All folder')
+                }
+                value={scopeSelection === 'all'}
+                disabled={!canEdit}
+                onChange={(event) => updateDashboardScopeAll(dashboard, scope, event.currentTarget.checked)}
+              />
+            </li>
             {variables.map((variable) => (
               <li key={variable.spec.name} className={styles.listItem}>
                 <Checkbox
                   label={variable.spec.name}
-                  value={isScopeNameSelected(scopeSelection, variable.spec.name)}
+                  value={isPredefinedNameSelected(selection, scope, variable.spec.name)}
                   disabled={!canEdit}
                   onChange={(event) =>
                     updateDashboardScopeVariable(

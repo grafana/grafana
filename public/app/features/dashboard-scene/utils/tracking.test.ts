@@ -234,16 +234,14 @@ describe('dashboard tracking', () => {
       });
     });
 
-    it('reports dashboards_predefined_variable_toggled', () => {
+    it('reports dashboards_predefined_variable_toggled without a variable name', () => {
       DashboardInteractions.predefinedVariableToggled({
         scope: 'global',
-        name: 'env',
         checked: true,
       });
 
       expect(reportInteraction).toHaveBeenCalledWith('dashboards_predefined_variable_toggled', {
         scope: 'global',
-        name: 'env',
         checked: true,
         isDynamicDashboard: true,
       });

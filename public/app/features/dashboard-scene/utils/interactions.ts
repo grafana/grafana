@@ -166,8 +166,9 @@ export const DashboardInteractions = {
   },
 
   // dashboards_predefined_variable_toggled
-  // when a user checks or unchecks a global or folder variable on the dashboard
-  predefinedVariableToggled: (properties: { scope: PredefinedVariableScope; name: string; checked: boolean }) => {
+  // when a user checks or unchecks a global or folder variable on the dashboard.
+  // Do not send variable names — they are customer-authored (cardinality + leak).
+  predefinedVariableToggled: (properties: { scope: PredefinedVariableScope; checked: boolean }) => {
     reportDashboardInteraction('predefined_variable_toggled', properties);
   },
 

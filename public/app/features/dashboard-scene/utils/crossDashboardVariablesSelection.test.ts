@@ -5,11 +5,14 @@ import {
   applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
+  isPredefinedNameSelected,
   isScopeNameSelected,
   mayInjectAnyPredefinedVariables,
   parseUseCrossDashboardVariables,
   resolvePredefinedVariablesForDashboard,
   serializeUseCrossDashboardVariables,
+  setScopeAll,
+  toggleSelectionName,
   toggleScopeName,
   writeUseCrossDashboardVariables,
 } from './crossDashboardVariablesSelection';
@@ -131,6 +134,25 @@ describe('writeUseCrossDashboardVariables', () => {
     writeUseCrossDashboardVariables(annotations, { global: 'none', folder: 'none' });
     expect(annotations).toEqual({ keep: 'yes' });
   });
+
+  it('drops grafana.app/ignorePredefinedVariables on persist', () => {
+    // Older dashboards may still carry this unread denylist. Persist must delete it
+    // or the key is copied into every later save.
+    const annotations: Record<string, string> = {
+      'grafana.app/ignorePredefinedVariables': 'global:*,folder:*',
+      keep: 'yes',
+    };
+
+    writeUseCrossDashboardVariables(annotations, { global: ['env'], folder: 'none' });
+    expect(Object.keys(annotations)).toEqual(['keep', AnnoKeyUseCrossDashboardVariables]);
+    expect(annotations).toEqual({
+      keep: 'yes',
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["env"],"folder":"none"}',
+    });
+
+    writeUseCrossDashboardVariables(annotations, { global: 'none', folder: 'none' });
+    expect(annotations).toEqual({ keep: 'yes' });
+  });
 });
 
 describe('applyUseCrossDashboardVariables', () => {
@@ -156,6 +178,21 @@ describe('applyUseCrossDashboardVariables', () => {
         (v) => v.spec.name
       )
     ).toEqual(['env', 'cluster']);
+  });
+
+  it('keeps a folder variable whose name was selected as global after scope reclassification', () => {
+    // mergePredefinedVariables drops the global when a folder var reuses the name.
+    const shadowed = [makeVar('env', 'folder'), makeVar('cluster', 'folder')];
+    expect(
+      applyUseCrossDashboardVariables(shadowed, { global: ['env'], folder: 'none' }).map((v) => v.spec.name)
+    ).toEqual(['env']);
+  });
+
+  it('does not treat global all as opting in folder-only names', () => {
+    const shadowed = [makeVar('env', 'folder'), makeVar('cluster', 'folder')];
+    expect(
+      applyUseCrossDashboardVariables(shadowed, { global: 'all', folder: 'none' }).map((v) => v.spec.name)
+    ).toEqual([]);
   });
 });
 
@@ -238,7 +275,7 @@ describe('getGlobalVariablesMode', () => {
     expect(getGlobalVariablesMode({ global: 'all', folder: 'all' })).toBe('all');
   });
 
-  it('maps a single all scope to that radio', () => {
+  it('maps a single all scope to that coarse mode', () => {
     expect(getGlobalVariablesMode({ global: 'all', folder: 'none' })).toBe('global');
     expect(getGlobalVariablesMode({ global: 'none', folder: 'all' })).toBe('folder');
   });
@@ -275,6 +312,44 @@ describe('isScopeNameSelected', () => {
     expect(isScopeNameSelected('none', 'env')).toBe(false);
     expect(isScopeNameSelected(['env'], 'env')).toBe(true);
     expect(isScopeNameSelected(['env'], 'region')).toBe(false);
+  });
+});
+
+describe('isPredefinedNameSelected', () => {
+  it('selects a folder name that is listed only under global', () => {
+    expect(isPredefinedNameSelected({ global: ['env'], folder: 'none' }, 'folder', 'env')).toBe(true);
+    expect(isPredefinedNameSelected({ global: ['env'], folder: 'none' }, 'folder', 'cluster')).toBe(false);
+  });
+
+  it('does not treat the other scope all as a name match', () => {
+    expect(isPredefinedNameSelected({ global: 'all', folder: 'none' }, 'folder', 'env')).toBe(false);
+  });
+});
+
+describe('setScopeAll', () => {
+  it('writes all when checked and none when unchecked', () => {
+    expect(setScopeAll(true)).toBe('all');
+    expect(setScopeAll(false)).toBe('none');
+  });
+});
+
+describe('toggleSelectionName', () => {
+  const allNames = ['env', 'cluster'];
+
+  it('adds a name to the listed scope', () => {
+    expect(toggleSelectionName({ global: 'none', folder: 'none' }, 'folder', 'env', true, allNames)).toEqual({
+      global: 'none',
+      folder: ['env'],
+    });
+  });
+
+  it('drops the name from both scopes on uncheck', () => {
+    expect(
+      toggleSelectionName({ global: ['env', 'region'], folder: 'none' }, 'folder', 'env', false, allNames)
+    ).toEqual({
+      global: ['region'],
+      folder: 'none',
+    });
   });
 });
 

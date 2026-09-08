@@ -11,6 +11,7 @@ import { toControlSourceRef } from '../../utils/predefinedVariables';
 
 import {
   DashboardPredefinedVariablesOptions,
+  updateDashboardScopeAll,
   updateDashboardScopeVariable,
   type PredefinedVariablesDashboard,
 } from './DashboardPredefinedVariablesOptions';
@@ -96,7 +97,7 @@ describe('updateDashboardScopeVariable', () => {
     expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
       '{"global":["env"],"folder":"none"}'
     );
-    expect(toggledSpy).toHaveBeenCalledWith({ scope: 'global', name: 'env', checked: true });
+    expect(toggledSpy).toHaveBeenCalledWith({ scope: 'global', checked: true });
     expect(dashboard.refreshPredefinedVariables).toHaveBeenCalled();
   });
 
@@ -133,6 +134,54 @@ describe('updateDashboardScopeVariable', () => {
       '{"global":["env","region"],"folder":"none"}'
     );
   });
+
+  it('checking All writes all so auto-include can be restored', () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["env"],"folder":"none"}',
+    });
+
+    updateDashboardScopeAll(dashboard, 'global', true);
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":"all","folder":"none"}'
+    );
+    expect(toggledSpy).toHaveBeenCalledWith({ scope: 'global', checked: true });
+  });
+
+  it('unchecking All clears the scope', () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"none"}',
+    });
+
+    updateDashboardScopeAll(dashboard, 'global', false);
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
+  });
+
+  it('unchecking a reclassified folder name also drops it from global', () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["env"],"folder":"none"}',
+    });
+
+    updateDashboardScopeVariable(dashboard, 'folder', 'env', false, ['env', 'cluster']);
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
+  });
+
+  it('drops grafana.app/ignorePredefinedVariables when persisting a selection', () => {
+    // Older dashboards may still carry this unread denylist. Persist must delete it
+    // or readAnnotationMap copies it into every later save.
+    const dashboard = createDashboard({
+      'grafana.app/ignorePredefinedVariables': 'global:*',
+    });
+
+    updateDashboardScopeVariable(dashboard, 'global', 'env', true, ['env']);
+
+    expect(Object.keys(dashboard.state.meta.k8s?.annotations ?? {})).toEqual([AnnoKeyUseCrossDashboardVariables]);
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":["env"],"folder":"none"}'
+    );
+  });
 });
 
 describe('DashboardPredefinedVariablesOptions', () => {
@@ -165,6 +214,8 @@ describe('DashboardPredefinedVariablesOptions', () => {
 
     expect(await screen.findByRole('checkbox', { name: 'env' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'cluster' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'All global' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'All folder' })).toBeInTheDocument();
     expect(screen.getByText('env')).toBeVisible();
     expect(screen.getByText('cluster')).toBeVisible();
   });

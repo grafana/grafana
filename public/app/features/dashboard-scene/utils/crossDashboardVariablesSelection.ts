@@ -27,7 +27,7 @@ export type PredefinedVariableScope = 'global' | 'folder';
  * - Both scopes `"all"` → `all`
  * - Global `"all"` + folder `"none"` → `global`
  * - Global `"none"` + folder `"all"` → `folder`
- * - Name lists or mixed combinations → `undefined`
+ * - Name lists or mixed combinations → `undefined` (not a coarse All/None/scope label)
  */
 export function getGlobalVariablesMode(
   selection: UseCrossDashboardVariables | undefined
@@ -124,6 +124,9 @@ export function writeUseCrossDashboardVariables(
   annotations: Record<string, string>,
   selection: UseCrossDashboardVariables
 ): void {
+  // Stop re-persisting the unread denylist this annotation replaced.
+  delete annotations['grafana.app/ignorePredefinedVariables'];
+
   const serialized = serializeUseCrossDashboardVariables(selection);
   if (serialized === undefined) {
     delete annotations[AnnoKeyUseCrossDashboardVariables];
@@ -143,8 +146,8 @@ export function isScopeNameSelected(scope: ScopeSelection, name: string): boolea
 }
 
 /**
- * Toggle one name in a scope. Checking every currently listed name stays a name array;
- * only the All radio writes `"all"`. Unchecking from `"all"` writes the remaining names.
+ * Toggle one name in a scope. Checking stays a name array — `"all"` is only written by
+ * the All checkbox (`setScopeAll`). Unchecking from `"all"` writes the remaining names.
  */
 export function toggleScopeName(
   scope: ScopeSelection,
@@ -168,6 +171,64 @@ export function toggleScopeName(
   return next.length === 0 ? 'none' : next;
 }
 
+/** Write `"all"` or `"none"` for a scope (All checkbox). */
+export function setScopeAll(checked: boolean): ScopeSelection {
+  return checked ? 'all' : 'none';
+}
+
+/**
+ * Apply a per-name checkbox to the full selection.
+ *
+ * Unchecking drops the name from both scopes so a folder variable that shadowed a
+ * selected global does not stay opted in via the leftover global name.
+ */
+export function toggleSelectionName(
+  selection: UseCrossDashboardVariables,
+  scope: PredefinedVariableScope,
+  name: string,
+  checked: boolean,
+  allNamesInScope: string[]
+): UseCrossDashboardVariables {
+  if (checked) {
+    return {
+      ...selection,
+      [scope]: toggleScopeName(selection[scope], name, true, allNamesInScope),
+    };
+  }
+
+  return {
+    global:
+      scope === 'global'
+        ? toggleScopeName(selection.global, name, false, allNamesInScope)
+        : dropListedName(selection.global, name),
+    folder:
+      scope === 'folder'
+        ? toggleScopeName(selection.folder, name, false, allNamesInScope)
+        : dropListedName(selection.folder, name),
+  };
+}
+
+/**
+ * Whether a variable listed under `scope` is opted in.
+ *
+ * A name-array selection in the other scope still counts, so a folder variable
+ * that shadowed a selected global keeps the explicit opt-in.
+ */
+export function isPredefinedNameSelected(
+  selection: UseCrossDashboardVariables | undefined,
+  scope: PredefinedVariableScope,
+  name: string
+): boolean {
+  if (!selection) {
+    return false;
+  }
+  if (isScopeNameSelected(selection[scope], name)) {
+    return true;
+  }
+  const other = scope === 'global' ? selection.folder : selection.global;
+  return Array.isArray(other) && other.includes(name);
+}
+
 export function applyUseCrossDashboardVariables(
   variables: VariableKind[],
   selection: UseCrossDashboardVariables
@@ -177,14 +238,19 @@ export function applyUseCrossDashboardVariables(
     if (!origin) {
       return true;
     }
-    if (origin.type === 'global') {
-      return isScopeNameSelected(selection.global, variable.spec.name);
-    }
-    if (origin.type === 'folder') {
-      return isScopeNameSelected(selection.folder, variable.spec.name);
+    if (origin.type === 'global' || origin.type === 'folder') {
+      return isPredefinedNameSelected(selection, origin.type, variable.spec.name);
     }
     return true;
   });
+}
+
+function dropListedName(scope: ScopeSelection, name: string): ScopeSelection {
+  if (scope === 'all' || scope === 'none') {
+    return scope;
+  }
+  const next = scope.filter((n) => n !== name);
+  return next.length === 0 ? 'none' : next;
 }
 
 /**
