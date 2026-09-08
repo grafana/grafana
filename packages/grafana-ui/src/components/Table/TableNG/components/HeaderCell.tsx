@@ -151,7 +151,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       )}
       <button
         tabIndex={0}
-        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelPrimary)}
+        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelRefreshed)}
         title={displayName}
       >
         {displayName}
@@ -308,9 +308,13 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
   }),
   // `table.refresh` gives the header its own background, so the label no longer needs to be
   // de-emphasised against the body rows to read as a header — it takes the body text colour.
-  headerCellLabelPrimary: css({
-    label: 'headerCellLabelPrimary',
+  headerCellLabelRefreshed: css({
+    label: 'headerCellLabelRefreshed',
     color: theme.colors.text.primary,
+    // A flex item won't shrink below its own min-content width by default, which for a `nowrap`
+    // label is the whole title — so `overflow: hidden` and the ellipsis above never engage and the
+    // title runs under the column menu pinned to the trailing edge. Allow it to shrink instead.
+    minWidth: 0,
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,

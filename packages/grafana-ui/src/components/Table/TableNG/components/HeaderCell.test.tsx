@@ -91,6 +91,18 @@ describe('HeaderCell', () => {
     );
   });
 
+  it('lets the header label shrink so a long title truncates against the column menu', () => {
+    // As a flex item the label won't shrink below its own min-content width unless min-width is 0,
+    // and the refreshed header pins the column menu to the trailing edge for it to truncate against.
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).toBe('0');
+
+    unmount();
+
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).not.toBe('0');
+  });
+
   it('renders nothing when hideHeader is set', () => {
     const { container } = render(
       <HeaderCell {...baseProps} field={makeField({ config: { custom: { hideHeader: true } } })} direction="ASC" />
