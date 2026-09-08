@@ -8,7 +8,6 @@ export const stubDatasource: DataSourceInstanceListItem = {
   name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
   isDefault: true,
 };
 

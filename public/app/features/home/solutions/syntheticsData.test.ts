@@ -47,7 +47,6 @@ function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: b
     name: ds.name,
     type: 'prometheus',
     meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-    readOnly: false,
     isDefault: ds.isDefault ?? false,
   };
 }

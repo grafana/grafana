@@ -48,7 +48,6 @@ function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: b
     name: ds.name,
     type: 'prometheus',
     meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-    readOnly: false,
     isDefault: ds.isDefault ?? false,
   };
 }
@@ -387,7 +386,6 @@ describe('Kubernetes Prometheus resolution', () => {
       name: partial.name,
       type: partial.type,
       meta: { id: partial.metaId } as DataSourceInstanceListItem['meta'],
-      readOnly: false,
       isDefault: false,
     });
     // Builtin rejected by meta.id; real and alias prometheus datasources pass.
