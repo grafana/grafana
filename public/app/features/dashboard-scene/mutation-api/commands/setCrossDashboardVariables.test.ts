@@ -8,11 +8,13 @@ import { setCrossDashboardVariablesCommand } from './setCrossDashboardVariables'
 
 const CHANGE_PATH = `/metadata/annotations/${AnnoKeyUseCrossDashboardVariables}`;
 
-function buildScene(options: {
-  annotations?: Record<string, string>;
-  canEdit?: boolean;
-  managedLocked?: boolean;
-} = {}): DashboardScene {
+function buildScene(
+  options: {
+    annotations?: Record<string, string>;
+    canEdit?: boolean;
+    managedLocked?: boolean;
+  } = {}
+): DashboardScene {
   const { annotations = {}, canEdit = true, managedLocked = false } = options;
   const meta = {
     k8s: { annotations: { ...annotations } },
@@ -90,10 +92,7 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
     const scene = buildScene();
 
-    const result = await setCrossDashboardVariablesCommand.handler(
-      { global: ['env'], folder: 'none' },
-      { scene }
-    );
+    const result = await setCrossDashboardVariablesCommand.handler({ global: ['env'], folder: 'none' }, { scene });
 
     expect(result.success).toBe(true);
     expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(

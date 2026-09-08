@@ -38,9 +38,7 @@ export const setCrossDashboardVariablesCommand: MutationCommand<SetCrossDashboar
 
     try {
       const previousSelection = parseUseCrossDashboardVariablesFromHost(scene);
-      const previousValue = previousSelection
-        ? serializeUseCrossDashboardVariables(previousSelection)
-        : undefined;
+      const previousValue = previousSelection ? serializeUseCrossDashboardVariables(previousSelection) : undefined;
 
       await persistUseCrossDashboardVariables(scene, payload);
 

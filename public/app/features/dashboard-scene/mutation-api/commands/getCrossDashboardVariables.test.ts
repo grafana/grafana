@@ -59,7 +59,10 @@ describe('GET_CROSS_DASHBOARD_VARIABLES', () => {
 
   it('returns undefined selection and available names when the annotation is missing', async () => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
-    mockFetchPredefinedVariables.mockResolvedValue([makeCandidate('env', 'global'), makeCandidate('cluster', 'folder')]);
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('env', 'global'),
+      makeCandidate('cluster', 'folder'),
+    ]);
 
     const result = await getCrossDashboardVariablesCommand.handler({}, { scene: buildScene() });
 
