@@ -105,6 +105,72 @@ func TestPullRequestJobRejected(t *testing.T) {
 	})
 }
 
+func TestValidateSingleJobAction(t *testing.T) {
+	tests := []struct {
+		name    string
+		spec    provisioning.JobSpec
+		wantErr bool
+	}{
+		{
+			name: "matching action and options is valid",
+			spec: provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{Paths: []string{"a.json"}},
+			},
+		},
+		{
+			name: "no options set at all is valid (orphan cleanup actions)",
+			spec: provisioning.JobSpec{
+				Action: provisioning.JobActionReleaseResources,
+			},
+		},
+		{
+			name: "fixFolderMetadata with nil options is valid",
+			spec: provisioning.JobSpec{
+				Action: provisioning.JobActionFixFolderMetadata,
+			},
+		},
+		{
+			name: "declared action mismatched with the populated options is rejected",
+			spec: provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Pull:   &provisioning.SyncJobOptions{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "smuggled admin-only action alongside an authorized one is rejected",
+			spec: provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{Paths: []string{"a.json"}},
+				Pull:   &provisioning.SyncJobOptions{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "two mutating actions populated at once is rejected",
+			spec: provisioning.JobSpec{
+				Action: provisioning.JobActionMove,
+				Move:   &provisioning.MoveJobOptions{Paths: []string{"a.json"}, TargetPath: "b/"},
+				Delete: &provisioning.DeleteJobOptions{Paths: []string{"c.json"}},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateSingleJobAction(tt.spec)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsBadRequest(err))
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestFixFolderMetadataFeatureGate(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
@@ -946,6 +1012,27 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, []string{"team-a/dashboard.json"}, nil, "feature-branch", true)
 		require.NoError(t, err)
 	})
+
+	t.Run("resource ref targeting a different branch also falls back to editor gate", func(t *testing.T) {
+		// authorizeResourceRefs authorizes the ref's *current* Grafana state, but
+		// the worker resolves it to its current sourcePath and deletes that path
+		// from the caller-supplied ref - which can be a different branch with
+		// unrelated content at that path. The guard must apply here too, not
+		// just for path-based targets, and without ever resolving the ref
+		// (no client/dynamic mocks set up - a regression would panic on a nil
+		// call rather than silently pass).
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+		}, "feature-branch", true)
+		require.NoError(t, err)
+	})
 }
 
 func TestAuthorizeMoveJob(t *testing.T) {
@@ -1100,6 +1187,29 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
 			Paths:      []string{"team-a/dashboard.json"},
+			TargetPath: "dest/",
+			Ref:        "feature-branch",
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("resource ref targeting a different branch also falls back to editor gate", func(t *testing.T) {
+		// Same reasoning as the delete case: the worker resolves the ref to its
+		// current sourcePath and moves that path within the caller-supplied ref,
+		// which can be a different branch with unrelated content at that path.
+		// No client/dynamic mocks are set up, so a regression here would panic
+		// on a nil call rather than silently pass.
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
 			TargetPath: "dest/",
 			Ref:        "feature-branch",
 		})

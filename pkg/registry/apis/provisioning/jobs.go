@@ -112,6 +112,19 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
+		// Every downstream authorization decision switches on spec.Action, but
+		// job persistence (mutateJobAction) instead derives the *stored* action
+		// from whichever options field is populated - if a caller declares one
+		// action while also populating a different action's options (e.g.
+		// Action: "delete" with a non-nil Pull), that mismatch would authorize
+		// the declared action but execute the smuggled one. Reject it here,
+		// before any authorization runs, so exactly one action's options can
+		// ever be in play and it always matches spec.Action.
+		if err := validateSingleJobAction(spec); err != nil {
+			responder.Error(err)
+			return
+		}
+
 		if jobs.IsOrphanCleanupAction(spec.Action) {
 			c.handleOrphanCleanupJob(ctx, r, name, spec, responder)
 			return
@@ -300,6 +313,49 @@ func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Requ
 		return
 	}
 	responder.Object(http.StatusAccepted, job)
+}
+
+// validateSingleJobAction rejects a spec that populates an options field for
+// an action other than spec.Action, or populates more than one action's
+// options field at once. mutateJobAction (persistentstore.go) derives the
+// *stored* action from whichever of these fields is set, independently of
+// spec.Action, so leaving a mismatch unchecked would let a request be
+// authorized against the declared action while a different, unauthorized
+// action's options ride along and take over at persistence time.
+//
+// Actions with no options field (e.g. the orphan-cleanup actions) are valid
+// with none of these set, so an empty result is not an error - only an
+// action/options mismatch or multiple populated fields are.
+func validateSingleJobAction(spec provisioning.JobSpec) error {
+	populated := map[provisioning.JobAction]bool{
+		provisioning.JobActionPullRequest:       spec.PullRequest != nil,
+		provisioning.JobActionPush:              spec.Push != nil,
+		provisioning.JobActionPull:              spec.Pull != nil,
+		provisioning.JobActionMigrate:           spec.Migrate != nil,
+		provisioning.JobActionDelete:            spec.Delete != nil,
+		provisioning.JobActionMove:              spec.Move != nil,
+		provisioning.JobActionFixFolderMetadata: spec.FixFolderMetadata != nil,
+		provisioning.JobActionTest:              spec.Test != nil,
+	}
+
+	var found []provisioning.JobAction
+	for action, isSet := range populated {
+		if isSet {
+			found = append(found, action)
+		}
+	}
+
+	switch len(found) {
+	case 0:
+		return nil
+	case 1:
+		if found[0] != spec.Action {
+			return apierrors.NewBadRequest(fmt.Sprintf("spec.action %q does not match the populated %q options", spec.Action, found[0]))
+		}
+		return nil
+	default:
+		return apierrors.NewBadRequest("job spec must set options for at most one action")
+	}
 }
 
 // authorizeJob dispatches pre-flight validation and authorization checks based on the job action.
@@ -606,15 +662,17 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 		return apierrors.NewBadRequest("delete jobs must target at least one path or resource")
 	}
 
-	// Path-based checks below (AuthorizeDeleteByPath) read file and folder
-	// identity from the repository's configured branch - ProvisioningAuthorizer
-	// has no concept of ref. If the request targets a different branch, that
-	// read can diverge from what the worker actually deletes there under the
-	// provisioning identity, so require Editor instead - the same protection
-	// this had before per-path checks became reachable by non-Editors.
-	// Resource-ref checks aren't affected: they authorize against the resource's
-	// live Grafana state, not git content at a specific ref.
-	if len(paths) > 0 && ref != "" && ref != cfg.Branch() {
+	// Neither check below is ref-aware: AuthorizeDeleteByPath reads file/folder
+	// identity from the repository's configured branch (ProvisioningAuthorizer
+	// has no concept of ref), and authorizeResourceRefs authorizes a resource
+	// ref's *current* Grafana state - but the worker resolves that same ref to
+	// its current sourcePath and deletes that path from opts.Ref. If the
+	// request targets a different branch, either path can diverge from what
+	// actually gets deleted there under the provisioning identity, so require
+	// Editor instead - the same protection this had before these checks became
+	// reachable by non-Editors. Applies regardless of whether the target came
+	// from paths or resources.
+	if ref != "" && ref != cfg.Branch() {
 		return c.authorizeEditorJob(ctx, cfg)
 	}
 
@@ -653,10 +711,11 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 		return apierrors.NewBadRequest("move jobs must target at least one path or resource")
 	}
 
-	// See the identical guard in authorizeDeleteJob: path-based checks aren't
-	// ref-aware, so a request targeting a different branch than configured
-	// falls back to requiring Editor.
-	if len(opts.Paths) > 0 && opts.Ref != "" && opts.Ref != cfg.Branch() {
+	// See the identical guard in authorizeDeleteJob: neither the path-based nor
+	// the resource-ref-based check is ref-aware, so a request targeting a
+	// different branch than configured falls back to requiring Editor,
+	// regardless of whether the target came from paths or resources.
+	if opts.Ref != "" && opts.Ref != cfg.Branch() {
 		return c.authorizeEditorJob(ctx, cfg)
 	}
 

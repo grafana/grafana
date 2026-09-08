@@ -294,3 +294,70 @@ func TestIntegrationProvisioning_MoveResourceRefRequiresTargetCreate(t *testing.
 	require.Equal(t, http.StatusForbidden, statusCode)
 	require.True(t, apierrors.IsForbidden(result.Error()))
 }
+
+// TestIntegrationProvisioning_MismatchedJobActionRejected covers a gap found
+// during review of the #127254 fix: job persistence (mutateJobAction) derives
+// the *stored* action from whichever options field is populated, independently
+// of spec.Action. Without validateSingleJobAction rejecting a mismatch up
+// front, a request declaring Action: delete (authorized against the far
+// weaker delete permissions) could carry a populated Pull object that gets
+// silently substituted in as the stored action once persisted - Pull is
+// admin-only and triggers a full resync.
+func TestIntegrationProvisioning_MismatchedJobActionRejected(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "mismatched-action-test"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:      repo,
+		Workflows: []string{"write"},
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "dashboard.json",
+		},
+	})
+	helper.RequireRepoDashboardCount(t, repo, 1)
+
+	t.Run("delete action with a smuggled pull object is rejected", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"dashboard.json"},
+			},
+			Pull: &provisioning.SyncJobOptions{},
+		})
+
+		var statusCode int
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context()).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "a request populating options for more than one action must be rejected")
+		require.Equal(t, http.StatusBadRequest, statusCode)
+		require.True(t, apierrors.IsBadRequest(result.Error()))
+	})
+
+	t.Run("action not matching its own populated options is rejected", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+
+		var statusCode int
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context()).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "spec.action must match the populated options")
+		require.Equal(t, http.StatusBadRequest, statusCode)
+		require.True(t, apierrors.IsBadRequest(result.Error()))
+	})
+}
