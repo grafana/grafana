@@ -61,11 +61,10 @@ func (r *Reconciler) isReconciled(ctx context.Context, namespace string, store *
 	}
 
 	if r.stateStore == nil {
-		// Without durable state, store existence is the only signal available,
-		// which is what this path relied on before. Reconciling every namespace
-		// on its first request instead would move a full reconcile onto the
-		// authorization path after every process start.
-		return true
+		// Callers that run a reconciler are required to supply one; treat its
+		// absence the way an empty record is treated rather than as evidence
+		// that the namespace is reconciled.
+		return false
 	}
 
 	state, ok, err := r.readState(ctx, namespace)

@@ -137,9 +137,11 @@ func ProvideZanzanaReconcilerState(kvStore kvstore.KVStore) reconciler.StateStor
 	return newReconcilerState(kvStore)
 }
 
-// ProvideNoopZanzanaReconcilerState is the OSS module server's stand-in: that
-// build has no SQL store, and therefore no kv_store table to record into.
-func ProvideNoopZanzanaReconcilerState() reconciler.StateStore {
+// ProvideDeferredZanzanaReconcilerState leaves the state store to the OSS
+// module server, whose graph has no SQL store: it builds one from its own
+// injector when the zanzana module starts, so that targets which need no
+// database don't open one.
+func ProvideDeferredZanzanaReconcilerState() reconciler.StateStore {
 	return nil
 }
 

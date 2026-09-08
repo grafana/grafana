@@ -310,9 +310,7 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.SearchServer, s.initSearchServerModule)
 
-	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs, s.reconcilerState)
-	})
+	m.RegisterModule(modules.ZanzanaServer, s.initZanzanaServerModule)
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
@@ -452,6 +450,22 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 		resourcepb.Quotas_ServiceDesc.ServiceName,
 	)
 	return svc, nil
+}
+
+func (s *ModuleServer) initZanzanaServerModule() (services.Service, error) {
+	reconcilerState := s.reconcilerState
+	if reconcilerState == nil {
+		// Builds are free not to put a SQL store in the module server graph, so
+		// that targets which don't need a database don't open one. Zanzana does
+		// need one, so build it here, where only this target pays for it.
+		var err error
+		reconcilerState, err = InitializeZanzanaReconcilerState(s.cfg, s.features, s.tracer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs, reconcilerState)
 }
 
 func (s *ModuleServer) initSearchServerModule() (services.Service, error) {

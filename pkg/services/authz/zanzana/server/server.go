@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -216,9 +217,10 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	var mtReconciler zanzana.MTReconciler
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if serverOpts.reconcilerState == nil {
-			logger.Warn("Reconciliation state will not be persisted; namespaces with an existing store " +
-				"are assumed to be reconciled, so permissions written by mutation hooks before the first " +
-				"reconciliation may be incomplete until the next reconciler interval")
+			// Without it every namespace reconciles inline on its first
+			// authorization request after each restart, which is a large enough
+			// regression to be worth refusing to start over.
+			return nil, errors.New("reconciler state store is required in MT reconciler mode")
 		}
 
 		mtReconciler = reconciler.NewReconciler(
