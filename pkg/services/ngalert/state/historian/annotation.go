@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -23,6 +24,11 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+)
+
+const (
+	annotationTagKeyColumnMaxLength   = 100
+	annotationTagValueColumnMaxLength = 512
 )
 
 type AccessControl interface {
@@ -209,7 +215,7 @@ func (h *AnnotationBackend) buildAnnotations(rule history_model.RuleMeta, states
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
-		annotationText, annotationData, tags := BuildAnnotationTextAndData(rule, state.State, h.maxTagsLength)
+		annotationText, annotationData, tags := buildAnnotationTextAndData(rule, state.State, h.maxTagsLength, logger)
 
 		item := annotations.Item{
 			AlertID:   rule.ID,
@@ -230,6 +236,10 @@ func (h *AnnotationBackend) buildAnnotations(rule history_model.RuleMeta, states
 // BuildAnnotationTextAndData creates the annotation text, JSON data, and tags for an alert state transition.
 // maxTagsLength limits the total serialized length of tags to avoid storage errors.
 func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State, maxTagsLength int64) (string, *simplejson.Json, []string) {
+	return buildAnnotationTextAndData(rule, currentState, maxTagsLength, log.NewNopLogger())
+}
+
+func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State, maxTagsLength int64, logger log.Logger) (string, *simplejson.Json, []string) {
 	jsonData := simplejson.New()
 	var value string
 
@@ -261,7 +271,7 @@ func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state
 
 	// Filter private labels once and use for both text and tags
 	labels := removePrivateLabels(currentState.Labels)
-	tags := convertLabelsToTags(labels, maxTagsLength)
+	tags := convertLabelsToTagsWithLogger(labels, maxTagsLength, logger)
 
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData, tags
 }
@@ -286,38 +296,56 @@ func jsonifyValues(vs map[string]float64) *simplejson.Json {
 // convertLabelsToTags converts alert labels to annotation tags.
 // Tags are in "key:value" format, sorted alphabetically.
 // Colons in both label keys and values are replaced with underscores to ensure proper parsing.
-// Tags are truncated if they would exceed maxLength to avoid storage errors.
-// Length calculation accounts for JSON array encoding: ["tag1","tag2",...]
+// Tags that exceed the column widths or maxLength are omitted.
+// maxLength accounts for JSON array encoding: ["tag1","tag2",...]
 func convertLabelsToTags(labels data.Labels, maxLength int64) []string {
+	return convertLabelsToTagsWithLogger(labels, maxLength, log.NewNopLogger())
+}
+
+func convertLabelsToTagsWithLogger(labels data.Labels, maxLength int64, logger log.Logger) []string {
 	if len(labels) == 0 {
 		return nil
 	}
 
-	// Sort keys for deterministic tag order
 	keys := make([]string, 0, len(labels))
 	for k := range labels {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	// Single pass: create tags and apply length limit
 	tags := make([]string, 0, len(keys))
-	var currentLength int64 = 2 // [ and ]
+	var currentLength int64 = 2
 
-	for i, k := range keys {
-		// Escape colons in both key and value to ensure proper parsing by tag.ParseTagPairs
+	for _, k := range keys {
 		safeKey := strings.ReplaceAll(k, ":", "_")
 		safeValue := strings.ReplaceAll(labels[k], ":", "_")
-		tag := fmt.Sprintf("%s:%s", safeKey, safeValue)
+		keyLength := utf8.RuneCountInString(safeKey)
+		valueLength := utf8.RuneCountInString(safeValue)
+		if keyLength > annotationTagKeyColumnMaxLength || valueLength > annotationTagValueColumnMaxLength {
+			logger.Warn("Skipping alert label as annotation tag because it exceeds the tag storage limit",
+				"labelKey", k,
+				"labelKeyLength", keyLength,
+				"labelValueLength", valueLength,
+				"maxLabelKeyLength", annotationTagKeyColumnMaxLength,
+				"maxLabelValueLength", annotationTagValueColumnMaxLength,
+			)
+			continue
+		}
 
-		// Check if this tag fits within maxLength
+		tag := fmt.Sprintf("%s:%s", safeKey, safeValue)
 		if maxLength > 0 {
-			tagLength := int64(len(tag) + 2) // quotes
-			if i > 0 {
-				tagLength++ // comma
+			tagLength := int64(len(tag) + 2)
+			if len(tags) > 0 {
+				tagLength++
 			}
 			if currentLength+tagLength > maxLength {
-				break // Stop adding tags
+				logger.Warn("Skipping alert label as annotation tag because it exceeds the configured annotation tags length",
+					"labelKey", k,
+					"tagLength", tagLength,
+					"currentTagsLength", currentLength,
+					"maxTagsLength", maxLength,
+				)
+				continue
 			}
 			currentLength += tagLength
 		}

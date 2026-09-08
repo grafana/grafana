@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -109,6 +111,39 @@ func TestAnnotationHistorian(t *testing.T) {
 		err := <-anns.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
+	})
+
+	t.Run("an oversized tag does not drop the history batch", func(t *testing.T) {
+		store := &interceptingAnnotationStore{enforceTagColumnLimits: true}
+		anns := createTestAnnotationSutWithStore(t, store)
+		anns.maxTagsLength = 4096
+		rule := createTestRule()
+		states := []state.StateTransition{
+			{
+				PreviousState: eval.Normal,
+				State: &state.State{
+					State:  eval.Alerting,
+					Labels: data.Labels{"severity": "critical"},
+				},
+			},
+			{
+				PreviousState: eval.Alerting,
+				State: &state.State{
+					State: eval.Normal,
+					Labels: data.Labels{
+						"grafana_folder": strings.Repeat("f", 513),
+						"severity":       "critical",
+					},
+				},
+			},
+		}
+
+		err := <-anns.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Len(t, store.savedAnnotations, 2)
+		require.Equal(t, []string{"severity:critical"}, store.savedAnnotations[0].Tags)
+		require.Equal(t, []string{"severity:critical"}, store.savedAnnotations[1].Tags)
 	})
 
 	t.Run("emits expected write metrics", func(t *testing.T) {
@@ -309,6 +344,26 @@ func TestBuildAnnotations(t *testing.T) {
 		require.Len(t, items, 1)
 		require.Nil(t, items[0].Tags)
 	})
+
+	t.Run("logs when a label cannot be stored as a tag", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		backend.maxTagsLength = 4096
+		logger := &logtest.Fake{}
+		rule := history_model.RuleMeta{}
+		states := []state.StateTransition{makeStateTransition()}
+		oversizedValue := strings.Repeat("v", 513)
+		states[0].Labels = data.Labels{"grafana_folder": oversizedValue}
+
+		items := backend.buildAnnotations(rule, states, logger)
+
+		require.Len(t, items, 1)
+		require.Empty(t, items[0].Tags)
+		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Equal(t, "Skipping alert label as annotation tag because it exceeds the tag storage limit", logger.WarnLogs.Message)
+		require.Equal(t, "grafana_folder", logContextValue(t, logger.WarnLogs.Ctx, "labelKey"))
+		require.Equal(t, 513, logContextValue(t, logger.WarnLogs.Ctx, "labelValueLength"))
+		require.NotContains(t, logger.WarnLogs.Ctx, oversizedValue)
+	})
 }
 
 func makeStateTransition() state.StateTransition {
@@ -415,7 +470,60 @@ func TestConvertLabelsToTags(t *testing.T) {
 		require.Equal(t, "app_name:service_api", tags[0])
 	})
 
-	t.Run("truncates tags when exceeding maxLength", func(t *testing.T) {
+	t.Run("keeps tags at the column limits", func(t *testing.T) {
+		labelKey := strings.Repeat("k", 100)
+		labelValue := strings.Repeat("v", 512)
+
+		tags := convertLabelsToTags(data.Labels{labelKey: labelValue}, 4096)
+
+		require.Equal(t, []string{labelKey + ":" + labelValue}, tags)
+	})
+
+	t.Run("skips a label with a key beyond the column limit", func(t *testing.T) {
+		labels := data.Labels{
+			strings.Repeat("a", 101): "oversized-key",
+			"z-valid":                "value",
+		}
+
+		tags := convertLabelsToTags(labels, 4096)
+
+		require.Equal(t, []string{"z-valid:value"}, tags)
+	})
+
+	t.Run("skips a label with a value beyond the column limit", func(t *testing.T) {
+		labels := data.Labels{
+			"a-oversized": strings.Repeat("v", 513),
+			"z-valid":     "value",
+		}
+
+		tags := convertLabelsToTags(labels, 4096)
+
+		require.Equal(t, []string{"z-valid:value"}, tags)
+	})
+
+	t.Run("measures the value column limit in characters", func(t *testing.T) {
+		acceptedValue := strings.Repeat("🔥", 512)
+		rejectedValue := strings.Repeat("🔥", 513)
+
+		acceptedTags := convertLabelsToTags(data.Labels{"label": acceptedValue}, 4096)
+		rejectedTags := convertLabelsToTags(data.Labels{"label": rejectedValue}, 4096)
+
+		require.Equal(t, []string{"label:" + acceptedValue}, acceptedTags)
+		require.Empty(t, rejectedTags)
+	})
+
+	t.Run("continues with smaller tags after reaching maxLength", func(t *testing.T) {
+		labels := data.Labels{
+			"a-oversized": strings.Repeat("v", 30),
+			"z-valid":     "v",
+		}
+
+		tags := convertLabelsToTags(labels, 15)
+
+		require.Equal(t, []string{"z-valid:v"}, tags)
+	})
+
+	t.Run("omits tags that exceed maxLength", func(t *testing.T) {
 		labels := data.Labels{
 			"label1": "value1",
 			"label2": "value2",
@@ -467,8 +575,21 @@ func TestConvertLabelsToTags(t *testing.T) {
 	})
 }
 
+func logContextValue(t *testing.T, ctx []any, key string) any {
+	t.Helper()
+	for i := 0; i+1 < len(ctx); i += 2 {
+		if ctx[i] == key {
+			return ctx[i+1]
+		}
+	}
+	t.Fatalf("log line has no %q field: %v", key, ctx)
+	return nil
+}
+
 type interceptingAnnotationStore struct {
-	lastQuery *annotations.ItemQuery
+	lastQuery              *annotations.ItemQuery
+	savedAnnotations       []annotations.Item
+	enforceTagColumnLimits bool
 }
 
 func (i *interceptingAnnotationStore) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -476,6 +597,16 @@ func (i *interceptingAnnotationStore) Find(ctx context.Context, query *annotatio
 	return []*annotations.ItemDTO{}, nil
 }
 
-func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
+func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey, items []annotations.Item, orgID int64, logger log.Logger) error {
+	if i.enforceTagColumnLimits {
+		for _, item := range items {
+			for _, parsedTag := range tag.ParseTagPairs(item.Tags) {
+				if len([]rune(parsedTag.Key)) > 100 || len([]rune(parsedTag.Value)) > 512 {
+					return errors.New("tag exceeds column limit")
+				}
+			}
+		}
+	}
+	i.savedAnnotations = items
 	return nil
 }
