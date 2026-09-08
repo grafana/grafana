@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -438,12 +439,13 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, status, snapshot.Status)
 
-		// then we wait for the sync to complete before the next status.
+		// The status is persisted before the sync releases its service-wide guard.
 		require.Eventually(
 			t,
 			func() bool {
-				cms, _ := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
-				return cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished
+				cms, err := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
+				return err == nil && cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished &&
+					atomic.LoadInt32(&s.isSyncSnapshotStatusFromGMSRunning) == 0
 			},
 			5*time.Second,
 			100*time.Millisecond,

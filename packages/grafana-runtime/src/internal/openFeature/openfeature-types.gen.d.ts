@@ -96,12 +96,14 @@ declare module "@openfeature/core" {
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
+    | "grafana.pluginPathNesting"
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
-    | "grafana.dashboardAutoGridDefault";
+    | "grafana.dashboardAutoGridDefault"
+    | "grafana.multiTenantUserPermissions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

@@ -272,8 +272,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 
 		return &provisioning.TestResults{
 			// NotFound (rather than the generic BadRequest other field
-			// validation failures use) so isReachableTestResult correctly
-			// classifies this as unreachable rather than a reachable-but-blocked
+			// validation failures use) so isRepositoryAccessible correctly
+			// classifies this as inaccessible rather than an accessible-but-blocked
 			// failure like branch protection, which also fails Test().
 			Code:    http.StatusNotFound,
 			Success: false,

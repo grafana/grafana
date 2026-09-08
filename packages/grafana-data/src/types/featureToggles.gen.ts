@@ -616,11 +616,6 @@ export interface FeatureToggles {
   */
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
-  * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
-  * @default true
-  */
-  improvedExternalSessionHandling?: boolean;
-  /**
   * Use session storage for handling the redirection after login
   * @default true
   */
@@ -725,11 +720,6 @@ export interface FeatureToggles {
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-  * @default true
-  */
-  improvedExternalSessionHandlingSAML?: boolean;
   /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   * @default false
