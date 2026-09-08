@@ -126,7 +126,7 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getAllByRole('cell')).toHaveLength(12);
     expect(screen.getAllByTestId('KeyValueTable--keyColumn')).toHaveLength(4);
-    expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
     expect(screen.getByRole('row', { name: 'jsonkey { "hello": "world" }' })).toBeInTheDocument();
   });
 
@@ -205,10 +205,10 @@ describe('KeyValuesTable tests', () => {
     });
 
     expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
 
     // Accessible name comes from the associated value label, not a generic aria-label
-    await user.click(screen.getByRole('button', { name: /"client"/ }));
+    await user.click(screen.getByRole('button', { name: 'client' }));
 
     expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
@@ -244,7 +244,7 @@ describe('KeyValuesTable tests', () => {
           : [],
     });
 
-    await user.click(screen.getByRole('button', { name: /"client"/ }));
+    await user.click(screen.getByRole('button', { name: 'client' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Documentation' }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
@@ -278,7 +278,7 @@ describe('KeyValuesTable tests', () => {
           : [],
     });
 
-    await user.click(screen.getByText(/"client"/));
+    await user.click(screen.getByText('client'));
 
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
@@ -333,7 +333,7 @@ describe('KeyValuesTable tests', () => {
           : undefined,
     });
 
-    expect(screen.getByText('"postgresql"')).toBeInTheDocument();
+    expect(screen.getByText('postgresql')).toBeInTheDocument();
     expect(screen.getByTestId('attribute-plugin-promo-trigger')).toBeInTheDocument();
     expect(screen.queryByText('Find slow queries faster')).not.toBeInTheDocument();
 

@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
 import { type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
@@ -10,6 +12,14 @@ import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
 import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -591,5 +601,48 @@ describe('TextNGEditor render mode preview', () => {
 
     expect(previewHtml()).toContain('row-0');
     expect(previewHtml()).toContain('row-1');
+  });
+});
+
+describe('TextNGEditor handlebars preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  it('evaluates expressions in the preview', () => {
+    render(
+      <TextNGEditor
+        content="{{#each data}}- {{host}}\n{{/each}}"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1');
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-2');
+  });
+
+  it('shows an alert in the preview when the template is broken', () => {
+    render(
+      <TextNGEditor
+        content="{{#each data}}"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
   });
 });

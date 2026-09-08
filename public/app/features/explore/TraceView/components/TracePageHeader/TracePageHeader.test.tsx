@@ -16,6 +16,7 @@ import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 
 import {
+  CoreApp,
   type IconName,
   type LinkModel,
   MutableDataFrame,
@@ -23,7 +24,9 @@ import {
   PluginExtensionPoints,
   PluginExtensionTypes,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { type TraceViewPluginExtensionContext } from '../types/trace';
@@ -49,6 +52,7 @@ jest.mock('app/core/copy/appNotification', () => ({
     success: jest.fn(),
     warning: jest.fn(),
     error: jest.fn(),
+    info: jest.fn(),
   })),
 }));
 
@@ -90,7 +94,8 @@ const createMockExtension = (
 const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
   hideHeaderDetails = false,
-  logsLinkModel?: LinkModel
+  logsLinkModel?: LinkModel,
+  traceOverride = trace
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -100,7 +105,8 @@ const setup = (
 
   const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
-    trace,
+    app: CoreApp.Unknown,
+    trace: traceOverride,
     timeZone: '',
     search: DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
@@ -143,6 +149,76 @@ describe('TracePageHeader test', () => {
     expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
     expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
     expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
+  });
+
+  it('renders the root service name and operation name separately next to method and status badges', () => {
+    setup();
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('lb HTTP Client');
+    expect(heading).not.toHaveTextContent('lb: HTTP Client');
+    expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+  });
+
+  it('shows a green check when the root request has a 2xx status', () => {
+    setup();
+
+    expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
+    expect(screen.getByText('200')).toBeInTheDocument();
+  });
+
+  it('shows an error indicator when the root request has a 5xx status', () => {
+    const errorTraceId = 'error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '500' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.getByText('POST')).toBeInTheDocument();
+    expect(screen.getByText('500')).toBeInTheDocument();
+    expect(screen.queryByText('200')).not.toBeInTheDocument();
+  });
+
+  it('shows an orange warning indicator when the root request has a 4xx status', () => {
+    const warningTraceId = 'warning-trace-id';
+    const warningTrace = {
+      ...trace,
+      traceID: warningTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: warningTraceId,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '404' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, warningTrace);
+
+    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.getByText('404')).toBeInTheDocument();
   });
 
   it('should render the trace-level logs link when provided', () => {
@@ -446,59 +522,60 @@ describe('TracePageHeader test', () => {
     });
   });
 
-  describe('Feedback Button', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should not render feedback button when feedbackLinksEnabled is false', () => {
-      // config.feedbackLinksEnabled is already mocked to false
-      setup();
-
-      const feedbackButton = screen.queryByText('Feedback');
-      expect(feedbackButton).not.toBeInTheDocument();
-    });
-
-    it('should render feedback button when feedbackLinksEnabled is true', () => {
-      config.feedbackLinksEnabled = true;
-
-      setup();
-
-      const feedbackButton = screen.getByText('Feedback');
-      expect(feedbackButton).toBeInTheDocument();
-      expect(feedbackButton.closest('a')).toHaveAttribute('href', 'https://forms.gle/RZDEx8ScyZNguDoC8');
-      expect(feedbackButton.closest('a')).toHaveAttribute('target', '_blank');
-    });
-
-    it('should display tooltip for feedback button', async () => {
+  describe('Share menu', () => {
+    const openShareMenu = async () => {
       const user = userEvent.setup();
+      await user.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton));
+      return user;
+    };
 
-      config.feedbackLinksEnabled = true;
-
+    it('should show share actions when the menu is opened', async () => {
       setup();
 
-      const feedbackButton = screen.getByText('Feedback');
-      await user.hover(feedbackButton);
+      expect(screen.queryByText('Copy link')).not.toBeInTheDocument();
 
-      await waitFor(() => {
-        expect(screen.getByRole('tooltip')).toBeInTheDocument();
-        expect(screen.getByText('Share your thoughts about tracing in Grafana.')).toBeInTheDocument();
-      });
+      await openShareMenu();
+
+      expect(screen.getByTestId(selectors.components.TraceViewer.shareMenu.copyLinkButton)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.TraceViewer.shareMenu.exportJsonButton)).toBeInTheDocument();
     });
 
-    it('should render feedback button with correct styling and icon', () => {
-      config.feedbackLinksEnabled = true;
+    it('should copy the current URL when Copy link is clicked', async () => {
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+      const notifyApp = {
+        success: jest.fn(),
+        warning: jest.fn(),
+        error: jest.fn(),
+        info: jest.fn(),
+      };
+      jest.mocked(useAppNotification).mockReturnValue(notifyApp);
 
+      const user = userEvent.setup();
       setup();
+      await user.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton));
+      await user.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.copyLinkButton));
 
-      const feedbackButton = screen.getByText('Feedback');
-      const buttonElement = feedbackButton.closest('a');
+      expect(writeText).toHaveBeenCalledWith(window.location.href);
+      expect(notifyApp.success).toHaveBeenCalledWith('Link copied to clipboard');
+    });
 
-      expect(buttonElement).toBeInTheDocument();
+    it('should not show the feedback section when feedbackLinksEnabled is false', async () => {
+      setup();
+      await openShareMenu();
 
-      // Check for icon
-      const iconElement = buttonElement?.querySelector('svg');
-      expect(iconElement).toBeInTheDocument();
+      expect(screen.queryByText('Feedback')).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.TraceViewer.shareMenu.feedbackLink)).not.toBeInTheDocument();
+    });
+
+    it('should show the feedback section when feedbackLinksEnabled is true', async () => {
+      config.feedbackLinksEnabled = true;
+      setup();
+      await openShareMenu();
+
+      expect(screen.getByText('Feedback')).toBeInTheDocument();
+      const feedbackLink = screen.getByTestId(selectors.components.TraceViewer.shareMenu.feedbackLink);
+      expect(feedbackLink).toHaveAttribute('href', 'https://forms.gle/RZDEx8ScyZNguDoC8');
+      expect(feedbackLink).toHaveAttribute('target', '_blank');
     });
   });
 
@@ -513,8 +590,7 @@ describe('TracePageHeader test', () => {
       expect(screen.getByText('Services')).toBeInTheDocument();
       expect(screen.getByText('URL')).toBeInTheDocument();
 
-      expect(screen.getByText('Share')).toBeInTheDocument();
-      expect(screen.getByText('Feedback')).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton)).toBeInTheDocument();
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 

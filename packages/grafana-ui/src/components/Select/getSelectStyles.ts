@@ -6,12 +6,14 @@ import { getFocusStyles } from '../../themes/mixins';
 import { stylesFactory } from '../../themes/stylesFactory';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     menu: css({
       label: 'grafana-select-menu',
       background: theme.components.dropdown.background,
+      border: `1px solid ${theme.components.dropdown.borderColor}`,
       borderRadius: theme.shape.radius.lg,
-      boxShadow: theme.shadows.z3,
+      boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
       position: 'relative',
       minWidth: '100%',
       overflow: 'hidden',

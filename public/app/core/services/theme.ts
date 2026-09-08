@@ -15,6 +15,9 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
 
   // Add css file for new theme
   if (oldTheme.colors.mode !== newTheme.colors.mode) {
+    // Match the URL the backend gave us rather than a path fragment: the build directory name
+    // differs per bundler and the URL may carry a CDN origin.
+    const oldCssHref = config.bootData.assets[oldTheme.colors.mode];
     const newCssLink = document.createElement('link');
     newCssLink.rel = 'stylesheet';
     newCssLink.href = config.bootData.assets[newTheme.colors.mode];
@@ -24,7 +27,7 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
       for (let i = 0; i < bodyLinks.length; i++) {
         const link = bodyLinks[i];
 
-        if (link.href && link.href.includes(`build/grafana.${oldTheme.colors.mode}`)) {
+        if (oldCssHref && link.href.endsWith(oldCssHref)) {
           // Remove existing link once the new css has loaded to avoid flickering
           // If we add new css at the same time we remove current one the page will be rendered without css
           // As the new css file is loading

@@ -12,7 +12,7 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -28,7 +28,7 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
-import { renderContent } from './renderContent';
+import { catchTemplateError, renderContent, type RenderedContent } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -37,8 +37,11 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter } = props;
+  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent } = props;
   const isEditing = app === CoreApp.PanelEditor;
+  // Fit-content only applies to the rendered view: the inline editor keeps its
+  // bounded, scrollable layout since active editing needs stable interactive space.
+  const fitContentOn = fitContent && !isEditing;
   const content = options.content ?? defaultOptions.content ?? '';
 
   const frames = data.series;
@@ -51,21 +54,17 @@ export function TextNGPanel(props: Props) {
   // shape and remounts the editor, so its view mode is held here instead.
   const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
 
-  const [processed, setProcessed] = useState<Options>(() => ({
-    mode: options.mode,
+  const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
-    content: isEditing ? EMPTY_CONTENT : renderPanelContent(options, series, replaceVariables),
-  }));
+    isEditing ? { mode: options.mode, content: EMPTY_CONTENT } : renderPanelContent(options, series, replaceVariables)
+  );
 
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes.
   const [wasEditing, setWasEditing] = useState(isEditing);
   if (wasEditing !== isEditing) {
     setWasEditing(isEditing);
     if (!isEditing) {
-      setProcessed({
-        mode: options.mode,
-        content: renderPanelContent(options, series, replaceVariables),
-      });
+      setProcessed(renderPanelContent(options, series, replaceVariables));
     }
   }
 
@@ -78,11 +77,8 @@ export function TextNGPanel(props: Props) {
         return;
       }
       const next = renderPanelContent(options, series, replaceVariables);
-      if (next !== processed.content || options.mode !== processed.mode) {
-        setProcessed({
-          mode: options.mode,
-          content: next,
-        });
+      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+        setProcessed(next);
       }
     },
     100,
@@ -119,7 +115,7 @@ export function TextNGPanel(props: Props) {
       />
     </Suspense>
   ) : (
-    <TextNGView mode={processed.mode} content={processed.content} code={options.code} />
+    <TextNGView {...processed} code={options.code} fitContent={fitContentOn} />
   );
 
   if (frames.length <= 1) {
@@ -131,55 +127,93 @@ export function TextNGPanel(props: Props) {
     value: index,
   }));
 
+  const framePicker = (
+    <Field noMargin>
+      <Combobox
+        aria-label={t('textng.frame-picker.label', 'Query')}
+        options={frameOptions}
+        value={frameOptions[currentFrameIndex]}
+        onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
+      />
+    </Field>
+  );
+
+  // Fit-content: no fixed-height flex wrapper — the picker sits below the panel
+  // in normal flow so the stack's natural height, not a forced 100%, is what
+  // the layout measures.
+  if (fitContentOn) {
+    return (
+      <Stack direction="column" gap={1}>
+        {panel}
+        {framePicker}
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="column" gap={1} height="100%">
       <Stack direction="column" grow={1} minHeight={0}>
         {panel}
       </Stack>
-      <Field noMargin>
-        <Combobox
-          aria-label={t('textng.frame-picker.label', 'Query')}
-          options={frameOptions}
-          value={frameOptions[currentFrameIndex]}
-          onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
-        />
-      </Field>
+      {framePicker}
     </Stack>
   );
 }
 
-interface TextNGViewProps {
+interface ProcessedContent extends RenderedContent {
   mode: TextMode;
-  content: string;
-  code: Options['code'];
 }
 
-function TextNGView({ mode, content, code }: TextNGViewProps) {
+interface TextNGViewProps extends ProcessedContent {
+  code: Options['code'];
+  fitContent?: boolean;
+}
+
+function TextNGView({ mode, content, error, code, fitContent }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
+
+  if (error) {
+    return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
+  }
 
   if (mode === TextMode.Code) {
     const codeOptions = code ?? defaultCodeOptions;
+    // CodeMirror always wraps lines here, so a line-count estimate (as v1 uses
+    // for Monaco, which doesn't wrap) would undercount soft-wrapped lines. Use
+    // 'auto' instead: CodeMirror's own .cm-scroller is forced to a CSS height
+    // of 100%, which resolves to auto against an auto-height .cm-editor, so it
+    // grows to fit exactly what's rendered, wraps included.
+    const codeHeight = fitContent ? 'auto' : '100%';
     return (
-      <div className={styles.codeContainer} data-testid="TextNGPanel-code">
+      <div className={cx(styles.codeContainer, fitContent && styles.codeContainerFit)} data-testid="TextNGPanel-code">
         <TextNGCodeView
           content={content}
           language={codeOptions.language}
           showLineNumbers={codeOptions.showLineNumbers ?? false}
+          height={codeHeight}
         />
       </div>
     );
   }
 
+  const rendered = (
+    <DangerouslySetHtmlContent
+      allowRerender
+      html={content}
+      className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
+      data-testid="TextNGPanel-converted-content"
+    />
+  );
+
+  // Fit-content: render in normal flow so the markdown/HTML defines the height.
+  // No size containment and no inner scroll — the cell's CSS bounds the result.
+  if (fitContent) {
+    return rendered;
+  }
+
   return (
     <div className={styles.containStrict}>
-      <ScrollContainer minHeight="100%">
-        <DangerouslySetHtmlContent
-          allowRerender
-          html={content}
-          className={cx('markdown-html', styles.markdownHtml)}
-          data-testid="TextNGPanel-converted-content"
-        />
-      </ScrollContainer>
+      <ScrollContainer minHeight="100%">{rendered}</ScrollContainer>
     </div>
   );
 }
@@ -197,7 +231,7 @@ function EditorLoadingFallback({
 }) {
   const theme = useTheme2();
   const layout = useStyles2(getEditorLayoutStyles);
-  const content = useMemo(
+  const rendered = useMemo(
     () => renderPanelContent(options, series, replaceVariables),
     [options, series, replaceVariables]
   );
@@ -208,7 +242,7 @@ function EditorLoadingFallback({
       <Stack minHeight={theme.components.height.md} />
       <div className={layout.body}>
         <div className={cx(layout.pane, layout.previewPane, !isCode && layout.htmlPreviewPane)}>
-          <TextNGView mode={options.mode} content={content} code={options.code} />
+          <TextNGView {...rendered} code={options.code} />
         </div>
       </div>
       {isCode && <Stack minHeight={theme.components.height.md} />}
@@ -233,18 +267,27 @@ function applyEditorChange(options: Options, change: TextNGEditorChange): Option
   return { ...options, content, mode, code };
 }
 
-function renderPanelContent(options: Options, series: DataFrame[], replaceVariables: InterpolateFunction): string {
-  return renderContent(
-    {
-      content: options.content ?? '',
-      mode: options.mode,
-      series,
-      renderMode: options.renderMode,
-      format: getInterpolateFormat(options.mode, options.code?.language),
-    },
-    replaceVariables,
-    config.disableSanitizeHtml
-  );
+function renderPanelContent(
+  options: Options,
+  series: DataFrame[],
+  replaceVariables: InterpolateFunction
+): ProcessedContent {
+  return {
+    mode: options.mode,
+    ...catchTemplateError(() =>
+      renderContent(
+        {
+          content: options.content ?? '',
+          mode: options.mode,
+          series,
+          renderMode: options.renderMode,
+          format: getInterpolateFormat(options.mode, options.code?.language),
+        },
+        replaceVariables,
+        config.disableSanitizeHtml
+      )
+    ),
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -256,6 +299,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   markdownHtml: css({
     height: '100%',
   }),
+  // Flow layout for fit-content mode: no size containment, no fixed height, so
+  // the content defines the panel's height.
+  markdownHtmlFit: css({
+    height: 'auto',
+  }),
   codeContainer: css({
     height: '100%',
     overflow: 'hidden',
@@ -263,6 +311,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // editor grows past the panel instead of scrolling internally
     'div:has(> .cm-editor)': {
       height: '100%',
+    },
+  }),
+  // Fit-content: let CodeMirror's explicit pixel height (see estimateCodeHeight)
+  // define the container instead of forcing it to fill the panel.
+  codeContainerFit: css({
+    height: 'auto',
+    overflow: 'visible',
+    'div:has(> .cm-editor)': {
+      height: 'auto',
     },
   }),
 });

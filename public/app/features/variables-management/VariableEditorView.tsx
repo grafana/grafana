@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Button, ConfirmModal, Field, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import {
   useCreateVariableMutation,
   useDeleteVariableMutation,
@@ -16,6 +16,7 @@ import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { sceneVariablesSetToSchemaV2Variables } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import {
   createSceneVariableFromVariableModel,
@@ -24,6 +25,7 @@ import {
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
@@ -31,6 +33,7 @@ import {
   buildVariableResource,
   canManageGlobalVariables,
   canManageVariableScope,
+  isRecreateVariableSave,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
@@ -56,10 +59,54 @@ export interface VariableEditorViewProps {
  */
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
+  const [defaultName] = useState(() => getNextAvailableVariableName('query', existingNames));
+  const [initialVariable, setInitialVariable] = useState<SceneVariable | undefined>(() =>
+    source
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
+      : undefined
+  );
+
+  useEffect(() => {
+    if (initialVariable) {
+      return;
+    }
+
+    let cancelled = false;
+    getVariableScene('query', { name: defaultName }).then((variable) => {
+      if (!cancelled) {
+        setInitialVariable(variable);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [defaultName, initialVariable]);
+
+  if (!initialVariable) {
+    return (
+      <div className={styles.container}>
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <VariableEditorLoaded source={source} onBack={onBack} initialVariable={initialVariable} />;
+}
+
+interface VariableEditorLoadedProps {
+  source?: Variable;
+  onBack: () => void;
+  initialVariable: SceneVariable;
+}
+
+function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEditorLoadedProps) {
+  const styles = useStyles2(getStyles);
   const isNew = !source;
   const allowGlobalScope = canManageGlobalVariables();
   const [searchParams] = useSearchParams();
-  // '' is the FolderPicker root/global uid. For non-editors root is hidden, so start
+  // '' is the FolderPicker root/global uid. Without root rights, start
   // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
   // even when showRootFolder is false. New variables may preselect a folder via
   // ?folderUid= from the folder Variables tab.
@@ -73,13 +120,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     }
     return allowGlobalScope ? '' : undefined;
   });
-  const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
-    source
-      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
-      : getVariableScene('query', { name: getNextAvailableVariableName('query', existingNames) })
-  );
-
+  const [sceneVariable, setSceneVariable] = useState(initialVariable);
   const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
   const [updateVariable, { isLoading: isUpdating }] = useUpdateVariableMutation();
   const [deleteVariable, { isLoading: isDeleting }] = useDeleteVariableMutation();
@@ -119,13 +160,17 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   const sourceScopeReady =
     !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
-  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
-  // and only into folders they can edit. Edit also requires source-scope rights so rename/move
-  // (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
+  // Root/global is Admin-only (seeded writer). Folder-scoped saves require folder CanEdit.
+  // Edit also requires source-scope rights so rename/move (create-then-delete) cannot
+  // leave a duplicate when the original cannot be deleted.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
   const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
   const canManageSourceScope =
     sourceScopeReady && canManageVariableScope(sourceFolderUid ?? '', sourceFolderCanEdit, allowGlobalScope);
+  const canDeleteVariables = contextSrv.hasPermission(AccessControlAction.VariablesDelete);
+  // Renaming or re-scoping goes through recreateVariable (create-then-delete),
+  // so it needs delete rights or it leaves the original behind.
+  const isRecreate = isRecreateVariableSave(source, logicalName, folderUid);
   const canSave =
     !isBusy &&
     !hasNameError &&
@@ -134,8 +179,11 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     hasValidFolderScope &&
     selectedScopeReady &&
     canManageSelectedScope &&
-    (isNew || canManageSourceScope);
-  const canDelete = !isBusy && Boolean(source) && canManageSourceScope;
+    (isNew || canManageSourceScope) &&
+    (!isRecreate || canDeleteVariables);
+  // variables:write (or create) can open /edit/:name, but delete is a separate action —
+  // same variables:delete gate as the list page, plus source-scope rights.
+  const canDelete = !isBusy && Boolean(source) && canManageSourceScope && canDeleteVariables;
   // Viewers can open unmanageable scopes to inspect them, but must not relocate (copy-as-move).
   const canChangeFolder = isNew || canManageSourceScope;
 
@@ -154,9 +202,9 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     return deactivate;
   }, [scene]);
 
-  const onTypeChange = (type: EditableVariableType) => {
+  const onTypeChange = async (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;
-    setSceneVariable(getVariableScene(type, { name, label }));
+    setSceneVariable(await getVariableScene(type, { name, label }));
     // The new scene carries over the last committed (valid) name.
     setHasNameError(false);
   };
@@ -242,10 +290,10 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
-          allowGlobalScope || !isNew
+          allowGlobalScope || folderUid === ''
             ? t(
                 'variables-management.editor.folder-description',
-                'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
+                'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)'
               )
             : t(
                 'variables-management.editor.folder-description-folder-only',
@@ -261,7 +309,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
           permission={canChangeFolder ? 'edit' : 'view'}
           value={folderUid}
           disabled={!canChangeFolder}
-          onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
+          onChange={(uid) => setFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>

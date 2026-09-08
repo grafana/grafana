@@ -1,8 +1,8 @@
 import Prism, { Token } from 'prismjs';
 
-import { createLogLine } from '../mocks/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
-import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
+import { generateLogGrammar, generateTextMatchGrammar, logsSupportHighlighting } from './grammar';
 
 describe('generateLogGrammar', () => {
   function generateScenario(entry: string, labels: Record<string, string> = { place: 'luna', source: 'logs' }) {
@@ -161,5 +161,67 @@ describe('generateTextMatchGrammar', () => {
     expect(generateTextMatchGrammar(['search', '(?i)(TRACE|DEBUG|INFO|WARN|ERROR|OTHER)'], 'word')).toEqual({
       'log-search-match': [/(?:search)/g, /(?:(TRACE|DEBUG|INFO|WARN|ERROR|OTHER))/gi, /word/gi],
     });
+  });
+});
+
+describe('logsSupportHighlighting', () => {
+  function makeLabels(count: number) {
+    const labels: Record<string, string> = {};
+    for (let i = 0; i < count; i++) {
+      labels[`field_${i}`] = 'v';
+    }
+    return labels;
+  }
+
+  test('Allows highlighting for empty results', () => {
+    expect(logsSupportHighlighting([])).toBe(true);
+  });
+
+  test('Allows highlighting for typical short logs with few labels', () => {
+    const logs = [
+      createLogRow({ entry: 'place="luna" 1ms 3 KB', labels: { place: 'luna', level: 'info' } }),
+      createLogRow({ entry: '{"status":200,"msg":"ok"}', labels: { job: 'api' } }),
+    ];
+    expect(logsSupportHighlighting(logs)).toBe(true);
+  });
+
+  test('Allows highlighting at the 20000-character line limit', () => {
+    expect(logsSupportHighlighting([createLogRow({ entry: 'e'.repeat(20000), labels: { app: 'api' } })])).toBe(true);
+  });
+
+  test('Disables highlighting when a log line exceeds 20000 characters', () => {
+    expect(logsSupportHighlighting([createLogRow({ entry: 'e'.repeat(20001), labels: { app: 'api' } })])).toBe(false);
+  });
+
+  test('Disables highlighting when raw is over the 20000-character limit and entry is not', () => {
+    expect(
+      logsSupportHighlighting([createLogRow({ entry: 'short', raw: 'e'.repeat(20001), labels: { app: 'api' } })])
+    ).toBe(false);
+  });
+
+  test('Allows highlighting at the 100-label limit', () => {
+    expect(logsSupportHighlighting([createLogRow({ entry: 'short line', labels: makeLabels(100) })])).toBe(true);
+  });
+
+  test('Disables highlighting when a log has more than 100 labels', () => {
+    expect(logsSupportHighlighting([createLogRow({ entry: 'short line', labels: makeLabels(101) })])).toBe(false);
+  });
+
+  test('Disables highlighting when line length × label count exceeds 1000000', () => {
+    // 10001 * 100 = 1000100, each individual cap still holds
+    expect(logsSupportHighlighting([createLogRow({ entry: 'e'.repeat(10001), labels: makeLabels(100) })])).toBe(false);
+  });
+
+  test('Allows highlighting when line length × label count is exactly 1000000', () => {
+    expect(logsSupportHighlighting([createLogRow({ entry: 'e'.repeat(20000), labels: makeLabels(50) })])).toBe(true);
+  });
+
+  test('Disables highlighting for the whole result if any log is oversized', () => {
+    const logs = [
+      createLogRow({ entry: 'ok', labels: { app: 'api' } }),
+      createLogRow({ entry: 'e'.repeat(20001), labels: { app: 'api' } }),
+      createLogRow({ entry: 'also ok', labels: { app: 'api' } }),
+    ];
+    expect(logsSupportHighlighting(logs)).toBe(false);
   });
 });
