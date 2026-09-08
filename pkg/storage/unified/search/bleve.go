@@ -2195,6 +2195,25 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
+func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+	resultFormat, err := selectedResultFormat(req.ResultFormat)
+	if err != nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError(err.Error()),
+		}
+	}
+	if req.Options == nil || req.Options.Key == nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError("missing query key"),
+		}
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Error:           b.verifyKey(req.Options.Key),
+		ResourceVersion: b.resourceVersion.Load(),
+		ResultFormat:    resultFormat,
+	}
+}
+
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
@@ -2206,24 +2225,7 @@ func (b *bleveIndex) Search(
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
-	resultFormat, err := selectedResultFormat(req.ResultFormat)
-	if err != nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError(err.Error()),
-		}, nil
-	}
-
-	if req.Options == nil || req.Options.Key == nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError("missing query key"),
-		}, nil
-	}
-
-	response := &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
-		ResourceVersion: b.resourceVersion.Load(),
-		ResultFormat:    resultFormat,
-	}
+	response := b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
@@ -2317,7 +2319,7 @@ func (b *bleveIndex) Search(
 	}
 
 	var fieldValueSchema *fieldValueResultSchema
-	if resultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+	if response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		fieldValueSchema, err = b.resolveFieldValueSchema(selectFields)
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
