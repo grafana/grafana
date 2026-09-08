@@ -543,9 +543,54 @@ func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
 
 // TestRepositoryController_handleDelete_ObservesPendingAge verifies the wiring
 // from handleDelete to the pending-age histogram and the completion counter: a
-// terminating repository with nothing to finalize still observes its age and
-// counts as a completed deletion.
+// terminating repository observes its age, and the deletion is counted once when
+// its finalizers are removed.
 func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
+
+	finalizer := NewMockFinalizerProcessor(t)
+	finalizer.
+		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		Once().
+		Return(nil)
+
+	repoClient := &mockRepoInterface{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+			return &provisioning.Repository{}, nil
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		repoFactory:     factory,
+		finalizer:       finalizer,
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+		client: &mockProvisioningV0alpha1Interface{
+			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+		},
+	}
+
+	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &deletion,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
+	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
+}
+
+// TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount verifies that
+// re-observing a terminating repository whose finalizers are already gone (an
+// informer re-enqueue before GC, or a resync while it lingers) does not
+// re-increment the completion counter -- it would otherwise double-count the same
+// deletion.
+func TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	c := &RepositoryController{
 		tracer:          tracing.InitializeTracerForTest(),
@@ -556,13 +601,13 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			DeletionTimestamp: &deletion,
-			// no finalizers: the delete path completes immediately
 		},
 	}
 	err := c.handleDelete(context.Background(), repo)
 	require.NoError(t, err)
+	// Age is still observed, but the deletion is not (re-)counted.
 	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
-	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
+	assert.Equal(t, 0.0, counterValue(t, reg, repositoryDeletionsMetric))
 }
 
 // TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged guards against a

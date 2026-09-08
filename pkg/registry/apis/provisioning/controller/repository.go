@@ -454,13 +454,18 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			}
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
+		// Count the deletion only here, at the moment we strip the finalizers.
+		// The empty-finalizers branch below must not count: removing the
+		// finalizers updates the object, so the informer can re-enqueue it before
+		// GC removes it, and that re-enqueued pass (plus every resync while it
+		// lingers) sees empty finalizers -- counting there would double-count the
+		// same deletion and skew the completed-vs-errored rate.
 		rc.deletionMetrics.recordDeletion()
 		return nil
 	} else {
 		logger.Info("no finalizers to process")
 	}
 
-	rc.deletionMetrics.recordDeletion()
 	return nil
 }
 
