@@ -248,6 +248,14 @@ describe('AutoGridLayoutManager content fit', () => {
     });
   });
 
+  it('uses the configured min height when initializing fit-content rows', () => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
+
+    const manager = new AutoGridLayoutManager({ fitContent: true, minHeight: 100 });
+
+    expect(manager.state.layout.state.autoRows).toBe('minmax(100px, max-content)');
+  });
+
   describe('fit content and fill screen are mutually exclusive', () => {
     beforeEach(() => {
       setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
@@ -325,6 +333,17 @@ describe('AutoGridLayoutManager content fit', () => {
       expect(manager.state.minHeight).toBe('none');
     });
 
+    it('onMinHeightChanged lowers the row track floor while fit content is on', () => {
+      setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
+      const { manager } = setup();
+      manager.onFitContentChanged(true);
+      expect(manager.state.layout.state.autoRows).toBe('minmax(320px, max-content)');
+
+      manager.onMinHeightChanged('short');
+
+      expect(manager.state.layout.state.autoRows).toBe('minmax(168px, max-content)');
+    });
+
     it('onMinHeightChanged resolves "custom" to the default pixels when coming from "none"', () => {
       const { manager } = setup();
       manager.onMinHeightChanged('none');
@@ -367,6 +386,24 @@ describe('getAutoRowsTemplate', () => {
 
   it('lets rows grow to content when fit content is present', () => {
     expect(getAutoRowsTemplate('tall', false, true)).toBe('minmax(512px, max-content)');
+  });
+
+  it('floors fit rows at the configured min height when it sits below the row height', () => {
+    expect(getAutoRowsTemplate('standard', false, true, 'short')).toBe('minmax(168px, max-content)');
+    expect(getAutoRowsTemplate('standard', false, true, 100)).toBe('minmax(100px, max-content)');
+  });
+
+  it('removes the fit row floor entirely for a "none" min height', () => {
+    expect(getAutoRowsTemplate('standard', false, true, 'none')).toBe('minmax(0px, max-content)');
+  });
+
+  it('clamps the fit row floor to the row height so a large min height cannot inflate non-fit rows', () => {
+    expect(getAutoRowsTemplate('standard', false, true, 'tall')).toBe('minmax(320px, max-content)');
+  });
+
+  it('ignores the min height while fit content is not present', () => {
+    expect(getAutoRowsTemplate('standard', false, false, 'short')).toBe('minmax(320px, 320px)');
+    expect(getAutoRowsTemplate('standard', true, false, 'short')).toBe('minmax(320px, auto)');
   });
 });
 
