@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 
 import { t } from '@grafana/i18n';
-import { EmptyState, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
+import { EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
+
+import { HomeGrid } from '../HomeGrid';
 
 import { OverviewSectionHeading, type OverviewSectionHeadingVariant } from './OverviewSectionHeading';
 import { AvailableSolutionCard, SolutionCard, SolutionCardSkeleton } from './SolutionCard';
@@ -9,11 +11,11 @@ import { groupOverviewCards, type OverviewCard } from './solutionGroups';
 
 export function SolutionGridSkeleton({ count }: { count: number }) {
   return (
-    <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
+    <HomeGrid columns={3} gap={2}>
       {Array.from({ length: count }).map((_, index) => (
         <SolutionCardSkeleton key={index} />
       ))}
-    </Grid>
+    </HomeGrid>
   );
 }
 
@@ -72,7 +74,7 @@ function SolutionGroup({ label, cards, variant }: SolutionGroupProps) {
         </span>
       </OverviewSectionHeading>
 
-      <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
+      <HomeGrid columns={3} gap={2}>
         {cards.map((card) =>
           card.kind === 'offer' ? (
             <AvailableSolutionCard key={card.solution.id} solution={card.solution} offer={card.offer} />
@@ -80,7 +82,7 @@ function SolutionGroup({ label, cards, variant }: SolutionGroupProps) {
             <SolutionCard key={card.solution.id} solution={card.solution} needsAttention={card.needsAttention} />
           )
         )}
-      </Grid>
+      </HomeGrid>
     </Stack>
   );
 }
