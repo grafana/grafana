@@ -40,6 +40,10 @@ const (
 	serviceAccountGroup    = "iam.grafana.app"
 	serviceAccountResource = "serviceaccounts"
 
+	datasourceGroup            = "loki.datasource.grafana.app"
+	datasourceResource         = "datasources"
+	datasourceQuerySubresource = "query"
+
 	statusSubresource = "status"
 )
 
@@ -87,6 +91,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewResourceTuple("team:ctx-list#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-list-dashboard"),
 		common.NewResourceTuple("team:ctx-batch#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-batch-dashboard"),
 		common.NewResourceTuple("team:ctx-1000#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-1000-dashboard"),
+		common.NewResourceTuple("user:u1", common.RelationCreate, datasourceGroup, datasourceResource, datasourceQuerySubresource, "ds-1"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)

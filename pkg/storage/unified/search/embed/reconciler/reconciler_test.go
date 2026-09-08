@@ -158,6 +158,40 @@ func TestReconciler_ObservesProcessDuration(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "vector_storage_reconciler_process_duration_seconds"))
 }
 
+func TestReconciler_RecordEmbeddingCounts(t *testing.T) {
+	m := resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+	vec := newFakeVector()
+	vec.counts = []vector.EmbeddingCount{
+		{Resource: "dashboards", Model: testModel, Count: 7},
+		{Resource: "folders", Model: testModel, Count: 3},
+	}
+	s, err := New(Options{
+		Storage:       &fakeStorage{},
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+		Builders:      []embed.Builder{dashboard.New()},
+		Interval:      time.Hour,
+		Metrics:       m,
+	})
+	require.NoError(t, err)
+
+	s.recordEmbeddingCounts(context.Background())
+	assert.Equal(t, 7.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
+	assert.Equal(t, 3.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("folders", testModel)))
+
+	// A label pair that disappears must stop being exported, not linger at
+	// its last value.
+	vec.counts = []vector.EmbeddingCount{{Resource: "dashboards", Model: testModel, Count: 9}}
+	s.recordEmbeddingCounts(context.Background())
+	assert.Equal(t, 1, testutil.CollectAndCount(m.EmbeddingsStored, "vector_storage_embeddings_stored"))
+	assert.Equal(t, 9.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
+
+	// A backend error leaves the last good sample in place.
+	vec.counts, vec.countsErr = nil, errors.New("boom")
+	s.recordEmbeddingCounts(context.Background())
+	assert.Equal(t, 9.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
+}
+
 func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 	// Two dashboards from different namespaces should produce two
 	// EmbedText calls (one per dashboard) and two Upsert calls.
@@ -172,6 +206,22 @@ func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 	assert.Equal(t, 2, text.calls, "one EmbedText call per dashboard")
 	require.Len(t, vec.upserts, 2, "one Upsert per dashboard")
 	assert.Equal(t, int64(200), vec.latestRV)
+}
+
+func TestReconciler_HappyPath_StampsBuilderVersion(t *testing.T) {
+	// Upserted vectors carry the builder's content-format version, not
+	// whatever the RV or an arbitrary literal happens to be.
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	for _, v := range vec.upserts[0] {
+		assert.Equal(t, dashboard.New().Version(), v.ContentVersion)
+	}
 }
 
 func TestReconciler_MultiPanelDashboard_SingleEmbedCall(t *testing.T) {
@@ -341,6 +391,44 @@ func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
 	require.Len(t, vec.upserts, 2, "folder move re-embeds despite unchanged content")
 	assert.Equal(t, "folder-b", vec.upserts[1][0].Folder, "stored folder refreshed to the new folder")
 	assert.Equal(t, 2, text.calls)
+}
+
+// TestReconciler_FolderTitle_PrefixesBreadcrumb covers the wiring: the
+// reconciler resolves the folder title via storage and passes it to Extract,
+// which prefixes the breadcrumb.
+func TestReconciler_FolderTitle_PrefixesBreadcrumb(t *testing.T) {
+	vec := newFakeVector()
+	storage := &fakeStorage{}
+	storage.setFolderTitle("ns", "folder-a", "Production")
+	s, _ := newReconciler(t, storage, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	assert.Contains(t, vec.upserts[0][0].Content, "Production → Dash")
+}
+
+// TestReconciler_FolderTitleResolveError_BlocksAdvance covers the retry
+// contract: a folder-title storage error is treated like any other
+// per-event failure — it blocks the cursor and re-queues the event, rather
+// than being swallowed.
+func TestReconciler_FolderTitleResolveError_BlocksAdvance(t *testing.T) {
+	vec := newFakeVector()
+	storage := &fakeStorage{readErr: errBoom}
+	s, text := newReconciler(t, storage, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, text.calls, "resolver error must short-circuit before embedding")
+
+	s.pendingMu.Lock()
+	_, hasPending := s.pending[pendingKey(dashGroup, dashRes, "ns", "dash-1")]
+	s.pendingMu.Unlock()
+	assert.True(t, hasPending, "resolver error re-queues the event for retry")
 }
 
 // A panel removed with no other change must delete the stale row without
@@ -790,6 +878,56 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	assert.Equal(t, snowflakeRV(150), vec.latestRV)
 }
 
+// Asserts the batch flushes on the byte cap. No flush count is exposed, so
+// observe it via the lazily-pulled iterator: yields-at-each-upsert is
+// [1,2,..] when flushing per event, [N,N,..] for one terminal flush. The
+// end-state invariants alone can't see the byte branch.
+func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
+	// run returns the iterator-yield count observed at each upsert.
+	run := func(t *testing.T, capBytes int) []int {
+		prevCount, prevBytes := startupBatchSize, maxStartupBatchBytes
+		startupBatchSize = 1000 // high enough that only the byte cap can fire
+		maxStartupBatchBytes = capBytes
+		t.Cleanup(func() {
+			startupBatchSize, maxStartupBatchBytes = prevCount, prevBytes
+		})
+
+		st := &fakeStorage{}
+		for i := 0; i < 6; i++ {
+			rv := snowflakeRV(int64(100 + i*10))
+			name := fmt.Sprintf("dash-%d", i)
+			st.changes = append(st.changes,
+				dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+		}
+
+		vec := newFakeVector()
+		vec.latestRV = snowflakeRV(50)
+
+		var yielded int
+		var atUpsert []int
+		st.onYield = func() { yielded++ }
+		vec.onUpsert = func() { atUpsert = append(atUpsert, yielded) }
+
+		s, _ := newReconciler(t, st, vec)
+		s.startupReconcile(context.Background())
+
+		require.Len(t, vec.upserts, 6, "every event embedded")
+		assert.Equal(t, snowflakeRV(150), vec.latestRV, "cursor advances to highest RV")
+		assert.Equal(t, 0, s.pendingLen(), "queue empty after startup")
+		return atUpsert
+	}
+
+	t.Run("byte cap flushes per event", func(t *testing.T) {
+		// cap=1: every non-empty value trips the byte cap → flush per event.
+		assert.Equal(t, []int{1, 2, 3, 4, 5, 6}, run(t, 1))
+	})
+
+	t.Run("cap off defers to one terminal flush", func(t *testing.T) {
+		// 1<<40: neither cap fires for 6 events → one terminal flush.
+		assert.Equal(t, []int{6, 6, 6, 6, 6, 6}, run(t, 1<<40))
+	})
+}
+
 // TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure
 // pins the recovery behavior when SetLatestRV fails after embeds
 // succeed. Without re-enqueueing the embedded events the cursor stays
@@ -815,6 +953,68 @@ func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing
 	assert.Len(t, vec.upserts, 3, "embeds succeeded even though the cursor write failed")
 	assert.Equal(t, snowflakeRV(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
 	assert.Equal(t, 3, s.pendingLen(), "all processed events re-enqueued for the next cycle to retry the advance")
+}
+
+// TestReconciler_StartupReconcile_FreesEmbeddedValues verifies an
+// embedded event releases its value, so the successes slice doesn't grow
+// unbounded over the backlog. Observed via the checkpoint-write-failure
+// path, which re-enqueues every embedded event.
+func TestReconciler_StartupReconcile_FreesEmbeddedValues(t *testing.T) {
+	st := &fakeStorage{}
+	for i := 0; i < 3; i++ {
+		rv := snowflakeRV(int64(100 + i*10))
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.setLatestRVErr = errBoom // fail the checkpoint so successes are re-enqueued
+	s, _ := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+
+	pending := s.drainPending()
+	require.Len(t, pending, 3, "all embedded events re-enqueued after the checkpoint write failed")
+	for _, ev := range pending {
+		assert.Nil(t, ev.value, "embedded value released before re-enqueue")
+	}
+}
+
+// After a checkpoint write fails, the re-enqueued value-less events must
+// replay as no-ops (no re-embed, no delete) while still advancing the
+// cursor. Distinct from FreesEmbeddedValues, which pins the release itself.
+func TestReconciler_StartupReconcile_ReleasedValuesReplayAsNoOps(t *testing.T) {
+	st := &fakeStorage{}
+	for i := 0; i < 3; i++ {
+		rv := snowflakeRV(int64(100 + i*10))
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.setLatestRVErr = errBoom // fail the checkpoint so the embedded events re-enqueue
+	s, text := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+	require.Len(t, vec.upserts, 3, "startup embedded all three")
+	require.Equal(t, 3, s.pendingLen(), "all re-enqueued after the checkpoint write failed")
+
+	embedCalls := text.calls
+	upserts := len(vec.upserts)
+
+	// Recover: checkpoint writes succeed; pending value-less events replay.
+	vec.setLatestRVErr = nil
+	s.processPending(context.Background())
+
+	assert.Equal(t, embedCalls, text.calls, "replay does not re-embed released values")
+	assert.Equal(t, upserts, len(vec.upserts), "replay does not upsert")
+	assert.Empty(t, vec.deletes, "replay does not delete")
+	assert.Equal(t, snowflakeRV(120), vec.latestRV, "cursor advances to highest RV on replay")
+	assert.Equal(t, 0, s.pendingLen(), "queue drained after replay")
 }
 
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
@@ -1305,6 +1505,7 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	assert.Equal(t, dashRes, vec.backfillJobs[0].Resource)
 	assert.Equal(t, testModel, vec.backfillJobs[0].Model)
 	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
+	assert.Equal(t, b.Version(), vec.backfillJobs[0].ContentVersion, "job is stamped with the builder's content version")
 
 	// Second event for the same resource: no-op (no new partition or job).
 	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999)))

@@ -107,8 +107,8 @@ test.describe(
         checked: false,
       });
 
-      // Check Include All option checkbox
-      const includeAllLabel = page.locator('label').filter({ hasText: 'Include All option' });
+      // Check Include All value checkbox
+      const includeAllLabel = page.locator('label').filter({ hasText: 'Include All value' });
       const includeAllCheckbox = includeAllLabel.locator('input[type="checkbox"]');
       await expect(includeAllCheckbox).toBeChecked({
         checked: false,
@@ -223,8 +223,8 @@ test.describe(
       await multiValueCheckbox.click({ force: true });
       await expect(multiValueCheckbox).toBeChecked();
 
-      // Enable Include All option
-      const includeAllLabel = page.locator('label').filter({ hasText: 'Include All option' });
+      // Enable Include All value
+      const includeAllLabel = page.locator('label').filter({ hasText: 'Include All value' });
       const includeAllCheckbox = includeAllLabel.locator('input[type="checkbox"]');
       await includeAllCheckbox.click({ force: true });
       await expect(includeAllCheckbox).toBeChecked();

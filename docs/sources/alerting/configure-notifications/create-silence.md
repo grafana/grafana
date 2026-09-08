@@ -71,6 +71,8 @@ Silences stop notifications from being created for a specified time window but d
 
 {{< admonition type="note" >}}
 Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+
+In Grafana Cloud, the standalone Alertmanager UI is deprecated and no longer available. Manage silences here in the Grafana Alerting UI instead. For details, refer to [Configure Alertmanagers](ref:alertmanager-architecture).
 {{< /admonition >}}
 
 ## Mute timings and active time intervals vs silences

@@ -2,8 +2,9 @@ import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { LayoutModes, PluginType } from '@grafana/data';
+import { type GrafanaConfig, LayoutModes, locationUtil, PluginType } from '@grafana/data';
 import { setPluginLinksHook, setPluginComponentsHook, setPluginFunctionsHook } from '@grafana/runtime';
+import { setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
@@ -105,25 +106,21 @@ jest.mock('@grafana/runtime', () => {
     getTemplateSrv: () => ({
       replace: (str: string) => str,
     }),
-    getDataSourceSrv: () => {
-      return {
-        getInstanceSettings: (uid: string) => {
-          return {
-            id: uid,
-            uid: uid,
-            type: PluginType.datasource,
-            name: uid,
-            meta: {
-              id: uid,
-              name: uid,
-              type: PluginType.datasource,
-              backend: true,
-              isBackend: true,
-            },
-          };
+    getDataSourceSrv: () => ({
+      getInstanceSettings: (uid: string) => ({
+        id: uid,
+        uid: uid,
+        type: PluginType.datasource,
+        name: uid,
+        meta: {
+          id: uid,
+          name: uid,
+          type: PluginType.datasource,
+          backend: true,
+          isBackend: true,
         },
-      };
-    },
+      }),
+    }),
   };
 });
 
@@ -157,13 +154,35 @@ describe('DataSourceEditTabs', () => {
     process.env.NODE_ENV = 'test';
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
+    setDatasourcePluginMetas({
+      [mockDatasources[0].type]: {
+        id: mockDatasources[0].type,
+        name: mockDatasources[0].type,
+        type: PluginType.datasource,
+        info: {
+          author: { name: '', url: '' },
+          description: '',
+          links: [],
+          logos: { large: '', small: '' },
+          screenshots: [],
+          updated: '',
+          version: '',
+        },
+        module: '',
+        baseUrl: '',
+      },
+    });
   });
 
-  it('should render Permissions and Insights tabs', () => {
+  afterEach(() => {
+    setDatasourcePluginMetas({});
+  });
+
+  it('should render Permissions and Insights tabs', async () => {
     const path = ROUTES.DataSourcesEdit.replace(':uid', mockDatasources[0].uid);
     renderPage(path);
 
-    const permissionsTab = screen.getByTestId('data-testid Tab Permissions');
+    const permissionsTab = await screen.findByTestId('data-testid Tab Permissions');
     expect(permissionsTab).toBeInTheDocument();
     expect(permissionsTab).toHaveTextContent('Permissions');
     expect(permissionsTab).toHaveAttribute('href', '/connections/datasources/edit/x/permissions');
@@ -172,5 +191,31 @@ describe('DataSourceEditTabs', () => {
     expect(insightsTab).toBeInTheDocument();
     expect(insightsTab).toHaveTextContent('Insights');
     expect(insightsTab).toHaveAttribute('href', '/connections/datasources/edit/x/insights');
+  });
+
+  describe('with appSubUrl', () => {
+    beforeAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    afterAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    it('prefixes the tab hrefs with the subpath exactly once', async () => {
+      const path = ROUTES.DataSourcesEdit.replace(':uid', mockDatasources[0].uid);
+      renderPage(path);
+
+      const permissionsTab = await screen.findByTestId('data-testid Tab Permissions');
+      expect(permissionsTab).toHaveAttribute('href', '/grafana/connections/datasources/edit/x/permissions');
+    });
   });
 });

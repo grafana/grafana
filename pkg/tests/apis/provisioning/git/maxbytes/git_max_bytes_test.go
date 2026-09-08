@@ -1,7 +1,6 @@
 package maxbytes
 
 import (
-	"context"
 	cryptorand "crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -115,7 +114,6 @@ func TestIntegrationGitMaxBytes_RawRead(t *testing.T) {
 // under-cap resources in the same repository are still applied.
 func TestIntegrationGitMaxBytes_Pull(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repo = "git-max-bytes-pull"
 
@@ -170,5 +168,5 @@ func TestIntegrationGitMaxBytes_Pull(t *testing.T) {
 
 	// Under-cap resources in the same repository are still applied — the cap is
 	// enforced per file, not per sync.
-	common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
+	helper.RequireRepoDashboardCount(t, repo, 1)
 }

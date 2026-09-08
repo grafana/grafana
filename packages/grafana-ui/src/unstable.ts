@@ -13,6 +13,9 @@ export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
 export { signatureHelp } from './components/CodeMirror/signatureHelp';
+export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
+export { applyVariableReference, createVariableCompletionSource } from './components/CodeMirror/variableCompletion';
+export type { VariableCompletionDisplay, VariableCompletionOptions } from './components/CodeMirror/variableCompletion';
 export type {
   CodeMirrorBasicSetup,
   CodeMirrorCompletion,
@@ -24,6 +27,7 @@ export type {
   CodeMirrorEditorProps,
   CodeMirrorEditorTheme,
   CodeMirrorExtension,
+  CodeMirrorSqlDialect,
   SignatureHelp,
   SignatureHelpProvider,
   SignatureInformation,
@@ -31,5 +35,4 @@ export type {
 } from './components/CodeMirror/types';
 export { getQueryFieldConfig } from './components/QueryFieldConfig/queryFieldConfig';
 export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/QueryFieldConfig/queryFieldConfig';
-export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export { TableNG } from './components/Table/TableNG/TableNG';

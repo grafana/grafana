@@ -55,6 +55,23 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["check1"].GetAllowed())
 	})
 
+	t.Run("pipe in correlation id is rejected by OpenFGA", func(t *testing.T) {
+		// OpenFGA validates CorrelationId against ^[\w\d-]{1,36}$; '|' fails
+		items := []*authzv1.BatchCheckItem{
+			newItem("newFolder|get", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		_, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.Error(t, err)
+
+		// '-' separator satisfies the regex; the request succeeds.
+		items = []*authzv1.BatchCheckItem{
+			newItem("newFolder-get", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Contains(t, res.GetResults(), "newFolder-get")
+	})
+
 	t.Run("multiple items with mixed permissions", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // user:1 has access

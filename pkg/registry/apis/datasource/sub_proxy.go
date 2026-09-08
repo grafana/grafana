@@ -92,6 +92,9 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+		if r.builder.cfg.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
+		}
 
 		// The apiserver request context carries the authenticated identity that
 		// NewDataSourceProxy reads via identity.GetRequester.

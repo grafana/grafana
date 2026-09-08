@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"strings"
 	"time"
@@ -117,6 +118,7 @@ var (
 	ErrDatasourceUnauthorized = errors.New("failed to authenticate in datasource")
 	ErrDatasourceForbidden    = errors.New("failed to authorize in datasource")
 	ErrConnectionFailure      = errors.New("failed to connect to remote write endpoint")
+	ErrRateLimited            = errors.New("write rejected due to rate limit")
 
 	// IgnoredErrors don't cause the Write to fail, but are still logged.
 	IgnoredErrors = []string{
@@ -222,9 +224,7 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 			labels = data.Labels{}
 		}
 		delete(labels, "__name__")
-		for k, v := range extraLabels {
-			labels[k] = v
-		}
+		maps.Copy(labels, extraLabels)
 
 		points = append(points, Point{
 			Name:   name,
@@ -435,6 +435,10 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 	if writeErr.StatusCode() == 403 {
 		actual := extractActualError(writeErr)
 		return fmt.Errorf("%w: %s", ErrDatasourceForbidden, actual), false
+	}
+	if writeErr.StatusCode() == 429 {
+		actual := extractActualError(writeErr)
+		return fmt.Errorf("%w: %s", ErrRateLimited, actual), false
 	}
 
 	// All other errors which do not fit into the above categories are also unexpected.

@@ -36,7 +36,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Valid Use case with group path",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				ExternalGroups:  []string{"foo", "bar"},
@@ -87,7 +87,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Valid Use case without group path",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				Login:           "eai-doe",
@@ -137,7 +137,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Valid Use case with org_mapping",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
 				Login:           "eai-doe",
@@ -191,7 +191,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		{
 			name: "Invalid Use case with org_mapping and invalid roles",
 			wantID: &authn.Identity{
-				OrgID:           0,
+				OrgID:           1,
 				OrgName:         "",
 				OrgRoles:        map[int64]identity.RoleType{4: identity.RoleEditor, 5: identity.RoleViewer},
 				Login:           "eai-doe",
@@ -253,7 +253,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			}
 
 			jwtClient := ProvideJWT(jwtService,
-				connectors.ProvideOrgRoleMapper(tc.cfg,
+				connectors.ProvideOrgRoleMapper(testConfigProvider(t, tc.cfg),
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				tc.cfg, tracing.InitializeTracerForTest())
 			validHTTPReq := &http.Request{
@@ -371,7 +371,7 @@ func TestJWTClaimConfig(t *testing.T) {
 				Header: map[string][]string{
 					jwtHeaderName: {token}},
 			}
-			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(cfg,
+			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				cfg, tracing.InitializeTracerForTest())
 			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
@@ -484,7 +484,7 @@ func TestJWTTest(t *testing.T) {
 				},
 			}
 			jwtClient := ProvideJWT(jwtService,
-				connectors.ProvideOrgRoleMapper(cfg,
+				connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				cfg, tracing.InitializeTracerForTest())
 			httpReq := &http.Request{
@@ -540,7 +540,7 @@ func TestJWTStripParam(t *testing.T) {
 		URL: &url.URL{RawQuery: "auth_token=" + token + "&other_param=other_value"},
 	}
 	jwtClient := ProvideJWT(jwtService,
-		connectors.ProvideOrgRoleMapper(cfg,
+		connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 		cfg, tracing.InitializeTracerForTest())
 	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
@@ -599,7 +599,7 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	}
 
 	jwtClient := ProvideJWT(jwtService,
-		connectors.ProvideOrgRoleMapper(cfg,
+		connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 		cfg, tracing.InitializeTracerForTest())
 	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{

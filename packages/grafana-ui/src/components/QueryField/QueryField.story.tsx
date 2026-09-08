@@ -6,11 +6,15 @@ import { Field } from '../Forms/Field';
 import { Label } from '../Forms/Label';
 
 import { QueryField, type QueryFieldProps } from './QueryField';
+import mdx from './QueryField.mdx';
 
 const meta: Meta<typeof QueryField> = {
   title: 'Inputs/Deprecated/QueryField',
   component: QueryField,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: [
         'onTypeahead',

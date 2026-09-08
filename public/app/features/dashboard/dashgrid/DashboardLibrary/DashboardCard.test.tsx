@@ -87,14 +87,14 @@ describe('DashboardCard', () => {
     expect(screen.getByText('My custom description')).toBeInTheDocument();
   });
 
-  it('should render fallback text when description is empty', () => {
+  it('should not render a description when it is empty', () => {
     const dashboard = createMockPluginDashboard({ description: '' });
     render(
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
     expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
-    expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
+    expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
   });
 
   describe('Button interactions', () => {
@@ -683,7 +683,7 @@ describe('DashboardCard', () => {
       expect(headings).toHaveLength(1);
     });
 
-    it('should render the description inside the rectangle, not in the bottom section', () => {
+    it('should render the description in the bottom section', () => {
       const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
       render(
         <DashboardCard
@@ -699,7 +699,7 @@ describe('DashboardCard', () => {
       expect(descriptions[0]).toHaveTextContent('A custom template description');
     });
 
-    it('should not render the "No preview available" placeholder', () => {
+    it('should render the "No preview available" placeholder when there is no image', () => {
       const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
@@ -710,6 +710,27 @@ describe('DashboardCard', () => {
         />
       );
 
+      expect(screen.getByText('No preview available')).toBeInTheDocument();
+    });
+
+    it('should render the preview image alongside the title and description in the bottom section', () => {
+      const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+          imageUrl="https://example.com/preview.png"
+        />
+      );
+
+      expect(screen.getByRole('img', { name: 'My Custom Template' })).toHaveAttribute(
+        'src',
+        'https://example.com/preview.png'
+      );
+      expect(screen.getByRole('heading', { name: 'My Custom Template' })).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('A custom template description');
       expect(screen.queryByText('No preview available')).not.toBeInTheDocument();
     });
 
@@ -806,7 +827,7 @@ describe('DashboardCard', () => {
       expect(screen.getByText('team-a')).toBeInTheDocument();
     });
 
-    it('should fall back to "No description available" when description is empty', () => {
+    it('should not render a description when a custom template has none', () => {
       const dashboard = createMockCustomTemplateDashboard({ description: '' });
       render(
         <DashboardCard
@@ -817,7 +838,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
+      expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
     });
 
     it('should call onEdit when the Edit menu item is clicked', async () => {

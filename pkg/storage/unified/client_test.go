@@ -2,6 +2,7 @@ package unified
 
 import (
 	"context"
+	"maps"
 	"net"
 	"strings"
 	"sync"
@@ -57,6 +58,8 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
+				nil,
 			)
 			require.NoError(t, err)
 
@@ -86,6 +89,8 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				authlib.FixedAccessClient(true),
+				nil,
+				nil,
 				nil,
 				nil,
 				nil,
@@ -260,9 +265,7 @@ func (s *testServer) getCalls() map[string]int {
 	defer s.mu.Unlock()
 
 	calls := make(map[string]int, len(s.Calls))
-	for method, count := range s.Calls {
-		calls[method] = count
-	}
+	maps.Copy(calls, s.Calls)
 
 	return calls
 }

@@ -141,21 +141,30 @@ Query expressions are different for each data source. For more information, refe
 
 1. [Enter general options](#enter-general-options-for-any-variable).
 1. Click **Open variable editor**.
-1. Configure the following options:
+1. Set the following options to configure your query in the **Query** tab:
 
-   | Option             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-   | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Data source        | Select a target data source in the **Data source** drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).                                                                                                                                                                                 |
-   | Query type         | Select an option in the drop-down list and fill in the query fields accordingly. For more information, refer to the [Query type](#query-type) section following these steps.                                                                                                                                                                                                                                                                                                                                                            |
-   | Regex              | (Optional) Type a regular expression in the field to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#filter-variables-with-regex).                                                                                                                                                                                  |
-   | Apply regex to     | Select **Variable value** or **Display text** to choose where the regular expression pattern is applied. The default is **Variable value**.                                                                                                                                                                                                                                                                                                                                                                                             |
-   | Sort               | Select the sort order for values to be displayed in the drop-down list. The default option, **Disabled**, means that the order of options returned by your data source query is used.                                                                                                                                                                                                                                                                                                                                                   |
-   | Refresh            | Select when the variable should update options:<ul><li>**On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.</li><li>**On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.</li></ul> |
-   | Use static options | (Optional) Toggle on the switch to add custom options in addition to the query results:<ul><li>Make entries in the **Value** and **Display text** fields.</li><li>Click **+ Add new option** to add another static option.</li></ul> Repeat these steps as many times as needed.                                                                                                                                                                                                                                                        |
+   | Option             | Description                                                                                                                                                                                                                                                                                                                                            |
+   | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | Target data source | Select a data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).                       |
+   | Query type         | If applicable, select an option in the drop-down list and fill in the query fields accordingly. For more information, refer to the [Query type](#query-type) section following these steps.                                                                                                                                                            |
+   | Regex              | (Optional) Type a regular expression in the field to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#filter-variables-with-regex). |
+   | Apply regex to     | Select **Variable value** or **Display text** to choose where the regular expression pattern is applied. The default is **Variable value**.                                                                                                                                                                                                            |
+   | Sort               | Select the sort order for values to be displayed in the drop-down list. The default option, **Disabled**, means that the order of options returned by your data source query is used.                                                                                                                                                                  |
 
-1. Click **Preview** to test the variable.
-1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Close** to close the query variable editor dialog box.
+1. In the **Static options** tab, set the following options:
+   - Select an option in the **Static options sort** drop-down list to control where in the list of variable values the static options appear.
+   - Under **value**, click **+ Add new option** or **Paste from clipboard** to add static options.
+
+1. Click **Preview** in the top of the dialog box to test the variable.
+
+   Grafana displays a list of the current variable values.
+
+1. In the **Preview of values** section, Review them to ensure they match what you expect.
+1. Click **Apply** to close the query variable editor dialog box.
+1. In the **Refresh** drop-down list, select an option to control when the variable should update:
+   - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
+   - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+
 1. (Optional) Set [Selection options](#configure-variable-selection-options) if needed:
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All value** - Enables an option to include all variables.
@@ -167,7 +176,7 @@ Query expressions are different for each data source. For more information, refe
 
 ### Query type
 
-The query field varies according to your data source.
+The query section of the editor varies according to your data source.
 Some data sources have custom query editors.
 
 Each data source defines how the variable values are extracted.

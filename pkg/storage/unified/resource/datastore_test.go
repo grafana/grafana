@@ -47,7 +47,7 @@ func setupBadgerKV(t *testing.T) KV {
 }
 
 func setupSqlKV(t *testing.T) kv.KV {
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())
@@ -1584,7 +1584,7 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 				Action:          DataActionCreated,
 			}
 
-			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "version-%d", version)))
 			require.NoError(t, err)
 		}
 
@@ -3069,7 +3069,7 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 			Folder:          "test-folder",
 		}
 
-		err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("content-%d", i))))
+		err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "content-%d", i)))
 		require.NoError(t, err)
 	}
 
@@ -3098,6 +3098,138 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 	for _, expected := range expectedCombinations {
 		require.True(t, foundCombinations[expected], "Expected combination not found: %s", expected)
 	}
+}
+
+func TestIntegrationDataStore_GetResourceStatsWithLimit(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsWithLimit)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsWithLimit)
+}
+
+func testDataStoreGetResourceStatsWithLimit(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(ns, name string, action kv.DataAction) {
+		rv := node.Generate().Int64()
+		err := ds.Save(ctx, DataKey{
+			Namespace:       ns,
+			Group:           "apps",
+			Resource:        "deployments",
+			Name:            name,
+			ResourceVersion: rv,
+			Action:          action,
+			Folder:          "f",
+		}, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	// ns-big has 8 live resources; ns-small has 3 live plus one that was deleted.
+	// ns-big sorts before ns-small, so the scan hits the big namespace first.
+	for i := range 8 {
+		save("ns-big", fmt.Sprintf("name-%02d", i), DataActionCreated)
+	}
+	for i := range 3 {
+		save("ns-small", fmt.Sprintf("name-%02d", i), DataActionCreated)
+	}
+	save("ns-small", "gone", DataActionCreated)
+	save("ns-small", "gone", DataActionDeleted)
+	// Recreated resource: latest event is a create, so it counts as live.
+	save("ns-small", "back", DataActionCreated)
+	save("ns-small", "back", DataActionDeleted)
+	save("ns-small", "back", DataActionCreated)
+
+	byNamespace := func(stats []ResourceStats) map[string]int64 {
+		out := map[string]int64{}
+		for _, s := range stats {
+			require.Equal(t, "apps", s.Group)
+			require.Equal(t, "deployments", s.Resource)
+			out[s.Namespace] = s.Count
+		}
+		return out
+	}
+
+	// Exact counts (no limit): deleted resource is excluded.
+	exact, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
+	require.NoError(t, err)
+	// ns-small: 3 singles + "gone" (deleted, excluded) + "back" (recreated, live) = 4.
+	require.Equal(t, map[string]int64{"ns-big": 8, "ns-small": 4}, byNamespace(exact))
+
+	// With a limit of 5: ns-big is capped (counted early-exit, not the full 8),
+	// ns-small stays exact because it is below the limit.
+	const countLimit = 5
+	capped, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, countLimit)
+	require.NoError(t, err)
+	got := byNamespace(capped)
+	require.Contains(t, got, "ns-big")
+	require.Contains(t, got, "ns-small")
+	require.GreaterOrEqual(t, got["ns-big"], int64(countLimit))
+	require.Less(t, got["ns-big"], int64(8), "large namespace should be capped, not fully counted")
+	require.Equal(t, int64(4), got["ns-small"], "namespace below the limit should be exact")
+
+	// minCount still excludes small namespaces when a valid countLimit (> minCount)
+	// caps a large one: ns-big (8 live) is capped and passes, ns-small (4 live) is
+	// excluded.
+	filtered, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 4, 6)
+	require.NoError(t, err)
+	gotFiltered := byNamespace(filtered)
+	require.GreaterOrEqual(t, gotFiltered["ns-big"], int64(6))
+	require.Less(t, gotFiltered["ns-big"], int64(8), "large namespace should be capped")
+	require.NotContains(t, gotFiltered, "ns-small", "namespace at or below minCount must be excluded")
+
+	// countLimit <= 0 behaves like the exact path.
+	unlimited, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, 0)
+	require.NoError(t, err)
+	require.Equal(t, map[string]int64{"ns-big": 8, "ns-small": 4}, byNamespace(unlimited))
+}
+
+func TestIntegrationDataStore_GetResourceStatsWithLimitClusterScoped(t *testing.T) {
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsWithLimitClusterScoped)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsWithLimitClusterScoped)
+}
+
+// Cluster-scoped resources have keys with no namespace segment (Namespace == "").
+// They must be counted by the exact path, and the limited path must cap them and
+// terminate rather than re-scanning the same keys forever.
+func testDataStoreGetResourceStatsWithLimitClusterScoped(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	save := func(name string) {
+		rv := node.Generate().Int64()
+		err := ds.Save(ctx, DataKey{
+			Group:           "apps",
+			Resource:        "deployments",
+			Name:            name,
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+			Folder:          "f",
+		}, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+	for i := range 8 {
+		save(fmt.Sprintf("item-%02d", i))
+	}
+
+	find := func(stats []ResourceStats) *ResourceStats {
+		for i := range stats {
+			if stats[i].Resource == "deployments" {
+				require.Equal(t, "", stats[i].Namespace, "cluster-scoped stats have empty namespace")
+				return &stats[i]
+			}
+		}
+		return nil
+	}
+
+	exact, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
+	require.NoError(t, err)
+	cs := find(exact)
+	require.NotNil(t, cs, "cluster-scoped resource must appear in exact stats")
+	require.Equal(t, int64(8), cs.Count)
+
+	capped, err := ds.GetResourceStatsWithLimit(ctx, NamespacedResource{}, 0, 5)
+	require.NoError(t, err)
+	cs = find(capped)
+	require.NotNil(t, cs, "cluster-scoped resource must appear in limited stats")
+	require.GreaterOrEqual(t, cs.Count, int64(5))
+	require.Less(t, cs.Count, int64(8), "cluster-scoped count should be capped")
 }
 
 func TestIntegrationDataStore_BatchDelete(t *testing.T) {
@@ -3202,7 +3334,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
 			}
-			err := ds.Save(ctx, existingKeys[i], bytes.NewReader([]byte(fmt.Sprintf("value-%d", i))))
+			err := ds.Save(ctx, existingKeys[i], bytes.NewReader(fmt.Appendf(nil, "value-%d", i)))
 			require.NoError(t, err)
 		}
 
@@ -3320,7 +3452,7 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 				Action:          DataActionCreated,
 			}
 
-			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "version-%d", version)))
 			require.NoError(t, err)
 		}
 

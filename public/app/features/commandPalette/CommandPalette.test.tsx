@@ -1,11 +1,13 @@
-import { KBarProvider } from 'kbar';
+import { KBarPortal, KBarProvider } from 'kbar';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
-import { useAssistant } from '@grafana/assistant';
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
+import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
   useFlagDashboardVectorSearch,
+  useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
@@ -15,6 +17,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
 
 import { CommandPalette } from './CommandPalette';
+import { type CommandPaletteAction } from './types';
 
 setPluginLinksHook(() => ({
   links: [],
@@ -33,13 +36,14 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
-  OpenAssistantButton: jest.fn().mockImplementation(({ title }) => <button>{title}</button>),
+  OpenAssistantButton: jest.fn().mockImplementation(({ title, onClick }) => <button onClick={onClick}>{title}</button>),
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   useFlagDashboardVectorSearch: jest.fn(),
   useFlagGrafanaVectorSearchCmdk: jest.fn(),
+  useFlagGrafanaCmdkHybridSearch: jest.fn(),
 }));
 
 jest.mock('kbar', () => ({
@@ -66,12 +70,82 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
+    setPluginLinksHook(() => ({
+      links: [],
+      isLoading: false,
+    }));
+
     // Deep search is gated on both vector-search toggles; default them on so most
-    // tests exercise the deep column, overridden where needed
+    // tests exercise the deep column, overridden where needed. Hybrid search
+    // supersedes (and disables) the deep column, so default it off
     (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
     (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
+    (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  it('reevaluates extension links each time the palette opens', async () => {
+    let isPaletteOpen = false;
+    let isExtensionEnabled = false;
+    const pluginLinksHook = jest.fn(() => ({
+      links: isExtensionEnabled
+        ? [
+            {
+              id: 'test-plugin/command-palette-link',
+              type: PluginExtensionTypes.link as const,
+              title: 'Dynamic extension action',
+              description: 'Enabled after the palette first opens',
+              pluginId: 'test-plugin',
+              path: '/test-plugin',
+            },
+          ]
+        : [],
+      isLoading: false,
+    }));
+    setPluginLinksHook(pluginLinksHook);
+    jest.mocked(KBarPortal).mockImplementation(({ children }) => (isPaletteOpen ? <div>{children}</div> : null));
+
+    const view = setup();
+    expect(pluginLinksHook).not.toHaveBeenCalled();
+
+    isPaletteOpen = true;
+    await act(async () => {
+      view.rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+    });
+    await screen.findByPlaceholderText('Search or jump to...');
+    const callsAfterFirstOpen = pluginLinksHook.mock.calls.length;
+    expect(callsAfterFirstOpen).toBeGreaterThan(0);
+    expect(screen.queryByText('Dynamic extension action')).not.toBeInTheDocument();
+
+    isPaletteOpen = false;
+    await act(async () => {
+      view.rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+    });
+
+    isExtensionEnabled = true;
+    isPaletteOpen = true;
+    await act(async () => {
+      view.rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+    });
+
+    expect(pluginLinksHook.mock.calls.length).toBeGreaterThan(callsAfterFirstOpen);
+    const user = userEvent.setup();
+    await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
+    expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
@@ -300,7 +374,8 @@ describe('CommandPalette', () => {
     it.each([
       ['dashboardVectorSearch off', () => (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false)],
       ['vectorSearchCmdk off', () => (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false)],
-    ])('does not render the deep search column when %s (both flags required)', async (_label, disableFlag) => {
+      ['cmdkHybridSearch on', () => (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(true)],
+    ])('does not render the deep search column when %s', async (_label, disableFlag) => {
       disableFlag();
       let deepSearchCalled = false;
       server.events.on('request:start', ({ request }) => {
@@ -357,6 +432,44 @@ describe('CommandPalette', () => {
           isDeepSearchLoaded: true,
           deepSearchItemsCount: 2,
           itemsCount: expect.any(Number),
+          target: '/d/dash-1',
+        })
+      );
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('reports the destination url as target when a navigational keyword result is clicked', async () => {
+      // Clicking the row's real <a href> makes jsdom log an (unimplemented)
+      // navigation error — suppress it; we only care about the report
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const actions: CommandPaletteAction[] = [
+        {
+          id: 'test/latency-dashboard',
+          name: 'Latency overview',
+          section: 'Dashboards',
+          sectionId: 'dashboards',
+          priority: 1,
+          url: '/d/abc123',
+        },
+      ];
+      render(
+        <KBarProvider actions={actions}>
+          <CommandPalette />
+        </KBarProvider>
+      );
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Latency overview');
+
+      const option = await screen.findByRole('option', { name: /Latency overview/ }, { timeout: 3000 });
+      await user.click(option);
+
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'command_palette_action_selected',
+        expect.objectContaining({
+          actionId: 'test/latency-dashboard',
+          section: 'dashboards',
+          isDeepSearchAction: false,
+          target: '/d/abc123',
         })
       );
       consoleErrorSpy.mockRestore();
@@ -380,7 +493,139 @@ describe('CommandPalette', () => {
           // Stable slug, not the translated section header ("Preferences")
           section: 'preferences',
           itemsCount: expect.any(Number),
+          // Change theme executes in place — no destination to report
+          target: undefined,
         })
+      );
+    });
+  });
+
+  describe('ask assistant', () => {
+    it('opens the assistant with the search query on Shift+Enter', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+
+      expect(openAssistant).toHaveBeenCalledWith({
+        origin: 'grafana/command-palette',
+        prompt: 'Search for latency',
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_ask_assistant', { trigger: 'shortcut' });
+    });
+
+    it('opens the assistant from the input pill', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+      await user.click(screen.getByRole('button', { name: /ask Assistant/ }));
+
+      // The real OpenAssistantButton opens the assistant itself (mocked here), so assert it got the right props
+      expect((OpenAssistantButton as jest.Mock).mock.lastCall?.[0]).toMatchObject({
+        origin: 'grafana/command-palette',
+        prompt: 'Search for latency',
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_ask_assistant', { trigger: 'input-pill' });
+    });
+
+    it('does not show the pill or react to Shift+Enter when the assistant is not available', async () => {
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(reportInteraction).not.toHaveBeenCalledWith('command_palette_ask_assistant', expect.anything());
+    });
+
+    it('does not show the pill or react to Shift+Enter when the search query is empty', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      // Focus the input without typing anything
+      screen.getByPlaceholderText('Search or jump to...').focus();
+
+      expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(openAssistant).not.toHaveBeenCalled();
+    });
+
+    it('does not show the pill or react to Shift+Enter when deep search is disabled', async () => {
+      // Either flag off → deepSearchEnabled is false → the pill and shortcut are gated off too
+      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(openAssistant).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('command_palette_deep_search_results_shown analytics', () => {
+    afterEach(() => {
+      server.events.removeAllListeners();
+    });
+
+    it('reports once when deep search results settle, with deep-search context', async () => {
+      server.use(
+        getVectorSearchHandler([
+          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
+          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      // Wait for the settled deep search render (500ms debounce)
+      await screen.findByText('API latency', {}, { timeout: 3000 });
+
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_deep_search_results_shown', {
+        isDeepSearchEnabled: true,
+        isDeepSearchLoaded: true,
+        deepSearchItemsCount: 2,
+        queryLength: 7,
+      });
+
+      // One event per settled result set, not one per keystroke
+      const shownCalls = (reportInteraction as jest.Mock).mock.calls.filter(
+        ([event]) => event === 'command_palette_deep_search_results_shown'
+      );
+      expect(shownCalls).toHaveLength(1);
+    });
+
+    it('does not report when deep search is disabled', async () => {
+      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      // Outwait the deep search debounce to prove nothing settles/reports
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      });
+
+      expect(reportInteraction).not.toHaveBeenCalledWith(
+        'command_palette_deep_search_results_shown',
+        expect.anything(),
+        expect.anything()
       );
     });
   });

@@ -1,14 +1,18 @@
 package rbac
 
-import "github.com/grafana/grafana/pkg/apimachinery/utils"
+import (
+	"slices"
 
-// k8sVerbMap maps K8s verbs to the canonical set of RBAC verbs used in K8s-native
-// action strings. Multiple K8s verbs collapse to a single RBAC verb:
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+// rbacVerbs maps each Kubernetes request verb onto the verb Grafana's RBAC
+// actions are named with. Several verbs collapse onto one:
 //
-//	list, watch → get
-//	patch       → update
-//	deletecollection → delete
-var k8sVerbMap = map[string]string{
+//	list, watch      -> get
+//	patch            -> update
+//	deletecollection -> delete
+var rbacVerbs = map[string]string{
 	utils.VerbGet:              "get",
 	utils.VerbList:             "get",
 	utils.VerbWatch:            "get",
@@ -19,6 +23,35 @@ var k8sVerbMap = map[string]string{
 	utils.VerbDeleteCollection: "delete",
 	utils.VerbGetPermissions:   "get_permissions",
 	utils.VerbSetPermissions:   "set_permissions",
+}
+
+// distinctRBACVerbs is the deduplicated, sorted set of values in rbacVerbs.
+var distinctRBACVerbs = func() []string {
+	out := make([]string, 0, len(rbacVerbs))
+	for _, verb := range rbacVerbs {
+		if !slices.Contains(out, verb) {
+			out = append(out, verb)
+		}
+	}
+	slices.Sort(out)
+	return out
+}()
+
+// ActionVerb returns the verb an RBAC action is named with for the given
+// Kubernetes request verb, and whether there is one.
+//
+// The side deriving the action to check and the side declaring the permission
+// up front both have to name it the same way, so both read this one table. An
+// action named with a verb the other does not use is never asked for, which
+// fails as a silent denial rather than an error.
+func ActionVerb(verb string) (string, bool) {
+	v, ok := rbacVerbs[verb]
+	return v, ok
+}
+
+// ActionVerbs returns the distinct verbs RBAC actions are named with, sorted.
+func ActionVerbs() []string {
+	return slices.Clone(distinctRBACVerbs)
 }
 
 // k8sNativeMapping is a deterministic Mapping for resources not registered in the
@@ -41,7 +74,7 @@ func newK8sNativeMapping(group, resource, subresource string) Mapping {
 // Action returns the RBAC action for the given K8s verb in the format
 // {group}/{resource}:{rbacVerb}.
 func (m *k8sNativeMapping) Action(verb string) (string, bool) {
-	v, ok := k8sVerbMap[verb]
+	v, ok := rbacVerbs[verb]
 	if !ok {
 		return "", false
 	}
@@ -78,15 +111,9 @@ func (m *k8sNativeMapping) AllActions() []string {
 		prefix += "/" + m.subresource
 	}
 
-	seen := make(map[string]struct{}, len(k8sVerbMap))
-	actions := make([]string, 0, len(k8sVerbMap))
-	for _, v := range k8sVerbMap {
-		action := prefix + ":" + v
-		if _, ok := seen[action]; ok {
-			continue
-		}
-		seen[action] = struct{}{}
-		actions = append(actions, action)
+	actions := make([]string, 0, len(distinctRBACVerbs))
+	for _, v := range distinctRBACVerbs {
+		actions = append(actions, prefix+":"+v)
 	}
 	return actions
 }

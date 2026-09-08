@@ -4,8 +4,10 @@ package github
 
 import (
 	"context"
+	"strconv"
 	"time"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -16,6 +18,7 @@ type Client interface {
 
 	// Repositories
 	GetRepository(ctx context.Context) (Repository, error)
+	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
 
 	// Branch protection
 	GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error)
@@ -29,6 +32,7 @@ type Client interface {
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, number int, body string) error
+	MergeBase(ctx context.Context, base, head string) (string, error)
 }
 
 type Repository struct {
@@ -77,7 +81,7 @@ type webhookConfig struct {
 	Secret string
 }
 
-func (c *webhookConfig) GetID() int64              { return c.ID }
+func (c *webhookConfig) GetID() string             { return strconv.FormatInt(c.ID, 10) }
 func (c *webhookConfig) GetURL() string            { return c.URL }
 func (c *webhookConfig) GetEvents() []string       { return c.Events }
 func (c *webhookConfig) GetSecret() string         { return c.Secret }

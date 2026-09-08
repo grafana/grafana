@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryEditor, type Props } from './QueryEditor';
-import { defaultQuery } from './constants';
+import { defaultExemplarLabels, defaultQuery } from './constants';
 import { TestDataQueryType } from './dataquery';
 import { type TestDataDataSource } from './datasource';
 import { scenarios } from './mocks/scenarios';
@@ -13,6 +13,8 @@ import { defaultStreamQuery } from './runStreams';
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+const testSelectors = selectors.components.DataSource.TestData.QueryTab;
 
 const mockOnChange = jest.fn();
 const props = {
@@ -90,6 +92,43 @@ describe('Test Datasource Query Editor', () => {
     expect(screen.getByLabelText('Speed (ms)')).toHaveValue(250);
     expect(screen.getByLabelText('Spread')).toHaveValue(3.5);
     expect(screen.getByLabelText('Bands')).toHaveValue(1);
+  });
+
+  it('seeds and renders the exemplars scenario options', async () => {
+    const { rerender } = setup();
+
+    const select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
+    await fireEvent.keyDown(select, { keyCode: 40 });
+    await userEvent.click(screen.getByText('Exemplars'));
+
+    expect(mockOnChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scenarioId: TestDataQueryType.Exemplars,
+        exemplarCount: 100,
+        exemplarLabels: defaultExemplarLabels,
+      })
+    );
+
+    rerender(
+      <QueryEditor
+        {...props}
+        query={{
+          ...defaultQuery,
+          scenarioId: TestDataQueryType.Exemplars,
+          exemplarCount: 100,
+          exemplarLabels: defaultExemplarLabels,
+        }}
+      />
+    );
+
+    expect(await screen.findByTestId(testSelectors.exemplarCount)).toHaveValue(100);
+    expect(screen.getByTestId(testSelectors.min)).toHaveValue(null);
+    expect(screen.getByTestId(testSelectors.max)).toHaveValue(null);
+
+    // The label row comes from Phase 2 and defaults to a single traceID label.
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('traceID');
+    expect(screen.getByRole('spinbutton', { name: 'Length' })).toHaveValue(16);
+    expect(screen.getByRole('button', { name: 'Add exemplar label' })).toBeInTheDocument();
   });
 
   it('persists the datasource from the query when switching scenario', async () => {

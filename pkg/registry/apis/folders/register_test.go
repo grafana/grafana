@@ -202,6 +202,13 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "should return folder not empty when folder contains variables",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 4, Resource: "variables", Group: "dashboard.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
 			name: "should return folder not empty when folder contains alertrules",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
 				{Count: 3, Resource: "alertrules", Group: "alerting.grafana.app"},
@@ -397,10 +404,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
 					&folders.Folder{},
 					nil).Once()
-				// also retrieves old parent for depth difference calculation
-				m.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
-					&folders.Folder{},
-					nil).Once()
+				// the old parent is covered by the shared expectation above
 			},
 		},
 		{
@@ -491,6 +495,14 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
+			// the source chain is resolved to reject moves out of the k6 tree
+			us.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
+				&folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "valid-parent",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+				}, nil).Maybe()
 			if tt.setupFn != nil {
 				tt.setupFn(us)
 			}

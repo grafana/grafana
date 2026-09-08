@@ -17,6 +17,8 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
@@ -161,6 +163,7 @@ export function useStaticActions(): CommandPaletteAction[] {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
@@ -212,6 +215,27 @@ export function useStaticActions(): CommandPaletteAction[] {
         },
       });
     }
+
+    const canReadQueries = hasSavedQueryReadPermissions();
+
+    if (queryLibraryEnabled && canReadQueries) {
+      navBarActions.push({
+        id: 'open-saved-queries',
+        name: t('command-palette.action.open-saved-queries', 'Open saved queries'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => openDrawer({ options: { context: 'command-palette' } }),
+      });
+    }
+
     return [...getGlobalActions(), ...navBarActions];
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    navBarTree,
+    queryLibraryEnabled,
+    openDrawer,
+  ]);
 }

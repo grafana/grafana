@@ -1,6 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
+import { type ReactNode } from 'react';
 
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
@@ -18,7 +19,14 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
  */
 export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
-export type CodeMirrorEditorLanguage = 'json' | 'sql';
+export type CodeMirrorEditorLanguage = 'go' | 'html' | 'json' | 'markdown' | 'sql' | 'typescript' | 'xml' | 'yaml';
+
+/**
+ * SQL dialect used for syntax highlighting and keyword completion when
+ * `language` is `'sql'`. Maps to the corresponding dialect from
+ * `@codemirror/lang-sql`. Defaults to `'standardSql'`.
+ */
+export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
 
 /**
  * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
@@ -98,6 +106,11 @@ export interface CodeMirrorEditorProps {
    */
   language?: CodeMirrorEditorLanguage;
   /**
+   * SQL dialect to use when `language` is `'sql'`. Controls dialect-specific
+   * syntax highlighting and keyword completion. Defaults to `'standardSql'`.
+   */
+  sqlDialect?: CodeMirrorSqlDialect;
+  /**
    * Editor height, such as `'200px'` or `'100%'`.
    */
   height?: string;
@@ -124,6 +137,17 @@ export interface CodeMirrorEditorProps {
    */
   completionMode?: CodeMirrorCompletionMode;
   /**
+   * When `true`, a typed space opens the completion popup as an explicit
+   * request. Suits a language where a space starts a new clause and the
+   * suggestions are keywords or identifiers, as after `SELECT ` in SQL.
+   *
+   * Leave it off (the default) for prose. A source is free to answer an explicit
+   * request with its whole list — the variable source does, so that Ctrl+Space
+   * offers every variable — and binding that to the space bar would open the
+   * popup on every word.
+   */
+  completeOnSpace?: boolean;
+  /**
    * Additional CodeMirror extensions to layer on top of the defaults.
    * Use this for linting, custom keymaps, themes, etc.
    */
@@ -148,4 +172,18 @@ export interface CodeMirrorEditorProps {
    * element instead of being captured as indentation (avoids a keyboard trap).
    */
   indentWithTab?: boolean;
+  /**
+   * Rejects all edits while keeping the text selectable.
+   */
+  readOnly?: boolean;
+  /**
+   * Wraps long lines instead of scrolling horizontally.
+   */
+  lineWrapping?: boolean;
+  /**
+   * Rendered while the editor bundle is being lazily loaded. Defaults to a
+   * loading placeholder; pass a styled preview of the content to avoid a
+   * visual flash when the editor appears.
+   */
+  loadingFallback?: ReactNode;
 }

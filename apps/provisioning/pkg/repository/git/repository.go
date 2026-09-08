@@ -76,12 +76,14 @@ type gitRepository struct {
 	client        nanogit.Client
 	writerOptions []nanogit.WriterOption
 	maxBytes      atomic.Int64
+	metrics       *repository.OperationRecorder
 }
 
 func NewRepository(
 	_ context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
+	metrics *repository.OperationMetrics,
 ) (GitRepository, error) {
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
@@ -129,6 +131,7 @@ func NewRepository(
 		gitConfig:     gitConfig,
 		client:        client,
 		writerOptions: writerOptions,
+		metrics:       metrics.Recorder(config.Spec.Type),
 	}
 	// Mirror the nanogit wire-level cap with the post-read content check so the
 	// limit applies even if WithMaxFileSize is never called explicitly.
@@ -282,7 +285,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}
 
 		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
+			Code:    http.StatusUnauthorized,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
@@ -308,7 +311,11 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}
 
 		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
+			// NotFound (rather than the generic BadRequest other field
+			// validation failures use) so isRepositoryAccessible correctly
+			// classifies this as inaccessible rather than an accessible-but-blocked
+			// failure like branch protection, which also fails Test().
+			Code:    http.StatusNotFound,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
@@ -387,7 +394,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("secure", "token").String(),
-					Detail: "write permission denied",
+					Detail: repository.WritePermissionDeniedDetail,
 				}},
 			}, nil
 		}
@@ -400,7 +407,10 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 }
 
 // Read implements provisioning.Repository.
-func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
+func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *repository.FileInfo, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Read(start, out, err) }()
+
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("read repository path", "path", filePath)
 	finalPath := safepath.Join(r.gitConfig.Path, filePath)
@@ -465,7 +475,10 @@ func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
 	r.maxBytes.Store(maxBytes)
 }
 
-func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
+func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []repository.FileTreeEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.List(start, err) }()
+
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("read repository tree")
 
@@ -511,7 +524,10 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 	return entries, nil
 }
 
-func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -557,7 +573,10 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 	return nil
 }
 
-func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -604,6 +623,9 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 	return nil
 }
 
+// Write is deliberately not instrumented: it delegates to Read plus Create or
+// Update, which each record their own operation. Observing it here as well
+// would count the same write twice.
 func (r *gitRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
 	if ref == "" {
 		ref = r.gitConfig.Branch
@@ -626,7 +648,10 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	return r.Create(ctx, path, ref, data, message)
 }
 
-func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) error {
+func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -650,7 +675,10 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	return r.commitAndPush(ctx, writer, comment)
 }
 
-func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -1005,7 +1033,8 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 }
 
 // createSignature creates author and committer signatures using the context signature if available,
-// falling back to default Grafana signature. The committer is overridden by
+// falling back to default Grafana signature. The author is overridden by
+// spec.commit.authorName/Email when set. The committer is overridden by
 // spec.commit.signerName/Email when set; that identity must match the signing
 // key for providers to mark commits as Verified. The author is overridden by
 // the signer identity when spec.commit.signerIsAuthor is true.
@@ -1031,6 +1060,11 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 
 	if author.Time.IsZero() {
 		author.Time = time.Now()
+	}
+
+	if commit := r.config.Spec.Commit; commit != nil && (commit.AuthorName != "" || commit.AuthorEmail != "") {
+		author.Name = cmp.Or(commit.AuthorName, "Grafana")
+		author.Email = cmp.Or(commit.AuthorEmail, "noreply@grafana.com")
 	}
 
 	committer := nanogit.Committer(author)

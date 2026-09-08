@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -20,10 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -86,6 +87,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
@@ -94,7 +96,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *display.DisplayHandler
+	display         *display.DisplayHandler
+	userPermissions *userpermissions.Handler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
@@ -102,9 +105,6 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
-
-	// Toggle for enabling authz management apis
-	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
 
@@ -114,6 +114,14 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
+	// ssoSettingsClient backs the SSOSetting kind's MTSettingsStore (reads +
+	// writes to setting.grafana.app). Built in RegisterAPIService when the
+	// kind's storage mode engages MT-Settings.
+	ssoSettingsClient settingsvc.Service
+
+	// ofClient evaluates the feature flags gating the IAM APIs. The default
+	// client resolves the globally-registered provider at evaluation time.
+	ofClient openfeature.IClient
 
 	apiConfig Config
 }

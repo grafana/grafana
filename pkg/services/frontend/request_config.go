@@ -41,6 +41,7 @@ type FSRequestConfig struct {
 func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, pluginsCDN *pluginscdn.Service, fullFrontendSettingsEnabled bool) (FSRequestConfig, error) {
 	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
+		PluginImportTelemetryPackages:        cfg.PluginImportTelemetryPackages,
 		AnonymousEnabled:                     cfg.Anonymous.Enabled,
 		ApplicationInsightsConnectionString:  cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:       cfg.ApplicationInsightsEndpointUrl,
@@ -94,6 +95,16 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 		if err != nil {
 			return FSRequestConfig{}, err
 		}
+
+		// TEMPORARY CODE
+		// Hardcode "Login with Grafana.com" until dynamic SSO settings are available
+		fullFrontendSettings.Oauth = map[string]any{
+			"grafana_com": map[string]any{
+				"icon": "grafana",
+				"name": "Grafana.com",
+			},
+		}
+		fullFrontendSettings.DisableLoginForm = true
 
 		requestConfig.FullFrontendSettings = fullFrontendSettings
 	}

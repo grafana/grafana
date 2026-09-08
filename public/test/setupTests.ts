@@ -19,6 +19,8 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
     shouldFailOnLog: true,
     shouldFailOnDebug: true,
     shouldFailOnInfo: true,
+    // Print the message for debug. Still fails the tests.
+    shouldPrintMessage: true,
   });
 }
 

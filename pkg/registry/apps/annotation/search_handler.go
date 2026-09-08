@@ -22,7 +22,6 @@ func newSearchHandler(
 	store Store,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
-	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
@@ -120,6 +119,8 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		opts.Scopes = scopes
 	}
 
+	// Scopes default to matching any of the requested values to align with other scope-based filtering in Grafana.
+	opts.ScopesMatchAny = true
 	if v := queryParams.Get("scopesMatchAny"); v != "" {
 		if matchAny, err := strconv.ParseBool(v); err == nil {
 			opts.ScopesMatchAny = matchAny
@@ -137,11 +138,13 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		}
 	}
 
-	// includeDeleted surfaces soft-deleted annotations as tombstones
-	if v := queryParams.Get("includeDeleted"); v != "" {
-		if includeDeleted, err := strconv.ParseBool(v); err == nil {
-			opts.IncludeDeleted = includeDeleted
-		}
+	switch queryParams.Get("deleted") {
+	case "include":
+		opts.Deleted = DeletedInclude
+	case "only":
+		opts.Deleted = DeletedOnly
+	default:
+		opts.Deleted = DeletedExclude
 	}
 
 	return opts

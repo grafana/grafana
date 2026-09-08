@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`bargauge module registers the expected bar gauge options 1`] = `
+[
+  "reduceOptions.values",
+  "reduceOptions.limit",
+  "reduceOptions.calcs",
+  "reduceOptions.fields",
+  "orientation",
+  "legend.showLegend",
+  "legend.displayMode",
+  "legend.placement",
+  "legend.width",
+  "legend.overflow",
+  "legend.limit",
+  "legend.calcs",
+  "text.titleSize",
+  "text.valueSize",
+  "displayMode",
+  "valueMode",
+  "namePlacement",
+  "namePlacement",
+  "showUnfilled",
+  "sizing",
+  "minVizWidth",
+  "minVizHeight",
+  "maxVizHeight",
+]
+`;

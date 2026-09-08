@@ -21,7 +21,10 @@ jest.mock('./RepositoryPullStatusCard', () => ({
   RepositoryPullStatusCard: () => null,
 }));
 
-const createMockRepository = (spec: Partial<RepositorySpec>): Repository => ({
+const createMockRepository = (
+  spec: Partial<RepositorySpec>,
+  webhook: NonNullable<Repository['status']>['webhook'] = { id: 42, url: 'https://grafana.example/webhook' }
+): Repository => ({
   metadata: { name: 'test-repo' },
   spec: {
     title: 'Test Repository',
@@ -34,7 +37,7 @@ const createMockRepository = (spec: Partial<RepositorySpec>): Repository => ({
     health: { healthy: true, checked: Date.now() },
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
-    webhook: { id: 42, url: 'https://grafana.example/webhook' },
+    webhook,
   },
 });
 
@@ -77,6 +80,35 @@ describe('RepositoryOverview', () => {
         'href',
         'https://gitlab.com/org/repo/-/hooks/42/edit'
       );
+    });
+
+    it('should link to Bitbucket webhook settings for bitbucket repositories', () => {
+      const repo = createMockRepository(
+        {
+          type: 'bitbucket',
+          bitbucket: { url: 'https://bitbucket.org/org/repo', branch: 'main' },
+        },
+        { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' }
+      );
+      render(<RepositoryOverview repo={repo} />);
+
+      expect(screen.getByRole('link', { name: 'View Webhook' })).toHaveAttribute(
+        'href',
+        'https://bitbucket.org/org/repo/admin/webhooks/%7B9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0%7D/edit'
+      );
+    });
+
+    it('should display the webhook UUID without braces for bitbucket repositories', () => {
+      const repo = createMockRepository(
+        {
+          type: 'bitbucket',
+          bitbucket: { url: 'https://bitbucket.org/org/repo', branch: 'main' },
+        },
+        { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' }
+      );
+      render(<RepositoryOverview repo={repo} />);
+
+      expect(screen.getByText('9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0')).toBeInTheDocument();
     });
 
     it('should not render the webhook link for repositories without webhook support', () => {

@@ -52,6 +52,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#reduce
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce
+  sql-expressions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/sql-expressions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/sql-expressions/
   table-data-example:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
@@ -139,6 +144,12 @@ You can also use a Math expression to define the **alert condition**. For exampl
 Realigns a time range to a new set of timestamps, this is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
 
 For more details, refer to the [Resample documentation](ref:resample-operation).
+
+### SQL
+
+Transforms the results of previous queries or expressions using MySQL-like syntax, which is useful for filtering rows, joining data from multiple queries, and aggregating results before evaluating the alert condition.
+
+For more details, refer to the [SQL expressions documentation](ref:sql-expressions).
 
 ### Threshold
 

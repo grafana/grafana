@@ -20,7 +20,8 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Name of the tag to display */
   name: string;
   icon?: IconName;
-  /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling. */
+  /** Use constant color from TAG_COLORS. Using index instead of color directly so we can match other styling.
+   * The index wraps around, so a value beyond the number of colors is fine. */
   colorIndex?: number;
   onClick?: OnTagClick;
 }

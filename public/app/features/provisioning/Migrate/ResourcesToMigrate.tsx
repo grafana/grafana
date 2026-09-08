@@ -3,11 +3,14 @@ import { type ReactNode, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Checkbox, Combobox, EmptyState, FilterInput, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Combobox, EmptyState, FilterInput, Pagination, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FolderEntry } from './FolderEntry';
 import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 import { type SortKey, compareFolders } from './sorting';
+
+/** Folder rows shown per page before pagination kicks in. */
+const PAGE_SIZE = 10;
 
 interface Props {
   /**
@@ -65,6 +68,7 @@ export function ResourcesToMigrate({
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -80,6 +84,21 @@ export function ResourcesToMigrate({
     return matched;
   }, [folders, search, sortKey]);
 
+  // Clamp the page so it stays valid when the filtered set shrinks (e.g. after
+  // a search) without needing an effect to reset it.
+  const numberOfPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, numberOfPages);
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  );
+
+  // 1-based range of matching folders visible on the current page, shown in the
+  // footer so the count stays honest once only a page's worth of rows renders.
+  // Only read when there's at least one match (the footer is hidden otherwise).
+  const rangeStart = (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (currentPage - 1) * PAGE_SIZE + paged.length;
+
   // Resources inside a selected folder appear ticked but can't be toggled
   // individually — the user deselects the folder first. Recomputed here (never
   // stored) so deselecting one folder doesn't strip resources covered by
@@ -94,9 +113,10 @@ export function ResourcesToMigrate({
     return covered;
   }, [folders, selectedFolderUids]);
 
-  // Select-all is scoped to the rows currently shown (after search), matching
-  // standard table behaviour — it never reaches past the filter to tick the
-  // whole instance.
+  // Select-all covers the whole filtered set — every matching folder across all
+  // pages, not just the page on screen — matching standard table behaviour
+  // where search narrows the target but pagination doesn't. It never reaches
+  // past the filter to tick the whole instance.
   const filteredFolderUids = filtered.map((folder) => folder.uid);
   const allFilteredSelected =
     filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
@@ -133,7 +153,10 @@ export function ResourcesToMigrate({
           <FilterInput
             placeholder={t('provisioning.migrate.resources-to-migrate-search', 'Search folders and resources')}
             value={search}
-            onChange={setSearch}
+            onChange={(value) => {
+              setSearch(value);
+              setPage(1);
+            }}
           />
         </div>
         <div className={styles.sortInput}>
@@ -157,6 +180,7 @@ export function ResourcesToMigrate({
             onChange={(opt) => {
               if (opt?.value) {
                 setSortKey(opt.value);
+                setPage(1);
               }
             }}
             aria-label={t('provisioning.migrate.resources-sort-aria', 'Sort folders')}
@@ -202,7 +226,7 @@ export function ResourcesToMigrate({
         />
       ) : (
         <div className={styles.list}>
-          {filtered.map((folder) => (
+          {paged.map((folder) => (
             <FolderEntry
               key={folder.uid}
               folder={folder}
@@ -218,17 +242,27 @@ export function ResourcesToMigrate({
         </div>
       )}
 
+      {numberOfPages > 1 && (
+        <Stack justifyContent="flex-end">
+          <Pagination currentPage={currentPage} numberOfPages={numberOfPages} onNavigate={setPage} />
+        </Stack>
+      )}
+
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
-        <Text variant="bodySmall" color="secondary">
-          {t('provisioning.migrate.resources-to-migrate-footer', '', {
-            // Plural agrees with the total folder count (the noun), not the
-            // number of rows shown.
-            shown: filtered.length,
-            count: folders.length,
-            defaultValue_one: 'Showing {{shown}} of {{count}} folder',
-            defaultValue_other: 'Showing {{shown}} of {{count}} folders',
-          })}
-        </Text>
+        {/* Skipped when nothing matches so it doesn't read "0–0 of 0" under the empty state. */}
+        {filtered.length > 0 && (
+          <Text variant="bodySmall" color="secondary">
+            {t('provisioning.migrate.resources-to-migrate-footer', '', {
+              // Plural agrees with the total matching folder count (the noun), not
+              // the size of the visible page range.
+              from: rangeStart,
+              to: rangeEnd,
+              count: filtered.length,
+              defaultValue_one: 'Showing {{from}}–{{to}} of {{count}} folder',
+              defaultValue_other: 'Showing {{from}}–{{to}} of {{count}} folders',
+            })}
+          </Text>
+        )}
         {folders.length > 0 &&
           (canMigrate ? (
             <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={submitDisabled}>

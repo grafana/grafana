@@ -57,7 +57,6 @@ func (AlertRuleExecErrState) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExecErrState"
 }
 
-// TODO(@moustafab): this should be imported from the notifications package
 // +k8s:openapi-gen=true
 type AlertRuleNotificationSettings = AlertRuleSimplifiedRoutingOrNamedRoutingTree
 
@@ -103,7 +102,6 @@ func (AlertRuleNotificationSettingsType) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
 }
 
-// TODO(@moustafab): validate regex for time interval ref
 // +k8s:openapi-gen=true
 type AlertRuleTimeIntervalRef string
 
@@ -125,8 +123,6 @@ func (AlertRuleNamedRoutingTree) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNamedRoutingTree"
 }
 
-// TODO: validate that only one can specify source=true
-// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 // +k8s:openapi-gen=true
 type AlertRuleExpressionMap map[string]AlertRuleExpression
 

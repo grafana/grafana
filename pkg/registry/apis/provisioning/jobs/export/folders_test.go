@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -144,8 +145,8 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil))
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, time.Time{}, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, time.Time{}, nil))
 
 					return true
 				})).Return(nil)
@@ -193,7 +194,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name() == "folder-1-uid" && result.Action() == repository.FileActionIgnored && result.Error() != nil && result.Error().Error() == "creating folder folder-1-uid at path grafana/folder-1: didn't work"
+					return result.Name() == "folder-1-uid" && result.Action() == repository.FileActionCreated && result.Error() != nil && result.Error().Error() == "creating folder folder-1-uid at path grafana/folder-1: didn't work"
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Name() == "folder-2-uid" && result.Action() == repository.FileActionCreated
@@ -207,8 +208,8 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, errors.New("didn't work")))
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, false, time.Time{}, errors.New("didn't work")))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "folder-2-uid", Path: "grafana/folder-2"}, true, time.Time{}, nil))
 
 					return true
 				})).Return(nil)
@@ -252,7 +253,7 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.Error(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil), "too many errors encountered")
+					require.Error(t, opts.OnFolder(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, time.Time{}, nil), "too many errors encountered")
 					return true
 				})).Return(fmt.Errorf("too many errors encountered"))
 			},
@@ -320,8 +321,8 @@ func TestExportFolders(t *testing.T) {
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					require.Equal(t, "feature/branch", opts.Ref)
 					require.Equal(t, "grafana", opts.Path)
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, nil))
-					require.NoError(t, opts.OnFolder(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent-folder", Path: "grafana/parent-folder"}, true, time.Time{}, nil))
+					require.NoError(t, opts.OnFolder(resources.Folder{ID: "child-folder", Path: "grafana/parent-folder/child-folder"}, true, time.Time{}, nil))
 
 					return true
 				})).Return(nil)
@@ -585,4 +586,38 @@ func (m *mockDynamicInterface) Get(ctx context.Context, name string, opts metav1
 		return nil, fmt.Errorf("no items found")
 	}
 	return &m.items[0], nil
+}
+
+// TestWriteFolderTree_PathCollisionFails verifies that two distinct folders whose
+// titles normalize to the same repository path fail the export loudly, instead of
+// silently letting one folder's _folder.json represent the wrong UID/title.
+func TestWriteFolderTree_PathCollisionFails(t *testing.T) {
+	tree := resources.NewEmptyFolderTree()
+	// Two distinct root folders whose titles both sanitize to "Reports".
+	tree.Add(resources.Folder{ID: "uid-a", Title: "» Reports"}, "")
+	tree.Add(resources.Folder{ID: "uid-b", Title: "Reports"}, "")
+
+	// Leaving both mocks without expectations asserts EnsureFolderTreeExists (and
+	// therefore any per-folder Record) is never reached once a collision is found.
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "both export to path")
+}
+
+// TestWriteFolderTree_NoCollisionProceeds verifies that folders with distinct
+// normalized paths pass the collision check and reach EnsureFolderTreeExists.
+func TestWriteFolderTree_NoCollisionProceeds(t *testing.T) {
+	tree := resources.NewEmptyFolderTree()
+	tree.Add(resources.Folder{ID: "uid-a", Title: "Reports"}, "")
+	tree.Add(resources.Folder{ID: "uid-b", Title: "Metrics"}, "")
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	require.NoError(t, err)
 }

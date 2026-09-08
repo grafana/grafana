@@ -67,20 +67,20 @@ function setupMocks({
 }
 
 describe('useGetResourceRepositoryView', () => {
-  const originalToggles = config.featureToggles;
+  const originalProvisioningEnabled = config.provisioningEnabled;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = { ...originalToggles, provisioning: true };
+    config.provisioningEnabled = true;
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
+    config.provisioningEnabled = originalProvisioningEnabled;
   });
 
   describe('provisioning disabled', () => {
     it('returns Disabled status', () => {
-      config.featureToggles = { ...originalToggles, provisioning: false };
+      config.provisioningEnabled = false;
       setupMocks();
 
       const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
@@ -427,7 +427,7 @@ describe('useGetResourceRepositoryView', () => {
     });
 
     it('is true when provisioning is disabled (no repository can exist)', () => {
-      config.featureToggles = { ...originalToggles, provisioning: false };
+      config.provisioningEnabled = false;
       setupMocks();
 
       const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));

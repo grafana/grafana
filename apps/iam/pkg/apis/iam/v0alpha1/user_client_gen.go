@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -102,13 +103,18 @@ func (c *UserClient) Delete(ctx context.Context, identifier resource.Identifier,
 }
 
 type GetUserTeamsRequest struct {
+	Params  GetUserTeamsRequestParams
 	Headers http.Header
 }
 
 func (c *UserClient) GetUserTeams(ctx context.Context, identifier resource.Identifier, request GetUserTeamsRequest) (*GetUserTeamsResponse, error) {
+	params := url.Values{}
+	params.Set("continue", fmt.Sprintf("%v", request.Params.Continue))
+	params.Set("limit", fmt.Sprintf("%v", request.Params.Limit))
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "/teams",
 		Verb:    "GET",
+		Query:   params,
 		Headers: request.Headers,
 	})
 	if err != nil {

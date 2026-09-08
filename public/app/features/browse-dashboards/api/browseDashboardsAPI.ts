@@ -1,7 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { handleRequestError } from '@grafana/api-clients';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
@@ -36,6 +35,7 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
+import { getFolderURL } from '../utils/dashboards';
 
 import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
@@ -78,6 +78,7 @@ const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): Descendant
   dashboards: folderCounts.dashboards || folderCounts.dashboard || 0,
   librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
   alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
+  recordingrules: folderCounts.recordingrules || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -167,7 +168,7 @@ export const browseDashboardsAPI = createApi({
           version,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ uid, title, parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -176,6 +177,10 @@ export const browseDashboardsAPI = createApi({
             })
           );
           refreshTeamFolders();
+          // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+          if (title) {
+            dispatch(updateDashboardName({ id: uid, title, url: getFolderURL(uid) }));
+          }
         });
       },
     }),
@@ -216,6 +221,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
         }
@@ -238,6 +244,7 @@ export const browseDashboardsAPI = createApi({
             dashboards: dashboardUIDs.length,
             librarypanels: 0,
             alertrules: 0,
+            recordingrules: 0,
           };
 
           for (const folderCounts of results) {
@@ -246,6 +253,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.dashboards += normalizedCounts.dashboards;
             totalCounts.alertrules += normalizedCounts.alertrules;
             totalCounts.librarypanels += normalizedCounts.librarypanels;
+            totalCounts.recordingrules += normalizedCounts.recordingrules;
           }
 
           return { data: totalCounts };
@@ -267,7 +275,7 @@ export const browseDashboardsAPI = createApi({
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
-          if (config.featureToggles.provisioning) {
+          if (config.provisioningEnabled) {
             if (isProvisionedDashboard(fullDash)) {
               appEvents.publish({
                 type: AppEvents.alertWarning.name,
@@ -351,11 +359,15 @@ export const browseDashboardsAPI = createApi({
             continue;
           }
 
-          await baseQuery({
+          const response = await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: deleteFolderParams,
           });
+          if (!response.error) {
+            // Only clear the nav starred entry for folders that were actually deleted
+            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+          }
         }
 
         return { data: undefined };
@@ -385,7 +397,7 @@ export const browseDashboardsAPI = createApi({
           for (const dashboardUID of dashboardUIDs) {
             // It's not possible to select a mix of provisioned and non-provisioned dashboards
             // from the UI, so this is mostly a guard in case that somehow happens
-            if (config.featureToggles.provisioning) {
+            if (config.provisioningEnabled) {
               const dto = await api.getDashboardDTO(dashboardUID);
               if (isProvisionedDashboard(dto)) {
                 appEvents.publish({
@@ -430,7 +442,6 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
-          dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
           invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
             dispatch(

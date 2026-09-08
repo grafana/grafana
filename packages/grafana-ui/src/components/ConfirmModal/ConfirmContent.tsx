@@ -46,6 +46,8 @@ export interface ConfirmContentProps {
   disabled?: boolean;
 }
 
+const promptCollator = new Intl.Collator();
+
 export const ConfirmContent = ({
   body,
   confirmPromptText,
@@ -67,7 +69,10 @@ export const ConfirmContent = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setIsDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
+    setIsDisabled(
+      confirmPromptText === undefined ||
+        promptCollator.compare(confirmPromptText.toLowerCase(), event.currentTarget.value.toLowerCase()) !== 0
+    );
   };
 
   useEffect(() => {
