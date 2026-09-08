@@ -138,9 +138,9 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock successful resource writes
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "new-ref").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 				repoResources.On("WriteResourceFromFile", mock.Anything, "alerts/alert.yaml", "new-ref").
-					Return("test-alert", schema.GroupVersionKind{Kind: "Alert", Group: "alerts"}, nil)
+					Return("test-alert", schema.GroupVersionKind{Kind: "Alert", Group: "alerts"}, 0, nil)
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -176,9 +176,9 @@ func TestIncrementalSync(t *testing.T) {
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", "new-ref").
 					Return("test-folder", nil)
 
-				progress.On("Record", mock.Anything, jobs.NewFolderResult("unsupported/path/").
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewFolderResult("unsupported/path/").
 					WithAction(repository.FileActionCreated).
-					Build()).Return()
+					Build())).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -205,10 +205,10 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", ".unsupported/path/file.txt").Return(false)
 
-				progress.On("Record", mock.Anything, jobs.NewPathOnlyResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewPathOnlyResult(
 					".unsupported/path/file.txt",
 				).WithAction(repository.FileActionIgnored).
-					Build()).Return()
+					Build())).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef: "old-ref",
@@ -231,15 +231,15 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"old-dashboard",
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/old.json").
 					WithAction(repository.FileActionDeleted).
-					Build()).Return()
+					Build())).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -267,16 +267,16 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
-					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"renamed-dashboard",
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/new.json").
 					WithPreviousPath("dashboards/old.json").
 					WithAction(repository.FileActionRenamed).
-					Build()).Return()
+					Build())).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -302,7 +302,7 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/dash.json").Return(false)
 
 				repoResources.On("ReplaceResourceFromFileByRef", mock.Anything, "dashboards/dash.json", "new-ref", "old-ref").
-					Return("replaced-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("replaced-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionUpdated &&
@@ -336,7 +336,7 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/dash.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/dash.json", "new-ref").
-					Return("written-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("written-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionUpdated &&
@@ -367,9 +367,9 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "dashboards/ignored.json").Return(false)
 
-				progress.On("Record", mock.Anything, jobs.NewPathOnlyResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewPathOnlyResult(
 					"dashboards/ignored.json",
-				).WithAction(repository.FileActionIgnored).Build()).Return()
+				).WithAction(repository.FileActionIgnored).Build())).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef: "old-ref",
@@ -546,7 +546,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "new-ref").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write failed"))
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, fmt.Errorf("write failed"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionCreated &&
@@ -582,7 +582,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/dash.json").Return(false)
 
 				repoResources.On("ReplaceResourceFromFileByRef", mock.Anything, "dashboards/dash.json", "new-ref", "old-ref").
-					Return("dash-name", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("replace failed"))
+					Return("dash-name", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, fmt.Errorf("replace failed"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionUpdated &&
@@ -616,7 +616,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, fmt.Errorf("delete failed"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionDeleted &&
@@ -694,7 +694,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/first.json", "new-ref").
-					Return("first-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("first-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/first.json" && result.Error() == nil
@@ -737,10 +737,10 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/new.json", "new-ref").
-					Return("new-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("new-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionDeleted && result.Path() == "dashboards/old.json"
@@ -773,7 +773,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/existing.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "new-ref").
-					Return("existing-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("existing-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionUpdated &&
@@ -810,10 +810,10 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/new.json", "new-ref").
-					Return("new-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("new-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionDeleted && result.Path() == "dashboards/old.json"
@@ -851,7 +851,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("delete failed"))
+					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, fmt.Errorf("delete failed"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionDeleted && result.Path() == "dashboards/old.json" && result.Error() != nil
@@ -946,7 +946,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				// if the folder is not found in git, there should be a call to remove the folder from grafana
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "new-ref").
@@ -976,7 +976,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				// if the folder still exists in git, there should not be a call to delete it from grafana
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "new-ref").
@@ -1006,9 +1006,9 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
-					Return("old-dashboard", "folder-uid-1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("old-dashboard", "folder-uid-1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "alerts/old-alert.yaml", "old-ref").
-					Return("old-alert", "folder-uid-2", schema.GroupVersionKind{Kind: "Alert", Group: "alerts"}, nil)
+					Return("old-alert", "folder-uid-2", schema.GroupVersionKind{Kind: "Alert", Group: "alerts"}, 0, nil)
 
 				progress.On("Record", mock.Anything, mock.Anything).Return()
 				progress.On("TooManyErrors").Return(nil)
@@ -1078,7 +1078,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 		progress.On("HasDirPathFailedCreation", "myfolder/dashboard.json").Return(false)
 		repoResources.On("WriteResourceFromFile", mock.Anything, "myfolder/dashboard.json", "new-ref").
-			Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+			Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 		progress.On("TooManyErrors").Return(nil)
 
 		// ReadTree returns a folder without _folder.json
@@ -1139,7 +1139,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 		progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 		repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "new-ref").
-			Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+			Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/test.json"
 		})).Return()
@@ -1358,7 +1358,7 @@ func TestIncrementalSync_FolderRouting(t *testing.T) {
 		progress.On("TooManyErrors").Return(nil)
 
 		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/_folder.json", "new-ref").
-			Return("folder-resource", schema.GroupVersionKind{Kind: "Folder", Group: "folders"}, nil)
+			Return("folder-resource", schema.GroupVersionKind{Kind: "Folder", Group: "folders"}, 0, nil)
 
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionUpdated &&
@@ -1442,7 +1442,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		// when the content is unchanged.
 		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref",
 			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }),
-		).Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+		).Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, 0, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "stable-uid").Return(nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -1494,7 +1494,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 			Return("hash-uid", nil)
 		// No hash in resource list → WriteResourceFromFile called without options.
 		repoResources.On("WriteResourceFromFile", mock.Anything, "gamma/dash.json", "new-ref").
-			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, 0, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "gamma-uid").Return(nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -1532,7 +1532,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 
 		repoResources.On("WriteResourceFromFile", mock.Anything, "beta/new-dash.json", "new-ref").
-			Return("new-dash", schema.GroupVersionKind{Kind: "Dashboard"}, nil)
+			Return("new-dash", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 
@@ -1593,7 +1593,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		// Child dashboard has hash in resource list → WithExistingHash passed.
 		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref",
 			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }),
-		).Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+		).Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, 0, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "old-alpha-uid").Return(nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()

@@ -23,6 +23,13 @@ var (
 	// ErrTokenNotFound is ErrSecretNotFound scoped to the repository token, letting
 	// the controller regenerate only when the token itself is the missing secret.
 	ErrTokenNotFound = errors.New("token secure value not found")
+
+	// ErrSecretDecryptFailed indicates the secret exists but could not be read right
+	// now -- the decrypt service was unreachable, or the keeper/KMS returned an error.
+	// It is a transient, infrastructure-side failure outside the user's control, so
+	// callers should classify it as a service issue to retry rather than as an invalid
+	// repository configuration to fix.
+	ErrSecretDecryptFailed = errors.New("secure value could not be decrypted")
 )
 
 type secretTypeLabel string
@@ -68,7 +75,7 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 
 	results, err := s.svc.Decrypt(ctx, provisioning.GROUP, s.namespace, sv.Name)
 	if err != nil {
-		return "", fmt.Errorf("failed to call decrypt service: %w", err)
+		return "", fmt.Errorf("%w: failed to call decrypt service: %w", ErrSecretDecryptFailed, err)
 	}
 
 	v, found := results[sv.Name]
@@ -84,7 +91,7 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 		if isNotFoundErr(err) {
 			return "", fmt.Errorf("%w: %q: %w", ErrSecretNotFound, sv.Name, err)
 		}
-		return "", fmt.Errorf("decrypt %q: %w", sv.Name, err)
+		return "", fmt.Errorf("%w: decrypt %q: %w", ErrSecretDecryptFailed, sv.Name, err)
 	}
 
 	return common.RawSecureValue(*v.Value()), nil

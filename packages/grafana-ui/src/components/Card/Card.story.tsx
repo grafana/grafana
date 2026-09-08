@@ -1,7 +1,9 @@
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import React from 'react';
 
 import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
+import { Stack } from '../Layout/Stack/Stack';
 import { TextLink } from '../Link/TextLink';
 import { TagList } from '../Tags/TagList';
 
@@ -247,14 +249,21 @@ export const DisabledState: StoryFn<typeof Card> = (args) => {
 };
 
 export const Selectable: StoryFn<typeof Card> = () => {
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const items = ['Option #1', 'Option #2', 'Option #3'];
+
   return (
-    <Card noMargin isSelected disabled>
-      <Card.Heading>Option #1</Card.Heading>
-      <Card.Description>This is a really great option, you will not regret it.</Card.Description>
-      <Card.Figure>
-        <img src={logo} alt="Grafana Logo" width="40" height="40" />
-      </Card.Figure>
-    </Card>
+    <Stack direction="column" gap={2}>
+      {items.map((item, index) => (
+        <Card key={item} noMargin isSelected={selectedIndex === index} onClick={() => setSelectedIndex(index)}>
+          <Card.Heading>{item}</Card.Heading>
+          <Card.Description>This is a really great option, you will not regret it.</Card.Description>
+          <Card.Figure>
+            <img src={logo} alt="Grafana Logo" width="40" height="40" />
+          </Card.Figure>
+        </Card>
+      ))}
+    </Stack>
   );
 };
 

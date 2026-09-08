@@ -8,6 +8,10 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		AuthInfo{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_AuthInfo(ref),
+		AuthInfoList{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_AuthInfoList(ref),
+		AuthInfoSpec{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_AuthInfoSpec(ref),
+		AuthInfoUserRef{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_AuthInfoUserRef(ref),
 		CreateSearchExternalGroupMappingsBody{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref),
 		CreateSearchExternalGroupMappingsResponse{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref),
 		CreateServiceAccountTokenBody{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenBody(ref),
@@ -90,6 +94,167 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		UserSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		UserStatus{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
 		UserTeamSyncStatus{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_UserTeamSyncStatus(ref),
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_AuthInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(metav1.ObjectMeta{}.OpenAPIModelName()),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the AuthInfo",
+							Default:     map[string]interface{}{},
+							Ref:         ref(AuthInfoSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			AuthInfoSpec{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_AuthInfoList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(metav1.ListMeta{}.OpenAPIModelName()),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(AuthInfo{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			AuthInfo{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_AuthInfoSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"userRef": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(AuthInfoUserRef{}.OpenAPIModelName()),
+						},
+					},
+					"authModule": {
+						SchemaProps: spec.SchemaProps{
+							Description: "authModule is the external auth provider the user is linked through (e.g. \"github\", \"ldap\", \"saml\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "authID is the identifier the auth provider returns at login (OAuth subject, LDAP DN, SAML NameID).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"externalUID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "externalUID is the external unique identifier of the user, used for provisioning systems such as SCIM to correlate the user without relying on authID.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Description: "created is the creation timestamp of the auth link, in epoch milliseconds.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"userRef", "authModule", "authID"},
+			},
+		},
+		Dependencies: []string{
+			AuthInfoUserRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_AuthInfoUserRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the unique identifier (UID) for a user.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
 	}
 }
 

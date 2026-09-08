@@ -5,6 +5,7 @@ import {
   BASE_URL as v0alphaBaseURL,
   type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import {
   arrayToDataFrame,
   type DataFrame,
@@ -17,8 +18,9 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
+import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
 import { isRootFolderUID } from '../constants';
@@ -32,7 +34,7 @@ import {
   type SearchQuery,
   type SearchResultMeta,
 } from './types';
-import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
+import { appendFrame, replaceCurrentFolderQuery } from './utils';
 
 const searchURI = `${v0alphaBaseURL}/search`;
 
@@ -84,18 +86,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // get the starred dashboards
-    const name = `user-${contextSrv.user.uid}`;
+    // get the starred items — dashboards, plus folders when starred folders are enabled
     const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
-        fieldSelector: `metadata.name=${name}`,
+        fieldSelector: userStarsFieldSelector(),
       })
     );
-    const items = result.data.items;
-    const starsIds = items?.length
-      ? items[0].spec.resource.find(({ group, kind }) => group === DASHBOARD_API_GROUP && kind === 'Dashboard')
-          ?.names || []
-      : [];
+    let starsIds = findStarredNames(result.data, DASHBOARD_API_GROUP, 'Dashboard');
+    if (starredFoldersEnabled()) {
+      starsIds = [...new Set([...starsIds, ...findStarredNames(result.data, FOLDER_API_GROUP, 'Folder')])];
+    }
 
     if (starsIds.length) {
       return this.doSearchQuery({
@@ -145,8 +145,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      const data = await deletedDashboardsCache.get();
-      const results = filterSearchResults(data, query);
+      // Both the filtering and the sorting happen behind this call: in the browser today,
+      // on the server once the trash endpoint is switched on.
+      const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {
       rsp = await this.fetchResponse(uri);

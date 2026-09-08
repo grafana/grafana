@@ -449,6 +449,7 @@ export function QueryEditorContextWrapper({
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
+      startQueryPreview: dataPane.startQueryPreview,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },

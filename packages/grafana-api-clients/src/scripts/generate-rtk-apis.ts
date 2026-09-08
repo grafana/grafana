@@ -9,18 +9,31 @@ const basePath = path.resolve(__dirname, '../../../..');
 // Include some types that are used inside the @rtk-query/codegen-openapi package
 // but not exported
 declare const operationKeys: readonly ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-type OperationDefinition = {
+export type OperationDefinition = {
   path: string;
   verb: (typeof operationKeys)[number];
   pathItem: OpenAPIV3.PathItemObject;
   operation: OpenAPIV3.OperationObject;
 };
-type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
+export type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
 const defaultHooksOptions = {
   queries: true,
   lazyQueries: true,
   mutations: true,
+};
+
+// Every namespaced kind can serve /search and /trash, and no frontend calls them yet, so
+// generating a hook per kind would add clients nobody imports. The dashboard search at
+// `/search` is a different, older endpoint and stays.
+const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
+
+export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+  if (Array.isArray(filterEndpoints)) {
+    return filterEndpoints;
+  }
+  return (name, operation) =>
+    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**
@@ -32,7 +45,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
     [filePath]: {
       schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
-      filterEndpoints,
+      filterEndpoints: withoutPerResourceSearch(filterEndpoints),
       tag: true,
       hooks: defaultHooksOptions,
       ...additional,

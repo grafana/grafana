@@ -6,6 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, grantUserRole } from '../../mocks';
+import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { ImportWizardGate } from './ImportToGMA';
@@ -13,6 +14,12 @@ import { ImportWizardGate } from './ImportToGMA';
 const server = setupMswServer();
 
 const MIMIR_DS_UID = 'mimir-uid';
+
+// useAutoSyncConfiguration (mounted by the wizard once the gate lets it through) fires this
+// unconditionally.
+beforeEach(() => {
+  setupDatasourcesEndpoint(server, []);
+});
 
 const ui = {
   blockTitle: byText(/auto-sync is enabled/i),

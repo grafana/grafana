@@ -465,4 +465,35 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
     });
   });
+
+  describe('starred view', () => {
+    // The starred view swaps the page's nav identity, so the nav index needs both entries.
+    const preloadedState = {
+      navIndex: {
+        'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' },
+        starred: { text: 'Starred', id: 'starred' },
+      },
+    };
+
+    beforeEach(() => {
+      // The child-folder describe's useParams mock leaks across describes; force the root view.
+      (useParams as jest.Mock).mockReturnValue({});
+    });
+
+    it('displays "Starred" as the page title when the starred param is set', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />, {
+        preloadedState,
+        historyOptions: { initialEntries: ['/dashboards?starred'] },
+      });
+      expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+    });
+
+    it('displays "Starred" as the page title for the starred=true shape the filter checkbox writes', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />, {
+        preloadedState,
+        historyOptions: { initialEntries: ['/dashboards?starred=true'] },
+      });
+      expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+    });
+  });
 });

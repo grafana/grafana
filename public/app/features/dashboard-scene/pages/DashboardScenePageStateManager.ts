@@ -615,8 +615,11 @@ abstract class DashboardScenePageStateManagerBase<T>
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
-    // Public dashboards are not part of a session and therefore should not use the cache
-    const skipSceneCache = options.route === DashboardRoutes.Public;
+    // Public dashboards are not part of a session and therefore should not use the cache.
+    // Provisioning previews are cached under the file path (options.uid for this route), which
+    // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
+    // preview when the same file is revisited at a different ref.
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1091,8 +1094,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    // Public dashboards are not part of a session and therefore should not use the cache
-    const skipSceneCache = options.route === DashboardRoutes.Public;
+    // Public dashboards are not part of a session and therefore should not use the cache.
+    // Provisioning previews are cached under the file path (options.uid for this route), which
+    // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
+    // preview when the same file is revisited at a different ref.
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);

@@ -120,6 +120,10 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "card": {
+      "background": "palette.white",
+      "borderColor": "palette.neutral200"
+    },
     "checkbox": {
       "activeBackgroundHover": "palette.orange600"
     },
