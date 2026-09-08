@@ -23,6 +23,12 @@ export interface ReadmeCreateClickedProperties extends EventProperty {
 export interface ReadmeLinkClickedProperties extends EventProperty {
   /** Host repository type for the folder whose rendered README contains the clicked link. */
   repositoryType: RepoType;
+  /**
+   * Where the click resolved: `in_app` when the link mapped to a synced resource and
+   * navigated to its Grafana page, `host` when it followed the host repository link.
+   * The key signal for how often README links resolve to in-app pages.
+   */
+  outcome: 'in_app' | 'host';
 }
 
 export interface ReadmeRetryClickedProperties extends EventProperty {

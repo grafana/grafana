@@ -1,6 +1,8 @@
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { useState } from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
+import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { Text } from './Text';
@@ -107,6 +109,23 @@ export const Basic: StoryFn = (args) => {
         {args.children}
       </Text>
     </div>
+  );
+};
+
+export const DynamicTruncatedText: StoryFn = () => {
+  const [text, setText] = useState('The first long text should appear in the tooltip before this button is pressed.');
+
+  return (
+    <Stack direction="column" gap={1}>
+      <div style={{ width: '200px' }}>
+        <Text element="p" truncate>
+          {text}
+        </Text>
+      </div>
+      <Button onClick={() => setText('The updated long text should replace the tooltip after this button is pressed.')}>
+        Update text
+      </Button>
+    </Stack>
   );
 };
 

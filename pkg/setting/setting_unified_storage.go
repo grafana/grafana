@@ -38,7 +38,7 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
-	PreferencesResource:      false,
+	PreferencesResource:      true, // Only Mode5!
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }

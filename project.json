@@ -21,7 +21,8 @@
           "projects": ["tag:scope:plugin"],
           "target": "build"
         }
-      ]
+      ],
+      "cache": false
     },
     "build": {
       "dependsOn": [
@@ -48,34 +49,21 @@
     "dev:rspack": {
       "dependsOn": [
         "themes-generate",
+        "build:swagger",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
         }
       ],
-      "outputs": ["{workspaceRoot}/public/build-rspack"],
-      "cache": true
-    },
-    "build:rspack": {
-      "dependsOn": [
-        "themes-generate",
-        {
-          "projects": ["tag:scope:plugin"],
-          "target": "build"
-        }
-      ],
-      "outputs": ["{workspaceRoot}/public/build-rspack", "{workspaceRoot}/public/build-swagger-rspack"],
-      "cache": true
+      "cache": false
     },
     "build:swagger": {
       "dependsOn": ["themes-generate"],
       "outputs": ["{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
-    "build:swagger:rspack": {
-      "dependsOn": ["themes-generate"],
-      "outputs": ["{workspaceRoot}/public/build-swagger-rspack"],
-      "cache": true
+    "start:swagger": {
+      "dependsOn": ["themes-generate"]
     },
     "themes-generate": {
       "inputs": [

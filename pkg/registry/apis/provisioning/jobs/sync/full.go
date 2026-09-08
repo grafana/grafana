@@ -295,9 +295,14 @@ func applyChange(
 		return
 	}
 
+	// Create the result builder before the write so its duration reflects the
+	// write itself; name and GVK are filled in from the result below.
+	resultBuilder := jobs.NewResourceResult().WithAction(change.Action).WithPath(change.Path)
+
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
 	var name string
 	var gvk schema.GroupVersionKind
+	var size int
 	var err error
 
 	// Pass the existing resource's content hash so the write can skip strict
@@ -315,11 +320,11 @@ func applyChange(
 			Group:    change.Existing.Group,
 			Resource: change.Existing.Resource,
 		}
-		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, currentRef, change.Existing.Name, oldGVR, writeOpts...)
+		name, gvk, size, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, currentRef, change.Existing.Name, oldGVR, writeOpts...)
 	} else {
-		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef, writeOpts...)
+		name, gvk, size, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef, writeOpts...)
 	}
-	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
+	resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 	if err != nil {
 		writeSpan.RecordError(err)
 		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))

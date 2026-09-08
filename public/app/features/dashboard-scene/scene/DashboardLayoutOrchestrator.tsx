@@ -1054,7 +1054,7 @@ const getPreviewStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.primary,
     border: `1px dashed ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     pointerEvents: 'none',
     zIndex: theme.zIndex.tooltip,
     overflow: 'hidden',

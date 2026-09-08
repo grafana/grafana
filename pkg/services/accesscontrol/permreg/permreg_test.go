@@ -199,6 +199,43 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 	}
 }
 
+// Guards the notebooks kind registration: the fixed:notebooks:* roles declare notebooks:*-scoped
+// permissions, and without the kindScopePrefix entry RegisterPermission fails and startup aborts.
+func Test_permissionRegistry_Notebooks(t *testing.T) {
+	pr := newPermissionRegistry()
+
+	require.Equal(t, "notebooks:uid:", pr.kindScopePrefix["notebooks"], "notebooks kind must be registered")
+
+	// Mirrors the grants declared by fixed:notebooks:reader/writer.
+	require.NoError(t, pr.RegisterPermission("notebooks:read", "notebooks:*"))
+	require.NoError(t, pr.RegisterPermission("notebooks:write", "notebooks:*"))
+	require.NoError(t, pr.RegisterPermission("notebooks:delete", "notebooks:*"))
+	require.NoError(t, pr.RegisterPermission("notebooks:create", "folders:*"))
+
+	tests := []struct {
+		name    string
+		action  string
+		scope   string
+		wantErr bool
+	}{
+		{name: "read on an object uid", action: "notebooks:read", scope: "notebooks:uid:abc", wantErr: false},
+		{name: "read on the kind wildcard", action: "notebooks:read", scope: "notebooks:*", wantErr: false},
+		{name: "create on the folder wildcard", action: "notebooks:create", scope: "folders:*", wantErr: false},
+		{name: "create on the general folder", action: "notebooks:create", scope: "folders:uid:general", wantErr: false},
+		{name: "read rejects a foreign kind scope", action: "notebooks:read", scope: "dashboards:uid:abc", wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := pr.IsPermissionValid(tt.action, tt.scope)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func Test_permissionRegistry_GetScopePrefixes(t *testing.T) {
 	pr := newPermissionRegistry()
 	err := pr.RegisterPermission("folders:read", "folders:uid:")

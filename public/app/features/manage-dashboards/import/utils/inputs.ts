@@ -1048,7 +1048,12 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable) {
+  // adhoc and groupby variables carry the same `datasource` shape as query variables, so they
+  // need the same placeholder resolution. The v2 path already remaps all three.
+  if (
+    (variableType === 'query' || variableType === 'adhoc' || variableType === 'groupby') &&
+    'datasource' in variable
+  ) {
     const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
     if (resolved) {
       return { ...variable, datasource: resolved };

@@ -6,9 +6,11 @@ import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
 import { Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
 import { useFeatureControlContext } from './FeatureControlProvider';
+import { PreviewAssetsMessage } from './PreviewAssetsMessage';
 
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 
@@ -18,6 +20,7 @@ export const FeatureControlFlags = () => {
   const { setIsOpen, setIsAccessible } = useFeatureControlContext();
   const [flags, setFlags] = useState<Flag[]>([]);
   const styles = useStyles2(getStyles);
+  const previewAssetsFolder = getPreviewAssetsFolder();
 
   useEffect(() => {
     const loadFlags = () => {
@@ -80,6 +83,8 @@ export const FeatureControlFlags = () => {
           Override frontend feature flags locally for testing and development purposes.
         </Trans>
       </Text>
+
+      {previewAssetsFolder && <PreviewAssetsMessage previewAssetsFolder={previewAssetsFolder} />}
 
       <div className={styles.list}>
         {flags.map((flag) => (
