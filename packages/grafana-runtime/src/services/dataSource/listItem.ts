@@ -9,8 +9,8 @@ import { lookupByUid, toListItem } from './settings';
  * the singular counterpart of `getDataSourceInstanceList`. Takes a uid string or any
  * {@link DataSourceRef} carrying one.
  *
- * Prefer it over `getDataSourceInstanceSettings` when `type`, `name`, `meta` and `isDefault`
- * are all you need: the settings it leaves out (`jsonData`, `url`, `access`, `apiVersion`) will
+ * Prefer it over `getDataSourceInstanceSettings` when `type`, `apiVersion`, `name`, `meta` and
+ * `isDefault` are all you need: the settings it leaves out (`jsonData`, `url`, `access`) will
  * eventually cost a request per uid.
  *
  * - **uid or nothing.** No name or numeric-id fallback, no `'default'`, no type-only refs, no
