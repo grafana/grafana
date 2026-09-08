@@ -4,7 +4,7 @@ import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/dat
  * Sentinel compare offset meaning "shift by the panel range's own duration" rather than a fixed
  * interval, so the compare window always mirrors the length of the current one.
  */
-export const PREVIOUS_PERIOD_VALUE = '__previousPeriod';
+const PREVIOUS_PERIOD_VALUE = '__previousPeriod';
 
 /**
  * Shifts a panel's time range backwards to produce the comparison window.
