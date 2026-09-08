@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
@@ -73,8 +74,9 @@ func NewModule(opts Options,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
+	reconcilerState reconciler.StateStore,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, experimentalKV, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, experimentalKV, hooksService, storeProvider, reconcileCRDs, reconcilerState)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +105,7 @@ func newModuleServer(opts Options,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
+	reconcilerState reconciler.StateStore,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -140,6 +143,7 @@ func newModuleServer(opts Options,
 		healthNotifier:   NewHealthNotifier(),
 		storeProvider:    storeProvider,
 		reconcileCRDs:    reconcileCRDs,
+		reconcilerState:  reconcilerState,
 	}
 
 	return s, nil
@@ -202,6 +206,10 @@ type ModuleServer struct {
 	// reconcileCRDs is the list of namespaced CRDs the MT reconciler translates
 	// into Zanzana tuples when running as a standalone zanzana-server module.
 	reconcileCRDs []schema.GroupVersionResource
+
+	// reconcilerState is where the MT reconciler records which namespaces it
+	// has reconciled. Nil in OSS builds, which have no SQL store to record to.
+	reconcilerState reconciler.StateStore
 
 	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
 	// so that operators can signal readiness to the /readyz endpoint.
@@ -302,9 +310,7 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.SearchServer, s.initSearchServerModule)
 
-	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs)
-	})
+	m.RegisterModule(modules.ZanzanaServer, s.initZanzanaServerModule)
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
@@ -444,6 +450,22 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 		resourcepb.Quotas_ServiceDesc.ServiceName,
 	)
 	return svc, nil
+}
+
+func (s *ModuleServer) initZanzanaServerModule() (services.Service, error) {
+	reconcilerState := s.reconcilerState
+	if reconcilerState == nil {
+		// Builds are free not to put a SQL store in the module server graph, so
+		// that targets which don't need a database don't open one. Zanzana does
+		// need one, so build it here, where only this target pays for it.
+		var err error
+		reconcilerState, err = InitializeZanzanaReconcilerState(s.cfg, s.features, s.tracer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs, reconcilerState)
 }
 
 func (s *ModuleServer) initSearchServerModule() (services.Service, error) {

@@ -56,6 +56,10 @@ type Manager struct {
 
 	rulesPerRuleGroupLimit int64
 
+	// maxLabelValueSize caps the byte length of any single expanded label/annotation
+	// value written into state. A non-positive value disables the clamp.
+	maxLabelValueSize int
+
 	persister StatePersister
 
 	ignorePendingForNoDataAndError bool
@@ -82,6 +86,11 @@ type ManagerCfg struct {
 	StatePeriodicSaveJitterEnabled bool
 
 	RulesPerRuleGroupLimit int64
+
+	// MaxLabelValueSize caps the byte length of any single expanded label/annotation
+	// value written into state. Zero uses [DefaultMaxLabelValueSize]; a negative
+	// value disables the clamp.
+	MaxLabelValueSize int
 
 	DisableExecution bool
 
@@ -115,6 +124,14 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		readiness = newGatedProbe(cfg.Clock, cfg.WarmGateTimeout)
 	}
 
+	maxLabelValueSize := cfg.MaxLabelValueSize
+	switch {
+	case maxLabelValueSize == 0:
+		maxLabelValueSize = DefaultMaxLabelValueSize
+	case maxLabelValueSize < 0:
+		maxLabelValueSize = 0
+	}
+
 	m := &Manager{
 		cache:                  c,
 		ResendDelay:            ResendDelay, // TODO: make this configurable
@@ -127,6 +144,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		clock:                  cfg.Clock,
 		externalURL:            cfg.ExternalURL,
 		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
+		maxLabelValueSize:      maxLabelValueSize,
 		persister:              statePersister,
 		tracer:                 cfg.Tracer,
 
@@ -488,7 +506,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
-		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL, st.maxLabelValueSize, st.metrics)
 		if curState := st.cache.get(alertRule.OrgID, alertRule.UID, newState.CacheID); curState != nil {
 			patch(newState, curState, result)
 		}

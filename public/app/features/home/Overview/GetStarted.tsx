@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Badge, Button, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
+
+import { HomeGrid } from '../HomeGrid';
 
 import { Guide, GuideSkeleton, type GuideProps } from './Guide';
 import { OverviewSectionHeading } from './OverviewSectionHeading';
@@ -22,11 +24,11 @@ export function GetStarted({ guides }: { guides?: GuideProps[] }) {
         </Text>
       </OverviewSectionHeading>
 
-      <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
+      <HomeGrid columns={3} gap={2}>
         {!guides && Array.from({ length: 6 }).map((_, index) => <GuideSkeleton key={index} />)}
 
         {guides && guides.slice(0, expanded ? guides.length : 6).map((guide) => <Guide key={guide.id} {...guide} />)}
-      </Grid>
+      </HomeGrid>
 
       {guides && guides.length > 6 && (
         <Stack direction="row" justifyContent="center">

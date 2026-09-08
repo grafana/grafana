@@ -7,13 +7,41 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { Box, Button, Combobox, Drawer, Field, Stack, Switch } from '@grafana/ui';
+import { type TimeCompareOptions, TimeCompareColorMode } from '@grafana/schema';
+import { Box, Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Switch } from '@grafana/ui';
 
 import { getQuickOptions } from '../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
 import { TimeComparisonField } from './timeCompare/TimeComparisonField';
+
+const getCompareColorModeOptions = (): Array<ComboboxOption<TimeCompareColorMode>> => [
+  {
+    label: t('dashboard.panel.time-range-settings.compare-color-mode-standard', 'Standard'),
+    value: TimeCompareColorMode.Standard,
+  },
+  {
+    label: t('dashboard.panel.time-range-settings.compare-color-mode-inverted', 'Inverted'),
+    value: TimeCompareColorMode.Inverted,
+  },
+  {
+    label: t('dashboard.panel.time-range-settings.compare-color-mode-same-as-value', 'Same as value'),
+    value: TimeCompareColorMode.SameAsValue,
+  },
+];
+
+// Only panels that render a comparison delta in their tooltip can honor the color mode.
+const PLUGINS_WITH_COMPARISON_DELTA = new Set(['timeseries']);
+
+/**
+ * `VizPanel` is generic over its plugin's options, so they are untyped here. The time comparison
+ * block is a shared common schema type, and every field on it is optional.
+ */
+function getCompareColorMode(panel: VizPanel): TimeCompareColorMode | undefined {
+  const options: { timeCompare?: TimeCompareOptions } = panel.state.options;
+  return options.timeCompare?.colorMode;
+}
 
 export type PanelTimeRangeZoomBehavior = 'panel_and_dashboard' | 'dashboard' | 'panel';
 
@@ -24,6 +52,7 @@ export interface PanelTimeRangeDrawerState extends SceneObjectState {
   zoomBehavior?: PanelTimeRangeZoomBehavior;
   hideTimeOverride?: boolean;
   compareWith?: string;
+  compareColorMode?: TimeCompareColorMode;
   timeFromLocked?: boolean;
 }
 
@@ -44,6 +73,10 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
         compareWith: timeRange.state.compareWith,
       });
     }
+
+    // The color mode only affects how the panel renders the comparison, so it lives in panel
+    // options rather than on PanelTimeRange.
+    this.setState({ compareColorMode: getCompareColorMode(panel) });
   }
 
   public onClose = () => {
@@ -66,6 +99,13 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
       zoomBehavior: this.state.zoomBehavior,
     });
 
+    // Only written when it changed, so applying the drawer on a panel that never set a color mode
+    // does not add an inert time comparison block to its saved options.
+    const { compareColorMode } = this.state;
+    if (compareColorMode !== getCompareColorMode(panel)) {
+      panel.onOptionsChange({ timeCompare: { colorMode: compareColorMode } });
+    }
+
     if (!panel.state.$timeRange) {
       panel.setState({ $timeRange: timeRange });
       const queryRunner = getQueryRunnerFor(panel);
@@ -76,7 +116,9 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
   };
 
   static Component = ({ model }: SceneComponentProps<PanelTimeRangeDrawer>) => {
-    const { timeFrom, timeShift, compareWith, hideTimeOverride } = model.useState();
+    const { timeFrom, timeShift, compareWith, compareColorMode, hideTimeOverride, panelRef } = model.useState();
+
+    const supportsComparisonDelta = PLUGINS_WITH_COMPARISON_DELTA.has(panelRef.resolve().state.pluginId);
 
     const timeOptions = getQuickOptions()
       .filter((o) => {
@@ -143,6 +185,23 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
           {config.featureToggles.timeComparison && (
             <TimeComparisonField value={compareWith} onChange={(compareWith) => model.setState({ compareWith })} />
+          )}
+
+          {config.featureToggles.timeComparison && compareWith && supportsComparisonDelta && (
+            <Field
+              noMargin
+              label={t('dashboard.panel.time-range-settings.compare-color-mode', 'Comparison tooltip delta color')}
+              description={t(
+                'dashboard.panel.time-range-settings.compare-color-mode-description',
+                'Colors delta between original and comparison value in the tooltip. Increase in value is green for standard, red for inverted, or the series color for same as value.'
+              )}
+            >
+              <Combobox
+                options={getCompareColorModeOptions()}
+                value={compareColorMode ?? TimeCompareColorMode.Standard}
+                onChange={(x) => model.setState({ compareColorMode: x.value })}
+              />
+            </Field>
           )}
 
           <Field
