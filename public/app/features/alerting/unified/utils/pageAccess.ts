@@ -3,6 +3,14 @@ import { hasAny } from 'app/core/navtree/utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import {
+  PERMISSIONS_CONTACT_POINTS,
+  PERMISSIONS_NOTIFICATION_POLICIES,
+  PERMISSIONS_TEMPLATES,
+  PERMISSIONS_TIME_INTERVALS,
+  notificationsPermissions,
+} from './alertmanagerPermissions';
+
 // Page-level access predicates for the alerting section: one per page, each
 // answering "may this user see this page here and now" from permissions,
 // feature flags and config together. The navigation tree gates items on them,
@@ -30,34 +38,26 @@ const stateHistoryServedByLoki = () => {
     : isStateHistoryBackend(stateHistory?.backend, 'loki');
 };
 
-// Permission sets shared by the page predicates below. They mirror the
-// ability system's sets for the same pages.
+// Permission sets shared by the page predicates below, reused from the ability
+// system's own sets so the two can't drift. They are supersets of the server's
+// nav gates: the ability sets include write and test actions the server's read
+// gate leaves out, which only matters for a custom role granting a write action
+// without the matching read.
 const alertInstanceAccess = () =>
   hasAny(AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead);
 
 const contactPointsPermissions = () =>
   hasAny(
-    AccessControlAction.AlertingNotificationsRead,
-    AccessControlAction.AlertingNotificationsExternalRead,
-    AccessControlAction.AlertingReceiversRead,
-    AccessControlAction.AlertingReceiversReadSecrets,
-    AccessControlAction.AlertingReceiversCreate,
-    AccessControlAction.AlertingTemplatesRead,
-    AccessControlAction.AlertingTemplatesWrite,
-    AccessControlAction.AlertingTemplatesDelete
+    ...PERMISSIONS_CONTACT_POINTS,
+    ...PERMISSIONS_TEMPLATES,
+    // The shared sets cover the Grafana-managed alertmanager only and omit the
+    // secrets read, so add what the server's nav gate also accepts
+    notificationsPermissions.read.external,
+    AccessControlAction.AlertingReceiversReadSecrets
   );
 
 const notificationPoliciesPermissions = () =>
-  hasAny(
-    AccessControlAction.AlertingNotificationsRead,
-    AccessControlAction.AlertingNotificationsExternalRead,
-    AccessControlAction.AlertingRoutesRead,
-    AccessControlAction.AlertingRoutesWrite,
-    AccessControlAction.AlertingTimeIntervalsRead,
-    AccessControlAction.AlertingTimeIntervalsWrite,
-    AccessControlAction.ActionAlertingManagedRoutesRead,
-    AccessControlAction.ActionAlertingManagedRoutesWrite
-  );
+  hasAny(...PERMISSIONS_NOTIFICATION_POLICIES, ...PERMISSIONS_TIME_INTERVALS, notificationsPermissions.read.external);
 
 /** Whether the alerting section itself is available */
 export const alertingEnabled = () => config.unifiedAlertingEnabled;
