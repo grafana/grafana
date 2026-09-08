@@ -46,10 +46,6 @@ describe('useCreateTeamOrchestrate', () => {
     mockUseMountedState.mockReturnValue(() => true);
     mockGetAppEvents.mockReturnValue({ publish: mockPublish } as never);
 
-    // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy folder
-    // handlers, so pin it off and let the app-platform cases opt in.
-    setTestFlags({ foldersAppPlatformAPI: false });
-
     contextSrv.fetchUserPermissions = jest.fn().mockResolvedValue(undefined);
     contextSrv.licensedAccessControlEnabled = () => false;
     contextSrv.hasPermission = () => true;

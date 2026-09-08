@@ -1,4 +1,5 @@
-import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { type PermissionLevel } from 'app/types/acl';
 
@@ -21,7 +22,7 @@ export function useFoldersQuery({
   rootFolderUID,
   rootFolderItem,
 }: UseFoldersQueryProps) {
-  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
+  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
   const resultLegacy = useFoldersQueryLegacy({ isBrowsing, openFolders, permission, rootFolderUID, rootFolderItem });
   const resultAppPlatform = useFoldersQueryAppPlatform({
     isBrowsing,

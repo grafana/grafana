@@ -1,7 +1,6 @@
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
@@ -38,19 +37,12 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   };
 
   beforeEach(() => {
-    // foldersAppPlatformAPI defaults to on, but the alerting mock server only serves the legacy
-    // /api/folders endpoints, so pin it off.
-    setTestFlags({ foldersAppPlatformAPI: false });
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.restoreAllMocks();
-    // The act wrap is needed because resetting fires OpenFeature events into the mounted page.
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('displays the folder title', async () => {

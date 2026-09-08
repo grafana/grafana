@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
 import { getStatusFromError } from 'app/core/utils/errors';
 
@@ -47,7 +47,7 @@ export const RestoreModal = ({
 }: RestoreModalProps) => {
   const styles = useStyles2(getStyles);
   const [userTarget, setUserTarget] = useState<string | undefined>();
-  const foldersAppPlatformAPI = useFlagFoldersAppPlatformAPI();
+  const foldersAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
   const numberOfDashboards = selectedDashboards.length;
   const { error: originError, isFetching } = useGetFolderQuery(
     originCandidate
