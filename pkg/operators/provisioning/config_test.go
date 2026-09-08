@@ -10,6 +10,7 @@ import (
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,6 +29,7 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 	cfg := ControllerConfig{
 		Settings:         &setting.Cfg{ProvisioningConnectionTypes: []string{string(configuredType)}},
 		connectionExtras: extras,
+		tracer:           tracing.NewNoopTracerService(),
 	}
 	factory, err := cfg.ConnectionFactory()
 	require.NoError(t, err)

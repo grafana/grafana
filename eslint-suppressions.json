@@ -268,11 +268,6 @@
       "count": 2
     }
   },
-  "packages/grafana-data/src/utils/flotPairs.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/utils/location.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -799,11 +794,6 @@
       "count": 2
     }
   },
-  "public/app/core/components/OptionsUI/NumberInput.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -1070,11 +1060,6 @@
   },
   "public/app/features/alerting/unified/components/receivers/form/fields/SubformField.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx": {
-    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -1765,11 +1750,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/TransformationsEditor/TransformationFilter.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -1858,11 +1838,6 @@
   "public/app/features/datasources/components/DataSourcePluginState.tsx": {
     "@grafana/no-gf-form": {
       "count": 3
-    }
-  },
-  "public/app/features/datasources/components/EditDataSourceActions.test.tsx": {
-    "@grafana/no-plain-links": {
-      "count": 1
     }
   },
   "public/app/features/datasources/hooks.ts": {

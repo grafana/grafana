@@ -19,7 +19,8 @@ export type Env = Record<string, string | true | undefined>;
 export default (env: Env = {}): Configuration => ({
   target: 'web',
   entry: {
-    app: './public/app/index.ts',
+    // Polyfills — webpack build only. See public/app/polyfills.ts.
+    app: ['./public/app/polyfills.ts', './public/app/index.ts'],
     boot: {
       import: './public/boot/index.ts',
       runtime: false,
