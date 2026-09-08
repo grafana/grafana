@@ -229,6 +229,8 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 		require.Error(t, err)
 		require.NotErrorIs(t, err, ErrTokenNotFound)
 		require.NotErrorIs(t, err, ErrSecretNotFound)
+		// Controller reason/retry classification keys off this sentinel.
+		require.ErrorIs(t, err, ErrSecretDecryptFailed)
 	})
 
 	t.Run("missing token wraps both ErrSecretNotFound and ErrTokenNotFound", func(t *testing.T) {
@@ -246,6 +248,8 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 		require.Error(t, err)
 		require.NotErrorIs(t, err, ErrTokenNotFound)
 		require.NotErrorIs(t, err, ErrSecretNotFound)
+		// Controller reason/retry classification keys off this sentinel.
+		require.ErrorIs(t, err, ErrSecretDecryptFailed)
 	})
 
 	t.Run("missing non-token secret does not carry ErrTokenNotFound", func(t *testing.T) {

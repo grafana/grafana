@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"math/rand/v2"
 	"net/http"
 	"slices"
@@ -412,7 +413,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			cancel()
 			return nil, errors.New("holder is required when enable_kv_leases is true")
 		}
-		leaseManager = lease.NewManager(kv, opts.Holder, opts.Reg)
+		leaseManager = lease.NewManager(kv, opts.Holder, "storage", opts.Reg)
 	}
 
 	backend := &kvStorageBackend{
@@ -743,7 +744,13 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"group", gr.Group,
 				"resource", gr.Resource,
 				"error", err)
-			break
+
+			// A cancelled context means the process is shutting down, so give up on the whole
+			// cycle. Any other failure only affects this group, and stopping here would leave
+			// the groups after it uncollected for good.
+			if ctx.Err() != nil {
+				return
+			}
 		}
 	}
 }
@@ -862,28 +869,24 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		}
 	}
 
-	if totalDeleted > 0 {
-		msg := "garbage collection deleted history"
-		perNamespaceMsg := "garbage collection deleted history per namespace"
-		if b.garbageCollection.DryRun {
-			msg = "garbage collection dry run"
-			perNamespaceMsg = "garbage collection dry run per namespace"
-		}
-
-		b.log.Info(msg,
+	// Logged even when nothing was eligible. A pass that finds no trash is the normal
+	// case for most groups, and staying silent leaves no way to tell it apart from a
+	// pass that never ran or was cut short.
+	b.log.Info("garbage collection finished",
+		"group", group,
+		"resource", resourceName,
+		"rows", totalDeleted,
+		"dryRun", b.garbageCollection.DryRun,
+		"seconds", time.Since(start).Seconds(),
+	)
+	for ns, count := range deletedPerNamespace {
+		b.log.Info("garbage collection finished per namespace",
 			"group", group,
 			"resource", resourceName,
-			"rows", totalDeleted,
-			"seconds", time.Since(start).Seconds(),
+			"namespace", ns,
+			"rows", count,
+			"dryRun", b.garbageCollection.DryRun,
 		)
-		for ns, count := range deletedPerNamespace {
-			b.log.Info(perNamespaceMsg,
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
 	}
 
 	return nil
@@ -2585,22 +2588,15 @@ func (k *kvStorageBackend) ListStoredResources(ctx context.Context, filter Names
 	return k.dataStore.ListStoredResources(ctx, filter)
 }
 
-func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTimes")
+func (k *kvStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTime", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+	defer span.End()
 
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		defer span.End()
-		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
-		if err != nil {
-			yield(ResourceLastImportTime{}, err)
-			return
-		}
-		for _, v := range valid {
-			if !yield(v.ToResourceLastImportTime(), nil) {
-				return
-			}
-		}
-	}
+	return k.lastImportStore.GetLastImportTime(ctx, nsr, k.lastImportTimeMaxAge)
 }
 
 type kvBulkImportItem struct {
@@ -2798,9 +2794,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batchLastMicroRV := lastMicroRV
 		if rvManagerDB != nil {
 			batchLastMicroRV = make(map[string]int64, len(lastMicroRV)+len(batch))
-			for key, value := range lastMicroRV {
-				batchLastMicroRV[key] = value
-			}
+			maps.Copy(batchLastMicroRV, lastMicroRV)
 		}
 
 		for _, req := range batch {

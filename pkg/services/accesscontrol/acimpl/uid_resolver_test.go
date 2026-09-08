@@ -148,12 +148,10 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 
 		// One caller cancels mid-flight; it must observe its own cancellation.
 		cancelCtx, cancel := context.WithCancel(context.Background())
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			_, err := r.GetUserIDByUID(cancelCtx, ns, "user-uid")
 			require.ErrorIs(t, err, context.Canceled)
-		}()
+		})
 
 		// The rest share the same flight and must still resolve successfully.
 		wg.Add(survivors)

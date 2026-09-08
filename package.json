@@ -105,7 +105,7 @@
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/levitate": "0.17.2",
-    "@grafana/plugin-e2e": "^3.10.0",
+    "@grafana/plugin-e2e": "^3.12.0",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
@@ -459,6 +459,7 @@
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.1": "^4.1.0",
     "js-yaml@npm:=4.1.1": "^4.1.0",
+    "js-yaml@npm:=4.3.0": "^4.3.1",
     "nodemailer": "9.0.3",
     "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
     "@types/slate/immutable": "^5.0.0",
@@ -472,7 +473,9 @@
     "tar@npm:7.5.11": "7.5.21",
     "linkify-it": "5.0.2",
     "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
-    "axios": "1.18.1"
+    "axios": "1.18.1",
+    "pacote": "21.5.1",
+    "brace-expansion@npm:5.0.6": "^5.0.9"
   },
   "workspaces": {
     "packages": [

@@ -25,7 +25,9 @@ jest.mock('@grafana/ui/unstable', () => {
       const ref = useRef(null);
 
       useEffect(() => {
-        if (!extensions || extensions.length < 3) {
+        // Baseline is 3 now (livePreview + the permanent scrollMarginExtension + the Enter/Shift-Enter
+        // keymap) — a real focus grant adds exactly one more on top of that.
+        if (!extensions || extensions.length < 4) {
           return;
         }
 
