@@ -264,24 +264,31 @@ func TestMaintain(t *testing.T) {
 
 	// the interval is less than the resend interval of 30 seconds
 	s := State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
-	s.Maintain(10, now.Add(10*time.Second))
+	s.Maintain(10, now.Add(10*time.Second), 0)
 	// 10 seconds + 4 x 30 seconds is 130 seconds
 	assert.Equal(t, now.Add(130*time.Second), s.EndsAt)
 
 	// the interval is above the resend interval of 30 seconds
 	s = State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
-	s.Maintain(60, now.Add(10*time.Second))
+	s.Maintain(60, now.Add(10*time.Second), 0)
 	// 10 seconds + 4 x 60 seconds is 250 seconds
 	assert.Equal(t, now.Add(250*time.Second), s.EndsAt)
+
+	// a configured resend delay larger than the interval is used for EndsAt
+	s = State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
+	s.Maintain(10, now.Add(10*time.Second), 5*time.Minute)
+	// 10 seconds + 4 x 5 minutes is 1210 seconds
+	assert.Equal(t, now.Add(1210*time.Second), s.EndsAt)
 }
 
 func TestEnd(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
 	testCases := []struct {
-		name       string
-		expected   time.Time
-		testRule   *ngmodels.AlertRule
-		testResult eval.Result
+		name        string
+		expected    time.Time
+		testRule    *ngmodels.AlertRule
+		testResult  eval.Result
+		resendDelay time.Duration
 	}{
 		{
 			name:     "less than resend delay: for=unset,interval=10s - endsAt = resendDelay * 3",
@@ -345,12 +352,18 @@ func TestEnd(t *testing.T) {
 				IntervalSeconds: 60,
 			},
 		},
+		{
+			name:        "configured resend delay larger than interval: interval=10s, delay=5m",
+			expected:    evaluationTime.Add(5 * time.Minute * 4),
+			testRule:    &ngmodels.AlertRule{IntervalSeconds: 10},
+			resendDelay: 5 * time.Minute,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := eval.Result{EvaluatedAt: evaluationTime}
-			assert.Equal(t, tc.expected, nextEndsTime(tc.testRule.IntervalSeconds, r.EvaluatedAt))
+			assert.Equal(t, tc.expected, nextEndsTime(tc.testRule.IntervalSeconds, r.EvaluatedAt, tc.resendDelay))
 		})
 	}
 }
@@ -588,7 +601,7 @@ func TestTransitionSetsResolvedAt(t *testing.T) {
 				EvaluatedAt: evaluatedAt,
 			}
 
-			transition := state.transition(baseRule, result, nil, logger, noImage, false)
+			transition := state.transition(baseRule, result, nil, logger, noImage, false, 0)
 
 			if tc.expectResolved {
 				require.NotNil(t, state.ResolvedAt, "ResolvedAt should be set for %s -> %s", tc.initialState, tc.resultState)
