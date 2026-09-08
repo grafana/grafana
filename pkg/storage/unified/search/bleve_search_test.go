@@ -583,6 +583,113 @@ func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
 	}
 }
 
+func TestFieldValueSearchResults(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	index := newTestDashboardsIndex(t, threshold, 1, noop)
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:      1,
+			Name:    "dashboard-1",
+			Title:   "Hello dashboard",
+			Tags:    []string{"production", "overview"},
+			Created: 1234,
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Name:      "dashboard-1",
+			},
+		},
+	}}}))
+
+	t.Run("field values", func(t *testing.T) {
+		req := newTestQuery("Hello")
+		req.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_TAGS, resource.SEARCH_FIELD_CREATED}
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
+		require.Nil(t, res.Results)
+		require.Len(t, res.Rows, 1)
+		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
+		require.NotNil(t, res.Rows[0].Score)
+
+		fields := make(map[string]*resourcepb.ResourceSearchValue, len(res.Fields))
+		for _, value := range res.Rows[0].Values {
+			require.Less(t, int(value.FieldIndex), len(res.Fields))
+			fields[res.Fields[value.FieldIndex].Name] = value
+		}
+		require.Equal(t, []string{"Hello dashboard"}, fields[resource.SEARCH_FIELD_TITLE].StringValues)
+		require.Equal(t, []string{"production", "overview"}, fields[resource.SEARCH_FIELD_TAGS].StringValues)
+		require.Equal(t, []int64{1234}, fields[resource.SEARCH_FIELD_CREATED].Int64Values)
+	})
+
+	t.Run("explicit score with free-text query", func(t *testing.T) {
+		req := newTestQuery("Hello")
+		req.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_SCORE}
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, 1)
+		require.NotNil(t, res.Rows[0].Score)
+	})
+
+	t.Run("default fields include score for free-text query", func(t *testing.T) {
+		req := newTestQuery("Hello")
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.NotEmpty(t, res.Fields)
+		require.Len(t, res.Rows, 1)
+		require.NotNil(t, res.Rows[0].Score)
+	})
+
+	t.Run("legacy remains default", func(t *testing.T) {
+		req := newTestQuery("")
+		req.Fields = []string{resource.SEARCH_FIELD_TITLE}
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, resourcepb.ResourceSearchRequest_RESOURCE_TABLE, res.ResultFormat)
+		require.NotNil(t, res.Results)
+		require.Empty(t, res.Fields)
+		require.Empty(t, res.Rows)
+	})
+
+	t.Run("unknown field", func(t *testing.T) {
+		req := newTestQuery("")
+		req.Fields = []string{"does_not_exist"}
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+		require.Equal(t, int32(400), res.Error.Code)
+		require.Contains(t, res.Error.Message, `unknown response field "does_not_exist"`)
+	})
+
+	t.Run("unknown format", func(t *testing.T) {
+		req := newTestQuery("")
+		req.ResultFormat = resourcepb.ResourceSearchRequest_ResultFormat(99)
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+		require.Equal(t, int32(400), res.Error.Code)
+	})
+}
+
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -1918,6 +2025,25 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		colsAll := columnNames(resAll)
 		require.NotEmpty(t, colsAll)
 		require.Greater(t, len(colsAll), 1, "empty Fields returns the full column set, not just the folder authz field")
+	})
+
+	t.Run("field-value results", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("allowed", "allowed"),
+			newDoc("denied", "denied"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(10)
+		q.Fields = []string{resource.SEARCH_FIELD_TITLE}
+		q.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res := searchResponse(t, index, ac, q)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
+		require.Nil(t, res.Results)
+		require.Len(t, res.Rows, 1)
+		require.Equal(t, "allowed", res.Rows[0].Key.Name)
+		require.Equal(t, []string{"allowed"}, res.Rows[0].Values[0].StringValues)
 	})
 
 	t.Run("stale SearchAfter cursor falls back to in-searcher path", func(t *testing.T) {
