@@ -1,4 +1,5 @@
 import { type DataSourceInstanceListItem, type FieldSparkline } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import {
   fetchClusterCpuSeries,
@@ -55,6 +56,7 @@ beforeEach(() => {
   mockSetupGuideEnabled.mockResolvedValue(false);
   mockAccessibleAppPage.mockReset();
   mockAccessibleAppPage.mockImplementation(async (appId, path) => `/a/${appId}${path}`);
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
 });
 
 describe('kubernetesSolution', () => {
@@ -234,6 +236,13 @@ describe('kubernetesSolution CTA and offer', () => {
     expect(cta?.href).toMatch(/^\/explore\?left=/);
     expect(cta?.action).toBe('open_solution');
     expect(decodeURIComponent(cta!.href)).toContain('k8s-prom');
+  });
+
+  it('omits the CTA when neither the app nor Explore is accessible', async () => {
+    mockAccessibleAppPage.mockResolvedValue(null);
+    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+
+    await expect(kubernetesSolution().cta()).resolves.toBeNull();
   });
 
   it('offers the accessible setup flow after a definitive no-data result', async () => {
