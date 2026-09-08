@@ -29,6 +29,43 @@
         }
       }
     },
+    "/authinfos/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search AuthInfo resources in a namespace.",
+        "operationId": "listAuthInfoSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/display": {
       "get": {
         "tags": ["Display"],
@@ -75,6 +112,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -1118,6 +1161,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -1362,6 +1411,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -2152,6 +2207,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -2824,10 +2885,110 @@
           }
         }
       }
+    },
+    "/users/~/permissions": {
+      "get": {
+        "tags": ["User"],
+        "description": "Get effective permissions for the currently authenticated identity",
+        "operationId": "getCurrentUserPermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPermissions"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AuthInfo": {
+        "type": "object",
+        "required": ["metadata", "spec"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the AuthInfo",
+            "default": {}
+          }
+        }
+      },
+      "AuthInfoList": {
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {}
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "AuthInfoSpec": {
+        "type": "object",
+        "required": ["userRef", "authModule", "authID"],
+        "properties": {
+          "authID": {
+            "description": "authID is the identifier the auth provider returns at login (OAuth subject, LDAP DN, SAML NameID).",
+            "type": "string",
+            "default": ""
+          },
+          "authModule": {
+            "description": "authModule is the external auth provider the user is linked through (e.g. \"github\", \"ldap\", \"saml\").",
+            "type": "string",
+            "default": ""
+          },
+          "created": {
+            "description": "created is the creation timestamp of the auth link, in epoch milliseconds.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "externalUID": {
+            "description": "externalUID is the external unique identifier of the user, used for provisioning systems such as SCIM to correlate the user without relying on authID.",
+            "type": "string"
+          },
+          "userRef": {
+            "default": {}
+          }
+        }
+      },
+      "AuthInfoUserRef": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "description": "Name is the unique identifier (UID) for a user.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "CreateSearchExternalGroupMappingsBody": {
         "type": "object",
         "required": ["teams", "totalHits"],
@@ -4935,6 +5096,35 @@
           }
         }
       },
+      "UserPermission": {
+        "description": "UserPermission is one effective action and scope granted to an identity.",
+        "type": "object",
+        "required": ["action", "scope"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "UserPermissions": {
+        "description": "UserPermissions contains the effective permissions for the current identity.",
+        "type": "object",
+        "required": ["permissions"],
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserPermission"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
       "UserTeam": {
         "type": "object",
         "properties": {
@@ -5011,7 +5201,7 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\" or \"NotIn\" in v1.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
             "type": "string",
             "default": ""
           },
@@ -5247,7 +5437,7 @@
         }
       },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {

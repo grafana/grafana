@@ -317,12 +317,12 @@ func TestGithubClient_GetCommits(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposCommitsByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -334,7 +334,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
 			wantCommits: nil,
-			wantErr:     errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr:     errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 	}
 
@@ -459,12 +459,12 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.PostReposHooksByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -475,7 +475,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			events:     []string{"push"},
 			secret:     "secret123",
 			want:       nil,
-			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr:    errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 		{
 			name: "hook already exists is adopted by URL",
@@ -728,12 +728,12 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposHooksByOwnerByRepoByHookId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -742,7 +742,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			repository: "test-repo",
 			webhookID:  123,
 			want:       nil,
-			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr:    errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 	}
 
@@ -868,12 +868,12 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -881,7 +881,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  101,
-			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr:    errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 	}
 
@@ -1051,12 +1051,12 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.PatchReposHooksByOwnerByRepoByHookId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -1071,7 +1071,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr: errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 	}
 
@@ -1237,12 +1237,12 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -1251,7 +1251,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			repository: "test-repo",
 			number:     202,
 			wantFiles:  nil,
-			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr:    errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 	}
 
@@ -1357,12 +1357,12 @@ func TestCreatePullRequestComment(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
+						w.WriteHeader(http.StatusBadRequest)
 						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
 							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
+								StatusCode: http.StatusBadRequest,
 							},
-							Message: "Internal server error",
+							Message: "Bad request",
 						}))
 					}),
 				),
@@ -1371,7 +1371,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			repository: "test-repo",
 			number:     101,
 			body:       "Test comment",
-			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			wantErr:    errors.New("GitHub API error (HTTP 400: Bad request)"),
 		},
 	}
 
@@ -1696,6 +1696,49 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 							"id":                      1,
 							"name":                    "test-ruleset",
 							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "always",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "org-level pull request rule with bypass mode always returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Organization",
+								"ruleset_source":      "test-org",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify includes_parents=true is set (required to fetch org-level rulesets)
+						require.Equal(t, "true", r.URL.Query().Get("includes_parents"),
+							"GetRuleset must set includes_parents=true to resolve org-level rulesets")
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "org-branch-protection",
+							"source_type":             "Organization",
+							"source":                  "test-org",
 							"enforcement":             "active",
 							"current_user_can_bypass": "always",
 						}))
@@ -2444,7 +2487,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    errors.New("GitHub API error (HTTP 500: Internal Server Error)"),
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "repository with special characters in name",

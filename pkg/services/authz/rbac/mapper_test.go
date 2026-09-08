@@ -398,6 +398,23 @@ func TestMapperRegistry_AlertRules(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_AssistantAlertRules verifies the assistant's external collection authorizes like the native rule kinds.
+func TestMapperRegistry_AssistantAlertRules(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("assistant.alertrules.ext.grafana.app", "alertrules", "")
+	require.True(t, ok, "assistant alertrules collection should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	assert.True(t, mapping.HasFolderSupport(), "alert rules are folder-scoped")
+	assert.Equal(t, "alert.rules:uid:", mapping.Prefix())
+
+	action, ok := mapping.Action(utils.VerbGet)
+	require.True(t, ok)
+	assert.Equal(t, "alert.rules:read", action)
+	assert.ElementsMatch(t, []string{"folders:view", "folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbGet))
+}
+
 // TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
 // flow through to annotation verbs via the subresource action set mapping.
 func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
@@ -480,6 +497,85 @@ func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
 		_, ok := reg.Get("iam.grafana.app", "permissions", "status")
 		assert.False(t, ok)
 	})
+}
+
+// TestGetAPIResourceName covers resolving a legacy scope resource back to an API resource name:
+//   - an exact key match wins over the shared-scope fallback (e.g. dashboards vs dashboards/annotations);
+//   - unknown group / unknown scope resource return false;
+//   - when several API resources share one scope resource, the fallback returns the sorted-first
+//     key deterministically (the regression this PR fixes). Each case is asserted repeatedly so a
+//     regression to Go's per-range map iteration order would eventually flip the result and fail.
+func TestGetAPIResourceName(t *testing.T) {
+	// Synthetic group whose keys (in non-sorted literal order) all share one scope resource,
+	// so the only stable answer is the sorted-first key "aaa".
+	syntheticSharedScope := mapper{
+		"example.grafana.app": {
+			"zzz": newResourceTranslation("shared", "uid", false, nil),
+			"aaa": newResourceTranslation("shared", "uid", false, nil),
+			"mmm": newResourceTranslation("shared", "uid", false, nil),
+		},
+	}
+
+	tests := []struct {
+		name     string
+		reg      MapperRegistry
+		group    string
+		resource string
+		wantName string
+		wantOK   bool
+	}{
+		{
+			name:     "exact key match wins over shared-scope fallback",
+			reg:      NewMapperRegistry(),
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			wantName: "dashboards",
+			wantOK:   true,
+		},
+		{
+			name:     "unknown group returns false",
+			reg:      NewMapperRegistry(),
+			group:    "does.not.exist.grafana.app",
+			resource: "dashboards",
+			wantOK:   false,
+		},
+		{
+			name:     "unknown scope resource returns false",
+			reg:      NewMapperRegistry(),
+			group:    "dashboard.grafana.app",
+			resource: "no-such-resource",
+			wantOK:   false,
+		},
+		{
+			// Real config: alertrules/recordingrules/rulesequences all map to "alert.rules".
+			name:     "real shared scope resource resolves to sorted-first key",
+			reg:      NewMapperRegistry(),
+			group:    "rules.alerting.grafana.app",
+			resource: "alert.rules",
+			wantName: "alertrules",
+			wantOK:   true,
+		},
+		{
+			name:     "synthetic shared scope resource resolves to sorted-first key",
+			reg:      syntheticSharedScope,
+			group:    "example.grafana.app",
+			resource: "shared",
+			wantName: "aaa",
+			wantOK:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Repeat to defeat Go's per-range map iteration randomization: a
+			// non-deterministic implementation would eventually return a different key.
+			for i := 0; i < 100; i++ {
+				name, ok := tt.reg.GetAPIResourceName(tt.group, tt.resource)
+				assert.Equal(t, tt.wantOK, ok)
+				assert.Equal(t, tt.wantName, name)
+			}
+		})
+	}
 }
 
 func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {

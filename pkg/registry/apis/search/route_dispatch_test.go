@@ -75,3 +75,44 @@ func TestSearchRouteDoesNotShadowStandardRoutes(t *testing.T) {
 		})
 	}
 }
+
+// A kind that declares no search fields, opts out, or is cluster-scoped gets no
+// search route. What a caller sees then is decided by the router, not by any code
+// in this package, so it is pinned here: the status differs depending on whether
+// the resource itself is served.
+func TestStatusWhenSearchRouteIsNotMounted(t *testing.T) {
+	const root = "/apis/dashboard.grafana.app/v0alpha1"
+
+	noop := func(*restful.Request, *restful.Response) {}
+	serve := func(routes func(ws *restful.WebService)) int {
+		container := restful.NewContainer()
+		container.Router(restful.CurlyRouter{})
+		ws := new(restful.WebService)
+		ws.Path(root)
+		routes(ws)
+		container.Add(ws)
+
+		w := httptest.NewRecorder()
+		container.ServeHTTP(w, httptest.NewRequest(http.MethodPost, root+"/namespaces/default/dashboards/search", nil))
+		return w.Code
+	}
+
+	// The kind is served, so the object routes claim this path for other verbs.
+	t.Run("kind served without a search route", func(t *testing.T) {
+		code := serve(func(ws *restful.WebService) {
+			ws.Route(ws.GET("/namespaces/{namespace}/dashboards/{name}").To(noop))
+			ws.Route(ws.PUT("/namespaces/{namespace}/dashboards/{name}").To(noop))
+			ws.Route(ws.DELETE("/namespaces/{namespace}/dashboards/{name}").To(noop))
+			ws.Route(ws.GET("/namespaces/{namespace}/dashboards").To(noop))
+			ws.Route(ws.POST("/namespaces/{namespace}/dashboards").To(noop))
+		})
+		assert.Equal(t, http.StatusMethodNotAllowed, code)
+	})
+
+	t.Run("resource not served at all", func(t *testing.T) {
+		code := serve(func(ws *restful.WebService) {
+			ws.Route(ws.GET("/namespaces/{namespace}/other").To(noop))
+		})
+		assert.Equal(t, http.StatusNotFound, code)
+	})
+}

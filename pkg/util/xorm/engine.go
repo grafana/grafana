@@ -405,7 +405,7 @@ type TableName interface {
 }
 
 var (
-	tpTableName = reflect.TypeOf((*TableName)(nil)).Elem()
+	tpTableName = reflect.TypeFor[TableName]()
 )
 
 func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {

@@ -28,7 +28,6 @@ const datasource: DataSourceInstanceListItem = {
   name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
   isDefault: true,
 };
 
@@ -38,6 +37,7 @@ const DEFAULT_STATE: SolutionState = {
   traces: 'inactive',
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
+  synthetics: 'inactive',
 };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {

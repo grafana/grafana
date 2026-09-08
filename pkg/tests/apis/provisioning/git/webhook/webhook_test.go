@@ -10,7 +10,9 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
@@ -154,6 +156,86 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 	}, webhookBaseURL, "write")
 
 	waitForWebhook(t, helper, repoName, 456)
+}
+
+// TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately verifies
+// that when webhook creation fails, the repository records a HealthFailureHook
+// (not a controller error) and the hook-failure cooldown suppresses an
+// immediate retry rather than hot-looping.
+func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "webhook-create-failure-cooldown"
+	var webhookCreateCalls atomic.Int32
+
+	mockOpts := append(githubHealthCheckMocks(), ghmock.WithRequestMatchHandler(
+		ghmock.PostReposHooksByOwnerByRepo,
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			webhookCreateCalls.Add(1)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+				Message: "failed to create webhook",
+			}))
+		}),
+	))
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
+	// waitForReady is skipped here: the Ready condition never turns true in
+	// this scenario, since webhook creation is designed to keep failing.
+	helper.CreateGithubRepoWithoutWaitingForReady(t, repoName, map[string][]byte{
+		"dashboard.json": common.DashboardJSON("gh-webhook-fail-dash", "GitHub Webhook Failure Dashboard", 1),
+	}, webhookBaseURL, "write")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
+		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
+		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
+		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
+		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should record the initial webhook failure")
+
+	// The controller reads the repository from its informer cache, so a reconcile
+	// pass that starts before the HealthFailureHook patch has propagated there
+	// still sees a pre-failure status and legitimately re-attempts the create.
+	// That makes "exactly one attempt" the wrong invariant; what must hold is
+	// that attempts stop once the cooldown is visible. Settle first, then require
+	// silence — a controller that hot-loops never settles and fails in
+	// waitForStableCount instead.
+	settled := waitForStableCount(t, &webhookCreateCalls, 2*time.Second, common.WaitTimeoutDefault)
+
+	require.Never(t, func() bool {
+		return webhookCreateCalls.Load() > settled
+	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried while the hook failure cooldown is active")
+}
+
+// waitForStableCount polls counter until it holds the same value for stableFor,
+// and returns that value. It fails the test if the counter is still moving after
+// timeout, which is what a hook-failure hot loop looks like.
+func waitForStableCount(t *testing.T, counter *atomic.Int32, stableFor, timeout time.Duration) int32 {
+	t.Helper()
+
+	const pollInterval = 50 * time.Millisecond
+	deadline := time.Now().Add(timeout)
+	last := counter.Load()
+	stableSince := time.Now()
+
+	for time.Now().Before(deadline) {
+		time.Sleep(pollInterval)
+		switch current := counter.Load(); {
+		case current != last:
+			last, stableSince = current, time.Now()
+		case time.Since(stableSince) >= stableFor:
+			return current
+		}
+	}
+
+	t.Fatalf("webhook creation attempts never stopped: still climbing after %s (last count %d)", timeout, last)
+	return 0
 }
 
 // TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment verifies the
