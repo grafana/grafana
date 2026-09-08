@@ -47,7 +47,9 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          # shellcheck disable=SC2153 # BASE_SHA is supplied by the GitHub Actions step env mapping.
           git fetch --no-tags --filter=blob:none origin "$HEAD_SHA" "$BASE_SHA"
+          # shellcheck disable=SC2153 # BASE_SHA is supplied by the GitHub Actions step env mapping.
           base_sha="$(git merge-base "$HEAD_SHA" "$BASE_SHA")"
           echo "sha=$base_sha" >> "$GITHUB_OUTPUT"
 
