@@ -3,7 +3,12 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 import { type NotebookScene } from '../scene/NotebookScene';
 
 import { readNotebookShape } from './shape';
-import { type NotebookEntryPoint, type NotebookLoadedProperties, type NotebookNewStartedProperties } from './types';
+import {
+  type NotebookCreatedProperties,
+  type NotebookEntryPoint,
+  type NotebookLoadedProperties,
+  type NotebookNewStartedProperties,
+} from './types';
 
 /** @owner sharing-squad */
 export const createNotebookEvent = defineFeatureEvents('grafana', 'notebook');
@@ -13,6 +18,9 @@ const createLoadedEvent = createNotebookEvent<NotebookLoadedProperties>('loaded'
 
 /** Fired when the blank notebook route opens, so nothing exists yet: pairs with `created` to give the abandonment rate. */
 const createNewStartedEvent = createNotebookEvent<NotebookNewStartedProperties>('new_started');
+
+/** Fired the moment a notebook first exists: autosave's first write, or the add-panel modal's create route. */
+const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('created');
 
 /**
  * Every notebook event, so a call site reads as analytics rather than as a stray helper. The
@@ -44,5 +52,9 @@ export const notebookAnalytics = {
 
   newStarted(source: NotebookEntryPoint): void {
     createNewStartedEvent({ source });
+  },
+
+  created(notebookUid: string, source: NotebookEntryPoint, cellCount: number): void {
+    createCreatedEvent({ notebook_uid: notebookUid, source, cell_count: cellCount });
   },
 };

@@ -23,6 +23,7 @@ import { createSuccessNotification, createErrorNotification } from 'app/core/cop
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
+import { type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
 import { useNotebookTagOptions } from '../scene/layout-notebook/useNotebookTagOptions';
 import { type PanelElement } from '../types';
@@ -44,9 +45,11 @@ interface Props {
    */
   buildPanel: () => Promise<PanelElement>;
   onDismiss: () => void;
+  /** Which surface opened this modal, for the notebook_created analytics event when it creates one. */
+  entryPoint: NotebookEntryPoint;
 }
 
-export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
+export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint }: Props) {
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();
   const canCreate = canCreateNotebooks();
@@ -115,7 +118,8 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
           ? await addPanelToExistingNotebook(existingUid, panel)
           : await createNotebookWithPanel(
               { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
-              panel
+              panel,
+              entryPoint
             );
 
         dispatch(
@@ -139,7 +143,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         throw error;
       }
     },
-    [buildPanel, onDismiss, selected]
+    [buildPanel, onDismiss, selected, entryPoint]
   );
 
   const isSubmitting = submitState.loading;

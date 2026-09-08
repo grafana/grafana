@@ -11,6 +11,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { notebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
@@ -39,7 +40,7 @@ export function NotebookScenePage() {
         stateManager.loadNotebook(uid);
       } else if (isNew) {
         stateManager.newNotebook();
-        notebookAnalytics.newStarted('notebook_list');
+        notebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
       }
     }
 

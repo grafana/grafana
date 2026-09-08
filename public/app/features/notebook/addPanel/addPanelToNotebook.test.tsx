@@ -7,10 +7,13 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { notebookAnalytics } from '../analytics/main';
 import { NotebookConflictError } from '../api/notebookResource';
 import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { addPanelErrorMessage, addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
+
+jest.mock('../analytics/main', () => ({ notebookAnalytics: { created: jest.fn() } }));
 
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
 const NOTEBOOK_URL = `${NOTEBOOKS_URL}/:name`;
@@ -42,6 +45,7 @@ jest.mock('app/store/store', () => {
 
 beforeEach(() => {
   testStore = createTestStore();
+  jest.mocked(notebookAnalytics.created).mockClear();
 });
 
 function panel(title: string): PanelKind {
@@ -153,7 +157,8 @@ describe('createNotebookWithPanel', () => {
 
     const added = await createNotebookWithPanel(
       { title: 'Checkout latency investigation', description: 'What are you investigating?', tags: ['latency'] },
-      panel('p95 latency')
+      panel('p95 latency'),
+      'dashboard_panel'
     );
 
     expect(added).toEqual({ uid: 'nb2', title: 'Checkout latency investigation' });
@@ -169,7 +174,7 @@ describe('createNotebookWithPanel', () => {
   it('sends a create body the apiserver can type', async () => {
     const captured = captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled', description: '', tags: [] }, panel('Chart'));
+    await createNotebookWithPanel({ title: 'Untitled', description: '', tags: [] }, panel('Chart'), 'dashboard_panel');
 
     expect(captured.body!.apiVersion).toBe('dashboard.grafana.app/v2beta1');
     expect(captured.body!.kind).toBe('Notebook');
@@ -179,7 +184,7 @@ describe('createNotebookWithPanel', () => {
   it('omits an empty description rather than writing one the user never typed', async () => {
     const captured = captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled', description: '', tags: [] }, panel('Chart'));
+    await createNotebookWithPanel({ title: 'Untitled', description: '', tags: [] }, panel('Chart'), 'dashboard_panel');
 
     expect(captured.body!.spec).not.toHaveProperty('description');
   });
@@ -189,9 +194,26 @@ describe('createNotebookWithPanel', () => {
   it('fails when the create response carries no name', async () => {
     captureCreate(null);
 
-    await expect(createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'))).rejects.toThrow(
-      /carried no name/
-    );
+    await expect(
+      createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'dashboard_panel')
+    ).rejects.toThrow(/carried no name/);
+  });
+
+  it('reports the caller entry point and cell count once the notebook is created', async () => {
+    captureCreate();
+
+    await createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'explore');
+
+    expect(notebookAnalytics.created).toHaveBeenCalledTimes(1);
+    expect(notebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1);
+  });
+
+  it('does not report a create when the write fails', async () => {
+    captureCreate(null);
+
+    await expect(createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'explore')).rejects.toThrow();
+
+    expect(notebookAnalytics.created).not.toHaveBeenCalled();
   });
 });
 

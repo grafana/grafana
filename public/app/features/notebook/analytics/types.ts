@@ -32,15 +32,32 @@ export interface NotebookLoadedProperties extends EventProperty {
 }
 
 /**
- * Where a notebook came from, shared by every event that has to name a surface. `notebook_list` is
- * the blank route reached from the list's create button. `explore` and `dashboard_panel` are the two
+ * Where a notebook came from, shared by every event that has to name a surface. `NOTEBOOK_LIST` is
+ * the blank route reached from the list's create button. `EXPLORE` and `DASHBOARD_PANEL` are the two
  * callers of the add-panel modal, which creates a notebook outright rather than opening a blank one,
- * so only `created` sends those. `assistant` and `workspace` are reserved for entry points that do
+ * so only `created` sends those. `ASSISTANT` and `WORKSPACE` are reserved for entry points that do
  * not exist yet, so nothing carries them.
  */
-export type NotebookEntryPoint = 'notebook_list' | 'explore' | 'dashboard_panel' | 'assistant' | 'workspace';
+export const NOTEBOOK_ENTRY_POINT = {
+  NOTEBOOK_LIST: 'notebook_list',
+  EXPLORE: 'explore',
+  DASHBOARD_PANEL: 'dashboard_panel',
+  ASSISTANT: 'assistant',
+  WORKSPACE: 'workspace',
+} as const;
+
+export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTEBOOK_ENTRY_POINT];
 
 export interface NotebookNewStartedProperties extends EventProperty {
   /** Which surface the new notebook was started from. */
   source: NotebookEntryPoint;
+}
+
+export interface NotebookCreatedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebook_uid: string;
+  /** Which surface the notebook was created from. */
+  source: NotebookEntryPoint;
+  /** Cells in the notebook at the moment it was created, excluding the trailing empty editor block. */
+  cell_count: number;
 }

@@ -9,6 +9,8 @@ import {
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
+import { notebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
@@ -568,6 +570,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       } finally {
         this.adoptingUid = false;
       }
+      notebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
       return { generation };
     });
   }
