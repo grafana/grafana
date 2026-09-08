@@ -182,7 +182,11 @@ func ByteCountSI(b int64) string {
 }
 
 // TruncateUTF8 truncates s to at most n bytes without splitting a multi-byte rune.
+// A non-positive n returns an empty string.
 func TruncateUTF8(s string, n int) string {
+	if n <= 0 {
+		return ""
+	}
 	if len(s) <= n {
 		return s
 	}
