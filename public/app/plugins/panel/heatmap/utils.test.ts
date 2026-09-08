@@ -759,9 +759,31 @@ describe('prepConfig', () => {
 
         const result = range(u, -4, 4, scaleKey);
 
-        // Must cover the bucket rather than collapsing to the ±1 fallback window.
-        expect(result[0]).toBeLessThanOrEqual(-4);
-        expect(result[1]).toBeGreaterThanOrEqual(4);
+        // Covers the bucket with a power of headroom, rather than collapsing to the
+        // ±1 fallback window.
+        expect(result).toEqual([-8, 8]);
+      });
+
+      it('follows an asymmetric lone straddler rather than forcing a symmetric window', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        // A single lopsided NHCB bucket (-1, 100]. Each end snaps independently, so
+        // the shallow negative side isn't stretched to match the positive one.
+        const { range, scaleKey, u } = buildYScaleWithFacets([-1], [100]);
+
+        const result = range(u, -1, 100, scaleKey);
+
+        expect(result).toEqual([-2, 128]);
+      });
+
+      it('keeps the symmetric fallback window for a lone epsilon zero bucket', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        // ±1e-128 has no extent to range over, so snapping its bounds would pin the
+        // band to the axis floor; the symmetric fallback window centers it instead.
+        const { range, scaleKey, u } = buildYScaleWithFacets([-1e-128], [1e-128]);
+
+        const result = range(u, -1e-128, 1e-128, scaleKey);
+
+        expect(result).toEqual([-1, 1]);
       });
     });
 
@@ -2159,6 +2181,20 @@ describe('snapSymlogRange', () => {
 
   it('clamps the max to the threshold when all data is within the linear region', () => {
     expect(snapSymlogRange(-0.5, 0.5, 0.989, 2)).toEqual([-0.5, 0.989]);
+  });
+
+  it('gives headroom to a bound sitting exactly on the threshold', () => {
+    // A bucket edge at exactly ±linthresh belongs to the log region, so it snaps
+    // like any other rather than sitting flush against the axis edge — otherwise
+    // an identical -1 bound would render at -2 with a 0.5 threshold but at -1
+    // with a 1 threshold.
+    expect(snapSymlogRange(-1, 100, 1, 2)).toEqual([-2, 128]);
+    expect(snapSymlogRange(-100, 1, 1, 2)).toEqual([-128, 2]);
+  });
+
+  it('snaps the two ends independently', () => {
+    // A bucket reaching much further on one side must not stretch the other.
+    expect(snapSymlogRange(-1, 100, 0.5, 2)).toEqual([-2, 128]);
   });
 });
 

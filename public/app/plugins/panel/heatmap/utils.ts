@@ -332,19 +332,19 @@ export function prepConfig(opts: PrepConfigOpts) {
                 hi = t;
               }
 
-              if (sparseZeroBucketOnly) {
-                // No real-magnitude bucket to anchor the threshold to. Usually that
-                // means a lone exponential zero bucket (±epsilon), but it can also be a
-                // single wide zero-straddling NHCB bucket whose empty neighbors the
-                // sparse encoding dropped. Size the symmetric window to the data rather
-                // than to the fallback threshold, so a wide straddler isn't clipped.
-                const extent = Math.max(t, Math.abs(lo), Math.abs(hi));
-                [scaleMin, scaleMax] =
-                  extent > t ? snapSymlogRange(-extent, extent, t, scaleLog || 2) : [-extent, extent];
+              if (sparseZeroBucketOnly && Math.max(Math.abs(lo), Math.abs(hi)) <= t) {
+                // A lone exponential zero bucket (±epsilon): no real-magnitude bucket to
+                // anchor the threshold to, and no extent of its own to range over. Show
+                // a symmetric window around zero so the single band is visible instead
+                // of collapsing to a degenerate or blank axis. A wide straddler falls
+                // through to the normal snapping below, which follows its actual bounds
+                // rather than forcing symmetry on an asymmetric bucket.
+                [scaleMin, scaleMax] = [-t, t];
               } else {
-                // Snap both ends out to clean powers of the base (see snapSymlogRange)
-                // so the outermost buckets get headroom off the axis edges and the span
-                // lines up with the pure-log axis.
+                // Snap each end out to a clean power of the base (see snapSymlogRange),
+                // independently, so the outermost buckets get headroom off the axis
+                // edges, the span lines up with the pure-log axis, and a bucket reaching
+                // further on one side doesn't stretch the other.
                 [scaleMin, scaleMax] = snapSymlogRange(lo, hi, t, scaleLog || 2);
               }
             } else if (isLogScale) {
@@ -1158,14 +1158,18 @@ export function findSymlogBounds(
  * next power of `base` away from zero — mirroring uPlot.rangeLog(fullMags) on the
  * pure-log axis. This gives the outermost buckets headroom off the axis edges (so a
  * lone negative bucket isn't crushed onto the baseline) and makes the span land on
- * clean powers, lining the ticks/gridlines up with the pure-log axis. Values inside
- * the linear region (|v| <= threshold, e.g. a zero-straddling bucket) are kept as-is.
+ * clean powers, lining the ticks/gridlines up with the pure-log axis. Values strictly
+ * inside the linear region (|v| < threshold, e.g. a zero-straddling bucket) are kept
+ * as-is.
  */
 export function snapSymlogRange(lo: number, hi: number, linthresh: number, base: number): [number, number] {
   const logB = (x: number) => Math.log(x) / Math.log(base);
   const nextPow = (x: number) => Math.pow(base, Math.floor(logB(x)) + 1);
-  const scaleMax = hi > linthresh ? nextPow(hi) : linthresh;
-  const scaleMin = lo < -linthresh ? -nextPow(-lo) : lo < 0 ? lo : -linthresh;
+  // Compare inclusively: a bucket edge sitting exactly on the threshold still
+  // belongs to the log region and gets the same power of headroom as any other,
+  // rather than ending up flush against the axis edge.
+  const scaleMax = hi >= linthresh ? nextPow(hi) : linthresh;
+  const scaleMin = lo <= -linthresh ? -nextPow(-lo) : lo < 0 ? lo : -linthresh;
   return [scaleMin, scaleMax];
 }
 
