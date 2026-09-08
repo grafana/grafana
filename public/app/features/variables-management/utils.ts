@@ -10,14 +10,36 @@ export function getVariableFolderPickerExcludeUIDs(): string[] | undefined {
   return config.sharedWithMeFolderUID ? [config.sharedWithMeFolderUID] : undefined;
 }
 
-/** Org Editors/Admins can create org-wide (global) variables; folder editors cannot. */
+/**
+ * Root/global variable mutations are Admin-only in the default RBAC model
+ * (`fixed:variables:writer` is seeded on Admin). Boot-data permissions are
+ * unscoped, so `variables:create` is also true for folder editors — it cannot
+ * distinguish folders:* / folders:uid:general from a single-folder grant.
+ * `/api/access-control/user/permissions` would, but that dump is not safe in
+ * multi-tenant (and has no generally-available app-platform replacement yet).
+ */
 export function canManageGlobalVariables(): boolean {
-  return contextSrv.isEditor;
+  return contextSrv.hasRole('Admin');
+}
+
+/**
+ * Rename or re-scope changes the derived metadata.name, so Save is create-then-delete
+ * (see recreateVariable). In-place spec-only edits are a PATCH.
+ */
+export function isRecreateVariableSave(
+  source: Variable | undefined,
+  logicalName: string,
+  folderUid: string | undefined
+): boolean {
+  if (!source) {
+    return false;
+  }
+  return logicalName !== getVariableSpecName(source) || folderUid !== (getVariableFolderUid(source) ?? '');
 }
 
 /**
  * Whether the user may mutate a variable in the given scope.
- * - `undefined` — no folder selected yet (non-editors creating)
+ * - `undefined` — no folder selected yet (creating without root rights)
  * - `''` — org-global / root; requires {@link canManageGlobalVariables}
  * - otherwise — folder UID; requires that folder's CanEdit
  */

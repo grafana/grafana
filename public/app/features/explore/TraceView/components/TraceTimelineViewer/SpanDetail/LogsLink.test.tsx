@@ -2,14 +2,18 @@ import { of, throwError } from 'rxjs';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import {
+  CoreApp,
   type DataSourceApi,
   type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
+  EventBusSrv,
   type LinkModel,
+  PluginExtensionPoints,
+  PluginExtensionTypes,
   store,
   toDataFrame,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
@@ -18,6 +22,7 @@ import {
 } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { PanelContextProvider } from '@grafana/ui';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
 import { getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from '../../logsLink';
@@ -27,6 +32,7 @@ import {
   addNoSpanIdFallback,
   getLogsButtonCTA,
   getLogsButtonTooltip,
+  isDrilldownContext,
   LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX,
   lokiQueryMatchStorageKey,
   LogsLinkButton,
@@ -36,6 +42,7 @@ import {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [], isLoading: false }),
 }));
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -48,6 +55,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
 const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
 const useDataSourceInstanceListMock = jest.mocked(useDataSourceInstanceList);
+const usePluginLinksMock = jest.mocked(usePluginLinks);
 
 const DYNAMIC_TRACE_TO_LOGS_FLAG = 'grafana.dynamicTraceToLogs';
 
@@ -115,6 +123,7 @@ describe('LogsLinkButton', () => {
     store.delete(datasourceMatchKey());
     mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
+    usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
     await act(async () => {
@@ -609,6 +618,84 @@ describe('LogsLinkButton', () => {
     );
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
   });
+
+  it('keeps an Explore href when not in a drilldown context', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: LokiQuery = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    };
+
+    render(
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
+  });
+
+  it('uses the Open in Logs Drilldown extension path when the panel app is unknown', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: LokiQuery = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    };
+    usePluginLinksMock.mockReturnValue({
+      isLoading: false,
+      links: [
+        {
+          id: '',
+          pluginId: 'grafana-lokiexplore-app',
+          path: '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid',
+          type: PluginExtensionTypes.link,
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    render(
+      <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Unknown }}>
+        <LogsLinkButton
+          linkModel={createProbingLinkModel(interpolatedQuery)}
+          traceDatasourceUid={TRACE_DATASOURCE_UID}
+        />
+      </PanelContextProvider>
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid');
+    expect(usePluginLinksMock).toHaveBeenCalledWith({
+      extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+      context: expect.objectContaining({
+        targets: [expect.objectContaining({ datasource: { uid: 'logs-ds-uid', type: 'loki' } })],
+      }),
+      limitPerPlugin: 1,
+    });
+  });
+
+  it('keeps the Explore href in a drilldown context when the extension does not return a path', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: LokiQuery = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    };
+
+    render(
+      <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Unknown }}>
+        <LogsLinkButton
+          linkModel={createProbingLinkModel(interpolatedQuery)}
+          traceDatasourceUid={TRACE_DATASOURCE_UID}
+        />
+      </PanelContextProvider>
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
+  });
 });
 
 describe('LogsLinkMenuItem', () => {
@@ -618,6 +705,7 @@ describe('LogsLinkMenuItem', () => {
     store.delete(datasourceMatchKey());
     mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
+    usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
     await act(async () => {
@@ -721,7 +809,7 @@ describe('LogsLinkMenuItem', () => {
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
-    expect(screen.getByRole('menuitem')).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeEnabled());
   });
 
   it('keeps the item disabled when the presence check errors', async () => {
@@ -1052,5 +1140,18 @@ describe('addNoSpanIdFallback', () => {
     expect(structured?.expr).not.toMatch(/span/i);
     expect(addNoSpanIdFallback(structured!)).toHaveLength(1);
     expect(addNoSpanIdFallback(lineContains!)).toHaveLength(1);
+  });
+});
+
+describe('isDrilldownContext', () => {
+  it.each([
+    [CoreApp.Unknown, true],
+    [CoreApp.Explore, false],
+    [CoreApp.Dashboard, false],
+    ['grafana-exploretraces-app', false],
+    ['grafana-lokiexplore-app', false],
+    [undefined, false],
+  ])('app %s → %s', (app, expected) => {
+    expect(isDrilldownContext(app)).toBe(expected);
   });
 });

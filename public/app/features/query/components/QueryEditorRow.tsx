@@ -69,10 +69,12 @@ export interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   hideActionButtons?: boolean;
+  draggable?: boolean;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
+  onQueryClosed?: () => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
@@ -577,8 +579,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       visualization,
       collapsable,
       hideActionButtons,
+      draggable = true,
       isOpen,
       onQueryOpenChanged,
+      onQueryClosed,
       app,
       editSavedQueryRef,
       addingSavedQuery,
@@ -606,13 +610,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const queryOperationRow = (
       <QueryOperationRow
         id={this.id}
-        draggable={!hideActionButtons && !inSavedQueryMode}
+        draggable={draggable && !hideActionButtons && !inSavedQueryMode}
         collapsable={collapsable}
         index={index}
         headerElement={this.renderHeader}
         actions={hideActionButtons ? undefined : this.renderActions}
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
+        onClose={onQueryClosed}
       >
         <div
           className={rowClasses}

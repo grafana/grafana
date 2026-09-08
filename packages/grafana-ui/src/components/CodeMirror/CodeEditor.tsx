@@ -21,21 +21,24 @@ import { useShallowStable, useStableCallback } from './useStableProps';
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
-  mode: CodeMirrorCompletionMode
+  mode: CodeMirrorCompletionMode,
+  completeOnSpace: boolean
 ): CodeMirrorExtension[] => {
   if (!sources || sources.length === 0) {
     return [];
   }
 
+  const spaceKeymap = completeOnSpace ? [autocompleteSpaceKeymap] : [];
+
   if (mode === 'override') {
-    return [autocompletion({ override: [...sources] }), autocompleteSpaceKeymap];
+    return [autocompletion({ override: [...sources] }), ...spaceKeymap];
   }
 
   // Merge: enable autocompletion and contribute the sources via language data
   // so they're combined with whatever the active language registers.
   return [
     autocompletion(),
-    autocompleteSpaceKeymap,
+    ...spaceKeymap,
     ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }])),
   ];
 };
@@ -93,6 +96,7 @@ export const CodeEditor = memo(function CodeEditor({
   'aria-labelledby': ariaLabelledby,
   completionSources,
   completionMode = 'merge',
+  completeOnSpace = false,
   extensions: additionalExtensionsProp,
   theme: themeOverride,
   basicSetup: basicSetupProp,
@@ -115,11 +119,20 @@ export const CodeEditor = memo(function CodeEditor({
       autocompleteTabKeymap,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
-      ...getCompletionExtensions(sources, completionMode),
+      ...getCompletionExtensions(sources, completionMode, completeOnSpace),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, sources, completionMode, lineWrapping, additionalExtensions]
+    [
+      ariaLabel,
+      ariaLabelledby,
+      languageExtension,
+      sources,
+      completionMode,
+      completeOnSpace,
+      lineWrapping,
+      additionalExtensions,
+    ]
   );
   return (
     <>

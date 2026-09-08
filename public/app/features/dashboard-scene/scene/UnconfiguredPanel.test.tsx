@@ -70,11 +70,14 @@ jest.mock('../utils/interactions', () => ({
   DashboardInteractions: { panelActionClicked: jest.fn(), editSessionStarted: jest.fn() },
 }));
 
-// Only mock the two functions this component imports from utils — avoid spreading
+// Only mock the functions this component imports. Avoid spreading
 // jest.requireActual which can pull in complex scene dependencies.
 jest.mock('../utils/utils', () => ({
-  getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
   findVizPanelByKey: jest.fn(),
+}));
+
+jest.mock('../utils/utils-panels', () => ({
+  getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
 }));
 
 // ─── typed mock references ────────────────────────────────────────────────────

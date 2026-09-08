@@ -962,16 +962,12 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Annotations != nil {
 		result.Annotations = make(map[string]string, len(alertRule.Annotations))
-		for s, s2 := range alertRule.Annotations {
-			result.Annotations[s] = s2
-		}
+		maps.Copy(result.Annotations, alertRule.Annotations)
 	}
 
 	if alertRule.Labels != nil {
 		result.Labels = make(map[string]string, len(alertRule.Labels))
-		for s, s2 := range alertRule.Labels {
-			result.Labels[s] = s2
-		}
+		maps.Copy(result.Labels, alertRule.Labels)
 	}
 
 	if alertRule.Record != nil {
