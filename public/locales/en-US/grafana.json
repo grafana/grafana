@@ -12483,9 +12483,6 @@
       "subtitle": "See grouped alerts with active notifications",
       "title": "Active notifications"
     },
-    "alerting-history": {
-      "title": "History"
-    },
     "alerting-home": {
       "title": "Home"
     },
@@ -12497,8 +12494,7 @@
       "title": "Alert rules"
     },
     "alerting-notification-config": {
-      "subtitle": "Manage contact points, notification policies, templates, and time intervals",
-      "title": "Notification configuration"
+      "subtitle": "Manage contact points, notification policies, templates, and time intervals"
     },
     "alerting-receivers": {
       "subtitle": "Choose how to notify your contact points when an alert instance fires",

@@ -100,10 +100,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('alerting.use-page-nav.page-nav.text.history', 'History');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
-    case 'alerts-history':
-      return t('nav.alerting-history.title', 'History');
-    case 'notification-config':
-      return t('nav.alerting-notification-config.title', 'Notification configuration');
     case 'alerts/recently-deleted':
       return t('nav.alerts-recently-deleted.title', 'Recently deleted');
     case 'cfg':
@@ -290,11 +286,6 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-alerts.subtitle', 'Visualize active and pending alerts');
     case 'alert-activity':
       return t('nav.alerting-activity.subtitle', 'View alerts and active notifications');
-    case 'notification-config':
-      return t(
-        'nav.alerting-notification-config.subtitle',
-        'Manage contact points, notification policies, templates, and time intervals'
-      );
     case 'alerts/recently-deleted':
       return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
     case 'alert':
