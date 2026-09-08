@@ -8497,7 +8497,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixní hodnota"
       },
-      "label": "Skalární",
+      "label-field": "",
       "label-limit": "Limit",
       "label-value": "Hodnota",
       "noOptionsMessage-no-fields-found": "Nebyla nalezena žádná pole",
@@ -12666,6 +12666,9 @@
       "subtitle": "Pravidla, která určují, zda se spustí výstraha",
       "title": "Pravidla výstrah"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Vyberte, jak upozornit kontaktní bod, když je spuštěna instance výstrahy",
       "title": "Kontaktní body"
@@ -12770,6 +12773,10 @@
     "explore": {
       "title": "Prozkoumat"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Získejte skutečné poznatky ohledně monitorování uživatelů",
       "title": "Frontend"
@@ -12850,6 +12857,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12880,6 +12891,10 @@
     },
     "profiles": {
       "title": "Profily"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -17019,6 +17034,8 @@
       "name-faceted-filter": "Viditelnost řady"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Přístupné",
         "label-dash": "Pomlčka",

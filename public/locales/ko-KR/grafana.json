@@ -8350,7 +8350,7 @@
       "fixed-value-options": {
         "label-fixed-values": "고정값"
       },
-      "label": "스칼라",
+      "label-field": "",
       "label-limit": "제한",
       "label-value": "값",
       "noOptionsMessage-no-fields-found": "필드를 찾을 수 없습니다",
@@ -12402,6 +12402,9 @@
       "subtitle": "경고 발생 여부를 결정하는 규칙",
       "title": "경고 규칙"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "경고 인스턴스가 실행될 때 연락처에 알리는 방법을 선택",
       "title": "연락처"
@@ -12506,6 +12509,10 @@
     "explore": {
       "title": "탐색"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "실제 사용자 모니터링 인사이트 얻기",
       "title": "프런트엔드"
@@ -12586,6 +12593,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "온콜"
     },
@@ -12616,6 +12627,10 @@
     },
     "profiles": {
       "title": "프로필"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16650,6 +16665,8 @@
       "name-faceted-filter": "시리즈 공개 여부"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "접근 가능 → 접근 가능한",
         "label-dash": "대시",

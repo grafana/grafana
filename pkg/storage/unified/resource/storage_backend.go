@@ -869,28 +869,24 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		}
 	}
 
-	if totalDeleted > 0 {
-		msg := "garbage collection deleted history"
-		perNamespaceMsg := "garbage collection deleted history per namespace"
-		if b.garbageCollection.DryRun {
-			msg = "garbage collection dry run"
-			perNamespaceMsg = "garbage collection dry run per namespace"
-		}
-
-		b.log.Info(msg,
+	// Logged even when nothing was eligible. A pass that finds no trash is the normal
+	// case for most groups, and staying silent leaves no way to tell it apart from a
+	// pass that never ran or was cut short.
+	b.log.Info("garbage collection finished",
+		"group", group,
+		"resource", resourceName,
+		"rows", totalDeleted,
+		"dryRun", b.garbageCollection.DryRun,
+		"seconds", time.Since(start).Seconds(),
+	)
+	for ns, count := range deletedPerNamespace {
+		b.log.Info("garbage collection finished per namespace",
 			"group", group,
 			"resource", resourceName,
-			"rows", totalDeleted,
-			"seconds", time.Since(start).Seconds(),
+			"namespace", ns,
+			"rows", count,
+			"dryRun", b.garbageCollection.DryRun,
 		)
-		for ns, count := range deletedPerNamespace {
-			b.log.Info(perNamespaceMsg,
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
 	}
 
 	return nil

@@ -3228,7 +3228,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.rspackBuild",
