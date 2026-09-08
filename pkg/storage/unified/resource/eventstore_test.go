@@ -13,6 +13,7 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -228,24 +229,46 @@ func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore)
 		PreviousRV:      999,
 	}
 
-	// Save the event
-	err := store.Save(ctx, event)
-	require.NoError(t, err)
+	for _, tc := range []struct {
+		name           string
+		previousRV     int64
+		previousAction kv.DataAction
+		previousFolder string
+	}{
+		{name: "no previous revision"},
+		{name: "legacy event", previousRV: 999},
+		{name: "bulk exclusion", previousRV: -1},
+		{name: "empty previous folder", previousRV: 999, previousAction: DataActionCreated},
+		{name: "previous folder", previousRV: 999, previousAction: DataActionUpdated, previousFolder: "old-folder"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			event.PreviousRV = tc.previousRV
+			event.PreviousAction = tc.previousAction
+			event.PreviousFolder = tc.previousFolder
+			require.NoError(t, store.Save(ctx, event))
 
-	// Get the event back
-	eventKey := EventKey{
-		Namespace:       event.Namespace,
-		Group:           event.Group,
-		Resource:        event.Resource,
-		Name:            event.Name,
-		ResourceVersion: event.ResourceVersion,
-		Action:          event.Action,
-		Folder:          event.Folder,
+			eventKey := EventKey{
+				Namespace:       event.Namespace,
+				Group:           event.Group,
+				Resource:        event.Resource,
+				Name:            event.Name,
+				ResourceVersion: event.ResourceVersion,
+				Action:          event.Action,
+				Folder:          event.Folder,
+			}
+
+			retrievedEvent, err := store.Get(ctx, eventKey)
+			require.NoError(t, err)
+			assert.Equal(t, event, retrievedEvent)
+
+			var listed []Event
+			for listedEvent, err := range store.ListSince(ctx, 0, SortOrderAsc) {
+				require.NoError(t, err)
+				listed = append(listed, listedEvent)
+			}
+			require.Equal(t, []Event{event}, listed)
+		})
 	}
-
-	retrievedEvent, err := store.Get(ctx, eventKey)
-	require.NoError(t, err)
-	assert.Equal(t, event, retrievedEvent)
 }
 
 func TestIntegrationEventStore_Get_NotFound(t *testing.T) {
@@ -488,27 +511,77 @@ func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *even
 }
 
 func TestEvent_JSONSerialization(t *testing.T) {
-	event := Event{
-		Namespace:       "default",
-		Group:           "apps",
-		Resource:        "resource",
-		Name:            "test-resource",
-		ResourceVersion: 1000,
-		Action:          DataActionCreated,
-		Folder:          "test-folder",
-		PreviousRV:      999,
+	const fields = `"namespace":"default","group":"apps","resource":"resource","name":"test-resource","resource_version":1000,"action":"updated","folder":"new-folder","previous_rv":999`
+	// Match the pre-enrichment reader to verify it can still read new records.
+	type legacyEvent struct {
+		Namespace       string `json:"namespace"`
+		Group           string `json:"group"`
+		Resource        string `json:"resource"`
+		Name            string `json:"name"`
+		ResourceVersion int64  `json:"resource_version"`
+		Action          string `json:"action"`
+		Folder          string `json:"folder"`
+		PreviousRV      int64  `json:"previous_rv"`
 	}
+	var expectedLegacy legacyEvent
+	require.NoError(t, json.Unmarshal([]byte("{"+fields+"}"), &expectedLegacy))
 
-	// Serialize to JSON
-	data, err := json.Marshal(event)
-	require.NoError(t, err)
+	for _, tc := range []struct {
+		name           string
+		previous       string
+		previousAction kv.DataAction
+		previousFolder string
+	}{
+		{name: "legacy record"},
+		{name: "null metadata", previous: `,"previous_action":null,"previous_folder":null`},
+		{name: "empty action", previous: `,"previous_action":"","previous_folder":""`},
+		{
+			name:           "empty folder",
+			previous:       `,"previous_action":"created","previous_folder":""`,
+			previousAction: DataActionCreated,
+		},
+		{
+			name:           "created",
+			previous:       `,"previous_action":"created","previous_folder":"old-folder"`,
+			previousAction: DataActionCreated,
+			previousFolder: "old-folder",
+		},
+		{
+			name:           "updated",
+			previous:       `,"previous_action":"updated","previous_folder":"old-folder"`,
+			previousAction: DataActionUpdated,
+			previousFolder: "old-folder",
+		},
+		{
+			name:           "deleted",
+			previous:       `,"previous_action":"deleted","previous_folder":"old-folder"`,
+			previousAction: DataActionDeleted,
+			previousFolder: "old-folder",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var event Event
+			require.NoError(t, json.Unmarshal([]byte("{"+fields+tc.previous+"}"), &event))
+			require.Equal(t, tc.previousAction, event.PreviousAction)
+			require.Equal(t, tc.previousFolder, event.PreviousFolder)
 
-	// Deserialize from JSON
-	var deserializedEvent Event
-	err = json.Unmarshal(data, &deserializedEvent)
-	require.NoError(t, err)
+			data, err := json.Marshal(event)
+			require.NoError(t, err)
+			if tc.previousAction == "" {
+				require.JSONEq(t, "{"+fields+`,"previous_folder":""}`, string(data))
+			} else {
+				require.JSONEq(t, "{"+fields+tc.previous+"}", string(data))
+			}
 
-	assert.Equal(t, event, deserializedEvent)
+			var roundTrip Event
+			require.NoError(t, json.Unmarshal(data, &roundTrip))
+			require.Equal(t, event, roundTrip)
+
+			var legacy legacyEvent
+			require.NoError(t, json.Unmarshal(data, &legacy))
+			require.Equal(t, expectedLegacy, legacy)
+		})
+	}
 }
 
 func TestEventKey_Struct(t *testing.T) {
