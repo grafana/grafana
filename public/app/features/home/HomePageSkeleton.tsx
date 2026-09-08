@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { Stack } from '@grafana/ui';
 
 import { DashboardTabsSkeleton } from './DashboardTabs/DashboardTabsSkeleton';
-import { HomeGrid, HOME_SECTION_MIN_WIDTH } from './HomeGrid';
+import { HomeGrid } from './HomeGrid';
 import { HomeSection } from './HomeSection';
 
 interface Props {
@@ -27,12 +27,7 @@ export function HomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra, r
               <Skeleton height={120} containerClassName={styles.block} />
             </HomeSection>
             {/* DashboardTabs and Alerts card*/}
-            <HomeGrid
-              columns={2}
-              minColumnWidth={HOME_SECTION_MIN_WIDTH}
-              gap={2}
-              data-testid="home-page-skeleton-cards"
-            >
+            <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
               <HomeSection direction="column" display="flex" gap={2}>
                 <DashboardTabsSkeleton redesignEnabled />
               </HomeSection>
@@ -45,12 +40,7 @@ export function HomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra, r
               <DashboardTabsSkeleton />
             </HomeSection>
             {(showAlertsCard || showIRMNewsCard) && (
-              <HomeGrid
-                columns={2}
-                minColumnWidth={HOME_SECTION_MIN_WIDTH}
-                gap={2}
-                data-testid="home-page-skeleton-cards"
-              >
+              <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
                 {showAlertsCard && <CardSkeleton />}
                 {showIRMNewsCard && <CardSkeleton />}
               </HomeGrid>

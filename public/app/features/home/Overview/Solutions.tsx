@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { t } from '@grafana/i18n';
 import { EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { HomeGrid, HOME_CARD_MIN_WIDTH } from '../HomeGrid';
+import { HomeGrid } from '../HomeGrid';
 import { SOLUTION_IDS } from '../solutions/constants';
 
 import { OverviewSectionHeading, type OverviewSectionHeadingVariant } from './OverviewSectionHeading';
@@ -19,7 +19,7 @@ interface SolutionsProps {
 export function Solutions({ emptyMessage, loading, cards }: SolutionsProps) {
   if (loading) {
     return (
-      <HomeGrid columns={3} minColumnWidth={HOME_CARD_MIN_WIDTH} gap={2}>
+      <HomeGrid columns={3} gap={2}>
         {Array.from({ length: SOLUTION_IDS.length }).map((_, index) => (
           <SolutionCardSkeleton key={index} />
         ))}
@@ -73,7 +73,7 @@ function SolutionGroup({ label, cards, variant }: SolutionGroupProps) {
         </span>
       </OverviewSectionHeading>
 
-      <HomeGrid columns={3} minColumnWidth={HOME_CARD_MIN_WIDTH} gap={2}>
+      <HomeGrid columns={3} gap={2}>
         {cards.map((card) =>
           card.kind === 'offer' ? (
             <AvailableSolutionCard key={card.solution.id} solution={card.solution} offer={card.offer} />

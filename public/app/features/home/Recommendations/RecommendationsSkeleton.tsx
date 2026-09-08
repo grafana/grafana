@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 
-import { HomeGrid, HOME_SECTION_MIN_WIDTH } from '../HomeGrid';
+import { HomeGrid } from '../HomeGrid';
 
 // Mirrors the RecommendationsView shell (heading row + two-column card grid) so the
 // section holds its space while the plugin list and data probes resolve.
@@ -19,7 +19,7 @@ export function RecommendationsSkeleton() {
       </Stack>
 
       <div className={styles.cards}>
-        <HomeGrid columns={2} minColumnWidth={HOME_SECTION_MIN_WIDTH} gap={0}>
+        <HomeGrid columns={2} gap={0}>
           {[160, 120].map((contextWidth) => (
             <div key={contextWidth} className={styles.card}>
               <Stack direction="column" gap={2}>

@@ -21,7 +21,7 @@ import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HeaderActions } from './HeaderActions';
-import { HomeGrid, HOME_SECTION_MIN_WIDTH } from './HomeGrid';
+import { HomeGrid } from './HomeGrid';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
@@ -175,7 +175,7 @@ export default function HomePage() {
 
                   <HomepageSolutionSections />
 
-                  <HomeGrid columns={2} minColumnWidth={HOME_SECTION_MIN_WIDTH} gap={2}>
+                  <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
                     <AlertIncidentTabs
@@ -200,7 +200,7 @@ export default function HomePage() {
                     <DashboardTabs extensionComponents={tabComponents} />
                   </HomeSection>
 
-                  <HomeGrid columns={2} minColumnWidth={HOME_SECTION_MIN_WIDTH} gap={2}>
+                  <HomeGrid columns={2} gap={2}>
                     {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
                     {incidentsData.enabled ? (
                       <IncidentsCard data={incidentsData} />

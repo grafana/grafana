@@ -5,7 +5,7 @@ import { Trans } from '@grafana/i18n';
 import { Badge, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 
-import { HomeGrid, HOME_CARD_MIN_WIDTH } from '../HomeGrid';
+import { HomeGrid } from '../HomeGrid';
 
 import { Guide, GuideSkeleton, type GuideProps } from './Guide';
 import { OverviewSectionHeading } from './OverviewSectionHeading';
@@ -24,7 +24,7 @@ export function GetStarted({ guides }: { guides?: GuideProps[] }) {
         </Text>
       </OverviewSectionHeading>
 
-      <HomeGrid columns={3} minColumnWidth={HOME_CARD_MIN_WIDTH} gap={2}>
+      <HomeGrid columns={3} gap={2}>
         {!guides && Array.from({ length: 6 }).map((_, index) => <GuideSkeleton key={index} />)}
 
         {guides && guides.slice(0, expanded ? guides.length : 6).map((guide) => <Guide key={guide.id} {...guide} />)}
