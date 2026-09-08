@@ -473,7 +473,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
 
-		receiverType := reflect.TypeOf((*v1.Route)(nil)).Elem()
+		receiverType := reflect.TypeFor[v1.Route]()
 		for i := 0; i < receiverType.NumField(); i++ {
 			field := receiverType.Field(i).Name
 			if _, ok := excludedFields[field]; ok {
