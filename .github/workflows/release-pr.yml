@@ -232,8 +232,12 @@ jobs:
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: |
           yarn install
-          npm version patch --no-git-tag-version
-          yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
+          current_version=$(node -p "require('./package.json').version")
+          if [ "$current_version" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+            yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+          fi
           yarn install
           yarn prettier:write
       - name: make gen-cue
