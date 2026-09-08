@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fester Wert"
       },
-      "label": "Skalar",
+      "label-field": "",
       "label-limit": "Limit",
       "label-value": "Wert",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden",
@@ -12490,6 +12490,9 @@
       "subtitle": "Regeln, die festlegen, ob eine Warnung ausgelöst wird",
       "title": "Warnregeln"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Entdecken"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Erhalten Sie echte Einblicke in die Benutzerüberwachung",
       "title": "Frontend"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profile"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Reihensichtbarkeit"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Zugänglich",
         "label-dash": "Strich",

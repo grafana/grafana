@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valeur fixe"
       },
-      "label": "Scalaire",
+      "label-field": "",
       "label-limit": "Limiter",
       "label-value": "Valeur",
       "noOptionsMessage-no-fields-found": "Aucun champ trouvé",
@@ -12490,6 +12490,9 @@
       "subtitle": "Règles qui déterminent si une alerte va être déclenchée",
       "title": "Règles d'alerte"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Explorer"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Obtenez des analyses de suivi des utilisateurs réels",
       "title": "Frontend"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profils"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Visibilité des séries"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Tirets",
