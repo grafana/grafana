@@ -307,6 +307,33 @@ func TestNew(t *testing.T) {
 		require.False(t, stored.RequireFolder)
 	})
 
+	t.Run("the resolved folder scope wins over this version's own", func(t *testing.T) {
+		// v2 dropped folderScoped, but v1 still requires it, and both versions
+		// register against the same GroupResource.
+		opts, registered := newStoreOpts(t, gvk)
+		opts.FolderScopedResources = map[string]bool{"testkinds": true}
+		_, err := New(gvk, app.ManifestVersionKind{
+			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
+		}, admission, opts, nil)
+		require.NoError(t, err)
+
+		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
+		require.True(t, stored.EnableFolderSupport)
+		require.True(t, stored.RequireFolder)
+	})
+
+	t.Run("a resource absent from the resolved map keeps its own scope", func(t *testing.T) {
+		opts, registered := newStoreOpts(t, gvk)
+		opts.FolderScopedResources = map[string]bool{"others": true}
+		_, err := New(gvk, app.ManifestVersionKind{
+			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
+		}, admission, opts, nil)
+		require.NoError(t, err)
+
+		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
+		require.False(t, stored.RequireFolder)
+	})
+
 	t.Run("a cluster kind cannot use folders", func(t *testing.T) {
 		opts, registered := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
@@ -449,4 +476,72 @@ func TestStatusStrategyResetFields(t *testing.T) {
 
 	// Inherited from the kind, so a status write is schema checked like any other.
 	require.Equal(t, base.NamespaceScoped(), s.NamespaceScoped())
+}
+
+// Storage options are keyed by resource, not by version, so every served
+// version of a kind has to register the same folder scope. Any version
+// requiring a folder decides for all of them.
+func TestFolderScopedResources(t *testing.T) {
+	falseValue := false
+	trueValue := true
+
+	t.Run("nil manifest", func(t *testing.T) {
+		require.Nil(t, FolderScopedResources(nil))
+	})
+
+	t.Run("one version requiring a folder decides for the resource", func(t *testing.T) {
+		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
+			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"}, // defaults to true
+			}},
+			{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+		}})
+		require.Equal(t, map[string]bool{"things": true}, got)
+	})
+
+	// Declaration order must not change the answer.
+	t.Run("order does not matter", func(t *testing.T) {
+		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
+			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+			{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &trueValue},
+			}},
+		}})
+		require.Equal(t, map[string]bool{"things": true}, got)
+	})
+
+	t.Run("every version opting out leaves the resource unscoped", func(t *testing.T) {
+		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
+			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+			{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+		}})
+		require.Equal(t, map[string]bool{"things": false}, got)
+	})
+
+	t.Run("an unserved version has no say", func(t *testing.T) {
+		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
+			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+			{Name: "v2", Served: false, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"},
+			}},
+		}})
+		require.Equal(t, map[string]bool{"things": false}, got)
+	})
+
+	t.Run("a kind with no plural has no resource to key", func(t *testing.T) {
+		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
+			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Scope: "Namespaced"}}},
+		}})
+		require.Empty(t, got)
+	})
 }

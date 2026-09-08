@@ -240,7 +240,7 @@ func apiGroupForPlugin(plugin definition.PluginDefinition) string {
 			strings.HasSuffix(group, ".ext.grafana.com") {
 			return group
 		}
-		if group != "" {
+		if group != "" && group != plugin.JSONData.ID {
 			panic(fmt.Sprintf("invalid manifest group %q for plugin %s: must be empty or end with .ext.grafana.app or .ext.grafana.com", group, plugin.JSONData.ID))
 		}
 	}
@@ -372,6 +372,10 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		return spec.MustCreateRef(name)
 	}, b.group, b.manifest)
 
+	// Resolved once for the whole manifest: storage options are keyed by
+	// resource, so every version of a kind has to register the same answer.
+	folderScoped := kindstore.FolderScopedResources(b.manifest)
+
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
 		storage[settingsRI.StoragePath()] = settingsStorage
@@ -402,9 +406,10 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 				for _, kind := range v.Kinds {
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
-						Scheme:              opts.Scheme,
-						OptsGetter:          opts.OptsGetter,
-						StorageOptsRegister: opts.StorageOptsRegister,
+						Scheme:                opts.Scheme,
+						OptsGetter:            opts.OptsGetter,
+						StorageOptsRegister:   opts.StorageOptsRegister,
+						FolderScopedResources: folderScoped,
 					}, defs)
 					if err != nil {
 						return err

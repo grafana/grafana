@@ -224,3 +224,41 @@ func TestInstallSchemaRejectsReservedListName(t *testing.T) {
 		require.ErrorContains(t, err, "reserved kind name")
 	})
 }
+
+// Storage options are keyed by GroupResource, which carries no version, so both
+// served versions of a kind register against the same key and whichever runs
+// last would otherwise decide the folder scope for both. A kind that requires a
+// folder in any served version requires one in all of them.
+func TestUpdateAPIGroupInfoFolderScopeIsConsistentAcrossVersions(t *testing.T) {
+	falseValue := false
+
+	manifest := &app.ManifestData{
+		AppName:          "example",
+		Group:            "example.ext.grafana.app",
+		PreferredVersion: "v1alpha1",
+		Versions: []app.ManifestVersion{
+			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"}, // folder scoped by default
+			}},
+			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+		},
+	}
+
+	b := testBuilder(t, manifest)
+	info, opts := testAPIGroupOptions(t, b)
+
+	registered := map[schema.GroupResource][]apistore.StorageOptions{}
+	opts.StorageOptsRegister = func(gr schema.GroupResource, so apistore.StorageOptions) {
+		registered[gr] = append(registered[gr], so)
+	}
+	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+
+	gr := schema.GroupResource{Group: "example.ext.grafana.app", Resource: "things"}
+	require.Len(t, registered[gr], 2, "both versions register against the shared resource")
+	for i, so := range registered[gr] {
+		require.True(t, so.EnableFolderSupport, "registration %d dropped folder support", i)
+		require.True(t, so.RequireFolder, "registration %d dropped the folder requirement", i)
+	}
+}
