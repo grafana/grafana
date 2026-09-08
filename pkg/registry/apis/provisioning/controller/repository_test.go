@@ -354,7 +354,16 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return c
 			}(),
-			statusPatcher: nil,
+			statusPatcher: func() StatusPatcher {
+				// The removal-patch failure records status.deleteError too, so a
+				// patcher must be present.
+				s := mocks.NewStatusPatcher(t)
+				s.
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					Once().
+					Return(nil)
+				return s
+			}(),
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -458,10 +467,21 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 		},
 	}
 
+	// The removal-patch failure is a blind spot for the finalizer SLO, so it must
+	// be metered and recorded on status.deleteError instead.
+	statusPatcher := mocks.NewStatusPatcher(t)
+	statusPatcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		Once().
+		Return(nil)
+
+	reg := prometheus.NewPedanticRegistry()
 	c := &RepositoryController{
-		repoFactory: factory,
-		finalizer:   finalizer,
-		tracer:      tracing.InitializeTracerForTest(),
+		repoFactory:     factory,
+		finalizer:       finalizer,
+		tracer:          tracing.InitializeTracerForTest(),
+		statusPatcher:   statusPatcher,
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -476,6 +496,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	require.Error(t, err)
 	require.ErrorContains(t, err, "remove finalizers")
 	require.Greater(t, atomic.LoadInt32(&calls), int32(1), "should retry at least once before giving up")
+	assert.Equal(t, 1.0, deletionFailuresByStage(t, reg, deletionStageRemoveFinalizers))
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {

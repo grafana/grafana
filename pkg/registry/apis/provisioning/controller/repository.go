@@ -90,6 +90,7 @@ type RepositoryController struct {
 	quotaGetter                   quotas.QuotaGetter
 	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
+	deletionMetrics               *repositoryDeletionMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 }
@@ -123,6 +124,7 @@ func NewRepositoryController(
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 	quotaMetrics := registerRepositoryQuotaMetrics(registry)
+	deletionMetrics := registerRepositoryDeletionMetrics(registry)
 
 	rc := &RepositoryController{
 		client:    provisioningClient,
@@ -158,6 +160,7 @@ func NewRepositoryController(
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
+		deletionMetrics:               deletionMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
@@ -382,6 +385,21 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	logger := logging.FromContext(ctx)
 	logger.Info("handle repository delete")
 
+	// Emit a point-in-time deletion snapshot on every delete reconcile: the
+	// aggregate metrics below carry no repository identity, so this log line is
+	// the only way to see *which* repository is stuck terminating and for how
+	// long. A stuck repository keeps reconciling at resync cadence, so its age
+	// climbs across successive lines.
+	usage.LogRepositoryDeletionStatus(logger, obj)
+
+	// A repository should leave Terminating within seconds; a stuck one keeps
+	// re-entering handleDelete at resync cadence, so re-observing its age each
+	// time lets an alert count reconciles that still see it terminating past a
+	// threshold (e.g. > 1h).
+	if ts := obj.GetDeletionTimestamp(); ts != nil {
+		rc.deletionMetrics.observePending(time.Since(ts.Time))
+	}
+
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
 		repo, err := rc.repoFactory.Build(ctx, obj)
@@ -391,6 +409,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
 		if err != nil {
+			rc.deletionMetrics.recordFailure(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
 				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
@@ -411,6 +430,14 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			return err
 		})
 		if err != nil {
+			// This failure (typically RetryOnConflict exhaustion) leaves the
+			// repository in Terminating with its finalizers still attached. It is
+			// outside the finalizer SLO, so meter it here and record it on the
+			// status or it goes entirely unseen.
+			rc.deletionMetrics.recordFailure(deletionStageRemoveFinalizers)
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
+			}
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
 		return nil

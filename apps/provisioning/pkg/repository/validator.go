@@ -116,7 +116,9 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	// Validating the presence of finalizers in resources not marked for deletion.
-	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+	// DeletionTimestamp.IsZero() is nil-safe (pointer receiver) and true exactly
+	// when the resource is not being deleted.
+	if cfg.DeletionTimestamp.IsZero() {
 		if len(cfg.Finalizers) == 0 {
 			list = append(list,
 				field.Invalid(
