@@ -45,6 +45,31 @@ function isAutoSyncSegmentEnabled(): boolean {
   return Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
 }
 
+/** Explains why the Auto-sync switch is disabled, or the normal hint when it isn't. */
+function getAutoSyncTooltip({
+  isAutoSyncConfigReady,
+  autoSyncNotReadyMessage,
+  isSelectedDatasourceAutoSyncCapable,
+}: {
+  isAutoSyncConfigReady: boolean;
+  autoSyncNotReadyMessage: string | undefined;
+  isSelectedDatasourceAutoSyncCapable: boolean;
+}): string | undefined {
+  if (!isAutoSyncConfigReady) {
+    return autoSyncNotReadyMessage;
+  }
+  if (isSelectedDatasourceAutoSyncCapable) {
+    return t(
+      'alerting.import-to-gma.step1.autosync-tooltip',
+      'Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.'
+    );
+  }
+  return t(
+    'alerting.import-to-gma.step1.autosync-tooltip-unsupported',
+    "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it."
+  );
+}
+
 interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
@@ -101,7 +126,12 @@ export function Step1Content({
 
   // Called unconditionally (even for the YAML source) so the Auto-sync checkbox always knows
   // whether the selected datasource qualifies; its own queries stay skipped for non-admins/toggle-off.
-  const { autoSyncEligibleAlertmanagers, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration();
+  const {
+    autoSyncEligibleAlertmanagers,
+    isLoading: isLoadingAutoSyncConfig,
+    isReady: isAutoSyncConfigReady,
+    notReadyMessage: autoSyncNotReadyMessage,
+  } = useAutoSyncConfiguration();
   const isSelectedDatasourceAutoSyncCapable =
     !isLoadingAutoSyncConfig && autoSyncEligibleAlertmanagers.some((ds) => ds.uid === notificationsDatasourceUID);
 
@@ -305,18 +335,12 @@ export function Step1Content({
                     transparent
                     label={t('alerting.import-to-gma.step1.autosync-label', 'Auto-sync')}
                     labelWidth={30}
-                    disabled={!isSelectedDatasourceAutoSyncCapable}
-                    tooltip={
-                      isSelectedDatasourceAutoSyncCapable
-                        ? t(
-                            'alerting.import-to-gma.step1.autosync-tooltip',
-                            'Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.'
-                          )
-                        : t(
-                            'alerting.import-to-gma.step1.autosync-tooltip-unsupported',
-                            "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it."
-                          )
-                    }
+                    disabled={!isAutoSyncConfigReady || !isSelectedDatasourceAutoSyncCapable}
+                    tooltip={getAutoSyncTooltip({
+                      isAutoSyncConfigReady,
+                      autoSyncNotReadyMessage,
+                      isSelectedDatasourceAutoSyncCapable,
+                    })}
                   >
                     <InlineSwitch
                       transparent

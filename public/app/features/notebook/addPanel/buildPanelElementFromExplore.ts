@@ -4,7 +4,7 @@ import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { createPanelDataProvider } from 'app/features/dashboard-scene/utils/createPanelDataProvider';
-import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { buildDashboardPanelFromExploreState } from 'app/features/explore/extensions/AddToDashboard/addToDashboard';
 import { type ExplorePanelData } from 'app/types/explore';
 

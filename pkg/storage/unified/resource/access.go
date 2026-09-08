@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -54,12 +55,31 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 				NativeHistogramBucketFactor:     1.1,
 				NativeHistogramMaxBucketNumber:  160,
 				NativeHistogramMinResetDuration: time.Hour,
-			}, []string{"check_count"}),
+			}, []string{"check_count_bucket"}),
 		errorsTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_grpc_authz_limited_client_errors_total",
 				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
+	}
+}
+
+// batchSizeBucket keeps the batch size out of the label value, which would
+// otherwise add a series per size. Ranges cover 1 to batchCheckChunkSize (50),
+// the sizes search produces, and are spelled out so changing that constant
+// cannot reshape existing series unnoticed.
+func batchSizeBucket(n int) string {
+	switch {
+	case n <= 1:
+		return "1"
+	case n <= 10:
+		return "2-10"
+	case n <= 25:
+		return "11-25"
+	case n <= 50:
+		return "26-50"
+	default:
+		return "51+"
 	}
 }
 
@@ -285,11 +305,9 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	}
 
 	// Merge results from underlying client
-	for correlationID, result := range resp.Results {
-		results[correlationID] = result
-	}
+	maps.Copy(results, resp.Results)
 
-	c.metrics.batchCheckDuration.WithLabelValues(fmt.Sprintf("%d", len(req.Checks))).Observe(time.Since(t).Seconds())
+	c.metrics.batchCheckDuration.WithLabelValues(batchSizeBucket(len(req.Checks))).Observe(time.Since(t).Seconds())
 	return claims.BatchCheckResponse{Results: results}, nil
 }
 

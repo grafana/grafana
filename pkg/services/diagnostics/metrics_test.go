@@ -31,15 +31,13 @@ func TestMetricsConcurrentInstancesDoNotLoseIncrements(t *testing.T) {
 	const incrementsPerInstance = 20
 	var wg sync.WaitGroup
 	for i := range incrementsPerInstance * 2 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if i%2 == 0 {
 				first.RecordStarted(ctx, ScopeDashboard)
 				return
 			}
 			second.RecordStarted(ctx, ScopeDashboard)
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -116,11 +114,9 @@ func TestMetricsConcurrentIncrementsAreNotLost(t *testing.T) {
 	const increments = 50
 	var wg sync.WaitGroup
 	for range increments {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			metrics.RecordStarted(ctx, ScopeDashboard)
-		}()
+		})
 	}
 	wg.Wait()
 
