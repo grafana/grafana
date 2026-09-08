@@ -106,29 +106,101 @@ func TestPullRequestJobRejected(t *testing.T) {
 }
 
 func TestFixFolderMetadataFeatureGate(t *testing.T) {
+	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
+	spec := provisioning.JobSpec{Action: provisioning.JobActionFixFolderMetadata}
+
+	jobsCreateReq := func(req authlib.CheckRequest) bool {
+		return req.Verb == utils.VerbCreate &&
+			req.Group == provisioning.GROUP &&
+			req.Resource == provisioning.JobResourceInfo.GetName() &&
+			req.Namespace == cfg.Namespace
+	}
 
 	t.Run("rejected when flag is disabled", func(t *testing.T) {
 		c := &jobsConnector{folderMetadataEnabled: false}
-		spec := provisioning.JobSpec{
-			Action: provisioning.JobActionFixFolderMetadata,
-		}
-
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 		assert.Contains(t, err.Error(), "provisioningFolderMetadata feature flag")
 	})
 
-	t.Run("allowed when flag is enabled", func(t *testing.T) {
-		c := &jobsConnector{folderMetadataEnabled: true}
-		spec := provisioning.JobSpec{
-			Action: provisioning.JobActionFixFolderMetadata,
-		}
+	t.Run("allowed when flag is enabled and user has jobs:create", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(nil)
 
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock, folderMetadataEnabled: true}
+		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.NoError(t, err)
 	})
+
+	t.Run("forbidden when flag is enabled but user lacks jobs:create", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(
+			apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("editor role is required")),
+		)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock, folderMetadataEnabled: true}
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+}
+
+func TestAuthorizeEditorJob(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+
+	jobsCreateReq := func(req authlib.CheckRequest) bool {
+		return req.Verb == utils.VerbCreate &&
+			req.Group == provisioning.GROUP &&
+			req.Resource == provisioning.JobResourceInfo.GetName() &&
+			req.Namespace == cfg.Namespace
+	}
+
+	t.Run("editor is authorized", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(nil)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock}
+		require.NoError(t, c.authorizeEditorJob(ctx, cfg))
+	})
+
+	t.Run("non-editor is forbidden", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(
+			apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("editor role is required")),
+		)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeEditorJob(ctx, cfg)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+}
+
+// editorAllowedAccess returns a mock AccessChecker whose Editor-fallback check
+// (authorizeEditorJob) always succeeds, for tests that need to get past that gate
+// to exercise action-specific behavior.
+func editorAllowedAccess(t *testing.T) *auth.MockAccessChecker {
+	editorChecker := auth.NewMockAccessChecker(t)
+	editorChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(nil).Maybe()
+
+	accessMock := auth.NewMockAccessChecker(t)
+	accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker).Maybe()
+	return accessMock
 }
 
 func TestExportFeatureGate(t *testing.T) {
@@ -159,9 +231,9 @@ func TestExportFeatureGate(t *testing.T) {
 
 	t.Run("migrate passes the gate when enabled", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
-		c := &jobsConnector{}
-		// spec.Migrate == nil short-circuits authorizeMigrateJob after the gate,
-		// so this exercises the gate without needing authorization mocks.
+		c := &jobsConnector{access: editorAllowedAccess(t)}
+		// spec.Migrate == nil short-circuits authorizeMigrateJob after the editor
+		// and feature gates, so this exercises those gates without further mocks.
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate}
 
 		err := c.authorizeJob(ctx, nil, cfg, spec)
@@ -170,10 +242,10 @@ func TestExportFeatureGate(t *testing.T) {
 
 	t.Run("push passes the gate when enabled", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
-		c := &jobsConnector{}
+		c := &jobsConnector{access: editorAllowedAccess(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
 
-		// Past the gate the push authorizer runs; with a nil repo it fails on the
+		// Past the gates the push authorizer runs; with a nil repo it fails on the
 		// reader check, which proves the feature gate let the request through.
 		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.Error(t, err)
@@ -697,12 +769,17 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "test", Resource: "test"}, "test", fmt.Errorf("forbidden"))
 
-	t.Run("empty targets succeeds", func(t *testing.T) {
+	t.Run("empty targets rejected", func(t *testing.T) {
+		// A delete with no paths and no resources isn't a no-op: the worker follows
+		// it with a full resync when Ref is empty, so it must be rejected rather
+		// than trivially authorized (there's nothing here for the per-path/resource
+		// checks below to check).
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, nil)
-		require.NoError(t, err)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
 	})
 
 	t.Run("authorized file path", func(t *testing.T) {
@@ -828,14 +905,18 @@ func TestAuthorizeMoveJob(t *testing.T) {
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "test", Resource: "test"}, "test", fmt.Errorf("forbidden"))
 
-	t.Run("empty targets succeeds", func(t *testing.T) {
+	t.Run("empty targets rejected", func(t *testing.T) {
+		// Same reasoning as the delete job: an empty move isn't a no-op given how
+		// the worker handles an empty ref, so it's rejected rather than trivially
+		// authorized.
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
 			TargetPath: "dest/",
 		})
-		require.NoError(t, err)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
 	})
 
 	t.Run("authorized file path", func(t *testing.T) {
@@ -876,11 +957,14 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		require.ErrorContains(t, err, "authorize move")
 	})
 
-	t.Run("authorized ResourceRef checks update", func(t *testing.T) {
+	t.Run("authorized ResourceRef checks update on source and create on target", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbUpdate
 		}), "folder-abc").Return(nil)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(nil)
 
 		mockReader := repository.NewMockReader(t)
 		clientsMock := resources.NewMockClientFactory(t)
@@ -904,6 +988,40 @@ func TestAuthorizeMoveJob(t *testing.T) {
 			TargetPath: "dest/",
 		})
 		require.NoError(t, err)
+	})
+
+	t.Run("unauthorized create on target returns error", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "folder-abc").Return(nil)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(forbidden)
+
+		mockReader := repository.NewMockReader(t)
+		clientsMock := resources.NewMockClientFactory(t)
+
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "my-dash", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructured("my-dash", "folder-abc"), nil)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: "dashboard.grafana.app", Kind: "Dashboard",
+		}).Return(dynClient, dashGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+			TargetPath: "dest/",
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "authorize move target")
 	})
 
 	t.Run("non-reader repo returns bad request", func(t *testing.T) {

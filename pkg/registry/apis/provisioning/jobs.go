@@ -327,8 +327,18 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 
 	switch spec.Action {
 	case provisioning.JobActionPush:
+		// The jobs subresource no longer gates job creation on provisioning.jobs:create
+		// (see authorizeRepositorySubresource), so push must re-require Editor here.
+		// authorizePushJob only checks read permission, which is too weak on its own.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 		return c.authorizePushJob(ctx, repo, cfg)
 	case provisioning.JobActionMigrate:
+		// Same as push: migrate must stay Editor-only.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
 		if spec.Delete != nil {
@@ -338,7 +348,13 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		if spec.Move != nil {
 			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
 		}
-	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata, provisioning.JobActionTest:
+	case provisioning.JobActionFixFolderMetadata:
+		// fixFolderMetadata has no path/resource-level checks of its own, so it must
+		// stay Editor-only now that job creation isn't gated on jobs:create up front.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
+	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionTest:
 		// Read-only / no-op operations don't require pre-flight resource authorization.
 		// Pull and test are authorized inline in handleCreateJob (admin-only).
 	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
@@ -346,6 +362,19 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		// and never reach authorizeJob.
 	}
 	return nil
+}
+
+// authorizeEditorJob checks provisioning.jobs:create with the Editor fallback role.
+// Used for job actions that have no path/resource-level authorization of their own
+// and so must stay Editor-only now that the jobs subresource lets any authenticated
+// user attempt job creation (see authorizeRepositorySubresource).
+func (c *jobsConnector) authorizeEditorJob(ctx context.Context, cfg *provisioning.Repository) error {
+	return c.access.WithFallbackRole(identity.RoleEditor).Check(ctx, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     provisioning.GROUP,
+		Resource:  provisioning.JobResourceInfo.GetName(),
+		Namespace: cfg.Namespace,
+	}, "")
 }
 
 // newJobAuthorizer creates an Authorizer for the given repository. Returns an error
@@ -360,6 +389,22 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 		return nil, fmt.Errorf("create clients for authorization: %w", err)
 	}
 	return resources.NewAuthorizer(cfg, reader, c.access, clients, c.folderMetadataEnabled), nil
+}
+
+// wrapAuthzError adds context to an authorization decision error while preserving
+// its HTTP status. fmt.Errorf's %w wrapping breaks status-code propagation here:
+// the apiserver extracts the response status via a type switch on the concrete
+// error type (k8s.io/apiserver/pkg/endpoints/handlers/responsewriters.ErrorToAPIStatus),
+// not errors.As, so a %w-wrapped apierrors.APIStatus (e.g. Forbidden) would
+// otherwise render as a 500 Internal Server Error instead of its real status.
+func wrapAuthzError(err error, format string, args ...any) error {
+	msg := fmt.Sprintf(format, args...)
+	if statusErr, ok := err.(apierrors.APIStatus); ok {
+		status := statusErr.Status()
+		status.Message = fmt.Sprintf("%s: %s", msg, status.Message)
+		return &apierrors.StatusError{ErrStatus: status}
+	}
+	return fmt.Errorf("%s: %w", msg, err)
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
@@ -386,7 +431,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			if apierrors.IsNotFound(err) {
 				continue
 			}
-			return fmt.Errorf("authorize %s resource %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+			return wrapAuthzError(err, "authorize %s resource %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
 
 		meta, err := utils.MetaAccessor(obj)
@@ -401,7 +446,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			GVR:      gvr,
 		}
 		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
-			return fmt.Errorf("authorize %s %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+			return wrapAuthzError(err, "authorize %s %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
 	}
 	return nil
@@ -514,7 +559,18 @@ func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo re
 }
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
+//
+// A delete job with no paths and no resources isn't a no-op: when Ref is empty,
+// the worker follows an empty delete with a full non-incremental sync (the only
+// way it supports removing an entire folder), which is the same effect as the
+// admin-only manual pull. Without this check, that full-sync side effect would be
+// reachable by anyone who can pass the per-path/resource checks below (trivially,
+// since there are none to check), rather than being gated like a real pull.
 func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef) error {
+	if len(paths) == 0 && len(resources) == 0 {
+		return apierrors.NewBadRequest("delete jobs must target at least one path or resource")
+	}
+
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -522,7 +578,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 
 	for _, path := range paths {
 		if err := authorizer.AuthorizeDeleteByPath(ctx, path); err != nil {
-			return fmt.Errorf("authorize delete %q: %w", path, err)
+			return wrapAuthzError(err, "authorize delete %q", path)
 		}
 	}
 
@@ -530,7 +586,14 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 }
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
+//
+// Like delete, an empty Paths+Resources move isn't a no-op given how the worker
+// handles an empty ref, so it's rejected outright rather than trivially authorized.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
+	if len(opts.Paths) == 0 && len(opts.Resources) == 0 {
+		return apierrors.NewBadRequest("move jobs must target at least one path or resource")
+	}
+
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -538,11 +601,51 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 
 	for _, path := range opts.Paths {
 		if err := authorizer.AuthorizeMoveByPath(ctx, path, opts.TargetPath); err != nil {
-			return fmt.Errorf("authorize move %q: %w", path, err)
+			return wrapAuthzError(err, "authorize move %q", path)
 		}
 	}
 
-	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbUpdate, "move")
+	if err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbUpdate, "move"); err != nil {
+		return err
+	}
+
+	// authorizeResourceRefs only checks update on the source above. Path-based moves
+	// also require create on the target (AuthorizeMoveByPath), so resource-based moves
+	// need the equivalent target-folder check to avoid moving into a folder the user
+	// can't create in.
+	return c.authorizeMoveResourceRefsTarget(ctx, authorizer, cfg.Namespace, opts.Resources, opts.TargetPath)
+}
+
+// authorizeMoveResourceRefsTarget checks create permission at the destination folder
+// for each resource-referenced move target, mirroring the target-folder check that
+// AuthorizeMoveByPath already performs for path-based moves.
+func (c *jobsConnector) authorizeMoveResourceRefsTarget(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, targetPath string) error {
+	if len(refs) == 0 {
+		return nil
+	}
+
+	clients, err := c.clients.Clients(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("create clients for authorization: %w", err)
+	}
+
+	checked := map[schema.GroupVersionResource]bool{}
+	for _, ref := range refs {
+		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
+		_, gvr, err := clients.ForKind(ctx, gvk)
+		if err != nil {
+			return fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
+		}
+		if checked[gvr] {
+			continue
+		}
+		checked[gvr] = true
+
+		if err := authorizer.AuthorizeCreateInFolder(ctx, gvr, targetPath); err != nil {
+			return wrapAuthzError(err, "authorize move target %q", targetPath)
+		}
+	}
+	return nil
 }
 
 // ValidUUID ensures the ID is valid for a blob.

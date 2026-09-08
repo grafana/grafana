@@ -92,6 +92,13 @@ type Authorizer interface {
 	//     update permission on the source parent and create on the target parent
 	AuthorizeMoveByPath(ctx context.Context, sourcePath, targetPath string) error
 
+	// AuthorizeCreateInFolder checks if the current user has create permission for
+	// the given resource kind in the folder that targetPath resolves to. This is
+	// the target-folder half of AuthorizeMoveByPath's file-move check, for callers
+	// that already know the resource kind (e.g. from a ResourceRef) instead of
+	// needing to read a source file to determine it.
+	AuthorizeCreateInFolder(ctx context.Context, gvr schema.GroupVersionResource, targetPath string) error
+
 	// AuthorizeReadAllSupported checks if the current user has read (get) permission
 	// on every supported provisioning resource type at the root level.
 	// This is used before operations that enumerate all resources (e.g. full export).
@@ -489,19 +496,44 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		return err
 	}
 
-	targetParent := safepath.Dir(targetPath)
-	var targetFolderID string
-	if targetParent == "" {
-		targetFolderID = RootFolder(a.repo)
-	} else {
-		var err error
-		targetFolderID, err = a.getFolderID(ctx, targetParent)
-		if err != nil {
-			return fmt.Errorf("get target folder ID for %q: %w", targetPath, err)
-		}
+	targetFolderID, err := a.getTargetFolderID(ctx, targetPath)
+	if err != nil {
+		return err
 	}
 
 	return a.authorizeFileVerb(ctx, sourcePath, targetFolderID, utils.VerbCreate)
+}
+
+// getTargetFolderID resolves the folder ID that a move's targetPath lands in,
+// shared by AuthorizeMoveByPath (file sources) and AuthorizeCreateInFolder.
+func (a *ProvisioningAuthorizer) getTargetFolderID(ctx context.Context, targetPath string) (string, error) {
+	targetParent := safepath.Dir(targetPath)
+	if targetParent == "" {
+		return RootFolder(a.repo), nil
+	}
+	folderID, err := a.getFolderID(ctx, targetParent)
+	if err != nil {
+		return "", fmt.Errorf("get target folder ID for %q: %w", targetPath, err)
+	}
+	return folderID, nil
+}
+
+// AuthorizeCreateInFolder checks if the current user has create permission for
+// gvr in the folder that targetPath resolves to. This is the target-folder half
+// of AuthorizeMoveByPath's file-move check, for callers that already know the
+// resource kind (e.g. from a ResourceRef) instead of needing to read a source
+// file to determine it.
+func (a *ProvisioningAuthorizer) AuthorizeCreateInFolder(ctx context.Context, gvr schema.GroupVersionResource, targetPath string) error {
+	targetFolderID, err := a.getTargetFolderID(ctx, targetPath)
+	if err != nil {
+		return err
+	}
+
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    gvr.Group,
+		Resource: gvr.Resource,
+		Verb:     utils.VerbCreate,
+	}, targetFolderID)
 }
 
 // AuthorizeReadAllSupported checks if the current user has read (get) permission

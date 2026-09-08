@@ -644,8 +644,19 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
+	// Jobs subresource - viewing/managing job history requires provisioning.jobs:*
+	// (editors can manage jobs). Creating a job is deliberately NOT gated here:
+	// the specific action isn't known until the request body is parsed (this
+	// authorizer only sees verb+resource+subresource), so job creation is
+	// authorized per-action in jobsConnector.authorizeJob instead. Push, migrate,
+	// fixFolderMetadata, pull and test still re-require Editor or Admin there;
+	// move and delete are authorized against the actual dashboards/folders being
+	// moved or deleted, the same way those operations are authorized without
+	// Git Sync (see issue #127254).
 	case "jobs":
+		if a.GetVerb() == apiutils.VerbCreate {
+			return authorizer.DecisionAllow, "", nil
+		}
 		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
