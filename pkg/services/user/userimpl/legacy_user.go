@@ -296,6 +296,12 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 		}
 	}
 
+	if cmd.OldPassword != nil && cmd.Password != nil {
+		if *cmd.OldPassword == *cmd.Password {
+			return user.ErrNewPasswordSameAsOld.Errorf("new password must be different from the current password")
+		}
+	}
+
 	if cmd.Password != nil {
 		if err := cmd.Password.Validate(s.cfg); err != nil {
 			return err
