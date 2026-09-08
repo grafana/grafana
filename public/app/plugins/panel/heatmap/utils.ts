@@ -302,28 +302,50 @@ export function prepConfig(opts: PrepConfigOpts) {
             const isLogScale =
               scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
             if (sparseSymlogLinearThreshold != null) {
-              if (sparseZeroBucketOnly) {
-                // Data is entirely the zero bucket (no real-magnitude buckets).
-                // Show a small symmetric window centered on zero so the single
-                // zero band is visible instead of collapsing to a degenerate or
-                // blank axis.
-                const t = sparseSymlogLinearThreshold;
-                [scaleMin, scaleMax] = [-t, t];
-              } else {
-                // Auto-detected symlog (negative/zero buckets present). The y-scale
-                // auto-ranges over the yMin facet only, so the passed dataMin is the
-                // lowest bucket's lower bound while the passed dataMax misses the top
-                // bucket's upper bound (which lives in the yMax facet). Recover the
-                // true top extent, then snap both ends out to clean powers of the base
-                // (see snapSymlogRange) so the outermost buckets get headroom off the
-                // axis edges and the span lines up with the pure-log axis.
-                let hi = dataMax;
-                for (const v of yMaxValues) {
-                  if (typeof v === 'number' && Number.isFinite(v) && v > hi) {
-                    hi = v;
-                  }
+              const t = sparseSymlogLinearThreshold;
+
+              // Auto-detected symlog (negative/zero buckets present). The y-scale
+              // auto-ranges over the yMin facet only, so the passed dataMin is the
+              // lowest bucket's lower bound while the passed dataMax misses the top
+              // bucket's upper bound (which lives in the yMax facet). NHCB unbounded
+              // tails additionally put ±Infinity in the bounds, and uPlot passes those
+              // straight through — an infinite end would make snapSymlogRange emit
+              // ±Infinity and symlogPowerSplits loop forever. So take the finite
+              // extremes of both facets, falling back to the linear threshold when a
+              // side has none.
+              let lo = Number.isFinite(dataMin) ? dataMin : Infinity;
+              let hi = Number.isFinite(dataMax) ? dataMax : -Infinity;
+              for (const v of yMinValues) {
+                if (typeof v === 'number' && Number.isFinite(v) && v < lo) {
+                  lo = v;
                 }
-                [scaleMin, scaleMax] = snapSymlogRange(dataMin, hi, sparseSymlogLinearThreshold, scaleLog || 2);
+              }
+              for (const v of yMaxValues) {
+                if (typeof v === 'number' && Number.isFinite(v) && v > hi) {
+                  hi = v;
+                }
+              }
+              if (!Number.isFinite(lo)) {
+                lo = -t;
+              }
+              if (!Number.isFinite(hi)) {
+                hi = t;
+              }
+
+              if (sparseZeroBucketOnly) {
+                // No real-magnitude bucket to anchor the threshold to. Usually that
+                // means a lone exponential zero bucket (±epsilon), but it can also be a
+                // single wide zero-straddling NHCB bucket whose empty neighbors the
+                // sparse encoding dropped. Size the symmetric window to the data rather
+                // than to the fallback threshold, so a wide straddler isn't clipped.
+                const extent = Math.max(t, Math.abs(lo), Math.abs(hi));
+                [scaleMin, scaleMax] =
+                  extent > t ? snapSymlogRange(-extent, extent, t, scaleLog || 2) : [-extent, extent];
+              } else {
+                // Snap both ends out to clean powers of the base (see snapSymlogRange)
+                // so the outermost buckets get headroom off the axis edges and the span
+                // lines up with the pure-log axis.
+                [scaleMin, scaleMax] = snapSymlogRange(lo, hi, t, scaleLog || 2);
               }
             } else if (isLogScale) {
               // Guard against non-positive values — log(0) = -Infinity causes uPlot to crash in logAxisSplits.
@@ -1155,6 +1177,11 @@ export function snapSymlogRange(lo: number, hi: number, linthresh: number, base:
  */
 export function symlogPowerSplits(scaleMin: number, scaleMax: number, linthresh: number, base: number): number[] {
   const logB = (x: number) => Math.log(x) / Math.log(base);
+  // A non-finite bound (NHCB unbounded tails) would make the loop below never
+  // terminate, hanging the render; emit just the seam rather than spin.
+  if (!Number.isFinite(scaleMin) || !Number.isFinite(scaleMax) || !(linthresh > 0) || !(base > 1)) {
+    return [0];
+  }
   const maxMag = Math.max(Math.abs(scaleMin), Math.abs(scaleMax), linthresh);
   const splits = [0];
   for (let k = Math.ceil(logB(linthresh) - 1e-9); Math.pow(base, k) <= maxMag * (1 + 1e-9); k++) {

@@ -703,6 +703,66 @@ describe('prepConfig', () => {
         expect(result[0]).toBeLessThan(0);
         expect(result[1]).toBeGreaterThan(0);
       });
+
+      // The symlog range callback reads the yMin/yMax facets off u.data; build a
+      // uPlot whose data has that shape so the callback sees real bucket bounds.
+      function buildYScaleWithFacets(yMin: number[], yMax: number[]) {
+        const heatmap = createDataFrame({
+          meta: { type: DataFrameType.HeatmapCells },
+          fields: [
+            { name: 'x', type: FieldType.time, values: yMin.map((_v, i) => 1000 * (i + 1)) },
+            { name: 'yMin', type: FieldType.number, values: yMin },
+            { name: 'yMax', type: FieldType.number, values: yMax },
+            { name: 'count', type: FieldType.number, values: yMin.map(() => 1) },
+          ],
+        });
+        const builder = prepConfig({
+          dataRef: { current: { heatmap } },
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { data: sparseData, log: 2 });
+        const facets = [yMin.map((_v, i) => 1000 * (i + 1)), yMin, yMax, yMin.map(() => 1)];
+        Object.defineProperty(u, 'data', { value: [facets[0], facets], writable: true });
+        const distribution = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))?.props.distribution;
+        return { range, scaleKey, u, distribution };
+      }
+
+      it('keeps the range finite when NHCB unbounded tails are present', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        // (-Inf, -4], (-4, 0], (0, 4], (4, +Inf] — finite non-positive boundaries
+        // engage symlog, but uPlot auto-ranges the yMin facet to -Infinity.
+        const { range, scaleKey, u, distribution } = buildYScaleWithFacets([-Infinity, -4, 0, 4], [-4, 0, 4, Infinity]);
+        expect(distribution).toBe(ScaleDistribution.Symlog);
+
+        const result = range(u, -Infinity, 4, scaleKey);
+
+        expect(Number.isFinite(result[0])).toBe(true);
+        expect(Number.isFinite(result[1])).toBe(true);
+        // The finite buckets stay on screen.
+        expect(result[0]).toBeLessThanOrEqual(-4);
+        expect(result[1]).toBeGreaterThanOrEqual(4);
+        // And the splits generator terminates on the resulting range.
+        expect(symlogPowerSplits(result[0]!, result[1]!, 4, 2).length).toBeGreaterThan(0);
+      });
+
+      it('spans a lone wide zero-straddling bucket instead of clamping to the fallback threshold', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        // A single NHCB bucket (-4, 4]; the sparse encoding dropped its empty
+        // neighbors, so there is no real-magnitude boundary to anchor the threshold.
+        const { range, scaleKey, u, distribution } = buildYScaleWithFacets([-4], [4]);
+        expect(distribution).toBe(ScaleDistribution.Symlog);
+
+        const result = range(u, -4, 4, scaleKey);
+
+        // Must cover the bucket rather than collapsing to the ±1 fallback window.
+        expect(result[0]).toBeLessThanOrEqual(-4);
+        expect(result[1]).toBeGreaterThanOrEqual(4);
+      });
     });
 
     describe('dense heatmap', () => {
