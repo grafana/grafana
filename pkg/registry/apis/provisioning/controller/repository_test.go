@@ -1700,14 +1700,6 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
 }
 
-// TestRepositoryController_isUserCaused covers the wrap shapes the classification
-// actually has to see through in production. A provider wraps its own named
-// sentinel around the translated API error with a two-verb fmt.Errorf, and Build
-// plus process() each wrap that again -- so the auth error the decision rests on
-// sits several levels down, on the second branch of a multi-error.
-//
-// The chain is rebuilt here rather than imported: the provider that produces it
-// lives in an enterprise package the controller must not depend on.
 // TestRepositoryController_process_RecordsReconcileErrorPhase drives process()
 // to fail at a stage other than delete/build/hook (quota) and asserts the
 // central recorder still counts it under the right phase -- proving the metric
@@ -1745,6 +1737,51 @@ func TestRepositoryController_process_RecordsReconcileErrorPhase(t *testing.T) {
 	require.Error(t, err, "a quota lookup failure must be returned")
 	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseQuota, reconcileCauseSystem),
 		"the failure must be counted under the quota phase")
+}
+
+// TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure
+// verifies the returned system error takes precedence over a swallowed
+// user-caused one: a user-caused build failure is surfaced on status and returns
+// nil, but when the deferred status flush then fails, that returned patch error
+// must be counted as phase=status/cause=system -- not hidden behind the earlier
+// user classification, or an SLO excluding cause="user" would miss it.
+func TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Status:     provisioning.RepositoryStatus{ObservedGeneration: 1},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+
+	reg := prometheus.NewPedanticRegistry()
+	patcher := &capturePatcher{err: errors.New("apiserver unavailable")}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:            repoGetter,
+		quotaGetter:      quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:     NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		repoFactory:      mockFactory,
+		statusPatcher:    patcher,
+		reconcileMetrics: registerReconcileErrorMetrics(reg),
+		logger:           logging.DefaultLogger,
+		tracer:           tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.Error(t, err, "the deferred status flush failure must be returned to the workqueue")
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseStatus, reconcileCauseSystem),
+		"the returned status-flush failure must be counted as system")
+	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseBuild, reconcileCauseUser),
+		"the swallowed user error must not be counted once a system error is returned")
 }
 
 func TestClassifyBuildFailureReason(t *testing.T) {
@@ -1789,6 +1826,14 @@ func TestClassifyHookFailureReason(t *testing.T) {
 	}
 }
 
+// TestRepositoryController_isUserCaused covers the wrap shapes the classification
+// actually has to see through in production. A provider wraps its own named
+// sentinel around the translated API error with a two-verb fmt.Errorf, and Build
+// plus process() each wrap that again -- so the auth error the decision rests on
+// sits several levels down, on the second branch of a multi-error.
+//
+// The chain is rebuilt here rather than imported: the provider that produces it
+// lives in an enterprise package the controller must not depend on.
 func TestRepositoryController_isUserCaused(t *testing.T) {
 	// Stands in for gitlab's ErrClientNotProjectScopedPermission.
 	errUnscoped := errors.New("gitlab client could not resolve its immutable projectID")

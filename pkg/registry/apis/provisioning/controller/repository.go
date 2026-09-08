@@ -730,23 +730,30 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	ctx := logging.Context(context.Background(), logger)
 
 	// phase tracks how far reconciliation has progressed so a failure is counted
-	// under the stage it occurred in. recordFailure records at most one
-	// reconcile-error metric per pass: the deferred call below catches every
-	// error returned to the workqueue, while the user-caused paths that surface
-	// the error on status and return nil (build/delete/hook) record themselves at
-	// the point they swallow it, since the deferred call only sees returned
-	// errors. Registered before the span defers so it runs last, after any
-	// deferred status flush has finalized err.
+	// under the stage it occurred in. The user-caused paths that surface their
+	// error on status and return nil (build/delete/hook) can't rely on the
+	// returned error, so they stash it in swallowedErr/swallowedPhase.
+	//
+	// The deferred recorder counts exactly one failure per reconcile and prefers
+	// the error actually returned to the workqueue over a swallowed one: a
+	// swallowed user-caused failure can be followed by a returned system error
+	// (e.g. the deferred status flush failing) that the worker logs, and that
+	// system failure must appear in the metric as cause="system". Registered
+	// before the span defers so it runs last, after any deferred status flush has
+	// finalized err.
 	phase := reconcilePhaseSetup
-	recorded := false
-	recordFailure := func(failurePhase string, failure error) {
-		if failure == nil || recorded {
-			return
+	var (
+		swallowedErr   error
+		swallowedPhase string
+	)
+	defer func() {
+		switch {
+		case err != nil:
+			rc.recordReconcileError(phase, err)
+		case swallowedErr != nil:
+			rc.recordReconcileError(swallowedPhase, swallowedErr)
 		}
-		recorded = true
-		rc.recordReconcileError(failurePhase, failure)
-	}
-	defer func() { recordFailure(phase, err) }()
+	}()
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -850,11 +857,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		case apierrors.IsServiceUnavailable(err):
 			return repoType, err
 		case patchErr != nil:
+			// The status write itself failed: count it under the status phase.
+			phase = reconcilePhaseStatus
 			return repoType, patchErr
 		default:
-			// Swallowed after surfacing on status: record it here since the
-			// deferred recorder only sees errors returned to the workqueue.
-			recordFailure(reconcilePhaseDelete, err)
+			// Swallowed after surfacing on status: stash it so the deferred
+			// recorder counts it, since it returns nil to the workqueue.
+			swallowedErr, swallowedPhase = err, reconcilePhaseDelete
 			return repoType, nil
 		}
 	}
@@ -1069,9 +1078,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			}
 
 			if rc.isUserCaused(err) {
-				// Swallowed after surfacing on status: record it here since the
-				// deferred recorder only sees errors returned to the workqueue.
-				recordFailure(reconcilePhaseBuild, err)
+				// Swallowed after surfacing on status: stash it so the deferred
+				// recorder counts it, since it returns nil to the workqueue.
+				swallowedErr, swallowedPhase = err, reconcilePhaseBuild
 				logger.Warn("unable to create repository from configuration, user-caused error", "error", err)
 				return repoType, nil
 			}
@@ -1169,9 +1178,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 	if hookErr != nil {
 		if rc.isUserCaused(hookErr) {
-			// Swallowed after surfacing on status: record it here since the
-			// deferred recorder only sees errors returned to the workqueue.
-			recordFailure(reconcilePhaseHook, hookErr)
+			// Swallowed after surfacing on status: stash it so the deferred
+			// recorder counts it unless a later stage returns a system error.
+			swallowedErr, swallowedPhase = hookErr, reconcilePhaseHook
 			logger.Warn("repository hook failed with a user-caused error", "error", hookErr)
 		} else {
 			err = fmt.Errorf("process hooks: %w", hookErr)
