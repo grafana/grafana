@@ -217,7 +217,7 @@ export interface MetricsDiskPressure {
 }
 
 /** The card's headline: active series, or the distinct metric names over the stats window when no series count resolved. */
-export interface MetricsCount {
+interface MetricsCount {
   kind: 'series' | 'names';
   value: number;
 }
