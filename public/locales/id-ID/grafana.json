@@ -8350,7 +8350,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Nilai tetap"
       },
-      "label": "Skalar",
+      "label-field": "",
       "label-limit": "Batas",
       "label-value": "Nilai",
       "noOptionsMessage-no-fields-found": "Tidak ada bidang yang ditemukan",
@@ -12402,6 +12402,9 @@
       "subtitle": "Aturan yang menentukan jika peringatan akan dinyalakan",
       "title": "Aturan peringatan"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Pilih cara memberi tahu titik kontak Anda saat instans peringatan menyala",
       "title": "Titik kontak"
@@ -12506,6 +12509,10 @@
     "explore": {
       "title": "Jelajahi"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Dapatkan wawasan pemantauan pengguna nyata",
       "title": "Frontend"
@@ -12586,6 +12593,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12616,6 +12627,10 @@
     },
     "profiles": {
       "title": "Profil"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16650,6 +16665,8 @@
       "name-faceted-filter": "Visibilitas seri"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Dapat diakses",
         "label-dash": "Tanda pisah",
