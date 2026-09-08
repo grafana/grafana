@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
@@ -23,10 +24,8 @@ func getBuildstamp(opts BuildInfo) int64 {
 
 func validPackaging(packaging string) string {
 	validTypes := []string{"dev", "deb", "rpm", "docker", "brew", "hosted", "unknown"}
-	for _, vt := range validTypes {
-		if packaging == vt {
-			return packaging
-		}
+	if slices.Contains(validTypes, packaging) {
+		return packaging
 	}
 	return "unknown"
 }

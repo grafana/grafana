@@ -347,8 +347,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	// with the playlist page and API which both serve anonymous Viewers.
 	if c.IsSignedIn || c.IsAnonymous {
 		showPlaylist := c.HasRole(org.RoleViewer)
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(c.Req.Context())) {
 			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
 		}
 		if showPlaylist {
@@ -378,10 +377,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		})
 
 		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
-			hasAccess(ac.EvalAny(
-				ac.EvalPermission(dashboards.ActionDashboardsCreate),
-				ac.EvalPermission(dashboards.ActionDashboardsWrite),
-			)) {
+			hasAccess(ac.EvalPermission(ac.ActionVariablesRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Variables",
 				SubTitle: "Template variables shared across dashboards, globally or per folder",

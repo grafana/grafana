@@ -119,7 +119,7 @@ export type TProps = {
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 const NUM_TICKS = 5;

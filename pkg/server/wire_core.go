@@ -45,6 +45,7 @@ import (
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -283,6 +284,7 @@ var wireBasicSet = wire.NewSet(
 	ngalert.ProvideAlertRuleFolderConsumer,
 	folderreconcile.ProvideReconciler,
 	libraryelements.ProvideFolderUIDRepair,
+	iamsso.ProvideSSOSettingsBackfill,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,

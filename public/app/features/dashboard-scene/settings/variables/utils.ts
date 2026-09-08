@@ -53,8 +53,7 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
   return type !== 'system' && type !== 'snapshot';
 }
 
-export const getDefaultTopPlacementLabel = () =>
-  t('dashboard.sidebar.variables.top-placement-default', 'Above dashboard');
+export const getDefaultTopPlacementLabel = () => t('dashboard.sidebar.variables.top-placement', 'Above dashboard');
 
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {

@@ -115,7 +115,7 @@ type TVirtualizedTraceViewOwnProps = {
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;

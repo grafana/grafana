@@ -115,12 +115,6 @@ export interface DashboardLayoutManager<S = {}, TLayout = DashboardV2Spec['layou
    * concrete grouping logic, which keeps the edit-pane out of the layout-manager import cycle.
    */
   canGroupSelectionInto?(items: SceneObject[], target: GroupTarget): GroupingResult;
-
-  /**
-   * Groups the given multi-selection of this layout's direct children into a new row or tab as a
-   * single undo/redo entry. See {@link canGroupSelectionInto}.
-   */
-  groupSelectionInto?(items: SceneObject[], target: GroupTarget): void;
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
@@ -141,7 +135,6 @@ export interface GroupingResult {
  */
 export function isGroupableLayoutManager(
   manager: DashboardLayoutManager
-): manager is DashboardLayoutManager &
-  Required<Pick<DashboardLayoutManager, 'canGroupSelectionInto' | 'groupSelectionInto'>> {
-  return typeof manager.canGroupSelectionInto === 'function' && typeof manager.groupSelectionInto === 'function';
+): manager is DashboardLayoutManager & Required<Pick<DashboardLayoutManager, 'canGroupSelectionInto'>> {
+  return typeof manager.canGroupSelectionInto === 'function';
 }

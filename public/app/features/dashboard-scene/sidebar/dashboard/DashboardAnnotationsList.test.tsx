@@ -1,8 +1,12 @@
-import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
+
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet, NEW_ANNOTATION_COLOR, NEW_ANNOTATION_NAME } from '../../scene/DashboardDataLayerSet';
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { annotationEditActions } from '../../settings/annotations/actions';
 import { activateFullSceneTree } from '../../utils/test-utils';
@@ -19,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 jest.mock('../../settings/annotations/actions', () => ({
-  annotationEditActions: { addAnnotation: jest.fn() },
+  annotationEditActions: { addAnnotation: jest.fn(), duplicateAnnotation: jest.fn() },
 }));
 
 jest.mock('app/core/hooks/useQueryParams', () => ({
@@ -56,7 +60,6 @@ async function renderAnnotationsList(annotationLayers: DashboardAnnotationsDataL
         within(renderResult.getByTestId('annotations-list-controls-menu')).getAllByTestId('annotation-name'),
       hiddenListItems: () =>
         within(renderResult.getByTestId('annotations-list-hidden')).getAllByTestId('annotation-name'),
-      addAnnotationButton: () => renderResult.getByRole('button', { name: /add annotation query/i }),
     },
   };
 }
@@ -129,8 +132,12 @@ function buildTestAnnotations() {
   };
 }
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('<DashboardAnnotationsList />', () => {
-  test('renders 3 sections (one per visibility/placement) and an "Add annotation" button', async () => {
+  test('renders 3 sections (one per visibility/placement)', async () => {
     const {
       visibleEnabled,
       visibleDisabled,
@@ -164,8 +171,6 @@ describe('<DashboardAnnotationsList />', () => {
 
     const hiddenNames = Array.from(elements.hiddenListItems()).map((item) => item.textContent);
     expect(hiddenNames).toEqual(['annotation-hidden-builtin (Built-in)', 'annotation-hidden-not-builtin']);
-
-    expect(elements.addAnnotationButton()).toBeInTheDocument();
   });
 });
 
@@ -180,42 +185,41 @@ test('always renders all 3 section titles even when some are empty', async () =>
 });
 
 describe('User interactions', () => {
-  describe('when an annotation name is clicked', () => {
-    test('selects the annotation in the pane', async () => {
+  describe('annotation list interactions', () => {
+    test('clicking the edit button selects the annotation in the pane', async () => {
       const { visibleEnabled } = buildTestAnnotations();
+      const { user, getByText, getByTestId, elements } = await renderAnnotationsList([visibleEnabled]);
+      const key = visibleEnabled.state.key ?? visibleEnabled.state.name;
 
-      const { user, getByText, elements } = await renderAnnotationsList([visibleEnabled]);
-
-      await user.click(getByText(visibleEnabled.state.name));
+      await user.hover(getByText(visibleEnabled.state.name));
+      await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
       expect(elements.dashboardScene.state.sidebar.selectObject).toHaveBeenCalledWith(visibleEnabled);
     });
-  });
 
-  describe('when the "Add annotation" button is clicked', () => {
-    test('calls annotationEditActions.addAnnotation', async () => {
+    test('clicking the delete button triggers confirmation modal', async () => {
+      const publishSpy = jest.spyOn(appEvents, 'publish');
       const { visibleEnabled } = buildTestAnnotations();
+      const { user, getByText, getByTestId } = await renderAnnotationsList([visibleEnabled]);
+      const key = visibleEnabled.state.key ?? visibleEnabled.state.name;
 
-      const { user, elements } = await renderAnnotationsList([visibleEnabled]);
+      await user.hover(getByText(visibleEnabled.state.name));
+      await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key)));
 
-      await user.click(elements.addAnnotationButton());
+      expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    });
 
-      await waitFor(() => expect(annotationEditActions.addAnnotation).toHaveBeenCalled());
-      expect(annotationEditActions.addAnnotation).toHaveBeenCalledWith({
-        source: elements.dataLayerSet,
-        addedObject: expect.objectContaining({
-          state: expect.objectContaining({
-            isEnabled: true,
-            isHidden: false,
-            name: NEW_ANNOTATION_NAME,
-            query: {
-              name: NEW_ANNOTATION_NAME,
-              iconColor: NEW_ANNOTATION_COLOR,
-              enable: true,
-            },
-          }),
-        }),
-      });
+    test('clicking the duplicate button creates a duplicate annotation', async () => {
+      const { visibleEnabled } = buildTestAnnotations();
+      const { user, getByText, getByTestId } = await renderAnnotationsList([visibleEnabled]);
+      const key = visibleEnabled.state.key ?? visibleEnabled.state.name;
+
+      await user.hover(getByText(visibleEnabled.state.name));
+      await user.click(
+        getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+      );
+
+      expect(annotationEditActions.duplicateAnnotation).toHaveBeenCalledWith(visibleEnabled);
     });
   });
 
