@@ -357,3 +357,42 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
+
+/**
+ * Bidirectional pairing between a time-comparison series and its current-period counterpart, keyed
+ * by index into `alignedFrame.fields`.
+ */
+export function getComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
+  const pairs = new Map<number, number>();
+  const bySeriesIndex = new Map<number, number[]>();
+
+  // field 0 is the join/x field and has no counterpart
+  for (let i = 1; i < alignedFrame.fields.length; i++) {
+    const seriesIndex = alignedFrame.fields[i].state?.seriesIndex;
+    if (seriesIndex == null) {
+      continue;
+    }
+    const group = bySeriesIndex.get(seriesIndex);
+    group == null ? bySeriesIndex.set(seriesIndex, [i]) : group.push(i);
+  }
+
+  const isCompare = (fieldIdx: number) => {
+    const frameIndex = alignedFrame.fields[fieldIdx].state?.origin?.frameIndex;
+    return frameIndex == null ? false : allFrames[frameIndex]?.meta?.timeCompare?.isTimeShiftQuery === true;
+  };
+
+  for (const group of bySeriesIndex.values()) {
+    // Only create pairs of two, in case a custom palette makes series with unrelated series on an index
+    if (group.length !== 2) {
+      continue;
+    }
+    const [a, b] = group;
+    if (isCompare(a) === isCompare(b)) {
+      continue;
+    }
+    pairs.set(a, b);
+    pairs.set(b, a);
+  }
+
+  return pairs;
+}

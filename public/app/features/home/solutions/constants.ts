@@ -1,1 +1,1 @@
-export const SOLUTION_IDS = ['kubernetes', 'metrics', 'logs', 'traces'] as const;
+export const SOLUTION_IDS = ['kubernetes', 'metrics', 'logs', 'traces', 'synthetics'] as const;

@@ -2,6 +2,7 @@ package versionpolicy
 
 import (
 	"regexp"
+	"slices"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -107,12 +108,7 @@ func (r *Resolver) naturalPreferred(group string) string {
 }
 
 func (r *Resolver) isRegistered(group, version string) bool {
-	for _, v := range r.order[group] {
-		if v == version {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(r.order[group], version)
 }
 
 // Outranks reports whether version a is strictly above b for a persist ceiling (major, then maturity,

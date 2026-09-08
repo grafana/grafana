@@ -118,8 +118,7 @@ func TestRecordingRule(t *testing.T) {
 		}()
 
 		for i := 0; i < 10; i++ {
-			wg.Add(1)
-			go func() {
+			wg.Go(func() {
 				for i := 0; i < 20; i++ {
 					max := 3
 					if i <= 10 {
@@ -141,8 +140,7 @@ func TestRecordingRule(t *testing.T) {
 						r.Stop(nil)
 					}
 				}
-				wg.Done()
-			}()
+			})
 		}
 
 		wg.Wait()

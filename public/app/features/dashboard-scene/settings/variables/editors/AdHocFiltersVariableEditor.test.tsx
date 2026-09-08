@@ -237,6 +237,30 @@ describe('AdHocFiltersVariableEditor', () => {
 
       expect(variable.state.enableGroupBy).toBe(false);
     });
+
+    it('should show Enable group by toggle as on when no datasource is selected', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+
+      const { renderer } = await setup(undefined, { datasource: null });
+
+      await waitFor(() => {
+        expect(renderer.getByText('Enable group by')).toBeInTheDocument();
+      });
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle)
+      ).toBeChecked();
+    });
+
+    it('should not show default group by editor when no datasource is selected', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+
+      const { renderer } = await setup(undefined, { datasource: null, enableGroupBy: true });
+
+      await waitFor(() => {
+        expect(renderer.getByText('Enable group by')).toBeInTheDocument();
+      });
+      expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
+    });
   });
 
   describe('default group-by origin', () => {
@@ -348,17 +372,22 @@ describe('AdHocFiltersVariableEditor', () => {
 interface SetupOptions {
   withDefaultKeys?: boolean;
   enableGroupBy?: boolean;
+  datasource?: { uid: string; type: string } | null;
 }
 
 async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, options: SetupOptions = {}) {
-  const { withDefaultKeys = false, enableGroupBy } = options;
+  const {
+    withDefaultKeys = false,
+    enableGroupBy,
+    datasource = { uid: defaultDatasource.uid, type: defaultDatasource.type },
+  } = options;
   const onRunQuery = jest.fn();
   const variable = new AdHocFiltersVariable({
     name: 'adhocVariable',
     type: 'adhoc',
     label: 'Filter',
     description: 'Filters are applied automatically to all queries that target this data source',
-    datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    datasource,
     filters: [
       {
         key: 'test',

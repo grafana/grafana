@@ -882,6 +882,10 @@ export type TimeZoneBrowser = 'browser';
  */
 export interface TimeCompareOptions {
   /**
+   * How the tooltip delta between the current and comparison values is colored
+   */
+  colorMode?: TimeCompareColorMode;
+  /**
    * Enable time comparison control
    */
   timeCompare?: boolean;
@@ -1142,3 +1146,13 @@ export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
+
+/**
+ * Colors the tooltip delta between the current and comparison values. "standard" colors an increase
+ * green, "inverted" colors an increase red, and "same_as_value" reuses the series color.
+ */
+export enum TimeCompareColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}
