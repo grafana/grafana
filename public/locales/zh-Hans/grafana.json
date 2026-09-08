@@ -8350,7 +8350,7 @@
       "fixed-value-options": {
         "label-fixed-values": "固定值"
       },
-      "label": "标量",
+      "label-field": "",
       "label-limit": "限制",
       "label-value": "值",
       "noOptionsMessage-no-fields-found": "未找到字段",
@@ -12402,6 +12402,9 @@
       "subtitle": "确定是否触发警报的规则",
       "title": "警报规则"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
@@ -12506,6 +12509,10 @@
     "explore": {
       "title": "探索"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "获得真正的用户监测洞察",
       "title": "前端"
@@ -12586,6 +12593,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12616,6 +12627,10 @@
     },
     "profiles": {
       "title": "个人资料"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16650,6 +16665,8 @@
       "name-faceted-filter": "序列可见性"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "可访问",
         "label-dash": "控制板",
