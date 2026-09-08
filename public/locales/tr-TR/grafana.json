@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Sabit değer"
       },
-      "label": "Skaler (Scalar)",
+      "label-field": "",
       "label-limit": "Sınırlama",
       "label-value": "Değer",
       "noOptionsMessage-no-fields-found": "Hiçbir alan bulunamadı",
@@ -12490,6 +12490,9 @@
       "subtitle": "Bir uyarının devreye girip girmeyeceğini belirleyen kurallar",
       "title": "Uyarı kuralları"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Bir uyarı örneği tetiklendiğinde, iletişim noktalarınızın nasıl bilgilendirileceğini seçin.",
       "title": "İletişim noktaları"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Keşfet"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Gerçek kullanıcı izleme içgörüleri elde edin",
       "title": "Ön uç"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profiller"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Seri görünürlüğü"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Erişilebilir",
         "label-dash": "Çizgi",

@@ -104,12 +104,10 @@ func TestIntegrationQueryCacheConcurrentPutSameKeyIsHarmless(t *testing.T) {
 	// ON CONFLICT DO NOTHING must collapse racing inserts to one row.
 	var wg sync.WaitGroup
 	for i := 0; i < 8; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := cache.Put(ctx, ns, testModel, hash, makeEmbedding(1, 0))
 			assert.NoError(t, err)
-		}()
+		})
 	}
 	wg.Wait()
 
