@@ -73,7 +73,7 @@ export function isNonSelectableVirtualFolder(uid: string): boolean {
 export function starredFoldersEnabled(): boolean {
   return (
     getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaStarredFolders, false) &&
-    getFeatureFlagClient().getBooleanValue('foldersAppPlatformAPI', false)
+    getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)
   );
 }
 

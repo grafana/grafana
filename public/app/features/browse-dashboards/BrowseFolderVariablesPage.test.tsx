@@ -57,7 +57,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+    // foldersAppPlatformAPI defaults to on, but this suite's folder handlers are the legacy ones.
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true, foldersAppPlatformAPI: false });
     server.use(
       http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () => {
         return HttpResponse.json({

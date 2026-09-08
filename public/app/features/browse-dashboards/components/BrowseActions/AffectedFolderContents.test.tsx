@@ -1,9 +1,9 @@
 import { HttpResponse } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { customFolderCountsHandler, getFolderFixtures } from '@grafana/test-utils/unstable';
+import { customFolderCountsHandler, getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
@@ -24,6 +24,18 @@ const folderASelection = {
 };
 
 describe('AffectedFolderContents', () => {
+  // foldersAppPlatformAPI defaults to on, but the counts handler here is the legacy one.
+  beforeEach(() => {
+    setTestFlags({ foldersAppPlatformAPI: false });
+  });
+
+  // The act wrap is needed because resetting fires OpenFeature events into the mounted component.
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   it('always renders the default message', () => {
     render(<AffectedFolderContents selectedItems={emptySelection} defaultMessage={<p>Default body</p>} />);
 

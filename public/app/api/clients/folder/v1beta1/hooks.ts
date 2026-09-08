@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
@@ -6,7 +5,7 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
@@ -140,7 +139,7 @@ export async function getFolderByUidFacade(uid: string) {
   // folder for either rather than fetching a folder resource that doesn't exist.
   const isRoot = isRootFolderUID(uid);
   const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
-  const shouldUseAppPlatformAPI = getFeatureFlagClient().getBooleanValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true);
 
   if (shouldUseAppPlatformAPI) {
     // Virtual folders aren't real resources, so the folder object comes from a
@@ -206,7 +205,7 @@ export async function getFolderByUidFacade(uid: string) {
  * @param uid
  */
 export function useGetFolderQueryFacade(uid?: string) {
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   // "" / undefined and "general" both mean the synthetic root folder —
   // neither is a real folder resource.
   const isRoot = isRootFolderUID(uid);
@@ -294,7 +293,7 @@ export function useDeleteFolderMutationFacade() {
   const [deleteFolderLegacy] = useDeleteFolderMutationLegacy();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
   const isBackendSupport = false;
@@ -322,7 +321,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
   const [deleteFolder] = useDeleteFolderMutation();
   const dispatch = useDispatch();
   const refresh = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
   const isBackendSupport = false;
@@ -363,7 +362,7 @@ export function useMoveMultipleFoldersMutationFacade() {
   const [updateFolder, updateFolderData] = useUpdateFolderMutation();
   const dispatch = useDispatch();
   const refetch = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   if (!shouldUseAppPlatformAPI) {
     return moveFoldersLegacyResult;
@@ -406,7 +405,7 @@ export function useCreateFolder() {
   const [createFolder, result] = useCreateFolderMutation();
   const legacyHook = useLegacyNewFolderMutation();
   const refresh = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   if (!shouldUseAppPlatformAPI) {
     return legacyHook;
@@ -479,7 +478,7 @@ export function useUpdateFolder() {
   const [updateFolder, result] = useUpdateFolderMutation();
   const legacyHook = useLegacySaveFolderMutation();
   const refresh = useRefreshFolders();
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   if (!shouldUseAppPlatformAPI) {
     return legacyHook;
@@ -520,7 +519,7 @@ export function useMoveFolderMutationFacade() {
   const moveFolderResult = useMoveFolderMutationLegacy();
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
   if (!shouldUseAppPlatformAPI) {
     return moveFolderResult;
@@ -572,7 +571,7 @@ export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSel
 
   // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
   // nested folders but both are good enough to report whether folder is empty or not.
-  const shouldUseAppPlatformAPI = useBooleanFlagValue('foldersAppPlatformAPI', false);
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {
