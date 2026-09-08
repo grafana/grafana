@@ -76,6 +76,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'alert-home':
       return t('nav.alerting-home.title', 'Home');
     case 'alert-list':
+    case 'alert-rules':
       return t('nav.alerting-list.title', 'Alert rules');
     case 'alert-list-legacy':
       return t('nav.alert-list-legacy.title', 'Alert rules');
@@ -83,6 +84,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-receivers.title', 'Contact points');
     case 'am-routes':
       return t('nav.alerting-am-routes.title', 'Notification policies');
+    case 'notification-config':
+      return t('alerting.alert.notification-configuration.group-title', 'Notification configuration');
     case 'channels':
       return t('nav.alerting-channels.title', 'Notification channels');
     case 'silences':
@@ -93,6 +96,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-alerts.title', 'Alert activity');
     case 'alert-activity':
       return t('nav.alerting-activity.title', 'Alert activity');
+    case 'alerts-history':
+      return t('alerting.use-page-nav.page-nav.text.history', 'History');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
     case 'alerts-history':
@@ -125,6 +130,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.teams.title', 'Teams');
     case 'plugins':
       return t('nav.plugins.title', 'Plugins');
+    case 'extensions':
+      return t('nav.extensions.title', 'Extensions');
     case 'org-settings':
       return t('nav.org-settings.title', 'Default preferences');
     case 'serviceaccounts':
@@ -143,10 +150,14 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.storage.title', 'Storage');
     case 'migrate-to-cloud':
       return t('nav.migrate-to-cloud.title', 'Migrate to Grafana Cloud');
+    case 'provisioning':
+      return t('nav.provisioning.title', 'Provisioning');
     case 'upgrading':
       return t('nav.upgrading.title', 'Stats and license');
     case 'monitoring':
       return t('nav.monitoring.title', 'Observability');
+    case 'observability':
+      return t('nav.observability.title', 'Observability');
     case 'infrastructure':
       return t('nav.infrastructure.title', 'Infrastructure');
     case 'frontend':
@@ -257,6 +268,7 @@ export function getNavSubTitle(navId: string | undefined) {
         'Manage Alertmanager configurations and enable receiving Grafana-managed alerts'
       );
     case 'alert-list':
+    case 'alert-rules':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':
       return t(
@@ -265,6 +277,11 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'am-routes':
       return t('nav.alerting-am-routes.subtitle', 'Determine how alerts are routed to contact points');
+    case 'notification-config':
+      return t(
+        'nav.alerting-notification-config.subtitle',
+        'Manage contact points, notification policies, templates, and time intervals'
+      );
     case 'silences':
       return t('nav.alerting-silences.subtitle', 'Stop notifications from one or more alerting rules');
     case 'groups':
@@ -292,6 +309,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.teams.subtitle', 'Groups of users that have common dashboard and permission needs');
     case 'plugins':
       return t('nav.plugins.subtitle', 'Extend the Grafana experience with plugins');
+    case 'extensions':
+      return t('nav.extensions.subtitle', 'Extend the UI of plugins and Grafana');
     case 'org-settings':
       return t('nav.org-settings.subtitle', 'Manage preferences across an organization');
     case 'serviceaccounts':
@@ -306,6 +325,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.storage.subtitle', 'Manage file storage');
     case 'migrate-to-cloud':
       return t('nav.migrate-to-cloud.subtitle', 'Copy resources from your self-managed installation to a cloud stack');
+    case 'provisioning':
+      return t('nav.provisioning.subtitle', 'View and manage your provisioning connections');
     case 'support-bundles':
       return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':
@@ -323,6 +344,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':
       return t('nav.monitoring.subtitle', 'Out-of-the-box observability solutions');
+    case 'observability':
+      return t(
+        'nav.observability.subtitle',
+        "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite"
+      );
     case 'infrastructure':
       return t('nav.infrastructure.subtitle', "Understand your infrastructure's health");
     case 'frontend':

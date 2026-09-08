@@ -2131,6 +2131,32 @@
     },
     {
       "metadata": {
+        "name": "datasources.teamHttpHeadersFromAppPlatformMT",
+        "resourceVersion": "1788332992874",
+        "creationTimestamp": "2026-09-02T07:09:52Z"
+      },
+      "spec": {
+        "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.teamHttpHeadersFromAppPlatformST",
+        "resourceVersion": "1788334529644",
+        "creationTimestamp": "2026-09-02T07:35:29Z"
+      },
+      "spec": {
+        "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.useNewStackInfoToSettingsCache",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3184,6 +3210,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.multiTenantUserPermissions",
+        "resourceVersion": "1788454129908",
+        "creationTimestamp": "2026-09-03T16:48:49Z"
+      },
+      "spec": {
+        "description": "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1781775898347",
         "creationTimestamp": "2026-06-18T09:44:58Z"
@@ -3736,7 +3777,8 @@
       "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-17T10:54:39Z"
+        "creationTimestamp": "2024-09-17T10:54:39Z",
+        "deletionTimestamp": "2026-08-24T15:04:10Z"
       },
       "spec": {
         "description": "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
@@ -3749,7 +3791,8 @@
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-09T17:02:49Z"
+        "creationTimestamp": "2025-01-09T17:02:49Z",
+        "deletionTimestamp": "2026-09-07T08:53:22Z"
       },
       "spec": {
         "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
@@ -6563,7 +6606,8 @@
       "metadata": {
         "name": "teamHttpHeadersFromAppPlatformMT",
         "resourceVersion": "1787269128937",
-        "creationTimestamp": "2026-08-20T23:38:48Z"
+        "creationTimestamp": "2026-08-20T23:38:48Z",
+        "deletionTimestamp": "2026-09-02T07:09:52Z"
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
@@ -6576,7 +6620,8 @@
       "metadata": {
         "name": "teamHttpHeadersFromAppPlatformST",
         "resourceVersion": "1787269128937",
-        "creationTimestamp": "2026-08-20T23:38:48Z"
+        "creationTimestamp": "2026-08-20T23:38:48Z",
+        "deletionTimestamp": "2026-09-02T07:35:29Z"
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",

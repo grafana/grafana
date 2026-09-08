@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
-      "label": "Scalar",
+      "label-field": "Field",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -9125,6 +9125,7 @@
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
+      "error-indicator": "Trace has errors",
       "errors": "Errors",
       "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
@@ -9143,10 +9144,12 @@
       "share-group": "Share",
       "share-tooltip": "Share and feedback",
       "start-time": "Start time",
+      "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": "Trace has client errors"
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -12602,6 +12605,10 @@
     "explore": {
       "title": "Explore"
     },
+    "extensions": {
+      "subtitle": "Extend the UI of plugins and Grafana",
+      "title": "Extensions"
+    },
     "frontend": {
       "subtitle": "Gain real user monitoring insights",
       "title": "Frontend"
@@ -12682,6 +12689,10 @@
       "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
       "title": "Notebooks"
     },
+    "observability": {
+      "subtitle": "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
+      "title": "Observability"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12712,6 +12723,10 @@
     },
     "profiles": {
       "title": "Profiles"
+    },
+    "provisioning": {
+      "subtitle": "View and manage your provisioning connections",
+      "title": "Provisioning"
     },
     "recently-deleted": {
       "subtitle": "Deleted dashboards are kept for up to 12 months.",
@@ -16781,6 +16796,8 @@
       "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
+      "description-dash-pattern": "Comma or space separated lengths. Example: 10, 20",
+      "label-dash-pattern": "Dash pattern",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Dash",
