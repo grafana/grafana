@@ -1,8 +1,8 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { type BackendSrv, config, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { resetProbeCandidates } from './probeUtils';
+import { resetProbeHealth } from './probeUtils';
 import { labelRecencyProbe, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
 
 jest.mock('@grafana/runtime', () => ({
@@ -37,7 +37,7 @@ beforeEach(() => {
   mockList.mockReset();
   mockInstance.mockReset();
   mockProxyGet.mockReset();
-  resetProbeCandidates();
+  resetProbeHealth();
   // Health checks share getBackendSrv().get: answer /health OK by default so candidates survive the filter.
   mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
@@ -155,6 +155,20 @@ describe('labelRecencyProbe', () => {
 });
 
 describe('prometheusHasRecentMetrics', () => {
+  it('asks for one name more than it excludes over the shared lookback', async () => {
+    const getResource = jest.fn().mockResolvedValue({ data: ['ALERTS', 'ALERTS_FOR_STATE', 'GRAFANA_ALERTS', 'up'] });
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+
+    await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
+
+    const end = Math.floor(Date.now() / 1000);
+    expect(getResource).toHaveBeenCalledWith(
+      'api/v1/label/__name__/values',
+      { start: end - 24 * 3600, end, limit: 4 },
+      { showErrorAlert: false }
+    );
+  });
+
   it('ignores alert-state series but counts real telemetry', async () => {
     const getResource = jest.fn().mockResolvedValue({ data: ['ALERTS', 'ALERTS_FOR_STATE', 'GRAFANA_ALERTS'] });
     mockInstance.mockResolvedValue(backendInstance(getResource));
@@ -163,6 +177,25 @@ describe('prometheusHasRecentMetrics', () => {
 
     getResource.mockResolvedValue({ data: ['ALERTS', 'node_uname_info'] });
     await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
+  });
+
+  it('excludes the configured Grafana alert-state metric instead of the default name', async () => {
+    const original = config.unifiedAlerting.stateHistory;
+    config.unifiedAlerting.stateHistory = { prometheusMetricName: 'MY_ALERTS' };
+    try {
+      const getResource = jest.fn().mockResolvedValue({ data: ['MY_ALERTS'] });
+      mockInstance.mockResolvedValue(backendInstance(getResource));
+
+      await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(false);
+      expect(getResource).toHaveBeenCalledWith('api/v1/label/__name__/values', expect.objectContaining({ limit: 4 }), {
+        showErrorAlert: false,
+      });
+
+      getResource.mockResolvedValue({ data: ['MY_ALERTS', 'up'] });
+      await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
+    } finally {
+      config.unifiedAlerting.stateHistory = original;
+    }
   });
 
   it('counts metric names that collide with Object.prototype properties', async () => {

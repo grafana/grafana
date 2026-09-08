@@ -3,30 +3,29 @@ import { css } from '@emotion/css';
 import { t } from '@grafana/i18n';
 import { EmptyState, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { SOLUTION_IDS } from '../solutions/constants';
-
 import { OverviewSectionHeading, type OverviewSectionHeadingVariant } from './OverviewSectionHeading';
 import { AvailableSolutionCard, SolutionCard, SolutionCardSkeleton } from './SolutionCard';
 import { groupOverviewCards, type OverviewCard } from './solutionGroups';
 
-interface SolutionsProps {
-  emptyMessage: string;
-  loading: boolean;
-  cards: OverviewCard[];
+export function SolutionGridSkeleton({ count }: { count: number }) {
+  return (
+    <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
+      {Array.from({ length: count }).map((_, index) => (
+        <SolutionCardSkeleton key={index} />
+      ))}
+    </Grid>
+  );
 }
 
-export function Solutions({ emptyMessage, loading, cards }: SolutionsProps) {
-  if (loading) {
-    return (
-      <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
-        {Array.from({ length: SOLUTION_IDS.length }).map((_, index) => (
-          <SolutionCardSkeleton key={index} />
-        ))}
-      </Grid>
-    );
-  }
+interface SolutionsProps {
+  emptyMessage: string;
+  cards: OverviewCard[];
+  /** Solutions still resolving; each holds a card-sized skeleton below the groups. */
+  pendingCount: number;
+}
 
-  if (cards.length === 0) {
+export function Solutions({ emptyMessage, cards, pendingCount }: SolutionsProps) {
+  if (cards.length === 0 && pendingCount === 0) {
     return <EmptyState hideImage variant="not-found" message={emptyMessage} />;
   }
 
@@ -45,6 +44,7 @@ export function Solutions({ emptyMessage, loading, cards }: SolutionsProps) {
         cards={groups.available}
         variant="default"
       />
+      {pendingCount > 0 && <SolutionGridSkeleton count={pendingCount} />}
     </Stack>
   );
 }

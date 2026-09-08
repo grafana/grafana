@@ -86,7 +86,7 @@ afterEach(() => {
 });
 
 describe('fetchLogsActivity', () => {
-  it('sums index volume, counts sources, and builds the ingest series over the right windows', async () => {
+  it('sums index volume and builds the ingest series over the right windows', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'labels') {
         return { data: ['filename', 'job', 'service_name'] };
@@ -124,9 +124,6 @@ describe('fetchLogsActivity', () => {
           },
         };
       }
-      if (path === 'label/service_name/values') {
-        return { data: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] };
-      }
       throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
@@ -134,7 +131,6 @@ describe('fetchLogsActivity', () => {
     const activity = await fetchLogsActivity(loki);
 
     expect(activity.bytes).toBe(47_000_000_000);
-    expect(activity.sources).toBe(8);
     expect(activity.series?.x?.values).toEqual([1_000_000, 1_060_000]);
     expect(activity.series?.y.values).toEqual([15, 35]);
 
@@ -147,7 +143,8 @@ describe('fetchLogsActivity', () => {
       { query: '{service_name=~".+"}', start: statsStart, end, aggregateBy: 'labels', targetLabels: 'service_name' },
       silent
     );
-    expect(getResource).toHaveBeenCalledWith('label/service_name/values', { start: statsStart, end }, silent);
+    // The distinct-source count needed label/<label>/values over 7d (megabytes, tens of seconds on big tenants).
+    expect(getResource).not.toHaveBeenCalledWith('label/service_name/values', expect.anything(), expect.anything());
     expect(getResource).toHaveBeenCalledWith(
       'index/volume_range',
       {
@@ -173,12 +170,16 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume_range') {
         return { data: { result: [] } };
       }
-      return { data: ['a'] };
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 1, series: null });
-    expect(getResource).toHaveBeenCalledWith('label/job/values', expect.anything(), expect.anything());
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
+    expect(getResource).toHaveBeenCalledWith(
+      'index/volume',
+      expect.objectContaining({ query: '{job=~".+"}', targetLabels: 'job' }),
+      expect.anything()
+    );
   });
 
   it('reports null bytes when the volume result is empty', async () => {
@@ -189,33 +190,51 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume' || path === 'index/volume_range') {
         return { data: { result: [] } };
       }
-      return { data: ['a'] };
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 1, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
   });
 
-  it('keeps the other fields when one endpoint is unavailable', async () => {
+  it('keeps the other field when one endpoint is unavailable', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'labels') {
         return { data: ['job'] };
       }
-      if (path === 'index/volume' || path === 'index/volume_range') {
+      if (path === 'index/volume') {
         throw new Error('volume disabled');
       }
-      return { data: ['a', 'b'] };
+      if (path === 'index/volume_range') {
+        return {
+          data: {
+            result: [
+              {
+                metric: {},
+                values: [
+                  [1_000, '10'],
+                  [1_060, '20'],
+                ],
+              },
+            ],
+          },
+        };
+      }
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 2, series: null });
+    const activity = await fetchLogsActivity(loki);
+
+    expect(activity.bytes).toBeNull();
+    expect(activity.series?.y.values).toEqual([10, 20]);
   });
 
   it('reports nulls when no usable label exists', async () => {
     const getResource = jest.fn(async () => ({ data: ['__stream_shard__'] }));
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: null, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledTimes(1);
   });
 
@@ -223,7 +242,7 @@ describe('fetchLogsActivity', () => {
     const getResource = jest.fn().mockRejectedValue(new Error('labels 403'));
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: null, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledTimes(1);
   });
 
@@ -235,7 +254,7 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume_range') {
         return { data: { result: [{ metric: {}, values: [[1_000, '10']] }] } };
       }
-      return { data: [] };
+      return { data: { result: [] } };
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
@@ -376,13 +395,10 @@ describe('metrics telemetry', () => {
   const scalarFrame = (refId: string, value: number, labels?: Record<string, string>) =>
     createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values: [value], labels }] });
 
-  it('reads cardinality, name count, hosts, and the series sparkline', async () => {
+  it('reads cardinality, hosts, and the series sparkline without fetching the name list', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/cardinality/label_values') {
         return { series_count_total: 4_200_000 };
-      }
-      if (path === 'api/v1/label/__name__/values') {
-        return { data: ['up', 'node_cpu_seconds_total', 'node_uname_info'] };
       }
       throw new Error(`unexpected path ${path}`);
     });
@@ -401,21 +417,17 @@ describe('metrics telemetry', () => {
     const activity = await fetchMetricsActivity(prom);
 
     expect(activity.series).toBe(4_200_000);
-    expect(activity.names).toBe(3);
+    expect(activity.names).toBeNull();
     expect(activity.hosts).toBe(12);
     expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
 
-    const end = Math.floor(Date.now() / 1000);
     expect(getResource).toHaveBeenCalledWith(
       'api/v1/cardinality/label_values',
       { 'label_names[]': '__name__', count_method: 'active' },
       { showErrorAlert: false }
     );
-    expect(getResource).toHaveBeenCalledWith(
-      'api/v1/label/__name__/values',
-      { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
-      { showErrorAlert: false }
-    );
+    // The 7d name list runs to megabytes on large tenants; a series count makes it redundant.
+    expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
       'series',
       'sum(prometheus_tsdb_head_series)',
@@ -466,9 +478,6 @@ describe('metrics telemetry', () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/cardinality/label_values') {
         return { series_count_total: 4_200_000 };
-      }
-      if (path === 'api/v1/label/__name__/values') {
-        return { data: ['up'] };
       }
       throw new Error(`unexpected path ${path}`);
     });
@@ -529,6 +538,8 @@ describe('metrics telemetry', () => {
       { uid: 'grafanacloud-usage', type: 'prometheus' }
     );
     expect(activity.series).toBe(9_900_000);
+    expect(activity.names).toBeNull();
+    expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
     expect(activity.dataPointsPerMinute).toBe(5_160_000);
     expect(activity.seriesSparkline?.y.values).toEqual([30, 40]);
   });
@@ -694,14 +705,15 @@ describe('metrics telemetry', () => {
       if (path === 'api/v1/status/tsdb') {
         return { data: { headStats: { numSeries: 987 } } };
       }
-      return { data: ['up'] };
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ series: 987, names: 1 });
+    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ series: 987, names: null });
+    expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
   });
 
-  it('keeps the name count when both active-series sources fail', async () => {
+  it('counts metric names over the stats window when both active-series sources fail', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/label/__name__/values') {
         return { data: ['up', 'process_cpu_seconds_total'] };
@@ -709,11 +721,37 @@ describe('metrics telemetry', () => {
       throw new Error('unsupported');
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    const end = Math.floor(Date.now() / 1000);
 
     const promise = fetchMetricsActivity(prom);
     await jest.advanceTimersByTimeAsync(10_000);
 
     await expect(promise).resolves.toMatchObject({ series: null, names: 2 });
+    expect(getResource).toHaveBeenCalledWith(
+      'api/v1/label/__name__/values',
+      { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
+      { showErrorAlert: false }
+    );
+  });
+
+  it('starts the name fallback as soon as the series sources settle, before the sparkline does', async () => {
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/label/__name__/values') {
+        return { data: ['up'] };
+      }
+      throw new Error('unsupported');
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunRangeQuery.mockReturnValue(new Promise(() => {}));
+    let settled = false;
+
+    void fetchMetricsActivity(prom).finally(() => {
+      settled = true;
+    });
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(getResource).toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
+    expect(settled).toBe(false);
   });
 
   it('reports no disk pressure when nobody is above threshold', async () => {

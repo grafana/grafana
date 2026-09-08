@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -11,12 +10,12 @@ import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, us
 import { useStoredString } from 'app/core/hooks/useStored';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution } from '../solutions/types';
 
 import { GetStarted } from './GetStarted';
-import { Solutions } from './Solutions';
-import { groupOverviewCards, resolveOverviewCards } from './solutionGroups';
+import { SolutionGridSkeleton, Solutions } from './Solutions';
+import { groupOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
+import { type OverviewCards } from './useOverviewCards';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
 
@@ -31,15 +30,15 @@ interface Option {
 }
 
 interface OverviewProps {
-  solutions: Solution[];
+  placement: OverviewCards;
 }
 
-export function Overview({ solutions }: OverviewProps) {
+export function Overview({ placement }: OverviewProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const guides = useGuides();
-  const { value: cards, loading: cardsLoading } = useAsync(() => resolveOverviewCards(solutions), [solutions]);
-  const groups = useMemo(() => groupOverviewCards(cards ?? []), [cards]);
+  const { cards, pending } = placement;
+  const groups = useMemo(() => groupOverviewCards(cards), [cards]);
 
   const options = useMemo<Option[]>(
     () => [
@@ -48,8 +47,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.all', 'All solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
-            cards={cards ?? []}
+            cards={cards}
+            pendingCount={pending.length}
             emptyMessage={t('home.overview.empty.all', 'No solutions were found.')}
           />
         ),
@@ -59,8 +58,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.attention', 'Needs attention'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.attention}
+            pendingCount={pending.length}
             emptyMessage={t('home.overview.empty.attention', 'No solutions need attention.')}
           />
         ),
@@ -70,8 +69,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.enabled', 'Enabled solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.enabled}
+            pendingCount={pending.length}
             emptyMessage={t('home.overview.empty.enabled', 'No enabled solutions with recent activity were found.')}
           />
         ),
@@ -81,8 +80,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.available', 'Available solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.available}
+            pendingCount={pending.length}
             emptyMessage={t('home.overview.empty.available', 'No available solutions to show yet.')}
           />
         ),
@@ -100,23 +99,24 @@ export function Overview({ solutions }: OverviewProps) {
           ]
         : []),
     ],
-    [cards, cardsLoading, groups, guides]
+    [cards, pending, groups, guides]
   );
-  // Empty instances onboard through guides: with no live solution, an unset preference defaults
-  // to Get started instead of All solutions. An explicit pick always wins, and once a solution
-  // goes live the unset default returns to All solutions.
-  const settledWithoutLiveSolutions = !cardsLoading && !!cards && cards.every((card) => card.kind !== 'live');
-  const showGuidesByDefault =
-    settledWithoutLiveSolutions && options.some((option) => option.value === GET_STARTED_OPTION_VALUE);
-  const [stored, setStored] = useStoredString(
-    HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY,
-    showGuidesByDefault ? GET_STARTED_OPTION_VALUE : options[0].value
-  );
-  const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
+  const settled = pending.length === 0;
+  const anyLive = cards.some((card) => card.kind === 'live');
+  // Same condition that adds the Get started option to `options`.
+  const guidesOffered = !guides || guides.length > 0;
+  // The unset preference resolves to All solutions once any solution is live, to Get started on a
+  // settled instance with no live solution and guides to show, and is unknown while a live card
+  // could still arrive — showing offers then would flip the view in front of the user.
+  const defaultView =
+    anyLive || (settled && !guidesOffered) ? options[0].value : settled ? GET_STARTED_OPTION_VALUE : undefined;
+  const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
+  const view = storedRaw || defaultView;
+  const option = view === undefined ? undefined : (options.find((o) => o.value === view) ?? options[0]);
 
   // The unset default is computed from settled cards and guides; keep the filter hidden until
   // then so its label never flips (e.g. All solutions → Get started) in front of the user.
-  const optionsSettled = !cardsLoading && guides !== undefined;
+  const optionsSettled = settled && guides !== undefined;
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -169,13 +169,13 @@ export function Overview({ solutions }: OverviewProps) {
                   solution: value,
                 });
               }}
-              active={option.value === value}
+              active={option?.value === value}
             />
           </Fragment>
         ))}
       </Menu>
     ),
-    [options, option.value, setStored, theme, styles]
+    [options, option?.value, setStored, theme, styles]
   );
   const [open, setOpen] = useState(false);
 
@@ -186,7 +186,7 @@ export function Overview({ solutions }: OverviewProps) {
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>
         </Text>
 
-        {optionsSettled ? (
+        {optionsSettled && option ? (
           <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
             <Button variant="secondary" size="md">
               <Stack direction="row" alignItems="center" columnGap={1}>
@@ -210,7 +210,7 @@ export function Overview({ solutions }: OverviewProps) {
         )}
       </Stack>
 
-      {option.content}
+      {option ? option.content : <SolutionGridSkeleton count={cards.length + pending.length} />}
     </Stack>
   );
 }

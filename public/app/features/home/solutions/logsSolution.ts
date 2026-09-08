@@ -52,14 +52,7 @@ export function logsSolution(): Solution {
       }
       return {
         primary: formattedValueToString(getValueFormat('decbytes')(logs.bytes)),
-        secondary:
-          logs.sources != null
-            ? t('home.solutions.logs.stats-sources', '', {
-                count: logs.sources,
-                defaultValue_one: 'ingested · 7d · ~{{count}} source',
-                defaultValue_other: 'ingested · 7d · ~{{count}} sources',
-              })
-            : t('home.solutions.logs.stats', 'ingested · 7d'),
+        secondary: t('home.solutions.logs.stats', 'ingested · 7d'),
       };
     },
     sparkline: async () => {

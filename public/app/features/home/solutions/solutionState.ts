@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
-import { withTimeout } from './probeUtils';
+import { SIGNAL_BUDGET_MS, withTimeout } from './probeUtils';
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
 
@@ -21,12 +21,10 @@ export interface SignalDetection {
   datasource: DataSourceInstanceListItem | null;
 }
 
-// Hard ceiling per signal; one parallel scan (3s health filter + 10s probes) settles well inside it.
-const SIGNAL_BUDGET_MS = 30_000;
-
 /**
- * A clean empty probe is inactive. Failures and timeouts are unknown and never reject. Callers
- * memoize detection so each solution scans once per homepage visit.
+ * A clean empty probe is inactive. Failures and timeouts are unknown and never reject. A batched
+ * scan (see PROBE_BATCH_SIZE) settles inside the budget by construction. Callers memoize
+ * detection so each solution scans once per homepage visit.
  */
 export async function detectSignal(probe: () => Promise<DataSourceInstanceListItem | null>): Promise<SignalDetection> {
   try {

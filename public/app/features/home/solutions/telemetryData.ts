@@ -30,7 +30,6 @@ const DETAIL_QUERY_TIMEOUT_MS = 30_000;
 
 export interface LogsActivity {
   bytes: number | null;
-  sources: number | null;
   series: FieldSparkline | null;
 }
 
@@ -79,11 +78,11 @@ async function resolveLogsLabel(instance: DataSourceWithBackend, start: number, 
 }
 
 /**
- * Ingested bytes and distinct sources over the stats window plus the 24h ingest-volume
- * sparkline, all riding Loki's index (cheap even over 7d). Each field fails soft to null.
+ * Ingested bytes over the stats window plus the 24h ingest-volume sparkline, both riding Loki's
+ * index (cheap even over 7d). Each field fails soft to null.
  */
 export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<LogsActivity> {
-  const empty: LogsActivity = { bytes: null, sources: null, series: null };
+  const empty: LogsActivity = { bytes: null, series: null };
   const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
     return empty;
@@ -97,14 +96,10 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   const query = `{${label}=~".+"}`;
   // aggregateBy=labels totals by label NAME, not value — one series; Loki's series limit cannot truncate it.
   const aggregate = { aggregateBy: 'labels', targetLabels: label };
-  const [volume, values, volumeRange] = await Promise.all([
+  const [volume, volumeRange] = await Promise.all([
     getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }).catch(
       () => null
     ),
-    getResource<{ data?: unknown }>(instance, `label/${encodeURIComponent(label)}/values`, {
-      start: statsStart,
-      end,
-    }).catch(() => null),
     getResource<LokiVolumeRangeResponse>(instance, 'index/volume_range', {
       query,
       start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
@@ -126,7 +121,6 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
       Array.isArray(volumes) && volumes.length > 0
         ? volumes.reduce((total, entry) => total + (Number(entry.value?.[1]) || 0), 0)
         : null,
-    sources: Array.isArray(values?.data) ? values.data.length : null,
     series: toSparkline([...buckets.entries()], 'Ingest volume'),
   };
 }
@@ -230,7 +224,7 @@ export interface MetricsActivity {
   series: number | null;
   /** Ingest rate (stack-scoped usage metrics, else Prometheus self-monitoring). */
   dataPointsPerMinute: number | null;
-  /** Distinct metric names over the stats window (fallback primary). */
+  /** Distinct metric names over the stats window; fetched only when no series count resolved. */
   names: number | null;
   /** node_exporter host count. */
   hosts: number | null;
@@ -380,9 +374,9 @@ async function resolveUsageQueries(): Promise<UsageQueries | null> {
 }
 
 /**
- * Active-series count, metric-name count, node_exporter host count, and the 24h active-series
- * sparkline. Every field fails soft to null; the card drops when nothing renderable remains.
- * Never a matcher-less series query — cardinality on large tenants is prohibitive.
+ * Active-series count (or the metric-name count when none resolves), node_exporter host count,
+ * and the 24h active-series sparkline. Every field fails soft to null; the card drops when nothing
+ * renderable remains. Never a matcher-less series query — cardinality on large tenants is prohibitive.
  */
 export async function fetchMetricsActivity(
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
@@ -402,11 +396,35 @@ export async function fetchMetricsActivity(
   // Prometheus resource calls take epoch seconds (unlike Loki's nanoseconds above).
   const end = Math.floor(Date.now() / 1000);
   const start = end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600;
-  const [series, names, seriesSparkline, healthFrames, usageStats] = await Promise.all([
-    fetchActiveSeries(instance),
-    getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end })
-      .then((res) => (Array.isArray(res?.data) ? res.data.length : null))
-      .catch(() => null),
+  const usageStats = usage
+    ? runInstantQueries(
+        { activeSeries: usage.activeSeries, dataPointsPerMinute: usage.dataPointsPerMinute },
+        usage.ds,
+        undefined,
+        // partial: readers are null-safe; one failed query keeps the rest.
+        true
+      )
+        .then((frames) => ({
+          series: readScalar(frames, 'activeSeries'),
+          dpm: readScalar(frames, 'dataPointsPerMinute'),
+        }))
+        .catch(() => null)
+    : Promise.resolve(null);
+  const activeSeries = Promise.all([fetchActiveSeries(instance), usageStats]).then(([series, stats]) =>
+    stats?.series != null && stats.series > 0 ? stats.series : series
+  );
+  // The 7d name list is only the fallback primary and runs to megabytes on large tenants: start it
+  // the moment both series sources have settled empty, independent of the other queries.
+  const names = activeSeries.then((count) =>
+    count == null
+      ? getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end })
+          .then((res) => (Array.isArray(res?.data) ? res.data.length : null))
+          .catch(() => null)
+      : null
+  );
+  const [series, nameCount, seriesSparkline, healthFrames, usageResult] = await Promise.all([
+    activeSeries,
+    names,
     usage
       ? runRangeQuery('series', usage.activeSeries, DATA_LOOKBACK_HOURS, usage.ds)
           .then((frames) => readSeries(frames, 'series'))
@@ -424,25 +442,11 @@ export async function fetchMetricsActivity(
       // partial: readers are null-safe; one failed query keeps the rest.
       true
     ).catch(() => null),
-    usage
-      ? runInstantQueries(
-          { activeSeries: usage.activeSeries, dataPointsPerMinute: usage.dataPointsPerMinute },
-          usage.ds,
-          undefined,
-          // partial: readers are null-safe; one failed query keeps the rest.
-          true
-        )
-          .then((frames) => ({
-            series: readScalar(frames, 'activeSeries'),
-            dpm: readScalar(frames, 'dataPointsPerMinute'),
-          }))
-          .catch(() => null)
-      : Promise.resolve(null),
+    usageStats,
   ]);
-  const usageSeries = usageStats?.series != null && usageStats.series > 0 ? usageStats.series : null;
   const promDpm = healthFrames ? readScalar(healthFrames, 'dpm') : null;
-  const usageDpm = usageStats?.dpm != null && usageStats.dpm > 0 ? usageStats.dpm : null;
+  const usageDpm = usageResult?.dpm != null && usageResult.dpm > 0 ? usageResult.dpm : null;
   const dataPointsPerMinute = usageDpm ?? (promDpm != null && promDpm > 0 ? promDpm : null);
   const hosts = healthFrames ? readScalar(healthFrames, 'hosts') : null;
-  return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline };
+  return { series, dataPointsPerMinute, names: nameCount, hosts, seriesSparkline };
 }

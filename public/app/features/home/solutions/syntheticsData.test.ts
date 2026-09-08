@@ -12,7 +12,7 @@ import {
 import { type BackendSrv, createQueryRunner, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { resetProbeCandidates } from './probeUtils';
+import { resetProbeHealth } from './probeUtils';
 import {
   fetchSyntheticsHealth,
   fetchSyntheticsStats,
@@ -77,7 +77,7 @@ beforeEach(() => {
   // Health pre-filter: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
-  resetProbeCandidates();
+  resetProbeHealth();
   dataByUid = {};
   probeErrorUids = new Set();
   framesByRefId = {};

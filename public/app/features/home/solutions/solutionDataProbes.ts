@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 
 import {
   findDatasourceWithData,
-  healthyProbeCandidates,
+  listProbeCandidates,
   probeProxyGet,
   PROBE_TIMEOUT_MS,
   resolveBackendInstance,
@@ -36,7 +36,7 @@ export async function probeFound(
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>,
   excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem | null> {
-  return findDatasourceWithData(await healthyProbeCandidates(type, excludeUids), hasData);
+  return findDatasourceWithData(await listProbeCandidates(type, undefined, excludeUids), hasData);
 }
 
 // Label metadata is a cheap, index-only recency check; empty within the lookback is definitive
@@ -73,17 +73,19 @@ export async function prometheusHasRecentMetrics(ds: DataSourceInstanceListItem)
   }
   const end = Math.floor(Date.now() / 1000);
   const start = end - DATA_LOOKBACK_HOURS * 3600;
+  const grafanaAlertMetric = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
+  const excluded = new Set([grafanaAlertMetric, ...ALERT_STATE_METRIC_NAMES]);
   const res = await withTimeout(
-    instance.getResource<{ data?: unknown }>('api/v1/label/__name__/values', { start, end }, { showErrorAlert: false }),
+    instance.getResource<{ data?: unknown }>(
+      'api/v1/label/__name__/values',
+      // `limit` (Prometheus ≥2.51, Mimir) caps the payload; one slot per excluded name plus one means
+      // a real name always fits. Servers ignoring `limit` return the full list as before.
+      { start, end, limit: excluded.size + 1 },
+      { showErrorAlert: false }
+    ),
     PROBE_TIMEOUT_MS
   );
-  const grafanaAlertMetric = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
-  return (
-    Array.isArray(res?.data) &&
-    res.data.some(
-      (name) => typeof name === 'string' && name !== grafanaAlertMetric && !ALERT_STATE_METRIC_NAMES.has(name)
-    )
-  );
+  return Array.isArray(res?.data) && res.data.some((name) => typeof name === 'string' && !excluded.has(name));
 }
 
 interface TempoSearchResponse {

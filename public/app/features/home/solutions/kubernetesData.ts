@@ -8,7 +8,6 @@ import { config } from '@grafana/runtime';
 
 import {
   createTtlCachedPromise,
-  filterHealthyDatasources,
   findDatasourceWithData,
   listProbeCandidates,
   MAX_PROBED_DATASOURCES,
@@ -88,11 +87,10 @@ async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid
   return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 
-// Health-filtered parallel scan over the ordered candidates; first candidate with data wins.
+// Batched, health-filtered scan over the ordered candidates; first candidate with data wins.
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
-  // Filter after the cap: broken datasources consume cap slots, same as they consumed probe slots.
-  const candidates = await filterHealthyDatasources((await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES));
-  return findDatasourceWithData(candidates, hasKubernetesNamespaces);
+  // Cap before the scan: broken datasources still consume cap slots.
+  return findDatasourceWithData((await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES), hasKubernetesNamespaces);
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, PROBE_TTL_MS);

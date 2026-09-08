@@ -2,7 +2,11 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
+import {
+  type ComponentTypeWithExtensionMeta,
+  type DataSourceInstanceListItem,
+  PluginExtensionPoints,
+} from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -17,6 +21,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
+import { type Solution } from './solutions/types';
+import { useHomepageSolutions } from './useHomepageSolutions';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -32,6 +38,11 @@ jest.mock('./analytics/main', () => ({
 
 jest.mock('app/plugins/panel/news/useNewsFeed');
 
+jest.mock('./useHomepageSolutions', () => ({
+  ...jest.requireActual('./useHomepageSolutions'),
+  useHomepageSolutions: jest.fn(),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
@@ -41,6 +52,9 @@ const useNewsFeedMock = jest.mocked(useNewsFeed);
 beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
+  jest
+    .mocked(useHomepageSolutions)
+    .mockImplementation(jest.requireActual('./useHomepageSolutions').useHomepageSolutions);
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   mockUsePluginBridge.mockReturnValue({ installed: false, loading: false });
   useNewsFeedMock.mockReturnValue({
@@ -296,6 +310,53 @@ describe('HomePage', () => {
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     // ...but the redesigned homepage ignores the HomepageTabs extension point.
     expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
+  });
+
+  it('starts card placement while extensions are still loading and hands it to the overview', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+    const datasource = jest.fn(
+      async (): Promise<DataSourceInstanceListItem> => ({
+        uid: 'p',
+        name: 'Prometheus',
+        type: 'prometheus',
+        meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
+        readOnly: false,
+        isDefault: true,
+      })
+    );
+    // Only placement reads this fact (the card reads datasource() again for its subtitle), so
+    // its call count is the number of placements run.
+    const needsAttention = jest.fn(async () => false);
+    const stub: Solution = {
+      id: 'metrics',
+      title: 'Metrics & infrastructure',
+      icon: 'chart-line',
+      signal: async () => 'active',
+      datasource,
+      needsAttention,
+      offer: async () => null,
+      stats: async () => null,
+      refinedStats: async () => null,
+      sparkline: async () => null,
+      cta: async () => null,
+      alert: async () => null,
+    };
+    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+
+    const { rerender } = render(<HomePage />);
+
+    // The whole-page skeleton is up, yet detection is already running.
+    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
+    expect(datasource).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+
+    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+    rerender(<HomePage />);
+
+    // The card renders from the placement started under the skeleton instead of re-detecting.
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    expect(needsAttention).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {

@@ -8,6 +8,7 @@ import { type Solution, type SolutionId } from '../solutions/types';
 
 import { Overview } from './Overview';
 import { useGuides } from './useGuides';
+import { useOverviewCards } from './useOverviewCards';
 
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn() }));
 jest.mock('./useGuides', () => ({ useGuides: jest.fn() }));
@@ -61,6 +62,10 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+function Harness({ solutions }: { solutions: Solution[] }) {
+  return <Overview placement={useOverviewCards(solutions)} />;
+}
+
 describe('Overview', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -70,14 +75,14 @@ describe('Overview', () => {
 
   it('hides the filter while guides load and omits Get started when they settle empty', async () => {
     mockUseGuides.mockReturnValue(undefined);
-    const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    const { user, rerender } = render(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     // Cards settled, guides still loading: the filter stays hidden so its label cannot flip.
     expect(await screen.findByText('Recommended getting started guides')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
 
     mockUseGuides.mockReturnValue([]);
-    rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+    rerender(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     await user.click(await screen.findByRole('button', { name: /all solutions/i }));
     expect(screen.queryByRole('menuitem', { name: 'Get started' })).not.toBeInTheDocument();
@@ -85,7 +90,7 @@ describe('Overview', () => {
 
   it('renders guide skeletons and then the loaded guide', async () => {
     mockUseGuides.mockReturnValue(undefined);
-    const { rerender, container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    const { rerender, container } = render(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     // Guides still loading + no live solution: the unset default already lands on Get started.
     const heading = (await screen.findByText('Recommended getting started guides')).parentElement;
@@ -94,7 +99,7 @@ describe('Overview', () => {
     expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0);
 
     mockUseGuides.mockReturnValue([guide]);
-    rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+    rerender(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: guide.title })).toBeInTheDocument();
@@ -111,7 +116,7 @@ describe('Overview', () => {
       }),
     });
 
-    render(<Overview solutions={[metrics]} />);
+    render(<Harness solutions={[metrics]} />);
 
     // An available (offer-only) solution is not "enabled": guides still win the default.
     expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
@@ -122,7 +127,7 @@ describe('Overview', () => {
     mockUseGuides.mockReturnValue([guide]);
     const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
 
-    render(<Overview solutions={[metrics]} />);
+    render(<Harness solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
@@ -132,7 +137,7 @@ describe('Overview', () => {
     mockUseGuides.mockReturnValue([guide]);
     window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
 
-    render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    render(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
@@ -141,7 +146,7 @@ describe('Overview', () => {
   it('falls back to All solutions on an empty instance when guides settle empty', async () => {
     mockUseGuides.mockReturnValue([]);
 
-    render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    render(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
@@ -152,7 +157,7 @@ describe('Overview', () => {
     const probe = deferred<DataSourceInstanceListItem | null>();
     const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
 
-    render(<Overview solutions={[metrics]} />);
+    render(<Harness solutions={[metrics]} />);
 
     // While classification is pending there is no filter to read a transient All solutions from.
     expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
@@ -172,7 +177,7 @@ describe('Overview', () => {
       mockUseGuides.mockReturnValue([guide]);
 
       const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
-      render(<Overview solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
+      render(<Harness solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
 
       await waitFor(() => expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument());
       expect(screen.getByText('Recommended getting started guides')).toBeInTheDocument();
@@ -189,7 +194,7 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
-      const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+      const { user, rerender } = render(<Harness solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
 
@@ -202,7 +207,7 @@ describe('Overview', () => {
 
       // A guides change rebuilds the options; the already-handled hash must not re-apply.
       mockUseGuides.mockReturnValue([guide]);
-      rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+      rerender(<Harness solutions={EMPTY_SOLUTIONS} />);
 
       expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
       expect(screen.queryByText('No solutions need attention.')).not.toBeInTheDocument();
@@ -218,7 +223,7 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
-      const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+      const { user } = render(<Harness solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
 
@@ -241,7 +246,7 @@ describe('Overview', () => {
   });
 
   it('clears an unrecognized anchor on an explicit filter pick', async () => {
-    const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+    const { user } = render(<Harness solutions={EMPTY_SOLUTIONS} />, {
       historyOptions: { initialEntries: ['/?orgId=1#needs-aattention'] },
     });
 
@@ -259,7 +264,7 @@ describe('Overview', () => {
   it('tracks overview filter changes from the dropdown', async () => {
     mockUseGuides.mockReturnValue([]);
 
-    const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    const { user } = render(<Harness solutions={EMPTY_SOLUTIONS} />);
 
     await screen.findByText('No solutions were found.');
     await user.click(screen.getByRole('button', { name: /all solutions/i }));
@@ -273,64 +278,142 @@ describe('Overview', () => {
     });
   });
 
-  it('does not render any card until every required classification has settled', async () => {
+  it('renders each card as soon as its own classification settles', async () => {
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
     const logsAttention = deferred<boolean>();
     const firstStats = jest.fn(async () => ({ primary: '4.2 M series' }));
-    const metricsDatasource = jest.fn(async () => datasource);
-    const logsDatasource = jest.fn(async () => datasource);
     const metrics = solution('metrics', {
       title: 'Metrics & infrastructure',
       signal: async () => 'active',
-      datasource: metricsDatasource,
+      datasource: async () => datasource,
       stats: firstStats,
     });
     const logs = solution('logs', {
       title: 'Logs',
       signal: async () => 'active',
-      datasource: logsDatasource,
+      datasource: async () => datasource,
       needsAttention: () => logsAttention.promise,
     });
 
-    const { container } = render(<Overview solutions={[metrics, logs]} />);
+    render(<Harness solutions={[metrics, logs]} />);
 
-    await waitFor(() => expect(metricsDatasource).toHaveBeenCalled());
-    expect(logsDatasource).toHaveBeenCalled();
-    expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+    // Metrics settles on its own: its card paints while the logs card still awaits its group.
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(await screen.findByText('4.2 M series')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
-    expect(firstStats).not.toHaveBeenCalled();
-    expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
 
     await act(async () => logsAttention.resolve(false));
 
-    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+    // The already-placed card was not remounted by its sibling settling.
     expect(firstStats).toHaveBeenCalledTimes(1);
   });
 
   it('returns to skeletons while a changed solution set is classified', async () => {
+    const tracesDatasource = deferred<DataSourceInstanceListItem | null>();
     const nextDatasource = deferred<DataSourceInstanceListItem | null>();
     const metrics = solution('metrics', {
       title: 'Metrics & infrastructure',
       datasource: async () => datasource,
     });
+    const traces = solution('traces', {
+      title: 'Traces',
+      datasource: () => tracesDatasource.promise,
+    });
     const logs = solution('logs', {
       title: 'Logs',
       datasource: () => nextDatasource.promise,
     });
-    const { container, rerender } = render(<Overview solutions={[metrics]} />);
+    const { rerender } = render(<Harness solutions={[metrics, traces]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
-    await waitFor(() => expect(container.querySelectorAll('.react-loading-skeleton')).toHaveLength(0));
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
 
-    rerender(<Overview solutions={[logs]} />);
+    rerender(<Harness solutions={[logs]} />);
 
-    await waitFor(() => expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0));
+    // A late answer for a solution no longer in the set must not surface.
+    await act(async () => tracesDatasource.resolve(datasource));
+
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
     expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: traces.title })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
 
     await act(async () => nextDatasource.resolve(datasource));
 
     expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: traces.title })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('keeps placed cards when the solution array is recreated with the same solutions', async () => {
+    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+    const solutions = [metrics];
+    const { rerender } = render(<Harness solutions={solutions} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+
+    rerender(<Harness solutions={[...solutions]} />);
+
+    // No flash back to a skeleton while the (memoized) facts are re-read.
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+
+    await act(async () => {});
+
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('holds offers behind skeletons until a live card settles when no view preference is stored', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    const logsDatasource = deferred<DataSourceInstanceListItem | null>();
+    const metrics = solution('metrics', {
+      title: 'Metrics & infrastructure',
+      offer: async () => ({
+        availability: 'enable',
+        description: 'Connect Prometheus-compatible metrics.',
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
+      }),
+    });
+    const logs = solution('logs', { title: 'Logs', datasource: () => logsDatasource.promise });
+    const others = (['traces', 'kubernetes', 'synthetics'] as const).map((id) =>
+      solution(id, { datasource: () => new Promise<null>(() => {}) })
+    );
+
+    render(<Harness solutions={[metrics, logs, ...others]} />);
+
+    // The offer has settled, but a live card could still arrive and flip the default to All
+    // solutions, so the grid stays on skeletons: one per solution.
+    await waitFor(() => expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(5));
+    expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+
+    await act(async () => logsDatasource.resolve(datasource));
+
+    expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(3);
+  });
+
+  it('renders a settled offer immediately when a view preference is stored', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
+    const metrics = solution('metrics', {
+      title: 'Metrics & infrastructure',
+      offer: async () => ({
+        availability: 'enable',
+        description: 'Connect Prometheus-compatible metrics.',
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
+      }),
+    });
+    const logs = solution('logs', { title: 'Logs', datasource: () => new Promise<null>(() => {}) });
+
+    render(<Harness solutions={[metrics, logs]} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
   });
 
   it('classifies a live solution as enabled when its attention query fails', async () => {
@@ -343,7 +426,7 @@ describe('Overview', () => {
       },
     });
 
-    render(<Overview solutions={[metrics]} />);
+    render(<Harness solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
@@ -360,7 +443,7 @@ describe('Overview', () => {
       },
     });
 
-    render(<Overview solutions={[metrics]} />);
+    render(<Harness solutions={[metrics]} />);
 
     expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
     expect(document.querySelectorAll('.react-loading-skeleton')).toHaveLength(0);
@@ -375,7 +458,7 @@ describe('Overview', () => {
       stats: () => stats.promise,
     });
 
-    const { container } = render(<Overview solutions={[metrics]} />);
+    const { container } = render(<Harness solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(screen.queryByText('4.2 M series')).not.toBeInTheDocument();
@@ -396,7 +479,7 @@ describe('Overview', () => {
       alert: attentionAlert,
     });
     const enabled = solution('logs', { title: 'Logs', datasource: async () => datasource, alert: enabledAlert });
-    const { user } = render(<Overview solutions={[attention, enabled]} />);
+    const { user } = render(<Harness solutions={[attention, enabled]} />);
 
     expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
@@ -420,7 +503,7 @@ describe('Overview', () => {
       alert: () => alert.promise,
     });
 
-    render(<Overview solutions={[metrics]} />);
+    render(<Harness solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
@@ -440,7 +523,7 @@ describe('Overview', () => {
         cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
       }),
     });
-    const { user } = render(<Overview solutions={[metrics]} />);
+    const { user } = render(<Harness solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /all solutions/i }));
