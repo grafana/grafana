@@ -116,7 +116,7 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 	}
 
 	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, reconcileCRDs, elector,
-		zServer.WithReconcilerState(newReconcilerState(kvstore.ProvideService(db))))
+		newReconcilerState(kvstore.ProvideService(db)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -471,7 +471,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	}
 
 	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs, elector,
-		zServer.WithReconcilerState(z.reconcilerState))
+		z.reconcilerState)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}

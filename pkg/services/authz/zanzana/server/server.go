@@ -75,52 +75,29 @@ type Server struct {
 	nsLimiterSize     int64
 }
 
-// Option configures optional server dependencies.
-type Option func(*options)
-
-type options struct {
-	reconcilerState reconciler.StateStore
-}
-
-// WithReconcilerState gives the MT reconciler somewhere to record which
-// namespaces it has reconciled, so the knowledge survives a restart. Without
-// it the reconciler can only tell that a namespace has a store, which the
-// mutation hooks create without reconciling anything.
-func WithReconcilerState(store reconciler.StateStore) Option {
-	return func(o *options) {
-		o.reconcilerState = store
-	}
-}
-
-func newOptions(opts []Option) options {
-	var o options
-	for _, apply := range opts {
-		apply(&o)
-	}
-	return o
-}
-
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, opts ...Option) (*Server, error) {
+// reconcilerState gives the MT reconciler somewhere to record which namespaces
+// it has reconciled, so the knowledge survives a restart. It is required in MT
+// reconciler mode: without it the reconciler can only tell that a namespace has
+// a store, which the mutation hooks create without reconciling anything.
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, reconcilerState reconciler.StateStore) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, elector, opts...)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs, elector, reconcilerState)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, opts ...Option) (*Server, error) {
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, reconcilerState reconciler.StateStore) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, elector, opts...)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs, elector, reconcilerState)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, opts ...Option) (*Server, error) {
-	serverOpts := newOptions(opts)
-
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource, elector leaderelection.Elector, reconcilerState reconciler.StateStore) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -216,7 +193,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 	var mtReconciler zanzana.MTReconciler
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
-		if serverOpts.reconcilerState == nil {
+		if reconcilerState == nil {
 			// Without it every namespace reconciles inline on its first
 			// authorization request after each restart, which is a large enough
 			// regression to be worth refusing to start over.
@@ -239,7 +216,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			tracer,
 			reg,
 			elector,
-			serverOpts.reconcilerState,
+			reconcilerState,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()
