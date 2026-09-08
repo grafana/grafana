@@ -11,7 +11,8 @@ import { type TimeCompareOptions, TimeCompareColorMode } from '@grafana/schema';
 import { Box, Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Switch } from '@grafana/ui';
 
 import { getQuickOptions } from '../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from '../../utils/utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
 import { TimeComparisonField } from './timeCompare/TimeComparisonField';
