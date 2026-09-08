@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,18 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const emptyLabelKeyPrefix = "__empty_label_key__"
 
 // DefaultMaxLabelValueSize is the default byte cap applied to any single
-// expanded label/annotation value written into alert state. It guards state
-// storage (AlertInstance.Labels/Annotations, persisted as DB TEXT columns)
-// and anything else reading persisted alert state, complementing the
-// sender-side clamp (pkg/services/ngalert/sender) which only protects the
-// external-Alertmanager send path. Chosen generously to avoid clamping
-// legitimate values; it exists as a safety net against pathological
-// template expansions, not as a routine content limit.
+// expanded label/annotation value written into alert state, complementing
+// the sender-side clamp (pkg/services/ngalert/sender). Chosen generously as
+// a safety net, not a routine content limit.
 const DefaultMaxLabelValueSize = 1 << 22 // 4 MiB
 
 type ruleStates struct {
@@ -239,7 +235,7 @@ func clampExpandedValues(log log.Logger, vals map[string]string, kind string, ma
 			clamped = make(map[string]string, len(vals))
 			maps.Copy(clamped, vals)
 		}
-		clamped[k] = truncateUTF8(v, maxSize)
+		clamped[k] = util.TruncateUTF8(v, maxSize)
 		log.Warn("Truncating expanded label/annotation value exceeding size cap",
 			"kind", kind, "name", k, "size", len(v), "cap", maxSize, "rule", ruleTitle, "rule_uid", ruleUID)
 		if stateMetrics != nil {
@@ -250,18 +246,6 @@ func clampExpandedValues(log log.Logger, vals map[string]string, kind string, ma
 		return clamped
 	}
 	return vals
-}
-
-// truncateUTF8 truncates s to at most n bytes without splitting a
-// multi-byte rune.
-func truncateUTF8(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	for n > 0 && !utf8.RuneStart(s[n]) {
-		n--
-	}
-	return s[:n]
 }
 
 // expand returns the expanded templates of all annotations or labels for the template data.
