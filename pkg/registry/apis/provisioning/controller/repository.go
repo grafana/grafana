@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -386,22 +387,28 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
-	logger.Info("handle repository delete")
-
-	// Emit a point-in-time deletion snapshot on every delete reconcile: the
-	// aggregate metrics below carry no repository identity, so this log line is
-	// the only way to see *which* repository is stuck terminating and for how
-	// long. A stuck repository keeps reconciling at resync cadence, so its age
-	// climbs across successive lines.
-	usage.LogRepositoryDeletionStatus(logger, obj)
 
 	// A repository should leave Terminating within seconds; a stuck one keeps
-	// re-entering handleDelete at resync cadence, so re-observing its age each
-	// time lets an alert count reconciles that still see it terminating past a
-	// threshold (e.g. > 1h).
+	// re-entering handleDelete at resync cadence. Re-observe its age each time so
+	// an alert can count reconciles that still see it terminating past a
+	// threshold (e.g. > 1h). The deletion metrics are aggregate and carry no
+	// repository identity, so the same fields are logged here to identify a
+	// specific stuck repository and which finalizers still hold it.
+	var pendingSeconds int64
 	if ts := obj.GetDeletionTimestamp(); ts != nil {
-		rc.deletionMetrics.observePending(time.Since(ts.Time))
+		age := time.Since(ts.Time)
+		rc.deletionMetrics.observePending(age)
+		if age > 0 {
+			pendingSeconds = int64(age.Seconds())
+		}
 	}
+	logger.Info("handle repository delete",
+		"pendingSeconds", pendingSeconds,
+		"finalizerCount", len(obj.Finalizers),
+		"finalizers", strings.Join(obj.Finalizers, ","),
+		"hasDeleteError", obj.Status.DeleteError != "",
+		"deleteError", obj.Status.DeleteError,
+	)
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
