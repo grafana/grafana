@@ -255,6 +255,7 @@ runs:
             - '.yarnrc.yml'
             - 'yarn.config.cjs'
           frontend_packages:
+            - 'yarn.lock'
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'
             - 'packages/**'
