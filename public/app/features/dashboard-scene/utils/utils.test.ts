@@ -477,17 +477,17 @@ describe('utils', () => {
   });
 
   describe('getDefaultVizPanel', () => {
-    it('attaches a query runner by default', () => {
+    it('attaches a query runner by default', async () => {
       setDataSourceSrv({
         getInstanceSettings: () => ({ uid: 'ds-1', type: 'prometheus' }),
       } as unknown as DataSourceSrv);
 
-      const panel = getDefaultVizPanel();
+      const panel = await getDefaultVizPanel();
 
       expect(panel.state.$data).toBeDefined();
     });
 
-    it('omits the query runner when the scene is previewing a plan', () => {
+    it('omits the query runner when the scene is previewing a plan', async () => {
       const scene = new DashboardScene({
         title: 'plan',
         meta: {},
@@ -501,12 +501,12 @@ describe('utils', () => {
         },
       });
 
-      const panel = getDefaultVizPanel(scene);
+      const panel = await getDefaultVizPanel(scene);
 
       expect(panel.state.$data).toBeUndefined();
     });
 
-    it('resolves the scene from any object inside it, so layout-level callers get the same behaviour', () => {
+    it('resolves the scene from any object inside it, so layout-level callers get the same behaviour', async () => {
       const layout = new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) });
       const scene = new DashboardScene({
         title: 'plan',
@@ -522,7 +522,7 @@ describe('utils', () => {
       });
 
       expect(findDashboardSceneFor(layout)).toBe(scene);
-      expect(getDefaultVizPanel(layout).state.$data).toBeUndefined();
+      expect((await getDefaultVizPanel(layout)).state.$data).toBeUndefined();
     });
 
     it('returns undefined rather than throwing for an object outside a dashboard scene', () => {

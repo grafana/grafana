@@ -1,7 +1,8 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -281,15 +282,16 @@ export function getDefaultPluginId(): string {
  * built without a query runner so it matches the plan's other placeholders and issues no traffic
  * against the default datasource. Attaching real queries is the build step's job, not the preview's.
  */
-export function getDefaultVizPanel(sceneObject?: SceneObject): VizPanel {
+export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<VizPanel> {
   const withQuery = !findDashboardSceneFor(sceneObject)?.isPlanning();
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
   // Only resolved when the panel is going to carry a query: a plan preview has no business
-  // touching the datasource registry just to throw the result away.
-  const datasourceSettings = withQuery ? getDataSourceSrv().getInstanceSettings(null) : undefined;
+  // touching the datasource registry just to throw the result away — and, since main made this
+  // lookup async, no business awaiting it either.
+  const datasourceSettings = withQuery ? await getDataSourceInstanceSettings(null) : undefined;
 
   return new VizPanel({
     title: newPanelTitle,
