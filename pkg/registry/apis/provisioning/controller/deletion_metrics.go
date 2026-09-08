@@ -6,10 +6,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Deletion stages, used as the "stage" label on the error counter so a
-// finalizer-processing error is distinguishable from an error stripping the
-// finalizers off the object afterwards.
+// Deletion stages, used as the "stage" label on the error counter so the
+// distinct delete-path failure points are distinguishable from one another.
 const (
+	// deletionStageBuild is the repoFactory.Build() call that constructs the
+	// repository before its finalizers can run. Its failure (e.g. missing or
+	// invalid credentials) leaves the repository stuck in Terminating.
+	deletionStageBuild = "build"
 	// deletionStageFinalizers is the finalizer.process() call that runs the
 	// registered finalizers (orphan-resource cleanup, etc.).
 	deletionStageFinalizers = "process_finalizers"

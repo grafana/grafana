@@ -260,9 +260,18 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			finalizer:     nil,
-			client:        nil,
-			statusPatcher: nil,
+			finalizer: nil,
+			client:    nil,
+			statusPatcher: func() StatusPatcher {
+				// A build failure records status.deleteError too, so a patcher
+				// must be present.
+				s := mocks.NewStatusPatcher(t)
+				s.
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					Once().
+					Return(nil)
+				return s
+			}(),
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -497,6 +506,71 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	require.ErrorContains(t, err, "remove finalizers")
 	require.Greater(t, atomic.LoadInt32(&calls), int32(1), "should retry at least once before giving up")
 	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageRemoveFinalizers))
+}
+
+// TestRepositoryController_handleDelete_BuildFailureIsMetered verifies that a
+// repoFactory.Build failure during deletion — which leaves the repository
+// terminating without ever running finalizers — is counted under the build stage
+// rather than going unmetered.
+func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, assert.AnError)
+
+	statusPatcher := mocks.NewStatusPatcher(t)
+	statusPatcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		Once().
+		Return(nil)
+
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		repoFactory:     factory,
+		statusPatcher:   statusPatcher,
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+	}
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "create repository from configuration")
+	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageBuild))
+}
+
+// TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged guards against a
+// hot-loop: re-writing the same deleteError bumps the resourceVersion, which the
+// informer turns back into a re-enqueue, so an unchanged error must not be
+// patched. A patcher with no expectations fails the test if Patch is called.
+func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T) {
+	c := &RepositoryController{statusPatcher: mocks.NewStatusPatcher(t)}
+	repo := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{DeleteError: "boom"},
+	}
+	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
+	require.NoError(t, err)
+}
+
+// TestRepositoryController_updateDeleteStatus_UsesAddOp verifies the patch uses
+// "add" (not "replace") so it creates the omitempty deleteError field on the
+// first failure, and only patches when the error actually changed.
+func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
+			return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
+		})).
+		Once().
+		Return(nil)
+	c := &RepositoryController{statusPatcher: patcher}
+	repo := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{DeleteError: "old"},
+	}
+	err := c.updateDeleteStatus(context.Background(), repo, errors.New("new"))
+	require.NoError(t, err)
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {

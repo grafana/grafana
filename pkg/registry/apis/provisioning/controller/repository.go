@@ -414,6 +414,10 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	if len(obj.Finalizers) > 0 {
 		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
+			rc.deletionMetrics.recordError(deletionStageBuild)
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
+			}
 			return fmt.Errorf("create repository from configuration: %w", err)
 		}
 
@@ -461,10 +465,21 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	// Skip the patch when the recorded error is unchanged: it bumps the
+	// resourceVersion, which the informer's UpdateFunc turns straight back into a
+	// re-enqueue, so rewriting the same deleteError on every failed pass would
+	// hot-loop the repository against the API server instead of retrying at the
+	// resync cadence.
+	if obj.Status.DeleteError == err.Error() {
+		return nil
+	}
 	logger := logging.FromContext(ctx)
 	logger.Info("updating repository status with deletion error", "error", err.Error())
+	// "add" rather than "replace": deleteError is omitempty and therefore absent
+	// before the first failure, where a "replace" on the missing path would fail.
+	// "add" creates it, and replaces it when already present.
 	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
-		"op":    "replace",
+		"op":    "add",
 		"path":  "/status/deleteError",
 		"value": err.Error(),
 	})
