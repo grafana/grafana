@@ -253,7 +253,10 @@ describe('AzureHealthModelsDatasource', () => {
     expect(response.data).toHaveLength(1);
     const frame = response.data[0];
     expect(frame.name).toBe('entity-one');
-    expect(frame.meta?.preferredVisualisationType).toBe('graph');
+    expect(frame.meta).toMatchObject({
+      preferredVisualisationType: 'graph',
+      preferredVisualisationPluginId: 'state-timeline',
+    });
     expect(frame.fields[0]).toMatchObject({
       name: 'Time',
       type: FieldType.time,

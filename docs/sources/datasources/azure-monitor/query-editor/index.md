@@ -91,7 +91,7 @@ Grafana retrieves the selected Health Model, its entities, and its relationships
 
 **Health Model Graph** returns nodes and edges for the **Node graph** panel. It shows health as a point-in-time snapshot at the end of the dashboard time range, drawing each entity coloured by its health state and connected to its dependencies.
 
-**Health Model Entity History** returns one stepwise series per entity using the entity history endpoint. Each series covers the full dashboard time range and maps health states to stable enum values: `Healthy` is `0`, `Degraded` is `1`, `Unhealthy` is `2`, `Unknown` is `3`, and `Deleted` is `4`. Grafana ranks **Time series** as the preferred visualization.
+**Health Model Entity History** returns one stepwise series per entity using the entity history endpoint. Each series covers the full dashboard time range and maps health states to stable enum values: `Healthy` is `0`, `Degraded` is `1`, `Unhealthy` is `2`, `Unknown` is `3`, and `Deleted` is `4`. Grafana ranks **State timeline** as the preferred visualization.
 
 {{< admonition type="note" >}}
 The **Health Model Entities** and **Health Model Graph** formats use the end of the dashboard time range as a point-in-time snapshot. Select **Health Model Entity History** to retrieve health-state changes across the selected range.

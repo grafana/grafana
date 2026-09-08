@@ -309,6 +309,7 @@ function entityHistoryFrame(
     refId,
     meta: {
       preferredVisualisationType: 'graph',
+      preferredVisualisationPluginId: 'state-timeline',
     },
     fields: [
       {
