@@ -142,7 +142,7 @@ func TestWriteOpenAPIInputRejectsDirectory(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, os.RemoveAll(dir)) })
 
 	target := filepath.Base(dir)
-	_, _, _, err = writeOpenAPIInput(writeOpenAPIContext(t, []string{"test-app"}), target, "")
+	_, _, _, err = writeOpenAPIInput(writeOpenAPIContext(t, []string{"test-app"}), target, "") //nolint:dogsled
 	require.ErrorContains(t, err, "is a directory; pass the manifest file inside it")
 }
 
