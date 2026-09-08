@@ -185,6 +185,86 @@ describe('alignTimeRangeCompareData', () => {
     expect(second.fields).toHaveLength(2);
   });
 
+  // Panel preparation rebuilds frame/field objects each render but passes the time values array
+  // through by reference, so an unchanged time field must not pay for a fresh shifted array.
+  describe('reuse of shifted time values (#126185)', () => {
+    const theme = createTheme();
+    const frameWithSharedTimeValues = (timeValues: number[], values: number[]) =>
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: timeValues },
+          { name: 'value', type: FieldType.number, values },
+        ],
+      });
+
+    it('reuses the shifted array across calls that share a time values array', () => {
+      const timeValues = [1000, 2000, 3000];
+      const first = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+      const second = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [4, 5, 6]), ONE_DAY_MS, theme);
+
+      // shiftTimeValues will increment time by an offset every time it is ran, so by running
+      // multiple times and having the same value, we know it is reusing the same data rather
+      // than re-calculating.
+      expect(first.fields[0].values).toEqual([86401000, 86402000, 86403000]);
+      expect(second.fields[0].values).toBe(first.fields[0].values);
+    });
+
+    it('re-shifts when the diff changes', () => {
+      const timeValues = [1000, 2000, 3000];
+      const day = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+      const week = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_WEEK_MS, theme);
+
+      expect(day.fields[0].values).toEqual([86401000, 86402000, 86403000]);
+      expect(week.fields[0].values).toEqual([604801000, 604802000, 604803000]);
+      expect(week.fields[0].values).not.toBe(day.fields[0].values);
+    });
+
+    it('re-shifts when values are appended to the same array', () => {
+      // Split/streaming query paths accumulate into the array they already handed out.
+      const timeValues = [1000, 2000];
+      const before = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2]), ONE_DAY_MS, theme);
+      expect(before.fields[0].values).toEqual([86401000, 86402000]);
+
+      timeValues.push(3000);
+      const after = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+
+      expect(after.fields[0].values).toEqual([86401000, 86402000, 86403000]);
+    });
+
+    it('re-shifts when a sliding buffer repeats the previous last timestamp', () => {
+      // A same-millisecond update can slide the buffer while leaving length and the trailing
+      // timestamp untouched, so those two signals alone would report the array as unchanged.
+      const timeValues = [1000, 2000, 3000];
+      alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+
+      timeValues.shift();
+      timeValues.push(3000);
+      const after = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [2, 3, 3]), ONE_DAY_MS, theme);
+
+      expect(after.fields[0].values).toEqual([86402000, 86403000, 86403000]);
+    });
+
+    it('re-shifts when a fixed-length buffer slides', () => {
+      const timeValues = [1000, 2000];
+      alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2]), ONE_DAY_MS, theme);
+
+      timeValues.shift();
+      timeValues.push(3000);
+      const after = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [2, 3]), ONE_DAY_MS, theme);
+
+      expect(after.fields[0].values).toEqual([86402000, 86403000]);
+    });
+
+    it('does not reuse across distinct time values arrays with equal contents', () => {
+      const first = alignTimeRangeCompareData(frameWithSharedTimeValues([1000, 2000], [1, 2]), ONE_DAY_MS, theme);
+      const second = alignTimeRangeCompareData(frameWithSharedTimeValues([1000, 2000], [1, 2]), ONE_DAY_MS, theme);
+
+      expect(first.fields[0].values).toEqual([86401000, 86402000]);
+      expect(second.fields[0].values).toEqual([86401000, 86402000]);
+      expect(second.fields[0].values).not.toBe(first.fields[0].values);
+    });
+  });
+
   // #126189 acceptance criteria — "compare is dashed, current is solid".
   // The compare frame is the only one passed through alignTimeRangeCompareData; the current-period frame
   // never gets a lineStyle, so leaving the current frame's config untouched is what keeps it solid.

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
@@ -1222,6 +1223,7 @@ func TestConnectionController_process(t *testing.T) {
 				connectionFactory: mockFactory,
 				logger:            logging.DefaultLogger,
 				resyncInterval:    5 * time.Minute,
+				tracer:            tracing.InitializeTracerForTest(),
 			}
 
 			item := &connectionQueueItem{key: tt.conn.Namespace + "/" + tt.conn.Name}
@@ -1386,6 +1388,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 				healthChecker:     mockHealthChecker,
 				statusPatcher:     mockPatcher,
 				logger:            logging.DefaultLogger,
+				tracer:            tracing.InitializeTracerForTest(),
 			}
 
 			// Process the connection

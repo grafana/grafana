@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"mime"
 	"net/http"
 	"net/url"
@@ -148,9 +149,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
 	req.Header.Set(rateLimiterHeader, rs.domain)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
-	for k, v := range headers {
-		req.Header[k] = v
-	}
+	maps.Copy(req.Header, headers)
 
 	logger.Debug("calling remote rendering service", "url", u)
 

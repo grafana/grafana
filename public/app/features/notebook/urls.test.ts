@@ -2,7 +2,7 @@ import { createBrowserHistory, createMemoryHistory } from 'history';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 
-import { notebookEditHref, notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
+import { notebookEditHref, notebookEditUrl, notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
 
 describe('notebook urls', () => {
   const originalLocationService = locationService;
@@ -50,6 +50,14 @@ describe('notebook urls', () => {
     setHistory(3);
 
     expect(notebookEditHref('nb1')).toBe('/notebooks/nb1?edit=true&orgId=3');
+  });
+
+  // Router-relative, unlike notebookEditHref: useNavigate applies the base and orgId itself, so
+  // prefixing here would double them the same way notebookViewUrl avoids it.
+  it('keeps the edit-mode route unprefixed, for router-based navigation', () => {
+    setHistory(1);
+
+    expect(notebookEditUrl('nb1')).toBe('/notebooks/nb1?edit=true');
   });
 
   it('builds an absolute share url', () => {

@@ -327,6 +327,7 @@ func AddTeamLBACRuleTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&TeamLBACRule{},
 		&TeamLBACRuleList{},
+		&GetTeamLBACRulesForSubjectRouteResponse{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},

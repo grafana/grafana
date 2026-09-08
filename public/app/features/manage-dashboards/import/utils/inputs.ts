@@ -14,9 +14,12 @@ import {
   mapDashboardLayoutSections,
   visitDashboardLayoutSections,
 } from 'app/features/dashboard/utils/visitDashboardLayoutSections';
-import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import {
+  ExportDatasourceName,
+  ExportLabel,
+  type LibraryElementExport,
+} from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
@@ -1045,7 +1048,12 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable) {
+  // adhoc and groupby variables carry the same `datasource` shape as query variables, so they
+  // need the same placeholder resolution. The v2 path already remaps all three.
+  if (
+    (variableType === 'query' || variableType === 'adhoc' || variableType === 'groupby') &&
+    'datasource' in variable
+  ) {
     const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
     if (resolved) {
       return { ...variable, datasource: resolved };

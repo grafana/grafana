@@ -35,6 +35,7 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 	readOAuthCookieMaxAge(iniFile, cfg)
 	readOAuthRefreshLockSettings(iniFile, cfg)
 	readCookieSecuritySettings(iniFile, cfg)
@@ -77,6 +78,10 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 
 func readOAuthCookieMaxAge(iniFile *ini.File, cfg *Cfg) {
 	cfg.OAuthCookieMaxAge = iniFile.Section("auth").Key("oauth_state_cookie_max_age").MustInt(600)
+}
+
+func readOAuthAllowInsecureEmailLookup(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthAllowInsecureEmailLookup = iniFile.Section("auth").Key("oauth_allow_insecure_email_lookup").MustBool(false)
 }
 
 func readOAuthRefreshLockSettings(iniFile *ini.File, cfg *Cfg) {

@@ -239,10 +239,6 @@ const (
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
 
-	// FlagCanvasExternalPlugin
-	// Load Canvas panel from an external plugin instead of the bundled core plugin
-	FlagCanvasExternalPlugin = "canvasExternalPlugin"
-
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
@@ -379,6 +375,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzUserPermissions
+	// Route user permission snapshots through the AuthZ service.
+	FlagAuthzUserPermissions = "authz.userPermissions"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -414,10 +414,6 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
-
-	// FlagImprovedExternalSessionHandling
-	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
-	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
 
 	// FlagUseSessionStorageForRedirection
 	// Use session storage for handling the redirection after login
@@ -487,10 +483,6 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagImprovedExternalSessionHandlingSAML
-	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
-
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
@@ -498,6 +490,14 @@ const (
 	// FlagTeamHttpHeadersFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformST
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformST = "datasources.teamHttpHeadersFromAppPlatformST"
+
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
@@ -794,6 +794,18 @@ const (
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
 
+	// FlagKubernetesAuthInfoApi
+	// Enables auth info APIs in the app platform
+	FlagKubernetesAuthInfoApi = "kubernetesAuthInfoApi"
+
+	// FlagKubernetesAuthInfoRedirect
+	// Redirects the requests of the auth info service to the app platform APIs
+	FlagKubernetesAuthInfoRedirect = "kubernetesAuthInfoRedirect"
+
+	// FlagApppluginsLoadAppManifest
+	// Load app manifest when loading plugin definitions
+	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -841,10 +853,6 @@ const (
 	// FlagRememberUserOrgForSso
 	// Remember the last viewed organization for users using SSO
 	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
-
-	// FlagDsAbstractionApp
-	// Registers the dsabstraction app for querying datasources via unified SQL
-	FlagDsAbstractionApp = "dsAbstractionApp"
 
 	// FlagDatasourcesApiServerEnableHealthEndpoint
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
@@ -894,10 +902,6 @@ const (
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 
-	// FlagGrafanaNewPreferencesPage
-	// Whether to use the new SharedPreferences functional component
-	FlagGrafanaNewPreferencesPage = "grafana.newPreferencesPage"
-
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
 	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
@@ -921,10 +925,6 @@ const (
 	// FlagDatasourcesUseNewStackInfoToSettingsCache
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
-
-	// FlagPreferencesRerouteLegacyAPIs
-	// Use K8s client implementation for legacy preferences API
-	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
 
 	// FlagPluginsMarketplaceLicensing
 	// Enables marketplace plugin licensing
@@ -961,6 +961,10 @@ const (
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
+
+	// FlagReportingRedirectReportSettingsToK8SApi
+	// Redirect legacy report settings API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportSettingsToK8SApi = "reporting.redirectReportSettingsToK8SApi"
 
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more

@@ -130,6 +130,19 @@ type CreateServiceAccountResult struct {
 	ServiceAccount ServiceAccount
 }
 
+type UpdateServiceAccountCommand struct {
+	UID        string
+	Name       string
+	Role       string
+	IsDisabled bool
+	OrgID      int64
+	Updated    legacysql.DBTime
+}
+
+type UpdateServiceAccountResult struct {
+	ServiceAccount ServiceAccount
+}
+
 var sqlQueryServiceAccountsTemplate = mustTemplate("service_accounts_query.sql")
 
 func newListServiceAccounts(sql *legacysql.LegacyDatabaseHelper, q *ListServiceAccountsQuery) listServiceAccountsQuery {
@@ -237,7 +250,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	cmd.OrgID = ns.OrgID
 	cmd.Email = cmd.Login
 
-	now := time.Now().UTC()
+	now := time.Now().UTC().Truncate(time.Second)
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
 	cmd.Created = legacysql.NewDBTime(now)
@@ -304,6 +317,102 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	}
 
 	return &CreateServiceAccountResult{ServiceAccount: createdSA}, nil
+}
+
+var sqlUpdateServiceAccountTemplate = mustTemplate("update_service_account.sql")
+
+func newUpdateServiceAccount(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateServiceAccountCommand) updateServiceAccountQuery {
+	return updateServiceAccountQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
+	}
+}
+
+type updateServiceAccountQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+	Command   *UpdateServiceAccountCommand
+}
+
+func (r updateServiceAccountQuery) Validate() error {
+	return nil
+}
+
+func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateServiceAccountCommand) (*UpdateServiceAccountResult, error) {
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+	cmd.OrgID = ns.OrgID
+	cmd.Updated = legacysql.NewDBTime(time.Now().UTC().Truncate(time.Second))
+
+	sql, err := s.getDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newUpdateServiceAccount(sql, &cmd)
+
+	// Resolve metadata before opening the write transaction. Reading through the
+	// store from inside the transaction would acquire a second DB connection.
+	existing, err := s.ListServiceAccounts(ctx, ns, ListServiceAccountsQuery{
+		UID:        cmd.UID,
+		Pagination: common.Pagination{Limit: 1},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil || len(existing.Items) < 1 {
+		return nil, serviceaccounts.ErrServiceAccountNotFound.Errorf("service account by uid %q", cmd.UID)
+	}
+	current := existing.Items[0]
+
+	var updatedSA ServiceAccount
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		saQuery, err := sqltemplate.Execute(sqlUpdateServiceAccountTemplate, req)
+		if err != nil {
+			return fmt.Errorf("execute service account template %q: %w", sqlUpdateServiceAccountTemplate.Name(), err)
+		}
+
+		if _, err := st.Exec(ctx, saQuery, req.GetArgs()...); err != nil {
+			return fmt.Errorf("failed to update service account: %w", err)
+		}
+
+		orgUserCmd := &UpdateOrgUserCommand{
+			OrgID:   ns.OrgID,
+			UserID:  current.ID,
+			Role:    cmd.Role,
+			Updated: cmd.Updated,
+		}
+		orgUserReq := newUpdateOrgUser(sql, orgUserCmd)
+
+		orgUserQuery, err := sqltemplate.Execute(sqlUpdateOrgUserTemplate, orgUserReq)
+		if err != nil {
+			return fmt.Errorf("execute org_user update template %q: %w", sqlUpdateOrgUserTemplate.Name(), err)
+		}
+
+		if _, err := st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...); err != nil {
+			return fmt.Errorf("failed to update org_user relationship: %w", err)
+		}
+
+		updatedSA = ServiceAccount{
+			ID:       current.ID,
+			UID:      cmd.UID,
+			Name:     cmd.Name,
+			Role:     cmd.Role,
+			Disabled: cmd.IsDisabled,
+			Created:  current.Created,
+			Updated:  cmd.Updated.Time,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateServiceAccountResult{ServiceAccount: updatedSA}, nil
 }
 
 func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {

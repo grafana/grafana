@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
@@ -67,13 +68,13 @@ func NewModule(opts Options,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
-	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
+	kvStore resourcekv.KV,
 	experimentalKV *resource.ExperimentalKVOptions, // Optional alternative KV for flagged use-cases; nil in OSS
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, experimentalKV, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, experimentalKV, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func newModuleServer(opts Options,
 	tracer tracing.Tracer,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
-	storageBackend resource.StorageBackend,
+	kvStore resourcekv.KV,
 	experimentalKV *resource.ExperimentalKVOptions,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
@@ -132,7 +133,7 @@ func newModuleServer(opts Options,
 		tracer:           tracer,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
-		storageBackend:   storageBackend,
+		kvStore:          kvStore,
 		experimentalKV:   experimentalKV,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
@@ -161,6 +162,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	kvStore          resourcekv.KV
 	experimentalKV   *resource.ExperimentalKVOptions
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
@@ -365,16 +367,15 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 			if err != nil {
 				return nil, err
 			}
-			kvStore, err := sql.ProvideKV(s.cfg, eDB)
-			if err != nil {
-				return nil, err
+			kvStore := s.kvStore
+			if kvStore == nil {
+				kvStore, err = sql.ProvideKV(s.cfg, eDB)
+				if err != nil {
+					return nil, err
+				}
 			}
-			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher), sql.WithVectorBackend(s.vectorBackend)}
-			if s.cfg.NATS.Notifier && s.natsSubscriber != nil {
-				opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{s.natsSubscriber}))
-			} else if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
-				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
-			}
+			opts := append([]sql.StorageBackendOption{sql.WithVectorBackend(s.vectorBackend)},
+				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber)...)
 			if s.experimentalKV != nil {
 				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
 			}

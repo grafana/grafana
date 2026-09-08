@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -164,4 +165,114 @@ func TestTrashAuthorizer_FolderlessKindChecksTheWholeNamespace(t *testing.T) {
 	require.Len(t, *calls, 1)
 	assert.Equal(t, utils.VerbSetPermissions, (*calls)[0].verb)
 	assert.Empty(t, (*calls)[0].folder, "no folder means the check is not scoped to one")
+}
+
+// batchAccessClient records round trips, so a test can tell one batch of many
+// folders from many single checks.
+type batchAccessClient struct {
+	callbackAccessClient
+	batches    [][]string
+	batchError error
+	// itemError answers every item in the batch with an error, which is what rbac
+	// does for an invalid namespace or subject.
+	itemError error
+}
+
+func (c *batchAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	folders := make([]string, 0, len(req.Checks))
+	for _, item := range req.Checks {
+		folders = append(folders, item.Folder)
+	}
+	c.batches = append(c.batches, folders)
+	if c.batchError != nil {
+		return authlib.BatchCheckResponse{}, c.batchError
+	}
+	if c.itemError != nil {
+		results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+		for _, item := range req.Checks {
+			results[item.CorrelationID] = authlib.BatchCheckResult{Error: c.itemError}
+		}
+		return authlib.BatchCheckResponse{Results: results}, nil
+	}
+	return c.callbackAccessClient.BatchCheck(ctx, id, req)
+}
+
+func newBatchAuthorizer(uid string, allow func(folder string) bool) (*TrashAuthorizer, *batchAccessClient, *[]error) {
+	var reported []error
+	ac := &batchAccessClient{}
+	ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+		return authlib.CheckResponse{Allowed: allow(folder), Zookie: authlib.NoopZookie{}}, nil
+	}
+	a := NewTrashAuthorizer(ac, trashTestUser(uid), trashTestKey(), func(e error) {
+		reported = append(reported, e)
+	})
+	return a, ac, &reported
+}
+
+// One round trip per page rather than one per folder is the point of Prepare.
+func TestTrashAuthorizer_PrepareResolvesEveryFolderInOneCall(t *testing.T) {
+	a, ac, _ := newBatchAuthorizer("carol", func(folder string) bool { return folder == "folder-1" })
+
+	a.Prepare(t.Context(), []TrashItem{
+		{Folder: "folder-1", DeletedBy: "user:alice"},
+		{Folder: "folder-2", DeletedBy: "user:alice"},
+		{Folder: "folder-1", DeletedBy: "user:alice"}, // repeat
+	})
+
+	require.Len(t, ac.batches, 1)
+	assert.Equal(t, []string{"folder-1", "folder-2"}, ac.batches[0], "a folder is asked about once")
+
+	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"))
+	assert.False(t, a.Allowed(t.Context(), "folder-2", "user:alice"))
+	assert.Len(t, ac.batches, 1, "the answers came from the cache")
+}
+
+// Objects the caller deleted are decided from the indexed field, so their folders
+// need no check.
+func TestTrashAuthorizer_PrepareSkipsFoldersItDoesNotNeed(t *testing.T) {
+	a, ac, _ := newBatchAuthorizer("alice", func(string) bool { return false })
+
+	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
+
+	assert.Empty(t, ac.batches)
+}
+
+// A failed batch must leave the folder undecided rather than remembered as denied.
+func TestTrashAuthorizer_PrepareFailureFallsBackToSingleCheck(t *testing.T) {
+	boom := errors.New("batch failed")
+	a, ac, reported := newBatchAuthorizer("carol", func(string) bool { return true })
+	ac.batchError = boom
+
+	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
+
+	require.Len(t, *reported, 1)
+	assert.ErrorIs(t, (*reported)[0], boom)
+	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"), "the single check still decides it")
+}
+
+// authlib denies k6-app in the single check and has no such rule for batches, so
+// batching a decision for it would disclose what every other path hides.
+func TestTrashAuthorizer_PrepareLeavesK6FolderToTheSingleCheck(t *testing.T) {
+	a, ac, _ := newBatchAuthorizer("carol", func(string) bool { return true })
+
+	a.Prepare(t.Context(), []TrashItem{
+		{Folder: "k6-app", DeletedBy: "user:alice"},
+		{Folder: "folder-1", DeletedBy: "user:alice"},
+	})
+
+	require.Len(t, ac.batches, 1)
+	assert.Equal(t, []string{"folder-1"}, ac.batches[0], "k6-app is not batched")
+}
+
+// A batch that answers some folders with an error leaves them to FolderAdmin, which
+// reports its own failure. Reporting here too would double every line of an outage.
+func TestTrashAuthorizer_PrepareDoesNotReportPerItemErrors(t *testing.T) {
+	boom := errors.New("item failed")
+	a, ac, reported := newBatchAuthorizer("carol", func(string) bool { return true })
+	ac.itemError = boom
+
+	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
+
+	assert.Empty(t, *reported)
+	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"), "the single check still decides it")
 }

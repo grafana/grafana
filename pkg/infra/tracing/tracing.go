@@ -163,6 +163,9 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 	if err != nil {
 		return nil, err
 	}
+	if ots.cfg.FilterOperationalEndpoints {
+		sampler = newInfraEndpointFilterSampler(sampler)
+	}
 
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
@@ -192,7 +195,7 @@ func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, e
 		return nil, err
 	}
 
-	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.FilterOperationalEndpoints, ots.cfg.CustomAttribs...)
 }
 
 func (ots *TracingService) initFileTracerProvider() (tracerProvider, error) {
@@ -215,7 +218,7 @@ func (ots *TracingService) initFileTracerProvider() (tracerProvider, error) {
 		return ots.disableFileExporter(err)
 	}
 
-	tp, err := initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+	tp, err := initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.FilterOperationalEndpoints, ots.cfg.CustomAttribs...)
 	if err != nil {
 		_ = exp.Shutdown(context.Background())
 		return ots.disableFileExporter(err)
@@ -257,7 +260,7 @@ func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 	}
 }
 
-func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVersion string, sampler tracesdk.Sampler, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVersion string, sampler tracesdk.Sampler, filterOperationalEndpoints bool, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
@@ -273,9 +276,17 @@ func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVe
 		return nil, err
 	}
 
+	rootSampler := tracesdk.ParentBased(sampler)
+	if filterOperationalEndpoints {
+		// The endpoint filter must sit outside ParentBased: ParentBased skips its
+		// root sampler when a span has a sampled parent, so a request arriving
+		// with a sampled traceparent would otherwise bypass the filter and still
+		// record operational-endpoint spans.
+		rootSampler = newInfraEndpointFilterSampler(rootSampler)
+	}
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
-		tracesdk.WithSampler(tracesdk.ParentBased(sampler)),
+		tracesdk.WithSampler(rootSampler),
 		tracesdk.WithResource(res),
 	)
 	return tp, nil
@@ -436,6 +447,88 @@ func (rl *rateLimiter) ShouldSample(p tracesdk.SamplingParameters) tracesdk.Samp
 }
 
 func (rl *rateLimiter) Description() string { return rl.description }
+
+// untracedServerPaths are exact request paths whose server spans are dropped.
+var untracedServerPaths = map[string]struct{}{
+	"/metrics": {},
+	"/healthz": {},
+	"/readyz":  {},
+	"/livez":   {},
+}
+
+// untracedServerPathPrefixes are request path prefixes whose server spans are
+// dropped. /debug/pprof covers profile/trace/heap/etc., all of which are pulled
+// on a schedule (e.g. by Alloy) and add only noise to traces.
+var untracedServerPathPrefixes = []string{
+	"/debug/pprof",
+}
+
+// pathAttributeKeys are the span attributes that may carry the request path.
+// Different server middlewares emit different keys: the k8s apiserver's otelhttp
+// runs with duplicated semconv (http.target + url.path), while Grafana's own
+// RequestTracing middleware sets http.url. Any of them may hold a query string.
+var pathAttributeKeys = map[attribute.Key]struct{}{
+	semconv.HTTPTargetKey:       {}, // "http.target"
+	semconv.HTTPURLKey:          {}, // "http.url" (grafana RequestTracing middleware)
+	attribute.Key("url.path"):   {},
+	attribute.Key("http.route"): {},
+}
+
+// infraEndpointFilterSampler drops server spans for high-frequency operational
+// endpoints (profiling, health, metrics) and delegates every other decision to
+// the wrapped sampler. These spans carry no diagnostic value and distort latency
+// signals — /debug/pprof/profile in particular intentionally blocks for its
+// sample window (e.g. seconds=14), which would otherwise surface as a
+// multi-second server span and trip latency-based tail sampling.
+//
+// Filtering at the sampler covers all otelhttp/tracing layers at once —
+// including the API server's nested handler-chain tracing — so a single hook
+// keeps these endpoints out of traces process-wide. It must be composed as the
+// outermost sampler so it also drops spans that arrive with a sampled parent.
+type infraEndpointFilterSampler struct {
+	inner tracesdk.Sampler
+}
+
+func newInfraEndpointFilterSampler(inner tracesdk.Sampler) *infraEndpointFilterSampler {
+	return &infraEndpointFilterSampler{inner: inner}
+}
+
+func (s *infraEndpointFilterSampler) ShouldSample(p tracesdk.SamplingParameters) tracesdk.SamplingResult {
+	if p.Kind == trace.SpanKindServer && isUntracedServerPath(p.Attributes) {
+		return tracesdk.SamplingResult{
+			Decision:   tracesdk.Drop,
+			Tracestate: trace.SpanContextFromContext(p.ParentContext).TraceState(),
+		}
+	}
+	return s.inner.ShouldSample(p)
+}
+
+func (s *infraEndpointFilterSampler) Description() string {
+	return fmt.Sprintf("InfraEndpointFilterSampler{%s}", s.inner.Description())
+}
+
+func isUntracedServerPath(attrs []attribute.KeyValue) bool {
+	for _, a := range attrs {
+		if _, ok := pathAttributeKeys[a.Key]; !ok {
+			continue
+		}
+		path := a.Value.AsString()
+		if i := strings.IndexByte(path, '?'); i >= 0 {
+			path = path[:i]
+		}
+		if _, ok := untracedServerPaths[path]; ok {
+			return true
+		}
+		for _, prefix := range untracedServerPathPrefixes {
+			// Require a path boundary so /debug/pprof matches /debug/pprof and
+			// its descendants, but not e.g. /debug/pprofiler.
+			if path == prefix || strings.HasPrefix(path, prefix+"/") {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	spanCtx := trace.SpanContextFromContext(ctx)

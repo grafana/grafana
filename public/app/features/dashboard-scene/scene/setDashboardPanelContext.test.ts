@@ -1,5 +1,6 @@
 import {
   type AdHocVariableModel,
+  CoreApp,
   EventBusSrv,
   type GroupByVariableModel,
   type Scope,
@@ -11,6 +12,7 @@ import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
@@ -20,6 +22,13 @@ jest.mock('../../annotations/isAnnotationApiAvailable');
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
+  getDatasourcePluginMeta: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn().mockResolvedValue({ uid: 'my-ds-uid', type: 'prometheus' }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
@@ -61,6 +70,38 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('app', () => {
+    it('Is PanelEditor while the panel edit pane is open', () => {
+      const { scene, vizPanel, context } = buildTestScene({});
+
+      expect(context.app).toBe(CoreApp.Dashboard);
+
+      scene.onEnterEditMode();
+      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+
+      expect(context.app).toBe(CoreApp.PanelEditor);
+    });
+
+    it('Still tracks the panel edit pane after the scene is deactivated and reactivated', async () => {
+      // Activating the scene resolves the panel datasource, which this suite does not register.
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const { scene, vizPanel, context } = buildTestScene({});
+
+      // Navigating away leaves the scene in the page cache, so the same context object is reused.
+      scene.activate()();
+      const deactivate = scene.activate();
+
+      scene.onEnterEditMode();
+      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+
+      expect(context.app).toBe(CoreApp.PanelEditor);
+
+      deactivate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      warnSpy.mockRestore();
+    });
+  });
+
   describe('canAddAnnotations', () => {
     it('Can add when builtIn is enabled and permissions allow', () => {
       const { context } = buildTestScene({ builtInAnnotationsEnabled: true, dashboardCanEdit: true, canAdd: true });
@@ -283,13 +324,13 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAddAdHocFilter', () => {
-    it('Should add new filter set', () => {
+    it('Should add new filter set', async () => {
       const { scene, context } = buildTestScene({});
 
-      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '!=' });
-      context.onAddAdHocFilter!({ key: 'hello', value: 'world2', operator: '!=' });
+      await context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '!=' });
+      await context.onAddAdHocFilter!({ key: 'hello', value: 'world2', operator: '!=' });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       expect(variable.state.filters).toEqual([
         { key: 'hello', value: 'world', operator: '!=' },
@@ -298,30 +339,30 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
-    it('Should update and add filter to existing set', () => {
+    it('Should update and add filter to existing set', async () => {
       const { scene, context } = buildTestScene({ existingFilterVariable: true });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       variable.setState({ filters: [{ key: 'existing', value: 'world', operator: '=' }] });
 
-      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
+      await context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
 
       expect(variable.state.filters.length).toBe(2);
 
       // Can update existing filter value without adding a new filter
-      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '!=' });
+      await context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '!=' });
       // Verify existing filter value updated
       expect(variable.state.filters[1].operator).toBe('!=');
     });
 
-    it('Should use existing adhoc filter when panel has no panel-level datasource because queries have all the same datasources (v2 behavior)', () => {
+    it('Should use existing adhoc filter when panel has no panel-level datasource because queries have all the same datasources (v2 behavior)', async () => {
       const { scene, context } = buildTestScene({ existingFilterVariable: true, panelDatasourceUndefined: true });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
       variable.setState({ filters: [] });
 
-      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
+      await context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
 
       // Should use the existing adhoc filter variable, not create a new one
       expect(variable.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
@@ -330,6 +371,21 @@ describe('setDashboardPanelContext', () => {
       const variables = sceneGraph.getVariables(scene);
       const adhocVars = variables.state.variables.filter((v) => v.state.type === 'adhoc');
       expect(adhocVars.length).toBe(1);
+    });
+  });
+
+  describe('getAdHocFilterVariableFor', () => {
+    it('does not create duplicate Filters variables when called concurrently', async () => {
+      const { scene } = buildTestScene({});
+
+      const [first, second] = await Promise.all([
+        getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' }),
+        getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' }),
+      ]);
+
+      const adhocVars = sceneGraph.getVariables(scene).state.variables.filter((v) => v.state.type === 'adhoc');
+      expect(adhocVars).toHaveLength(1);
+      expect(first).toBe(second);
     });
   });
 
@@ -415,31 +471,31 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAddAdHocFilters', () => {
-    it('should add adhoc filters', () => {
+    it('should add adhoc filters', async () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,
       });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       const filters: AdHocFilterItem[] = [
         { key: 'existing', value: 'val', operator: '=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
       ];
 
-      context.onAddAdHocFilters?.(filters);
+      await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([
         { key: 'existing', value: 'val', operator: '=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
       ]);
     });
 
-    it('should update and add adhoc filters', () => {
+    it('should update and add adhoc filters', async () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,
       });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
 
@@ -450,7 +506,7 @@ describe('setDashboardPanelContext', () => {
         { key: 'id', value: 'id', operator: '=' },
       ];
 
-      context.onAddAdHocFilters?.(filters);
+      await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([
         { key: 'existing', value: 'val', operator: '!=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
@@ -459,12 +515,12 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
-    it('should not add a filter that already exists with the same key, value and operator', () => {
+    it('should not add a filter that already exists with the same key, value and operator', async () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,
       });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
 
@@ -473,39 +529,39 @@ describe('setDashboardPanelContext', () => {
         { key: 'cluster', value: 'cluster', operator: '=' },
       ];
 
-      context.onAddAdHocFilters?.(filters);
+      await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([
         { key: 'existing', value: 'val', operator: '=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
       ]);
     });
 
-    it('should not update the filters when all new filters are duplicates', () => {
+    it('should not update the filters when all new filters are duplicates', async () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,
       });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
       const updateFiltersSpy = jest.spyOn(variable, 'updateFilters');
 
-      context.onAddAdHocFilters?.([{ key: 'existing', value: 'val', operator: '=' }]);
+      await context.onAddAdHocFilters?.([{ key: 'existing', value: 'val', operator: '=' }]);
 
       expect(updateFiltersSpy).not.toHaveBeenCalled();
       expect(variable.state.filters).toEqual([{ key: 'existing', value: 'val', operator: '=' }]);
     });
 
-    it('should not do anything if filters empty', () => {
+    it('should not do anything if filters empty', async () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,
       });
 
-      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       const filters: AdHocFilterItem[] = [];
 
-      context.onAddAdHocFilters?.(filters);
+      await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
     });
   });

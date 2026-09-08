@@ -35,6 +35,25 @@ func (p *mutableConfigProvider) GetSections(ctx context.Context, sections ...str
 	return provider.GetSections(ctx, sections...)
 }
 
+// sharedRawConfigProvider simulates the enterprise ConfigProvider: every call
+// to Get returns the same *setting.Cfg (and therefore the same ini.File),
+// which is what triggers the concurrent map race inside ini.Section.Key().
+type sharedRawConfigProvider struct {
+	cfg *setting.Cfg
+}
+
+func (p *sharedRawConfigProvider) Get(context.Context) (*setting.Cfg, error) {
+	return p.cfg, nil
+}
+
+func (p *sharedRawConfigProvider) GetSections(ctx context.Context, sections ...string) (*ini.File, error) {
+	provider, err := configprovider.ProvideService(p.cfg)
+	if err != nil {
+		return nil, err
+	}
+	return provider.GetSections(ctx, sections...)
+}
+
 var (
 	iniContent = `
 	[auth.generic_oauth]
@@ -164,6 +183,25 @@ func TestOAuthStrategyUsesCurrentConfig(t *testing.T) {
 	rotated, err := strategy.GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
 	require.NoError(t, err)
 	require.Equal(t, "rotated-secret", rotated["client_secret"])
+}
+
+func TestOAuthStrategyPreservesAuthSectionInheritance(t *testing.T) {
+	raw, err := ini.Load([]byte(`
+[auth]
+signout_redirect_url = https://example.com/logout
+
+[auth.generic_oauth]
+enabled = true
+`))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = raw
+	strategy := NewOAuthStrategy(staticConfigProvider(t, cfg))
+
+	result, err := strategy.GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+	require.NoError(t, err)
+	require.Equal(t, "https://example.com/logout", result["signout_redirect_url"])
 }
 
 func oauthConfigWithClientSecret(t *testing.T, secret string) *setting.Cfg {
@@ -388,5 +426,38 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 				require.Equal(t, value, actualConfig[key], "Difference in key: %s. Expected: %v, got: %v", key, value, actualConfig[key])
 			}
 		})
+	}
+}
+
+// TestGetProviderConfig_ConcurrentAccess exercises the code path that
+// previously panicked with "concurrent map read and map write" inside
+// gopkg.in/ini.v1 when multiple goroutines called GetProviderConfig on a
+// shared *setting.Cfg. Run with -race to verify the fix:
+//
+//	go test -race -run TestGetProviderConfig_ConcurrentAccess ./pkg/services/ssosettings/strategies/
+func TestGetProviderConfig_ConcurrentAccess(t *testing.T) {
+	iniFile, err := ini.Load([]byte(iniContent))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = iniFile
+
+	// sharedRawConfigProvider returns the same cfg (and thus the same
+	// ini.File) on every call, which is what the enterprise ConfigProvider
+	// does when the TTL cache is warm.
+	strategy := NewOAuthStrategy(&sharedRawConfigProvider{cfg: cfg})
+
+	const goroutines = 16
+	errs := make(chan error, goroutines)
+
+	for range goroutines {
+		go func() {
+			_, err := strategy.GetProviderConfig(t.Context(), "generic_oauth")
+			errs <- err
+		}()
+	}
+
+	for range goroutines {
+		require.NoError(t, <-errs)
 	}
 }
