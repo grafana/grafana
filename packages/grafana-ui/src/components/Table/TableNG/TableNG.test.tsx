@@ -743,6 +743,17 @@ describe('TableNG', () => {
       expect(screen.getByText('No rows')).toBeInTheDocument();
       expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
+
+    it('gives the columns the full width when there are no rows to expand', () => {
+      // With no nested frame to expand into there's no expander column, so its width shouldn't be
+      // held back from the real columns — rdg's grid-template-columns shows what they actually got.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createEmptyNestedDataFrame()} width={800} height={600} />
+      );
+
+      const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
+      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
+    });
   });
 
   describe('Nested table footer', () => {
