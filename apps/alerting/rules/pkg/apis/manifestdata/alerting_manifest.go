@@ -46,10 +46,6 @@ var appManifestData = app.ManifestData{
 					Plural:     "AlertRules",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
-						Trash:    func(b bool) *bool { return &b }(false),
-					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -173,10 +169,6 @@ var appManifestData = app.ManifestData{
 					Plural:     "RecordingRules",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
-						Trash:    func(b bool) *bool { return &b }(false),
-					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -275,11 +267,11 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
-					"/alertrules/search": {
+					"/alertrules/searchRules": {
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "listAlertRuleSearchV0alpha1",
+								OperationId: "listAlertRuleSearchRulesV0alpha1",
 
 								RequestBody: &spec3.RequestBody{
 									RequestBodyProps: spec3.RequestBodyProps{
@@ -338,7 +330,7 @@ var appManifestData = app.ManifestData{
 																"labelSelector": {
 																	SchemaProps: spec.SchemaProps{
 
-																		Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchLabelSelector"),
+																		Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelector"),
 																	},
 																},
 																"limit": {
@@ -354,7 +346,7 @@ var appManifestData = app.ManifestData{
 																			Schema: &spec.Schema{
 																				SchemaProps: spec.SchemaProps{
 
-																					Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchSortField"),
+																					Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchSortField"),
 																				}},
 																		},
 																	},
@@ -363,7 +355,7 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "where is the search predicate tree. Omitting it matches every rule of the\nkind, subject to labelSelector and per-rule authorisation.",
-																		Ref:         spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode"),
+																		Ref:         spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
 																	},
 																},
 															},
@@ -402,7 +394,7 @@ var appManifestData = app.ManifestData{
 																								Schema: &spec.Schema{
 																									SchemaProps: spec.SchemaProps{
 
-																										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1FacetValue"),
+																										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1FacetValue"),
 																									}},
 																							},
 																						},
@@ -417,7 +409,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchResultHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultHit"),
 																						}},
 																				},
 																			},
@@ -431,7 +423,7 @@ var appManifestData = app.ManifestData{
 																		"metadata": {
 																			SchemaProps: spec.SchemaProps{
 
-																				Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchResultsMetadata"),
+																				Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultsMetadata"),
 																			},
 																		},
 																	},
@@ -450,11 +442,11 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"/recordingrules/search": {
+					"/recordingrules/searchRules": {
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "listRecordingRuleSearchV0alpha1",
+								OperationId: "listRecordingRuleSearchRulesV0alpha1",
 
 								RequestBody: &spec3.RequestBody{
 									RequestBodyProps: spec3.RequestBodyProps{
@@ -513,7 +505,7 @@ var appManifestData = app.ManifestData{
 																"labelSelector": {
 																	SchemaProps: spec.SchemaProps{
 
-																		Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchLabelSelector"),
+																		Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelector"),
 																	},
 																},
 																"limit": {
@@ -529,7 +521,7 @@ var appManifestData = app.ManifestData{
 																			Schema: &spec.Schema{
 																				SchemaProps: spec.SchemaProps{
 
-																					Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchSortField"),
+																					Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchSortField"),
 																				}},
 																		},
 																	},
@@ -538,7 +530,7 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "where is the search predicate tree. Omitting it matches every rule of the\nkind, subject to labelSelector and per-rule authorisation.",
-																		Ref:         spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode"),
+																		Ref:         spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
 																	},
 																},
 															},
@@ -576,7 +568,7 @@ var appManifestData = app.ManifestData{
 																								Schema: &spec.Schema{
 																									SchemaProps: spec.SchemaProps{
 
-																										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1FacetValue"),
+																										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1FacetValue"),
 																									}},
 																							},
 																						},
@@ -591,7 +583,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchResultHit"),
+																							Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultHit"),
 																						}},
 																				},
 																			},
@@ -605,7 +597,7 @@ var appManifestData = app.ManifestData{
 																		"metadata": {
 																			SchemaProps: spec.SchemaProps{
 
-																				Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchResultsMetadata"),
+																				Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata"),
 																			},
 																		},
 																	},
@@ -1119,7 +1111,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1FacetValue": {
+					"listAlertRuleSearchRulesV0alpha1FacetValue": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#FacetValue is a single facet term and its count.",
@@ -1141,7 +1133,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchExistsLeaf": {
+					"listAlertRuleSearchRulesV0alpha1SearchExistsLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchExistsLeaf is a future field-existence predicate. Modelled for schema\nstability; always rejected today.",
@@ -1157,7 +1149,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchFilterLeaf": {
+					"listAlertRuleSearchRulesV0alpha1SearchFilterLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchFilterLeaf matches a single field against a set of values.",
@@ -1195,7 +1187,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchLabelSelector": {
+					"listAlertRuleSearchRulesV0alpha1SearchLabelSelector": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchLabelSelector filters on the resource's metadata.labels, mirroring\nmetav1.LabelSelector. It is ANDed with where. Note this selects resource\nmetadata labels, not the rules' own alerting labels: those are filtered\nthrough a where filter leaf on the indexed \"labels\" field.",
@@ -1207,7 +1199,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchLabelSelectorRequirement"),
+													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"),
 												}},
 										},
 									},
@@ -1227,7 +1219,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchLabelSelectorRequirement": {
+					"listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchLabelSelectorRequirement is one metadata label requirement, mirroring\nmetav1.LabelSelectorRequirement. Only In and NotIn are accepted; Exists and\nDoesNotExist are modelled for schema stability and rejected.",
@@ -1266,7 +1258,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchRangeLeaf": {
+					"listAlertRuleSearchRulesV0alpha1SearchRangeLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchRangeLeaf is a future numeric/date range predicate. Modelled for\nschema stability; always rejected today.",
@@ -1302,7 +1294,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchResultHit": {
+					"listAlertRuleSearchRulesV0alpha1SearchResultHit": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchResultHit is a single match: its identity, an optional relevance score\n(present only when a text query was evaluated), and the requested fields.",
@@ -1319,7 +1311,7 @@ var appManifestData = app.ManifestData{
 								"resource": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchResultResource"),
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultResource"),
 									},
 								},
 								"score": {
@@ -1333,7 +1325,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchResultResource": {
+					"listAlertRuleSearchRulesV0alpha1SearchResultResource": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchResultResource is the full identity of a hit. The namespace is implicit\nfrom the URL and omitted.",
@@ -1367,7 +1359,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchResultsMetadata": {
+					"listAlertRuleSearchRulesV0alpha1SearchResultsMetadata": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
@@ -1387,7 +1379,7 @@ var appManifestData = app.ManifestData{
 								"totalHitsRelation": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1TotalHitsRelation"),
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1TotalHitsRelation"),
 									},
 								},
 							},
@@ -1397,7 +1389,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchSortField": {
+					"listAlertRuleSearchRulesV0alpha1SearchSortField": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchSortField names a field to sort by and a direction, defaulting to\nascending. Only fields declaring the sort capability may be named, and only\nscalar ones: sorting on a list of values has no defined meaning.",
@@ -1422,7 +1414,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchTextLeaf": {
+					"listAlertRuleSearchRulesV0alpha1SearchTextLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchTextLeaf is a free-text predicate against one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used\n(today: title). A match requires every whitespace-separated term of value to\nappear in the field, in any order. How very short terms, punctuation, and\ncommon words are matched is backend-defined and may change.",
@@ -1455,7 +1447,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1SearchWhereNode": {
+					"listAlertRuleSearchRulesV0alpha1SearchWhereNode": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchWhereNode is a single node of the where query tree. Exactly one key\nmust be set, and the set key names the node's type. Combinators (and/or/not)\ncompose other nodes; leaves (text/filter/range/exists) are terminal\npredicates.\n\nEvery node type is modelled so the schema is future-proof, but only a narrow\nsubset is accepted: a single top-level leaf, or one \"and\" over text and\nfilter leaves. Everything else is rejected. or, not, range and exists are\nsketched for future versions and always rejected today.",
@@ -1468,7 +1460,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode"),
+													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
 												}},
 										},
 									},
@@ -1476,19 +1468,19 @@ var appManifestData = app.ManifestData{
 								"exists": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchExistsLeaf"),
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchExistsLeaf"),
 									},
 								},
 								"filter": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchFilterLeaf"),
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchFilterLeaf"),
 									},
 								},
 								"not": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode"),
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
 									},
 								},
 								"or": {
@@ -1498,7 +1490,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode"),
+													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
 												}},
 										},
 									},
@@ -1506,20 +1498,20 @@ var appManifestData = app.ManifestData{
 								"range": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchRangeLeaf"),
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf"),
 									},
 								},
 								"text": {
 									SchemaProps: spec.SchemaProps{
 
 										Description: "Leaves.",
-										Ref:         spec.MustCreateRef("#/components/schemas/listAlertRuleSearchV0alpha1SearchTextLeaf"),
+										Ref:         spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf"),
 									},
 								},
 							},
 						},
 					},
-					"listAlertRuleSearchV0alpha1TotalHitsRelation": {
+					"listAlertRuleSearchRulesV0alpha1TotalHitsRelation": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"string"},
 							Description: "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
@@ -1529,7 +1521,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1FacetValue": {
+					"listRecordingRuleSearchRulesV0alpha1FacetValue": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#FacetValue is a single facet term and its count.",
@@ -1551,7 +1543,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchExistsLeaf": {
+					"listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchExistsLeaf is a future field-existence predicate. Modelled for schema\nstability; always rejected today.",
@@ -1567,7 +1559,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchFilterLeaf": {
+					"listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchFilterLeaf matches a single field against a set of values.",
@@ -1605,7 +1597,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchLabelSelector": {
+					"listRecordingRuleSearchRulesV0alpha1SearchLabelSelector": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchLabelSelector filters on the resource's metadata.labels, mirroring\nmetav1.LabelSelector. It is ANDed with where. Note this selects resource\nmetadata labels, not the rules' own alerting labels: those are filtered\nthrough a where filter leaf on the indexed \"labels\" field.",
@@ -1617,7 +1609,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchLabelSelectorRequirement"),
+													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"),
 												}},
 										},
 									},
@@ -1637,7 +1629,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchLabelSelectorRequirement": {
+					"listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchLabelSelectorRequirement is one metadata label requirement, mirroring\nmetav1.LabelSelectorRequirement. Only In and NotIn are accepted; Exists and\nDoesNotExist are modelled for schema stability and rejected.",
@@ -1676,7 +1668,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchRangeLeaf": {
+					"listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchRangeLeaf is a future numeric/date range predicate. Modelled for\nschema stability; always rejected today.",
@@ -1712,7 +1704,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchResultHit": {
+					"listRecordingRuleSearchRulesV0alpha1SearchResultHit": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchResultHit is a single match: its identity, an optional relevance score\n(present only when a text query was evaluated), and the requested fields.",
@@ -1729,7 +1721,7 @@ var appManifestData = app.ManifestData{
 								"resource": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchResultResource"),
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultResource"),
 									},
 								},
 								"score": {
@@ -1743,7 +1735,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchResultResource": {
+					"listRecordingRuleSearchRulesV0alpha1SearchResultResource": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchResultResource is the full identity of a hit. The namespace is implicit\nfrom the URL and omitted.",
@@ -1777,7 +1769,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchResultsMetadata": {
+					"listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
@@ -1797,7 +1789,7 @@ var appManifestData = app.ManifestData{
 								"totalHitsRelation": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1TotalHitsRelation"),
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1TotalHitsRelation"),
 									},
 								},
 							},
@@ -1807,7 +1799,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchSortField": {
+					"listRecordingRuleSearchRulesV0alpha1SearchSortField": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchSortField names a field to sort by and a direction, defaulting to\nascending. Only fields declaring the sort capability may be named, and only\nscalar ones: sorting on a list of values has no defined meaning.",
@@ -1832,7 +1824,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchTextLeaf": {
+					"listRecordingRuleSearchRulesV0alpha1SearchTextLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchTextLeaf is a free-text predicate against one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used\n(today: title). A match requires every whitespace-separated term of value to\nappear in the field, in any order. How very short terms, punctuation, and\ncommon words are matched is backend-defined and may change.",
@@ -1865,7 +1857,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1SearchWhereNode": {
+					"listRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "#SearchWhereNode is a single node of the where query tree. Exactly one key\nmust be set, and the set key names the node's type. Combinators (and/or/not)\ncompose other nodes; leaves (text/filter/range/exists) are terminal\npredicates.\n\nEvery node type is modelled so the schema is future-proof, but only a narrow\nsubset is accepted: a single top-level leaf, or one \"and\" over text and\nfilter leaves. Everything else is rejected. or, not, range and exists are\nsketched for future versions and always rejected today.",
@@ -1878,7 +1870,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode"),
+													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
 												}},
 										},
 									},
@@ -1886,19 +1878,19 @@ var appManifestData = app.ManifestData{
 								"exists": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchExistsLeaf"),
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf"),
 									},
 								},
 								"filter": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchFilterLeaf"),
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf"),
 									},
 								},
 								"not": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode"),
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
 									},
 								},
 								"or": {
@@ -1908,7 +1900,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode"),
+													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
 												}},
 										},
 									},
@@ -1916,20 +1908,20 @@ var appManifestData = app.ManifestData{
 								"range": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchRangeLeaf"),
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"),
 									},
 								},
 								"text": {
 									SchemaProps: spec.SchemaProps{
 
 										Description: "Leaves.",
-										Ref:         spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchV0alpha1SearchTextLeaf"),
+										Ref:         spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf"),
 									},
 								},
 							},
 						},
 					},
-					"listRecordingRuleSearchV0alpha1TotalHitsRelation": {
+					"listRecordingRuleSearchRulesV0alpha1TotalHitsRelation": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"string"},
 							Description: "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
@@ -1967,9 +1959,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertrules/search|POST":     v0alpha1.ListAlertRuleSearchV0alpha1Response{},
-	"v0alpha1||<namespace>/recordingrules/search|POST": v0alpha1.ListRecordingRuleSearchV0alpha1Response{},
-	"v0alpha1||<namespace>/searchRules|POST":           v0alpha1.CreateSearchRulesResponse{},
+	"v0alpha1||<namespace>/alertrules/searchRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1Response{},
+	"v0alpha1||<namespace>/recordingrules/searchRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response{},
+	"v0alpha1||<namespace>/searchRules|POST":                v0alpha1.CreateSearchRulesResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -1995,9 +1987,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1||<namespace>/alertrules/search|POST":     v0alpha1.ListAlertRuleSearchV0alpha1RequestBody{},
-	"v0alpha1||<namespace>/recordingrules/search|POST": v0alpha1.ListRecordingRuleSearchV0alpha1RequestBody{},
-	"v0alpha1||<namespace>/searchRules|POST":           v0alpha1.CreateSearchRulesRequestBody{},
+	"v0alpha1||<namespace>/alertrules/searchRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody{},
+	"v0alpha1||<namespace>/recordingrules/searchRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
+	"v0alpha1||<namespace>/searchRules|POST":                v0alpha1.CreateSearchRulesRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

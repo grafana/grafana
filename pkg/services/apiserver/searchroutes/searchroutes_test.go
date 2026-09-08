@@ -253,8 +253,10 @@ func TestBuild_EnrolledKindsAreListedHere(t *testing.T) {
 
 	assert.ElementsMatch(t, []string{
 		// Declare search fields.
+		"alertrules",
 		"dashboards",
 		"externalgroupmappings",
+		"recordingrules",
 		"teambindings",
 		"teams",
 		"users",

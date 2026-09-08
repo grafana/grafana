@@ -5,21 +5,19 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1/search"
 )
 
-// Two search contracts live here while the first is migrated onto the second.
+// Three search contracts coexist during the storage migration.
 //
-// The per-kind endpoints ({resource}/search, defined in the imported search
-// package) are the target: one endpoint per rule kind, speaking the generic
-// per-resource search contract (search.grafana.app SearchQuery / SearchResults)
-// exactly, so the generic endpoint can take them over without a client change
-// once rules are served from unified storage. They are declared here first and
-// served in a follow-up; until then a call to one gets a 404.
+// The alerting-owned per-kind compatibility endpoints
+// ({resource}/searchRules) speak the generic per-resource search contract
+// (search.grafana.app SearchQuery / SearchResults) while remaining distinct
+// from the generic {resource}/search endpoints.
 //
 // searchRules is the cross-resource endpoint they supersede: one call searches
 // both AlertRule and RecordingRule. Its request shape is modelled on the generic
 // design for familiarity but is a separate contract, with its own TypeMeta, a
 // string labelSelector, string sort fields, and a typed per-hit field union. It
-// stays until its handler moves to the per-kind routes, and is removed with it;
-// nothing new should be built against it.
+// stays until clients move to the per-kind compatibility routes; nothing new
+// should be built against it.
 
 // #SearchTextLeaf is a free-text search across one or more text-capable
 // fields. When fields is omitted, the kind's default text field set is used.
@@ -66,17 +64,15 @@ import (
 
 searchRoutes: {
 	namespaced: {
-		// One endpoint per rule kind, at the paths and operation IDs the generic
-		// search API uses, so a generated client keeps the same symbols when the
-		// generic endpoint takes over. The query is a POST body (not query params)
-		// so the typed #SearchQuery tree survives the transport.
-		"/alertrules/search": {
+		// One alerting-owned compatibility endpoint per rule kind. The query is a
+		// POST body (not query params) so the typed #SearchQuery tree survives the
+		// transport.
+		"/alertrules/searchRules": {
 			POST: {
 				// These search routes are experimental and subject to change without deprecation until stabilized
 				// list rather than create because searching reads; the codegen
-				// requires a Kubernetes verb prefix and this is the one the generic
-				// API uses for the same route.
-				name: "listAlertRuleSearchV0alpha1"
+				// requires a Kubernetes verb prefix.
+				name: "listAlertRuleSearchRulesV0alpha1"
 				request: {
 					body: search.#SearchQuery
 				}
@@ -88,10 +84,10 @@ searchRoutes: {
 				}
 			}
 		}
-		"/recordingrules/search": {
+		"/recordingrules/searchRules": {
 			POST: {
 				// These search routes are experimental and subject to change without deprecation until stabilized
-				name: "listRecordingRuleSearchV0alpha1"
+				name: "listRecordingRuleSearchRulesV0alpha1"
 				request: {
 					body: search.#SearchQuery
 				}

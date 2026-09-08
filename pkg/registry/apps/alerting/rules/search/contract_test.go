@@ -27,8 +27,8 @@ import (
 
 func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 	for name, generated := range map[string]any{
-		"alert rules":     model.ListAlertRuleSearchV0alpha1RequestBody{},
-		"recording rules": model.ListRecordingRuleSearchV0alpha1RequestBody{},
+		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1RequestBody{},
+		"recording rules": model.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assertSameJSONShape(t, searchv0.SearchQuery{}, generated)
@@ -38,8 +38,8 @@ func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 
 func TestResponseBodyMatchesGenericSearchResults(t *testing.T) {
 	for name, generated := range map[string]any{
-		"alert rules":     model.ListAlertRuleSearchV0alpha1Response{},
-		"recording rules": model.ListRecordingRuleSearchV0alpha1Response{},
+		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1Response{},
+		"recording rules": model.ListRecordingRuleSearchRulesV0alpha1Response{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assertSameJSONShape(t, searchv0.SearchResults{}, generated)
