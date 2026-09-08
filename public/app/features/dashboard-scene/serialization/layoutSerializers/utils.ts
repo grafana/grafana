@@ -4,8 +4,8 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import {
   type SceneDataProvider,
   type SceneDataQuery,
-  type SceneObject,
   SceneDataTransformer,
+  type SceneObject,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
