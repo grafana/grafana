@@ -17,6 +17,7 @@ import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
+import { NO_SYSTEM_TRANSFORMATIONS } from '../../../scene/systemTransformations';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorProvider } from './QueryEditorContext';
@@ -315,7 +316,11 @@ describe('QueryEditorRenderer', () => {
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
           qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
-          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
+          panelState={{
+            panel: new VizPanel({ key: 'panel-1' }),
+            transformations: [],
+            systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+          }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
             selectedQuery,
@@ -393,7 +398,11 @@ describe('QueryEditorRenderer', () => {
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
           qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
-          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
+          panelState={{
+            panel: new VizPanel({ key: 'panel-1' }),
+            transformations: [],
+            systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+          }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
             selectedQuery,
