@@ -4,10 +4,12 @@ import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
-const MERMAID_SELECTOR = 'code.language-mermaid, pre.mermaid';
-
 export const DIAGRAM_CLASS = 'textng-mermaid';
 export const DIAGRAM_ERROR_CLASS = 'textng-mermaid-error';
+
+// Also matches already-rendered diagrams, so a theme change redraws them instead of leaving stale colors.
+const MERMAID_SELECTOR = `code.language-mermaid, pre.mermaid, .${DIAGRAM_CLASS}`;
+const SOURCE_ATTR = 'data-mermaid-source';
 
 // Render ids have to be unique document-wide, not just per panel.
 let diagramSeq = 0;
@@ -18,12 +20,12 @@ export async function renderMermaidDiagrams(container: HTMLElement, theme: Grafa
     return;
   }
 
-  const diagrams = Array.from(container.querySelectorAll(MERMAID_SELECTOR), (block) => ({
-    // textContent un-escapes marked's `--&gt;` back to `-->` for free.
-    source: block.textContent ?? '',
+  const diagrams = Array.from(container.querySelectorAll(MERMAID_SELECTOR), (block) => {
     // A fence keeps the source in the <code>, but the <pre> is what gets replaced.
-    target: block.tagName === 'CODE' ? (block.parentElement ?? block) : block,
-  }));
+    const target = block.tagName === 'CODE' ? (block.parentElement ?? block) : block;
+    // textContent un-escapes marked's `--&gt;` back to `-->` for free.
+    return { source: target.getAttribute(SOURCE_ATTR) ?? target.textContent ?? '', target };
+  });
 
   if (diagrams.length === 0) {
     return;
@@ -47,6 +49,7 @@ export async function renderMermaidDiagrams(container: HTMLElement, theme: Grafa
     if (typeof result === 'string') {
       const diagram = document.createElement('div');
       diagram.className = DIAGRAM_CLASS;
+      diagram.setAttribute(SOURCE_ATTR, source);
       diagram.innerHTML = textUtil.sanitizeSVGContent(result);
       target.replaceWith(diagram);
     } else {
@@ -70,9 +73,18 @@ async function renderDiagram(mermaid: Mermaid, source: string): Promise<string |
 }
 
 function markFailed(target: Element, error: Error) {
+  const text = t('textng.mermaid.render-error', 'Diagram error: {{message}}', { message: error.message });
+
+  // A theme-change redraw may hit the same failure again; update the existing message instead of duplicating it.
+  const previous = target.previousElementSibling;
+  if (previous?.classList.contains(DIAGRAM_ERROR_CLASS)) {
+    previous.textContent = text;
+    return;
+  }
+
   const message = document.createElement('div');
   message.className = DIAGRAM_ERROR_CLASS;
-  message.textContent = t('textng.mermaid.render-error', 'Diagram error: {{message}}', { message: error.message });
+  message.textContent = text;
   target.insertAdjacentElement('beforebegin', message);
 }
 
