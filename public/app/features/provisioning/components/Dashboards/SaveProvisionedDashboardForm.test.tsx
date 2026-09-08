@@ -188,6 +188,28 @@ function setupFolderless(
   });
 }
 
+// An existing, unchanged dashboard scene — for tests where Save must be driven by something
+// other than the dashboard being dirty (branch retarget, forceNewBranch recovery).
+function makeNotDirtyDashboard(): DashboardScene {
+  const state = {
+    meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
+    title: 'Test Dashboard',
+    description: 'Test Description',
+    isDirty: false,
+  };
+  return {
+    state,
+    useState: () => state,
+    setState: jest.fn(),
+    closeModal: jest.fn(),
+    getSaveModel: jest.fn().mockReturnValue({}),
+    saveCompleted: jest.fn(),
+    getSaveAsModel: jest.fn().mockReturnValue({}),
+    setManager: jest.fn(),
+    getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+  } as unknown as DashboardScene;
+}
+
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
   expect(capturedRequest).not.toBeNull();
   return capturedRequest as { url: URL; body: unknown };
@@ -1010,29 +1032,7 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should enable save when the target branch is changed even if the dashboard is not dirty', async () => {
-    const notDirtyDashboard = {
-      state: {
-        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        isDirty: false,
-      },
-      useState: () => ({
-        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        isDirty: false,
-      }),
-      setState: jest.fn(),
-      closeModal: jest.fn(),
-      getSaveModel: jest.fn().mockReturnValue({}),
-      saveCompleted: jest.fn(),
-      getSaveAsModel: jest.fn().mockReturnValue({}),
-      setManager: jest.fn(),
-      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
-    } as unknown as DashboardScene;
-
-    const { user } = setup({ dashboard: notDirtyDashboard });
+    const { user } = setup({ dashboard: makeNotDirtyDashboard() });
 
     // Baseline: nothing changed yet, so Save is disabled.
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
@@ -1047,29 +1047,7 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should enable save in the deleted-branch recovery (forceNewBranch) with no other changes', () => {
     // Recovery installs the generated branch as a default (never marks ref dirty) on an
     // otherwise-unchanged preview, so Save must be enabled on the forceNewBranch flag alone.
-    const notDirtyDashboard = {
-      state: {
-        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        isDirty: false,
-      },
-      useState: () => ({
-        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        isDirty: false,
-      }),
-      setState: jest.fn(),
-      closeModal: jest.fn(),
-      getSaveModel: jest.fn().mockReturnValue({}),
-      saveCompleted: jest.fn(),
-      getSaveAsModel: jest.fn().mockReturnValue({}),
-      setManager: jest.fn(),
-      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
-    } as unknown as DashboardScene;
-
-    setup({ dashboard: notDirtyDashboard, isNew: false, forceNewBranch: true });
+    setup({ dashboard: makeNotDirtyDashboard(), isNew: false, forceNewBranch: true });
 
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
   });

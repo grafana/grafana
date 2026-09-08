@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { useLazyGetRepositoryRefsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Modal } from '@grafana/ui';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  useGetRepositoryFilesWithPathQuery,
+  useLazyGetRepositoryRefsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -14,11 +16,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { isGitProvider } from '../../utils/repositoryTypes';
-import {
-  type PreviewBranchInfo,
-  type PullRequestOpenActions,
-  PreviewBannerViewPR,
-} from '../Shared/PreviewBannerViewPR';
+import { type PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
 
 export interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;
@@ -58,7 +56,6 @@ function DashboardPreviewBannerContent({
   const { repository } = useGetResourceRepositoryView({ name: slug });
   const [triggerRefs, { isFetching: isCheckingBranch }] = useLazyGetRepositoryRefsQuery();
   const [branchGone, setBranchGone] = useState(false);
-  const [refGoneDismissed, setRefGoneDismissed] = useState(false);
   const navigate = useNavigate();
 
   // The version currently saved in Grafana, if the dashboard already exists on the configured branch
@@ -78,34 +75,32 @@ function DashboardPreviewBannerContent({
     }
   }, [existingUid]);
 
-  // Verify the branch still exists before following the pull request link. If it is gone (e.g. the
-  // PR was closed and its branch deleted), close the pre-opened tab and offer a way out instead of
-  // opening a dead compare link. `open`/`cancel` act on a tab the banner opened synchronously within
-  // the click gesture, so a slow refs check doesn't get the eventual open blocked as a popup.
-  const handleOpenPullRequest = useCallback(
-    async ({ open, cancel }: PullRequestOpenActions) => {
-      const targetRef = file.data?.ref;
-      const repoName = repository?.name;
-      if (!repoName || !targetRef) {
-        open();
-        return;
-      }
+  // Verify the branch still exists before following the pull request link. Resolves whether the
+  // banner should open the link: `false` means the branch is gone (e.g. the PR was closed and its
+  // branch deleted) and the recovery modal takes over — no tab is opened at all, so the user never
+  // sees a dead compare link or a placeholder-tab flash.
+  const handleOpenPullRequest = useCallback(async (): Promise<boolean> => {
+    const targetRef = file.data?.ref;
+    const repoName = repository?.name;
+    if (!repoName || !targetRef) {
+      return true;
+    }
 
-      try {
-        const refs = await triggerRefs({ name: repoName }).unwrap();
-        if (refs.items?.some((ref) => ref.name === targetRef)) {
-          open();
-        } else {
-          cancel();
-          setBranchGone(true);
-        }
-      } catch {
-        // Don't block the user on a failed check — fall back to the original behavior.
-        open();
+    try {
+      const refs = await triggerRefs({ name: repoName }).unwrap();
+      // An empty refs list means the check failed (a healthy repo always has its configured
+      // branch), so open anyway. Only a non-empty list missing our branch proves deletion.
+      const items = refs.items ?? [];
+      if (items.length === 0 || items.some((ref) => ref.name === targetRef)) {
+        return true;
       }
-    },
-    [file.data?.ref, repository?.name, triggerRefs]
-  );
+      setBranchGone(true);
+      return false;
+    } catch {
+      // Don't block the user on a failed check — fall back to opening the link.
+      return true;
+    }
+  }, [file.data?.ref, repository?.name, triggerRefs]);
 
   // Wait for the dry-run to resolve before rendering. resource.action drives the title, so showing
   // the banner mid-load would flash the "created" default and then flip to the real action.
@@ -134,24 +129,8 @@ function DashboardPreviewBannerContent({
   // required (matching the loader) so transient/auth errors aren't mislabelled as a deleted branch.
   const refGone = Boolean(queryParams.ref) && file.isError && isFetchError(file.error) && file.error.status === 404;
   if (refGone) {
-    // The query has no usable data, so we must not fall through to the preview banner (it would show
-    // a misleading "created in a branch" default). Once dismissed, render nothing at all.
-    if (refGoneDismissed) {
-      return null;
-    }
-    return (
-      <Alert
-        severity="info"
-        style={{ flex: 0 }}
-        title={t('dashboard-scene.dashboard-preview-banner.branch-gone-title', 'This branch no longer exists')}
-        onRemove={() => setRefGoneDismissed(true)}
-      >
-        {t(
-          'dashboard-scene.dashboard-preview-banner.branch-gone-refresh-body',
-          'The branch this preview was created on has been deleted. You are now viewing the saved version of this dashboard.'
-        )}
-      </Alert>
-    );
+    // Never fall through to the preview banner — the query has no data to render it from.
+    return <BranchGoneNotice />;
   }
 
   // Vars
@@ -166,9 +145,15 @@ function DashboardPreviewBannerContent({
 
   // The pull request button points at a "create pull request" compare link that is only valid while
   // the branch exists. Pre-flighting is only worthwhile when we created it (a real PR link still
-  // resolves after its branch is gone) and the provider exposes a refs listing.
+  // resolves after its branch is gone) and the provider exposes a refs listing. It also requires the
+  // branch workflow: without it the recovery modal offers a save-to-new-branch the repo can't do.
   const canPreflightBranch = Boolean(
-    !hasExistingPr && repository?.name && targetRef && repository?.type && isGitProvider(repository.type)
+    !hasExistingPr &&
+      repository?.name &&
+      targetRef &&
+      repository?.type &&
+      isGitProvider(repository.type) &&
+      repository.workflows?.includes('branch')
   );
 
   const branchInfo: PreviewBranchInfo = {
@@ -229,6 +214,30 @@ function DashboardPreviewBannerContent({
         </Modal.ButtonRow>
       </Modal>
     </>
+  );
+}
+
+// Shown when the page is loaded with a ref whose branch was deleted (e.g. after a refresh). The
+// loader already shows the saved version, so this is just an explanation and can be dismissed.
+function BranchGoneNotice() {
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) {
+    return null;
+  }
+
+  return (
+    <Alert
+      severity="info"
+      style={{ flex: 0 }}
+      title={t('dashboard-scene.dashboard-preview-banner.branch-gone-title', 'This branch no longer exists')}
+      onRemove={() => setDismissed(true)}
+    >
+      {t(
+        'dashboard-scene.dashboard-preview-banner.branch-gone-refresh-body',
+        'The branch this preview was created on has been deleted. You are now viewing the saved version of this dashboard.'
+      )}
+    </Alert>
   );
 }
 

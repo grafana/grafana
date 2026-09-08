@@ -36,13 +36,9 @@ jest.mock('../../hooks/useGetResourceRepositoryView', () => {
   };
 });
 
+const mockTriggerRefs = jest.fn();
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
-}));
-
-const mockTriggerRefs = jest.fn();
-jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('@grafana/api-clients/rtkq/provisioning/v0alpha1'),
   useLazyGetRepositoryRefsQuery: () => [mockTriggerRefs, { isFetching: false }],
 }));
 
@@ -93,6 +89,7 @@ interface FileQueryData {
 interface SetupOverrides {
   pullRequestParam?: PullRequestParamReturn;
   fileQuery?: { data?: FileQueryData; isLoading?: boolean; isError?: boolean; error?: unknown };
+  repositoryView?: Partial<typeof defaultRepositoryView>;
 }
 
 const defaultRepositoryView = {
@@ -141,7 +138,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
   });
 
   mockUseGetResourceRepositoryView.mockReturnValue({
-    repository: defaultRepositoryView,
+    repository: { ...defaultRepositoryView, ...overrides.repositoryView },
     repoType: 'github',
     status: RepoViewStatus.Ready,
     isLoading: false,
@@ -362,12 +359,9 @@ describe('DashboardPreviewBanner', () => {
 
   describe('branch pre-flight on open pull request', () => {
     let windowOpenSpy: jest.SpyInstance;
-    let pendingTab: { location: { href: string }; close: jest.Mock };
 
     beforeEach(() => {
-      // The button opens a tab synchronously within the click gesture; the pre-flight then drives it.
-      pendingTab = { location: { href: '' }, close: jest.fn() };
-      windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
+      windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
     });
 
     afterEach(() => {
@@ -377,7 +371,7 @@ describe('DashboardPreviewBanner', () => {
     const clickOpenPullRequest = () =>
       userEvent.setup().click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
 
-    it('navigates the pre-opened tab to the pull request link when the branch still exists', async () => {
+    it('opens the pull request link after the check confirms the branch still exists', async () => {
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.resolve({ items: [{ name: 'feature-branch' }] }),
       });
@@ -385,13 +379,18 @@ describe('DashboardPreviewBanner', () => {
 
       await clickOpenPullRequest();
 
-      expect(windowOpenSpy).toHaveBeenCalledWith('about:blank', '_blank');
       await waitFor(() => expect(mockTriggerRefs).toHaveBeenCalledWith({ name: 'my-repo' }));
-      await waitFor(() => expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare'));
+      await waitFor(() =>
+        expect(windowOpenSpy).toHaveBeenCalledWith(
+          'https://github.com/org/repo/compare',
+          '_blank',
+          'noopener,noreferrer'
+        )
+      );
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
 
-    it('closes the tab and offers a way out when the branch is gone', async () => {
+    it('opens no tab at all and offers a way out when the branch is gone', async () => {
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
       });
@@ -400,8 +399,8 @@ describe('DashboardPreviewBanner', () => {
       await clickOpenPullRequest();
 
       expect(await screen.findByText('This branch no longer exists')).toBeInTheDocument();
-      expect(pendingTab.close).toHaveBeenCalled();
-      expect(pendingTab.location.href).toBe('');
+      // The check runs before any tab is opened, so there is no placeholder tab to flash or close.
+      expect(windowOpenSpy).not.toHaveBeenCalled();
     });
 
     it('re-opens the save flow from the modal', async () => {
@@ -452,8 +451,48 @@ describe('DashboardPreviewBanner', () => {
 
       await clickOpenPullRequest();
 
-      await waitFor(() => expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare'));
+      await waitFor(() =>
+        expect(windowOpenSpy).toHaveBeenCalledWith(
+          'https://github.com/org/repo/compare',
+          '_blank',
+          'noopener,noreferrer'
+        )
+      );
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+
+    // A live repo always lists at least its configured branch, so an empty or missing refs list
+    // means the check is unreliable, not that the branch is gone.
+    it.each([
+      { desc: 'empty', refs: { items: [] } },
+      { desc: 'missing', refs: {} },
+    ])('opens the link when the refs list is $desc (inconclusive, not branch-gone)', async ({ refs }) => {
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve(refs),
+      });
+      setup();
+
+      await clickOpenPullRequest();
+
+      await waitFor(() =>
+        expect(windowOpenSpy).toHaveBeenCalledWith(
+          'https://github.com/org/repo/compare',
+          '_blank',
+          'noopener,noreferrer'
+        )
+      );
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+
+    it('keeps a plain link (no pre-flight) when the repository lacks the branch workflow', async () => {
+      // Without the branch workflow the recovery modal would offer a save-to-new-branch the repo
+      // can't perform, so the pre-flight is skipped entirely.
+      setup({}, { repositoryView: { workflows: ['write'] } });
+
+      const link = screen.getByRole('link', { name: /Open pull request in GitHub/i });
+      expect(link).toHaveAttribute('href', 'https://github.com/org/repo/compare');
+      expect(screen.queryByRole('button', { name: /Open pull request in GitHub/i })).not.toBeInTheDocument();
+      expect(mockTriggerRefs).not.toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
@@ -192,11 +192,16 @@ describe('PreviewBannerViewPR', () => {
       });
     });
 
-    it('renders a click handler that opens a tab synchronously and hands the caller open/cancel', async () => {
+    it('opens the tab only after the pre-flight resolves true — never before', async () => {
       const user = userEvent.setup();
-      const onOpenPullRequest = jest.fn();
-      const pendingTab = { location: { href: '' }, close: jest.fn(), opener: {} as unknown };
-      const openSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
+      // Hold the pre-flight open so the "no tab yet" state is observable without a timing race.
+      let resolvePreflight!: (shouldOpen: boolean) => void;
+      const onOpenPullRequest = jest.fn().mockReturnValue(
+        new Promise<boolean>((resolve) => {
+          resolvePreflight = resolve;
+        })
+      );
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
 
       render(
         <PreviewBannerViewPR
@@ -210,24 +215,66 @@ describe('PreviewBannerViewPR', () => {
       expect(screen.queryByRole('link', { name: /pull request in GitHub/i })).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
 
-      // The tab is opened within the click gesture, before the async check runs.
-      expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank');
-      // The opener is severed to prevent reverse tabnabbing.
-      expect(pendingTab.opener).toBeNull();
+      // While the check is in flight, no tab has been opened — no placeholder, no flash.
       expect(onOpenPullRequest).toHaveBeenCalledTimes(1);
+      expect(openSpy).not.toHaveBeenCalled();
 
-      const actions = onOpenPullRequest.mock.calls[0][0];
-      // open() navigates the pre-opened tab to the computed link.
-      actions.open();
-      expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare');
-      // cancel() closes it.
-      actions.cancel();
-      expect(pendingTab.close).toHaveBeenCalledTimes(1);
+      resolvePreflight(true);
+      await waitFor(() =>
+        expect(openSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank', 'noopener,noreferrer')
+      );
+      expect(openSpy).toHaveBeenCalledTimes(1);
 
       openSpy.mockRestore();
     });
 
-    it('shows a checking state on the button while pre-flighting', () => {
+    it('does not open any tab when the pre-flight resolves false', async () => {
+      const user = userEvent.setup();
+      const onOpenPullRequest = jest.fn().mockResolvedValue(false);
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
+
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={onOpenPullRequest}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
+
+      await waitFor(() => expect(onOpenPullRequest).toHaveBeenCalledTimes(1));
+      expect(openSpy).not.toHaveBeenCalled();
+
+      openSpy.mockRestore();
+    });
+
+    it('degrades to a plain link when the popup is blocked after a passed pre-flight', async () => {
+      const user = userEvent.setup();
+      const onOpenPullRequest = jest.fn().mockResolvedValue(true);
+      // A blocked popup makes window.open return null.
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(null);
+
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={onOpenPullRequest}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
+
+      // The next click is a direct user gesture on a real link, which browsers always allow.
+      const link = await screen.findByRole('link', { name: /Open pull request in GitHub/i });
+      expect(link).toHaveAttribute('href', 'https://github.com/org/repo/compare');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(screen.queryByRole('button', { name: /Open pull request in GitHub/i })).not.toBeInTheDocument();
+
+      openSpy.mockRestore();
+    });
+
+    it('shows a checking state and disables the button while pre-flighting', () => {
       render(
         <PreviewBannerViewPR
           isNewPr
@@ -237,7 +284,8 @@ describe('PreviewBannerViewPR', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Checking branch…' })).toBeInTheDocument();
+      // Disabled so repeated clicks can't run overlapping checks.
+      expect(screen.getByRole('button', { name: 'Checking branch…' })).toBeDisabled();
     });
   });
 
