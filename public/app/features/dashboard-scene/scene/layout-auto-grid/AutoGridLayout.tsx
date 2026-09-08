@@ -177,9 +177,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     document.body.classList.add('dashboard-draggable-transparent-selection');
 
-    // The orchestrator owns the document-level pointermove/pointerup listeners for the whole
-    // drag; we hook into them via callbacks instead of registering our own, so cleanup doesn't
-    // depend on this layout staying active (e.g. across a tab switch mid-drag).
     getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem, {
       onDrag: this._onDrag,
       onDragEnd: this._onDragEnd,

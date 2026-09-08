@@ -153,9 +153,10 @@ describe('DashboardLayoutOrchestrator', () => {
 
   describe('undo/redo for panel drag', () => {
     // The orchestrator owns both outcomes of a drag: a same-grid reorder (committed from the
-    // draggedChildren preview + the snapshot taken at drag start) and a cross-layout move.
-    // AutoGridLayout itself only tracks the preview during the drag and never decides which
-    // one happened — see reorderAutoGridItems.test.ts for the reorder action itself.
+    // draggedChildren preview against the layout's own children, which the drag itself never
+    // mutates) and a cross-layout move. AutoGridLayout itself only tracks the preview during the
+    // drag and never decides which one happened — see reorderAutoGridItems.test.ts for the
+    // reorder action itself.
     it('records one undo entry for a same-grid reorder committed via draggedChildren, and round-trips', async () => {
       const { dashboard, manager, gridItem1, gridItem2 } = setupAutoGrid();
       const orchestrator = dashboard.state.layoutOrchestrator;
@@ -168,7 +169,6 @@ describe('DashboardLayoutOrchestrator', () => {
       await stopDragging(orchestrator, {
         sourceDropTarget: manager,
         lastDropTarget: manager,
-        sourceChildrenSnapshot: [gridItem1, gridItem2],
         dropTargetUnderMouse: manager,
       });
 
@@ -202,7 +202,6 @@ describe('DashboardLayoutOrchestrator', () => {
         sourceDropTarget: managerA,
         lastDropTarget: managerB,
         sourceOriginalIndex: 0,
-        sourceChildrenSnapshot: [gridItem, siblingItem],
         dropTargetUnderMouse: managerB,
       });
 
@@ -434,7 +433,6 @@ async function stopDragging(
     sourceDropTarget: DashboardDropTarget | null;
     lastDropTarget: DashboardDropTarget | null;
     sourceOriginalIndex?: number;
-    sourceChildrenSnapshot?: AutoGridItem[];
     dropTargetUnderMouse?: DashboardDropTarget | null;
   }
 ) {
@@ -445,10 +443,6 @@ async function stopDragging(
   if (opts.sourceOriginalIndex !== undefined) {
     // @ts-expect-error - accessing private property for testing
     orchestrator._sourceOriginalIndex = opts.sourceOriginalIndex;
-  }
-  if (opts.sourceChildrenSnapshot !== undefined) {
-    // @ts-expect-error - accessing private property for testing
-    orchestrator._sourceChildrenSnapshot = opts.sourceChildrenSnapshot;
   }
 
   // @ts-expect-error - accessing private method for testing

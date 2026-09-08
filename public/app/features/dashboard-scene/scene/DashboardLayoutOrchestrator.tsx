@@ -120,8 +120,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _lastHoveredAutoGridItemKey: string | null = null;
   /** Original child index of the dragged item before it was detached from its source layout */
   private _sourceOriginalIndex: number | null = null;
-  /** Snapshot of the source AutoGridLayout's children at drag start, used to compute a single reorder move at drop time */
-  private _sourceChildrenSnapshot: AutoGridItem[] | null = null;
   /** Whether the drag that just ended dropped the item onto a different layout than it started in */
   private _droppedElsewhere = false;
   private _tabDragState: TabDragState | undefined;
@@ -283,31 +281,27 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;
     this._sourceOriginalIndex = null;
-    this._sourceChildrenSnapshot = null;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
 
   /**
    * Commits a single undoable reorder for a drag that ended within the layout it started in,
-   * based on the snapshot taken at drag start and wherever the drag preview (draggedChildren)
-   * left the item. No-op if nothing was actually reordered.
+   * based on where the item started (`children`, which the drag itself never mutates — only the
+   * `draggedChildren` preview does) and wherever the drag preview left it. No-op if nothing was
+   * actually reordered.
    */
   private _commitSameLayoutReorder(
-    sourceDropTarget: DashboardDropTarget,
+    sourceDropTarget: DashboardDropTarget | null,
     gridItem: SceneGridItemLike | undefined
   ): void {
     if (!(sourceDropTarget instanceof AutoGridLayoutManager) || !gridItem || !(gridItem instanceof AutoGridItem)) {
       return;
     }
 
-    const snapshot = this._sourceChildrenSnapshot;
-    if (!snapshot) {
-      return;
-    }
-
     const layout = sourceDropTarget.state.layout;
-    const finalOrder = layout.state.draggedChildren ?? snapshot;
-    const fromIndex = snapshot.findIndex((child) => child === gridItem);
+    const children = layout.state.children;
+    const finalOrder = layout.state.draggedChildren ?? children;
+    const fromIndex = children.findIndex((child) => child === gridItem);
     const toIndex = finalOrder.findIndex((child) => child === gridItem);
 
     if (fromIndex === -1 || toIndex === -1) {
@@ -869,18 +863,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   /**
-   * Captures the source AutoGridLayout's children (for computing a single reorder move at drop
-   * time) and the dragged item's index within them. No-op (beyond clearing the snapshot) for
-   * non-AutoGrid sources.
+   * Captures the dragged item's index within its source AutoGridLayout's children, so a
+   * cross-layout move can reinsert it at the same spot on undo. No-op for non-AutoGrid sources.
    */
   private _captureSourceGridState(gridItem: SceneGridItemLike): number | null {
     if (this._sourceDropTarget instanceof AutoGridLayoutManager) {
       const children = this._sourceDropTarget.state.layout.state.children;
-      this._sourceChildrenSnapshot = [...children];
       const idx = children.findIndex((child) => child === gridItem);
       return idx >= 0 ? idx : null;
     }
-    this._sourceChildrenSnapshot = null;
     return null;
   }
 
