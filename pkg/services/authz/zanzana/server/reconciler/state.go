@@ -46,9 +46,15 @@ type namespaceState struct {
 }
 
 // describes reports whether the record was written for the store that exists
-// now, by the current expected-tuple computation.
+// now, by an expected-tuple computation at least as new as this process's.
+//
+// A newer version counts as reconciled so that during a rolling deploy that
+// bumps stateVersion, replicas still running the old binary leave namespaces
+// the new ones have reconciled alone rather than reverting their tuples. A
+// rollback recovers on its own: the leader's periodic pass reconciles every
+// store regardless of its record and rewrites the record with its own version.
 func (s namespaceState) describes(store *zanzana.StoreInfo) bool {
-	return s.Version == stateVersion && s.StoreID != "" && s.StoreID == store.ID
+	return s.Version >= stateVersion && s.StoreID != "" && s.StoreID == store.ID
 }
 
 // isReconciled reports whether namespace can be served without reconciling it

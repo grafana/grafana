@@ -145,6 +145,21 @@ func TestEnsureNamespace_ReconcilesOnOutdatedRecordVersion(t *testing.T) {
 	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 }
 
+func TestEnsureNamespace_SkipsReconcileOnNewerRecordVersion(t *testing.T) {
+	// A record written by a newer binary mid-rollout must not be reverted to
+	// this one's computation.
+	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{{ID: "store-1", Name: "ahead-ns"}}}
+	state := newFakeStateStore()
+	state.record(t, "ahead-ns", namespaceState{StoreID: "store-1", Version: stateVersion + 1})
+	r := newReconcilerWithState(srv, notFoundClientFactory{}, state)
+
+	require.NoError(t, r.EnsureNamespace(context.Background(), "ahead-ns"))
+
+	assert.Equal(t, int32(0), srv.deleteStoreCalls.Load())
+	assert.Equal(t, namespaceState{StoreID: "store-1", Version: stateVersion + 1}, state.state(t, "ahead-ns"),
+		"the newer record should be left as it is")
+}
+
 func TestEnsureNamespace_ReconcilesWhenStateStoreFails(t *testing.T) {
 	// An unreadable record must not be read as "already reconciled".
 	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{{ID: "store-1", Name: "broken-ns"}}}
