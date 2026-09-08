@@ -416,7 +416,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageBuild)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
-				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
+				logger.Error("failed to update repository status after repository build error", "error", statusErr)
 			}
 			return fmt.Errorf("create repository from configuration: %w", err)
 		}

@@ -541,6 +541,30 @@ func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
 	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageBuild))
 }
 
+// TestRepositoryController_handleDelete_ObservesPendingAge verifies the wiring
+// from handleDelete to the pending-age histogram and the completion counter: a
+// terminating repository with nothing to finalize still observes its age and
+// counts as a completed deletion.
+func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+	}
+
+	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &deletion,
+			// no finalizers: the delete path completes immediately
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
+	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
+}
+
 // TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged guards against a
 // hot-loop: re-writing the same deleteError bumps the resourceVersion, which the
 // informer turns back into a re-enqueue, so an unchanged error must not be
