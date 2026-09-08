@@ -5,20 +5,19 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  AnnoKeyManagerIdentity,
-  AnnoKeyManagerKind,
-  AnnoKeySourcePath,
-} from 'app/features/apiserver/types';
+import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
-import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
-import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import {
+  type DashboardChangeInfo,
+  NameAlreadyExistsError,
+  SaveButton,
+  isNameExistsError,
+  nextMetaAfterFolderPick,
+} from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -32,51 +31,13 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
-  /** Prefer drawer.onClose so Save As folder/meta mutations are restored on cancel. */
-  onCancel?: () => void;
-  /** Carries title/description across a swap to another save form; omit outside the save drawer. */
-  drawer?: SaveDashboardDrawer;
+  /** Owns cancel (restoring Save As folder/meta mutations) and carries title/description across a swap to another save form */
+  drawer: SaveDashboardDrawer;
 }
 
-/**
- * Merges folder/provisioning overlay into dashboard meta for Save As without dropping
- * existing k8s identity fields (name, resourceVersion, etc.). Canceling Save As after a
- * folder change must leave the live scene able to save as an update.
- */
-export function nextMetaAfterSaveAsFolderChange(
-  currentMeta: DashboardMeta,
-  folderUid: string | undefined,
-  provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>
-): DashboardMeta {
-  const currentAnnotations = currentMeta.k8s?.annotations ?? {};
-  const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
-
-  // Drop the previous folder's manager annotations, and the source path with them: it records where
-  // the file currently lives, so keeping it would pin generatePath() to the old folder and revert the
-  // pick. Everything else is kept (including denylist).
-  const droppedAnnotations = new Set<string>([AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath]);
-  const preservedAnnotations = Object.fromEntries(
-    Object.entries(currentAnnotations).filter(([key]) => !droppedAnnotations.has(key))
-  );
-
-  return {
-    ...currentMeta,
-    folderUid,
-    k8s: {
-      ...currentMeta.k8s,
-      ...provisionedMeta.k8s,
-      annotations: {
-        ...preservedAnnotations,
-        ...provisionedMeta.k8s?.annotations,
-        ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
-      },
-    },
-  };
-}
-
-export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
   const { changedSaveModel } = changeInfo;
-  const draft = drawer?.saveFormDraft;
+  const draft = drawer.saveFormDraft;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
@@ -119,39 +80,18 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }:
   // Park what is typed as it changes rather than on unmount: React renders the form that takes
   // over before this one's cleanup runs, so an unmount write would reach it one swap too late
   useEffect(() => {
-    if (drawer) {
-      drawer.saveFormDraft = { title: formValues.title, description: formValues.description };
-    }
+    drawer.saveFormDraft = { title: formValues.title, description: formValues.description };
   }, [drawer, formValues.title, formValues.description]);
 
-  const folderSelectionIdRef = useRef(0);
   const onFolderChange = useCallback(
-    async (uid: string | undefined, title: string | undefined) => {
-      // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
-      const selectionId = ++folderSelectionIdRef.current;
+    (uid: string | undefined, title: string | undefined) => {
       setValue('folder', { uid, title });
-      let provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>;
-      try {
-        // The database escape hatch stays unmanaged whatever folder is picked
-        provisionedMeta = drawer?.state.saveToDatabase ? {} : await getProvisionedMeta(uid);
-      } catch {
-        // Revert to what the scene meta still describes: a racing pick's value may never have reached it
-        if (selectionId === folderSelectionIdRef.current) {
-          setValue('folder', { uid: dashboard.state.meta.folderUid, title: dashboard.state.meta.folderTitle });
-        }
-        return;
-      }
-      if (selectionId !== folderSelectionIdRef.current) {
-        return;
-      }
-      // folderTitle goes with folderUid, or the diff tab and a remounted picker keep naming the old folder
-      dashboard.setState({
-        meta: { ...nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta), folderTitle: title },
-      });
+      // Meta is where the drawer resolves the repository from
+      dashboard.setState({ meta: nextMetaAfterFolderPick(dashboard.state.meta, uid, title) });
       // Re-validate title when folder changes to check for duplicates in new folder
       trigger('title');
     },
-    [dashboard, drawer, setValue, trigger]
+    [dashboard, setValue, trigger]
   );
 
   const handleTitleChange = useCallback(
@@ -220,7 +160,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }:
   };
 
   const cancelButton = (
-    <Button variant="secondary" onClick={() => (onCancel ? onCancel() : dashboard.closeModal())} fill="outline">
+    <Button variant="secondary" onClick={drawer.onClose} fill="outline">
       <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );

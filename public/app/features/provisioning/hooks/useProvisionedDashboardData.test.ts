@@ -1,76 +1,86 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
+import { act, renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
-import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { type SaveFormDraft } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import { setupProvisioningMswServer } from '../mocks/server';
-
+import { type DashboardRepositoryView } from './useDashboardRepositoryView';
 import { RepoViewStatus } from './useGetResourceRepositoryView';
 import { useDefaultValues, useProvisionedDashboardData } from './useProvisionedDashboardData';
 
-setupProvisioningMswServer();
-
-const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
-
-const settingsWithRepo = {
-  items: [
-    {
-      name: 'my-repo',
-      title: 'My Repo',
-      type: 'github',
-      target: 'folder',
-      branch: 'main',
-      workflows: ['branch', 'write'],
-    },
-  ],
-  allowImageRendering: true,
-  availableRepositoryTypes: ['github'],
+const folderRepo: RepositoryView = {
+  name: 'my-repo',
+  title: 'My Repo',
+  type: 'github',
+  target: 'folder',
+  branch: 'main',
+  workflows: ['branch', 'write'],
 };
 
-const folderlessSettings = {
-  items: [
-    {
-      name: 'folderless-repo',
-      title: 'Folderless Repo',
-      type: 'github',
-      target: 'folderless',
-      workflows: ['branch', 'write'],
-    },
-  ],
-  allowImageRendering: true,
-  availableRepositoryTypes: ['github'],
+const folderlessRepo: RepositoryView = {
+  name: 'folderless-repo',
+  title: 'Folderless Repo',
+  type: 'github',
+  target: 'folderless',
+  workflows: ['branch', 'write'],
 };
 
-const folderResponse = {
-  kind: 'Folder',
-  apiVersion: 'folder.grafana.app/v1beta1',
-  metadata: {
-    name: 'test-folder',
-    namespace: 'default',
-    uid: 'test-folder',
-    creationTimestamp: '2023-01-01T00:00:00Z',
-    annotations: {
-      [AnnoKeySourcePath]: 'dashboards',
+function folder(sourcePath: string): Folder {
+  return {
+    kind: 'Folder',
+    apiVersion: 'folder.grafana.app/v1beta1',
+    metadata: {
+      name: 'test-folder',
+      namespace: 'default',
+      uid: 'test-folder',
+      creationTimestamp: '2023-01-01T00:00:00Z',
+      annotations: { [AnnoKeySourcePath]: sourcePath },
     },
-  },
-  spec: { title: 'Test Folder', description: '' },
-};
+    spec: { title: 'Test Folder', description: '' },
+  };
+}
 
-const mockMeta = {
+function readyView(repository?: RepositoryView, folderData?: Folder): DashboardRepositoryView {
+  return {
+    status: RepoViewStatus.Ready,
+    repository,
+    folder: folderData,
+    isLoading: false,
+    isNewSave: false,
+    isProvisioned: Boolean(repository),
+    isInstanceManaged: false,
+    isReadOnlyRepo: false,
+    isMissingRepo: !repository,
+  };
+}
+
+function pendingView(status: RepoViewStatus, error?: unknown): DashboardRepositoryView {
+  return {
+    status,
+    error,
+    isLoading: status === RepoViewStatus.Loading,
+    isNewSave: false,
+    isProvisioned: false,
+    isInstanceManaged: false,
+    isReadOnlyRepo: false,
+    isMissingRepo: status !== RepoViewStatus.Loading,
+  };
+}
+
+const storedMeta: DashboardMeta = {
   folderUid: 'test-folder',
   k8s: {
+    name: 'stored-dash',
     annotations: {
       [AnnoKeyManagerKind]: ManagerKind.Repo,
       [AnnoKeyManagerIdentity]: 'my-repo',
@@ -79,191 +89,111 @@ const mockMeta = {
   },
 };
 
-beforeEach(() => {
-  config.provisioningEnabled = true;
-});
-
-afterEach(() => {
-  config.provisioningEnabled = false;
-});
-
 describe('useDefaultValues', () => {
-  it('returns Loading while settings are being fetched', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, async () => {
-        await new Promise((r) => setTimeout(r, 500));
-        return HttpResponse.json(settingsWithRepo);
+  it('returns Loading with null values while the repository is being resolved', () => {
+    const { result } = renderHook(() =>
+      useDefaultValues({
+        meta: storedMeta,
+        defaultTitle: 'Test Dashboard',
+        isNew: false,
+        view: pendingView(RepoViewStatus.Loading),
       })
     );
-
-    const meta = {
-      folderUid: 'test-folder',
-      k8s: {
-        annotations: {
-          [AnnoKeyManagerKind]: ManagerKind.Repo,
-          [AnnoKeyManagerIdentity]: 'my-repo',
-          [AnnoKeySourcePath]: 'dashboards/test.json',
-        },
-      },
-    };
-
-    const { result } = renderHook(() => useDefaultValues({ meta, defaultTitle: 'Test Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
 
     expect(result.current.status).toBe(RepoViewStatus.Loading);
     expect(result.current.values).toBeNull();
   });
 
-  it('returns Error when the settings endpoint fails', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
-
-    const { result } = renderHook(() => useDefaultValues({ meta: mockMeta, defaultTitle: 'Test Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
-    expect(result.current.values).toBeNull();
-    expect(result.current.error).toBeDefined();
-  });
-
-  it('returns Error when the folder endpoint fails', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
-      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json({ message: 'Not found' }, { status: 500 }))
+  it('returns Error with the lookup error', () => {
+    const error = new Error('Forbidden');
+    const { result } = renderHook(() =>
+      useDefaultValues({
+        meta: storedMeta,
+        defaultTitle: 'Test Dashboard',
+        isNew: false,
+        view: pendingView(RepoViewStatus.Error, error),
+      })
     );
 
-    const { result } = renderHook(() => useDefaultValues({ meta: mockMeta, defaultTitle: 'Test Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
+    expect(result.current.status).toBe(RepoViewStatus.Error);
     expect(result.current.values).toBeNull();
-    expect(result.current.error).toBeDefined();
+    expect(result.current.error).toBe(error);
   });
 
-  it('returns Orphaned with null values when no repository matches', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () =>
-        HttpResponse.json({
-          items: [],
-          allowImageRendering: true,
-          availableRepositoryTypes: ['github'],
-        })
-      ),
-      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+  it('returns Orphaned with null values and no error', () => {
+    const { result } = renderHook(() =>
+      useDefaultValues({
+        meta: storedMeta,
+        defaultTitle: 'Test Dashboard',
+        isNew: false,
+        view: pendingView(RepoViewStatus.Orphaned),
+      })
     );
 
-    // A stored dashboard: its manager annotation records where the file lives, so a repository
-    // that no longer exists really does leave it orphaned
-    const meta = {
-      folderUid: 'test-folder',
-      k8s: {
-        name: 'stored-dash',
-        annotations: {
-          [AnnoKeyManagerKind]: ManagerKind.Repo,
-          [AnnoKeyManagerIdentity]: 'unknown-repo',
-          [AnnoKeySourcePath]: 'dashboards/test.json',
-        },
-      },
-    };
-
-    const { result } = renderHook(() => useDefaultValues({ meta, defaultTitle: 'Test Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Orphaned));
+    expect(result.current.status).toBe(RepoViewStatus.Orphaned);
     expect(result.current.values).toBeNull();
     expect(result.current.error).toBeUndefined();
   });
 
-  it('falls back to the folder repository when a new save carries a stale manager annotation', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
-      http.get(`${FOLDER_BASE}/folders/:name`, () =>
-        HttpResponse.json({
-          ...folderResponse,
-          metadata: {
-            ...folderResponse.metadata,
-            annotations: {
-              ...folderResponse.metadata.annotations,
-              [AnnoKeyManagerKind]: ManagerKind.Repo,
-              [AnnoKeyManagerIdentity]: 'my-repo',
-            },
-          },
-        })
-      )
+  it('returns Error when the view is Ready without a repository', () => {
+    const { result } = renderHook(() =>
+      useDefaultValues({ meta: storedMeta, defaultTitle: 'Test Dashboard', isNew: false, view: readyView() })
     );
 
-    // A new dashboard picked into a folder keeps the annotation of whatever repo it saw first. It
-    // owns no file yet, so a name that no longer resolves must not dead-end the form as orphaned
-    const meta = {
-      folderUid: 'test-folder',
-      k8s: {
-        annotations: {
-          [AnnoKeyManagerKind]: ManagerKind.Repo,
-          [AnnoKeyManagerIdentity]: 'deleted-repo',
-        },
-      },
-    };
-
-    const { result } = renderHook(() => useDefaultValues({ meta, defaultTitle: 'New Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
-    // The save targets the repository that actually resolved, not the name the annotation still holds
-    expect(result.current.values?.repo).toBe('my-repo');
-  });
-
-  it('returns Ready with form values when repository is resolved', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
-      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
-    );
-
-    const { result } = renderHook(() => useDefaultValues({ meta: mockMeta, defaultTitle: 'Test Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
-    expect(result.current.values).not.toBeNull();
-    expect(result.current.values?.repo).toBe('my-repo');
-    expect(result.current.values?.title).toBe('Test Dashboard');
-    expect(result.current.repository?.name).toBe('my-repo');
-  });
-
-  it('resolves a folderless repo for a brand-new dashboard with no folder', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
-
-    const { result } = renderHook(() => useDefaultValues({ meta: {}, defaultTitle: 'New Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
-    expect(result.current.isNew).toBe(true);
-    expect(result.current.values?.repo).toBe('folderless-repo');
-  });
-
-  it('does not resolve a folderless repo for an existing dashboard with no folder', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
-
-    const meta = { slug: 'existing-dashboard', k8s: { name: 'existing-dashboard-uid', annotations: {} } };
-
-    const { result } = renderHook(() => useDefaultValues({ meta, defaultTitle: 'Existing Dashboard' }), {
-      wrapper: getWrapper({}),
-    });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
+    expect(result.current.status).toBe(RepoViewStatus.Error);
     expect(result.current.values).toBeNull();
   });
 
-  it('resolves a folderless repo when copying an existing dashboard to the root', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+  it('returns Ready with form values for a stored dashboard, keeping its annotated repo and path', () => {
+    const { result } = renderHook(() =>
+      useDefaultValues({
+        meta: storedMeta,
+        defaultTitle: 'Test Dashboard',
+        isNew: false,
+        view: readyView(folderRepo, folder('dashboards')),
+      })
+    );
 
-    // Meta after picking "No folder (repository root)": the folder's manager annotations are gone
-    // but the source dashboard's k8s identity and source path remain
-    const meta = {
+    expect(result.current.status).toBe(RepoViewStatus.Ready);
+    expect(result.current.values).toMatchObject({
+      repo: 'my-repo',
+      title: 'Test Dashboard',
+      path: 'dashboards/test.json',
+      folder: { uid: 'test-folder' },
+    });
+    expect(result.current.repository?.name).toBe('my-repo');
+    expect(result.current.isNew).toBe(false);
+  });
+
+  it('targets the resolved repository, not a stale annotation, for a new save', () => {
+    const meta: DashboardMeta = {
+      folderUid: 'test-folder',
+      k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'deleted-repo' } },
+    };
+
+    const { result } = renderHook(() =>
+      useDefaultValues({ meta, defaultTitle: 'New Dashboard', isNew: true, view: readyView(folderRepo) })
+    );
+
+    expect(result.current.values?.repo).toBe('my-repo');
+    expect(result.current.isNew).toBe(true);
+  });
+
+  it('names a new save file after its title inside the resolved folder', () => {
+    const { result } = renderHook(() =>
+      useDefaultValues({
+        meta: { folderUid: 'test-folder' },
+        defaultTitle: 'New Dashboard',
+        isNew: true,
+        view: readyView(folderlessRepo, folder('team-a')),
+      })
+    );
+
+    expect(result.current.values?.path).toBe('team-a/new-dashboard.json');
+  });
+
+  it('names a copy after the given title and ignores the source file path', () => {
+    const meta: DashboardMeta = {
       slug: 'existing-dashboard',
       k8s: {
         name: 'existing-dashboard-uid',
@@ -272,158 +202,141 @@ describe('useDefaultValues', () => {
       },
     };
 
-    const { result } = renderHook(
-      () => useDefaultValues({ meta, defaultTitle: 'Existing Dashboard', saveAsCopy: true }),
-      { wrapper: getWrapper({}) }
+    const { result } = renderHook(() =>
+      useDefaultValues({
+        meta,
+        defaultTitle: 'Existing Dashboard Copy',
+        saveAsCopy: true,
+        isNew: true,
+        view: readyView(folderlessRepo),
+      })
     );
 
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
-    expect(result.current.isNew).toBe(true);
-    expect(result.current.values?.repo).toBe('folderless-repo');
+    expect(result.current.values).toMatchObject({
+      title: 'Existing Dashboard Copy',
+      path: 'existing-dashboard-copy.json',
+      repo: 'folderless-repo',
+      copyTags: false,
+    });
   });
 
-  it('drops the folder path prefix when a picked folder is cleared back to the repository root', async () => {
-    const provisionedFolder = {
-      ...folderResponse,
-      metadata: {
-        ...folderResponse.metadata,
-        annotations: {
-          [AnnoKeySourcePath]: 'team-a',
-          [AnnoKeyManagerKind]: ManagerKind.Repo,
-          [AnnoKeyManagerIdentity]: 'folderless-repo',
-        },
-      },
-    };
-    server.use(
-      http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)),
-      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(provisionedFolder))
+  it('drops the folder path prefix when a picked folder is cleared back to the repository root', () => {
+    const { result, rerender } = renderHook(
+      ({ meta, view }: { meta: DashboardMeta; view: DashboardRepositoryView }) =>
+        useDefaultValues({ meta, defaultTitle: 'New Dashboard', isNew: true, view }),
+      { initialProps: { meta: { folderUid: 'f1' }, view: readyView(folderlessRepo, folder('team-b')) } }
     );
 
-    const { result, rerender } = renderHook(({ meta }) => useDefaultValues({ meta, defaultTitle: 'New Dashboard' }), {
-      wrapper: getWrapper({}),
-      initialProps: { meta: { folderUid: 'test-folder' } as DashboardMeta },
-    });
+    expect(result.current.values?.path).toBe('team-b/new-dashboard.json');
 
-    await waitFor(() => expect(result.current.values?.path).toMatch(/^team-a\//));
+    rerender({ meta: { folderUid: '' }, view: readyView(folderlessRepo) });
 
-    // "No folder (repository root)" clears the folder from the scene meta
-    rerender({ meta: {} });
-
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
+    expect(result.current.status).toBe(RepoViewStatus.Ready);
     expect(result.current.values?.repo).toBe('folderless-repo');
-    expect(result.current.values?.path).not.toContain('/');
+    expect(result.current.values?.path).toBe('new-dashboard.json');
   });
 });
 
 describe('useProvisionedDashboardData', () => {
-  function createDashboard(meta = {}) {
+  function createDashboard(meta: Partial<DashboardMeta> = {}) {
     return new DashboardScene({
       title: 'Test Dashboard',
       uid: 'test-uid',
       description: 'A test dashboard',
-      meta: {
-        slug: 'test-dashboard',
-        folderUid: 'test-folder',
-        k8s: {
-          annotations: {
-            [AnnoKeyManagerKind]: ManagerKind.Repo,
-            [AnnoKeyManagerIdentity]: 'my-repo',
-            [AnnoKeySourcePath]: 'dashboards/test.json',
-          },
-        },
-        ...meta,
-      },
+      meta: { slug: 'test-dashboard', ...storedMeta, ...meta },
     });
   }
 
-  it('propagates Loading status with null defaultValues', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, async () => {
-        await new Promise((r) => setTimeout(r, 500));
-        return HttpResponse.json(settingsWithRepo);
-      })
-    );
+  const wrapper = getWrapper({ renderWithRouter: true });
 
-    const dashboard = createDashboard();
-    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-      wrapper: getWrapper({ renderWithRouter: true }),
-    });
+  it('propagates Loading status with null defaultValues', () => {
+    const { result } = renderHook(
+      () => useProvisionedDashboardData(createDashboard(), pendingView(RepoViewStatus.Loading)),
+      { wrapper }
+    );
 
     expect(result.current.repoDataStatus).toBe(RepoViewStatus.Loading);
     expect(result.current.defaultValues).toBeNull();
     expect(result.current.readOnly).toBe(true);
   });
 
-  it('propagates Error status with the error object', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
-
-    const dashboard = createDashboard();
-    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-      wrapper: getWrapper({ renderWithRouter: true }),
-    });
-
-    await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Error));
-    expect(result.current.defaultValues).toBeNull();
-    expect(result.current.error).toBeDefined();
-  });
-
-  it('returns Ready with populated defaultValues when resolved', async () => {
-    server.use(
-      http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
-      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+  it('propagates Error status with the error object', () => {
+    const error = new Error('Forbidden');
+    const { result } = renderHook(
+      () => useProvisionedDashboardData(createDashboard(), pendingView(RepoViewStatus.Error, error)),
+      { wrapper }
     );
 
-    const dashboard = createDashboard();
-    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-      wrapper: getWrapper({ renderWithRouter: true }),
-    });
+    expect(result.current.repoDataStatus).toBe(RepoViewStatus.Error);
+    expect(result.current.defaultValues).toBeNull();
+    expect(result.current.error).toBe(error);
+  });
 
-    await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
-    expect(result.current.defaultValues).not.toBeNull();
-    expect(result.current.defaultValues?.repo).toBe('my-repo');
+  it('returns Ready with populated defaultValues when resolved', () => {
+    const { result } = renderHook(
+      () => useProvisionedDashboardData(createDashboard(), readyView(folderRepo, folder('dashboards'))),
+      { wrapper }
+    );
+
+    expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
+    expect(result.current.defaultValues).toMatchObject({
+      repo: 'my-repo',
+      title: 'Test Dashboard',
+      description: 'A test dashboard',
+    });
     expect(result.current.repository?.name).toBe('my-repo');
     expect(result.current.readOnly).toBe(false);
   });
 
-  it('resolves the folderless repo for a brand-new dashboard saved at root', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+  it('seeds a new save from the draft parked on the drawer, filename included', () => {
+    const view = { ...readyView(folderlessRepo), isNewSave: true };
+    const { result } = renderHook(
+      () =>
+        useProvisionedDashboardData(createDashboard({ folderUid: undefined, k8s: undefined }), view, {
+          draft: { title: 'Typed', description: 'Typed desc' },
+        }),
+      { wrapper }
+    );
 
-    const dashboard = createDashboard({ folderUid: undefined, k8s: undefined });
-    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-      wrapper: getWrapper({ renderWithRouter: true }),
-    });
-
-    await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
     expect(result.current.isNew).toBe(true);
-    expect(result.current.repository?.name).toBe('folderless-repo');
+    expect(result.current.defaultValues).toMatchObject({
+      title: 'Typed',
+      description: 'Typed desc',
+      path: 'typed.json',
+    });
   });
 
-  it('does not resolve the folderless repo for an existing dashboard saved at root', async () => {
-    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+  it('suffixes a copy once: the title parked by the form is final on re-resolution', () => {
+    const view = { ...readyView(folderlessRepo), isNewSave: true };
+    const { result, rerender } = renderHook(
+      ({ draft }: { draft?: SaveFormDraft }) =>
+        useProvisionedDashboardData(createDashboard({ folderUid: undefined, k8s: undefined }), view, {
+          saveAsCopy: true,
+          draft,
+        }),
+      { wrapper, initialProps: { draft: undefined } as { draft?: SaveFormDraft } }
+    );
 
-    const dashboard = createDashboard({
-      folderUid: undefined,
-      k8s: { name: 'existing-dashboard-uid', annotations: {} },
-    });
-    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-      wrapper: getWrapper({ renderWithRouter: true }),
+    expect(result.current.defaultValues).toMatchObject({
+      title: 'Test Dashboard Copy',
+      path: 'test-dashboard-copy.json',
     });
 
-    await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Error));
-    expect(result.current.repository).toBeUndefined();
+    // The form parks exactly what it shows; a folder pick recomputes the defaults from that
+    rerender({ draft: { title: 'Test Dashboard Copy' } });
+
+    expect(result.current.defaultValues).toMatchObject({
+      title: 'Test Dashboard Copy',
+      path: 'test-dashboard-copy.json',
+    });
   });
 
   describe('enforced branch name template', () => {
     // write-first repo: without the enforced-template override the default workflow would be `write`.
-    const enforcedSettings = {
-      ...settingsWithRepo,
-      items: [
-        {
-          ...settingsWithRepo.items[0],
-          workflows: ['write', 'branch'],
-          branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
-        },
-      ],
+    const enforcedRepo: RepositoryView = {
+      ...folderRepo,
+      workflows: ['write', 'branch'],
+      branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
     };
 
     afterEach(async () => {
@@ -432,65 +345,40 @@ describe('useProvisionedDashboardData', () => {
       });
     });
 
-    it('switches to the branch workflow when the template is enforced and the flag is on', async () => {
+    it('switches to the branch workflow when the template is enforced and the flag is on', () => {
       setTestFlags({ 'provisioning.gitConventions': true });
-      server.use(
-        http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
-        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
+        { wrapper }
       );
 
-      const dashboard = createDashboard();
-      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-        wrapper: getWrapper({ renderWithRouter: true }),
-      });
-
-      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
       // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
       expect(result.current.defaultValues?.workflow).toBe('branch');
     });
 
-    it('keeps the default write workflow when the gitConventions flag is off', async () => {
+    it('keeps the default write workflow when the gitConventions flag is off', () => {
       setTestFlags({ 'provisioning.gitConventions': false });
-      server.use(
-        http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
-        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
+        { wrapper }
       );
 
-      const dashboard = createDashboard();
-      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-        wrapper: getWrapper({ renderWithRouter: true }),
-      });
-
-      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
       expect(result.current.defaultValues?.workflow).toBe('write');
     });
 
-    it('keeps the default write workflow when enforcement has no usable template', async () => {
+    it('keeps the default write workflow when enforcement has no usable template', () => {
       setTestFlags({ 'provisioning.gitConventions': true });
-      server.use(
-        http.get(`${BASE}/settings`, () =>
-          HttpResponse.json({
-            ...settingsWithRepo,
-            items: [
-              {
-                ...settingsWithRepo.items[0],
-                workflows: ['write', 'branch'],
-                // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so
-                // the workflow must not switch (nothing to enforce).
-                branchOptions: { enforceTemplate: true },
-              },
-            ],
-          })
-        ),
-        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so the
+      // workflow must not switch (nothing to enforce).
+      const repo: RepositoryView = { ...enforcedRepo, branchOptions: { enforceTemplate: true } };
+
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(createDashboard(), readyView(repo, folder('dashboards'))),
+        { wrapper }
       );
 
-      const dashboard = createDashboard();
-      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
-        wrapper: getWrapper({ renderWithRouter: true }),
-      });
-
-      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
       expect(result.current.defaultValues?.workflow).toBe('write');
     });
   });

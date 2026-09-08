@@ -4,6 +4,8 @@ import { isFetchError } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Button } from '@grafana/ui';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type Diffs } from '../settings/version-history/utils';
 
@@ -32,6 +34,30 @@ export function isNameExistsError(error?: Error) {
 
 export function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
+}
+
+const FOLDER_BOUND_ANNOTATIONS: readonly string[] = [AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath];
+
+/**
+ * Meta after a new save (new dashboard or Save As) picks a folder. The manager and source-path
+ * annotations describe where a previewed or copied file came from; the picked folder now decides the
+ * repository, so they go. Identity fields (name, resourceVersion) and every other annotation stay.
+ */
+export function nextMetaAfterFolderPick(
+  meta: DashboardMeta,
+  folderUid: string | undefined,
+  folderTitle: string | undefined
+): DashboardMeta {
+  const annotations = meta.k8s?.annotations;
+  const k8s = annotations
+    ? {
+        ...meta.k8s,
+        annotations: Object.fromEntries(
+          Object.entries(annotations).filter(([key]) => !FOLDER_BOUND_ANNOTATIONS.includes(key))
+        ),
+      }
+    : meta.k8s;
+  return { ...meta, folderUid, folderTitle, k8s };
 }
 
 export function NameAlreadyExistsError() {

@@ -3,12 +3,10 @@ import { useRef } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { type SaveFormDraft } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import {
-  RepoViewStatus,
-  useGetResourceRepositoryView,
-} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { RepoViewStatus, type RepositoryViewData } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
@@ -22,10 +20,7 @@ import { generatePath, slugifyForFilename } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { type ProvisionedDashboardFormData } from '../types/form';
 
-// A save-as copy writes a new file even though the source dashboard already exists.
-export function getIsNewDashboardSave(meta: DashboardMeta, saveAsCopy?: boolean) {
-  return !meta.k8s?.name || Boolean(saveAsCopy);
-}
+import { type DashboardRepositoryView } from './useDashboardRepositoryView';
 
 interface UseDefaultValuesParams {
   meta: DashboardMeta;
@@ -33,6 +28,8 @@ interface UseDefaultValuesParams {
   defaultDescription?: string;
   loadedFromRef?: string;
   saveAsCopy?: boolean;
+  isNew: boolean;
+  view: Pick<RepositoryViewData, 'repository' | 'folder' | 'status' | 'error'>;
 }
 
 export function useDefaultValues({
@@ -41,28 +38,19 @@ export function useDefaultValues({
   defaultDescription,
   loadedFromRef,
   saveAsCopy,
+  isNew,
+  view: { repository, folder, status, error },
 }: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
-  const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  const isNew = getIsNewDashboardSave(meta, saveAsCopy);
-  const { repository, folder, isLoading, status, error } = useGetResourceRepositoryView({
-    name: managerKind === 'repo' ? managerIdentity : undefined,
-    folderName: meta.folderUid,
-    includeFolderless: !meta.folderUid && isNew,
-    // A new save owns no file yet, so its manager annotation is only a hint. Resolving it the same
-    // way useIsProvisionedNG does keeps the two from disagreeing over whether this is provisioned,
-    // which is what left the drawer rendering the provisioned branch around an orphan notice.
-    nameIsHint: isNew,
-  });
   // Minted once per form rather than per render: this feeds the fallback filename for a save with
   // no title to slugify, and regenerating it would rewrite that filename on every recompute
   const timestampRef = useRef<string>(undefined);
   timestampRef.current ??= generateTimestamp();
   const timestamp = timestampRef.current;
 
-  if (isLoading || status === RepoViewStatus.Loading) {
+  if (status === RepoViewStatus.Loading) {
     return {
       values: null,
       status: RepoViewStatus.Loading,
@@ -94,11 +82,10 @@ export function useDefaultValues({
 
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
 
-  const formTitle = saveAsCopy ? `${defaultTitle} Copy` : defaultTitle;
   // The form syncs a new save's filename from its title, so seed that same name here. Falling back
   // to a timestamped placeholder would mint a fresh one on every defaults recompute, and each one
   // lands in the field for the render before the sync replaces it, which reads as a flicker.
-  const titleSlug = isNew ? slugifyForFilename(formTitle ?? '') : undefined;
+  const titleSlug = isNew ? slugifyForFilename(defaultTitle) : undefined;
 
   const dashboardPath = generatePath({
     timestamp,
@@ -119,7 +106,7 @@ export function useDefaultValues({
         uid: meta.folderUid,
         title: '',
       },
-      title: formTitle,
+      title: defaultTitle,
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository, loadedFromRef),
       copyTags: saveAsCopy ? false : true,
@@ -147,18 +134,26 @@ export interface ProvisionedDashboardData {
  * It retrieves default values, repository information, and workflow options based on the current dashboard state.
  */
 
-export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCopy?: boolean): ProvisionedDashboardData {
-  const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
+export function useProvisionedDashboardData(
+  dashboard: DashboardScene,
+  view: DashboardRepositoryView,
+  options: { saveAsCopy?: boolean; draft?: SaveFormDraft } = {}
+): ProvisionedDashboardData {
+  const { saveAsCopy, draft } = options;
+  const { meta, title, description } = dashboard.useState();
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const defaultValuesResult = useDefaultValues({
     meta,
-    defaultTitle,
-    defaultDescription,
+    // The draft is whatever the previous form showed, suffix included, so only a fresh copy gets one
+    defaultTitle: draft?.title ?? (saveAsCopy ? `${title} Copy` : title),
+    defaultDescription: draft?.description ?? description,
     loadedFromRef,
     saveAsCopy,
+    isNew: view.isNewSave,
+    view,
   });
 
   if (defaultValuesResult.status !== RepoViewStatus.Ready) {

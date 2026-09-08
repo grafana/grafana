@@ -1,13 +1,17 @@
 import { useRef } from 'react';
 
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
+import { Alert, Button, Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { FormLoadingErrorAlert } from 'app/features/provisioning/components/Dashboards/FormLoadingErrorAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
-import { type DashboardMeta } from 'app/types/dashboard';
+import {
+  type DashboardRepositoryView,
+  useDashboardRepositoryView,
+} from 'app/features/provisioning/hooks/useDashboardRepositoryView';
+import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -21,6 +25,8 @@ import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
 
+type SaveTarget = 'repository' | 'database';
+
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   showDiff?: boolean;
@@ -32,11 +38,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
-  // Git/Database switch for provisioned saves, owned by useDatabaseSaveSwitch. Lives on the
-  // drawer because switching tabs unmounts the save form while the drawer stays open.
-  saveToDatabase?: boolean;
-  // uid is the scene uid at switch time; a different one on unmount means a save already landed
-  databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean; uid?: string };
+  /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
+  saveTarget?: SaveTarget;
 }
 
 /** Title and description typed into a save form, so a form swap can hand them to the next one */
@@ -47,10 +50,9 @@ export interface SaveFormDraft {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   /**
-   * Deliberately not scene state: a folder pick can change which save form applies, and each form
-   * keeps title/description in its own local form state, so the draft outlives the swap here. It is
-   * only read when a form mounts and written when one unmounts, so making it reactive would just
-   * re-render the drawer on every swap.
+   * Title/description typed into a save form, read once by the form that replaces it after a folder
+   * pick or target switch. Not scene state: it is written on every keystroke and read only on mount,
+   * so reactivity would just re-render the drawer (and re-diff the dashboard) per keystroke.
    */
   public saveFormDraft: SaveFormDraft | undefined;
 
@@ -89,7 +91,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
-    saveToDatabase,
+    saveTarget,
   } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
@@ -108,19 +110,23 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const { isProvisioned: resolvedIsProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(
-    dashboard,
-    saveAsCopy
-  );
-  // A folder pick re-runs the repository lookup, so hold the last settled answer while the next one
-  // is in flight: unmounting the form that is already up would drop what the user typed into it
-  const settledIsProvisionedNG = useRef<boolean | undefined>(undefined);
-  if (!isResolvingRepo) {
-    settledIsProvisionedNG.current = resolvedIsProvisionedNG;
+  const liveView = useDashboardRepositoryView(dashboard, saveAsCopy);
+  const { isNewSave } = liveView;
+  // A folder pick re-runs the lookup. Hold the last settled view while it is in flight, and through a
+  // dead end (the picked folder's repository is gone, or its lookup failed): unmounting the form that is
+  // up would drop what the user typed, and its folder picker is the only way out of the dead end
+  const isDeadEnd =
+    isNewSave && (liveView.status === RepoViewStatus.Orphaned || liveView.status === RepoViewStatus.Error);
+  const settledView = useRef<DashboardRepositoryView | undefined>(undefined);
+  if (!liveView.isLoading && !(isDeadEnd && settledView.current)) {
+    settledView.current = liveView;
   }
-  const isProvisionedNG = settledIsProvisionedNG.current ?? resolvedIsProvisionedNG;
-  // Only the first lookup has nothing to hold, so it is the only one that may show a spinner
-  const isFirstRepoResolve = isResolvingRepo && settledIsProvisionedNG.current === undefined;
+  const view = settledView.current ?? liveView;
+  const isHolding = view !== liveView;
+  // The root of a folderless repository is the one place a new save can go either way
+  const canChooseTarget = isNewSave && !meta.folderUid && view.repository?.target === 'folderless';
+  const target: SaveTarget =
+    canChooseTarget && saveTarget ? saveTarget : view.isProvisioned ? 'repository' : 'database';
 
   const tabs = (
     <TabsBar>
@@ -147,8 +153,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-update-template', 'Save template');
   } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
-  } else if ((isProvisioned || isProvisionedNG) && !changeInfo.isNew && !saveToDatabase) {
-    // A dashboard that does not exist yet, or one being written to the database, is not provisioned
+  } else if (!isNewSave && (isProvisioned || view.isProvisioned)) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
   }
 
@@ -170,27 +175,26 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
-    // Checked before the spinner: once switched to the database form, a folder pick re-runs the
-    // repository lookup, and neither a cold cache nor an unmanaged folder may unmount that form
-    if (saveToDatabase || isProvisionedNG) {
+    if (target === 'repository') {
       return (
         <SaveProvisionedDashboard
           dashboard={dashboard}
           changeInfo={changeInfo}
           drawer={model}
           saveAsCopy={saveAsCopy}
+          view={view}
+          isReresolving={isHolding}
         />
       );
     }
 
-    if (isFirstRepoResolve) {
+    // First lookup of a new save: nothing settled to hold, so the form waits
+    if (view.isLoading) {
       return <Spinner />;
     }
 
     if (saveAsCopy || changeInfo.isNew) {
-      return (
-        <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} drawer={model} />
-      );
+      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {
@@ -203,7 +207,49 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   return (
     <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
-      <div style={{ display: showDiff ? 'none' : 'contents' }}>{renderForm()}</div>
+      <div style={{ display: showDiff ? 'none' : 'contents' }}>
+        <Stack direction="column" gap={2}>
+          {isDeadEnd &&
+            isHolding &&
+            (liveView.status === RepoViewStatus.Orphaned ? (
+              <Alert
+                severity="warning"
+                title={t(
+                  'dashboard-scene.save-dashboard-drawer.folder-repo-missing-title',
+                  'The selected folder cannot be saved to'
+                )}
+              >
+                <Trans i18nKey="dashboard-scene.save-dashboard-drawer.folder-repo-missing-body">
+                  The provisioning repository managing this folder no longer exists. Choose a different folder or save
+                  at the repository root.
+                </Trans>
+              </Alert>
+            ) : (
+              <FormLoadingErrorAlert error={liveView.error} />
+            ))}
+          {renderForm()}
+          {canChooseTarget && (
+            <div>
+              <Button
+                variant="secondary"
+                size="sm"
+                fill="text"
+                onClick={() => model.setState({ saveTarget: target === 'repository' ? 'database' : 'repository' })}
+              >
+                {target === 'repository' ? (
+                  <Trans i18nKey="dashboard-scene.save-dashboard-drawer.save-to-database">
+                    Save to Grafana database instead
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="dashboard-scene.save-dashboard-drawer.save-to-git">
+                    Save to Git repository instead
+                  </Trans>
+                )}
+              </Button>
+            </div>
+          )}
+        </Stack>
+      </div>
       {showDiff && (
         <SaveDashboardDiff
           diff={diffs}
