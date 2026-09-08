@@ -192,9 +192,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
 
-    // The orchestrator's drop decision (same-grid reorder or cross-layout move) has already been
-    // committed by the time this runs — everything in _stopDraggingSync is synchronous now, so
-    // there's no async gap during which resetting here could show the item at the wrong position.
     this._resetPanelPositionAndSize();
     this.setState({ draggingKey: undefined });
 

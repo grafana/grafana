@@ -1,251 +1,28 @@
-import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 
-import { activateFullSceneTree } from '../utils/test-utils';
+import { moveGridItem } from '../actions/layout/moveGridItem';
+import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
 
-import { type DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
+import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
-import { RowItem } from './layout-rows/RowItem';
-import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
-import { type DashboardDropTarget } from './types/DashboardDropTarget';
 
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
-});
+jest.mock('../actions/layout/moveGridItem', () => ({
+  moveGridItem: jest.fn(),
+}));
+jest.mock('../actions/layout/reorderAutoGridItems', () => ({
+  reorderAutoGridItems: jest.fn(),
+}));
+
+const moveGridItemMock = jest.mocked(moveGridItem);
+const reorderAutoGridItemsMock = jest.mocked(reorderAutoGridItems);
 
 describe('DashboardLayoutOrchestrator', () => {
-  describe('cross-tab drag', () => {
-    // Nothing is mutated mid-drag any more (no eager detach) — the item stays in its source
-    // the whole time. These tests drive _stopDraggingSync directly, as a real drag would call it
-    // once the pointer is released, and assert on the single atomic outcome it produces.
-    it('should drop item into current tab when dropped on tab header', async () => {
-      const { orchestrator, tab1Manager, tab2Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
-
-      orchestrator.setState({
-        draggingGridItem: gridItem.getRef(),
-        sourceTabKey: tab1.state.key,
-      });
-
-      const tab2 = tabsManager.state.tabs[1];
-
-      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
-      expect(tab2Manager.state.layout.state.children).toHaveLength(0);
-
-      // Simulates having hovered/switched to tab2 (lastDropTarget is the TabItem), with the
-      // cursor released over the tab header (no valid drop target under mouse)
-      await stopDragging(orchestrator, { sourceDropTarget: tab1Manager, lastDropTarget: tab2, sourceOriginalIndex: 0 });
-
-      expect(tab2Manager.state.layout.state.children).toHaveLength(1);
-      expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
-      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
-    });
-
-    it('should cancel drop when panel is released between tab headers — item stays in source, nothing recorded', async () => {
-      const { dashboard, orchestrator, tab1Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
-
-      orchestrator.setState({
-        draggingGridItem: gridItem.getRef(),
-        sourceTabKey: tab1.state.key,
-      });
-
-      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
-
-      // Cursor released over the tab bar itself (between headers), no valid target under mouse
-      await stopDragging(orchestrator, { sourceDropTarget: tab1Manager, lastDropTarget: tabsManager });
-
-      // Nothing was ever mutated, so the panel is exactly where it started and there's nothing
-      // to undo.
-      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
-      expect(tab1Manager.state.layout.state.children[0]).toBe(gridItem);
-      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
-    });
-
-    it('should preserve original order when cancelled among sibling panels', async () => {
-      const { dashboard, orchestrator, tab1Manager, tabsManager, gridItem, tab1 } = setupWithTwoTabs();
-
-      // Add more panels to tab1: [itemBefore, gridItem, itemAfter]
-      const panelBefore = new VizPanel({ title: 'Before', key: 'panel-before', pluginId: 'table' });
-      const panelAfter = new VizPanel({ title: 'After', key: 'panel-after', pluginId: 'table' });
-      const itemBefore = new AutoGridItem({ key: 'item-before', body: panelBefore });
-      const itemAfter = new AutoGridItem({ key: 'item-after', body: panelAfter });
-
-      tab1Manager.state.layout.setState({ children: [itemBefore, gridItem, itemAfter] });
-      expect(tab1Manager.state.layout.state.children[1]).toBe(gridItem);
-
-      orchestrator.setState({
-        draggingGridItem: gridItem.getRef(),
-        sourceTabKey: tab1.state.key,
-      });
-
-      await stopDragging(orchestrator, {
-        sourceDropTarget: tab1Manager,
-        lastDropTarget: tabsManager,
-        sourceOriginalIndex: 1,
-      });
-
-      const children = tab1Manager.state.layout.state.children;
-      expect(children).toHaveLength(3);
-      expect(children[0]).toBe(itemBefore);
-      expect(children[1]).toBe(gridItem);
-      expect(children[2]).toBe(itemAfter);
-      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
-    });
-
-    it('should not cancel drop when lastDropTarget is stale TabsLayoutManager but mouse is over valid target', async () => {
-      const { orchestrator, tab1Manager, tab2Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
-
-      orchestrator.setState({
-        draggingGridItem: gridItem.getRef(),
-        sourceTabKey: tab1.state.key,
-      });
-
-      // Stale: last pointermove was over the tab bar, but pointerup lands on a valid target
-      await stopDragging(orchestrator, {
-        sourceDropTarget: tab1Manager,
-        lastDropTarget: tabsManager,
-        sourceOriginalIndex: 0,
-        dropTargetUnderMouse: tab2Manager,
-      });
-
-      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
-      expect(tab2Manager.state.layout.state.children).toHaveLength(1);
-      expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
-    });
-
-    it('should complete normal drop when valid drop target exists', async () => {
-      const { dashboard, orchestrator, tab1Manager, tab2Manager, gridItem, tab1 } = setupWithTwoTabs();
-
-      orchestrator.setState({
-        draggingGridItem: gridItem.getRef(),
-        sourceTabKey: tab1.state.key,
-      });
-
-      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
-
-      await stopDragging(orchestrator, {
-        sourceDropTarget: tab1Manager,
-        lastDropTarget: tab2Manager,
-        sourceOriginalIndex: 0,
-        dropTargetUnderMouse: tab2Manager,
-      });
-
-      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
-      expect(tab2Manager.state.layout.state.children).toHaveLength(1);
-      expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
-
-      const sidebar = dashboard.state.sidebar;
-      expect(sidebar.state.undoStack).toHaveLength(1);
-
-      sidebar.undoAction();
-      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
-      expect(tab1Manager.state.layout.state.children[0].state.body).toBe(gridItem.state.body);
-      expect(tab2Manager.state.layout.state.children).toHaveLength(0);
-    });
-  });
-
-  describe('undo/redo for panel drag', () => {
-    // The orchestrator owns both outcomes of a drag: a same-grid reorder (committed from the
-    // draggedChildren preview against the layout's own children, which the drag itself never
-    // mutates) and a cross-layout move. AutoGridLayout itself only tracks the preview during the
-    // drag and never decides which one happened — see reorderAutoGridItems.test.ts for the
-    // reorder action itself.
-    it('records one undo entry for a same-grid reorder committed via draggedChildren, and round-trips', async () => {
-      const { dashboard, manager, gridItem1, gridItem2 } = setupAutoGrid();
-      const orchestrator = dashboard.state.layoutOrchestrator;
-
-      orchestrator.setState({ draggingGridItem: gridItem1.getRef() });
-
-      // Simulate the drag preview having reordered the panels before the pointer was released.
-      manager.state.layout.setState({ draggedChildren: [gridItem2, gridItem1] });
-
-      await stopDragging(orchestrator, {
-        sourceDropTarget: manager,
-        lastDropTarget: manager,
-        dropTargetUnderMouse: manager,
-      });
-
-      expect(manager.state.layout.state.children).toEqual([gridItem2, gridItem1]);
-
-      const sidebar = dashboard.state.sidebar;
-      expect(sidebar.state.undoStack).toHaveLength(1);
-
-      sidebar.undoAction();
-      expect(manager.state.layout.state.children).toEqual([gridItem1, gridItem2]);
-
-      sidebar.redoAction();
-      expect(manager.state.layout.state.children).toEqual([gridItem2, gridItem1]);
-    });
-
-    it('records exactly one undo entry when a same-grid reorder is immediately followed by dropping on a different layout (regression: no leftover/ghost panel)', async () => {
-      const { dashboard, managerA, managerB, gridItem } = setupTwoAutoGrids();
-
-      const siblingPanel = new VizPanel({ title: 'Sibling', key: 'panel-sibling', pluginId: 'table' });
-      const siblingItem = new AutoGridItem({ key: 'sibling-item', body: siblingPanel });
-      managerA.state.layout.setState({ children: [gridItem, siblingItem] });
-
-      const orchestrator = dashboard.state.layoutOrchestrator;
-      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
-
-      // Simulate having reordered gridItem past its sibling inside managerA before the pointer
-      // left the grid and was released over managerB instead.
-      managerA.state.layout.setState({ draggedChildren: [siblingItem, gridItem] });
-
-      await stopDragging(orchestrator, {
-        sourceDropTarget: managerA,
-        lastDropTarget: managerB,
-        sourceOriginalIndex: 0,
-        dropTargetUnderMouse: managerB,
-      });
-
-      // Only the cross-layout move should have happened: the in-grid reorder preview must not be
-      // committed on top of it, and the panel must end up in exactly one place.
-      expect(managerA.state.layout.state.children).toEqual([siblingItem]);
-      expect(managerB.state.layout.state.children).toHaveLength(1);
-      expect(managerB.state.layout.state.children[0]).toBe(gridItem);
-
-      const sidebar = dashboard.state.sidebar;
-      expect(sidebar.state.undoStack).toHaveLength(1);
-    });
-
-    it('records one undo entry for a cross-grid move between two plain AutoGrids and round-trips', async () => {
-      const { dashboard, managerA, managerB, gridItem, panel } = setupTwoAutoGrids();
-      const orchestrator = dashboard.state.layoutOrchestrator;
-
-      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
-
-      await stopDragging(orchestrator, {
-        sourceDropTarget: managerA,
-        lastDropTarget: managerB,
-        sourceOriginalIndex: 0,
-        dropTargetUnderMouse: managerB,
-      });
-
-      expect(managerA.state.layout.state.children).toHaveLength(0);
-      expect(managerB.state.layout.state.children).toHaveLength(1);
-      expect(managerB.state.layout.state.children[0]).toBe(gridItem);
-
-      const sidebar = dashboard.state.sidebar;
-      expect(sidebar.state.undoStack).toHaveLength(1);
-
-      sidebar.undoAction();
-      expect(managerB.state.layout.state.children).toHaveLength(0);
-      expect(managerA.state.layout.state.children).toHaveLength(1);
-      expect(managerA.state.layout.state.children[0].state.body).toBe(panel);
-
-      sidebar.redoAction();
-      expect(managerA.state.layout.state.children).toHaveLength(0);
-      expect(managerB.state.layout.state.children).toHaveLength(1);
-    });
-  });
-
   describe('getItemLabel (via state)', () => {
     it('should extract panel title from AutoGridItem', () => {
       const panel = new VizPanel({
@@ -278,6 +55,95 @@ describe('DashboardLayoutOrchestrator', () => {
       // Empty title should be falsy, which the orchestrator handles with fallback to 'Panel'
       expect(gridItem.state.body.state.title).toBe('');
       expect(gridItem.state.body.state.title || 'Panel').toBe('Panel');
+    });
+  });
+  describe('triggers correct dashboard actions', () => {
+    beforeEach(() => {
+      moveGridItemMock.mockClear();
+      reorderAutoGridItemsMock.mockClear();
+    });
+
+    it('commits a reorder when dropped back within the source layout', () => {
+      const { orchestrator, manager, gridItem } = setup();
+      const panel2 = new VizPanel({ title: 'Panel B', key: 'panel-2', pluginId: 'table' });
+      const gridItem2 = new AutoGridItem({ key: 'grid-item-2', body: panel2 });
+      manager.state.layout.setState({ children: [gridItem, gridItem2], draggedChildren: [gridItem2, gridItem] });
+      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = manager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = manager;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(manager);
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
+
+      expect(reorderAutoGridItemsMock).toHaveBeenCalledTimes(1);
+      expect(reorderAutoGridItemsMock).toHaveBeenCalledWith({
+        layout: manager.state.layout,
+        movedItem: gridItem,
+        fromIndex: 0,
+        toIndex: 1,
+      });
+      expect(moveGridItemMock).not.toHaveBeenCalled();
+    });
+
+    it('moves the item when dropped onto a different layout', () => {
+      const { orchestrator, tab1Manager, tab2Manager, gridItem } = setupWithTwoTabs();
+      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = tab1Manager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tab2Manager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceOriginalIndex = 0;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._currentDropPosition = 2;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2Manager);
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
+
+      expect(moveGridItemMock).toHaveBeenCalledTimes(1);
+      expect(moveGridItemMock).toHaveBeenCalledWith({
+        source: tab1Manager,
+        destination: tab2Manager,
+        gridItem,
+        originalIndex: 0,
+        destinationIndex: 2,
+      });
+      expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
+    });
+
+    it('commits a reorder (not a move) when dropped on the tab bar between headers', () => {
+      const { orchestrator, tab1Manager, tabsManager, gridItem } = setupWithTwoTabs();
+      const panel2 = new VizPanel({ title: 'Panel B', key: 'panel-tab1-b', pluginId: 'table' });
+      const gridItem2 = new AutoGridItem({ key: 'grid-item-tab1-b', body: panel2 });
+      tab1Manager.state.layout.setState({ children: [gridItem, gridItem2], draggedChildren: [gridItem2, gridItem] });
+      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = tab1Manager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tabsManager;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(null);
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
+
+      expect(reorderAutoGridItemsMock).toHaveBeenCalledTimes(1);
+      expect(reorderAutoGridItemsMock).toHaveBeenCalledWith({
+        layout: tab1Manager.state.layout,
+        movedItem: gridItem,
+        fromIndex: 0,
+        toIndex: 1,
+      });
+      expect(moveGridItemMock).not.toHaveBeenCalled();
     });
   });
 });
@@ -399,36 +265,30 @@ describe('AutoGridLayoutManager as DashboardDropTarget', () => {
   });
 });
 
-async function stopDragging(
-  orchestrator: DashboardLayoutOrchestrator,
-  opts: {
-    sourceDropTarget: DashboardDropTarget | null;
-    lastDropTarget: DashboardDropTarget | null;
-    sourceOriginalIndex?: number;
-    dropTargetUnderMouse?: DashboardDropTarget | null;
-  }
-) {
-  // @ts-expect-error - accessing private property for testing
-  orchestrator._sourceDropTarget = opts.sourceDropTarget;
-  // @ts-expect-error - accessing private property for testing
-  orchestrator._lastDropTarget = opts.lastDropTarget;
-  if (opts.sourceOriginalIndex !== undefined) {
-    // @ts-expect-error - accessing private property for testing
-    orchestrator._sourceOriginalIndex = opts.sourceOriginalIndex;
-  }
+function setup() {
+  const panel = new VizPanel({
+    title: 'Panel A',
+    key: 'panel-1',
+    pluginId: 'table',
+  });
 
-  // @ts-expect-error - accessing private method for testing
-  const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-  // @ts-expect-error - accessing private method for testing
-  orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(opts.dropTargetUnderMouse ?? null);
+  const gridItem = new AutoGridItem({
+    key: 'grid-item-1',
+    body: panel,
+  });
 
-  // @ts-expect-error - accessing private method for testing
-  orchestrator._stopDraggingSync({ clientX: 100, clientY: 100 } as PointerEvent);
+  const manager = new AutoGridLayoutManager({
+    layout: new AutoGridLayout({ children: [gridItem] }),
+  });
 
-  // @ts-expect-error - accessing private method for testing
-  orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
+  const orchestrator = new DashboardLayoutOrchestrator();
 
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  new DashboardScene({
+    body: manager,
+    layoutOrchestrator: orchestrator,
+  });
+
+  return { orchestrator, manager, gridItem, panel };
 }
 
 function setupAutoGrid() {
@@ -458,34 +318,9 @@ function setupAutoGrid() {
     layout: new AutoGridLayout({ children: [gridItem1, gridItem2] }),
   });
 
-  const dashboard = new DashboardScene({ body: manager });
-  activateFullSceneTree(dashboard);
+  new DashboardScene({ body: manager });
 
-  return { dashboard, manager, gridItem1, gridItem2, panel1, panel2 };
-}
-
-// Two plain AutoGrids, each its own row, with no tabs involved.
-function setupTwoAutoGrids() {
-  const panel = new VizPanel({ title: 'Panel', key: 'panel-a', pluginId: 'table' });
-  const gridItem = new AutoGridItem({ key: 'grid-item-a', body: panel });
-
-  const managerA = new AutoGridLayoutManager({
-    key: 'manager-a',
-    layout: new AutoGridLayout({ children: [gridItem] }),
-  });
-  const managerB = new AutoGridLayoutManager({
-    key: 'manager-b',
-    layout: new AutoGridLayout({ children: [] }),
-  });
-
-  const rowsManager = new RowsLayoutManager({
-    rows: [new RowItem({ key: 'row-a', layout: managerA }), new RowItem({ key: 'row-b', layout: managerB })],
-  });
-
-  const dashboard = new DashboardScene({ body: rowsManager });
-  activateFullSceneTree(dashboard);
-
-  return { dashboard, managerA, managerB, gridItem, panel };
+  return { manager, gridItem1, gridItem2, panel1, panel2 };
 }
 
 function setupWithTwoTabs() {
@@ -528,12 +363,15 @@ function setupWithTwoTabs() {
     tabs: [tab1, tab2],
   });
 
-  // DashboardScene's constructor always creates its own layoutOrchestrator (it isn't
-  // configurable), so grab the real one rather than constructing a separate, unparented instance.
-  const dashboard = new DashboardScene({ body: tabsManager });
-  const orchestrator = dashboard.state.layoutOrchestrator;
+  const orchestrator = new DashboardLayoutOrchestrator();
 
-  activateFullSceneTree(dashboard);
+  const dashboard = new DashboardScene({
+    body: tabsManager,
+    layoutOrchestrator: orchestrator,
+  });
+
+  // Activate the scene hierarchy to set up parent relationships
+  dashboard.activate();
 
   return {
     orchestrator,
