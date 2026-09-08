@@ -268,11 +268,6 @@
       "count": 2
     }
   },
-  "packages/grafana-data/src/utils/flotPairs.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/utils/location.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
