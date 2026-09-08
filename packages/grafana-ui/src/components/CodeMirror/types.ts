@@ -137,6 +137,17 @@ export interface CodeMirrorEditorProps {
    */
   completionMode?: CodeMirrorCompletionMode;
   /**
+   * When `true`, a typed space opens the completion popup as an explicit
+   * request. Suits a language where a space starts a new clause and the
+   * suggestions are keywords or identifiers, as after `SELECT ` in SQL.
+   *
+   * Leave it off (the default) for prose. A source is free to answer an explicit
+   * request with its whole list — the variable source does, so that Ctrl+Space
+   * offers every variable — and binding that to the space bar would open the
+   * popup on every word.
+   */
+  completeOnSpace?: boolean;
+  /**
    * Additional CodeMirror extensions to layer on top of the defaults.
    * Use this for linting, custom keymaps, themes, etc.
    */

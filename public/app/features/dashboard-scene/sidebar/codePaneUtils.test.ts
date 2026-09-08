@@ -43,7 +43,7 @@ function buildDashboard(uid?: string): DashboardScene {
 
 function buildApplyDashboard(uid?: string): DashboardScene {
   return {
-    state: { uid, key: 'key-1', isEditing: true, meta: {} },
+    state: { uid, key: 'key-1', isEditing: true, meta: {}, body: { editModeChanged: jest.fn() } },
     serializer: { metadata: {} },
     onEnterEditMode: jest.fn(),
     setState: jest.fn(),
@@ -235,5 +235,20 @@ describe('applyJsonToDashboard', () => {
     const text = getDashboardResourceText(buildDashboard(undefined));
     const result = applyJsonToDashboard(buildApplyDashboard(undefined), text);
     expect(result.success).toBe(true);
+  });
+
+  // Regression: the rebuild swaps in a freshly-deserialized layout manager, which is not
+  // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
+  // (via entering edit mode), so panels stayed frozen in the new tree until this call was also
+  // made on the swapped-in body.
+  it('re-enables dragging on the rebuilt layout', () => {
+    const dashboard = buildApplyDashboard('abc-123');
+    const text = getDashboardResourceText(buildDashboard('abc-123'));
+
+    applyJsonToDashboard(dashboard, text);
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- reach into the test double's mock
+    const editModeChanged = (dashboard.state.body as unknown as { editModeChanged: jest.Mock }).editModeChanged;
+    expect(editModeChanged).toHaveBeenCalledWith(true);
   });
 });

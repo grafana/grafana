@@ -268,6 +268,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	// call to the backend, so an outage must fail fast here too.
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
+	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter()
 	_, err := entry.breaker.Execute(func() (struct{}, error) {
 		entry.handler.ServeHTTP(rec, proxyReq)
