@@ -64,16 +64,7 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 	}
 
 	mappingFields := fieldDefinitionsForMapping(provider, group, kindResource)
-	defaultFieldNames := []string{
-		resource.SEARCH_FIELD_ID,
-		resource.SEARCH_FIELD_TITLE,
-		resource.SEARCH_FIELD_TAGS,
-		resource.SEARCH_FIELD_FOLDER,
-		resource.SEARCH_FIELD_RV,
-		resource.SEARCH_FIELD_CREATED,
-		resource.SEARCH_FIELD_LEGACY_ID,
-		resource.SEARCH_FIELD_MANAGER_KIND,
-	}
+	defaultFieldNames := defaultSearchResultFieldNames()
 	allNames := make([]string, 0, len(defaultFieldNames)+len(mappingFields))
 	allNames = append(allNames, defaultFieldNames...)
 	for _, field := range mappingFields {
@@ -249,22 +240,8 @@ func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSear
 }
 
 func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bool, error) {
-	// Dashboard callers still use the numeric legacy ID while the index stores
-	// its source label as a string.
 	if name == resource.SEARCH_FIELD_LEGACY_ID {
-		value, ok := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
-		if !ok || value == nil {
-			return nil, false, nil
-		}
-		text, ok := value.(string)
-		if !ok {
-			return value, true, nil
-		}
-		id, err := strconv.ParseInt(text, 10, 64)
-		if err != nil {
-			return nil, false, fmt.Errorf("invalid legacy ID %q: %w", text, err)
-		}
-		return id, true, nil
+		return searchHitLegacyID(match)
 	}
 
 	value, ok := match.Fields[name]
@@ -272,6 +249,24 @@ func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bo
 		value, ok = match.Fields[resource.SEARCH_FIELD_PREFIX+name]
 	}
 	return value, ok, nil
+}
+
+// Dashboard callers still use the numeric legacy ID while the index stores
+// its source label as a string.
+func searchHitLegacyID(match *blevesearch.DocumentMatch) (any, bool, error) {
+	value, ok := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
+	if !ok || value == nil {
+		return nil, false, nil
+	}
+	text, ok := value.(string)
+	if !ok {
+		return nil, false, fmt.Errorf("expected legacy ID string, got %T", value)
+	}
+	id, err := strconv.ParseInt(text, 10, 64)
+	if err != nil {
+		return int64(0), true, fmt.Errorf("invalid legacy ID %q: %w", text, err)
+	}
+	return id, true, nil
 }
 
 func newSearchResultValue(

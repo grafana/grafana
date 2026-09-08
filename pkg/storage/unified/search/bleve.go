@@ -3929,13 +3929,9 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
 			case resource.SEARCH_FIELD_LEGACY_ID:
-				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
-				if v != nil {
-					str, ok := v.(string)
-					if ok {
-						id, _ := strconv.ParseInt(str, 10, 64)
-						row.Cells[i], err = encoders[i](id)
-					}
+				v, ok, _ := searchHitLegacyID(match)
+				if ok {
+					row.Cells[i], err = encoders[i](v)
 				}
 			default:
 				fieldName := f.Name
@@ -3960,16 +3956,24 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	return table, nil
 }
 
+func defaultSearchResultFieldNames() []string {
+	return []string{
+		resource.SEARCH_FIELD_ID,
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_TAGS,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_RV,
+		resource.SEARCH_FIELD_CREATED,
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+	}
+}
+
 func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
-	fields := []*resourcepb.ResourceTableColumnDefinition{
-		standard.Field(resource.SEARCH_FIELD_ID),
-		standard.Field(resource.SEARCH_FIELD_TITLE),
-		standard.Field(resource.SEARCH_FIELD_TAGS),
-		standard.Field(resource.SEARCH_FIELD_FOLDER),
-		standard.Field(resource.SEARCH_FIELD_RV),
-		standard.Field(resource.SEARCH_FIELD_CREATED),
-		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
-		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
+	defaultFields := defaultSearchResultFieldNames()
+	fields := make([]*resourcepb.ResourceTableColumnDefinition, len(defaultFields))
+	for i, name := range defaultFields {
+		fields[i] = standard.Field(name)
 	}
 
 	if custom != nil {
