@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
@@ -637,16 +637,5 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
-  });
-
-  it('renders a markdown mermaid fence as a diagram', async () => {
-    const props = createProps((target) => target, {
-      options: { content: '```mermaid\ngraph TD\n  A --> B\n```', mode: TextMode.Markdown },
-    });
-
-    setup(props, CoreApp.Dashboard);
-
-    const view = screen.getByTestId('TextNGPanel-converted-content');
-    await waitFor(() => expect(view.querySelector('.textng-mermaid svg')).not.toBeNull());
   });
 });

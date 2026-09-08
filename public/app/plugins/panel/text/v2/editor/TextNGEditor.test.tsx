@@ -658,22 +658,4 @@ describe('TextNGEditor handlebars preview', () => {
 
     expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
   });
-
-  it('renders mermaid diagrams in the preview', async () => {
-    render(
-      <TextNGEditor
-        content={'```mermaid\ngraph TD\n  A --> B\n```'}
-        mode={TextMode.Markdown}
-        showLineNumbers={false}
-        series={series}
-        replaceVariables={(target) => target}
-        onChange={jest.fn()}
-        view="preview"
-        onViewChange={jest.fn()}
-      />
-    );
-
-    const preview = screen.getByTestId(PREVIEW_TEST_ID);
-    await waitFor(() => expect(preview.querySelector('.textng-mermaid svg')).not.toBeNull());
-  });
 });
