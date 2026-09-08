@@ -2248,6 +2248,25 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
+func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+	resultFormat, err := selectedResultFormat(req.ResultFormat)
+	if err != nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError(err.Error()),
+		}
+	}
+	if req.Options == nil || req.Options.Key == nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError("missing query key"),
+		}
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Error:           b.verifyKey(req.Options.Key),
+		ResourceVersion: b.resourceVersion.Load(),
+		ResultFormat:    resultFormat,
+	}
+}
+
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
@@ -2259,16 +2278,7 @@ func (b *bleveIndex) Search(
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
-	if req.Options == nil || req.Options.Key == nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError("missing query key"),
-		}, nil
-	}
-
-	response := &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
-		ResourceVersion: b.resourceVersion.Load(),
-	}
+	response := b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
@@ -2321,6 +2331,13 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
+	// Keep the response fields before ensureSearchFields expands the Bleve load
+	// list. The query conversion may have added _score, which is part of the
+	// response shape but is not a stored index field.
+	selectFields := slices.Clone(searchrequest.Fields)
+	if len(req.Fields) < 1 && req.Limit > 0 {
+		selectFields = append(selectFields, resource.SEARCH_FIELD_ALL_FIELDS)
+	}
 	if err := b.ensureSearchFields(searchrequest, req); err != nil {
 		return nil, err
 	}
@@ -2354,20 +2371,22 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// selectFields is the response column list, derived from the caller's
-	// requested fields (or the all-fields sentinel when none were requested).
-	// It is snapshotted before ensureAuthzFields so the folder field — which
-	// bleve loads only to authorize hits — is never returned to the caller.
-	// This keeps "fields loaded from bleve" (searchrequest.Fields) separate
-	// from "fields returned to the caller" (selectFields).
-	selectFields := slices.Clone(searchrequest.Fields)
+	var fieldValueSchema *fieldValueResultSchema
+	if response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		fieldValueSchema, err = b.resolveFieldValueSchema(selectFields)
+		if err != nil {
+			return &resourcepb.ResourceSearchResponse{
+				Error: resource.NewBadRequestError(err.Error()),
+			}, nil
+		}
+	}
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -2386,8 +2405,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, selectFields, res.Hits, searchrequest.Sort, req.Explain)
-	if err != nil {
+	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, res.Hits, searchrequest.Sort, req.Explain); err != nil {
 		return nil, err
 	}
 
@@ -3045,7 +3063,9 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	}
 
 	// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
-	searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_SCORE) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	}
 	queryFields := b.resolveQueryFields(req.QueryFields)
 
 	for _, field := range queryFields {
@@ -3962,13 +3982,9 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
 			case resource.SEARCH_FIELD_LEGACY_ID:
-				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
-				if v != nil {
-					str, ok := v.(string)
-					if ok {
-						id, _ := strconv.ParseInt(str, 10, 64)
-						row.Cells[i], err = encoders[i](id)
-					}
+				v, ok, _ := searchHitLegacyID(match)
+				if ok {
+					row.Cells[i], err = encoders[i](v)
 				}
 			default:
 				fieldName := f.Name
@@ -3993,16 +4009,24 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	return table, nil
 }
 
+func defaultSearchResultFieldNames() []string {
+	return []string{
+		resource.SEARCH_FIELD_ID,
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_TAGS,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_RV,
+		resource.SEARCH_FIELD_CREATED,
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+	}
+}
+
 func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
-	fields := []*resourcepb.ResourceTableColumnDefinition{
-		standard.Field(resource.SEARCH_FIELD_ID),
-		standard.Field(resource.SEARCH_FIELD_TITLE),
-		standard.Field(resource.SEARCH_FIELD_TAGS),
-		standard.Field(resource.SEARCH_FIELD_FOLDER),
-		standard.Field(resource.SEARCH_FIELD_RV),
-		standard.Field(resource.SEARCH_FIELD_CREATED),
-		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
-		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
+	defaultFields := defaultSearchResultFieldNames()
+	fields := make([]*resourcepb.ResourceTableColumnDefinition, len(defaultFields))
+	for i, name := range defaultFields {
+		fields[i] = standard.Field(name)
 	}
 
 	if custom != nil {
