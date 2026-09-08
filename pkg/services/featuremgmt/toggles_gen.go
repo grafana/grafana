@@ -81,7 +81,7 @@ const (
 
 	// FlagAlertingRuleStatusSync
 	// Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
-	FlagAlertingRuleStatusSync = "alertingRuleStatusSync"
+	FlagAlertingRuleStatusSync = "alerting.ruleStatusSync"
 
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources

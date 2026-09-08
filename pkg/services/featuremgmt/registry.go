@@ -227,7 +227,7 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertingRuleStatusSync",
+			Name:        "alerting.ruleStatusSync",
 			Description: "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,

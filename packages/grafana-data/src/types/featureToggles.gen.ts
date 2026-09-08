@@ -117,7 +117,7 @@ export interface FeatureToggles {
   * Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
   * @default false
   */
-  alertingRuleStatusSync?: boolean;
+  ['alerting.ruleStatusSync']?: boolean;
   /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
