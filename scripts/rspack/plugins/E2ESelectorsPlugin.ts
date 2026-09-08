@@ -10,12 +10,14 @@ const { sources, Compilation } = rspack;
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 // selector source that, when changed in watch mode, should trigger a regenerate
 const selectorsSrc = path.join('packages', 'grafana-e2e-selectors', 'src');
+// yarn is a .cmd shim on windows, which execFile cannot resolve without a shell
+const yarnBin = process.platform === 'win32' ? 'yarn.cmd' : 'yarn';
 
 // runs the generator in a subprocess (tsx) and captures the JSON on stdout. we shell out rather than
 // import the generator directly because the rspack config is loaded by native node, which can't resolve
 // the selector source's extensionless imports; tsx (esbuild resolution) can.
 function generate(): string {
-  return execFileSync('yarn', ['workspace', '@grafana/e2e-selectors', 'generate-e2e-selectors-json', '--stdout'], {
+  return execFileSync(yarnBin, ['workspace', '@grafana/e2e-selectors', 'generate-e2e-selectors-json', '--stdout'], {
     cwd: repoRoot,
     encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024,
