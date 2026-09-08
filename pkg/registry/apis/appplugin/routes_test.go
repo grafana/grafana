@@ -229,6 +229,7 @@ func TestWithPathParametersIsIdempotent(t *testing.T) {
 	props := spec3.PathProps{
 		Get: &spec3.Operation{OperationProps: spec3.OperationProps{
 			Parameters: []*spec3.Parameter{declared},
+			Tags:       []string{"manifest"},
 		}},
 		// A nil operation is left alone rather than being materialised.
 		Post: nil,
@@ -239,6 +240,7 @@ func TestWithPathParametersIsIdempotent(t *testing.T) {
 	require.Len(t, out.Get.Parameters, 2)
 	require.Same(t, declared, out.Get.Parameters[0])
 	require.Equal(t, namespaceParameter, out.Get.Parameters[1].Name)
+	require.Equal(t, []string{"manifest"}, out.Get.Tags)
 	require.Nil(t, out.Post)
 }
 

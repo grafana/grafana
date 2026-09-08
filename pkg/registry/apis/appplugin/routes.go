@@ -290,6 +290,8 @@ func operationWithPathParameters(op spec3.Operation, tags []string, params ...*s
 		declared = append(declared, &p)
 	}
 	op.Parameters = declared
-	op.Tags = tags
+	if tags != nil {
+		op.Tags = slices.Clone(tags)
+	}
 	return &op
 }

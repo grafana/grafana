@@ -11,12 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -50,7 +50,7 @@ func testAPIGroupOptions(t *testing.T, b *AppPluginAPIBuilder) (*genericapiserve
 	info := genericapiserver.NewDefaultAPIGroupInfo(b.group, scheme, metav1.ParameterCodec, codecs)
 	return &info, builder.APIGroupOptions{
 		Scheme:              scheme,
-		OptsGetter:          appinstaller.NewNoopRESTOptionsGetter(),
+		OptsGetter:          apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
 		MetricsRegister:     prometheus.NewRegistry(),
 		StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
 	}

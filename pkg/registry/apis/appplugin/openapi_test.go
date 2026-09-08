@@ -1,6 +1,7 @@
 package appplugin
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -149,6 +150,29 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 	for name := range oas.Components.Schemas {
 		require.NotContains(t, name, ".v0alpha1.", "other versions must not be injected into this version's spec")
 	}
+}
+
+func TestSetOperationResponseBodiesPreservesErrors(t *testing.T) {
+	kindRef := spec.MustCreateRef("#/components/schemas/example.Kind")
+	statusRef := spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status")
+	response := func(ref spec.Ref) *spec3.Response {
+		return &spec3.Response{ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
+			"application/json": {MediaTypeProps: spec3.MediaTypeProps{
+				Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}},
+			}},
+		}}}
+	}
+	op := &spec3.Operation{OperationProps: spec3.OperationProps{Responses: &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+			http.StatusOK:         response(statusRef),
+			http.StatusBadRequest: response(statusRef),
+		}},
+	}}}
+
+	setOperationResponseBodies(op, kindRef)
+
+	require.Equal(t, kindRef.String(), op.Responses.StatusCodeResponses[http.StatusOK].Content["application/json"].Schema.Ref.String())
+	require.Equal(t, statusRef.String(), op.Responses.StatusCodeResponses[http.StatusBadRequest].Content["application/json"].Schema.Ref.String())
 }
 
 func TestPostProcessManifestKindPostExample(t *testing.T) {

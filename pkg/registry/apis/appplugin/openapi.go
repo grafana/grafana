@@ -320,7 +320,10 @@ func setOperationResponseBodies(op *spec3.Operation, ref spec.Ref) {
 	if op == nil || op.Responses == nil {
 		return
 	}
-	for _, res := range op.Responses.StatusCodeResponses {
+	for code, res := range op.Responses.StatusCodeResponses {
+		if code < http.StatusOK || code >= http.StatusMultipleChoices {
+			continue
+		}
 		for _, mt := range res.Content {
 			mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
 		}

@@ -400,6 +400,7 @@ func TestStatusStrategyPrepareForUpdate(t *testing.T) {
 	old := &unstructured.Unstructured{Object: map[string]any{
 		"spec":   map[string]any{"testField": int64(1)},
 		"status": map[string]any{"state": "old"},
+		"other":  "keep",
 	}}
 	old.SetLabels(map[string]string{"keep": "me"})
 	old.SetAnnotations(map[string]string{"grafana.app/folder": "fold"})
@@ -408,18 +409,22 @@ func TestStatusStrategyPrepareForUpdate(t *testing.T) {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"spec":   map[string]any{"testField": int64(999)},
 		"status": map[string]any{"state": "new"},
+		"other":  "replace",
 	}}
 	obj.SetLabels(map[string]string{"sneaky": "label"})
 	obj.SetAnnotations(map[string]string{"grafana.app/folder": "elsewhere"})
 	obj.SetFinalizers(nil)
+	obj.SetManagedFields([]metav1.ManagedFieldsEntry{{Manager: "status-manager"}})
 
 	s.PrepareForUpdate(context.Background(), obj, old)
 
 	require.Equal(t, map[string]any{"state": "new"}, obj.Object["status"], "the status is the write")
 	require.Equal(t, map[string]any{"testField": int64(1)}, obj.Object["spec"])
+	require.Equal(t, "keep", obj.Object["other"])
 	require.Equal(t, map[string]string{"keep": "me"}, obj.GetLabels())
 	require.Equal(t, map[string]string{"grafana.app/folder": "fold"}, obj.GetAnnotations())
 	require.Equal(t, []string{"a-finalizer"}, obj.GetFinalizers())
+	require.Equal(t, "status-manager", obj.GetManagedFields()[0].Manager)
 	require.Equal(t, s.gvk, obj.GroupVersionKind())
 
 	// An object stored before it had a spec must not gain one from the request.

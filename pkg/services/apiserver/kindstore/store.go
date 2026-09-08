@@ -414,19 +414,19 @@ func (s *statusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.
 	}
 	s.restoreGVK(u)
 	s.pruneAndDefault(u)
+	status, hasStatus, _ := unstructured.NestedFieldNoCopy(u.Object, "status")
+	managedFields := u.GetManagedFields()
+
 	oldU, ok := old.(*unstructured.Unstructured)
 	if !ok {
 		return
 	}
-	if spec, found, _ := unstructured.NestedFieldNoCopy(oldU.Object, "spec"); found {
-		u.Object["spec"] = runtime.DeepCopyJSONValue(spec)
+	*u = *oldU.DeepCopy()
+	s.restoreGVK(u)
+	u.SetManagedFields(managedFields)
+	if hasStatus {
+		u.Object["status"] = runtime.DeepCopyJSONValue(status)
 	} else {
-		unstructured.RemoveNestedField(u.Object, "spec")
+		unstructured.RemoveNestedField(u.Object, "status")
 	}
-	// Mirrors the generic status strategy: the metadata a status write carries
-	// is whatever the caller read, not an edit it is entitled to make.
-	u.SetLabels(oldU.GetLabels())
-	u.SetAnnotations(oldU.GetAnnotations())
-	u.SetFinalizers(oldU.GetFinalizers())
-	u.SetOwnerReferences(oldU.GetOwnerReferences())
 }
