@@ -8,7 +8,6 @@ import {
   type SceneGridItemLike,
 } from '@grafana/scenes';
 
-import { reorderAutoGridItems } from '../../actions/layout/reorderAutoGridItems';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
@@ -78,7 +77,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Container's initial page position, used to compensate for layout shifts during drag */
   private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
-  private _childrenSnapshotAtDragStart: AutoGridItem[] | null = null;
   protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
@@ -165,7 +163,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this._draggedGridItem = gridItem;
     this._lastDropTargetGridItemKey = gridItem.state.key!;
-    this._childrenSnapshotAtDragStart = [...this.state.children];
 
     const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
     this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
@@ -191,22 +188,19 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   private _onDragEnd() {
     window.getSelection()?.removeAllRanges();
 
-    const draggedGridItem = this._draggedGridItem;
-    const startSnapshot = this._childrenSnapshotAtDragStart;
-
     this._draggedGridItem = null;
     this._initialGridItemPosition = null;
     this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
-    this._childrenSnapshotAtDragStart = null;
 
-    // Only reset position/size and clear draggingKey if not dropping to a different layout.
-    // For cross-grid drops, the orchestrator will call endExternalDrag() after the item is moved
-    // to prevent flickering where the item would momentarily appear at wrong position
-    // (CSS vars cleared but draggingKey still set = absolute positioning with no position).
+    // Only reset position/size and clear draggingKey if the orchestrator didn't drop the item onto
+    // a different layout (or commit an in-grid reorder itself). For those cases, the orchestrator
+    // calls endExternalDrag() once it's done, to prevent flickering where the item would
+    // momentarily appear at wrong position (CSS vars cleared but draggingKey still set = absolute
+    // positioning with no position). Whether the drop landed elsewhere, and reordering the panels
+    // when it didn't, is the orchestrator's call to make, not this layout's.
     const orchestrator = getLayoutOrchestratorFor(this);
-    const droppedElsewhere = orchestrator?.isDroppedElsewhere();
-    if (!droppedElsewhere) {
+    if (!orchestrator?.isDroppedElsewhere()) {
       this._resetPanelPositionAndSize();
       this.setState({ draggingKey: undefined });
     }
@@ -214,17 +208,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     document.body.removeEventListener('pointermove', this._onDrag);
     document.body.removeEventListener('pointerup', this._onDragEnd);
     document.body.classList.remove('dashboard-draggable-transparent-selection');
-
-    // reordered within the same layout (moving between layouts is handled by the orchestrator)
-    if (!droppedElsewhere && draggedGridItem && startSnapshot) {
-      const finalOrder = this.state.draggedChildren ?? startSnapshot;
-      reorderAutoGridItems({
-        layout: this,
-        movedItem: draggedGridItem,
-        fromIndex: startSnapshot.findIndex((child) => child === draggedGridItem),
-        toIndex: finalOrder.findIndex((child) => child === draggedGridItem),
-      });
-    }
 
     if (this.state.draggedChildren) {
       this.setState({ draggedChildren: undefined });

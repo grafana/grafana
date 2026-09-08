@@ -152,8 +152,70 @@ describe('DashboardLayoutOrchestrator', () => {
   });
 
   describe('undo/redo for panel drag', () => {
-    // Same-grid reorder is recorded by AutoGridLayout itself (via draggedChildren) — see
-    // AutoGridLayout.test.tsx. This suite covers cross-layout moves, owned by the orchestrator.
+    // The orchestrator owns both outcomes of a drag: a same-grid reorder (committed from the
+    // draggedChildren preview + the snapshot taken at drag start) and a cross-layout move.
+    // AutoGridLayout itself only tracks the preview during the drag and never decides which
+    // one happened — see reorderAutoGridItems.test.ts for the reorder action itself.
+    it('records one undo entry for a same-grid reorder committed via draggedChildren, and round-trips', async () => {
+      const { dashboard, manager, gridItem1, gridItem2 } = setupAutoGrid();
+      const orchestrator = dashboard.state.layoutOrchestrator;
+
+      orchestrator.setState({ draggingGridItem: gridItem1.getRef() });
+
+      // Simulate the drag preview having reordered the panels before the pointer was released.
+      manager.state.layout.setState({ draggedChildren: [gridItem2, gridItem1] });
+
+      await stopDragging(orchestrator, {
+        sourceDropTarget: manager,
+        lastDropTarget: manager,
+        sourceChildrenSnapshot: [gridItem1, gridItem2],
+        dropTargetUnderMouse: manager,
+      });
+
+      expect(manager.state.layout.state.children).toEqual([gridItem2, gridItem1]);
+
+      const sidebar = dashboard.state.sidebar;
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      sidebar.undoAction();
+      expect(manager.state.layout.state.children).toEqual([gridItem1, gridItem2]);
+
+      sidebar.redoAction();
+      expect(manager.state.layout.state.children).toEqual([gridItem2, gridItem1]);
+    });
+
+    it('records exactly one undo entry when a same-grid reorder is immediately followed by dropping on a different layout (regression: no leftover/ghost panel)', async () => {
+      const { dashboard, managerA, managerB, gridItem } = setupTwoAutoGrids();
+
+      const siblingPanel = new VizPanel({ title: 'Sibling', key: 'panel-sibling', pluginId: 'table' });
+      const siblingItem = new AutoGridItem({ key: 'sibling-item', body: siblingPanel });
+      managerA.state.layout.setState({ children: [gridItem, siblingItem] });
+
+      const orchestrator = dashboard.state.layoutOrchestrator;
+      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
+
+      // Simulate having reordered gridItem past its sibling inside managerA before the pointer
+      // left the grid and was released over managerB instead.
+      managerA.state.layout.setState({ draggedChildren: [siblingItem, gridItem] });
+
+      await stopDragging(orchestrator, {
+        sourceDropTarget: managerA,
+        lastDropTarget: managerB,
+        sourceOriginalIndex: 0,
+        sourceChildrenSnapshot: [gridItem, siblingItem],
+        dropTargetUnderMouse: managerB,
+      });
+
+      // Only the cross-layout move should have happened: the in-grid reorder preview must not be
+      // committed on top of it, and the panel must end up in exactly one place.
+      expect(managerA.state.layout.state.children).toEqual([siblingItem]);
+      expect(managerB.state.layout.state.children).toHaveLength(1);
+      expect(managerB.state.layout.state.children[0]).toBe(gridItem);
+
+      const sidebar = dashboard.state.sidebar;
+      expect(sidebar.state.undoStack).toHaveLength(1);
+    });
+
     it('records one undo entry for a cross-grid move between two plain AutoGrids and round-trips', async () => {
       const { dashboard, managerA, managerB, gridItem, panel } = setupTwoAutoGrids();
       const orchestrator = dashboard.state.layoutOrchestrator;
@@ -195,37 +257,21 @@ describe('DashboardLayoutOrchestrator', () => {
     it('should return false when source and target are the same', () => {
       const { orchestrator } = setup();
 
-      // Use the same object reference for both - the comparison is by reference
-      const mockDropTarget = { state: { key: 'grid-1' } };
       // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = mockDropTarget;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = mockDropTarget;
+      orchestrator._droppedElsewhere = false;
 
-      // When source equals target (same reference), it's not dropped elsewhere
       expect(orchestrator.isDroppedElsewhere()).toBe(false);
     });
 
-    it('should return true when source and target differ', () => {
+    it('should return true once the orchestrator has decided the drop landed on a different layout', () => {
       const { orchestrator } = setup();
 
+      // Set by _stopDraggingSync itself when it commits a cross-layout move - not derived from
+      // _sourceDropTarget/_lastDropTarget, which get cleared as part of the same cleanup.
       // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = { state: { key: 'grid-1' } };
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = { state: { key: 'grid-2' } };
+      orchestrator._droppedElsewhere = true;
 
       expect(orchestrator.isDroppedElsewhere()).toBe(true);
-    });
-
-    it('should return false when lastDropTarget is null', () => {
-      const { orchestrator } = setup();
-
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = { state: { key: 'grid-1' } };
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = null;
-
-      expect(orchestrator.isDroppedElsewhere()).toBe(false);
     });
   });
 
@@ -388,6 +434,7 @@ async function stopDragging(
     sourceDropTarget: DashboardDropTarget | null;
     lastDropTarget: DashboardDropTarget | null;
     sourceOriginalIndex?: number;
+    sourceChildrenSnapshot?: AutoGridItem[];
     dropTargetUnderMouse?: DashboardDropTarget | null;
   }
 ) {
@@ -398,6 +445,10 @@ async function stopDragging(
   if (opts.sourceOriginalIndex !== undefined) {
     // @ts-expect-error - accessing private property for testing
     orchestrator._sourceOriginalIndex = opts.sourceOriginalIndex;
+  }
+  if (opts.sourceChildrenSnapshot !== undefined) {
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._sourceChildrenSnapshot = opts.sourceChildrenSnapshot;
   }
 
   // @ts-expect-error - accessing private method for testing
