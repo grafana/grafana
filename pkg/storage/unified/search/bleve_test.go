@@ -2390,9 +2390,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	var rebuilds, updates, searches atomic.Int64
 	const searchConcurrency = 25
 	for i := range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			for ctx.Err() == nil {
 				select {
@@ -2432,18 +2430,16 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				require.Equal(t, int64(10), resp.TotalHits)
 				searches.Add(1)
 			}
-		}()
+		})
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for ctx.Err() == nil {
 			_, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 			require.NoError(t, err)
 			rebuilds.Add(1)
 		}
-	}()
+	})
 
 	time.Sleep(5 * time.Second)
 	cancel()
@@ -2476,9 +2472,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 
 	const searchConcurrency = 25
 	for range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			prevRV := int64(0)
 			for ctx.Err() == nil {
@@ -2493,7 +2487,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 				updatedRVs[rv]++
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	time.Sleep(1 * time.Second)
@@ -2534,9 +2528,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
 	const searchConcurrency = 10
 	for range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			var collectedRVs []int64
 			for ctx.Err() == nil {
@@ -2559,7 +2551,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 				// (We get measurements from update function, but check is done on times inside updater)
 				require.GreaterOrEqual(t, collectedRVs[i], collectedRVs[i-1]+(9*int64(minInterval/time.Millisecond)/10))
 			}
-		}()
+		})
 	}
 
 	// Run updates and searches for this time.

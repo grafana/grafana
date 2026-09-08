@@ -505,17 +505,15 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
 	// handle http shutdown on server context done
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 
 		<-ctx.Done()
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-	}()
+	})
 
 	errg, _ := errgroup.WithContext(ctx)
 
