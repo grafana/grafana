@@ -2,7 +2,7 @@ import fs from 'fs';
 import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
-import { escapeJsonPointer, simplifySchemaName } from './schema-name.ts';
+import { buildSchemaNameMap, escapeJsonPointer, simplifySchemaName } from './schema-name.ts';
 
 /**
  * Process an OpenAPI spec to remove k8s metadata from names and paths:
@@ -16,6 +16,10 @@ import { escapeJsonPointer, simplifySchemaName } from './schema-name.ts';
 function processOpenAPISpec(spec: OpenAPIV3.Document) {
   // Create a deep copy of the spec to avoid mutating the original
   const newSpec = JSON.parse(JSON.stringify(spec));
+
+  // Names are decided up front because the paths are rewritten before the schemas are,
+  // and a $ref has to end up with the same name as the schema it points at.
+  const schemaNames = buildSchemaNameMap(Object.keys(newSpec.components.schemas), specGroup(newSpec));
 
   // Process 'paths' property
   const newPaths: Record<string, unknown> = {};
@@ -58,7 +62,7 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
         operation.parameters = filterNamespaceParameters(operation.parameters);
       }
 
-      updateRefs(operation);
+      updateRefs(operation, schemaNames);
 
       newPathItem[method] = operation;
     }
@@ -68,19 +72,14 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
   newSpec.paths = newPaths;
 
   // Process 'components.schemas', i.e., type definitions
+  // Written in the order they arrived in, so that naming changes show up in a diff on
+  // their own rather than alongside a reshuffle of every schema in the document.
   const newSchemas: Record<string, unknown> = {};
   for (const schemaKey of Object.keys(newSpec.components.schemas)) {
-    const newKey = simplifySchemaName(schemaKey);
-    if (newSchemas[newKey]) {
-      // This can happen when invalid specs are used, although ignoring the error will work
-      // it is better to fix the spec to avoid confusion.
-      throw new Error(`Duplicate schema key found: ${newKey}. from: ${schemaKey}`);
-    }
-
     const schemaObject = newSpec.components.schemas[schemaKey];
-    updateRefs(schemaObject);
+    updateRefs(schemaObject, schemaNames);
 
-    newSchemas[newKey] = schemaObject;
+    newSchemas[schemaNames.get(schemaKey) ?? simplifySchemaName(schemaKey)] = schemaObject;
   }
   newSpec.components.schemas = newSchemas;
 
@@ -95,18 +94,37 @@ function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject |
 }
 
 /**
+ * The group the document describes, taken from a path since that is where it appears
+ * literally. `info.title` is the fallback, and is not always a group at all - the quotas
+ * document calls itself 'Grafana API Server'.
+ */
+function specGroup(spec: OpenAPIV3.Document) {
+  for (const path of Object.keys(spec.paths ?? {})) {
+    const match = path.match(/^\/apis\/([^\/]+)\//);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  const title = spec.info?.title ?? '';
+  return /^\S+\/v\S*$/.test(title) ? title.split('/')[0] : undefined;
+}
+
+/**
  * Recursively update all $ref fields to remove k8s metadata from names
  */
-function updateRefs(obj: unknown) {
+function updateRefs(obj: unknown, schemaNames: Map<string, string>) {
   if (Array.isArray(obj)) {
     for (const item of obj) {
-      updateRefs(item);
+      updateRefs(item, schemaNames);
     }
   } else if (typeof obj === 'object' && obj !== null) {
     if ('$ref' in obj && typeof obj.$ref === 'string') {
       const refParts = obj.$ref.split('/');
       const lastRefPart = refParts[refParts.length - 1];
-      const newRefName = simplifySchemaName(lastRefPart);
+      // A ref to a schema the document does not define keeps the old behaviour, since
+      // there is no published name to look up.
+      const newRefName = schemaNames.get(lastRefPart) ?? simplifySchemaName(lastRefPart);
       // The components.schemas key is the plain (unescaped) name, but a '/' inside
       // a $ref token is always a JSON Pointer path separator, so it must be
       // re-escaped here or the ref won't resolve back to that key.
@@ -115,7 +133,7 @@ function updateRefs(obj: unknown) {
     for (const key in obj) {
       if (key !== '$ref') {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        updateRefs(obj[key as keyof typeof obj]);
+        updateRefs(obj[key as keyof typeof obj], schemaNames);
       }
     }
   }
