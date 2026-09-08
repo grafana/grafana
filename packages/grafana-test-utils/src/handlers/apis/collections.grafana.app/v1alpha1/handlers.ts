@@ -11,8 +11,10 @@ const STARRED_RESOURCE_MAPS = {
 const getStarsMapFor = (group: string, kind: string) =>
   STARRED_RESOURCE_MAPS[`${group}/${kind}` as keyof typeof STARRED_RESOURCE_MAPS];
 
+export const starsRoute = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
+
 const getStarsHandler = () =>
-  http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () => {
+  http.get(starsRoute, () => {
     const mockStarsResponse = {
       kind: 'StarsList',
       apiVersion: 'collections.grafana.app/v1alpha1',

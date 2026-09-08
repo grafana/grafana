@@ -134,7 +134,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       title={t('query-editor-next.edit-query-name', 'Edit query name')}
     >
       <span className={styles.queryNameText}>
-        <Text color="primary" element="p" truncate variant="code">
+        <Text color="primary" element="p" truncate variant="body">
           {query.refId}
         </Text>
       </span>
@@ -179,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     maxWidth: '300px',
 
     input: {
-      fontFamily: theme.typography.fontFamilyMonospace,
+      fontFamily: theme.typography.fontFamily,
     },
   }),
   inputRow: css({

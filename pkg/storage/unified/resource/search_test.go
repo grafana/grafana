@@ -115,12 +115,13 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
-	resourceStats   []ResourceStats
-	lastImportTimes []ResourceLastImportTime
-	statsCalls      atomic.Int32
-	listStoredCalls atomic.Int32
-	listStoredErr   error
-	lastCountLimit  atomic.Int64
+	resourceStats       []ResourceStats
+	lastImportTimes     []ResourceLastImportTime
+	statsCalls          atomic.Int32
+	listStoredCalls     atomic.Int32
+	listStoredErr       error
+	lastCountLimit      atomic.Int64
+	lastImportTimeCalls atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -195,14 +196,14 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		for _, ti := range m.lastImportTimes {
-			if !yield(ti, nil) {
-				return
-			}
+func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	m.lastImportTimeCalls.Add(1)
+	for _, importTime := range m.lastImportTimes {
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
 		}
 	}
+	return time.Time{}, nil
 }
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
@@ -490,6 +491,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
 	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
 	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
+	require.Equal(t, int32(1), storage.lastImportTimeCalls.Load())
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -1924,20 +1926,20 @@ func (i *trashIterator) Folder() string         { return "" }
 func (i *trashIterator) Value() []byte          { return i.entries[i.pos].value }
 
 func testObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title)
 }
 
 // testDeletedObjectJSON is what storage holds after a delete: the deletion marker
 // records who deleted the object as its last updater, and when (see server.go).
 func testDeletedObjectJSON(name, title, deletedBy string, deletedAt time.Time) []byte {
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"deletionTimestamp":%q,"annotations":{%q:%q}},"spec":{"title":%q}}`,
-		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title))
+		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title)
 }
 
 func testProvisionedObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
-		name, utils.AnnoKeyManagerKind, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
+		name, utils.AnnoKeyManagerKind, title)
 }
 
 // trashSearchOptions returns search options with deleted objects kept in the
@@ -2114,7 +2116,6 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	// nothing.
 	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
 	require.NoError(t, err)
-	require.NotEmpty(t, live.Tags)
 	require.NotEmpty(t, live.Fields)
 
 	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
@@ -2128,12 +2129,52 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	require.True(t, *doc.IsDeleted)
 
 	require.Nil(t, doc.IsProvisioned, "the object was not provisioned")
-	require.Empty(t, doc.Tags)
 	require.Empty(t, doc.Fields)
 	require.Empty(t, doc.Labels)
 	require.Empty(t, doc.References)
 	require.Empty(t, doc.Description)
 	require.Nil(t, doc.Manager)
+}
+
+// Tags survive a delete, so trash can show them. They are read from the marker's
+// spec, the same place live search reads them, and the marker is the whole object
+// as it was, so this costs no extra read.
+func TestBuildDeletedDocumentKeepsTags(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+
+	// Trash and live search must report the same tags for the same object.
+	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.NotEmpty(t, live.Tags)
+
+	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.Equal(t, live.Tags, doc.Tags)
+
+	// An object with no usable tags is indexed without the field rather than with an
+	// empty list, so trash documents are shaped like live ones.
+	for name, body := range map[string]string{
+		"no tags":            `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
+		"empty list":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
+		"tags not a list":    `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
+		"no spec at all":     `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
+		"spec not an object": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":"just a string"}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			doc, err := buildDeletedDocument(key, 10, []byte(body))
+			require.NoError(t, err)
+			require.Nil(t, doc.Tags)
+		})
+	}
+
+	// A malformed entry is skipped rather than failing the document, so one bad tag
+	// cannot keep a deleted object out of trash.
+	t.Run("non-string entries are skipped", func(t *testing.T) {
+		body := []byte(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone","tags":["a",1,null,"b"]}}`)
+		doc, err := buildDeletedDocument(key, 10, body)
+		require.NoError(t, err)
+		require.Equal(t, []string{"a", "b"}, doc.Tags)
+	})
 }
 
 // The three fields /trash serves beyond title and folder. All of them come from

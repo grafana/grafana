@@ -57,6 +57,7 @@ import {
   buildCellHeightMeasurers,
   applyFilter,
   compileFrameToRecords,
+  isSortableField,
   createTypographyContext,
   extractPixelValue,
 } from './utils';
@@ -348,7 +349,6 @@ interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
-  sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
 }
@@ -357,7 +357,6 @@ export function useHeaderHeight({
   fields,
   enabled,
   columnWidths,
-  sortColumns,
   typographyCtx,
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
@@ -377,8 +376,9 @@ export function useHeaderHeight({
         if (field.config?.custom?.filterable) {
           width -= HEADER_ICON_SPACE;
         }
-        // sorting icon
-        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
+        // sorting icon. reserved on every sortable column, not just the currently-sorted one, so a
+        // wrapped header doesn't gain a line (shifting the whole grid down) the moment it's sorted.
+        if (isSortableField(field)) {
           width -= HEADER_ICON_SPACE;
         }
         // type icon
@@ -388,7 +388,7 @@ export function useHeaderHeight({
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, sortColumns, showTypeIcons]
+    [fields, columnWidths, showTypeIcons]
   );
 
   const headerHeight = useMemo(() => {
@@ -730,7 +730,6 @@ export interface ContentAwareWidths {
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
-  sortColumns?: SortColumn[];
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
@@ -757,7 +756,6 @@ interface UseContentAwareWidthsOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
-  sortColumns?: SortColumn[];
 }
 
 /**
@@ -770,7 +768,6 @@ export function useContentAwareWidths({
   typographyCtx,
   showTypeIcons = false,
   getActions,
-  sortColumns,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -791,10 +788,9 @@ export function useContentAwareWidths({
             headerTypographyCtx,
             showTypeIcons,
             getActions,
-            sortColumns,
           }
         : undefined,
-    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions, sortColumns]
+    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions]
   );
 }
 

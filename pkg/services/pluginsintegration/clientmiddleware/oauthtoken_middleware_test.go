@@ -116,6 +116,19 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "id-token", cdt.QueryDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
 		})
 
+		t.Run("Should forward OAuth Identity when calling QueryChunkedData", func(t *testing.T) {
+			err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{otherHeader: "test"},
+			}, nopChunkedWriter{})
+			require.NoError(t, err)
+			require.NotNil(t, cdt.QueryChunkedDataReq)
+			require.Len(t, cdt.QueryChunkedDataReq.Headers, 3)
+			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
+			require.Equal(t, "Bearer access-token", cdt.QueryChunkedDataReq.Headers[backend.OAuthIdentityTokenHeaderName])
+			require.Equal(t, "id-token", cdt.QueryChunkedDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
+		})
+
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
 			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,

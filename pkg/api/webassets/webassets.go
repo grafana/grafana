@@ -7,18 +7,44 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
+
+const (
+	// BuildDir is served at the public/build URL prefix; both bundlers write inside it.
+	BuildDir       = "build"
+	RspackBuildDir = BuildDir + "/rspack"
+
+	AssetsManifestFile = "assets-manifest.json"
+)
+
+// PublicPathFor returns the URL prefix assets in buildDir are referenced by. It must
+// match the bundler's output.publicPath.
+func PublicPathFor(buildDir string) string {
+	return path.Join("public", buildDir) + "/"
+}
+
+// ResolveBuildDir returns the directory holding the manifest and boot script to read.
+// Call it per request; resolving at startup pins the rollout to process lifetime.
+func ResolveBuildDir(ctx context.Context) string {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
+		return RspackBuildDir
+	}
+	return BuildDir
+}
 
 type ManifestInfo struct {
 	FilePath  string `json:"src,omitempty"`
@@ -65,11 +91,10 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 		result, err = ReadWebAssetsFromCDN(ctx, buildDir, cdn)
 	}
 
-	assetsFilename := "assets-manifest.json"
-
 	if result == nil {
-		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, assetsFilename))
+		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, AssetsManifestFile))
 		if err == nil {
+			result.PublicPath = PublicPathFor(buildDir)
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
 				result.SetContentDeliveryURL(cdn)
@@ -101,7 +126,7 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 }
 
 func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/"+buildDir+"/assets-manifest.json", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+path.Join("public", buildDir, AssetsManifestFile), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +143,7 @@ func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	const maxManifestSize = 10 * 1024 * 1024
 	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
+		dto.PublicPath = PublicPathFor(buildDir)
 		dto.SetContentDeliveryURL(baseURL)
 	}
 	return dto, err

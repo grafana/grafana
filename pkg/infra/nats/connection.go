@@ -38,9 +38,6 @@ type connection struct {
 	config      *Config
 	credentials func() string
 
-	// onAsyncError, when set, is invoked from the NATS async error handler after logging.
-	onAsyncError func(error)
-
 	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
@@ -218,14 +215,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())
 		}),
 		natsclient.ErrorHandler(func(_ *natsclient.Conn, sub *natsclient.Subscription, err error) {
-			subject := ""
-			if sub != nil {
-				subject = sub.Subject
-			}
-			c.log.Warn("nats async error", "role", roleStr, "subject", subject, "err", err)
-			if c.onAsyncError != nil {
-				c.onAsyncError(err)
-			}
+			c.log.Warn("nats async error", "role", roleStr, "subject", asyncErrorSubject(sub, err), "reason", asyncErrorReason(err), "err", err)
+			c.metrics.recordAsyncError(sub, err)
 		}),
 	}
 

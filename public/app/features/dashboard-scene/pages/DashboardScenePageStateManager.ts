@@ -1,7 +1,8 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -483,7 +484,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
-        initializeReportRenderReadinessObserver();
+        initializeReportRenderReadinessObserver(queryController);
       }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
@@ -614,8 +615,11 @@ abstract class DashboardScenePageStateManagerBase<T>
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
-    // Public dashboards are not part of a session and therefore should not use the cache
-    const skipSceneCache = options.route === DashboardRoutes.Public;
+    // Public dashboards are not part of a session and therefore should not use the cache.
+    // Provisioning previews are cached under the file path (options.uid for this route), which
+    // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
+    // preview when the same file is revisited at a different ref.
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -722,7 +726,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       throw new Error('Missing required parameters for template dashboard');
     }
 
-    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    const ds = await getDataSourceInstanceSettings(datasource);
     if (!ds) {
       throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
     }
@@ -757,7 +761,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, [
       {
         name: '*',
         type: 'datasource',
@@ -793,7 +797,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, mappings);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
@@ -1090,8 +1094,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    // Public dashboards are not part of a session and therefore should not use the cache
-    const skipSceneCache = options.route === DashboardRoutes.Public;
+    // Public dashboards are not part of a session and therefore should not use the cache.
+    // Provisioning previews are cached under the file path (options.uid for this route), which
+    // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
+    // preview when the same file is revisited at a different ref.
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);

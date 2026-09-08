@@ -192,8 +192,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(AlertRule{}.OpenAPIModelName()),
+										Ref: ref(AlertRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -315,9 +314,8 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -347,9 +345,8 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -361,9 +358,8 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -432,9 +428,8 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -447,9 +442,8 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -499,8 +493,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(AlertRuleExpression{}.OpenAPIModelName()),
+										Ref: ref(AlertRuleExpression{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -534,8 +527,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(AlertRulestatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(AlertRulestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -634,8 +626,7 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesBody(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CreateSearchRulesSearchResultHit{}.OpenAPIModelName()),
+										Ref: ref(CreateSearchRulesSearchResultHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -652,8 +643,7 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesBody(ref common.Referenc
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref:     ref(CreateSearchRulesFacetValue{}.OpenAPIModelName()),
+													Ref: ref(CreateSearchRulesFacetValue{}.OpenAPIModelName()),
 												},
 											},
 										},
@@ -731,8 +721,7 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(CreateSearchRulesSearchResultHit{}.OpenAPIModelName()),
+										Ref: ref(CreateSearchRulesSearchResultHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -749,8 +738,7 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref common.Refe
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref:     ref(CreateSearchRulesFacetValue{}.OpenAPIModelName()),
+													Ref: ref(CreateSearchRulesFacetValue{}.OpenAPIModelName()),
 												},
 											},
 										},
@@ -812,9 +800,8 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesRuleSearchHitFields(ref 
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -826,9 +813,8 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesRuleSearchHitFields(ref 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -842,9 +828,8 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesRuleSearchHitFields(ref 
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1166,8 +1151,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RecordingRule{}.OpenAPIModelName()),
+										Ref: ref(RecordingRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1241,9 +1225,8 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1263,8 +1246,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RecordingRuleExpression{}.OpenAPIModelName()),
+										Ref: ref(RecordingRuleExpression{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1300,8 +1282,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref common.ReferenceC
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RecordingRulestatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(RecordingRulestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1481,8 +1462,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleSequenceList(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RuleSequence{}.OpenAPIModelName()),
+										Ref: ref(RuleSequence{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1536,8 +1516,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RuleSequenceRuleRef{}.OpenAPIModelName()),
+										Ref: ref(RuleSequenceRuleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1549,8 +1528,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RuleSequenceRuleRef{}.OpenAPIModelName()),
+										Ref: ref(RuleSequenceRuleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1579,8 +1557,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleSequenceStatus(ref common.ReferenceCa
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RuleSequencestatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(RuleSequencestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},

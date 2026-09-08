@@ -113,44 +113,74 @@ The overview lets you search for specific keys, and adjust them, without scrolli
 Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by dimension.
 You can use a key for both a filter and a group by.
 
-### Group and filter from the panel
+## Cross-filtering {#dashboard-drilldown-with-filters}
+
+In some visualizations, you can apply filters directly from the visualization.
+Click on a series in the panel and then click **Filter on this value** or **Filter out this value**.
+This filters by the labels found on that series:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filters-v13.0.png" max-width="675px" alt="Panel with tooltip open showing options to filter on a value or filter it out" >}}
+
+To enable this functionality, you need to add an override for every field by which you want to filter.
+In the override:
+
+- Select a field name.
+- Enable the **Filterable** switch.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.2.png" max-width="400px" alt="Field override making some fields filterable" >}}
+
+You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
+
+Cross-filtering is supported for the following visualizations:
+
+| Visualization  | Requires Group by |
+| -------------- | ----------------- |
+| Bar chart      | no                |
+| Histogram      | yes               |
+| State timeline | yes               |
+| Status history | yes               |
+| Table          | no                |
+| Time series    | yes               |
+
+### Apply cross-filtering
+
+To apply cross-filtering, follow these steps:
+
+1. To display the filter icons, hover your cursor over the data point with the value for which you want to filter. In this example, the table cell value is `ConfigMap Updated`, which is in the `alertname` column:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with a filter icon displayed on a table cell" >}}
+
+   In bar chart visualizations, hover and click the bar to display the filter button:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The filter button in a bar chart tooltip">}}
+
+1. Click the add filter icon.
+
+   The filter pair `alertname = ConfigMap Updated` is added, and all panels using the same data source that include that value are filtered by it:
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-applied-v12.2.png" max-width="550px" alt="Table and bar chart, filtered" >}}
+
+If one of the panels in the dashboard using that data source doesn't include that filter value, the panel won't return any data. In this example, the filter pair `_name_ = ALERTS` has been added so the bar chart doesn't return any results:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
+
+For some visualizations, if your query doesn't include some type of data grouping, you might need to group the data first.
+For more information, refer to [Group from the panel](#group-from-the-panel).
+
+In cases where the data source you're using doesn't support filtering, consider using the special Dashboard data source.
+For more information, refer to [Filter any data using the Dashboard data source](#filter-any-data-using-the-dashboard-data-source).
+
+### Group from the panel
 
 When the **Group by** switch is toggled on, you can also set a group by dimension from a panel rather than from the dashboard-level control.
 Hover the cursor over any panel using the data source of the filter to show the **Group by** selector:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
 
-The panel-level **Group by** control only includes keys available in the panel's query. This is in contrast with the dashaboard-level control that includes all available keys for the dashboard.
+The panel-level **Group by** control only includes keys available in the panel's query. This is in contrast with the dashboard-level control that includes all available keys for the dashboard.
 Your selection is applied to all the panels in the dashboard with the same data source.
 
-You can also further filter a time series panel, which allows you to drill down further into your data.
-After setting your group by dimension and splitting your data, click on a series in a panel and click **Filter on this value** or **Filter out this value**.
-This filters by the labels found on that series, which are related to the already set group by dimensions.
-
-To enable this functionality, you need to add one or more overrides for the panel.
-In the following example, the override:
-
-- Adds a regular expression, so that all fields are filterable
-- Enables the **Filterable** switch
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.1.png" max-width="400px" alt="Field override making all fields filterable" >}}
-
-However, you can create overrides to address specific fields.
-You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
-
-With the override in place, you can click a series on a time series panel and filter it in or out.
-The new filter is shown in the dashboard filter control and the it's applied to the whole dashboard.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filters-v13.0.png" max-width="675px" alt="Panel with tooltip open showing options to filter on a value or filter it out" >}}
-
-Now you can filter data on the dashboard.
-
-## Advanced filtering
-
-After you've added filters to a dashboard, you can use them in several ways to explore and refine your data.
-The following sections explain how to filter data from unsupported data sources, apply filters directly from visualizations, and preserve filters when navigating between panels.
-
-### Filter any data using the Dashboard data source
+## Filter any data using the Dashboard data source
 
 In cases where a data source doesn't support the use of filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
 This allows you to bypass the limitations of the data source in the source panel.
@@ -180,46 +210,3 @@ To use filters on data from an unsupported data source, follow these steps:
 
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.
-
-### Dashboard drilldown with filters
-
-In table and bar chart visualizations, you can apply filters directly from the visualization.
-To quickly apply filter variables, follow these steps:
-
-1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
-
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with a filter icon displayed on a table cell" >}}
-
-   In bar chart visualizations, hover and click the bar to display the filter button:
-
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The filter button in a bar chart tooltip">}}
-
-1. Click the add filter icon.
-
-   The variable pair `alertname = ConfigMap Updated` is added to the filter and all panels using the same data source that include that variable value are filtered by that value:
-
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-applied-v12.2.png" max-width="550px" alt="Table and bar chart, filtered" >}}
-
-If one of the panels in the dashboard using that data source doesn't include that variable value, the panel won't return any data. In this example, the variable pair `_name_ = ALERTS` has been added to the filter so the bar chart doesn't return any results:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
-
-In cases where the data source you're using doesn't support filtering, consider using the special Dashboard data source.
-For more information, refer to [Filter any data using the Dashboard data source](#filter-any-data-using-the-dashboard-data-source).
-
-### Panel-to-panel filtering
-
-You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
-
-To preserve the context of the current dashboard:
-
-- **Time range:** You must explicitly include the current time range in the link.
-- **Variables:** You must enable **Include all variables** to preserve existing selections.
-- **Ordering:** Ensure that **Include all variables** is placed before the specific variable you are defining in the link.
-
-Filters on the current dashboard are automatically preserved.
-
-Learn more in:
-
-- [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
-- [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#filters)

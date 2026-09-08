@@ -65,7 +65,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 	require.NoError(t, err)
 
 	userService, err := userimpl.ProvideService(
-		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sql), orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

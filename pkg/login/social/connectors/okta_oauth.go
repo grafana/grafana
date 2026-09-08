@@ -12,13 +12,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ social.SocialConnector = (*SocialOkta)(nil)
@@ -47,18 +47,25 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialOkta {
+func NewOktaProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (*SocialOkta, error) {
+	base, err := newSocialBaseWithCache(social.OktaProviderName, ctx, orgRoleMapper, info, features, cfgProvider, cache)
+	if err != nil {
+		return nil, err
+	}
+
 	provider := &SocialOkta{
-		SocialBase: newSocialBaseWithCache(social.OktaProviderName, orgRoleMapper, info, features, cfg, cache),
+		SocialBase: base,
 	}
 
 	if info.UseRefreshToken {
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -98,7 +105,9 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.OktaProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.OktaProviderName, newInfo); err != nil {
+		return err
+	}
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
@@ -195,7 +204,10 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 			return nil, err
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, externalOrgs, directlyMappedRole)
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, externalOrgs, directlyMappedRole)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

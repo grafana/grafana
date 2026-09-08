@@ -5,12 +5,9 @@ import { ToolbarButton } from '@grafana/ui';
 
 import { useFeatureControlContext } from './FeatureControlProvider';
 
+// Rendered via LazyFeatureControlButton, which owns the `isAccessible` check.
 export const FeatureControlButton = memo(function FeatureControlButton() {
-  const { isAccessible, isOpen, setIsOpen } = useFeatureControlContext();
-
-  if (!isAccessible) {
-    return null;
-  }
+  const { isOpen, setIsOpen } = useFeatureControlContext();
 
   return (
     <ToolbarButton

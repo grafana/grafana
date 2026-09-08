@@ -447,10 +447,16 @@ describe('RuleListActions', () => {
       enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
     });
 
-    // Drive auto-sync state via the Config resource: useIsAutoSyncActive reads
-    // spec.externalAlertmanagerSync.datasourceUid, so specUid is the active-sync signal.
+    // Drive auto-sync state via the Config resource: for an API-configured org useIsAutoSyncActive
+    // reads spec.externalAlertmanagerSync.datasourceUid, so specUid is the active-sync signal.
     function mockAutoSync(uid?: string) {
       setupAutoSyncConfig(server, uid ? { specUid: uid } : {});
+    }
+
+    // An operator-configured sync leaves spec dormant — grafana.ini is authoritative and the UID
+    // surfaces only in status with origin='ini' — but sync is just as active.
+    function mockIniManagedAutoSync(uid: string) {
+      setupAutoSyncConfig(server, { statusUid: uid, origin: 'ini' });
     }
 
     async function findDisabledWizardItem(menu: HTMLElement) {
@@ -499,6 +505,24 @@ describe('RuleListActions', () => {
       const item = await findDisabledWizardItem(menu);
       expect(item).toHaveAttribute('aria-disabled', 'true');
       expect(item).not.toHaveAttribute('href');
+      expect(item).toHaveTextContent(/auto-sync/i);
+    });
+
+    it('disables "Import to Grafana Alerting" when sync is configured through grafana.ini', async () => {
+      grantUserRole(OrgRole.Editor);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.ActionAlertingNotificationsConfigRead,
+      ]);
+      mockIniManagedAutoSync('mimir-uid');
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      const item = await findDisabledWizardItem(menu);
+      expect(item).toHaveAttribute('aria-disabled', 'true');
       expect(item).toHaveTextContent(/auto-sync/i);
     });
 

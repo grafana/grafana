@@ -16,10 +16,8 @@ import {
   useSceneObjectState,
 } from '@grafana/scenes';
 import { Alert, Box, Button, Combobox, Field, Input, Stack, TextArea } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { changeVariableDescription } from '../../actions/variable/changeVariableDescription';
 import { changeVariableHideValue } from '../../actions/variable/changeVariableHideValue';
@@ -42,6 +40,7 @@ import {
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
+import { confirmDeleteVariable } from '../../sidebar/dashboard/variableListActions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 
@@ -164,31 +163,15 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onConfirmDelete() {
-    const name = this.variable.state.name;
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
-        text: t('dashboard-scene.variable-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
-          name,
-        }),
-        yesText: t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable'),
-        onConfirm: () => {
-          this.onDelete();
-        },
-      })
-    );
+    confirmDeleteVariable(this.variable);
   }
 
   public onDelete() {
-    const set = this.variable.parent!;
+    const set = this.variable.parent;
     if (!(set instanceof SceneVariableSet)) {
       return;
     }
-
-    removeVariable({
-      source: set,
-      removedObject: this.variable,
-    });
+    removeVariable({ source: set, removedObject: this.variable });
   }
 
   public onChangeName(name: string) {
