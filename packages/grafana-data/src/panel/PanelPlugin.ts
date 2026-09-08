@@ -24,6 +24,12 @@ import {
   type VisualizationPresetsSupplier,
   type VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
+import {
+  type ResolvedSystemTransformations,
+  type SystemTransformations,
+  type SystemTransformationsContext,
+  type SystemTransformationsSupplier,
+} from '../types/transformations';
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -175,6 +181,8 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
+  private systemTransformationsSupplier?: SystemTransformationsSupplier;
+  private systemTransformationsSupplierFailed = false;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -385,6 +393,93 @@ export class PanelPlugin<
   setDataSupport(support: Partial<PanelPluginDataSupport>) {
     this.dataSupport = { ...this.dataSupport, ...support };
     return this;
+  }
+
+  /**
+   * Registers read-only transformations in dashboard panels.
+   *
+   * Prepended transformations run before every user-configured transformation, appended ones after
+   * all of them. Both run before field overrides, so the fields either position produces are
+   * matchable by an override. An array result is shorthand for `prepend`. Neither is persisted to
+   * the dashboard.
+   *
+   * The supplier receives the query result frames on every data update, so it can return
+   * different transformations for different shapes of data. Empty results pass through
+   * without consulting the supplier. See {@link SystemTransformationsSupplier} for what it may
+   * return and {@link SystemTransformations} for the two positions.
+   *
+   * The transformations editor shows them as read-only rows under "Panel transformations".
+   *
+   * @example
+   * ```typescript
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *     .setSystemTransformations(({ series }) =>
+   *       series[0]?.meta?.preferredVisualisationType === 'nodeGraph'
+   *         ? [{ id: 'transpose', options: {} }]
+   *         : []
+   *     );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *     .setSystemTransformations(() => ({
+   *       prepend: [{ id: 'extractFields', options: {} }],
+   *       append: [{ id: 'reduce', options: {} }],
+   *     }));
+   * ```
+   *
+   * @alpha
+   **/
+  setSystemTransformations(supplier: SystemTransformationsSupplier) {
+    this.systemTransformationsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * Transformations registered via {@link setSystemTransformations}, normalized to explicit
+   * positions so callers never have to handle the array shorthand. Both groups are empty when the
+   * plugin registered none, and when its supplier throws. Never throws.
+   *
+   * @internal
+   */
+  getSystemTransformations(ctx: SystemTransformationsContext): ResolvedSystemTransformations {
+    let registered: ReturnType<SystemTransformationsSupplier>;
+
+    try {
+      registered = this.systemTransformationsSupplier?.(ctx);
+    } catch (err) {
+      // Callers run the supplier from inside the panel's data pipeline and from inside an editor
+      // render, so an escaping exception would error the panel's data or take down the edit pane.
+      // Registering nothing leaves the panel on its untransformed data, the same outcome as a plugin
+      // that never called setSystemTransformations. Reported once, because those callers reach this on
+      // every data update and every render.
+      if (!this.systemTransformationsSupplierFailed) {
+        this.systemTransformationsSupplierFailed = true;
+        console.error(`Panel plugin "${this.meta?.id}" threw from its setSystemTransformations supplier`, err);
+      }
+
+      return { prepend: [], append: [] };
+    }
+
+    if (!registered) {
+      return { prepend: [], append: [] };
+    }
+
+    return Array.isArray(registered)
+      ? { prepend: registered, append: [] }
+      : { prepend: registered.prepend ?? [], append: registered.append ?? [] };
+  }
+
+  /**
+   * Whether the plugin registered transformations at all, without running the supplier. Answers the
+   * data-independent half of the question, which {@link getSystemTransformations} cannot: it needs
+   * frames, and a supplier is free to return none for a given set of them.
+   *
+   * @internal
+   */
+  hasSystemTransformations() {
+    return this.systemTransformationsSupplier !== undefined;
   }
 
   /**
