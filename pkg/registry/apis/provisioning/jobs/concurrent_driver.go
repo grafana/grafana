@@ -33,6 +33,18 @@ type queuedEvent struct {
 // resync/re-list re-delivers the key if the job is still unclaimed.
 const maxClaimAttempts = 3
 
+// maxStaleClaimAttempts bounds the retries of a claim outcome the freshness
+// floor rejected as a lagging read. The count is really a wall-clock budget:
+// the queue's per-item limiter doubles from 5ms, so the nine waits between ten
+// attempts sum to ~2.6s — nearly all of it in the last three — matching the
+// ~2.3s the repository/connection getters afford (4 in-place reads × 250ms ×
+// 3 workqueue attempts). Each attempt is one cheap GET; a worker never sleeps
+// in place, which is why the budget must come from the backoff schedule
+// rather than fewer, longer waits. Past it, the key drops and the re-list (or
+// the floor's TTL) resolves the disagreement; stale_reads_exhausted_total is
+// the signal that this budget is too tight in practice.
+const maxStaleClaimAttempts = 10
+
 // defaultPostClaimCooldown is the post-claim cooldown used when the constructor
 // is given a non-positive resync interval. It matches the default resync
 // cadence of both wirings.
@@ -61,6 +73,11 @@ type ConcurrentJobDriver struct {
 	// the driver passes only raw event facts.
 	processed *usinformer.ProcessedMetrics
 
+	// staleReads counts claim outcomes the freshness floor rejected as lagging
+	// reads (retried) and the keys surrendered to the re-list after the retries
+	// ran out (exhausted).
+	staleReads *usinformer.StaleReadMetrics
+
 	// postClaimCooldown is how long a key is barred from processing after its
 	// job failed post-claim: the side effects may already have run, and the
 	// rolled-back claim makes the job immediately claimable again. The bar is
@@ -81,9 +98,43 @@ type ConcurrentJobDriver struct {
 	cooldowns map[string]time.Time
 	triggers  map[string]queuedEvent
 
+	// floor, when set, is the freshness floor the NATS jobs informer maintains
+	// (see TrackFloor). The driver consults it only to disambiguate a claim 404:
+	// a floor outstanding for the key means the job was announced and the read
+	// path has not caught up, so the claim is retried instead of trusting the
+	// NotFound as "completed and deleted".
+	floor *usinformer.RVFloor
+
 	// logger is used by informer event callbacks, which run outside Run's
 	// context and therefore cannot use logging.FromContext.
 	logger logging.Logger
+}
+
+// TrackFloor gives the driver the freshness floor its informer maintains, so
+// claim reads can be validated against what was announced. Call before Run; a
+// nil floor (the apiserver wiring) leaves every claim outcome trusted.
+func (c *ConcurrentJobDriver) TrackFloor(floor *usinformer.RVFloor) { c.floor = floor }
+
+// staleClaimRead reports whether a claim failure is evidence of a lagging read
+// path rather than the job's true state: a 404 while a live floor says the job
+// was announced (under a deletion watermark the 404 IS the truth — the job
+// completed and was deleted), or an "already claimed" observed at a version
+// below the floor — the still-claimed predecessor of a reused name, not the
+// announced incarnation. An AlreadyClaimedError at or above the floor is
+// genuine contention.
+func (c *ConcurrentJobDriver) staleClaimRead(err error, namespace, name string) bool {
+	if c.floor == nil {
+		return false
+	}
+	if apierrors.IsNotFound(err) {
+		rv, deleted := c.floor.Watermark(namespace, name)
+		return rv > 0 && !deleted
+	}
+	var claimed *AlreadyClaimedError
+	if errors.As(err, &claimed) {
+		return c.floor.Below(namespace, name, claimed.ObservedResourceVersion)
+	}
+	return false
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns
@@ -128,6 +179,7 @@ func NewConcurrentJobDriver(
 		workers:              workers,
 		metrics:              metrics,
 		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
+		staleReads:           usinformer.NewStaleReadMetrics(registry, resourceLabelJobs),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -454,16 +506,23 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	logger.Debug("process job key", "attempt", attempt)
 
 	err = processor.processKey(ctx, namespace, name, trigger, queued.enqueued)
+	// A claim outcome read below the announced floor is a lagging replica, not
+	// truth: a 404 may hide an announced create, and an "already claimed" may be
+	// the still-claimed predecessor of a reused job name whose fresh incarnation
+	// this replica cannot see yet. Both retry on the claim path (nothing ran, so
+	// retrying cannot re-run any work), under a larger attempt cap so the
+	// backoff can outlast the visibility lag.
+	staleClaimRead := c.staleClaimRead(err, namespace, name)
 	switch {
 	case err == nil:
 		if attempt > 1 {
 			logger.Info("job claim succeeded after retries", "attempts", attempt)
 		}
 		c.queue.Forget(key)
-	case errors.Is(err, ErrAlreadyClaimed):
+	case errors.Is(err, ErrAlreadyClaimed) && !staleClaimRead:
 		logger.Debug("job already claimed by another worker - dropping from queue")
 		c.queue.Forget(key)
-	case apierrors.IsNotFound(err):
+	case apierrors.IsNotFound(err) && !staleClaimRead:
 		logger.Debug("job no longer exists - dropping from queue")
 		c.queue.Forget(key)
 	case errors.Is(err, errPostClaim):
@@ -476,7 +535,16 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
 			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
 		c.queue.Forget(key)
+	case staleClaimRead && attempt < maxStaleClaimAttempts:
+		c.staleReads.RecordRetried()
+		logger.Info("job announced but not yet visible to this read path - will retry claim",
+			"attempt", attempt, "max_attempts", maxStaleClaimAttempts)
+		c.setQueued(key, queued.trigger, queued.enqueued)
+		c.queue.AddRateLimited(key)
 	case attempt >= maxClaimAttempts:
+		if staleClaimRead {
+			c.staleReads.RecordExhausted()
+		}
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
 			"attempts", attempt, "error", err)
 		c.queue.Forget(key)

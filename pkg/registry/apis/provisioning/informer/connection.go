@@ -12,6 +12,8 @@ import (
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -19,6 +21,10 @@ import (
 // ConnectionGetter is the read seam the connection controller reconciles
 // against. It exposes only the single connection under reconciliation, so the
 // source can be swapped without touching the controller.
+//
+// Get must return a current object: under NATS it enforces the freshness floor
+// the informer events announce, returning usinformer.ErrStaleRead when the API
+// cannot yet serve the connection at that version.
 type ConnectionGetter interface {
 	Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error)
 }
@@ -26,15 +32,21 @@ type ConnectionGetter interface {
 // NewConnectionDeltaSource returns the connection delta source and the getter it
 // backs. Under NATS the getter reads reconcile state fresh from the API;
 // otherwise it reads the informer's cache lister.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
+		staleReads := usinformer.NewStaleReadMetrics(reg, provisioningapis.ConnectionResourceInfo.GroupVersionResource().Resource)
 		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore())
 		// Same as the repository informer: the controller's only feed, with
 		// connection health checks driven by the re-list, so it must keep
 		// operating at the re-list cadence while NATS is unavailable rather
 		// than gate on the subscription.
 		source.AllowDegradedStart()
-		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1())
+		// And the same freshness contract: every delivered event raises the floor
+		// before the controller's handler enqueues the key, so the getter can
+		// refuse reconcile reads staler than the event that triggered them.
+		floor := usinformer.NewRVFloor()
+		source.TrackFloor(floor)
+		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1(), floor, staleReads)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
@@ -69,15 +81,22 @@ func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (
 }
 
 // NewClientConnectionGetter backs a ConnectionGetter with the API client, for
-// the NATS watch where there is no informer cache to serve a fresh reconcile read.
-func NewClientConnectionGetter(c typedclient.ProvisioningV0alpha1Interface) ConnectionGetter {
-	return clientConnectionGetter{client: c}
+// the NATS watch where there is no informer cache to serve a fresh reconcile
+// read. floor is the freshness floor the informer events raise; Get refuses to
+// return a read below it (retrying briefly, then usinformer.ErrStaleRead). A
+// nil floor disables the check; metrics counts the enforcement outcomes (nil
+// disables).
+func NewClientConnectionGetter(c typedclient.ProvisioningV0alpha1Interface, floor *usinformer.RVFloor, metrics *usinformer.StaleReadMetrics) ConnectionGetter {
+	return clientConnectionGetter{client: c, reader: usinformer.NewFreshReader(floor, metrics)}
 }
 
 type clientConnectionGetter struct {
 	client typedclient.ProvisioningV0alpha1Interface
+	reader usinformer.FreshReader
 }
 
 func (g clientConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+	return usinformer.GetFresh(ctx, g.reader, namespace, name, func(ctx context.Context) (*provisioningapis.Connection, error) {
+		return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+	})
 }

@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -11,10 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGetter RepoGetter, history HistoryWriter, metrics *JobMetrics, workers ...Worker) *ConcurrentJobDriver {
@@ -548,4 +551,158 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 
 	cancel()
 	require.NoError(t, <-runDone)
+}
+
+// A claim 404 while the freshness floor says the job was announced is a
+// read-visibility lag, not a missing job: the claim is retried until the read
+// path catches up (here: until the job resolves as claimed elsewhere).
+func TestConcurrentJobDriver_StaleNotFoundClaimIsRetried(t *testing.T) {
+	var claims atomic.Int32
+	notFound := apierrors.NewNotFound(provisioning.JobResourceInfo.GroupVersionResource().GroupResource(), "job1")
+
+	store := &MockStore{}
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+			if claims.Add(1) < 3 {
+				return nil, nil, notFound
+			}
+			return nil, nil, ErrAlreadyClaimed
+		}).Maybe()
+
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	floor := usinformer.NewRVFloor()
+	// A realistic snowflake-range resource version, as the notification carries.
+	floor.Raise("ns1", "job1", 200000000000000000)
+	driver.TrackFloor(floor)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	driver.EventHandler().AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+	}, false)
+
+	require.Eventually(t, func() bool { return claims.Load() == 3 }, 2*time.Second, 10*time.Millisecond)
+
+	// The terminal outcome (claimed elsewhere) must stop the retries.
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, int32(3), claims.Load(), "a stale 404 must be retried until the job resolves")
+
+	cancel()
+	require.NoError(t, <-runDone)
+}
+
+// Without an outstanding floor a claim 404 stays trusted — the job completed
+// and was deleted — so the key is dropped without retries.
+func TestConcurrentJobDriver_TrustedNotFoundClaimIsDropped(t *testing.T) {
+	var claims atomic.Int32
+	notFound := apierrors.NewNotFound(provisioning.JobResourceInfo.GroupVersionResource().GroupResource(), "job1")
+
+	store := &MockStore{}
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+			claims.Add(1)
+			return nil, nil, notFound
+		}).Maybe()
+
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	driver.TrackFloor(usinformer.NewRVFloor()) // tracked, but nothing announced this job
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	driver.EventHandler().AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+	}, false)
+
+	require.Eventually(t, func() bool { return claims.Load() == 1 }, 2*time.Second, 10*time.Millisecond)
+
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, int32(1), claims.Load(), "a trusted 404 must not be retried")
+
+	cancel()
+	require.NoError(t, <-runDone)
+}
+
+// An "already claimed" observed at a version below the announced floor is the
+// still-claimed predecessor of a reused job name served by a lagging read
+// path, not genuine contention: the claim is retried until the read path
+// catches up with the announced incarnation.
+func TestConcurrentJobDriver_StaleAlreadyClaimedIsRetried(t *testing.T) {
+	const (
+		rvStalePredecessor = int64(200000000000000000)
+		rvAnnounced        = int64(300000000000000000)
+	)
+	var claims atomic.Int32
+
+	store := &MockStore{}
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+			if claims.Add(1) < 3 {
+				return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: rvStalePredecessor}
+			}
+			// The read path caught up: the announced incarnation is genuinely claimed.
+			return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: rvAnnounced}
+		}).Maybe()
+
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	floor := usinformer.NewRVFloor()
+	floor.Raise("ns1", "job1", rvAnnounced)
+	driver.TrackFloor(floor)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	driver.EventHandler().AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+	}, false)
+
+	require.Eventually(t, func() bool { return claims.Load() == 3 }, 2*time.Second, 10*time.Millisecond)
+
+	// The genuine (at-floor) already-claimed outcome must stop the retries.
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, int32(3), claims.Load(), "a stale already-claimed must be retried until the announced incarnation is visible")
+
+	cancel()
+	require.NoError(t, <-runDone)
+}
+
+// staleClaimRead is the seam that decides whether a claim failure indicts a
+// lagging read path. It must trust everything without a floor, treat a 404
+// under a live watermark as stale but under a deletion watermark as truth, and
+// indict an already-claimed only when it was observed below the floor —
+// including the conflict-exhausted error, which wraps AlreadyClaimedError.
+func TestConcurrentJobDriver_StaleClaimReadClassification(t *testing.T) {
+	const (
+		rvOld      = int64(200000000000000000)
+		rvAnnounce = int64(300000000000000000)
+	)
+	notFound := apierrors.NewNotFound(provisioning.JobResourceInfo.GroupVersionResource().GroupResource(), "j")
+	staleClaimed := &AlreadyClaimedError{ObservedResourceVersion: rvOld}
+	freshClaimed := &AlreadyClaimedError{ObservedResourceVersion: rvAnnounce}
+	// The conflict-exhaustion path wraps the typed error in more context.
+	exhausted := fmt.Errorf("failed to claim job after conflicts: %w", staleClaimed)
+
+	driver := newTestConcurrentDriver(t, 1, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	assert.False(t, driver.staleClaimRead(notFound, "ns", "j"), "no floor trusts every outcome")
+
+	floor := usinformer.NewRVFloor()
+	driver.TrackFloor(floor)
+	assert.False(t, driver.staleClaimRead(notFound, "ns", "j"), "no watermark trusts the 404")
+
+	floor.Raise("ns", "j", rvAnnounce)
+	assert.True(t, driver.staleClaimRead(notFound, "ns", "j"), "a 404 under a live watermark is a stale read")
+	assert.True(t, driver.staleClaimRead(staleClaimed, "ns", "j"), "an already-claimed below the floor is the stale predecessor")
+	assert.True(t, driver.staleClaimRead(exhausted, "ns", "j"), "conflict exhaustion below the floor is equally stale")
+	assert.False(t, driver.staleClaimRead(freshClaimed, "ns", "j"), "an already-claimed at the floor is genuine contention")
+	assert.False(t, driver.staleClaimRead(errors.New("boom"), "ns", "j"), "other errors are not staleness evidence")
+
+	floor.Deleted("ns", "j", rvAnnounce+1)
+	assert.False(t, driver.staleClaimRead(notFound, "ns", "j"), "under a deletion watermark the 404 is the truth")
 }

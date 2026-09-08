@@ -81,7 +81,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// The jobs informer resyncs on job_interval (default 30s) rather than the
 	// controllers' resync_interval, preserving the job pickup cadence (and config
 	// key) of the polling design this replaced.
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
+	jobInformer, jobFloor := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
+	// Under NATS the floor lets the driver tell a claim 404 caused by
+	// read-visibility lag from a genuinely deleted job; nil otherwise.
+	driver.TrackFloor(jobFloor)
 	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)

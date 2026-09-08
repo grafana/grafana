@@ -51,6 +51,7 @@ jobs:
               # (keep in sync with the negations in unified_storage below)
               - 'pkg/storage/unified/apistore/**'
               - 'pkg/storage/unified/federated/**'
+              - 'pkg/storage/unified/informer/**'
               - 'pkg/storage/unified/*.go'
             unified_storage:
               - 'pkg/storage/unified/**'
@@ -58,6 +59,7 @@ jobs:
               # server (keep in sync with the client-side block in api_layer above)
               - '!pkg/storage/unified/apistore/**'
               - '!pkg/storage/unified/federated/**'
+              - '!pkg/storage/unified/informer/**'
               - '!pkg/storage/unified/*.go'
               # migration test files and fixtures don't ship in the storage/search
               # server binary, so they can't break cross-version compatibility
