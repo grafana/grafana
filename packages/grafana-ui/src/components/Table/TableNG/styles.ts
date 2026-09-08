@@ -9,7 +9,7 @@ import {
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
-  PAGINATION_CHROME_HEIGHT,
+  getPaginationChromeHeight,
   PAGINATION_MARGIN,
   TABLE,
 } from './constants';
@@ -118,8 +118,8 @@ export const getGridStyles = memoize(
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
         // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see PAGINATION_CHROME_HEIGHT)
-        blockSize: enablePagination ? `calc(100% - ${PAGINATION_CHROME_HEIGHT}px)` : '100%',
+        // the panel (see getPaginationChromeHeight)
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -272,8 +272,10 @@ export const getGridStyles = memoize(
         display: 'flex',
         justifyContent: 'center',
         // equal to theme.spacing(1), but taken from the same constant the grid reserves against so the
-        // two can't drift apart
-        marginBlock: PAGINATION_MARGIN,
+        // two can't drift apart. Only `noPanelPadding` gets a bottom margin: with the panel's own
+        // padding in place, the controls already have that space below them.
+        marginBlockStart: PAGINATION_MARGIN,
+        marginBlockEnd: noPanelPadding ? PAGINATION_MARGIN : 0,
         width: '100%',
       }),
       paginationSummary: css({

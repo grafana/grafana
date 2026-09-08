@@ -36,7 +36,7 @@ import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
   HEADER_ICON_SPACE,
-  PAGINATION_CHROME_HEIGHT,
+  getPaginationChromeHeight,
   TABLE,
 } from './constants';
 import { IS_SAFARI_26 } from './styles';
@@ -153,6 +153,8 @@ export interface PaginatedRowsOptions {
   paginationHeight?: number;
   enabled: boolean;
   hasNestedFrames?: boolean;
+  /** Whether the panel has dropped its own padding — the pagination controls then need their own bottom margin. */
+  noPanelPadding?: boolean;
   /** When set to a positive value, fixes the number of rows per page instead of deriving it from the panel height. */
   pageSize?: number;
 }
@@ -171,7 +173,17 @@ export interface PaginatedRowsResult {
 
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, headerHeight, footerHeight, rowHeight, enabled, hasNestedFrames, pageSize }: PaginatedRowsOptions
+  {
+    height,
+    width,
+    headerHeight,
+    footerHeight,
+    rowHeight,
+    enabled,
+    hasNestedFrames,
+    pageSize,
+    noPanelPadding,
+  }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
@@ -227,7 +239,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_CHROME_HEIGHT;
+      const rowAreaHeight = height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding);
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
       // ensure at least one row per page is displayed
       rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -247,7 +259,7 @@ export function usePaginatedRows(
       pageRangeStart,
       pageRangeEnd,
     };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize]);
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize, noPanelPadding]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {

@@ -237,6 +237,7 @@ export function TableFlat(props: TableNGProps) {
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     pageSize,
+    noPanelPadding,
   });
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {

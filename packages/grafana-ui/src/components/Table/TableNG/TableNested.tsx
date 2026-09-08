@@ -317,6 +317,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     rowHeight,
     hasNestedFrames: true,
     pageSize,
+    noPanelPadding,
   });
 
   const showPagination = enablePagination && numRows > 0;

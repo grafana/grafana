@@ -259,12 +259,12 @@ describe('TableNG hooks', () => {
 
     it('should handle pagination correctly', () => {
       // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total:
-      // (70 - PAGINATION_CHROME_HEIGHT 48) / rowHeight 10 = 2.
+      // (60 - pagination chrome 38) / rowHeight 10 = 2.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 70,
+          height: 60,
           width: 800,
           rowHeight: 10,
           headerHeight: 0,
@@ -295,7 +295,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 150,
+          height: 140,
           width: 800,
           rowHeight: 10,
           headerHeight: TABLE.HEADER_HEIGHT,
@@ -341,7 +341,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 150,
+          height: 140,
           width: 800,
           rowHeight: 10,
           headerHeight: TABLE.HEADER_HEIGHT,
@@ -418,14 +418,37 @@ describe('TableNG hooks', () => {
       expect(result.current.rows[0].__index).toBe(2);
     });
 
+    it('reserves an extra margin under the controls when the panel has no padding of its own', () => {
+      // The pager only needs a bottom margin when the panel has dropped its padding, and that margin
+      // comes out of the row area: (58 - 38) / 10 = 2 rows with the panel's padding in place, and
+      // (58 - 46) / 10 = 1 without it.
+      const { rows } = setupData();
+      const options = {
+        enabled: true,
+        height: 58,
+        width: 800,
+        rowHeight: 10,
+        headerHeight: 0,
+        footerHeight: 0,
+      };
+
+      const { result: withPanelPadding } = renderHook(() => usePaginatedRows(rows, options));
+      expect(withPanelPadding.current.rowsPerPage).toBe(2);
+
+      const { result: withoutPanelPadding } = renderHook(() =>
+        usePaginatedRows(rows, { ...options, noPanelPadding: true })
+      );
+      expect(withoutPanelPadding.current.rowsPerPage).toBe(1);
+    });
+
     it('should fall back to the height-derived page size when pageSize is not a positive number', () => {
-      // (70 - PAGINATION_CHROME_HEIGHT 48) / 10 = 2 rows per page from height; pageSize: 0 must not
+      // (60 - pagination chrome 38) / 10 = 2 rows per page from height; pageSize: 0 must not
       // override that.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
           enabled: true,
-          height: 70,
+          height: 60,
           width: 800,
           rowHeight: 10,
           headerHeight: 0,

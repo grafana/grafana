@@ -60,21 +60,28 @@ const PANEL_TITLE_INSET = 12;
 export const FIRST_COLUMN_EXTRA_PADDING = PANEL_TITLE_INSET - TABLE.CELL_PADDING;
 
 /**
- * Vertical space the pagination controls take under the grid: the control row itself, plus the
- * margin above and below it.
- *
- * One constant because three places have to agree on it — `paginationContainer`'s own margin, the
- * grid's `blockSize` reservation, and `usePaginatedRows`, which subtracts it from the panel height
- * before working out how many rows fit on a page. Those were three separate numbers derived three
- * different ways, and they no longer added up: the grid reserved 38px against a chrome that
- * measures ~45px, so the grid plus the controls overflowed the panel.
- *
- * The row height is hand-measured rather than a token: it comes out of the `size="sm"` Pagination
- * buttons and their line-height (29.2px), rounded up to a whole spacing step.
+ * The pagination row's own height. Hand-measured rather than a token: it comes out of the
+ * `size="sm"` Pagination buttons (24px) plus the 5px bottom margin on the list items that hold
+ * them, rounded up to a whole pixel.
  */
-const PAGINATION_ROW_HEIGHT = 32;
+const PAGINATION_ROW_HEIGHT = 30;
+
+/** Gap between the grid and the pagination controls, and below them when they need one. */
 export const PAGINATION_MARGIN = 8;
-export const PAGINATION_CHROME_HEIGHT = PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * 2;
+
+/**
+ * Vertical space the pagination controls take under the grid: the row itself, the margin above it,
+ * and a matching margin below it only when the panel has dropped its own padding (`noPanelPadding`)
+ * and so has none of its own left to sit on.
+ *
+ * One helper because three places have to agree on the number — `paginationContainer`'s margins,
+ * the grid's `blockSize` reservation, and `usePaginatedRows`, which subtracts it from the panel
+ * height before working out how many rows fit on a page. Those were three separate numbers derived
+ * three different ways, and they no longer added up: the grid reserved 38px against a 37px chrome,
+ * so the grid plus the controls overflowed the panel.
+ */
+export const getPaginationChromeHeight = (noPanelPadding = false): number =>
+  PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * (noPanelPadding ? 2 : 1);
 
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a

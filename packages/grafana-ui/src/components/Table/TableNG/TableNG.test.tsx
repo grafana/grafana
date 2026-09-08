@@ -1184,6 +1184,37 @@ describe('TableNG', () => {
       expect(paginationText).toContain('of 100 rows');
     });
 
+    it('only gives the pagination controls a bottom margin when the panel has no padding of its own', () => {
+      const frame = toDataFrame({
+        name: 'LargeData',
+        fields: [
+          {
+            name: 'Index',
+            type: FieldType.number,
+            values: Array.from({ length: 100 }, (_, i) => i),
+            config: { custom: {} },
+            display: (v: number) => ({ text: String(v), numeric: Number(v) }),
+          },
+        ],
+      });
+
+      function pagerMarginBlockEnd(noPanelPadding: boolean) {
+        const { container, unmount } = render(
+          <TableNG data={frame} width={800} height={300} enablePagination noPanelPadding={noPanelPadding} />
+        );
+        const pager = container.querySelector('.table-ng-pagination')!.parentElement!;
+        // logical property: jsdom doesn't fold `margin-block-end` into `marginBottom`
+        const marginBlockEnd = window.getComputedStyle(pager).getPropertyValue('margin-block-end');
+        unmount();
+        return marginBlockEnd;
+      }
+
+      // the panel's own padding already sits below the controls here...
+      expect(pagerMarginBlockEnd(false)).toBe('0');
+      // ...but with it dropped, the controls would otherwise sit on the panel edge
+      expect(pagerMarginBlockEnd(true)).toBe('8px');
+    });
+
     it('navigates between pages when pagination controls are clicked', async () => {
       // Create a data frame with many rows
       const fields = [
