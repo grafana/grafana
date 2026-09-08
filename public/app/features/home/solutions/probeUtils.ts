@@ -43,12 +43,9 @@ export const HEALTH_CHECK_TIMEOUT_MS = 3000;
 /** Hard ceiling per signal; detectSignal reads it. */
 export const SIGNAL_BUDGET_MS = 30_000;
 
-// Rounds that fit the budget, then the smallest batch covering the cap in those rounds, so a slow
-// scan never turns an active solution into an unknown one (2 rounds × 13s = 26s < 30s today).
-const PROBE_ROUNDS = Math.floor(SIGNAL_BUDGET_MS / (HEALTH_CHECK_TIMEOUT_MS + PROBE_TIMEOUT_MS));
-
-/** Candidates probed per round; bounds fan-out on datasource-heavy instances while keeping the winner deterministic. */
-export const PROBE_BATCH_SIZE = Math.ceil(MAX_PROBED_DATASOURCES / PROBE_ROUNDS);
+// Two rounds of (health + probe timeout) over the cap fit SIGNAL_BUDGET_MS. A literal, not derived
+// arithmetic: the fake-timer budget test fails if a timeout change breaks the fit.
+const PROBE_BATCH_SIZE = 5;
 
 // Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
 // (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
@@ -126,10 +123,9 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
   };
 }
 
-/** Probe candidates of `type`. Cloud utilities and `excludeUids` never qualify, even as the only candidates: platform telemetry must not settle a product-data probe. */
+/** Probe candidates of `type`, default first. Cloud utilities and `excludeUids` never qualify: platform telemetry must not settle a product-data probe. */
 export async function listProbeCandidates(
   type: string,
-  cap = MAX_PROBED_DATASOURCES,
   excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem[]> {
   const list = await getDataSourceInstanceList({
@@ -139,8 +135,7 @@ export async function listProbeCandidates(
   });
   const pool = list.filter((ds) => !excludeUids?.has(ds.uid) && !isCloudUtilityDatasourceName(ds.name));
   const def = pool.find((ds) => ds.isDefault);
-  const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
-  return ordered.slice(0, cap);
+  return def ? [def, ...pool.filter((ds) => ds !== def)] : pool;
 }
 
 const healthCache = new Map<string, TtlCachedPromise<boolean>>();
@@ -177,23 +172,23 @@ export function resetProbeHealth(): void {
 }
 
 /**
- * First candidate (in priority order) whose probe confirms data, or null. Candidates are taken in
- * priority-ordered batches: each batch is health-filtered, the healthy ones probed in parallel,
- * and a hit ends the scan so later candidates are never probed. Unhealthy candidates and probe
- * errors read as no data.
+ * First candidate (priority order) whose probe confirms data, or null. Scans at most
+ * MAX_PROBED_DATASOURCES candidates in batches of PROBE_BATCH_SIZE; each is probed once its own
+ * /health is OK and a hit ends the scan. Unhealthy candidates and probe errors read as no data.
  */
 export async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
 ): Promise<DataSourceInstanceListItem | null> {
-  for (let i = 0; i < candidates.length; i += PROBE_BATCH_SIZE) {
-    const batch = candidates.slice(i, i + PROBE_BATCH_SIZE);
-    const health = await Promise.all(batch.map((ds) => isDatasourceHealthy(ds.uid)));
-    const healthy = batch.filter((_, index) => health[index]);
-    const results = await Promise.allSettled(healthy.map((ds) => hasData(ds)));
+  const capped = candidates.slice(0, MAX_PROBED_DATASOURCES);
+  for (let i = 0; i < capped.length; i += PROBE_BATCH_SIZE) {
+    const batch = capped.slice(i, i + PROBE_BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map(async (ds) => (await isDatasourceHealthy(ds.uid)) && (await hasData(ds)))
+    );
     const winner = results.findIndex((result) => result.status === 'fulfilled' && result.value === true);
     if (winner !== -1) {
-      return healthy[winner];
+      return batch[winner];
     }
   }
   return null;

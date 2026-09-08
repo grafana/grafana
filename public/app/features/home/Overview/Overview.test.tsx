@@ -4,11 +4,12 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution, type SolutionId } from '../solutions/types';
+import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
+import { type Solution } from '../solutions/types';
 
 import { Overview } from './Overview';
 import { useGuides } from './useGuides';
-import { useOverviewCards } from './useOverviewCards';
+import { useOverviewPlacement } from './useOverviewPlacement';
 
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn() }));
 jest.mock('./useGuides', () => ({ useGuides: jest.fn() }));
@@ -16,15 +17,6 @@ jest.mock('./useGuides', () => ({ useGuides: jest.fn() }));
 const mockUseGuides = jest.mocked(useGuides);
 const mockCtaClicked = jest.mocked(ctaClicked);
 const EMPTY_SOLUTIONS: Solution[] = [];
-
-const datasource: DataSourceInstanceListItem = {
-  uid: 'datasource',
-  name: 'Datasource',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
-  isDefault: true,
-};
 
 const guide = {
   id: 'app-monitoring',
@@ -36,34 +28,8 @@ const guide = {
   href: '#',
 };
 
-function solution(id: SolutionId, overrides: Partial<Solution> = {}): Solution {
-  return {
-    id,
-    title: id,
-    icon: 'chart-line',
-    signal: async () => 'inactive',
-    datasource: async () => null,
-    needsAttention: async () => false,
-    stats: async () => null,
-    refinedStats: async () => null,
-    sparkline: async () => null,
-    cta: async () => null,
-    alert: async () => null,
-    offer: async () => null,
-    ...overrides,
-  };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
-}
-
 function Harness({ solutions }: { solutions: Solution[] }) {
-  return <Overview placement={useOverviewCards(solutions)} />;
+  return <Overview placement={useOverviewPlacement(solutions)} />;
 }
 
 describe('Overview', () => {
@@ -107,7 +73,7 @@ describe('Overview', () => {
 
   it('defaults to Get started when no solution is live and guides are available', async () => {
     mockUseGuides.mockReturnValue([guide]);
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       offer: async () => ({
         availability: 'enable',
@@ -125,7 +91,10 @@ describe('Overview', () => {
 
   it('keeps the All solutions default when a solution is live', async () => {
     mockUseGuides.mockReturnValue([guide]);
-    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      datasource: async () => stubDatasource,
+    });
 
     render(<Harness solutions={[metrics]} />);
 
@@ -155,7 +124,7 @@ describe('Overview', () => {
   it('hides the filter until solutions settle so the default never flips in view', async () => {
     mockUseGuides.mockReturnValue([guide]);
     const probe = deferred<DataSourceInstanceListItem | null>();
-    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
+    const metrics = stubSolution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
 
     render(<Harness solutions={[metrics]} />);
 
@@ -176,7 +145,10 @@ describe('Overview', () => {
     try {
       mockUseGuides.mockReturnValue([guide]);
 
-      const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+      const metrics = stubSolution('metrics', {
+        title: 'Metrics & infrastructure',
+        datasource: async () => stubDatasource,
+      });
       render(<Harness solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
 
       await waitFor(() => expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument());
@@ -282,16 +254,16 @@ describe('Overview', () => {
     window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
     const logsAttention = deferred<boolean>();
     const firstStats = jest.fn(async () => ({ primary: '4.2 M series' }));
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       signal: async () => 'active',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       stats: firstStats,
     });
-    const logs = solution('logs', {
+    const logs = stubSolution('logs', {
       title: 'Logs',
       signal: async () => 'active',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: () => logsAttention.promise,
     });
 
@@ -314,15 +286,15 @@ describe('Overview', () => {
   it('returns to skeletons while a changed solution set is classified', async () => {
     const tracesDatasource = deferred<DataSourceInstanceListItem | null>();
     const nextDatasource = deferred<DataSourceInstanceListItem | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
     });
-    const traces = solution('traces', {
+    const traces = stubSolution('traces', {
       title: 'Traces',
       datasource: () => tracesDatasource.promise,
     });
-    const logs = solution('logs', {
+    const logs = stubSolution('logs', {
       title: 'Logs',
       datasource: () => nextDatasource.promise,
     });
@@ -334,14 +306,14 @@ describe('Overview', () => {
     rerender(<Harness solutions={[logs]} />);
 
     // A late answer for a solution no longer in the set must not surface.
-    await act(async () => tracesDatasource.resolve(datasource));
+    await act(async () => tracesDatasource.resolve(stubDatasource));
 
     expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
     expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: traces.title })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
 
-    await act(async () => nextDatasource.resolve(datasource));
+    await act(async () => nextDatasource.resolve(stubDatasource));
 
     expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: traces.title })).not.toBeInTheDocument();
@@ -349,7 +321,10 @@ describe('Overview', () => {
   });
 
   it('keeps placed cards when the solution array is recreated with the same solutions', async () => {
-    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      datasource: async () => stubDatasource,
+    });
     const solutions = [metrics];
     const { rerender } = render(<Harness solutions={solutions} />);
 
@@ -370,7 +345,7 @@ describe('Overview', () => {
   it('holds offers behind skeletons until a live card settles when no view preference is stored', async () => {
     mockUseGuides.mockReturnValue([guide]);
     const logsDatasource = deferred<DataSourceInstanceListItem | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       offer: async () => ({
         availability: 'enable',
@@ -378,9 +353,9 @@ describe('Overview', () => {
         cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
       }),
     });
-    const logs = solution('logs', { title: 'Logs', datasource: () => logsDatasource.promise });
+    const logs = stubSolution('logs', { title: 'Logs', datasource: () => logsDatasource.promise });
     const others = (['traces', 'kubernetes', 'synthetics'] as const).map((id) =>
-      solution(id, { datasource: () => new Promise<null>(() => {}) })
+      stubSolution(id, { datasource: () => new Promise<null>(() => {}) })
     );
 
     render(<Harness solutions={[metrics, logs, ...others]} />);
@@ -390,7 +365,7 @@ describe('Overview', () => {
     await waitFor(() => expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(5));
     expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
 
-    await act(async () => logsDatasource.resolve(datasource));
+    await act(async () => logsDatasource.resolve(stubDatasource));
 
     expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
@@ -400,7 +375,7 @@ describe('Overview', () => {
   it('renders a settled offer immediately when a view preference is stored', async () => {
     mockUseGuides.mockReturnValue([guide]);
     window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       offer: async () => ({
         availability: 'enable',
@@ -408,7 +383,7 @@ describe('Overview', () => {
         cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
       }),
     });
-    const logs = solution('logs', { title: 'Logs', datasource: () => new Promise<null>(() => {}) });
+    const logs = stubSolution('logs', { title: 'Logs', datasource: () => new Promise<null>(() => {}) });
 
     render(<Harness solutions={[metrics, logs]} />);
 
@@ -417,10 +392,10 @@ describe('Overview', () => {
   });
 
   it('classifies a live solution as enabled when its attention query fails', async () => {
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       signal: async () => 'active',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: async () => {
         throw new Error('health unavailable');
       },
@@ -434,7 +409,7 @@ describe('Overview', () => {
   });
 
   it('settles instead of holding skeletons when required facts reject', async () => {
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       datasource: async () => {
         throw new Error('datasource lookup failed');
       },
@@ -451,10 +426,10 @@ describe('Overview', () => {
 
   it('keeps optional card facts progressive after placement', async () => {
     const stats = deferred<{ primary: string } | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       signal: async () => 'active',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       stats: () => stats.promise,
     });
 
@@ -472,13 +447,17 @@ describe('Overview', () => {
   it('groups attention and enabled cards and filters without reclassifying them', async () => {
     const attentionAlert = jest.fn(async () => ({ primary: '3 hosts above 90% disk' }));
     const enabledAlert = jest.fn(async () => null);
-    const attention = solution('metrics', {
+    const attention = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: async () => true,
       alert: attentionAlert,
     });
-    const enabled = solution('logs', { title: 'Logs', datasource: async () => datasource, alert: enabledAlert });
+    const enabled = stubSolution('logs', {
+      title: 'Logs',
+      datasource: async () => stubDatasource,
+      alert: enabledAlert,
+    });
     const { user } = render(<Harness solutions={[attention, enabled]} />);
 
     expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
@@ -496,9 +475,9 @@ describe('Overview', () => {
 
   it('loads alert details after placing an attention card', async () => {
     const alert = deferred<{ primary: string } | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: async () => true,
       alert: () => alert.promise,
     });
@@ -515,7 +494,7 @@ describe('Overview', () => {
   });
 
   it('shows offers through the Available filter', async () => {
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       offer: async () => ({
         availability: 'enable',

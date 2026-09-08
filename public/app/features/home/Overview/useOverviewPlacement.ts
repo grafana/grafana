@@ -4,7 +4,7 @@ import { type Solution } from '../solutions/types';
 
 import { type OverviewCard, resolveOverviewCard } from './solutionGroups';
 
-export interface OverviewCards {
+export interface OverviewPlacement {
   /** Placed cards in `solutions` order; solutions with neither datasource nor offer are omitted. */
   cards: OverviewCard[];
   /** Solutions whose placement is still resolving, in `solutions` order. */
@@ -17,7 +17,7 @@ export interface OverviewCards {
  * the current `solutions`, so a recreated array of the same solutions keeps its cards and
  * solutions no longer in the set are simply never read.
  */
-export function useOverviewCards(solutions: Solution[]): OverviewCards {
+export function useOverviewPlacement(solutions: Solution[]): OverviewPlacement {
   const [placed, setPlaced] = useState(() => new Map<Solution, OverviewCard | null>());
 
   useEffect(() => {

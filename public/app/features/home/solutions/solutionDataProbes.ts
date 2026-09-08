@@ -36,7 +36,7 @@ export async function probeFound(
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>,
   excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem | null> {
-  return findDatasourceWithData(await listProbeCandidates(type, undefined, excludeUids), hasData);
+  return findDatasourceWithData(await listProbeCandidates(type, excludeUids), hasData);
 }
 
 // Label metadata is a cheap, index-only recency check; empty within the lookback is definitive

@@ -10,7 +10,6 @@ import {
   createTtlCachedPromise,
   findDatasourceWithData,
   listProbeCandidates,
-  MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
   PROBE_TTL_MS,
 } from './probeUtils';
@@ -66,9 +65,7 @@ const K8S_APP_STORAGE_KEY = 'grafana.k8s-app.navigation.storage';
 
 // Priority: the k8s app's stored choice, then — skipping cloud utility datasources — the default, then list order.
 async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
-  // Uncapped: the stored preference must be honored even when it sits past the fan-out cap;
-  // resolveKubernetesPrometheus applies the cap after this reorder.
-  const ordered = await listProbeCandidates('prometheus', Number.POSITIVE_INFINITY);
+  const ordered = await listProbeCandidates('prometheus');
   let promName: string | undefined;
   try {
     // store.getObject absorbs missing/corrupt values; the try guards localStorage access itself throwing.
@@ -87,10 +84,9 @@ async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid
   return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 
-// Batched, health-filtered scan over the ordered candidates; first candidate with data wins.
+// The stored choice is moved to the front before the scan caps the list.
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
-  // Cap before the scan: broken datasources still consume cap slots.
-  return findDatasourceWithData((await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES), hasKubernetesNamespaces);
+  return findDatasourceWithData(await orderedCandidates(), hasKubernetesNamespaces);
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, PROBE_TTL_MS);

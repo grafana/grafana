@@ -15,7 +15,7 @@ import { GetStarted } from './GetStarted';
 import { SolutionGridSkeleton, Solutions } from './Solutions';
 import { groupOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
-import { type OverviewCards } from './useOverviewCards';
+import { type OverviewPlacement } from './useOverviewPlacement';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
 
@@ -30,7 +30,7 @@ interface Option {
 }
 
 interface OverviewProps {
-  placement: OverviewCards;
+  placement: OverviewPlacement;
 }
 
 export function Overview({ placement }: OverviewProps) {
@@ -39,6 +39,8 @@ export function Overview({ placement }: OverviewProps) {
   const guides = useGuides();
   const { cards, pending } = placement;
   const groups = useMemo(() => groupOverviewCards(cards), [cards]);
+  // Get started is offered while guides load and once any exist; settled-empty guides drop it.
+  const guidesOffered = !guides || guides.length > 0;
 
   const options = useMemo<Option[]>(
     () => [
@@ -86,8 +88,7 @@ export function Overview({ placement }: OverviewProps) {
           />
         ),
       },
-      // Hide get started if there are no guides to show, but do show it while loading
-      ...(!guides || guides.length > 0
+      ...(guidesOffered
         ? [
             {
               value: GET_STARTED_OPTION_VALUE,
@@ -99,17 +100,22 @@ export function Overview({ placement }: OverviewProps) {
           ]
         : []),
     ],
-    [cards, pending, groups, guides]
+    [cards, pending, groups, guides, guidesOffered]
   );
   const settled = pending.length === 0;
   const anyLive = cards.some((card) => card.kind === 'live');
-  // Same condition that adds the Get started option to `options`.
-  const guidesOffered = !guides || guides.length > 0;
-  // The unset preference resolves to All solutions once any solution is live, to Get started on a
-  // settled instance with no live solution and guides to show, and is unknown while a live card
-  // could still arrive — showing offers then would flip the view in front of the user.
-  const defaultView =
-    anyLive || (settled && !guidesOffered) ? options[0].value : settled ? GET_STARTED_OPTION_VALUE : undefined;
+  // What an unset preference shows; a stored pick wins below.
+  let defaultView: string | undefined;
+  if (anyLive) {
+    defaultView = options[0].value;
+  } else if (!settled) {
+    // A live card could still arrive; showing offers now would flip the view in front of the user.
+    defaultView = undefined;
+  } else if (guidesOffered) {
+    defaultView = GET_STARTED_OPTION_VALUE;
+  } else {
+    defaultView = options[0].value;
+  }
   const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
   const view = storedRaw || defaultView;
   const option = view === undefined ? undefined : (options.find((o) => o.value === view) ?? options[0]);

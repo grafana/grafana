@@ -8,7 +8,6 @@ import {
   isDatasourceHealthy,
   listProbeCandidates,
   MAX_PROBED_DATASOURCES,
-  PROBE_BATCH_SIZE,
   PROBE_TIMEOUT_MS,
   resetProbeHealth,
   SIGNAL_BUDGET_MS,
@@ -67,7 +66,7 @@ describe('listProbeCandidates', () => {
       listItem({ uid: 'kept', name: 'product' }),
     ]);
 
-    const candidates = await listProbeCandidates('loki', undefined, new Set(['excluded']));
+    const candidates = await listProbeCandidates('loki', new Set(['excluded']));
 
     expect(candidates.map((ds) => ds.uid)).toEqual(['kept']);
   });
@@ -75,7 +74,7 @@ describe('listProbeCandidates', () => {
   it('returns empty when exclusions empty the list', async () => {
     getDataSourceInstanceListMock.mockResolvedValue([listItem({ uid: 'only', name: 'grafanacloud-usage' })]);
 
-    await expect(listProbeCandidates('prometheus', undefined, new Set(['only']))).resolves.toEqual([]);
+    await expect(listProbeCandidates('prometheus', new Set(['only']))).resolves.toEqual([]);
   });
 
   it('never probes cloud utility datasources, even as the only candidates', async () => {
@@ -116,16 +115,16 @@ describe('listProbeCandidates', () => {
     await expect(listProbeCandidates('loki')).resolves.toEqual([listItem({ name: 'product' })]);
   });
 
-  it('puts the default datasource first and applies the cap', async () => {
+  it('puts the default datasource first', async () => {
     getDataSourceInstanceListMock.mockResolvedValue([
       ...Array.from({ length: MAX_PROBED_DATASOURCES }, (_, i) => listItem({ name: `ds-${i}` })),
       listItem({ name: 'the-default', isDefault: true }),
     ]);
 
-    const candidates = await listProbeCandidates('loki');
+    const names = (await listProbeCandidates('loki')).map((ds) => ds.name);
 
-    expect(candidates).toHaveLength(MAX_PROBED_DATASOURCES);
-    expect(candidates[0].name).toBe('the-default');
+    expect(names).toHaveLength(MAX_PROBED_DATASOURCES + 1);
+    expect(names[0]).toBe('the-default');
   });
 });
 
@@ -280,7 +279,7 @@ describe('findDatasourceWithData', () => {
 
     await expect(findDatasourceWithData(candidates, hasData)).resolves.toBe(candidates[1]);
     expect(hasData.mock.calls.map(([ds]) => ds.uid)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
-    expect(healthGetMock).toHaveBeenCalledTimes(PROBE_BATCH_SIZE);
+    expect(healthGetMock).toHaveBeenCalledTimes(5);
   });
 
   it('continues to the next batch when the first has none', async () => {
@@ -289,6 +288,52 @@ describe('findDatasourceWithData', () => {
 
     await expect(findDatasourceWithData(candidates, hasData)).resolves.toBe(candidates[6]);
     expect(hasData).toHaveBeenCalledTimes(7);
+  });
+
+  it('scans at most MAX_PROBED_DATASOURCES candidates', async () => {
+    const candidates = Array.from({ length: 11 }, (_, i) => listItem({ uid: `p${i + 1}`, name: `p${i + 1}` }));
+    const hasData = jest.fn(async (ds: DataSourceInstanceListItem) => ds.uid === 'p11');
+
+    await expect(findDatasourceWithData(candidates, hasData)).resolves.toBeNull();
+    expect(hasData.mock.calls.map(([ds]) => ds.uid)).toEqual([
+      'p1',
+      'p2',
+      'p3',
+      'p4',
+      'p5',
+      'p6',
+      'p7',
+      'p8',
+      'p9',
+      'p10',
+    ]);
+  });
+
+  it('probes a candidate as soon as its own health answers, not after the slowest one', async () => {
+    jest.useFakeTimers();
+    try {
+      healthGetMock.mockImplementation((url: string) =>
+        url.includes('/slow/')
+          ? new Promise((resolve) => setTimeout(() => resolve({ status: 'OK' }), 2_000))
+          : Promise.resolve({ status: 'OK' })
+      );
+      const slow = listItem({ uid: 'slow', name: 'slow' });
+      const fast = listItem({ uid: 'fast', name: 'fast' });
+      const hasData = jest.fn(async () => false);
+
+      const promise = findDatasourceWithData([slow, fast], hasData);
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(hasData).toHaveBeenCalledTimes(1);
+      expect(hasData).toHaveBeenCalledWith(fast);
+
+      await jest.advanceTimersByTimeAsync(2_000);
+
+      await expect(promise).resolves.toBeNull();
+      expect(hasData).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('settles a capped scan of slow candidates inside the signal budget', async () => {

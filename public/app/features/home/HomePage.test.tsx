@@ -2,11 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import {
-  type ComponentTypeWithExtensionMeta,
-  type DataSourceInstanceListItem,
-  PluginExtensionPoints,
-} from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -21,7 +17,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
-import { type Solution } from './solutions/types';
+import { stubDatasource, stubSolution } from './solutions/test-utils';
 import { useHomepageSolutions } from './useHomepageSolutions';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
@@ -315,33 +311,16 @@ describe('HomePage', () => {
   it('starts card placement while extensions are still loading and hands it to the overview', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-    const datasource = jest.fn(
-      async (): Promise<DataSourceInstanceListItem> => ({
-        uid: 'p',
-        name: 'Prometheus',
-        type: 'prometheus',
-        meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-        readOnly: false,
-        isDefault: true,
-      })
-    );
+    const datasource = jest.fn(async () => stubDatasource);
     // Only placement reads this fact (the card reads datasource() again for its subtitle), so
     // its call count is the number of placements run.
     const needsAttention = jest.fn(async () => false);
-    const stub: Solution = {
-      id: 'metrics',
+    const stub = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      icon: 'chart-line',
       signal: async () => 'active',
       datasource,
       needsAttention,
-      offer: async () => null,
-      stats: async () => null,
-      refinedStats: async () => null,
-      sparkline: async () => null,
-      cta: async () => null,
-      alert: async () => null,
-    };
+    });
     jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
 
     const { rerender } = render(<HomePage />);

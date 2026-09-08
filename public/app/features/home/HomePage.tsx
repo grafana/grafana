@@ -24,7 +24,7 @@ import { HeaderActions } from './HeaderActions';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
-import { useOverviewCards } from './Overview/useOverviewCards';
+import { useOverviewPlacement } from './Overview/useOverviewPlacement';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import { type Solution } from './solutions/types';
@@ -68,7 +68,7 @@ export default function HomePage() {
   const solutions = useHomepageSolutions();
   // Placement is the slow part of the page and needs nothing from the extensions gating the
   // sections; owning it here starts it at mount and keeps it alive across the skeleton.
-  const placement = useOverviewCards(redesignEnabled ? solutions.solutions : NO_SOLUTIONS);
+  const placement = useOverviewPlacement(redesignEnabled ? solutions.solutions : NO_SOLUTIONS);
 
   const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageAssistant,

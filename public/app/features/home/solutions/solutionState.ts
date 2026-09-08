@@ -22,9 +22,9 @@ export interface SignalDetection {
 }
 
 /**
- * A clean empty probe is inactive. Failures and timeouts are unknown and never reject. A batched
- * scan (see PROBE_BATCH_SIZE) settles inside the budget by construction. Callers memoize
- * detection so each solution scans once per homepage visit.
+ * A clean empty probe is inactive. Failures and timeouts are unknown and never reject. A capped,
+ * batched scan (PROBE_BATCH_SIZE) settles inside the budget. Callers memoize detection so each
+ * solution scans once per homepage visit.
  */
 export async function detectSignal(probe: () => Promise<DataSourceInstanceListItem | null>): Promise<SignalDetection> {
   try {

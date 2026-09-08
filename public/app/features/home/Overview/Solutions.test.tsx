@@ -1,34 +1,10 @@
 import { render, screen } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
-
-import { type Solution } from '../solutions/types';
+import { stubSolution } from '../solutions/test-utils';
 
 import { Solutions } from './Solutions';
 
-const datasource: DataSourceInstanceListItem = {
-  uid: 'datasource',
-  name: 'Datasource',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
-  isDefault: true,
-};
-
-const metrics: Solution = {
-  id: 'metrics',
-  title: 'Metrics & infrastructure',
-  icon: 'chart-line',
-  signal: async () => 'active',
-  datasource: async () => datasource,
-  needsAttention: async () => false,
-  stats: async () => null,
-  refinedStats: async () => null,
-  sparkline: async () => null,
-  cta: async () => null,
-  alert: async () => null,
-  offer: async () => null,
-};
+const metrics = stubSolution('metrics', { title: 'Metrics & infrastructure' });
 
 describe('Solutions', () => {
   it('renders one skeleton per pending solution', () => {
