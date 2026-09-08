@@ -1,5 +1,10 @@
-import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+} from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import {
   defaultDataQueryKind,
@@ -14,28 +19,18 @@ import {
   type DefaultControlEvent,
 } from './dashboardControls';
 
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return {
-    ...actual,
-    getDataSourceSrv: jest.fn(),
-  };
-});
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
 
 jest.mock('../serialization/layoutSerializers/utils', () => ({
   getRuntimePanelDataSource: jest.fn(),
 }));
 
-const getDataSourceSrvMock = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
-
-const createMockDataSourceSrv = (overrides: Partial<DataSourceSrv> = {}): DataSourceSrv => ({
-  get: jest.fn(),
-  getList: jest.fn(),
-  getInstanceSettings: jest.fn(),
-  reload: jest.fn(),
-  registerRuntimeDataSource: jest.fn(),
-  ...overrides,
-});
+const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
+const getDataSourceInstanceSettingsMock = jest.mocked(getDataSourceInstanceSettings);
 
 // Helper to create a mock datasource instance
 const createMockDatasource = (
@@ -113,6 +108,7 @@ const mockLink1: DashboardLink = {
 describe('dashboardControls', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getDataSourceInstanceSettingsMock.mockResolvedValue({ uid: 'test-ds-uid' } as DataSourceInstanceSettings);
   });
 
   describe('loadDefaultControlsShared$', () => {
@@ -148,16 +144,12 @@ describe('dashboardControls', () => {
         getDefaultLinks: undefined,
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn((ref) => {
-          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
-            return Promise.resolve(mockDs1);
-          }
-          return Promise.resolve(mockDs2);
-        }),
+      getDataSourceInstanceMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+          return mockDs1;
+        }
+        return mockDs2;
       });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
 
       const events: DefaultControlEvent[] = [];
 
@@ -174,12 +166,10 @@ describe('dashboardControls', () => {
       });
     });
 
-    it('should continue emitting from other datasources when one fails to load', (done) => {
+    it('should skip a missing datasource without warning and still emit from others', (done) => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const refs: DataSourceRef[] = [
-        { uid: 'ds-fail', type: 'broken' },
-        { uid: 'ds-ok', type: 'prometheus' },
-      ];
+      const missingRef: DataSourceRef = { uid: 'ds-missing', type: 'broken' };
+      const okRef: DataSourceRef = { uid: 'ds-ok', type: 'prometheus' };
 
       const mockDs = createMockDatasource({
         uid: 'ds-ok',
@@ -188,24 +178,139 @@ describe('dashboardControls', () => {
         getDefaultLinks: undefined,
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn((ref) => {
-          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-fail') {
-            return Promise.reject(new Error('Datasource not found'));
-          }
-          return Promise.resolve(mockDs);
-        }),
+      getDataSourceInstanceSettingsMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === missingRef.uid) {
+          return undefined;
+        }
+        return { uid: 'ds-ok' } as DataSourceInstanceSettings;
       });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
 
       const events: DefaultControlEvent[] = [];
 
-      loadDefaultControlsShared$(refs).subscribe({
+      loadDefaultControlsShared$([missingRef, okRef]).subscribe({
         next: (event) => events.push(event),
         complete: () => {
           expect(events).toHaveLength(1);
           expect(events[0].type).toBe('variables');
+          expect(getDataSourceInstanceMock).toHaveBeenCalledTimes(1);
+          expect(getDataSourceInstanceMock).toHaveBeenCalledWith(okRef);
+          expect(warnSpy).not.toHaveBeenCalled();
+          warnSpy.mockRestore();
+          done();
+        },
+      });
+    });
+
+    it('should load default controls for a type-only ref with an empty uid', (done) => {
+      const emptyUidRef: DataSourceRef = { uid: '', type: 'prometheus' };
+
+      const mockDs = createMockDatasource({
+        uid: 'prom-uid',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      getDataSourceInstanceSettingsMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && ref.uid === '') {
+          return undefined;
+        }
+        return { uid: 'prom-uid', type: 'prometheus' } as DataSourceInstanceSettings;
+      });
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$([emptyUidRef]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(getDataSourceInstanceSettingsMock).toHaveBeenCalledWith({ uid: undefined, type: 'prometheus' });
+          expect(getDataSourceInstanceMock).toHaveBeenCalledWith(emptyUidRef);
+          expect(events).toHaveLength(1);
+          expect(events[0].type).toBe('variables');
+          done();
+        },
+      });
+    });
+
+    it('should skip a type-only ref that falls back to a different datasource type', (done) => {
+      // getDsRefsFromScene emits { type: pluginId } (no uid) for every DataSourceVariable.
+      // When that plugin has no installed instance, getDataSourceInstanceSettings falls
+      // back to the default datasource — the same contract as legacy getInstanceSettings,
+      // but not as legacy get(), which rejected. Skip so the default DS's controls are
+      // not emitted under the variable's pluginId.
+      const typeOnlyRef: DataSourceRef = { type: 'someuninstalledplugin' };
+
+      getDataSourceInstanceSettingsMock.mockResolvedValue({
+        uid: 'default-uid',
+        type: 'prometheus',
+      } as DataSourceInstanceSettings);
+
+      const defaultDs = createMockDatasource({
+        uid: 'default-uid',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+      getDataSourceInstanceMock.mockResolvedValue(defaultDs);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$([typeOnlyRef]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(events).toEqual([]);
+          expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+          done();
+        },
+      });
+    });
+
+    it('should load default controls when a type-only ref resolves via plugin aliasIDs', (done) => {
+      // DataSourceVariable refs use pluginId, which may still be a legacy id (testdata).
+      // getDataSourceInstanceSettings resolves that through meta.aliasIDs to a real
+      // instance whose settings.type is the current plugin id. That is not a default-DS
+      // fallback and must not be skipped.
+      const typeOnlyRef: DataSourceRef = { type: 'testdata' };
+
+      getDataSourceInstanceSettingsMock.mockResolvedValue({
+        uid: 'testdata-uid',
+        type: 'grafana-testdata-datasource',
+        meta: { id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+      } as DataSourceInstanceSettings);
+
+      const mockDs = createMockDatasource({
+        uid: 'testdata-uid',
+        type: 'grafana-testdata-datasource',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$([typeOnlyRef]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(getDataSourceInstanceMock).toHaveBeenCalledWith(typeOnlyRef);
+          expect(events).toHaveLength(1);
+          expect(events[0].type).toBe('variables');
+          done();
+        },
+      });
+    });
+
+    it('should warn when a registered datasource fails to load, even if the error mentions not found', (done) => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const refs: DataSourceRef[] = [{ uid: 'ds-fail', type: 'broken' }];
+      const loadError = new Error('Loading chunk 42 failed (404 Not Found)');
+
+      getDataSourceInstanceMock.mockRejectedValue(loadError);
+
+      loadDefaultControlsShared$(refs).subscribe({
+        complete: () => {
+          expect(warnSpy).toHaveBeenCalledWith('Failed to load datasource', refs[0], loadError);
           warnSpy.mockRestore();
           done();
         },
@@ -223,11 +328,7 @@ describe('dashboardControls', () => {
         getDefaultLinks: () => Promise.resolve([mockLink1]),
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
 
       const events: DefaultControlEvent[] = [];
 
@@ -251,11 +352,7 @@ describe('dashboardControls', () => {
         resolveDs = resolve;
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => dsPromise),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
+      getDataSourceInstanceMock.mockReturnValue(dsPromise);
 
       const events: DefaultControlEvent[] = [];
       const subscription = loadDefaultControlsShared$(refs).subscribe({
@@ -299,16 +396,12 @@ describe('dashboardControls', () => {
         getDefaultLinks: undefined,
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn((ref) => {
-          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
-            return Promise.resolve(mockDs1);
-          }
-          return Promise.resolve(mockDs2);
-        }),
+      getDataSourceInstanceMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+          return mockDs1;
+        }
+        return mockDs2;
       });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
 
       const emissions: VariableKind[][] = [];
       const shared$ = loadDefaultControlsShared$(refs);
@@ -343,11 +436,7 @@ describe('dashboardControls', () => {
         getDefaultLinks: () => Promise.resolve([mockLink1]),
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
 
       const emissions: VariableKind[][] = [];
       const shared$ = loadDefaultControlsShared$(refs);
@@ -388,16 +477,12 @@ describe('dashboardControls', () => {
         getDefaultLinks: () => Promise.resolve([mockLink2]),
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn((ref) => {
-          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
-            return Promise.resolve(mockDs1);
-          }
-          return Promise.resolve(mockDs2);
-        }),
+      getDataSourceInstanceMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+          return mockDs1;
+        }
+        return mockDs2;
       });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
 
       const emissions: DashboardLink[][] = [];
       const shared$ = loadDefaultControlsShared$(refs);
@@ -426,11 +511,7 @@ describe('dashboardControls', () => {
         getDefaultLinks: undefined,
       });
 
-      const mockSrv = createMockDataSourceSrv({
-        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
-      });
-
-      getDataSourceSrvMock.mockReturnValue(mockSrv);
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
 
       const emissions: DashboardLink[][] = [];
       const shared$ = loadDefaultControlsShared$(refs);

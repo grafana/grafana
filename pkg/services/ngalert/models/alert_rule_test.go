@@ -1084,7 +1084,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		"FolderFullpath": {},
 	}
 
-	tpe := reflect.TypeOf(AlertRule{})
+	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
 	for i := 0; i < tpe.NumField(); i++ {
 		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
@@ -1127,7 +1127,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"FolderFullpath":              {},
 	}
 
-	tpe := reflect.TypeOf(AlertRule{})
+	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
 	for i := 0; i < tpe.NumField(); i++ {
 		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {

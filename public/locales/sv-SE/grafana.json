@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fast värde"
       },
-      "label": "Skalär",
+      "label-field": "",
       "label-limit": "Gräns",
       "label-value": "Värde",
       "noOptionsMessage-no-fields-found": "Inga fält hittades",
@@ -12490,6 +12490,9 @@
       "subtitle": "Regler som avgör om en varning kommer att utlösas",
       "title": "Varningsregler"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Välj hur du vill att dina kontaktpunkter meddelas när en varningsinstans utlöses",
       "title": "Kontaktpunkter"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Utforska"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Få verkliga användarövervakningsinsikter",
       "title": "Frontend"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "Jour"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profiler"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Seriesynlighet"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Tillgänglig",
         "label-dash": "Kontrollpanel",
