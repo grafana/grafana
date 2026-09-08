@@ -61,7 +61,7 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
-  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyUseCrossDashboardVariables,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
@@ -88,16 +88,16 @@ import { getDashboardTemplateExtension } from '../settings/enterprise-components
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
+import {
+  mayInjectAnyPredefinedVariables,
+  resolvePredefinedVariablesForDashboard,
+} from '../utils/crossDashboardVariablesSelection';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
-import {
-  mayInjectAnyPredefinedVariables,
-  resolvePredefinedVariablesForDashboard,
-} from '../utils/predefinedVariableDenyList';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
@@ -369,7 +369,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Re-resolve global/folder variables from the current denylist annotation and apply them
+   * Re-resolve global/folder variables from the current selection annotation and apply them
    * to the live scene (e.g. after save) so a full page reload is not required.
    */
   public async refreshPredefinedVariables(): Promise<void> {
@@ -662,7 +662,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Serializer annotations are mutated outside scene state when editing the denylist.
+   * Serializer annotations are mutated outside scene state when editing the selection.
    * Restore them from the edit-session baseline when discarding.
    */
   private restoreSerializerAnnotationsFromInitialState() {
@@ -679,11 +679,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         annotations[key] = value;
       }
     }
-    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
     if (typeof initialValue === 'string') {
-      annotations[AnnoKeyIgnorePredefinedVariables] = initialValue;
+      annotations[AnnoKeyUseCrossDashboardVariables] = initialValue;
     } else {
-      delete annotations[AnnoKeyIgnorePredefinedVariables];
+      delete annotations[AnnoKeyUseCrossDashboardVariables];
     }
     this.serializer.setK8SAnnotations(annotations);
   }
@@ -1178,9 +1178,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return addNewRowTo(this.state.body);
   }
 
-  public onCreateNewPanel(): VizPanel {
+  public async onCreateNewPanel(): Promise<VizPanel> {
     const profiler = getDashboardSceneProfiler();
-    const vizPanel = getDefaultVizPanel();
+    const vizPanel = await getDefaultVizPanel();
     profiler.attachProfilerToPanel(vizPanel);
 
     this.addPanel(vizPanel);
