@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor, createCodeEditorTheme } from '@grafana/ui/unstable';
 
 import { type CodeLanguage } from '../panelcfg.gen';
 
@@ -16,13 +16,25 @@ export interface TextNGCodeViewProps {
   showLineNumbers: boolean;
   /** CSS height passed straight to CodeMirror. Defaults to filling the parent. */
   height?: string;
+  transparent?: boolean;
 }
 
 /**
  * Read-only, syntax-highlighted rendering of code-mode content
  */
-export function TextNGCodeView({ content, language, showLineNumbers, height = '100%' }: TextNGCodeViewProps) {
+export function TextNGCodeView({
+  content,
+  language,
+  showLineNumbers,
+  height = '100%',
+  transparent,
+}: TextNGCodeViewProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const editorTheme = useMemo(
+    () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
+    [theme, transparent]
+  );
 
   const basicSetup = useMemo(
     () => ({
@@ -55,6 +67,7 @@ export function TextNGCodeView({ content, language, showLineNumbers, height = '1
       height={height}
       aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
       loadingFallback={<pre className={styles.loadingFallback}>{content}</pre>}
+      theme={editorTheme}
     />
   );
 }

@@ -38,7 +38,7 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent } = props;
+  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent } = props;
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
@@ -104,7 +104,14 @@ export function TextNGPanel(props: Props) {
     // Show the rendered content while the editor chunk loads; the editor
     // opens in Preview view, so the content stays in place.
     <Suspense
-      fallback={<EditorLoadingFallback options={options} series={series} replaceVariables={replaceVariables} />}
+      fallback={
+        <EditorLoadingFallback
+          options={options}
+          series={series}
+          replaceVariables={replaceVariables}
+          transparent={transparent}
+        />
+      }
     >
       <TextNGEditor
         content={content}
@@ -119,6 +126,7 @@ export function TextNGPanel(props: Props) {
         onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
         view={view}
         onViewChange={setView}
+        transparent={transparent}
       />
     </Suspense>
   ) : (
@@ -174,9 +182,10 @@ interface ProcessedContent extends RenderedContent {
 interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
   fitContent?: boolean;
+  transparent?: boolean;
 }
 
-function TextNGView({ mode, content, error, code, fitContent }: TextNGViewProps) {
+function TextNGView({ mode, content, error, code, fitContent, transparent }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (error) {
@@ -198,6 +207,7 @@ function TextNGView({ mode, content, error, code, fitContent }: TextNGViewProps)
           language={codeOptions.language}
           showLineNumbers={codeOptions.showLineNumbers ?? false}
           height={codeHeight}
+          transparent={transparent}
         />
       </div>
     );
@@ -231,10 +241,12 @@ function EditorLoadingFallback({
   options,
   series,
   replaceVariables,
+  transparent,
 }: {
   options: Options;
   series: DataFrame[];
   replaceVariables: InterpolateFunction;
+  transparent?: boolean;
 }) {
   const theme = useTheme2();
   const layout = useStyles2(getEditorLayoutStyles);
@@ -248,8 +260,15 @@ function EditorLoadingFallback({
     <div className={layout.wrapper}>
       <Stack minHeight={theme.components.height.md} />
       <div className={layout.body}>
-        <div className={cx(layout.pane, layout.previewPane, !isCode && layout.htmlPreviewPane)}>
-          <TextNGView {...rendered} code={options.code} />
+        <div
+          className={cx(
+            layout.pane,
+            layout.previewPane,
+            !transparent && layout.previewPaneOpaque,
+            !isCode && layout.htmlPreviewPane
+          )}
+        >
+          <TextNGView {...rendered} code={options.code} transparent={transparent} />
         </div>
       </div>
       {isCode && <Stack minHeight={theme.components.height.md} />}
