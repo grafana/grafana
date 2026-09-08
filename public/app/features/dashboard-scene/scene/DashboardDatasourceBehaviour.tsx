@@ -16,6 +16,7 @@ import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
+import { pluginTransformationsEnabled } from './systemTransformations';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
@@ -161,9 +162,15 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         }
       };
 
-      const dataTransformer = sourcePanelQueryRunner.parent;
+      const parent = sourcePanelQueryRunner.parent;
+      const dataTransformer = parent instanceof SceneDataTransformer ? parent : undefined;
 
-      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      // A transformer that can reprocess without its source re-querying needs its own subscription.
+      // Plugin transformations are one such trigger, and they are gated per panel by VizPanel's
+      // `applyPluginTransformations` rather than by this flag directly. But every site that builds a
+      // panel from a save model sets that prop from this same flag, so for the source panels reached
+      // here flag-on is still exactly the set of transformers that can reprocess on their own.
+      if (dataTransformer && (dataTransformer.state.transformations.length > 0 || pluginTransformationsEnabled())) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and

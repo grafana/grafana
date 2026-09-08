@@ -4,8 +4,8 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import {
   type SceneDataProvider,
   type SceneDataQuery,
-  SceneDataTransformer,
   type SceneObject,
+  SceneDataTransformer,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
@@ -40,6 +40,7 @@ import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
@@ -86,6 +87,8 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
   delete options.__angularMigration;
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
@@ -176,6 +179,8 @@ export function buildLibraryPanelState(panel: LibraryPanelKind, id?: number): Vi
   }
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
     seriesLimit: config.panelSeriesLimit,
