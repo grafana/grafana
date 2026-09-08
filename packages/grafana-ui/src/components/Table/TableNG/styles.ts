@@ -218,6 +218,12 @@ export const getGridStyles = memoize(
             borderStartEndRadius: theme.shape.radius.default,
             overflow: 'hidden',
           },
+          // The footer is the last row in the grid, so react-data-grid's per-cell bottom border
+          // draws a hairline along the table's own bottom edge with nothing below it to divide.
+          // Its top border (`--rdg-summary-border-*`) still separates it from the rows above.
+          '.rdg-bottom-summary-row > .rdg-cell': {
+            borderBlockEnd: 'none',
+          },
         }),
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the

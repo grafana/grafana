@@ -1127,6 +1127,25 @@ describe('TableNG', () => {
       // Sum of Column B values (1+2+3=6)
       expect(screen.getByText('6')).toBeInTheDocument();
     });
+
+    it("drops the footer cells' bottom border under table.refresh", () => {
+      // The footer is the grid's last row, so react-data-grid's per-cell bottom border draws a
+      // hairline along the table's own bottom edge. Its top border still divides it from the rows.
+      const baseFrame = createBasicDataFrame();
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frameWithReducers} width={800} height={600} tableRefreshEnabled />
+      );
+
+      const footerCell = container.querySelector<HTMLElement>('.rdg-bottom-summary-row .rdg-cell')!;
+      expect(window.getComputedStyle(footerCell).getPropertyValue('border-block-end')).toBe('none');
+    });
   });
 
   describe('Pagination', () => {
