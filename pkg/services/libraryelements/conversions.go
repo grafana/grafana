@@ -3,6 +3,7 @@ package libraryelements
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -79,9 +80,7 @@ func toRawMessage(raw runtime.Object) (json.RawMessage, error) {
 func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, error) {
 	legacyModel := map[string]any{}
 	if panel.Status != nil {
-		for k, v := range panel.Status.Missing.Object {
-			legacyModel[k] = v
-		}
+		maps.Copy(legacyModel, panel.Status.Missing.Object)
 	}
 
 	spec := panel.Spec

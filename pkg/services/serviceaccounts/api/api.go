@@ -340,7 +340,7 @@ type SearchOrgServiceAccountsWithPagingParams struct {
 
 // swagger:parameters createServiceAccount
 type CreateServiceAccountParams struct {
-	//in:body
+	// in:body
 	Body serviceaccounts.CreateServiceAccountForm
 }
 
