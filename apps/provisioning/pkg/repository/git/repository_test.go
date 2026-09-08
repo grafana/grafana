@@ -2357,6 +2357,25 @@ func TestNewGitRepository(t *testing.T) {
 			expectMaxBytes: 1024,
 		},
 		{
+			// Non-positive limits mean "unlimited"; they must be clamped so nanogit
+			// never sees a negative field (which would fail client construction).
+			name: "success - negative limits treated as unlimited",
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/owner/repo.git",
+				Branch: "main",
+				Token:  "plain-token",
+				Limits: Limits{
+					MaxFileSize:         -1,
+					MaxBulkFetchSize:    -1,
+					MaxRefsSize:         -1,
+					MaxPushResponseSize: -1,
+				},
+			},
+			wantError:      false,
+			expectURL:      "https://git.example.com/owner/repo.git",
+			expectMaxBytes: 0,
+		},
+		{
 			name: "success - with commit signing",
 			gitConfig: RepositoryConfig{
 				URL:              "https://git.example.com/owner/repo.git",

@@ -50,7 +50,9 @@ type RepositoryConfig struct {
 }
 
 // Limits caps, in bytes, the response sizes nanogit will read from the server,
-// classified by git operation. A zero value for any field means unlimited.
+// classified by git operation. A non-positive value (<= 0) for any field means
+// unlimited, matching the "<= 0 = unlimited" semantics documented for the
+// corresponding provisioning settings.
 type Limits struct {
 	// MaxFileSize caps single-object fetches (blob/tree/commit, used by
 	// GetBlobByPath). It also drives the post-read content-size check.
@@ -64,9 +66,28 @@ type Limits struct {
 	MaxPushResponseSize int64
 }
 
-// isZero reports whether no limit is configured.
-func (l Limits) isZero() bool {
-	return l.MaxFileSize == 0 && l.MaxBulkFetchSize == 0 && l.MaxRefsSize == 0 && l.MaxPushResponseSize == 0
+// toOptions converts the configured limits into nanogit's options. Any
+// non-positive value is clamped to 0 (unlimited): the provisioning settings
+// document "<= 0 = unlimited", but nanogit rejects negative limit fields at
+// client construction, which would otherwise make a previously valid config
+// fail to instantiate every repository. The second return reports whether any
+// positive cap is set, so callers can skip WithLimits entirely when none is.
+func (l Limits) toOptions() (options.Limits, bool) {
+	clamp := func(v int64) int64 {
+		if v <= 0 {
+			return 0
+		}
+		return v
+	}
+	opts := options.Limits{
+		SingleObjectFetchMaxBytes:   clamp(l.MaxFileSize),
+		MultiObjectFetchMaxBytes:    clamp(l.MaxBulkFetchSize),
+		RefsMetadataMaxBytes:        clamp(l.MaxRefsSize),
+		ReceivePackResponseMaxBytes: clamp(l.MaxPushResponseSize),
+	}
+	set := opts.SingleObjectFetchMaxBytes > 0 || opts.MultiObjectFetchMaxBytes > 0 ||
+		opts.RefsMetadataMaxBytes > 0 || opts.ReceivePackResponseMaxBytes > 0
+	return opts, set
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -92,13 +113,8 @@ func NewRepository(
 	// Push the byte limits into nanogit so a malicious or misbehaving server
 	// cannot exhaust client memory: oversized responses are aborted mid-read
 	// rather than buffered in full.
-	if !gitConfig.Limits.isZero() {
-		opts = append(opts, options.WithLimits(options.Limits{
-			SingleObjectFetchMaxBytes:   gitConfig.Limits.MaxFileSize,
-			MultiObjectFetchMaxBytes:    gitConfig.Limits.MaxBulkFetchSize,
-			RefsMetadataMaxBytes:        gitConfig.Limits.MaxRefsSize,
-			ReceivePackResponseMaxBytes: gitConfig.Limits.MaxPushResponseSize,
-		}))
+	if limits, ok := gitConfig.Limits.toOptions(); ok {
+		opts = append(opts, options.WithLimits(limits))
 	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
@@ -778,7 +794,7 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 	logger.Info("list refs")
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list refs: %w", err)
+		return nil, fmt.Errorf("list refs: %w", mapNanogitError(err))
 	}
 	refItems := make([]provisioning.RefItem, 0, len(refs))
 	for _, ref := range refs {
@@ -801,7 +817,7 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	logger.Info("get latest ref")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
-		return "", fmt.Errorf("get branch ref: %w", err)
+		return "", fmt.Errorf("get branch ref: %w", mapNanogitError(err))
 	}
 
 	return branchRef.Hash.String(), nil
@@ -836,7 +852,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 
 	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
 	if err != nil {
-		return nil, fmt.Errorf("compare commits: %w", err)
+		return nil, fmt.Errorf("compare commits: %w", mapNanogitError(err))
 	}
 
 	changes := make([]repository.VersionedFileChange, 0)
@@ -1009,14 +1025,14 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 
 	// If error is not "ref not found", return the error
 	if !errors.Is(err, nanogit.ErrObjectNotFound) {
-		return nanogit.Ref{}, fmt.Errorf("check branch exists: %w", err)
+		return nanogit.Ref{}, fmt.Errorf("check branch exists: %w", mapNanogitError(err))
 	}
 
 	// Branch doesn't exist, create it based on the configured branch
 	srcBranch := r.gitConfig.Branch
 	srcRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", srcBranch))
 	if err != nil {
-		return nanogit.Ref{}, fmt.Errorf("get source branch ref: %w", err)
+		return nanogit.Ref{}, fmt.Errorf("get source branch ref: %w", mapNanogitError(err))
 	}
 
 	// Create the new branch reference
@@ -1026,7 +1042,7 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 	}
 
 	if err := r.client.CreateRef(ctx, newRef); err != nil {
-		return nanogit.Ref{}, fmt.Errorf("create branch: %w", err)
+		return nanogit.Ref{}, fmt.Errorf("create branch: %w", mapNanogitError(err))
 	}
 
 	return newRef, nil
@@ -1215,11 +1231,26 @@ func mapNanogitError(err error) error {
 	return err
 }
 
-// checkHTTPError checks if the error is a known HTTP error (401, 403, 503) and returns
-// the appropriate TestResults. Returns nil if the error is not a known HTTP error.
+// checkHTTPError checks if the error is a known HTTP error (401, 403, 413, 503) and
+// returns the appropriate TestResults. Returns nil if the error is not a known HTTP error.
 func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults {
 	if err == nil {
 		return nil
+	}
+
+	// A capped git operation (refs listing, branch fetch) aborted because the
+	// response exceeded a configured byte limit; mapNanogitError has already
+	// turned it into a 413. Surface that instead of the generic 400 fallback.
+	if apierrors.IsRequestEntityTooLargeError(err) {
+		return &provisioning.TestResults{
+			Code:    http.StatusRequestEntityTooLarge,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  fieldPath.String(),
+				Detail: err.Error(),
+			}},
+		}
 	}
 
 	if errors.Is(err, repository.ErrUnauthorized) {

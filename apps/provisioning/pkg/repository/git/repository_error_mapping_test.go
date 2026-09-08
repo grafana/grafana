@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol/client"
 )
 
@@ -79,6 +81,71 @@ func TestMapNanogitError_ResponseTooLarge(t *testing.T) {
 	var statusErr apierrors.APIStatus
 	require.True(t, errors.As(got, &statusErr), "mapped error should implement APIStatus interface")
 	require.Equal(t, int32(http.StatusRequestEntityTooLarge), statusErr.Status().Code)
+}
+
+// TestCheckHTTPError_ResponseTooLarge verifies that a capped operation's 413
+// surfaces as a 413 TestResults rather than falling through to the generic 400
+// that Test() returns for unrecognized errors.
+func TestCheckHTTPError_ResponseTooLarge(t *testing.T) {
+	err := mapNanogitError(&client.ErrResponseTooLarge{Limit: 1024, Op: "ls-refs"})
+	result := checkHTTPError(err, field.NewPath("spec", "git", "branch"))
+
+	require.NotNil(t, result)
+	require.Equal(t, http.StatusRequestEntityTooLarge, result.Code)
+	require.False(t, result.Success)
+	require.Len(t, result.Errors, 1)
+}
+
+// TestLimits_toOptions verifies that non-positive limits are clamped to 0
+// (unlimited) so nanogit never receives a negative field, and that "set" only
+// reports true when at least one positive cap is configured.
+func TestLimits_toOptions(t *testing.T) {
+	tests := []struct {
+		name    string
+		limits  Limits
+		want    options.Limits
+		wantSet bool
+	}{
+		{
+			name:    "all zero is unlimited and unset",
+			limits:  Limits{},
+			want:    options.Limits{},
+			wantSet: false,
+		},
+		{
+			name: "negative values are clamped to unlimited",
+			limits: Limits{
+				MaxFileSize:         -1,
+				MaxBulkFetchSize:    -5,
+				MaxRefsSize:         -100,
+				MaxPushResponseSize: -1,
+			},
+			want:    options.Limits{},
+			wantSet: false,
+		},
+		{
+			name: "mixed positive and non-positive",
+			limits: Limits{
+				MaxFileSize:         1024,
+				MaxBulkFetchSize:    0,
+				MaxRefsSize:         -1,
+				MaxPushResponseSize: 2048,
+			},
+			want: options.Limits{
+				SingleObjectFetchMaxBytes:   1024,
+				ReceivePackResponseMaxBytes: 2048,
+			},
+			wantSet: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, set := tt.limits.toOptions()
+			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.wantSet, set)
+		})
+	}
 }
 
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes
