@@ -120,7 +120,7 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   getDefaultLayout(): DashboardLayoutManager | undefined;
 }
 
-function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
+export function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
   return 'isDashboardScene' in obj;
 }
 

@@ -2,9 +2,9 @@ import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, VizPanel } from '@grafana/scenes';
 import { Badge } from '@grafana/ui';
 
-import { findDashboardSceneFor, getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
-import { type DashboardScene } from './DashboardScene';
+import { type DashboardSceneLike, isDashboardSceneLike } from './types/dashboard';
 
 /**
  * Marks a panel in a plan preview as showing sample data rather than query results.
@@ -32,9 +32,9 @@ export class PlanPlaceholderBadge extends SceneObjectBase {
 
 function PlanPlaceholderBadgeRenderer({ model }: SceneComponentProps<PlanPlaceholderBadge>) {
   const panel = model.getPanel();
-  const dashboard = findDashboardSceneFor(model);
+  const dashboard = model.getRoot();
 
-  if (!panel || !dashboard) {
+  if (!panel || !isDashboardSceneLike(dashboard)) {
     return null;
   }
 
@@ -45,7 +45,7 @@ function PlanPlaceholderBadgeRenderer({ model }: SceneComponentProps<PlanPlaceho
  * Split from the renderer so the state subscriptions are unconditional: whether the badge has a
  * panel and a dashboard to read is settled by the scene graph, not by React.
  */
-function PlanPlaceholderBadgeContent({ panel, dashboard }: { panel: VizPanel; dashboard: DashboardScene }) {
+function PlanPlaceholderBadgeContent({ panel, dashboard }: { panel: VizPanel; dashboard: DashboardSceneLike }) {
   // Subscribed rather than read once: the badge has to disappear the moment the plan is built,
   // even in the case where the built dashboard reuses the very panel objects it previewed.
   const { planning } = dashboard.useState();
