@@ -43,8 +43,12 @@ export const HEALTH_CHECK_TIMEOUT_MS = 3000;
 /** Hard ceiling per signal; detectSignal reads it. */
 export const SIGNAL_BUDGET_MS = 30_000;
 
-// Two rounds of (health + probe timeout) over the cap fit SIGNAL_BUDGET_MS. A literal, not derived
-// arithmetic: the fake-timer budget test fails if a timeout change breaks the fit.
+// Batching bounds the fan-out. The solution scans run together and share the browser's per-host
+// connection pool, where a queued probe burns its timeout unsent; and the default datasource
+// (candidate 0) usually hits, so a first-batch hit leaves the second five unissued. Five is the
+// smallest batch that covers the cap in two rounds, and two rounds of (health + probe timeout)
+// fit SIGNAL_BUDGET_MS. A literal, not derived arithmetic: the fake-timer budget test fails if a
+// timeout change breaks the fit.
 const PROBE_BATCH_SIZE = 5;
 
 // Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
@@ -174,7 +178,8 @@ export function resetProbeHealth(): void {
 /**
  * First candidate (priority order) whose probe confirms data, or null. Scans at most
  * MAX_PROBED_DATASOURCES candidates in batches of PROBE_BATCH_SIZE; each is probed once its own
- * /health is OK and a hit ends the scan. Unhealthy candidates and probe errors read as no data.
+ * /health is OK, and a hit returns as soon as every higher-priority candidate in its batch has
+ * settled without one. Unhealthy candidates and probe errors read as no data.
  */
 export async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
@@ -183,12 +188,16 @@ export async function findDatasourceWithData(
   const capped = candidates.slice(0, MAX_PROBED_DATASOURCES);
   for (let i = 0; i < capped.length; i += PROBE_BATCH_SIZE) {
     const batch = capped.slice(i, i + PROBE_BATCH_SIZE);
-    const results = await Promise.allSettled(
-      batch.map(async (ds) => (await isDatasourceHealthy(ds.uid)) && (await hasData(ds)))
+    const probes = batch.map((ds) =>
+      isDatasourceHealthy(ds.uid)
+        .then((ok) => ok && hasData(ds))
+        .catch(() => false)
     );
-    const winner = results.findIndex((result) => result.status === 'fulfilled' && result.value === true);
-    if (winner !== -1) {
-      return batch[winner];
+    // Awaited in priority order: a hit returns without waiting for lower-priority siblings.
+    for (let j = 0; j < probes.length; j++) {
+      if (await probes[j]) {
+        return batch[j];
+      }
     }
   }
   return null;

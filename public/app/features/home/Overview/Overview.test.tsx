@@ -256,13 +256,11 @@ describe('Overview', () => {
     const firstStats = jest.fn(async () => ({ primary: '4.2 M series' }));
     const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      signal: async () => 'active',
       datasource: async () => stubDatasource,
       stats: firstStats,
     });
     const logs = stubSolution('logs', {
       title: 'Logs',
-      signal: async () => 'active',
       datasource: async () => stubDatasource,
       needsAttention: () => logsAttention.promise,
     });
@@ -394,7 +392,6 @@ describe('Overview', () => {
   it('classifies a live solution as enabled when its attention query fails', async () => {
     const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      signal: async () => 'active',
       datasource: async () => stubDatasource,
       needsAttention: async () => {
         throw new Error('health unavailable');
@@ -428,7 +425,6 @@ describe('Overview', () => {
     const stats = deferred<{ primary: string } | null>();
     const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      signal: async () => 'active',
       datasource: async () => stubDatasource,
       stats: () => stats.promise,
     });

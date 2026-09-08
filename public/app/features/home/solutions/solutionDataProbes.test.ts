@@ -38,7 +38,7 @@ beforeEach(() => {
   mockInstance.mockReset();
   mockProxyGet.mockReset();
   resetProbeHealth();
-  // Health checks share getBackendSrv().get: answer /health OK by default so candidates survive the filter.
+  // Health checks share getBackendSrv().get: answer /health OK by default so every candidate is probed.
   mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
 });

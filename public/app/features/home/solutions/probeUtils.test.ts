@@ -246,6 +246,15 @@ describe('findDatasourceWithData', () => {
     }
   });
 
+  it('returns a hit without waiting for a hung lower-priority sibling', async () => {
+    const first = listItem({ uid: 'first', name: 'first' });
+    const hung = listItem({ uid: 'hung', name: 'hung' });
+    const hasData = (ds: DataSourceInstanceListItem) =>
+      ds.uid === 'first' ? Promise.resolve(true) : new Promise<boolean>(() => {});
+
+    await expect(findDatasourceWithData([first, hung], hasData)).resolves.toBe(first);
+  });
+
   it('reads a rejected probe as no data', async () => {
     const candidates = [listItem({ uid: 'broken', name: 'broken' }), listItem({ uid: 'empty', name: 'empty' })];
     const hasData = (ds: DataSourceInstanceListItem) =>

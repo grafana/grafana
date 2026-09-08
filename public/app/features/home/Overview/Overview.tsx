@@ -102,23 +102,14 @@ export function Overview({ placement }: OverviewProps) {
     ],
     [cards, pending, groups, guides, guidesOffered]
   );
+  const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
   const settled = pending.length === 0;
   const anyLive = cards.some((card) => card.kind === 'live');
-  // What an unset preference shows; a stored pick wins below.
-  let defaultView: string | undefined;
-  if (anyLive) {
-    defaultView = options[0].value;
-  } else if (!settled) {
-    // A live card could still arrive; showing offers now would flip the view in front of the user.
-    defaultView = undefined;
-  } else if (guidesOffered) {
-    defaultView = GET_STARTED_OPTION_VALUE;
-  } else {
-    defaultView = options[0].value;
-  }
-  const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
-  const view = storedRaw || defaultView;
-  const option = view === undefined ? undefined : (options.find((o) => o.value === view) ?? options[0]);
+  // The unset default is knowable once a live card exists or every solution settled; until then
+  // nothing renders, since offers painted now could flip to Get started in front of the user.
+  const decided = !!storedRaw || anyLive || settled;
+  const defaultView = !anyLive && guidesOffered ? GET_STARTED_OPTION_VALUE : options[0].value;
+  const option = options.find((o) => o.value === (storedRaw || defaultView)) ?? options[0];
 
   // The unset default is computed from settled cards and guides; keep the filter hidden until
   // then so its label never flips (e.g. All solutions → Get started) in front of the user.
@@ -175,13 +166,13 @@ export function Overview({ placement }: OverviewProps) {
                   solution: value,
                 });
               }}
-              active={option?.value === value}
+              active={option.value === value}
             />
           </Fragment>
         ))}
       </Menu>
     ),
-    [options, option?.value, setStored, theme, styles]
+    [options, option.value, setStored, theme, styles]
   );
   const [open, setOpen] = useState(false);
 
@@ -192,7 +183,7 @@ export function Overview({ placement }: OverviewProps) {
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>
         </Text>
 
-        {optionsSettled && option ? (
+        {optionsSettled ? (
           <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
             <Button variant="secondary" size="md">
               <Stack direction="row" alignItems="center" columnGap={1}>
@@ -216,7 +207,7 @@ export function Overview({ placement }: OverviewProps) {
         )}
       </Stack>
 
-      {option ? option.content : <SolutionGridSkeleton count={cards.length + pending.length} />}
+      {decided ? option.content : <SolutionGridSkeleton count={cards.length + pending.length} />}
     </Stack>
   );
 }

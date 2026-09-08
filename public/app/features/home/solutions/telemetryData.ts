@@ -436,10 +436,6 @@ export async function fetchMetricsActivity(
     // partial: readers are null-safe; one failed query keeps the rest.
     true
   ).catch(() => null);
-  const ingestRate = Promise.all([usageStats, fleet]).then(
-    ([stack, frames]) => stack?.dpm ?? positive(frames && readScalar(frames, 'dpm'))
-  );
-  const hostCount = fleet.then((frames) => (frames ? readScalar(frames, 'hosts') : null));
   const trend = usage
     ? runRangeQuery('series', usage.activeSeries, DATA_LOOKBACK_HOURS, usage.ds)
         .then((frames) => readSeries(frames, 'series'))
@@ -447,12 +443,18 @@ export async function fetchMetricsActivity(
         // Zero-ingestion stacks have no usage series; chain the counts' self-monitoring fallback.
         .then((sparkline) => sparkline ?? fetchSeriesSparkline(ds, mimir))
     : fetchSeriesSparkline(ds, mimir);
-  const [series, names, dataPointsPerMinute, hosts, seriesSparkline] = await Promise.all([
+  const [series, names, stack, frames, seriesSparkline] = await Promise.all([
     seriesCount,
     nameCount,
-    ingestRate,
-    hostCount,
+    usageStats,
+    fleet,
     trend,
   ]);
-  return { series, dataPointsPerMinute, names, hosts, seriesSparkline };
+  return {
+    series,
+    dataPointsPerMinute: stack?.dpm ?? positive(frames && readScalar(frames, 'dpm')),
+    names,
+    hosts: frames ? readScalar(frames, 'hosts') : null,
+    seriesSparkline,
+  };
 }
