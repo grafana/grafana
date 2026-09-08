@@ -8399,7 +8399,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Vaste waarde"
       },
-      "label": "Scalair",
+      "label-field": "",
       "label-limit": "Limiet",
       "label-value": "Waarde",
       "noOptionsMessage-no-fields-found": "Geen velden gevonden",
@@ -12490,6 +12490,9 @@
       "subtitle": "Regels die bepalen of een waarschuwing afgaat",
       "title": "Waarschuwingsregels"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Kies hoe je je contactpunten op de hoogte wilt stellen wanneer een waarschuwingsinstantie afgaat",
       "title": "Contactpunten"
@@ -12594,6 +12597,10 @@
     "explore": {
       "title": "Verkennen"
     },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
+    },
     "frontend": {
       "subtitle": "Ontvang monitoringinzichten van echte gebruikers",
       "title": "Frontend"
@@ -12674,6 +12681,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "Oproepbaar"
     },
@@ -12704,6 +12715,10 @@
     },
     "profiles": {
       "title": "Profielen"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -16773,6 +16788,8 @@
       "name-faceted-filter": "Zichtbaarheid van reeksen"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Toegankelijk",
         "label-dash": "Liggend streepje",
