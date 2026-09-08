@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -186,13 +187,7 @@ func normalizeIncludePath(p string) string {
 
 func RoleAuth(roles ...org.RoleType) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		ok := false
-		for _, role := range roles {
-			if role == c.OrgRole {
-				ok = true
-				break
-			}
-		}
+		ok := slices.Contains(roles, c.OrgRole)
 		if !ok {
 			accessForbidden(c)
 		}

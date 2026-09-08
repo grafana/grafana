@@ -172,7 +172,6 @@ export class GrafanaBootConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
-  pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
   pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';
@@ -238,6 +237,7 @@ export class GrafanaBootConfig {
   postHogToken?: string;
   postHogHost?: string;
   analyticsConsoleReporting = false;
+  pluginImportTelemetryPackages: string[] = [];
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
   dashboardDefaultPreload = false;

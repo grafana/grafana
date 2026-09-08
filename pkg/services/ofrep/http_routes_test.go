@@ -123,7 +123,7 @@ func TestAPIBuilder_ValidateNamespace(t *testing.T) {
 				req = req.WithContext(context.Background())
 			}
 
-			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
+			evalCtx, err := b.readEvalContext(context.Background(), httptest.NewRecorder(), req)
 			require.NoError(t, err)
 
 			namespace, valid := b.validateNamespace(req, evalCtx)
@@ -171,7 +171,7 @@ func TestValidateNamespace_UnauthPathNamespace(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := newReq(tt.body, tt.pathNS)
-			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
+			evalCtx, err := b.readEvalContext(context.Background(), httptest.NewRecorder(), req)
 			require.NoError(t, err)
 
 			ns, valid := b.validateNamespace(req, evalCtx)
@@ -381,5 +381,10 @@ func TestSetup_RegistersRoutesOnStandaloneMux(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", bytes.NewBufferString(`{}`))
 	w := httptest.NewRecorder()
 	m.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	deprecated := httptest.NewRequest(http.MethodPost, "/apis/features.grafana.app/v0alpha1/namespaces/stacks-1/ofrep/v1/evaluate/flags", bytes.NewBufferString(`{}`))
+	w = httptest.NewRecorder()
+	m.ServeHTTP(w, deprecated)
 	assert.Equal(t, http.StatusOK, w.Code)
 }

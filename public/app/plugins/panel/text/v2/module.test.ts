@@ -1,16 +1,19 @@
-import { PanelOptionsEditorBuilder, standardEditorsRegistry, toDataFrame } from '@grafana/data';
-import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
+import { FieldConfigProperty, PanelOptionsEditorBuilder, standardEditorsRegistry, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { type Options, RenderMode } from '../panelcfg.gen';
 
 import { textNGPanelOptions } from './module';
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
-}));
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
 
-let mockNewFeatures = true;
+afterAll(() => {
+  setTestFlags({});
+});
 
 // addSelect resolves its editor from the registry, which app.ts normally seeds.
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -30,10 +33,6 @@ function getRenderModeItem() {
 }
 
 describe('textNGPanelOptions', () => {
-  beforeEach(() => {
-    mockNewFeatures = true;
-  });
-
   it('registers renderMode with a default that preserves a single render', () => {
     expect(getRenderModeItem().defaultValue).toBe(RenderMode.Once);
   });
@@ -61,9 +60,34 @@ describe('textNGPanelOptions', () => {
   });
 
   it('hides renderMode when the text.newFeatures flag is off, even with rows', () => {
-    mockNewFeatures = false;
+    setTestFlags({ [FlagKeys.TextNewFeatures]: false });
     const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
     expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(false);
+  });
+});
+
+describe('field config', () => {
+  async function getFieldConfigIds(newFeatures: boolean) {
+    let ids: string[] = [];
+    await jest.isolateModulesAsync(async () => {
+      const { setTestFlags } = await import('@grafana/test-utils/unstable');
+      setTestFlags({ [FlagKeys.TextNewFeatures]: newFeatures });
+
+      const { standardFieldConfigEditorRegistry } = await import('@grafana/data');
+      standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+      const { plugin } = await import('./module');
+      ids = plugin.fieldConfigRegistry.list().map((item) => item.id);
+    });
+    return ids;
+  }
+
+  it('registers value mappings and thresholds as the only field config options', async () => {
+    expect(await getFieldConfigIds(true)).toEqual([FieldConfigProperty.Mappings, FieldConfigProperty.Thresholds]);
+  });
+
+  it('registers no field config at all when the text.newFeatures flag is off', async () => {
+    expect(await getFieldConfigIds(false)).toEqual([]);
   });
 });

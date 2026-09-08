@@ -3,6 +3,7 @@ import {
   type NotebookElement,
   type NotebookLayoutItemKind,
   type PanelKind,
+  type PanelQueryKind,
   type Spec as NotebookSpec,
 } from '../types';
 
@@ -95,7 +96,7 @@ function cellContentToMarkdown(content: CellContentKind): string {
     return content.spec.text;
   }
 
-  return fence(content.spec.code, content.spec.language);
+  return toCodeFence(content.spec.code, content.spec.language);
 }
 
 /**
@@ -124,10 +125,21 @@ function panelToMarkdown(panel: PanelKind['spec']): string {
     return lines.join('\n');
   }
 
-  const described = queries.map((query) => ({
+  lines.push('', toCodeFence(JSON.stringify(queries.map(describeQuery), null, 2), 'json'));
+
+  return lines.join('\n');
+}
+
+/**
+ * A PanelQueryKind, flattened into the shape most useful to a reader or a coding agent — shared
+ * between a panel's own export (many queries) and a Query cell's (exactly one, see
+ * cellContentToMarkdown).
+ */
+function describeQuery(query: PanelQueryKind) {
+  return {
     refId: query.spec.refId,
-    // Only when true. The point is that a disabled query would otherwise read as one the panel is
-    // running; saying so on every active query is noise in every export.
+    // Only when true. The point is that a disabled query would otherwise read as one that's running;
+    // saying so on every active query is noise in every export.
     ...(query.spec.hidden && { hidden: true }),
     datasource: query.spec.query.datasource?.name,
     // The plugin id, which is what says whether `expr` below is PromQL, LogQL or something else.
@@ -137,14 +149,10 @@ function panelToMarkdown(panel: PanelKind['spec']): string {
     // Nested rather than spread: a datasource's own query model commonly carries its own refId and
     // hidden, which merging would silently overwrite these with.
     query: query.spec.query.spec,
-  }));
-
-  lines.push('', fence(JSON.stringify(described, null, 2), 'json'));
-
-  return lines.join('\n');
+  };
 }
 
-function fence(body: string, language: string): string {
+function toCodeFence(body: string, language: string): string {
   // A body containing its own ``` run would end the block early, so the fence grows past the
   // longest run inside it — the same rule CommonMark uses. Tracked in a loop rather than spread
   // into Math.max, which a body with tens of thousands of runs would blow the argument limit on.
