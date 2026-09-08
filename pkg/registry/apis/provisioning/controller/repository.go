@@ -1072,7 +1072,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 				// Swallowed after surfacing on status: record it here since the
 				// deferred recorder only sees errors returned to the workqueue.
 				recordFailure(reconcilePhaseBuild, err)
-				logger.Warn("unable to create repository from configuration, user-facing error", "error", err)
+				logger.Warn("unable to create repository from configuration, user-caused error", "error", err)
 				return repoType, nil
 			}
 
@@ -1172,7 +1172,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// Swallowed after surfacing on status: record it here since the
 			// deferred recorder only sees errors returned to the workqueue.
 			recordFailure(reconcilePhaseHook, hookErr)
-			logger.Warn("repository hook failed with a user-facing error", "error", hookErr)
+			logger.Warn("repository hook failed with a user-caused error", "error", hookErr)
 		} else {
 			err = fmt.Errorf("process hooks: %w", hookErr)
 		}
@@ -1352,7 +1352,7 @@ func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 
 // Returns errors that are due to user errors
 func (rc *RepositoryController) isUserCaused(err error) bool {
-	// List of errors that are user-facing errors and are left recorded on the repository
+	// List of errors that are user-caused errors and are left recorded on the repository
 	if errors.Is(err, repository.ErrUnauthorized) ||
 		errors.Is(err, repository.ErrPermissionDenied) {
 		return true
