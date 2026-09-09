@@ -64,8 +64,8 @@ export default function HomePage() {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const solutions = useHomepageSolutions();
   // Placement is the slow part of the page and needs nothing from the extensions gating the
-  // sections: start it at mount so it runs under the skeleton. The overview reads the same
-  // memoized placements when it mounts, so nothing is probed twice.
+  // sections: start it at mount so it runs under the skeleton. Its facts are memoized on the
+  // solution or TTL-cached, so the overview's own placement re-reads settled promises when it mounts.
   useEffect(() => {
     if (redesignEnabled) {
       for (const solution of solutions.solutions) {

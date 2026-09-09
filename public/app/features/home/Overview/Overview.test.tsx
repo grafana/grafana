@@ -27,10 +27,6 @@ const guide = {
   href: '#',
 };
 
-function Harness({ solutions }: { solutions: Solution[] }) {
-  return <Overview solutions={solutions} />;
-}
-
 describe('Overview', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -40,14 +36,14 @@ describe('Overview', () => {
 
   it('hides the filter while guides load and omits Get started when they settle empty', async () => {
     mockUseGuides.mockReturnValue(undefined);
-    const { user, rerender } = render(<Harness solutions={EMPTY_SOLUTIONS} />);
+    const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     // Cards settled, guides still loading: the filter stays hidden so its label cannot flip.
     expect(await screen.findByText('Recommended getting started guides')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
 
     mockUseGuides.mockReturnValue([]);
-    rerender(<Harness solutions={EMPTY_SOLUTIONS} />);
+    rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     await user.click(await screen.findByRole('button', { name: /all solutions/i }));
     expect(screen.queryByRole('menuitem', { name: 'Get started' })).not.toBeInTheDocument();
@@ -55,7 +51,7 @@ describe('Overview', () => {
 
   it('renders guide skeletons and then the loaded guide', async () => {
     mockUseGuides.mockReturnValue(undefined);
-    const { rerender, container } = render(<Harness solutions={EMPTY_SOLUTIONS} />);
+    const { rerender, container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     // Guides still loading + no live solution: the unset default already lands on Get started.
     const heading = (await screen.findByText('Recommended getting started guides')).parentElement;
@@ -64,7 +60,7 @@ describe('Overview', () => {
     expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0);
 
     mockUseGuides.mockReturnValue([guide]);
-    rerender(<Harness solutions={EMPTY_SOLUTIONS} />);
+    rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: guide.title })).toBeInTheDocument();
@@ -81,7 +77,7 @@ describe('Overview', () => {
       }),
     });
 
-    render(<Harness solutions={[metrics]} />);
+    render(<Overview solutions={[metrics]} />);
 
     // An available (offer-only) solution is not "enabled": guides still win the default.
     expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
@@ -95,7 +91,7 @@ describe('Overview', () => {
       datasource: async () => stubDatasource,
     });
 
-    render(<Harness solutions={[metrics]} />);
+    render(<Overview solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
@@ -105,7 +101,7 @@ describe('Overview', () => {
     mockUseGuides.mockReturnValue([guide]);
     window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
 
-    render(<Harness solutions={EMPTY_SOLUTIONS} />);
+    render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
@@ -114,7 +110,7 @@ describe('Overview', () => {
   it('falls back to All solutions on an empty instance when guides settle empty', async () => {
     mockUseGuides.mockReturnValue([]);
 
-    render(<Harness solutions={EMPTY_SOLUTIONS} />);
+    render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
@@ -125,7 +121,7 @@ describe('Overview', () => {
     const probe = deferred<DataSourceInstanceListItem | null>();
     const metrics = stubSolution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
 
-    render(<Harness solutions={[metrics]} />);
+    render(<Overview solutions={[metrics]} />);
 
     // While classification is pending there is no filter to read a transient All solutions from.
     expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
@@ -148,7 +144,7 @@ describe('Overview', () => {
         title: 'Metrics & infrastructure',
         datasource: async () => stubDatasource,
       });
-      render(<Harness solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
+      render(<Overview solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
 
       await waitFor(() => expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument());
       expect(screen.getByText('Recommended getting started guides')).toBeInTheDocument();
@@ -165,7 +161,7 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
-      const { user, rerender } = render(<Harness solutions={EMPTY_SOLUTIONS} />, {
+      const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
 
@@ -178,7 +174,7 @@ describe('Overview', () => {
 
       // A guides change rebuilds the options; the already-handled hash must not re-apply.
       mockUseGuides.mockReturnValue([guide]);
-      rerender(<Harness solutions={EMPTY_SOLUTIONS} />);
+      rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
 
       expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
       expect(screen.queryByText('No solutions need attention.')).not.toBeInTheDocument();
@@ -194,7 +190,7 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
-      const { user } = render(<Harness solutions={EMPTY_SOLUTIONS} />, {
+      const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
 
@@ -217,7 +213,7 @@ describe('Overview', () => {
   });
 
   it('clears an unrecognized anchor on an explicit filter pick', async () => {
-    const { user } = render(<Harness solutions={EMPTY_SOLUTIONS} />, {
+    const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
       historyOptions: { initialEntries: ['/?orgId=1#needs-aattention'] },
     });
 
@@ -235,7 +231,7 @@ describe('Overview', () => {
   it('tracks overview filter changes from the dropdown', async () => {
     mockUseGuides.mockReturnValue([]);
 
-    const { user } = render(<Harness solutions={EMPTY_SOLUTIONS} />);
+    const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     await screen.findByText('No solutions were found.');
     await user.click(screen.getByRole('button', { name: /all solutions/i }));
@@ -264,7 +260,7 @@ describe('Overview', () => {
       needsAttention: () => logsAttention.promise,
     });
 
-    render(<Harness solutions={[metrics, logs]} />);
+    render(<Overview solutions={[metrics, logs]} />);
 
     // Metrics settles on its own: its card paints while the logs card still awaits its group.
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
@@ -295,12 +291,12 @@ describe('Overview', () => {
       title: 'Logs',
       datasource: () => nextDatasource.promise,
     });
-    const { rerender } = render(<Harness solutions={[metrics, traces]} />);
+    const { rerender } = render(<Overview solutions={[metrics, traces]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
 
-    rerender(<Harness solutions={[logs]} />);
+    rerender(<Overview solutions={[logs]} />);
 
     // A late answer for a solution no longer in the set must not surface.
     await act(async () => tracesDatasource.resolve(stubDatasource));
@@ -323,11 +319,11 @@ describe('Overview', () => {
       datasource: async () => stubDatasource,
     });
     const solutions = [metrics];
-    const { rerender } = render(<Harness solutions={solutions} />);
+    const { rerender } = render(<Overview solutions={solutions} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
 
-    rerender(<Harness solutions={[...solutions]} />);
+    rerender(<Overview solutions={[...solutions]} />);
 
     // No flash back to a skeleton while the (memoized) facts are re-read.
     expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
@@ -355,7 +351,7 @@ describe('Overview', () => {
       stubSolution(id, { datasource: () => new Promise<null>(() => {}) })
     );
 
-    render(<Harness solutions={[metrics, logs, ...others]} />);
+    render(<Overview solutions={[metrics, logs, ...others]} />);
 
     // The offer has settled, but a live card could still arrive and flip the default to All
     // solutions, so the grid stays on skeletons: one per solution.
@@ -382,7 +378,7 @@ describe('Overview', () => {
     });
     const logs = stubSolution('logs', { title: 'Logs', datasource: () => new Promise<null>(() => {}) });
 
-    render(<Harness solutions={[metrics, logs]} />);
+    render(<Overview solutions={[metrics, logs]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
@@ -397,7 +393,7 @@ describe('Overview', () => {
       },
     });
 
-    render(<Harness solutions={[metrics]} />);
+    render(<Overview solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
@@ -414,7 +410,7 @@ describe('Overview', () => {
       },
     });
 
-    render(<Harness solutions={[metrics]} />);
+    render(<Overview solutions={[metrics]} />);
 
     expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
     expect(document.querySelectorAll('.react-loading-skeleton')).toHaveLength(0);
@@ -428,7 +424,7 @@ describe('Overview', () => {
       stats: () => stats.promise,
     });
 
-    const { container } = render(<Harness solutions={[metrics]} />);
+    const { container } = render(<Overview solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(screen.queryByText('4.2 M series')).not.toBeInTheDocument();
@@ -453,7 +449,7 @@ describe('Overview', () => {
       datasource: async () => stubDatasource,
       alert: enabledAlert,
     });
-    const { user } = render(<Harness solutions={[attention, enabled]} />);
+    const { user } = render(<Overview solutions={[attention, enabled]} />);
 
     expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
@@ -477,7 +473,7 @@ describe('Overview', () => {
       alert: () => alert.promise,
     });
 
-    render(<Harness solutions={[metrics]} />);
+    render(<Overview solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
@@ -497,7 +493,7 @@ describe('Overview', () => {
         cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
       }),
     });
-    const { user } = render(<Harness solutions={[metrics]} />);
+    const { user } = render(<Overview solutions={[metrics]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /all solutions/i }));

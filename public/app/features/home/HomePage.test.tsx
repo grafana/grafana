@@ -312,8 +312,7 @@ describe('HomePage', () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
     const datasource = jest.fn(async () => stubDatasource);
-    // Only placement reads this fact (the card reads datasource() again for its subtitle), so
-    // its call count is the number of placements run.
+    // Only placement reads this fact, so a call while the skeleton is up proves detection started at mount.
     const needsAttention = jest.fn(async () => false);
     const stub = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
@@ -333,9 +332,8 @@ describe('HomePage', () => {
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     rerender(<HomePage />);
 
-    // The card renders from the placement started under the skeleton instead of re-detecting.
+    // The card renders once the extensions settle.
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
-    expect(needsAttention).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {

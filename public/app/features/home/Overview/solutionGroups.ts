@@ -10,24 +10,14 @@ export interface OverviewSolutionGroups {
   available: OverviewCard[];
 }
 
-const placements = new WeakMap<Solution, Promise<OverviewCard | null>>();
-
 /**
  * Places one solution: live when a datasource proved data (its own attention fact decides the
  * group), otherwise an offer, otherwise hidden. Rejected facts degrade only this solution:
- * datasource and offer read as absent, attention as false. Never rejects. One placement per
- * solution object, so the page-mount warm-up and every Overview mount share it.
+ * datasource and offer read as absent, attention as false. Never rejects. Its facts are memoized
+ * on the solution or TTL-cached below it, so a repeat placement within the cache window starts no
+ * request.
  */
-export function resolveOverviewCard(solution: Solution): Promise<OverviewCard | null> {
-  let placement = placements.get(solution);
-  if (!placement) {
-    placement = placeSolution(solution);
-    placements.set(solution, placement);
-  }
-  return placement;
-}
-
-async function placeSolution(solution: Solution): Promise<OverviewCard | null> {
+export async function resolveOverviewCard(solution: Solution): Promise<OverviewCard | null> {
   const datasource = await solution.datasource().catch(() => null);
   if (datasource) {
     const needsAttention = await solution.needsAttention().catch(() => false);
