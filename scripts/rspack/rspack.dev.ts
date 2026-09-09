@@ -148,7 +148,7 @@ export default (env: Env = {}) => {
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: ['**/node_modules', ...decoupledPlugins],
+      ignored: ['**/node_modules', '**/public/build/**', ...decoupledPlugins],
     },
 
     resolve: {
@@ -169,7 +169,7 @@ export default (env: Env = {}) => {
 
     optimization: {
       moduleIds: 'named',
-      runtimeChunk: true,
+      runtimeChunk: false,
       removeEmptyChunks: false,
       splitChunks: false,
     },
