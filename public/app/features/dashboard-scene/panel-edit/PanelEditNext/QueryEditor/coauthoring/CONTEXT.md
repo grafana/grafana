@@ -16,7 +16,7 @@ The query row owns the coauthoring transaction:
 
 The datasource query editor registers a row-scoped `QueryEditorCoauthoringAdapterV1`. The adapter publishes invocation snapshots, exposes an atomic typed baseline and language-specific context, and prepares and validates typed proposals. It does not render Core UI or stage an editor-specific preview.
 
-Core binds each registration to the current datasource instance and query row. The transaction and surface consume an adapter only while that identity still matches; switching rows or datasources invalidates the registration before the previous editor's cleanup runs.
+Core binds each registration to the resolved datasource instance and query row. For datasource variables, this means the concrete UID in `rawRef`, not the variable expression stored in the settings UID. The transaction and surface consume an adapter only while that identity still matches; switching rows or datasource instances invalidates the registration before the previous editor's cleanup runs.
 
 ## Private seam
 

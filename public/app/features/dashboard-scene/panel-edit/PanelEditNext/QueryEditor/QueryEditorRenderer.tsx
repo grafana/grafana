@@ -46,7 +46,6 @@ interface QueryEditorPanelProps {
 interface RegisteredCoauthoringAdapter {
   adapter: QueryEditorCoauthoringAdapterV1;
   identity: string;
-  registrar: QueryEditorCoauthoringRegistrationV1;
 }
 
 export function QueryEditorPanel({
@@ -62,7 +61,9 @@ export function QueryEditorPanel({
 }: QueryEditorPanelProps) {
   const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
   const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
-  const coauthoringIdentity = `${coauthoringDatasourceType}:${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const coauthoringDatasourceUid =
+    queryDsData?.dsSettings?.rawRef?.uid ?? queryDsData?.datasource?.uid ?? queryDsData?.dsSettings?.uid ?? '';
+  const coauthoringIdentity = `${coauthoringDatasourceType}:${coauthoringDatasourceUid}:${query?.refId ?? ''}`;
   const coauthoringAvailable = coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE;
   const [registeredCoauthoringAdapter, setRegisteredCoauthoringAdapter] = useState<RegisteredCoauthoringAdapter>();
   const error = data?.errors?.find((e) => e.refId === query?.refId);
@@ -74,7 +75,7 @@ export function QueryEditorPanel({
   const coauthoringRegistration = useMemo<QueryEditorCoauthoringRegistrationV1>(() => {
     const registrar: QueryEditorCoauthoringRegistrationV1 = {
       register: (adapter) => {
-        const registration = { adapter, identity: coauthoringIdentity, registrar };
+        const registration = { adapter, identity: coauthoringIdentity };
         setRegisteredCoauthoringAdapter(registration);
         return () => setRegisteredCoauthoringAdapter((current) => (current === registration ? undefined : current));
       },
@@ -82,9 +83,7 @@ export function QueryEditorPanel({
     return registrar;
   }, [coauthoringIdentity]);
   const coauthoringAdapter =
-    coauthoringAvailable &&
-    registeredCoauthoringAdapter?.identity === coauthoringIdentity &&
-    registeredCoauthoringAdapter.registrar === coauthoringRegistration
+    coauthoringAvailable && registeredCoauthoringAdapter?.identity === coauthoringIdentity
       ? registeredCoauthoringAdapter.adapter
       : undefined;
   const proposalTransaction = useQueryProposalTransaction({
