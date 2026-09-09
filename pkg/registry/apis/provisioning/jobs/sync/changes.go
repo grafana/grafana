@@ -425,8 +425,7 @@ func processInvalidFolderMetadataChanges(
 			continue
 		}
 
-		var invalidErr *resources.InvalidFolderMetadata
-		if errors.As(err, &invalidErr) {
+		if invalidErr, ok := errors.AsType[*resources.InvalidFolderMetadata](err); ok {
 			logging.FromContext(ctx).Info("invalid folder metadata", "path", change.Path, "action", change.Action, "error", err)
 			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
