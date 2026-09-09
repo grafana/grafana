@@ -1678,6 +1678,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.searchFieldValueResults",
+        "resourceVersion": "1788883151754",
+        "creationTimestamp": "2026-09-08T15:59:11Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for dashboard search requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -2098,6 +2111,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.querier.newName",
+        "resourceVersion": "1787908978150",
+        "creationTimestamp": "2026-08-28T09:22:58Z"
+      },
+      "spec": {
+        "description": "Data source query service, use the new name",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5985,6 +6013,20 @@
         "description": "Enables frontend-rendered table appendix pages in PDF reports",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.redirectReportSettingsToK8SApi",
+        "resourceVersion": "1787675413454",
+        "creationTimestamp": "2026-08-25T16:30:13Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report settings API endpoints to the Kubernetes reporting API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
