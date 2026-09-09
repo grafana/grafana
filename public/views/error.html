@@ -21,8 +21,6 @@
       :root {
         --fs-loader-bg: #f4f5f5;
         --fs-loader-text-color: rgb(36, 41, 46);
-        --fs-spinner-arc-color: #f55f3e;
-        --fs-spinner-track-color: rgba(36, 41, 46, 0.12);
         --fs-color-error: #e0226e;
       }
 
@@ -31,15 +29,7 @@
         :root {
           --fs-loader-bg: #111217;
           --fs-loader-text-color: rgb(204, 204, 220);
-          --fs-spinner-arc-color: #f55f3e;
-          --fs-spinner-track-color: rgba(204, 204, 220, 0.12);
           --fs-color-error: #d10e5c;
-        }
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
         }
       }
 
@@ -51,35 +41,6 @@
           -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
           'Segoe UI Emoji', 'Segoe UI Symbol';
         line-height: 1; /* prevent shift when css loads in that changes the body line-height */
-      }
-
-      .fs-spinner {
-        animation: spin 1500ms linear infinite;
-        width: 32px;
-        height: 32px;
-      }
-
-      .fs-spinner-track {
-        stroke: rgba(255, 255, 255, 0.15);
-      }
-
-      .fs-spinner-arc {
-        stroke: #f55f3e;
-      }
-
-      .fs-loader-text {
-        opacity: 0;
-        font-size: 16px;
-        margin-bottom: 0;
-        transition: opacity 300ms ease-in-out;
-      }
-
-      .fs-loader-starting-up .fs-loader-text {
-        opacity: 1;
-      }
-
-      .fs-variant-error .fs-loader-text {
-        opacity: 1;
       }
 
       .fs-error-icon {
@@ -144,7 +105,7 @@
     </style>
   </head>
 
-  <body class="fs-variant-error">
+  <body>
     <main class="fs-error-page">
       <section class="fs-error-page__content" aria-labelledby="error-title">
         <header class="fs-error-page__header">
