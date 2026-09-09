@@ -173,7 +173,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
 			t.Run("Can revoke all users tokens", func(t *testing.T) {
-				userIds := []int64{}
+				userIds := make([]int64, 0, 3)
 				for i := range 3 {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
@@ -242,8 +242,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
 			t.Run("Can revoke all users tokens and associated external sessions", func(t *testing.T) {
-				userIds := []int64{}
-				extSessionIds := []int64{}
+				userIds := make([]int64, 0, 3)
+				extSessionIds := make([]int64, 0, 3)
 				for i := range 3 {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)

@@ -33,7 +33,7 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 			})
 
 			const count = 3
-			var names []string
+			names := make([]string, 0, count)
 			for i := range count {
 				name, title := rk.instance(i)
 				names = append(names, name)

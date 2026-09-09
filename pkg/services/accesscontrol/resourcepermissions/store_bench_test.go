@@ -84,7 +84,7 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*store, []int64)
 }
 
 func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac *store, dsNum, usersNum, permissionsPerDs int) []int64 {
-	dataSources := make([]int64, 0)
+	dataSources := make([]int64, 0, dsNum)
 	for i := range dsNum {
 		addDSCommand := &datasources.AddDataSourceCommand{
 			OrgID:  0,
@@ -156,8 +156,8 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 		legacysql.NewDatabaseProvider(store), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		qs, supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(b, err)
-	userIds := make([]int64, 0)
-	teamIds := make([]int64, 0)
+	userIds := make([]int64, 0, UsersPerTeam*numberOfTeams)
+	teamIds := make([]int64, 0, numberOfTeams)
 	for i := range numberOfTeams {
 		// Create team
 		teamCmd := team.CreateTeamCommand{

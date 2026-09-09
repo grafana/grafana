@@ -313,7 +313,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 			copies = append(copies, models.CopyRule(rule))
 		}
 
-		var updates []RuleDelta
+		updates := make([]RuleDelta, 0, 5)
 		for i := range 5 {
 			ruleCopy := models.CopyRule(copies[i])
 			ruleCopy.Title += util.GenerateShortUID()

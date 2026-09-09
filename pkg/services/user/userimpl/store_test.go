@@ -652,7 +652,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		userIdsToDisable := []int64{}
+		userIdsToDisable := make([]int64, 0, 3)
 		for i := range 3 {
 			userIdsToDisable = append(userIdsToDisable, users[i].ID)
 		}

@@ -1044,7 +1044,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			Name:      "paged-item",
 		}
 
-		var resourceVersions []int64
+		resourceVersions := make([]int64, 0, 10)
 
 		// First create the initial resource
 		initialRV, err := WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns2))

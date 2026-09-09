@@ -2524,7 +2524,7 @@ func createV0V1FlatPanels(numPanels, queriesPerPanel int) map[string]interface{}
 }
 
 func createV0V1WithCollapsedRows(numRows, panelsPerRow, queriesPerPanel int) map[string]interface{} {
-	panels := make([]interface{}, 0)
+	panels := make([]interface{}, 0, numRows)
 	panelID := 1
 
 	for r := range numRows {
@@ -2557,7 +2557,7 @@ func createV0V1WithCollapsedRows(numRows, panelsPerRow, queriesPerPanel int) map
 }
 
 func createV0V1WithExpandedRows(numRows, panelsPerRow, queriesPerPanel int) map[string]interface{} {
-	panels := make([]interface{}, 0)
+	panels := make([]interface{}, 0, numRows*(1+panelsPerRow)) // 1 row + panels per row
 	panelID := 1
 
 	for r := range numRows {
