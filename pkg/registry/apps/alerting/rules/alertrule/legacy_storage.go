@@ -62,8 +62,7 @@ var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
 
-// toAPIError classifies errors from the alert rule service into the matching apierrors
-// status, mirroring the classic /api/v1/provisioning/alert-rules handler in api_provisioning.go.
+// toAPIError classifies errors from the alert rule service into the matching apierrors status.
 func toAPIError(name string, err error) error {
 	switch {
 	case errors.Is(err, ngmodels.ErrAlertRuleFailedValidation):
