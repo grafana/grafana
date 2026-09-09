@@ -3,10 +3,11 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Tab, TabContent, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { NotificationsScene } from '../../../notifications/NotificationsScene';
+import { DOCS_URL_CONFIGURE_ALERT_STATE_HISTORY } from '../../../utils/docs';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 
@@ -21,6 +22,10 @@ function HistoryPage() {
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
   const notificationsEnabled = config.featureToggles.alertingNotificationHistoryGlobal;
+  const stateHistory = config.unifiedAlerting.stateHistory;
+  const backend = stateHistory?.backend?.trim().toLowerCase();
+  const primary = stateHistory?.primary?.trim().toLowerCase();
+  const alertHistoryEnabled = backend === 'loki' || (backend === 'multiple' && primary === 'loki');
 
   const activeTab =
     notificationsEnabled && queryParams.tab === ActiveTab.Notifications
@@ -58,7 +63,25 @@ function HistoryPage() {
             )}
           </Text>
         </Box>
-        {activeTab === ActiveTab.AlertEvents && <CentralAlertHistoryScene />}
+        {activeTab === ActiveTab.AlertEvents &&
+          (alertHistoryEnabled ? (
+            <CentralAlertHistoryScene />
+          ) : (
+            <Alert
+              severity="info"
+              title={t('alerting.central-alert-history.configure-loki-title', 'Configure Loki to view alert history')}
+            >
+              <Trans i18nKey="alerting.central-alert-history.configure-loki-description">
+                Viewing history across alert rules requires Loki. Ask your Grafana administrator to configure Loki for
+                alert state history.
+              </Trans>{' '}
+              <TextLink href={DOCS_URL_CONFIGURE_ALERT_STATE_HISTORY} external>
+                <Trans i18nKey="alerting.central-alert-history.configure-loki-link">
+                  Configure alert state history
+                </Trans>
+              </TextLink>
+            </Alert>
+          ))}
         {activeTab === ActiveTab.Notifications && notificationsEnabled && <NotificationsScene />}
       </TabContent>
     </AlertingPageWrapper>
