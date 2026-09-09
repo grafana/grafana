@@ -110,18 +110,18 @@ type RepositoryUsageStatus struct {
 	ManagedResourceCount int64
 	// ManagedResources is the per-kind breakdown, one entry per group/resource.
 	ManagedResources []provisioning.ResourceCount
-	// TokenLastUpdated is when the repository's controller-managed token was last
+	// TokenLastUpdatedAt is when the repository's controller-managed token was last
 	// generated (status.token.lastUpdated), in epoch milliseconds; 0 when the
-	// repository has no managed token. now-TokenLastUpdated is the token age.
-	TokenLastUpdated int64
-	// TokenExpiration is when that token expires (status.token.expiration), in epoch
+	// repository has no managed token. now-TokenLastUpdatedAt is the token age.
+	TokenLastUpdatedAt int64
+	// TokenExpiresAt is when that token expires (status.token.expiration), in epoch
 	// milliseconds; 0 when the provider issues non-expiring tokens or there is no
 	// token. A value in the past means the token is expired.
-	TokenExpiration int64
-	// WebhookLastRotated is when the repository's webhook secret was last rotated
+	TokenExpiresAt int64
+	// WebhookLastRotatedAt is when the repository's webhook secret was last rotated
 	// (status.webhook.lastRotated), in epoch milliseconds; 0 when there is no
-	// webhook or it has never been rotated. now-WebhookLastRotated is the secret age.
-	WebhookLastRotated int64
+	// webhook or it has never been rotated. now-WebhookLastRotatedAt is the secret age.
+	WebhookLastRotatedAt int64
 }
 
 // LogRepositoryUsageStatus emits the repository usage-status snapshot on logger:
@@ -164,9 +164,9 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		}
 	}
 
-	var webhookLastRotated int64
+	var webhookLastRotatedAt int64
 	if repo.Status.Webhook != nil {
-		webhookLastRotated = repo.Status.Webhook.LastRotated
+		webhookLastRotatedAt = repo.Status.Webhook.LastRotated
 	}
 
 	return RepositoryUsageStatus{
@@ -183,9 +183,9 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		LastSyncFinishedAt:   repo.Status.Sync.Finished,
 		ManagedResourceCount: total,
 		ManagedResources:     repo.Status.Stats,
-		TokenLastUpdated:     repo.Status.Token.LastUpdated,
-		TokenExpiration:      repo.Status.Token.Expiration,
-		WebhookLastRotated:   webhookLastRotated,
+		TokenLastUpdatedAt:   repo.Status.Token.LastUpdated,
+		TokenExpiresAt:       repo.Status.Token.Expiration,
+		WebhookLastRotatedAt: webhookLastRotatedAt,
 	}
 }
 
@@ -227,9 +227,9 @@ func (s RepositoryUsageStatus) LogValues() []any {
 		"syncState", s.SyncState,
 		"lastSyncFinishedAt", s.LastSyncFinishedAt,
 		"managedResourceCount", s.ManagedResourceCount,
-		"tokenLastUpdated", s.TokenLastUpdated,
-		"tokenExpiration", s.TokenExpiration,
-		"webhookLastRotated", s.WebhookLastRotated,
+		"tokenLastUpdatedAt", s.TokenLastUpdatedAt,
+		"tokenExpiresAt", s.TokenExpiresAt,
+		"webhookLastRotatedAt", s.WebhookLastRotatedAt,
 	}
 }
 
