@@ -12569,6 +12569,7 @@
       "title": "Create"
     },
     "create-alert": {
+      "subtitle": "Create an alert rule",
       "title": "New alert rule"
     },
     "create-dashboard": {
