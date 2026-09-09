@@ -3,7 +3,7 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 
@@ -23,24 +23,24 @@ const wrapper = ({ children }: { children: ReactNode }) => {
 };
 
 describe('useFoldersQuery', () => {
-  let configBackup: runtime.GrafanaBootConfig;
-
-  beforeAll(() => {
-    configBackup = { ...runtime.config };
-  });
-
-  afterAll(() => {
-    runtime.config.featureToggles = configBackup.featureToggles;
-  });
-
   describe.each([
     // foldersAppPlatformAPI enabled
     true,
     // foldersAppPlatformAPI disabled
     false,
   ])('foldersAppPlatformAPI feature toggle set to %s', (featureToggleState) => {
+    beforeEach(() => {
+      setTestFlags({ foldersAppPlatformAPI: featureToggleState });
+    });
+
+    // The act wrap is needed because resetting fires OpenFeature events while the hook is mounted.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
     it('returns data', async () => {
-      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
       const [_dashboardsContainer, ...items] = await testFn();
 
       const sortedItemTitles = items.map((item) => (item.item as DashboardViewItem).title).sort();
@@ -57,7 +57,6 @@ describe('useFoldersQuery', () => {
     });
 
     it('uses custom root folder display name when rootFolderItem is provided', async () => {
-      runtime.config.featureToggles.foldersAppPlatformAPI = featureToggleState;
       const { result } = renderHook(
         () =>
           useFoldersQuery({

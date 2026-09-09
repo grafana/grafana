@@ -61,6 +61,8 @@ export const FlagKeys = {
   FlameGraphTableNg: "flameGraph.tableNg",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables use of app platform API for folders */
+  FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -471,6 +473,17 @@ export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraphWithCallTree", false, options).value;
+};
+
+/**
+ * Enables use of app platform API for folders
+ *
+ * **Details:**
+ * - flag key: `foldersAppPlatformAPI`
+ * - default value: `true`
+ */
+export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("foldersAppPlatformAPI", true, options).value;
 };
 
 /**

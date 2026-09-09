@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { act, render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -577,12 +577,10 @@ describe('MegaMenu', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
     // Flag cleanup is handled by the outer afterEach (act-wrapped, since setTestFlags fires
     // OpenFeature events into the still-mounted menu).
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     });
 
     it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {

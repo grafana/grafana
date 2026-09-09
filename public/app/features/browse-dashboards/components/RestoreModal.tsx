@@ -4,7 +4,8 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
 import { getStatusFromError } from 'app/core/utils/errors';
 
@@ -46,13 +47,14 @@ export const RestoreModal = ({
 }: RestoreModalProps) => {
   const styles = useStyles2(getStyles);
   const [userTarget, setUserTarget] = useState<string | undefined>();
+  const foldersAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   const numberOfDashboards = selectedDashboards.length;
   const { error: originError, isFetching } = useGetFolderQuery(
     originCandidate
       ? {
           folderUID: originCandidate,
           accesscontrol: false,
-          isLegacyCall: Boolean(config.featureToggles.foldersAppPlatformAPI),
+          isLegacyCall: foldersAppPlatformAPI,
         }
       : skipToken,
     { refetchOnMountOrArgChange: true }
