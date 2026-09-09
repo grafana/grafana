@@ -193,6 +193,12 @@ export const getGridStyles = memoize(
 
         // `table.refresh` rounds the table's top corners, matching the header's own surface.
         ...(tableRefreshEnabled && {
+          // The header cells' own rounded corners (below) leave the area outside the radius
+          // transparent, so a row scrolling under the sticky header painted straight through it.
+          // This grid is the scroll container, so rounding it clips everything it scrolls — the rows
+          // included — and the panel shows through the corner instead of a row's background.
+          borderStartStartRadius: theme.shape.radius.default,
+          borderStartEndRadius: theme.shape.radius.default,
           '.rdg-header-row > .rdg-cell': {
             // Sub-pixel scroll offsets can leave a hairline gap above the sticky header where the
             // row scrolled underneath it shows through — invisible before this commit, since the
