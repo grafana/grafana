@@ -118,7 +118,7 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// would stay open for the whole long-running connection. See
 		// filters.WithWatchInstrumentation for the upstream request span.
 		handler = withoutWatchServerSpan(handler, c.TracerProvider)
-		handler = filters.WithExtractTraceContext(handler)
+		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
 
