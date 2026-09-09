@@ -1,6 +1,7 @@
 package oauth_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -129,7 +130,7 @@ func TestExtra_Build_PassesAccessToken(t *testing.T) {
 				func(*provisioning.Connection) connection.SecureValues { return secure },
 				provisioning.GitlabOAuthConnectionType,
 				provisioning.GitLabRepositoryType,
-				func(_ provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
+				func(_ context.Context, _ provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
 					gotToken = accessToken
 					return oauth.NewMockProvider(t), nil
 				},
@@ -163,7 +164,7 @@ func TestExtra_Build_ProviderError(t *testing.T) {
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.GitlabOAuthConnectionType,
 		provisioning.GitLabRepositoryType,
-		func(_ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
+		func(_ context.Context, _ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
 			return nil, errors.New("boom")
 		},
 		nil,
@@ -319,7 +320,7 @@ func newTestExtra(t *testing.T, secure *connection.MockSecureValues, validateSpe
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.GitlabOAuthConnectionType,
 		provisioning.GitLabRepositoryType,
-		func(_ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
+		func(_ context.Context, _ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
 			return oauth.NewMockProvider(t), nil
 		},
 		validateSpec,

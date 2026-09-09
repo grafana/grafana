@@ -21,7 +21,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
-import { type ColumnWidth, type ColumnWidths, type SortColumn } from '@grafana/react-data-grid';
+import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -44,21 +44,22 @@ import {
   HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
+  HEADER_TOOLTIP_SPACE,
   LAST_COLUMN_CLASS,
   TABLE,
 } from './constants';
-import { type TextAlign } from './styles';
-import {
-  type TableRow,
-  type ColumnTypes,
-  type FrameToRowsConverter,
-  type Comparator,
-  type TypographyCtx,
-  type MeasureCellHeight,
-  type MeasureCellHeightEntry,
-  type FilterType,
-  type GetActionsFunctionLocal,
-  type TableColumn,
+import type { TextAlign } from './styles';
+import type {
+  TableRow,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TypographyCtx,
+  MeasureCellHeight,
+  MeasureCellHeightEntry,
+  FilterType,
+  GetActionsFunctionLocal,
+  TableColumn,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -201,6 +202,19 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 /**
+ * @internal
+ * Returns true if the field's cells pretty-print their value as JSON. An `other` field only does so
+ * when no explicit cell type was chosen — one set to Pill or Markdown should render as that instead.
+ */
+export function rendersAsJson(field: Field, cellType = getCellOptions(field).type): boolean {
+  return (
+    cellType === TableCellDisplayMode.JSONView ||
+    ((cellType == null || cellType === TableCellDisplayMode.Auto) &&
+      getAutoRendererDisplayMode(field) === TableCellDisplayMode.JSONView)
+  );
+}
+
+/**
  * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
  */
 function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
@@ -276,7 +290,14 @@ export function getTextHeightEstimator(avgCharWidth: number): MeasureCellHeight 
     }
 
     const charsPerLine = width / avgCharWidth;
-    const lines = Math.ceil(strValue.length / charsPerLine);
+    // A pretty-printed JSON value (and any other multi-line string) carries real newlines that the
+    // renderer preserves (`pre-wrap`/`pre-line`), so each one forces a line break regardless of width.
+    // Estimating off the total string length alone ignores those breaks and badly undercounts a value
+    // with many short lines. Sum the wrapped-line estimate per newline-delimited segment instead,
+    // matching how the precise uwrap measurer already treats embedded newlines.
+    const lines = strValue
+      .split('\n')
+      .reduce((total, line) => total + Math.max(1, Math.ceil(line.length / charsPerLine)), 0);
     return lines * lineHeight;
   };
 }
@@ -514,10 +535,12 @@ export function getRowHeight(
       const cellValueRaw = row.__index === -1 ? displayName : row[displayName];
       if (cellValueRaw != null) {
         // For non-string fields (e.g. Time, Number), the raw value is a number/epoch that
-        // AutoCell formats via field.display() before rendering. Measure the rendered string
+        // AutoCell formats via field.display() before rendering. A JSON cell reformats strings too,
+        // expanding compact source into an indented block. Measure the rendered string either way
         // so the height matches what is actually displayed in the cell.
+        const needsFormatting = field.type !== FieldType.string || rendersAsJson(field);
         const cellValueForMeasuring =
-          field.type !== FieldType.string && row.__index !== -1 && field.display != null
+          needsFormatting && row.__index !== -1 && field.display != null
             ? formattedValueToString(field.display(cellValueRaw))
             : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
@@ -564,7 +587,10 @@ export function shouldTextOverflow(field: Field): boolean {
     // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
     (field.type === FieldType.string && cellOptions.type !== TableCellDisplayMode.Image) ||
     // regardless of the underlying cell type, data links cells have text overflow.
-    cellOptions.type === TableCellDisplayMode.DataLinks;
+    cellOptions.type === TableCellDisplayMode.DataLinks ||
+    // an unwrapped JSON cell collapses its pretty-printed block to a single truncated line, so
+    // expanding on hover is the only way to read the value short of opening the inspector.
+    rendersAsJson(field, cellOptions.type);
 
   return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
 }
@@ -793,6 +819,15 @@ const processNestedTableRows = (rows: TableRow[], processParents: (parents: Tabl
 };
 
 /* ----------------------------- Data grid sorting ---------------------------- */
+/**
+ * @internal
+ * Columns are sortable unless explicitly disabled. Shared by the column definitions, the header
+ * cell, and the width/height measurement, which reserve room for the sort arrow.
+ */
+export function isSortableField(field: Field): boolean {
+  return field.config.custom?.sortable !== false;
+}
+
 /**
  * @internal
  */
@@ -1303,13 +1338,11 @@ export interface ContentAwareColWidthsOptions {
   showTypeIcons?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
-  /** Currently-sorted columns; a sorted column reserves header space for its sort arrow. */
-  sortColumns?: SortColumn[];
   /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
   tableRefreshEnabled?: boolean;
   /**
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
-   * filter icon that marks it, the same way a sorted column reserves space for its arrow.
+   * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
   /** `table.refresh`: a reorderable column reserves space for its drag handle. */
@@ -1435,24 +1468,31 @@ export function isColumnMenuVisible(
  *
  * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
  * the column, so an under-estimate truncates the title outright — and it's one short string per
- * column, not a sample across many rows. Sort-arrow space is only reserved when `isSorted` (widths
- * recompute on sort), so a tight column doesn't ellipsize its title the moment it's sorted.
+ * column, not a sample across many rows.
+ *
+ * Sort-arrow space is reserved for every sortable column, whether or not it is currently sorted:
+ * reserving it only for the sorted column would make every auto width a function of the sort state,
+ * so clicking a header would resize the whole table (the sorted column gains the arrow's width, and
+ * that shifts every other column's share of the leftover space).
  */
 function measureHeaderWidth(
   field: Field,
   ctx: TypographyCtx,
   showTypeIcons: boolean,
-  isSorted: boolean,
+  isSortable: boolean,
   tableRefreshEnabled: boolean,
-  isFilterable: boolean,
   isFiltered: boolean,
   enableColumnReorder: boolean,
   canManageColumns: boolean
 ): number {
+  const isFilterable = field.config.custom?.filterable ?? false;
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
-  headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  headerWidth += isSortable ? HEADER_ICON_SPACE : 0;
+  // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
+  // is there for as long as the option is set rather than only while some state holds.
+  headerWidth += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   // the drag handle is always in flow once reorder is enabled, unlike the sort arrow/filter icons
   // which only reserve space while that state is active.
   headerWidth += enableColumnReorder ? HEADER_DRAG_HANDLE_SPACE : 0;
@@ -1493,7 +1533,6 @@ function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
   if (reducers == null || reducers.length === 0) {
     return 0;
   }
-
   // Reduce over a copy with its own `state` so we never touch the shared `field.state.calcs`:
   // reduceField reads and writes that cache, and the footer (useReducerEntries) relies on it —
   // reducing the full, unfiltered values here would otherwise leave the footer showing whole-dataset
@@ -1615,6 +1654,7 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Actions]: measureActionsColWidth,
   [TableCellDisplayMode.DataLinks]: measureDataLinksColWidth,
   [TableCellDisplayMode.Markdown]: measureMarkdownColWidth,
+  [TableCellDisplayMode.JSONView]: measureJsonColWidth,
 };
 
 const DEFAULT_GROWTH_WEIGHT = 1;
@@ -1645,6 +1685,10 @@ function growthWeight(type: FieldType): number {
  *      the widest column doesn't run away from its neighbours; numeric/boolean columns grow only
  *      modestly (see {@link growthWeight}).
  * When content overflows the available width the content widths are kept and the grid scrolls.
+ *
+ * Every input is independent of the sort and filter state (fields hold the full, unsorted values),
+ * so widths stay put when the user sorts or filters. See {@link measureHeaderWidth} for the sort
+ * arrow, the one affordance that would otherwise make them sort-dependent.
  */
 export function computeContentAwareColWidths(
   fields: Field[],
@@ -1654,7 +1698,6 @@ export function computeContentAwareColWidths(
     headerTypographyCtx,
     showTypeIcons = false,
     getActions,
-    sortColumns,
     tableRefreshEnabled = false,
     filter,
     sampleSize,
@@ -1688,7 +1731,6 @@ export function computeContentAwareColWidths(
   let contentTotal = 0;
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
-  const sortedKeys = new Set(sortColumns?.map((c) => c.columnKey));
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(
@@ -1703,23 +1745,19 @@ export function computeContentAwareColWidths(
       field,
       headerTypographyCtx,
       showTypeIcons,
-      sortedKeys.has(getDisplayName(field)),
+      isSortableField(field),
       tableRefreshEnabled,
-      field.config.custom?.filterable ?? false,
       filteredKeys.has(getDisplayName(field)),
       enableColumnReorder,
       canManageColumns
     );
 
-    // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
-    // column wider than a sparse one, and the cap bounds it so it wraps to extra height within.
+    // Size to content (unioned with header width below), even for wrapped columns — the cap bounds
+    // it, wrapping adds height instead. Registered measurer picks pill/link/action/graphical; default is text.
     const cellType = getCellOptions(field).type;
-    const resolvedType = cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
-    // Untyped (`other`) fields render as JSON too, mirroring the displayJsonValue attachment in
-    // render-hooks. Only a fallback: an explicit cell type's renderer ignores the JSON display, so a
-    // registered measurer wins.
-    const rendersAsJson = cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other;
-    const measure = COL_WIDTH_MEASURERS[resolvedType] ?? (rendersAsJson ? measureJsonColWidth : measureTextColWidth);
+    const resolvedType =
+      cellType == null || cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
+    const measure = COL_WIDTH_MEASURERS[resolvedType] ?? measureTextColWidth;
     const cellWidth = measure(field, effectiveSampleSize, measureCtx);
     const footerWidth = measureFooterWidth(field, headerTypographyCtx);
 
@@ -1751,9 +1789,9 @@ export function computeContentAwareColWidths(
     if (!shouldGrow) {
       // No leftover to distribute — the columns already fill or overflow availWidth, so the grid
       // scrolls regardless and matching the total exactly no longer matters. Round up instead of
-      // cumulatively: a column sitting exactly at its measured content need (fractional canvas
-      // measurement) has no slack to give up, and cumulative rounding can shave a random column
-      // below that need and truncate its header for no benefit.
+      // cumulatively: a column sitting exactly at its measured content need (canvas measurement is
+      // fractional) has no slack to give up, and cumulative rounding can shave a column below that
+      // need and truncate its header for no benefit.
       widths[i] = Math.ceil(contentWidth);
       continue;
     }

@@ -313,7 +313,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
                 return (
                   <div style={{ width, height }}>
-                    <CommonTableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                    <CommonTableNG
+                      width={width}
+                      height={height}
+                      data={dataFrame}
+                      showTypeIcons={true}
+                      transparent={config.theme2.flags.visualDesignRefresh}
+                    />
                   </div>
                 );
               }

@@ -3,7 +3,6 @@ package vector
 import (
 	"database/sql"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"text/template"
@@ -43,6 +42,7 @@ var (
 	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
 	sqlVectorCollectionUpdateVersion     = mustTemplate("vector_collection_update_version.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
+	sqlVectorCollectionLexicalSearch     = mustTemplate("vector_collection_lexical_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
 	sqlVectorBackfillJobsReopen          = mustTemplate("vector_backfill_jobs_reopen.sql")
@@ -67,6 +67,12 @@ type sqlVectorCollectionUpsertRequest struct {
 	Resource  string
 	Vector    *Vector
 	Embedding any // pgvector.HalfVector
+}
+
+// ComputeTS gates the stored tsvector to external rows; internal rows
+// keep NULL (bleve is their lexical index).
+func (r *sqlVectorCollectionUpsertRequest) ComputeTS() bool {
+	return isExternalPartitionKey(r.Resource)
 }
 
 func (r *sqlVectorCollectionUpsertRequest) Validate() error {
@@ -437,13 +443,39 @@ type sqlVectorCollectionSearchResponse struct {
 	Content     string
 	Score       float64
 	Folder      string
-	Metadata    json.RawMessage
+	// []byte, not json.RawMessage: only *[]byte scans a NULL without error,
+	// and metadata is optional on external rows.
+	Metadata []byte
 }
 
 // MetadataFilterGroup is one filter rendered as OR-ed JSONB containments:
 // ( metadata @> j1 OR metadata @> j2 ... ) — IN semantics across values.
 type MetadataFilterGroup struct {
 	JSONs []string // e.g. `{"datasource_uids":["ds1"]}`
+}
+
+// vectorSearchFilterArgs are the filter predicates shared by the semantic
+// and lexical templates so the legs can't diverge. nil/empty = no filter.
+type vectorSearchFilterArgs struct {
+	UIDValues            []string
+	FolderValues         []string
+	MetadataFilterGroups []MetadataFilterGroup
+}
+
+func (r *vectorSearchFilterArgs) UIDFilter() bool {
+	return len(r.UIDValues) > 0
+}
+
+func (r *vectorSearchFilterArgs) UIDFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDValues)
+}
+
+func (r *vectorSearchFilterArgs) FolderFilter() bool {
+	return len(r.FolderValues) > 0
+}
+
+func (r *vectorSearchFilterArgs) FolderFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.FolderValues)
 }
 
 type sqlVectorCollectionSearchRequest struct {
@@ -455,10 +487,7 @@ type sqlVectorCollectionSearchRequest struct {
 	Limit          int64
 	Response       *sqlVectorCollectionSearchResponse
 
-	// nil/empty means no filter on that field.
-	UIDValues            []string
-	FolderValues         []string
-	MetadataFilterGroups []MetadataFilterGroup
+	vectorSearchFilterArgs
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {
@@ -478,20 +507,47 @@ func (r *sqlVectorCollectionSearchRequest) Results() (*sqlVectorCollectionSearch
 	return &cp, nil
 }
 
-func (r *sqlVectorCollectionSearchRequest) UIDFilter() bool {
-	return len(r.UIDValues) > 0
+type sqlVectorCollectionLexicalSearchResponse struct {
+	UID         string
+	Title       string
+	Folder      string
+	Subresource string
+	Content     string
+	// See sqlVectorCollectionSearchResponse.Metadata.
+	Metadata []byte
+	Rank     float64
 }
 
-func (r *sqlVectorCollectionSearchRequest) UIDFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.UIDValues)
+type sqlVectorCollectionLexicalSearchRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	Query     string
+	Limit     int64
+	Response  *sqlVectorCollectionLexicalSearchResponse
+
+	vectorSearchFilterArgs
 }
 
-func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {
-	return len(r.FolderValues) > 0
+func (r *sqlVectorCollectionLexicalSearchRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Query == "" {
+		return fmt.Errorf("query must not be empty")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
+	}
+	return nil
 }
 
-func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.FolderValues)
+func (r *sqlVectorCollectionLexicalSearchRequest) Results() (*sqlVectorCollectionLexicalSearchResponse, error) {
+	// Response is reused across Scan calls; shallow copy is safe because Scan
+	// allocates a fresh []byte for Metadata.
+	cp := *r.Response
+	return &cp, nil
 }
 
 type sqlQueryCacheGetResponse struct {

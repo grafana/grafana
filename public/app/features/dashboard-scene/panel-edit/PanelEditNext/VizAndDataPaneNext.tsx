@@ -74,7 +74,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     pageContainer: css({
       display: 'grid',
       width: '100%',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       overflow: 'hidden',
       paddingBottom: theme.spacing(1),
     }),
@@ -120,7 +120,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       bottom: 0,
       left: 0,
       right: 0,
-      top: theme.spacing(0.5),
+      top: 0,
     }),
     sidebarResizeHandle: css({
       position: 'absolute',
@@ -129,8 +129,8 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       // Sit inside the grid gap between the sidebar and the data pane (width matches the
       // gap) so the handle and its pill never overlap the sidebar's vertical scrollbar,
       // which renders at the inner right edge of the sidebar box.
-      right: `-${theme.spacing(2)}`,
-      width: theme.spacing(2),
+      right: `-${theme.spacing(1)}`,
+      width: theme.spacing(1),
     }),
   };
 }

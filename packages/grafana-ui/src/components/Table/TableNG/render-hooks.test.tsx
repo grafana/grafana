@@ -2,7 +2,7 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import memoize from 'micro-memoize';
-import { type ComponentProps, createRef, isValidElement, type Key } from 'react';
+import { Children, type ComponentProps, createRef, isValidElement, type Key, type ReactNode } from 'react';
 
 import {
   createDataFrame,
@@ -14,16 +14,30 @@ import {
   FieldColorModeId,
   FieldType,
 } from '@grafana/data';
-import { type CalculatedColumn, type RenderRowProps } from '@grafana/react-data-grid';
+import { type CalculatedColumn, type RenderCellProps, type RenderRowProps } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import { type TableCellTooltipProps } from './components/TableCellTooltip';
+import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
-import { type FilterType, type NestedRowEntry, type TableColumn, type TableRow, type TableSummaryRow } from './types';
+import {
+  type FilterType,
+  type NestedRowEntry,
+  type TableCellRendererProps,
+  type TableColumn,
+  type TableRow,
+  type TableSummaryRow,
+} from './types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -287,12 +301,41 @@ function getHeaderCellProps(column: TableColumn): ComponentProps<typeof HeaderCe
   return node.props;
 }
 
+/**
+ * The grid passes a full RenderCellProps; the cell renderers only read `row` and `column`.
+ */
+function makeCellProps(column: TableColumn, row: TableRow): RenderCellProps<TableRow, TableSummaryRow> {
+  return { column, row } as unknown as RenderCellProps<TableRow, TableSummaryRow>;
+}
+
+/**
+ * The width handed to a cell renderer is only observable through the cell component's props;
+ * renderCell wraps that component in a fragment alongside the optional cell actions.
+ */
+function getCellRendererProps(column: TableColumn, row: TableRow): TableCellRendererProps {
+  const node = column.renderCell?.({
+    column: column as unknown as CalculatedColumn<TableRow, TableSummaryRow>,
+    row,
+    rowIdx: row.__index,
+    isCellEditable: false,
+    tabIndex: -1,
+    onRowChange: jest.fn(),
+  });
+  if (!isValidElement<{ children: ReactNode }>(node)) {
+    throw new Error(`renderCell did not return an element for column "${column.key}"`);
+  }
+  const [cell] = Children.toArray(node.props.children);
+  if (!isValidElement<TableCellRendererProps>(cell)) {
+    throw new Error(`renderCell did not render a cell component for column "${column.key}"`);
+  }
+  return cell.props;
+}
+
 function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConfig {
   const theme = createTheme();
   const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
   return {
     theme,
-    applyToRowBgFn: undefined,
     getCellColorInlineStyles,
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,
@@ -459,6 +502,56 @@ describe('useColumnBuilderFromFields', () => {
     });
   });
 
+  it('renders a cell tooltip against a prepared copy of the tooltip field', () => {
+    // The tooltip field is hidden, so it never reaches the builder through `fields` — it has to be
+    // prepared on lookup, otherwise the tooltip formats JSON with the frame's raw display processor.
+    const tooltipFrame = createDataFrame({
+      fields: [
+        { name: 'A', type: FieldType.string, values: ['x', 'y'], config: { custom: { tooltip: { field: 'J' } } } },
+        { name: 'J', type: FieldType.other, values: [{ a: 1 }, { a: 2 }], config: { custom: { hidden: true } } },
+      ],
+    });
+    const rawDisplay = (v: unknown) => ({ text: String(v), numeric: NaN });
+    tooltipFrame.fields[1].display = rawDisplay;
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
+    const result = callFromFields(hook, [tooltipFrame.fields[0]], [100], tooltipFrame, rows, rows);
+    const node = result.columns[0].renderCell!(makeCellProps(result.columns[0], rows[0]));
+
+    if (!isValidElement<TableCellTooltipProps>(node)) {
+      throw new Error('renderCell did not return a tooltip element');
+    }
+    expect(node.props.field).not.toBe(tooltipFrame.fields[1]);
+    expect(node.props.field.display!({ a: 1 }).text).toBe(JSON.stringify({ a: 1 }, null, ' '));
+    // ...and the frame's own field is left alone
+    expect(tooltipFrame.fields[1].display).toBe(rawDisplay);
+  });
+
+  it('hands cell renderers the column width reduced by the cell chrome (padding and border)', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
+
+    const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome);
+    expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  it("also takes the first column's panel-edge inset off the width it hands that column", () => {
+    // Under `noPanelPadding` the first column is padded further in to line its content up with the
+    // panel title. That padding eats into the content box, so a width-driven cell (sparkline, bar
+    // gauge) sized against the full content width would render that much too wide and clip.
+    const hook = renderColumnBuilderHook({
+      filterResult: makeFilterResult(),
+      config: makeConfig({ firstColumnExtraPadding: FIRST_COLUMN_EXTRA_PADDING }),
+    });
+    const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
+
+    const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome - FIRST_COLUMN_EXTRA_PADDING);
+    // only the first column carries the inset
+    expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
   describe('header alignment', () => {
     // Field B is numeric, so it right-aligns by default. table.refresh left-aligns every header
     // regardless, giving the column menu a stable trailing edge to sit against.
@@ -602,5 +695,83 @@ describe('useColumnBuilderFromFields', () => {
       const headerProps = getHeaderCellProps(result.columns[0]);
       expect(headerProps.crossFilterTailRows).toEqual(topLevelScope);
     });
+  });
+});
+
+// -----------------------------------------------------------------------------
+// prepareFieldsForDisplay
+// -----------------------------------------------------------------------------
+
+describe('prepareFieldsForDisplay', () => {
+  const baseDisplay = (v: unknown) => ({ text: String(v), numeric: NaN });
+
+  it('attaches the JSON pretty-printer to an `other` field without mutating the original', () => {
+    const field: Field = {
+      name: 'j',
+      type: FieldType.other,
+      values: [{ a: 1 }],
+      config: {},
+      display: baseDisplay,
+    };
+    const originalDisplay = field.display;
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    // the original field is left untouched — no shared-object mutation
+    expect(field.display).toBe(originalDisplay);
+    // the prepared field is a copy carrying the JSON display
+    expect(prepared).not.toBe(field);
+    expect(prepared.display).not.toBe(originalDisplay);
+    expect(prepared.display!({ a: 1 }).text).toBe(JSON.stringify({ a: 1 }, null, ' '));
+  });
+
+  it('attaches the JSON pretty-printer to an explicit JSONView cell', () => {
+    const field: Field = {
+      name: 'j',
+      type: FieldType.string,
+      values: ['{"a":1}'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      display: baseDisplay,
+    };
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    expect(prepared).not.toBe(field);
+    expect(prepared.display!('{"a":1}').text).toBe('{\n "a": 1\n}');
+  });
+
+  it.each([TableCellDisplayMode.Pill, TableCellDisplayMode.Markdown])(
+    'leaves an `other` field alone when it is explicitly a %s column',
+    (type) => {
+      // These renderers ignore the JSON display processor, so attaching it only clobbers the field's
+      // own formatting — an array of pill values would become a multi-line JSON blob.
+      const value = ['a', 'b'];
+      const field: Field = {
+        name: 'j',
+        type: FieldType.other,
+        values: [value],
+        config: { custom: { cellOptions: { type } } },
+        display: baseDisplay,
+      };
+
+      const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+      expect(prepared).toBe(field);
+      expect(prepared.display!(value).text).toBe('a,b');
+    }
+  );
+
+  it('returns fields that need no display processor by reference, unchanged', () => {
+    const field: Field = {
+      name: 's',
+      type: FieldType.string,
+      values: ['x'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.Auto } } },
+      display: baseDisplay,
+    };
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    expect(prepared).toBe(field);
   });
 });

@@ -103,6 +103,35 @@ describe('HeaderCell', () => {
     expect(handle.querySelector('svg')).toBeInTheDocument();
   });
 
+  it('keeps the sort arrow outside the truncating label under table.refresh', () => {
+    // The refreshed label clips its own overflow to ellipsize a long title, so an arrow inside it
+    // would be the first thing to disappear — exactly when the sort state matters most.
+    const { container, unmount } = render(
+      <HeaderCell {...baseProps} field={makeField()} direction="ASC" tableRefreshEnabled />
+    );
+    const label = screen.getByRole('button', { name: 'Field1' });
+    expect(label.querySelector('svg')).not.toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeInTheDocument();
+
+    unmount();
+
+    // the classic header's label doesn't shrink, so the arrow stays inside it
+    render(<HeaderCell {...baseProps} field={makeField()} direction="ASC" />);
+    expect(screen.getByRole('button', { name: 'Field1' }).querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('lets the header label shrink so a long title truncates against the column menu', () => {
+    // As a flex item the label won't shrink below its own min-content width unless min-width is 0,
+    // and the refreshed header pins the column menu to the trailing edge for it to truncate against.
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).toBe('0');
+
+    unmount();
+
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).not.toBe('0');
+  });
+
   it('renders nothing when hideHeader is set', () => {
     const { container } = render(
       <HeaderCell {...baseProps} field={makeField({ config: { custom: { hideHeader: true } } })} direction="ASC" />
@@ -118,6 +147,37 @@ describe('HeaderCell', () => {
   it('renders with wrapped header text when wrapHeaderText is enabled', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+  });
+
+  it('renders an info tooltip when headerTooltip is set', () => {
+    render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({ config: { custom: { headerTooltip: 'Only sorts the results on display' } } })}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Only sorts the results on display' })).toBeInTheDocument();
+  });
+
+  it('does not render an info tooltip when headerTooltip is not set', () => {
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+  });
+
+  it('does not bubble info tooltip clicks to the column header', async () => {
+    const onHeaderClick = jest.fn();
+    render(
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <div onClick={onHeaderClick}>
+        <HeaderCell
+          {...baseProps}
+          field={makeField({ config: { custom: { headerTooltip: 'Only sorts the results on display' } } })}
+        />
+      </div>
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Only sorts the results on display' }));
+    expect(onHeaderClick).not.toHaveBeenCalled();
   });
 
   it('renders a filter button when the field is filterable', () => {
@@ -356,6 +416,32 @@ describe('HeaderCell', () => {
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
     });
 
+    it('tells assistive tech the filter icon expands a dialog, and whether it is open', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      const filterIcon = screen.getByLabelText(filterIconLabel);
+      expect(filterIcon).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(filterIcon).toHaveAttribute('aria-expanded', 'false');
+
+      await userEvent.click(filterIcon);
+
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(filterIcon).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('leaves the filter icon collapsed when the column menu opened the popup instead', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText('Column options for Field1'));
+      await userEvent.click(await screen.findByText('Update filter'));
+
+      // the popup is open, but anchored to the menu — the icon must not claim it
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
+    });
+
     it('does not sort the column when the filter icon is clicked', async () => {
       const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
       const onHeaderClick = jest.fn();
@@ -508,6 +594,30 @@ describe('HeaderCell', () => {
       // the filter button is the last element in the header; tabbing from the (earlier) label button should not trigger
       fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
       expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    // `table.refresh` puts the title, tooltip and active-filter icon in one wrapper, so "last child
+    // element of the header" is no longer the same thing as "last tab stop in the header".
+    const tooltipField = () => makeField({ config: { custom: { headerTooltip: 'Only counts displayed rows' } } });
+
+    it('does not call selectFirstCell when tabbing from the title ahead of the header tooltip', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    it('calls selectFirstCell when tabbing from the header tooltip, the last tab stop in the cell', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Only counts displayed rows' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls selectFirstCell when tabbing from the column menu, past the title and tooltip', () => {
+      const filterableTooltipField = () =>
+        makeField({ config: { custom: { filterable: true, headerTooltip: 'Only counts displayed rows' } } });
+      const { selectFirstCell } = renderInGrid({ field: filterableTooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Column options for Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
     });
 
     it('ignores the keydown when the event target is not an HTMLElement', () => {

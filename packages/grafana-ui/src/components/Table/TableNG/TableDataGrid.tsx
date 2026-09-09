@@ -184,7 +184,7 @@ export function TableDataGrid({
         {...commonDataGridProps}
         role={role}
         ref={gridRef}
-        className={styles.grid}
+        className={clsx(styles.grid, noPanelPadding && styles.firstColumnInset)}
         columns={columns}
         rows={rows}
         rowKeyGetter={rowKeyGetter}

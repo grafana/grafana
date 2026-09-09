@@ -298,4 +298,61 @@ describe('useOrganizeFields', () => {
       });
     });
   });
+
+  describe('time column header tooltip', () => {
+    test('sets headerTooltip on the time field when provided', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+          timeColumnHeaderTooltip: 'Only sorts the results on display',
+        })
+      );
+
+      await waitFor(() => {
+        expect(organizedFields.current.organizedFrame).not.toBeNull();
+      });
+
+      const timeField = organizedFields.current.organizedFrame?.fields.find(
+        (field) => field.name === LOGS_DATAPLANE_TIMESTAMP_NAME
+      );
+      const bodyField = organizedFields.current.organizedFrame?.fields.find(
+        (field) => field.name === LOGS_DATAPLANE_BODY_NAME
+      );
+      expect(timeField?.config.custom?.headerTooltip).toBe('Only sorts the results on display');
+      expect(bodyField?.config.custom?.headerTooltip).toBeUndefined();
+    });
+
+    test('does not set headerTooltip on the time field when omitted', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+        })
+      );
+
+      await waitFor(() => {
+        expect(organizedFields.current.organizedFrame).not.toBeNull();
+      });
+
+      const timeField = organizedFields.current.organizedFrame?.fields.find(
+        (field) => field.name === LOGS_DATAPLANE_TIMESTAMP_NAME
+      );
+      expect(timeField?.config.custom?.headerTooltip).toBeUndefined();
+    });
+  });
 });

@@ -33,7 +33,7 @@ const (
 func TeamSortFieldMapping() map[string]string {
 	return map[string]string{
 		resource.SEARCH_FIELD_TITLE: "name",
-		fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+		builders.TEAM_SEARCH_EMAIL:  "email",
 	}
 }
 

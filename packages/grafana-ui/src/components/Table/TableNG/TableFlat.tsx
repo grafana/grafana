@@ -13,7 +13,7 @@ import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
 import { ColumnVisibilitySidePanel } from './components/ColumnVisibilitySidePanel';
-import { COLUMN_SETTLE_MS, TABLE } from './constants';
+import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -28,7 +28,12 @@ import {
   useRowCompiler,
   useTypographyCtx,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -40,7 +45,6 @@ import {
 import {
   calculateFooterHeight,
   filterFieldsByHiddenColumns,
-  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
@@ -113,6 +117,12 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  // Row-height and column-width measurement must both see the same rendered value column-building
+  // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
+  // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
+  // object value to "[object Object]" — a single short line that never grows the row past one line,
+  // and that content-aware width sizes no wider than a plain short string column.
+  const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
     () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -169,8 +179,8 @@ export function TableFlat(props: TableNGProps) {
 
   // only reorder when the flag is on, so a bug here can't affect the flag-off table at all.
   const orderedVisibleFields = tableRefreshEnabled
-    ? orderFieldsByDisplayNames(visibleFields, columnOrder)
-    : visibleFields;
+    ? orderFieldsByDisplayNames(preparedFields, columnOrder)
+    : preparedFields;
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -341,10 +351,6 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
-  const applyToRowBgFn = useMemo(
-    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
-    [data.fields, getCellColorInlineStyles]
-  );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
@@ -373,7 +379,6 @@ export function TableFlat(props: TableNGProps) {
     typographyCtx,
     showTypeIcons,
     getActions: getCellActions,
-    sortColumns,
     tableRefreshEnabled,
     filter,
     enableColumnReorder: tableRefreshEnabled,
@@ -393,7 +398,6 @@ export function TableFlat(props: TableNGProps) {
     columnWidths: widths,
     fields: displayedFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
     noPanelPadding,
@@ -431,6 +435,7 @@ export function TableFlat(props: TableNGProps) {
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     pageSize,
+    noPanelPadding,
   });
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -455,7 +460,6 @@ export function TableFlat(props: TableNGProps) {
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -480,10 +484,11 @@ export function TableFlat(props: TableNGProps) {
       onTogglePin: tableRefreshEnabled ? handleTogglePin : undefined,
       onOpenColumnPanel: tableRefreshEnabled ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       pinnedColumns: tableRefreshEnabled ? pinnedColumnSet : undefined,
+      // the first column here is a field column, so it's the one carrying the panel-edge inset
+      firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -504,6 +509,7 @@ export function TableFlat(props: TableNGProps) {
       handleHideColumn,
       handleTogglePin,
       pinnedColumnSet,
+      noPanelPadding,
     ]
   );
 

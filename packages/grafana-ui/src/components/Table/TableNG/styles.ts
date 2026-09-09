@@ -10,6 +10,8 @@ import {
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
+  getPaginationChromeHeight,
+  PAGINATION_MARGIN,
   TABLE,
 } from './constants';
 import { type TableCellStyles } from './types';
@@ -49,12 +51,36 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
-const buildHeaderColors = (theme: GrafanaTheme2, transparent?: boolean, tableRefreshEnabled?: boolean) => {
-  const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-  const headerCellBackgroundColor = tableRefreshEnabled ? theme.colors.background.elevated : bgColor;
-  const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerCellBackgroundColor, 0.1);
-  const headerCellDragTargetBackgroundColor = theme.colors.emphasize(headerCellBackgroundColor, 0.05);
-  return { headerCellBackgroundColor, headerCellDraggingBackgroundColor, headerCellDragTargetBackgroundColor };
+// How far the `table.refresh` header background steps away from the background the rows sit on.
+// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
+// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
+// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
+// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
+// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
+// hair of `background.secondary`, the established "one step off white" surface.
+const HEADER_BACKGROUND_EMPHASIS = 0.04;
+
+// `table.refresh` drag states: react-data-grid paints the dragged column and its drop target with
+// solid colors, and both step off the header's own background so they still read as part of it.
+const HEADER_DRAGGING_EMPHASIS = 0.1;
+const HEADER_DRAG_TARGET_EMPHASIS = 0.05;
+
+// The background the grid's rows sit on. Shared so the header, its drag states and the settle
+// highlight all derive from one color rather than each recomputing it.
+const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
+  if (theme.flags.visualDesignRefresh) {
+    return transparent ? theme.colors.background.page : theme.components.panel.background;
+  }
+  return transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+};
+
+const getHeaderBackgroundColor = (
+  theme: GrafanaTheme2,
+  transparent?: boolean,
+  tableRefreshEnabled?: boolean
+): string => {
+  const bgColor = getGridBackgroundColor(theme, transparent);
+  return tableRefreshEnabled ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS) : bgColor;
 };
 
 export const getGridStyles = memoize(
@@ -65,11 +91,7 @@ export const getGridStyles = memoize(
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean
   ) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-    if (visualRefreshEnabled) {
-      bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
-    }
+    const bgColor = getGridBackgroundColor(theme, transparent);
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
     // unpredictable for background color cells
     const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
@@ -79,17 +101,23 @@ export const getGridStyles = memoize(
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
-    // `--rdg-header-background-color` needs to match the solid colors dragging/drag-over/settle use
-    // below — they're all derived from the same base color via buildHeaderColors rather than each
-    // computing it separately, so a themed header can't fall out of sync with its own drag states.
-    const { headerCellBackgroundColor, headerCellDraggingBackgroundColor, headerCellDragTargetBackgroundColor } =
-      buildHeaderColors(theme, transparent, tableRefreshEnabled);
+    const headerBackgroundColor = getHeaderBackgroundColor(theme, transparent, tableRefreshEnabled);
+    const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
+    const headerCellDragTargetBackgroundColor = theme.colors.emphasize(
+      headerBackgroundColor,
+      HEADER_DRAG_TARGET_EMPHASIS
+    );
+
+    // The expander column is the outer table's first column (see markEdgeColumns), so under
+    // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
+    // other first column — `gridNested` below has to know about it to stay flush with that column.
+    const nestedGridExpanderPaddingOffset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
 
     return {
       grid: css({
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
-        '--rdg-header-background-color': headerCellBackgroundColor,
+        '--rdg-header-background-color': headerBackgroundColor,
         '--rdg-border-color': borderColor,
         '--rdg-color': theme.colors.text.primary,
         '--rdg-summary-border-color': borderColor,
@@ -100,15 +128,21 @@ export const getGridStyles = memoize(
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        '--rdg-row-hover-background-color': transparent
-          ? theme.colors.background.primary
-          : theme.colors.background.secondary,
+        // Under `table.refresh` a hovered row takes the header's surface, so "one step off the row
+        // background" means one thing across the table. The old pair had the same blind spot the
+        // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
+        // light theme is white on near-white.
+        '--rdg-row-hover-background-color': tableRefreshEnabled
+          ? headerBackgroundColor
+          : transparent
+            ? theme.colors.background.primary
+            : theme.colors.background.secondary,
         '--rdg-row-selected-background-color': selectedRowColor,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
-        // TODO: magic 32px number is unfortunate. it would be better to have the content
-        // flow using flexbox rather than hard-coding this size via a calc
-        blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
+        // give the pagination controls their room back, so the grid and the pager together still fit
+        // the panel (see getPaginationChromeHeight)
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -120,8 +154,7 @@ export const getGridStyles = memoize(
           '&:last-child': {
             borderInlineEnd: 'none',
           },
-
-          '&[aria-selected="true"][role="columnheader"]': {
+          [`${SELECTED_CELL_SELECTOR}[role="columnheader"]`]: {
             outline: 'none',
           },
         },
@@ -129,16 +162,22 @@ export const getGridStyles = memoize(
         // add a box shadow on hover and selection for all body cells
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
           [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-          // selected cells should appear below hovered cells.
-          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
-          '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
+          // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
+          // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
+          // same specificity, so the hover rule has to come last for a cell that is both to land on
+          // the hover value.
+          [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 7 },
+          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
+          // react-data-grid rings the selected cell in the selection color. Once focus is gone that
+          // ring marks a cell the user can no longer see they are on, so leave the cell bare.
+          [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
         },
 
         '.rdg-cell.rdg-cell-frozen': {
           backgroundColor: 'var(--rdg-row-background-color)',
           zIndex: theme.zIndex.tooltip - 4,
+          [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
           ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
-          '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
         },
 
         // have to override styles for row selection to workaround safari styles workaround
@@ -213,17 +252,22 @@ export const getGridStyles = memoize(
             borderStartEndRadius: theme.shape.radius.default,
             overflow: 'hidden',
           },
-        }),
-
-        // The panel around the table drops its own padding so the header surface can bleed to the
-        // panel edges, which leaves the first column's content further left than the panel title.
-        // Scoped to rows that are *direct* children, so a nested table's own grid (which lives
-        // inside a cell) keeps the standard padding throughout.
-        ...(noPanelPadding && {
-          [`& > * > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
+          // The footer is the last row in the grid, so react-data-grid's per-cell bottom border
+          // draws a hairline along the table's own bottom edge with nothing below it to divide.
+          // Its top border (`--rdg-summary-border-*`) still separates it from the rows above.
+          '.rdg-bottom-summary-row > .rdg-cell': {
+            borderBlockEnd: 'none',
           },
         }),
+      }),
+      // The panel around the table drops its own padding so the header surface can bleed to the
+      // panel edges, which leaves the first column's content further left than the panel title.
+      // A class of its own rather than part of `grid`: a nested table's inner grid also carries
+      // `grid`, and only the outermost table's first column lines up with the panel title.
+      firstColumnInset: css({
+        [`& > * > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+          paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
+        },
       }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
@@ -231,10 +275,14 @@ export const getGridStyles = memoize(
         // intersects the viewport, never becomes relevant, and stays collapsed forever.
         contentVisibility: 'visible',
         height: '100%',
-        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
+        // The expander column is tagged `FIRST_COLUMN_CLASS` (see markEdgeColumns), so under
+        // `noPanelPadding` its own paddingInlineStart grows by `FIRST_COLUMN_EXTRA_PADDING` too —
+        // subtract it back out here so this nested grid still starts flush with the expander
+        // column's edge instead of drifting right by that same amount.
+        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - nestedGridExpanderPaddingOffset - 1}px)`,
         overflowX: 'scroll',
         overflowY: 'hidden',
-        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - nestedGridExpanderPaddingOffset - 1,
         marginBlock: TABLE.CELL_PADDING,
         // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
         '&[aria-expanded="false"]': {
@@ -242,7 +290,7 @@ export const getGridStyles = memoize(
         },
       }),
       cellNested: css({
-        '&[aria-selected=true]': { outline: 'none' },
+        [SELECTED_CELL_SELECTOR]: { outline: 'none' },
         '&:hover': { backgroundColor: 'transparent' },
       }),
       noDataNested: css({
@@ -277,7 +325,11 @@ export const getGridStyles = memoize(
         alignItems: 'center',
         display: 'flex',
         justifyContent: 'center',
-        marginTop: '8px',
+        // equal to theme.spacing(1), but taken from the same constant the grid reserves against so the
+        // two can't drift apart. Only `noPanelPadding` gets a bottom margin: with the panel's own
+        // padding in place, the controls already have that space below them.
+        marginBlockStart: PAGINATION_MARGIN,
+        marginBlockEnd: noPanelPadding ? PAGINATION_MARGIN : 0,
         width: '100%',
       }),
       paginationSummary: css({
@@ -304,19 +356,17 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
   })
 );
 
-// `table.refresh`: a brief highlight applied to a column's header after it's reordered or pinned,
-// so the change is noticeable even though the column itself doesn't move far. A plain background
-// color rather than a @keyframes animation: the header cell's own `background-color` transition
-// (see the `.rdg-header-row > .rdg-cell` rule above) picks this up and animates both in and back
-// out on its own, and — unlike a keyframe animation, which restarts from a fixed "from" color
-// whenever this class's underlying CSS regenerates under a new theme — a transition just retargets
-// smoothly from whatever's currently rendered, so switching themes mid-highlight doesn't jump.
-export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) => {
-  const { headerCellDragTargetBackgroundColor } = buildHeaderColors(theme, false, tableRefreshEnabled);
-  return css({
-    backgroundColor: headerCellDragTargetBackgroundColor,
-  });
-});
+// The brief highlight a column carries after it lands from a reorder or a pin. Same color the drop
+// target uses, so the settle reads as the tail end of the drag rather than a new signal; the
+// transition it fades over lives on the header cell itself (see getGridStyles).
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
+  css({
+    backgroundColor: theme.colors.emphasize(
+      getHeaderBackgroundColor(theme, false, tableRefreshEnabled),
+      HEADER_DRAG_TARGET_EMPHASIS
+    ),
+  })
+);
 
 export const getDefaultCellStyles: TableCellStyles = memoize(
   (theme, { textAlign, shouldOverflow, maxHeight }) =>
@@ -408,7 +458,7 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     overflow: 'hidden',
     padding: theme.spacing(1),
     width: 'inherit',
@@ -424,14 +474,24 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
   }),
 }));
 
+/**
+ * A cell react-data-grid considers selected, whether or not the grid still has focus. Use this for
+ * resets and stacking that have to hold for as long as the selection does — see ACTIVE_CELL_SELECTORS
+ * for the visual treatment that follows focus instead.
+ */
+const SELECTED_CELL_SELECTOR = '&[aria-selected=true]';
+
 const ACTIVE_CELL_SELECTORS = {
   hover: {
     nested: '.rdg-cell:hover &',
     normal: '&:hover',
   },
+  // react-data-grid keeps a cell selected after the grid loses focus, and offers no API to clear it
+  // (`selectCell` rejects any out-of-bounds position), so gate on `:focus-within` to release the
+  // expanded state when the user clicks away from the table.
   selected: {
-    nested: '[aria-selected=true] &',
-    normal: '&[aria-selected=true]',
+    nested: '[aria-selected=true]:focus-within &',
+    normal: `${SELECTED_CELL_SELECTOR}:focus-within`,
   },
 } as const;
 

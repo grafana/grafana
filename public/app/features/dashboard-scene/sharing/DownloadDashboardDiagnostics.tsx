@@ -26,6 +26,7 @@ import {
 import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type SceneShareTabState, type ShareView } from './types';
 
@@ -72,14 +73,6 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
   return undefined;
 }
 
-// panel.state.key is "panel-<id>"; parse the numeric id without importing utils (import cycle, as above).
-// Mirrors getPanelIdForVizPanel in dashboard-scene/utils/utils.ts, including its non-null assertion:
-// every VizPanel in the scene graph is keyed this way, so an undefined key indicates a real bug
-// upstream rather than something to paper over with a fallback id.
-function panelIdFrom(panel: VizPanel): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
-}
-
 // Collects every data panel's queries (with the runner-level datasource filled in, hidden queries
 // dropped, and template/scoped variables interpolated, mirroring the single-panel view) into the
 // whole-dashboard request payload. Panels with no active queries (e.g. text panels) are omitted.
@@ -119,7 +112,7 @@ async function collectDashboardPanels(dashboard: DashboardScene): Promise<Dashbo
       // save-model elements), so the id has to match that source panel for the backend to resolve its
       // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
       return {
-        id: panelIdFrom(panel),
+        id: getPanelIdForVizPanel(panel),
         title: panel.state.title ?? '',
         from: String(timeRange.from.valueOf()),
         to: String(timeRange.to.valueOf()),

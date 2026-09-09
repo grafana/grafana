@@ -179,6 +179,9 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       }
 
       scene.setState({ ...newState, editPanel: undefined });
+      // Dashboard state is replaced in place losing all edit-only properties.
+      // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
+      scene.state.body.editModeChanged?.(true);
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that

@@ -242,6 +242,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
 	selectFields []string,
+	fieldValueSchema *fieldValueResultSchema,
 	stats *resource.SearchStats,
 	response *resourcepb.ResourceSearchResponse,
 	trashAuthz *resource.TrashAuthorizer,
@@ -412,7 +413,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
-	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
+	return response, b.finalizePostFilter(ctx, response, page, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 }
 
@@ -469,7 +470,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearchRequest_Facet, trash bool) []string {
 	fields := make([]string, 0, len(facets)+2)
 	for _, facet := range facets {
-		field := b.searchFields.storedFacetFields[facet.Field]
+		field := b.searchFields.storedFacetField(facet.Field)
 		if field != "" && !slices.Contains(fields, field) {
 			fields = append(fields, field)
 		}
@@ -489,7 +490,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	stats *resource.SearchStats,
 	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
-	agg := newFacetAggregator(facets, b.searchFields.storedFacetFields)
+	agg := newFacetAggregator(facets, b.searchFields.storedFacetField)
 	cfg := b.postRankAuthz
 	maxCandidates := int64(cfg.FacetSampleSize)
 	var candidates int64
@@ -581,6 +582,7 @@ func (b *bleveIndex) finalizePostFilter(
 	response *resourcepb.ResourceSearchResponse,
 	page search.DocumentMatchCollection,
 	selectFields []string,
+	fieldValueSchema *fieldValueResultSchema,
 	sort search.SortOrder,
 	req *resourcepb.ResourceSearchRequest,
 	firstRes *bleve.SearchResult,
@@ -627,11 +629,9 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	results, err := b.hitsToTable(ctx, selectFields, page, sort, req.Explain)
-	if err != nil {
+	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
 		return err
 	}
-	response.Results = results
 	if wantFacets {
 		// Counts are the exact authorized term counts within the bounded sample;
 		// see facetAggregator.build for why we don't extrapolate.
@@ -646,7 +646,7 @@ func (b *bleveIndex) finalizePostFilter(
 type facetAggregator struct {
 	fields map[string]*resourcepb.ResourceSearchRequest_Facet
 	// requested field -> stored Bleve field
-	storedFields map[string]string
+	storedField func(string) string
 	// facet name -> term -> count
 	counts map[string]map[string]int64
 	// facet name -> number of authorized hits missing that field
@@ -657,14 +657,14 @@ type facetAggregator struct {
 
 func newFacetAggregator(
 	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
-	storedFields map[string]string,
+	storedField func(string) string,
 ) *facetAggregator {
 	a := &facetAggregator{
-		fields:       facets,
-		storedFields: storedFields,
-		counts:       make(map[string]map[string]int64, len(facets)),
-		missing:      make(map[string]int64, len(facets)),
-		total:        make(map[string]int64, len(facets)),
+		fields:      facets,
+		storedField: storedField,
+		counts:      make(map[string]map[string]int64, len(facets)),
+		missing:     make(map[string]int64, len(facets)),
+		total:       make(map[string]int64, len(facets)),
 	}
 	for name := range facets {
 		a.counts[name] = make(map[string]int64)
@@ -674,7 +674,7 @@ func newFacetAggregator(
 
 func (a *facetAggregator) add(doc *search.DocumentMatch) {
 	for name, f := range a.fields {
-		v, ok := doc.Fields[a.storedFields[f.Field]]
+		v, ok := doc.Fields[a.storedField(f.Field)]
 		if !ok || v == nil {
 			a.missing[name]++
 			continue

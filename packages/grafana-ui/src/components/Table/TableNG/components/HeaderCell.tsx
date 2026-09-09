@@ -11,6 +11,7 @@ import { type Column, type SortDirection } from '@grafana/react-data-grid';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
@@ -18,7 +19,7 @@ import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { HEADER_DRAG_HANDLE_WIDTH } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName, isColumnMenuVisible } from '../utils';
+import { getDisplayName, isColumnMenuVisible, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -54,6 +55,10 @@ interface HeaderCellProps {
   onOpenColumnPanel?: () => void;
 }
 
+// Everything the header cell can put in the tab order: buttons, plus anything opting in with a
+// tabindex. The filter popup and column menu portal out of the cell, so their contents never match.
+const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   direction,
@@ -77,13 +82,15 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
-  const sortable = field.config.custom?.sortable !== false;
+  const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
+  const headerTooltip = field.config.custom?.headerTooltip;
+
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
-  const hasActiveFilter = tableRefreshEnabled && filterable && filter[filterKey]?.filtered != null;
+  const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
   // Whether hide/pin apply to this column at all — the "Manage columns" item opens the sidebar for
   // reorder too, so it needs its own broader check rather than reusing this alone.
   const canManageColumns = Boolean(onHideColumn) || Boolean(onTogglePin);
@@ -128,33 +135,48 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     return null;
   }
 
-  const onKeyDown = disableKeyboardEvents
-    ? undefined
-    : (ev: React.KeyboardEvent) => {
-        // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
-        // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
-        // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
-        ev.stopPropagation();
+  let onKeyDown: React.KeyboardEventHandler | undefined;
+  if (!disableKeyboardEvents) {
+    onKeyDown = (ev: React.KeyboardEvent) => {
+      // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
+      // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
+      // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
+      ev.stopPropagation();
 
-        if (!(ev.key === 'Tab' && !ev.shiftKey)) {
-          return;
-        }
+      if (!(ev.key === 'Tab' && !ev.shiftKey)) {
+        return;
+      }
 
-        const tableTabbedElement = ev.target;
-        if (!(tableTabbedElement instanceof HTMLElement)) {
-          return;
-        }
+      const tableTabbedElement = ev.target;
+      if (!(tableTabbedElement instanceof HTMLElement)) {
+        return;
+      }
 
-        const headerContent = ref.current;
-        const headerCell = ref.current?.parentNode;
-        const row = headerCell?.parentNode;
-        const isLastElementInHeader =
-          headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+      const headerContent = ref.current;
+      const headerCell = headerContent?.parentNode;
+      const row = headerCell?.parentNode;
+      if (!headerContent || headerCell !== row?.lastElementChild) {
+        return;
+      }
 
-        if (isLastElementInHeader) {
-          selectFirstCell();
-        }
-      };
+      // Compare against the last tabbable element itself rather than assuming the header's last child
+      // element holds it: under `table.refresh` the title, tooltip and active-filter icon share one
+      // wrapper, so tabbing from the title would otherwise look like tabbing out of the header and
+      // skip the controls after it.
+      const tabbables = headerContent.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR);
+      if (tabbables[tabbables.length - 1] === tableTabbedElement) {
+        selectFirstCell();
+      }
+    };
+  }
+
+  const sortArrow = direction && (
+    <Icon
+      className={clsx(styles.headerCellIcon, tableRefreshEnabled && styles.headerCellSortIcon)}
+      size="lg"
+      name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+    />
+  );
 
   const label = (
     <>
@@ -163,25 +185,42 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       )}
       <button
         tabIndex={0}
-        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelPrimary)}
+        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelRefreshed)}
         title={displayName}
       >
         {displayName}
-        {direction && (
-          <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
-        )}
+        {!tableRefreshEnabled && sortArrow}
       </button>
+      {/* The refreshed label can shrink to ellipsize a long title, and it clips its own overflow, so
+          the arrow has to sit outside it to survive — same reason the active-filter icon does. */}
+      {tableRefreshEnabled && sortArrow}
+      {headerTooltip && (
+        <IconButton
+          name="info-circle"
+          size="sm"
+          tooltip={headerTooltip}
+          className={styles.headerTooltipIcon}
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        />
+      )}
       {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
           its own; it sits with the sort arrow because both report the column's state. It doubles as a
           shortcut back into the filter popup, so the filter can be adjusted or cleared without going
           through the menu. Sized "sm" like the type icon rather than "lg" like the arrow: the funnel
           fills its box where the arrow is a thin glyph, so the arrow's nominal size reads far bigger. */}
-      {hasActiveFilter && (
+      {tableRefreshEnabled && hasActiveFilter && (
         <button
           ref={filterIconRef}
           type="button"
           className={styles.headerCellFilterButton}
           aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+          aria-haspopup="dialog"
+          // The popup is shared with the column menu's "Filter values" item, so `isPopoverVisible`
+          // alone would have this button claim a popup that the menu opened. `filterAnchor` is
+          // whichever control opened it, which is what makes the distinction.
+          aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
           data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
           onClick={(ev) => {
             // the header cell itself sorts on click, so this must not bubble
@@ -361,12 +400,25 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
   }),
   // `table.refresh` gives the header its own background, so the label no longer needs to be
   // de-emphasised against the body rows to read as a header — it takes the body text colour.
-  headerCellLabelPrimary: css({
-    label: 'headerCellLabelPrimary',
+  headerCellLabelRefreshed: css({
+    label: 'headerCellLabelRefreshed',
     color: theme.colors.text.primary,
+    // A flex item won't shrink below its own min-content width by default, which for a `nowrap`
+    // label is the whole title — so `overflow: hidden` and the ellipsis above never engage and the
+    // title runs under the column menu pinned to the trailing edge. Allow it to shrink instead.
+    minWidth: 0,
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  // The sort arrow reports the column's state, so it keeps its full size while the title beside it
+  // gives up width to the trailing controls.
+  headerCellSortIcon: css({
+    label: 'headerCellSortIcon',
+    flexShrink: 0,
+  }),
+  headerTooltipIcon: css({
+    cursor: 'default',
   }),
   // Wraps the filter icon without changing how it reads: no padding, border or background, so the
   // button box is exactly the icon and the header's spacing and reserved width are unaffected.

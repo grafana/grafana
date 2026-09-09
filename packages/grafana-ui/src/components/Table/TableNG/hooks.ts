@@ -32,7 +32,13 @@ import { type MatcherScope } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING, HEADER_ICON_SPACE, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_ICON_SPACE,
+  getPaginationChromeHeight,
+  TABLE,
+} from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -57,6 +63,7 @@ import {
   buildCellHeightMeasurers,
   applyFilter,
   compileFrameToRecords,
+  isSortableField,
   createTypographyContext,
   extractPixelValue,
 } from './utils';
@@ -146,6 +153,8 @@ export interface PaginatedRowsOptions {
   paginationHeight?: number;
   enabled: boolean;
   hasNestedFrames?: boolean;
+  /** Whether the panel has dropped its own padding — the pagination controls then need their own bottom margin. */
+  noPanelPadding?: boolean;
   /** When set to a positive value, fixes the number of rows per page instead of deriving it from the panel height. */
   pageSize?: number;
 }
@@ -162,12 +171,19 @@ export interface PaginatedRowsResult {
   smallPagination: boolean;
 }
 
-// hand-measured. pagination height is 30px, plus 8px top margin
-const PAGINATION_HEIGHT = 38;
-
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, headerHeight, footerHeight, rowHeight, enabled, hasNestedFrames, pageSize }: PaginatedRowsOptions
+  {
+    height,
+    width,
+    headerHeight,
+    footerHeight,
+    rowHeight,
+    enabled,
+    hasNestedFrames,
+    pageSize,
+    noPanelPadding,
+  }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
@@ -223,7 +239,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
+      const rowAreaHeight = height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding);
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
       // ensure at least one row per page is displayed
       rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -243,7 +259,7 @@ export function usePaginatedRows(
       pageRangeStart,
       pageRangeEnd,
     };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize]);
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize, noPanelPadding]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
@@ -348,7 +364,6 @@ interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
-  sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
@@ -358,7 +373,6 @@ export function useHeaderHeight({
   fields,
   enabled,
   columnWidths,
-  sortColumns,
   typographyCtx,
   showTypeIcons = false,
   noPanelPadding = false,
@@ -382,8 +396,9 @@ export function useHeaderHeight({
         if (field.config?.custom?.filterable) {
           width -= HEADER_ICON_SPACE;
         }
-        // sorting icon
-        if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
+        // sorting icon. reserved on every sortable column, not just the currently-sorted one, so a
+        // wrapped header doesn't gain a line (shifting the whole grid down) the moment it's sorted.
+        if (isSortableField(field)) {
           width -= HEADER_ICON_SPACE;
         }
         // type icon
@@ -393,7 +408,7 @@ export function useHeaderHeight({
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, sortColumns, showTypeIcons, noPanelPadding]
+    [fields, columnWidths, showTypeIcons, noPanelPadding]
   );
 
   const headerHeight = useMemo(() => {
@@ -738,7 +753,6 @@ export interface ContentAwareWidths {
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
-  sortColumns?: SortColumn[];
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   enableColumnReorder?: boolean;
@@ -770,7 +784,6 @@ interface UseContentAwareWidthsOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
-  sortColumns?: SortColumn[];
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   enableColumnReorder?: boolean;
@@ -788,7 +801,6 @@ export function useContentAwareWidths({
   typographyCtx,
   showTypeIcons = false,
   getActions,
-  sortColumns,
   tableRefreshEnabled = false,
   filter,
   enableColumnReorder = false,
@@ -814,7 +826,6 @@ export function useContentAwareWidths({
             headerTypographyCtx,
             showTypeIcons,
             getActions,
-            sortColumns,
             tableRefreshEnabled,
             filter,
             enableColumnReorder,
@@ -828,7 +839,6 @@ export function useContentAwareWidths({
       headerTypographyCtx,
       showTypeIcons,
       getActions,
-      sortColumns,
       filter,
       tableRefreshEnabled,
       enableColumnReorder,

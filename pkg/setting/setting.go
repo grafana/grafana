@@ -331,6 +331,7 @@ type Cfg struct {
 	PanelSeriesLimit                 int
 	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
+	ReportRenderQueryGracePeriod     time.Duration
 
 	// Auth
 	LoginCookieName                   string
@@ -503,6 +504,7 @@ type Cfg struct {
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 	MeticulousAIRecordingToken          string
+	PluginImportTelemetryPackages       []string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -1634,6 +1636,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
+	cfg.ReportRenderQueryGracePeriod = dashboards.Key("report_render_query_grace_period").MustDuration(3 * time.Second)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1681,6 +1684,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
+	cfg.PluginImportTelemetryPackages = util.SplitString(analytics.Key("plugin_import_telemetry_packages").MustString(""))
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")

@@ -10,7 +10,7 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
   const hoverColor = theme.colors.accent.background;
   const clickTargetSize = theme.spacing(1);
   const handlebarThickness = 2;
-  const handlebarWidth = theme.spacing(4);
+  const handlebarWidth = theme.spacing(6);
   let verticalOffset = '50%';
   let horizontalOffset = '50%';
 

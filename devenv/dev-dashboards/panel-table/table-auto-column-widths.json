@@ -1011,8 +1011,8 @@
         "kind": "Panel",
         "spec": {
           "id": 6,
-          "title": "JSON auto cells",
-          "description": "A FieldType.other column renders as JSON via the Auto cell; content-aware widths size it to its content (widest line when wrapped, whole value otherwise).",
+          "title": "other + Auto cell (unwrapped) \u2014 hover a cell to reveal it",
+          "description": "A FieldType.other column pretty-prints as JSON through the Auto cell. Unwrapped, the block collapses to one truncated line; hovering expands the cell in place, bounded so a large value cannot escape the panel.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1030,7 +1030,7 @@
                       "datasource": null,
                       "spec": {
                         "scenarioId": "raw_frame",
-                        "rawFrameContent": "[{\"refId\":\"A\",\"fields\":[{\"name\":\"service\",\"type\":\"string\",\"values\":[\"gateway\",\"auth-service\",\"billing-worker\",\"notifications\"]},{\"name\":\"metadata\",\"type\":\"other\",\"typeInfo\":{\"frame\":\"json.RawMessage\"},\"values\":[{\"region\":\"us-east-1\",\"replicas\":3,\"healthy\":true},{\"region\":\"eu-west-1\",\"replicas\":5,\"healthy\":false,\"lastError\":\"connection timeout after 30s\",\"retries\":4},{\"region\":\"ap-south-1\",\"replicas\":1,\"healthy\":true,\"notes\":\"scheduled maintenance window 02:00-04:00 UTC\"},{\"region\":\"us-west-2\",\"replicas\":2,\"healthy\":true}]}]}]"
+                        "rawFrameContent": "[{\"refId\":\"A\",\"fields\":[{\"name\":\"service\",\"type\":\"string\",\"values\":[\"gateway\",\"auth-service\",\"billing-worker\",\"notifications\",\"search-indexer\"]},{\"name\":\"metadata\",\"type\":\"other\",\"typeInfo\":{\"frame\":\"json.RawMessage\"},\"values\":[{\"region\":\"us-east-1\",\"replicas\":3,\"healthy\":true},{\"region\":\"eu-west-1\",\"replicas\":5,\"healthy\":false,\"lastError\":\"connection timeout after 30s\",\"retries\":4},{\"region\":\"ap-south-1\",\"replicas\":1,\"healthy\":true,\"notes\":\"scheduled maintenance window 02:00-04:00 UTC\"},{\"region\":\"us-west-2\",\"replicas\":2,\"healthy\":true},{\"region\":\"us-central-1\",\"replicas\":12,\"healthy\":false,\"deployment\":{\"image\":\"registry.internal.example.com/observability/search-indexer@sha256:9f2b8c1d4e6a7b3c5d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c\",\"resources\":{\"cpu\":\"4000m\",\"memory\":\"16Gi\",\"ephemeralStorage\":\"64Gi\"},\"env\":[{\"name\":\"INDEX_SHARDS\",\"value\":\"48\"},{\"name\":\"REPLICA_FACTOR\",\"value\":\"3\"}]},\"lastError\":\"index rebuild aborted after 4h12m: shard 37 failed its consistency check against the primary replica and the retry budget was exhausted\"}]}]}]"
                       }
                     }
                   }
@@ -1053,6 +1053,118 @@
               "fieldConfig": {
                 "defaults": {
                   "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "json-cells-view": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Explicit JSON View cell (unwrapped)",
+          "description": "Identical rendering to the Auto cell above \u2014 both resolve to the same JSON styles, so the two panels should look the same.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": null,
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"refId\":\"A\",\"fields\":[{\"name\":\"service\",\"type\":\"string\",\"values\":[\"gateway\",\"auth-service\",\"billing-worker\",\"notifications\",\"search-indexer\"]},{\"name\":\"metadata\",\"type\":\"other\",\"typeInfo\":{\"frame\":\"json.RawMessage\"},\"values\":[{\"region\":\"us-east-1\",\"replicas\":3,\"healthy\":true},{\"region\":\"eu-west-1\",\"replicas\":5,\"healthy\":false,\"lastError\":\"connection timeout after 30s\",\"retries\":4},{\"region\":\"ap-south-1\",\"replicas\":1,\"healthy\":true,\"notes\":\"scheduled maintenance window 02:00-04:00 UTC\"},{\"region\":\"us-west-2\",\"replicas\":2,\"healthy\":true},{\"region\":\"us-central-1\",\"replicas\":12,\"healthy\":false,\"deployment\":{\"image\":\"registry.internal.example.com/observability/search-indexer@sha256:9f2b8c1d4e6a7b3c5d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c\",\"resources\":{\"cpu\":\"4000m\",\"memory\":\"16Gi\",\"ephemeralStorage\":\"64Gi\"},\"env\":[{\"name\":\"INDEX_SHARDS\",\"value\":\"48\"},{\"name\":\"REPLICA_FACTOR\",\"value\":\"3\"}]},\"lastError\":\"index rebuild aborted after 4h12m: shard 37 failed its consistency check against the primary replica and the retry budget was exhausted\"}]}]}]"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.0.0-local",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": false,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "cellOptions": {
+                      "type": "json-view"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "json-cells-wrapped": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Wrapped (wrapText) \u2014 indentation must be visible",
+          "description": "With wrapping on the cell renders as pre-wrap: newlines preserved, indentation preserved, and lines too long for the column soft-wrap instead of being clipped.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": null,
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"refId\":\"A\",\"fields\":[{\"name\":\"service\",\"type\":\"string\",\"values\":[\"gateway\",\"auth-service\",\"billing-worker\",\"notifications\",\"search-indexer\"]},{\"name\":\"metadata\",\"type\":\"other\",\"typeInfo\":{\"frame\":\"json.RawMessage\"},\"values\":[{\"region\":\"us-east-1\",\"replicas\":3,\"healthy\":true},{\"region\":\"eu-west-1\",\"replicas\":5,\"healthy\":false,\"lastError\":\"connection timeout after 30s\",\"retries\":4},{\"region\":\"ap-south-1\",\"replicas\":1,\"healthy\":true,\"notes\":\"scheduled maintenance window 02:00-04:00 UTC\"},{\"region\":\"us-west-2\",\"replicas\":2,\"healthy\":true},{\"region\":\"us-central-1\",\"replicas\":12,\"healthy\":false,\"deployment\":{\"image\":\"registry.internal.example.com/observability/search-indexer@sha256:9f2b8c1d4e6a7b3c5d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c\",\"resources\":{\"cpu\":\"4000m\",\"memory\":\"16Gi\",\"ephemeralStorage\":\"64Gi\"},\"env\":[{\"name\":\"INDEX_SHARDS\",\"value\":\"48\"},{\"name\":\"REPLICA_FACTOR\",\"value\":\"3\"}]},\"lastError\":\"index rebuild aborted after 4h12m: shard 37 failed its consistency check against the primary replica and the retry budget was exhausted\"}]}]}]"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.0.0-local",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": false,
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "wrapText": true
+                  }
                 },
                 "overrides": []
               }
@@ -1196,10 +1308,36 @@
                         "x": 0,
                         "y": 0,
                         "width": 24,
-                        "height": 12,
+                        "height": 10,
                         "element": {
                           "kind": "ElementReference",
                           "name": "json-cells"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 10,
+                        "width": 24,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "json-cells-view"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 20,
+                        "width": 24,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "json-cells-wrapped"
                         }
                       }
                     }

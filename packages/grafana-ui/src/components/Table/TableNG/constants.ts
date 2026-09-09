@@ -24,6 +24,12 @@ export const TABLE = {
   NESTED_NO_DATA_HEIGHT: 60,
   BORDER_RIGHT: 1,
   SCROLLBAR_AFFORDANCE: 16,
+  // Bounds on a JSON cell expanded by hover. Unlike a long string, a JSON blob can be hundreds of
+  // lines and thousands of columns wide, so an unbounded expansion escapes the panel and puts the
+  // content out of reach again. Capping the width lets `pre-wrap` wrap instead of growing, and the
+  // height cap keeps the overlay scrollable in place; the inspector remains the full-value view.
+  JSON_OVERFLOW_MAX_WIDTH: 600,
+  JSON_OVERFLOW_MAX_HEIGHT: '40vh',
 };
 
 /**
@@ -53,6 +59,30 @@ const PANEL_TITLE_INSET = 12;
  */
 export const FIRST_COLUMN_EXTRA_PADDING = PANEL_TITLE_INSET - TABLE.CELL_PADDING;
 
+/**
+ * The pagination row's own height. Hand-measured rather than a token: it comes out of the
+ * `size="sm"` Pagination buttons (24px) plus the 5px bottom margin on the list items that hold
+ * them, rounded up to a whole pixel.
+ */
+const PAGINATION_ROW_HEIGHT = 30;
+
+/** Gap between the grid and the pagination controls, and below them when they need one. */
+export const PAGINATION_MARGIN = 8;
+
+/**
+ * Vertical space the pagination controls take under the grid: the row itself, the margin above it,
+ * and a matching margin below it only when the panel has dropped its own padding (`noPanelPadding`)
+ * and so has none of its own left to sit on.
+ *
+ * One helper because three places have to agree on the number — `paginationContainer`'s margins,
+ * the grid's `blockSize` reservation, and `usePaginatedRows`, which subtracts it from the panel
+ * height before working out how many rows fit on a page. Those were three separate numbers derived
+ * three different ways, and they no longer added up: the grid reserved 38px against a 37px chrome,
+ * so the grid plus the controls overflowed the panel.
+ */
+export const getPaginationChromeHeight = (noPanelPadding = false): number =>
+  PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * (noPanelPadding ? 2 : 1);
+
 // `table.refresh`: how long a column's "settle" highlight plays after it's reordered or pinned.
 export const COLUMN_SETTLE_MS = 280;
 
@@ -63,14 +93,21 @@ const HEADER_ICON_WIDTH = 18;
 const HEADER_ICON_GAP = 4;
 export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;
 
-// Space the `table.refresh` header column menu reserves. It replaces the inline filter icon, but is
-// an IconButton rather than a bare Icon, so it needs its own measurement: a size="sm" IconButton is
-// a 14px glyph plus the 4px trailing margin the component sets on itself. Keep in step with the
-// `size` prop in HeaderCellMenu — changing one without the other silently mis-sizes auto columns.
-// The menu button stays in flow while hover-hidden (it fades with opacity rather than unmounting),
-// so this reserves the same space whether or not it happens to be visible.
-const HEADER_MENU_BUTTON_WIDTH = 14 + 4;
-export const HEADER_MENU_SPACE = HEADER_MENU_BUTTON_WIDTH + HEADER_ICON_GAP;
+// Space one of the header's IconButtons reserves. They need their own measurement rather than
+// reusing HEADER_ICON_SPACE: a size="sm" IconButton is a 14px glyph plus the 4px trailing margin the
+// component sets on itself, where the icons above are bare `Icon`s. Keep in step with the `size`
+// props at the call sites — changing one without this silently mis-sizes auto columns.
+const HEADER_ICON_BUTTON_WIDTH = 14 + 4;
+const HEADER_ICON_BUTTON_SPACE = HEADER_ICON_BUTTON_WIDTH + HEADER_ICON_GAP;
+
+// The `table.refresh` column menu, which replaces the classic header's inline filter icon. It stays
+// in flow while hover-hidden (it fades with opacity rather than unmounting), so this reserves the
+// same space whether or not it happens to be visible.
+export const HEADER_MENU_SPACE = HEADER_ICON_BUTTON_SPACE;
+
+// The info button a column with `headerTooltip` set renders next to its label. Always in flow, and
+// in both the classic and refreshed headers.
+export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
 
 // Space the `table.refresh` reorder drag handle reserves before the label. It's a bare `Icon` at
 // default size="md" (16px) rather than an IconButton, so unlike the menu button it has no

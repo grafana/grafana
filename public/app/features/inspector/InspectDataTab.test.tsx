@@ -260,9 +260,11 @@ describe('InspectDataTab', () => {
       // previously cached displayName (see fieldOverrides.ts) — the fix must re-cache after that,
       // not before, or the pre-cache never survives to the frame TableNG actually renders.
       render(
-        <InspectDataTab
-          {...createProps({ useTableNG: true, options: { withTransforms: false, withFieldConfig: true } })}
-        />
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab
+            {...createProps({ useTableNG: true, options: { withTransforms: false, withFieldConfig: true } })}
+          />
+        </OpenFeatureProvider>
       );
 
       expect(dataArrivedWithCachedDisplayNames).toBe(true);
