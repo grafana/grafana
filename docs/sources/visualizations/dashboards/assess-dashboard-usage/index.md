@@ -150,7 +150,7 @@ You can sort the dashboards by:
 
 Grafana updates the insights data behind these sort options every 24 hours, so the values don't include views or errors from the current day.
 
-**Views total** and **Errors total** are aggregate rollups.
+**Views total** and **Errors total** are aggregates.
 Depending on how long your instance has been collecting insights data, they might not cover the entire lifetime of a dashboard.
 
 To sort by activity that tracks more closely to the present, use **Views 30 days**, **Errors 30 days**, or [visualize the daily usage insights data](#visualize-usage-insights-data).
