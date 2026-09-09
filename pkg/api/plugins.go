@@ -303,8 +303,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 
 	content, err := hs.pluginMarkdown(c.Req.Context(), pluginID, p.Info.Version, name)
 	if err != nil {
-		var notFound plugins.NotFoundError
-		if errors.As(err, &notFound) {
+		if notFound, ok := errors.AsType[plugins.NotFoundError](err); ok {
 			return response.Error(http.StatusNotFound, notFound.Error(), nil)
 		}
 
@@ -483,12 +482,10 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
 	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {
-		var dupeErr plugins.DuplicateError
-		if errors.As(err, &dupeErr) {
+		if _, ok := errors.AsType[plugins.DuplicateError](err); ok {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var clientError repo.ErrResponse4xx
-		if errors.As(err, &clientError) {
+		if clientError, ok := errors.AsType[repo.ErrResponse4xx](err); ok {
 			return response.Error(clientError.StatusCode(), clientError.Message(), err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
