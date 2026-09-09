@@ -66,7 +66,8 @@
 /.github/workflows/sbom-on-release.yml @grafana/security
 
 # Backend code
-# go.mod reviewers come from // @team comments via .github/workflows/modowners-reviewers.yml
+# Reviewers come from // @team comments via .github/workflows/modowners-reviewers.yml.
+# Empty owners so GitHub does not request a squad. Same pattern as the generated API clients below.
 /go.mod
 /go.sum
 /go.work @grafana/grafana-app-platform-squad
