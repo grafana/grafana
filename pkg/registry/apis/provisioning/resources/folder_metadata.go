@@ -189,7 +189,7 @@ func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath,
 		// file does. tracing.Error (not RecordError) sets the span status to
 		// codes.Error so these show up in status-based trace queries.
 		if outcome == folderReadOutcomeInvalid || outcome == folderReadOutcomeError {
-			tracing.Error(span, err)
+			_ = tracing.Error(span, err)
 		}
 		span.End()
 		folderMetadataMetrics.recordRead(repo, start, err)
