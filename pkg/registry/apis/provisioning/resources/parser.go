@@ -218,7 +218,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
 	if err != nil {
-		return nil, fmt.Errorf("get meta accessor: %w", err)
+		return nil, NewResourceValidationError(fmt.Errorf("get meta accessor: %w", err))
 	}
 	obj := parsed.Obj
 

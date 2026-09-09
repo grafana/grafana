@@ -59,6 +59,21 @@ func TestParser(t *testing.T) {
 		require.Contains(t, err.Error(), "resource validation failed")
 	})
 
+	t.Run("malformed metadata", func(t *testing.T) {
+		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Data: []byte(`apiVersion: dashboard.grafana.app/v1
+kind: Dashboard
+metadata: "not-an-object"
+spec: {}`),
+		})
+		require.Error(t, err)
+		var resourceErr *ResourceValidationError
+		require.ErrorAs(t, err, &resourceErr)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.Status().Code)
+	})
+
 	t.Run("dashboard parsing (with and without name)", func(t *testing.T) {
 		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
