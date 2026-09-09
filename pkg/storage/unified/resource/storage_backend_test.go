@@ -159,7 +159,8 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// Reconciling a tenant writes its pending-delete record to the experimental
 	// KV while the resource label update goes through the main backend.
-	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", backend.snowflake.Generate().Int64(), nil)
+	previousRV := backend.snowflake.Generate().Int64()
+	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
 
 	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
@@ -184,7 +185,7 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.NoError(t, resource.UnmarshalJSON(value))
 	require.Equal(t, "true", resource.GetLabels()[labelPendingDelete])
 
-	_, err = backend.eventStore.Get(t.Context(), EventKey{
+	event, err := backend.eventStore.Get(t.Context(), EventKey{
 		Namespace:       latest.Namespace,
 		Group:           latest.Group,
 		Resource:        latest.Resource,
@@ -193,6 +194,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 		Action:          latest.Action,
 	})
 	require.NoError(t, err)
+	require.Equal(t, previousRV, event.PreviousRV)
+	require.Equal(t, DataActionCreated, event.PreviousAction)
+	require.Empty(t, event.PreviousFolder)
 
 	// The experimental KV is metadata-only: resource data and events remain in
 	// the main KV even when tenant metadata routing is enabled.
@@ -485,16 +489,30 @@ func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *
 }
 
 func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
-	for _, useChannel := range []bool{true, false} {
-		backend := setupTestStorageBackend(t)
-		name := "pollingNotifier"
-
-		if useChannel {
-			backend = setupTestStorageBackend(t, withChannelNotifier)
-			name = "channelNotifier"
-		}
-
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		configure func(*KVBackendOptions)
+	}{
+		{name: "pollingNotifier"},
+		{name: "channelNotifier", configure: withChannelNotifier},
+		{name: "natsNotifier", configure: func(opts *KVBackendOptions) {
+			sub := &fakeEventSubscriber{enabled: true}
+			opts.EnableNatsNotifier = true
+			opts.EventSubscriber = sub
+			opts.EventPublisher = &fakeEventPublisher{
+				enabled: true,
+				onPublish: func(subject string, data []byte) {
+					sub.currentHandler()(subject, data)
+				},
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				if tc.configure != nil {
+					tc.configure(opts)
+				}
+			})
 			ctx, stop := context.WithTimeout(t.Context(), 3*time.Second)
 			defer stop()
 
@@ -584,6 +602,15 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 
 					if j > 0 {
 						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
+						previousAction := DataActionCreated
+						if j > 1 {
+							previousAction = DataActionUpdated
+						}
+						require.Equal(t, previousAction, writtenEvent.PreviousAction)
+						require.Equal(t, events[j-1].Object.GetFolder(), writtenEvent.PreviousFolder) // #nosec G602 -- bounds checked by `j > 0`
+					} else {
+						require.Empty(t, writtenEvent.PreviousAction)
+						require.Empty(t, writtenEvent.PreviousFolder)
 					}
 				case <-ctx.Done():
 					require.FailNow(t, "timed out waiting for events")
@@ -593,18 +620,23 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
-// countingKV wraps a KV and counts the reads issued against the data section,
-// so a test can tell how many storage round trips resolving a set of events
-// took, and how many keys those round trips covered.
+// countingKV counts data and event reads so tests can verify storage round trips
+// and detect per-event lookups.
 type countingKV struct {
 	KV
 	mu         sync.Mutex
 	roundTrips int
 	keysRead   int
 	keysListed int
+	eventReads int
 }
 
 func (k *countingKV) count(section string, keys int) {
+	if section == kv.EventsSection {
+		k.mu.Lock()
+		k.eventReads += keys
+		k.mu.Unlock()
+	}
 	if section != kv.DataSection {
 		return
 	}
@@ -620,6 +652,12 @@ func (k *countingKV) stats() (roundTrips, keysRead int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	return k.roundTrips, k.keysRead
+}
+
+func (k *countingKV) eventsRead() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.eventReads
 }
 
 func (k *countingKV) listed() int {
