@@ -12004,6 +12004,7 @@
     },
     "logs-controls": {
       "collapse": "Collapse",
+      "copy": "Copy results",
       "deduplication": "Deduplication",
       "display-level-all": "All levels",
       "download": "Download logs",
@@ -12075,6 +12076,7 @@
         "tooltip": "Set timestamp format"
       },
       "tooltip": {
+        "copy": "Copy results",
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",

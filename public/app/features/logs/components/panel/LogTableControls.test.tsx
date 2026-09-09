@@ -4,14 +4,16 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, EventBusSrv, LogsSortOrder } from '@grafana/data';
 import { PanelContextProvider } from '@grafana/ui';
 
-import { DownloadFormat, downloadLogs } from '../../utils';
+import { DownloadFormat, copyLogs, downloadLogs } from '../../utils';
 
 import { LogTableControls } from './LogTableControls';
 
 const DOWNLOAD_LOGS_LABEL_COPY = 'Download logs';
+const COPY_RESULTS_LABEL_COPY = 'Copy results';
 
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
+  copyLogs: jest.fn(),
   downloadLogs: jest.fn(),
 }));
 
@@ -27,6 +29,7 @@ describe('LogTableControls', () => {
           sortOrder={sortOrder}
           setSortOrder={jest.fn()}
           downloadLogs={jest.fn()}
+          copyLogs={jest.fn()}
           wrapText={false}
           onWrapTextClick={jest.fn()}
         />
@@ -53,6 +56,7 @@ describe('LogTableControls', () => {
         sortOrder={LogsSortOrder.Ascending}
         setSortOrder={jest.fn()}
         downloadLogs={jest.fn()}
+        copyLogs={jest.fn()}
         wrapText={false}
         onWrapTextClick={jest.fn()}
       />
@@ -77,6 +81,7 @@ describe('LogTableControls', () => {
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           downloadLogs={jest.fn()}
+          copyLogs={jest.fn()}
           wrapText={false}
           onWrapTextClick={jest.fn()}
         />
@@ -105,6 +110,7 @@ describe('LogTableControls', () => {
         sortOrder={LogsSortOrder.Ascending}
         setSortOrder={jest.fn()}
         downloadLogs={jest.fn()}
+        copyLogs={jest.fn()}
         wrapText={wrapText}
         onWrapTextClick={onWrapTextClick}
       />
@@ -139,6 +145,7 @@ describe('LogTableControls', () => {
           sortOrder={LogsSortOrder.Ascending}
           setSortOrder={jest.fn()}
           downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          copyLogs={copyLogs as unknown as () => void}
           wrapText={false}
           onWrapTextClick={jest.fn()}
         />
@@ -172,6 +179,7 @@ describe('LogTableControls', () => {
           sortOrder={LogsSortOrder.Ascending}
           setSortOrder={jest.fn()}
           downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          copyLogs={copyLogs as unknown as () => void}
           wrapText={false}
           onWrapTextClick={jest.fn()}
         />
@@ -199,11 +207,40 @@ describe('LogTableControls', () => {
           sortOrder={LogsSortOrder.Ascending}
           setSortOrder={jest.fn()}
           downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          copyLogs={copyLogs as unknown as () => void}
           wrapText={false}
           onWrapTextClick={jest.fn()}
         />
       </PanelContextProvider>
     );
     expect(screen.queryByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(COPY_RESULTS_LABEL_COPY)).not.toBeInTheDocument();
+  });
+
+  it('Allows to copy logs in Explore', async () => {
+    jest.mocked(copyLogs).mockClear();
+    render(
+      <PanelContextProvider
+        value={{
+          app: CoreApp.Explore,
+          eventsScope: 'test',
+          eventBus: new EventBusSrv(),
+        }}
+      >
+        <LogTableControls
+          logOptionsStorageKey={''}
+          controlsExpanded={false}
+          setControlsExpanded={jest.fn()}
+          sortOrder={LogsSortOrder.Ascending}
+          setSortOrder={jest.fn()}
+          downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
+          copyLogs={copyLogs as unknown as () => void}
+          wrapText={false}
+          onWrapTextClick={jest.fn()}
+        />
+      </PanelContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText(COPY_RESULTS_LABEL_COPY));
+    expect(copyLogs).toHaveBeenCalledTimes(1);
   });
 });

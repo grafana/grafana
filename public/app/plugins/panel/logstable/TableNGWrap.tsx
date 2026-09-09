@@ -18,7 +18,7 @@ import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogL
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
-import { type DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
+import { type DownloadFormat, copyLogs as copy, downloadLogs as download } from 'app/features/logs/utils';
 import {
   useCacheFieldDisplayNames,
   useCellActions,
@@ -95,6 +95,14 @@ export function TableNGWrap({
     [options.displayedFields, rawDataFrame]
   );
 
+  const copyLogs = useCallback(() => {
+    if (!rawDataFrame) {
+      return;
+    }
+    const { meta, rows } = dataFrameToLogsModel([rawDataFrame]);
+    copy(rows, meta, options.displayedFields);
+  }, [options.displayedFields, rawDataFrame]);
+
   return (
     <div className={styles.tableWrapper}>
       {showControls && (
@@ -107,6 +115,7 @@ export function TableNGWrap({
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
             downloadLogs={downloadLogs}
+            copyLogs={copyLogs}
             onWrapTextClick={onWrapTextClick}
             wrapText={Boolean(options.wrapText)}
           />
