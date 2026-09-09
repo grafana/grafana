@@ -1111,6 +1111,36 @@ func (h *ProvisioningTestHelper) RequireRepoFolderCount(t *testing.T, repoName s
 		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
 }
 
+// RequireRepoFolderCount performs the same checks as RequireRepoFolderCount, but also returns
+// the folders managed by given repository.
+func (h *ProvisioningTestHelper) RequireRepoFolderCountAndGetManaged(t *testing.T, repoName string, expectedCount int) []unstructured.Unstructured {
+	t.Helper()
+	var managed []unstructured.Unstructured
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+
+		managed = filterManagedResources(folders.Items, repoName)
+		assert.Equal(c, expectedCount, len(managed), "unexpected number of folders managed by repo %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected %d folder(s) managed by repo %s", expectedCount, repoName)
+	return managed
+}
+
+// filterManagedResources returns the resources managed by repoName.
+func filterManagedResources(items []unstructured.Unstructured, repoName string) []unstructured.Unstructured {
+	var managed []unstructured.Unstructured
+	for i := range items {
+		annotations := items[i].GetAnnotations()
+		if annotations["grafana.app/managedBy"] == "repo" && annotations["grafana.app/managerId"] == repoName {
+			managed = append(managed, items[i])
+		}
+	}
+	return managed
+}
+
 // TriggerConnectionReconciliation forces the controller to re-process a connection
 // by touching its status (aging the health timestamp by 1ms). A merge patch on the
 // status subresource carries no resourceVersion, so it never conflicts with

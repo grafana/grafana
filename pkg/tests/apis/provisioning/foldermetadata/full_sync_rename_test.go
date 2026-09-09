@@ -148,11 +148,11 @@ func TestIntegrationProvisioning_FullSync_RenameNestedSubtree(t *testing.T) {
 			for _, folder := range folders {
 				common.RequireFolderState(t, helper.Folders, folder.uid, folder.title, folder.oldPath, folder.parent)
 			}
-			common.RequireDashboards(t, helper.DashboardsV1, dashboardsBefore)
+			common.RequireDashboards(t, helper.DashboardsV1, t.Context(), dashboardsBefore)
 
 			// The count includes the repository's target folder. Preserve object
 			// identities as well as names to detect deletion followed by recreation.
-			initialFolders := helper.RequireRepoFolderCount(t, repo, len(folders)+1)
+			initialFolders := helper.RequireRepoFolderCountAndGetManaged(t, repo, len(folders)+1)
 			initialSnapshots := make(map[string]common.ObjectSnapshot, len(initialFolders))
 			for i := range initialFolders {
 				initialSnapshots[initialFolders[i].GetName()] = common.SnapshotObject(t, &initialFolders[i])
@@ -175,14 +175,14 @@ func TestIntegrationProvisioning_FullSync_RenameNestedSubtree(t *testing.T) {
 						assertNoFolderAtPath(t, helper, repo, folder.oldPath)
 					}
 				}
-				actualFolders := helper.RequireRepoFolderCount(t, repo, len(folders)+1)
+				actualFolders := helper.RequireRepoFolderCountAndGetManaged(t, repo, len(folders)+1)
 				for i := range actualFolders {
 					folder := &actualFolders[i]
 					before, exists := initialSnapshots[folder.GetName()]
 					require.True(t, exists, "unexpected folder %q after rename", folder.GetName())
 					common.RequireUpdatedInPlace(t, folder.GetName(), before, common.SnapshotObject(t, folder))
 				}
-				common.RequireDashboards(t, helper.DashboardsV1, dashboardsAfter)
+				common.RequireDashboards(t, helper.DashboardsV1, t.Context(), dashboardsAfter)
 			}
 			requireRenamedTree()
 
