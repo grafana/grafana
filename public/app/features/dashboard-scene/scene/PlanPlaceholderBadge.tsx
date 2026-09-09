@@ -4,10 +4,14 @@ import { Badge } from '@grafana/ui';
 
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
-import { type DashboardSceneLike, isDashboardSceneLike } from './types/dashboard';
+import { isDashboardSceneLike } from './types/dashboard';
 
 /**
  * Marks a panel in a plan preview as showing sample data rather than query results.
+ *
+ * It outlives planning mode on purpose. The signal it carries is about the panel — these numbers
+ * came from no query — not about the mode the page is in, and the two stop agreeing the moment the
+ * user presses Build.
  *
  * The preview deliberately looks like a real dashboard — that fidelity is the whole point — and
  * its panels are seeded with plausible synthetic series so they do not read as broken. Those two
@@ -38,17 +42,22 @@ function PlanPlaceholderBadgeRenderer({ model }: SceneComponentProps<PlanPlaceho
     return null;
   }
 
-  return <PlanPlaceholderBadgeContent panel={panel} dashboard={dashboard} />;
+  return <PlanPlaceholderBadgeContent panel={panel} />;
 }
 
 /**
- * Split from the renderer so the state subscriptions are unconditional: whether the badge has a
- * panel and a dashboard to read is settled by the scene graph, not by React.
+ * Split from the renderer so the state subscription is unconditional: whether the badge has a panel
+ * to read is settled by the scene graph, not by React.
+ *
+ * Deliberately says nothing about the dashboard's planning state. This badge is only ever attached
+ * to a panel `ADD_PANEL` built while planning (`buildOptions.withoutQueries`, the sole producer), so
+ * its presence already means "scaffolded as a placeholder" and a planning check adds no protection
+ * against badging a real panel. What it did add was a bug: pressing Build clears planning state
+ * immediately, but the panels keep their seeded data until the build's first `APPLY_SPEC` lands
+ * seconds later — so the badge vanished while the invented numbers were still on screen, which is
+ * the one moment they can be mistaken for measurements.
  */
-function PlanPlaceholderBadgeContent({ panel, dashboard }: { panel: VizPanel; dashboard: DashboardSceneLike }) {
-  // Subscribed rather than read once: the badge has to disappear the moment the plan is built,
-  // even in the case where the built dashboard reuses the very panel objects it previewed.
-  const { planning } = dashboard.useState();
+function PlanPlaceholderBadgeContent({ panel }: { panel: VizPanel }) {
   const { $data } = panel.useState();
 
   // Deliberately structural rather than `$data instanceof SceneDataNode`. The assistant plugin
@@ -62,7 +71,10 @@ function PlanPlaceholderBadgeContent({ panel, dashboard }: { panel: VizPanel; da
   // border is the whole signal it needs.
   const showsDataFromNoQuery = Boolean($data) && !getQueryRunnerFor(panel);
 
-  if (!planning || !showsDataFromNoQuery) {
+  // Self-clearing, and per panel: the build rebuilds the scene from the applied spec, at which
+  // point the panel has a real query runner (and this badge is no longer attached at all). A panel
+  // the build failed to reach keeps its badge, which is correct — it is still showing sample data.
+  if (!showsDataFromNoQuery) {
     return null;
   }
 

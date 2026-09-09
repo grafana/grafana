@@ -15,12 +15,24 @@ import { PlanPlaceholderBadge } from './PlanPlaceholderBadge';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 describe('PlanPlaceholderBadge', () => {
-  it('removes the sample data label when planning ends', () => {
+  // Pressing Build clears planning state at once, but the seeded data stays on the panels until the
+  // build's first APPLY_SPEC lands. The badge has to cover that window: it is the only interval in
+  // which the invented numbers are on screen with no sign saying so.
+  it('keeps the sample data label after planning ends, while the sample is still on the panel', () => {
     const { dashboard } = setup(new SceneDataNode({}));
 
     expect(screen.getByText('Sample data')).toBeInTheDocument();
 
     act(() => dashboard.setState({ planning: undefined }));
+
+    expect(screen.getByText('Sample data')).toBeInTheDocument();
+  });
+
+  it('removes the sample data label once a query runner replaces the sample, planning or not', () => {
+    const { dashboard, panel } = setup(new SceneDataNode({}));
+
+    act(() => dashboard.setState({ planning: undefined }));
+    act(() => panel.setState({ $data: new SceneQueryRunner({ queries: [], runQueriesMode: 'manual' }) }));
 
     expect(screen.queryByText('Sample data')).not.toBeInTheDocument();
   });
