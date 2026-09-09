@@ -8,7 +8,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { NO_SYSTEM_TRANSFORMATIONS, getResolvedSystemTransformations } from '../../../scene/systemTransformations';
-import { getQueryRunnerFor } from '../../../utils/utils';
+import { getQueryRunnerFor } from '../../../utils/getQueryRunnerFor';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
 

@@ -78,7 +78,7 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 	t.Run("repeated resolves of the same UID hit the cache after the first Get", func(t *testing.T) {
 		r, getCount := newCountingResolver(t, 0, iamObject(teamGVR.GroupVersion().WithKind("Team"), ns.Value, "team-uid", 42))
 
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			id, err := r.GetTeamIDByUID(context.Background(), ns, "team-uid")
 			require.NoError(t, err)
 			require.Equal(t, int64(42), id)
@@ -93,7 +93,7 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		const goroutines = 25
 		var wg sync.WaitGroup
 		wg.Add(goroutines)
-		for i := 0; i < goroutines; i++ {
+		for range goroutines {
 			go func() {
 				defer wg.Done()
 				id, err := r.GetUserIDByUID(context.Background(), ns, "user-uid")
@@ -155,7 +155,7 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 
 		// The rest share the same flight and must still resolve successfully.
 		wg.Add(survivors)
-		for i := 0; i < survivors; i++ {
+		for range survivors {
 			go func() {
 				defer wg.Done()
 				id, err := r.GetUserIDByUID(context.Background(), ns, "user-uid")
@@ -189,7 +189,7 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		// re-resolved every time rather than pinning 0 for the TTL.
 		r, getCount := newCountingResolver(t, 0, iamObject(teamGVR.GroupVersion().WithKind("Team"), ns.Value, "team-uid", 0))
 
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			id, err := r.GetTeamIDByUID(context.Background(), ns, "team-uid")
 			require.NoError(t, err)
 			require.Equal(t, int64(0), id)

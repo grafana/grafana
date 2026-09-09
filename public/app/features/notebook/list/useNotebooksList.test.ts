@@ -448,6 +448,49 @@ describe('useNotebooksList', () => {
     });
   });
 
+  describe('loadedTags', () => {
+    it('collects the tags of every row, deduped and ordered for a reader', () => {
+      setSearch([
+        makeHit({ name: 'nb1', title: 'One', tags: ['slo', 'errors'] }),
+        makeHit({ name: 'nb2', title: 'Two', tags: ['errors', 'Alerting'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      expect(result.current.loadedTags).toEqual(['Alerting', 'errors', 'slo']);
+    });
+
+    it('is empty when nothing is loaded', () => {
+      setSearch([]);
+
+      const { result } = setupHook();
+
+      expect(result.current.loadedTags).toEqual([]);
+    });
+
+    // From the rows before client-side filtering: a picker whose options narrowed as the reader
+    // filtered would drop the very tags left to choose from, which is what happened to the author
+    // filter when it was built that way.
+    it('does not narrow as the rows are filtered', async () => {
+      setSearchRouteMissing();
+      setList([
+        makeNotebook({ name: 'nb1', title: 'Checkout error spike', tags: ['errors'] }),
+        makeNotebook({ name: 'nb2', title: 'Q2 latency regression', tags: ['latency'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      await waitFor(() => expect(result.current.loadedTags).toEqual(['errors', 'latency']));
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      await waitFor(() => expect(result.current.rows).toHaveLength(1));
+      expect(result.current.loadedTags).toEqual(['errors', 'latency']);
+    });
+  });
+
   describe('tag filtering', () => {
     // `In` is set membership, so one leaf listing both tags would match a notebook carrying either.
     // Selecting two tags has to narrow, which an `and` of one leaf each expresses.
@@ -485,6 +528,50 @@ describe('useNotebooksList', () => {
           },
         })
       );
+    });
+
+    // The rows offer one tag at a time, so the caller adds rather than replaces.
+    it('adds one tag to the selection, leaving the others in place', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency']);
+      });
+      act(() => {
+        result.current.addTagFilter('slo');
+      });
+
+      await waitFor(() =>
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [
+              { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
+              { filter: { field: 'tags', operator: 'In', values: ['slo'] } },
+            ],
+          },
+        })
+      );
+      expect(result.current.tagFilter).toEqual(['latency', 'slo']);
+    });
+
+    // Clicking a tag that is already filtered on should do nothing, rather than list it twice and
+    // send the same leaf twice with it.
+    it('ignores a tag already in the selection', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.addTagFilter('latency');
+      });
+      await waitFor(() => expect(result.current.tagFilter).toEqual(['latency']));
+
+      act(() => {
+        result.current.addTagFilter('latency');
+      });
+
+      expect(result.current.tagFilter).toEqual(['latency']);
+      expect(lastSearchArg()).toMatchObject({
+        where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
+      });
     });
 
     it('counts as filtered, so an empty result reads as no matches rather than no notebooks', async () => {
