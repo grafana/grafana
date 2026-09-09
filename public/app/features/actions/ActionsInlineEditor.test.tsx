@@ -75,7 +75,7 @@ describe('ActionsInlineEditor', () => {
     const user = userEvent.setup();
     render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Edit action/i })).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe('ActionsInlineEditor', () => {
     const user = userEvent.setup();
     render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} showOneClick={true} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
 
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
@@ -107,7 +107,7 @@ describe('ActionsInlineEditor', () => {
     const user = userEvent.setup();
     render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} showOneClick={false} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
 
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
@@ -118,7 +118,7 @@ describe('ActionsInlineEditor', () => {
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
     // Toggle method to GET inside the editor and save.
     await user.click(screen.getByRole('radio', { name: 'GET' }));
     await user.click(screen.getByRole('button', { name: /^Save$/i }));
