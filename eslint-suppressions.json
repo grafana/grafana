@@ -2739,9 +2739,6 @@
   "public/app/plugins/datasource/graphite/configuration/ConfigEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/graphite/datasource.ts": {
