@@ -20,8 +20,6 @@ import (
 
 const ServiceName = "plugin.backgroundinstaller"
 
-const syncPreinstallTimeout = 5 * time.Minute
-
 var (
 	installRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "plugins",
@@ -151,7 +149,7 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 func (s *Service) starting(ctx context.Context) error {
 	if len(s.cfg.PreinstallPluginsSync) > 0 {
 		s.log.Info("Installing plugins", "plugins", s.cfg.PreinstallPluginsSync)
-		installCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), syncPreinstallTimeout)
+		installCtx, cancel := context.WithTimeout(ctx, setting.PreinstallPluginsSyncTimeout(s.cfg))
 		defer cancel()
 		if err := s.installPlugins(installCtx, s.cfg.PreinstallPluginsSync, true); err != nil {
 			s.log.Error("Failed to install plugins", "error", err)
