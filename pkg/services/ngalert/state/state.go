@@ -779,7 +779,7 @@ func ParseFormattedState(stateStr string) (eval.State, string, error) {
 
 // GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
 func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string, includeFolder bool, features featuremgmt.FeatureToggles) map[string]string {
-	extraLabels := make(map[string]string, 4)
+	extraLabels := make(map[string]string, 5)
 
 	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
 	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
@@ -787,6 +787,10 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 
 	if includeFolder {
 		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+
+	if !models.IsRuleSequenceGroup(rule.RuleGroup) {
+		extraLabels[models.RuleGroupLabel] = rule.RuleGroup
 	}
 
 	if rule.NotificationSettings != nil {
