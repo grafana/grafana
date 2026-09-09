@@ -3,6 +3,7 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -555,9 +556,7 @@ func (w *wrappedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Ob
 		if existingLabels == nil {
 			existingLabels = make(map[string]string)
 		}
-		for key, value := range w.legacyLabels {
-			existingLabels[key] = value
-		}
+		maps.Copy(existingLabels, w.legacyLabels)
 		meta.SetLabels(existingLabels)
 	}
 	if len(w.legacyAnnotations) > 0 {
@@ -565,9 +564,7 @@ func (w *wrappedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Ob
 		if existingAnnotations == nil {
 			existingAnnotations = make(map[string]string)
 		}
-		for key, value := range w.legacyAnnotations {
-			existingAnnotations[key] = value
-		}
+		maps.Copy(existingAnnotations, w.legacyAnnotations)
 		meta.SetAnnotations(existingAnnotations)
 	}
 

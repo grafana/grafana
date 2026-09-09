@@ -148,7 +148,7 @@ func TestConnection_Mutate(t *testing.T) {
 func TestConnection_Test(t *testing.T) {
 	const appID = "123"
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-	token, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
+	token, _, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -1386,7 +1386,7 @@ func TestConnection_ValidateToken(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Generate a valid token using the existing function (expires in 10 minutes)
-	validToken, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
+	validToken, _, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
 	require.NoError(t, err)
 
 	_, exp, err := getIssuingAndExpirationTimeFromToken(validToken)
@@ -1538,7 +1538,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			validateToken: func(t *testing.T, token common.RawSecureValue) {
 				// Generate a second token and verify they're different (due to different timestamps)
 				time.Sleep(1 * time.Second) // Ensure different iat claim
-				token2, err := github.GenerateJWTToken("789", common.RawSecureValue(privateKeyBase64))
+				token2, _, err := github.GenerateJWTToken("789", common.RawSecureValue(privateKeyBase64))
 				require.NoError(t, err)
 				assert.NotEqual(t, token, token2, "tokens should differ due to timestamp")
 			},
@@ -1638,9 +1638,15 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			} else {
 				require.NoError(t, err)
-				assert.NotEmpty(t, token)
+				require.NotNil(t, token)
+				assert.NotEmpty(t, token.Token)
+				// The persisted expiry must equal the JWT's own exp claim, not a
+				// separately computed estimate.
+				_, claimExpiry, err := getIssuingAndExpirationTimeFromToken(token.Token)
+				require.NoError(t, err)
+				assert.True(t, token.ExpiresAt.Equal(claimExpiry))
 				if tt.validateToken != nil {
-					tt.validateToken(t, token)
+					tt.validateToken(t, token.Token)
 				}
 			}
 		})
@@ -2187,7 +2193,7 @@ func TestNewConnectionWithCustomConfig(t *testing.T) {
 	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
 	require.NoError(t, err)
 
-	parsedToken, err := jwt.Parse(string(token), func(_ *jwt.Token) (any, error) {
+	parsedToken, err := jwt.Parse(string(token.Token), func(_ *jwt.Token) (any, error) {
 		return &key.PublicKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	require.NoError(t, err)

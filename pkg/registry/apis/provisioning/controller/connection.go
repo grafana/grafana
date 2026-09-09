@@ -22,6 +22,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -308,6 +309,11 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
+	// Log a connection usage-status snapshot on every reconcile (including no-op
+	// cycles), the connection counterpart of the repository usage status; see
+	// usage.ConnectionUsageStatus.
+	usage.LogConnectionUsageStatus(logger, conn)
+
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
@@ -379,7 +385,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		logger.Info("generating connection token")
 
 		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_token", connSpanAttrs(conn))
-		token, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
+		token, tokenExpiresAt, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
 		tokenSpan.End()
 		if err != nil {
 			logger.Error("failed to generate connection token", "error", err)
@@ -389,13 +395,19 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
 			// Record when the token was written so a not-yet-readable secret on the next
-			// reconcile is not mistaken for a missing one and regenerated in a loop. Use
-			// "add": status.token is a newly introduced field that may be absent on
-			// Connections created before this change, and "add" both creates and replaces.
+			// reconcile is not mistaken for a missing one and regenerated in a loop, and
+			// persist the expiration so freshness can be evaluated from status without a
+			// live re-validation. Use "add": status.token is a newly introduced field
+			// that may be absent on Connections created before this change, and "add"
+			// both creates and replaces.
+			tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+			if !tokenExpiresAt.IsZero() {
+				tokenStatus.Expiration = tokenExpiresAt.UnixMilli()
+			}
 			patchOperations = append(patchOperations, map[string]interface{}{
 				"op":    "add",
 				"path":  "/status/token",
-				"value": provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()},
+				"value": tokenStatus,
 			})
 			conn.Secure.Token = common.InlineSecureValue{Create: token}
 		}
@@ -454,6 +466,16 @@ func (cc *ConnectionController) shouldGenerateToken(
 	obj *provisioning.Connection,
 	c connection.TokenConnection,
 ) bool {
+	// Record the expired state from the persisted expiration, independent of the
+	// refresh decision below and of live validation — an expired token that fails
+	// ValidateToken (and so takes the "invalid" path) still counts as expired here.
+	// Mirrors the repository path; re-emitted each resync.
+	if exp := obj.Status.Token.Expiration; exp != 0 {
+		if expiration := time.UnixMilli(exp); !expiration.After(time.Now()) {
+			cc.tokenMetrics.recordExpired()
+		}
+	}
+
 	if obj.Secure.Token.IsZero() {
 		// An OAuth connection has no token until the user completes the authorization
 		// flow after creation; there is nothing to generate until one is stored.
@@ -468,6 +490,15 @@ func (cc *ConnectionController) shouldGenerateToken(
 	if err != nil {
 		cc.tokenMetrics.recordRefreshReason(refreshReasonInvalid)
 		return true
+	}
+
+	// Backfill the expired classification for tokens persisted before expiration
+	// tracking (status.token.expiration == 0): use the live validated expiry, so a
+	// pre-upgrade token that lapses before its first refresh still counts as
+	// expired. Tokens with a persisted expiration are already classified above;
+	// ValidateToken returns the (possibly past) expiry without erroring on expiry.
+	if obj.Status.Token.Expiration == 0 && !expiresAt.IsZero() && !expiresAt.After(time.Now()) {
+		cc.tokenMetrics.recordExpired()
 	}
 
 	if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
@@ -494,7 +525,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (token common.RawSecureValue, patchOperations []map[string]interface{}, err error) {
+) (token common.RawSecureValue, expiresAt time.Time, patchOperations []map[string]interface{}, err error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
@@ -507,11 +538,11 @@ func (cc *ConnectionController) generateConnectionToken(
 		}
 	}()
 
-	token, err = conn.GenerateConnectionToken(ctx)
+	generated, err := conn.GenerateConnectionToken(ctx)
 	if err != nil {
 		failed = true
 		logger.Error("failed to generate connection token", "error", err)
-		return "", nil, nil // Non-blocking: return empty patches
+		return "", time.Time{}, nil, nil // Non-blocking: return empty patches
 	}
 
 	logger.Info("successfully generated new connection token")
@@ -521,10 +552,10 @@ func (cc *ConnectionController) generateConnectionToken(
 			"op":   "replace",
 			"path": "/secure/token",
 			"value": map[string]string{
-				"create": string(token),
+				"create": string(generated.Token),
 			},
 		},
 	}
 
-	return token, patchOperations, nil
+	return generated.Token, generated.ExpiresAt, patchOperations, nil
 }

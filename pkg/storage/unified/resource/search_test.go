@@ -115,12 +115,13 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
-	resourceStats   []ResourceStats
-	lastImportTimes []ResourceLastImportTime
-	statsCalls      atomic.Int32
-	listStoredCalls atomic.Int32
-	listStoredErr   error
-	lastCountLimit  atomic.Int64
+	resourceStats       []ResourceStats
+	lastImportTimes     []ResourceLastImportTime
+	statsCalls          atomic.Int32
+	listStoredCalls     atomic.Int32
+	listStoredErr       error
+	lastCountLimit      atomic.Int64
+	lastImportTimeCalls atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -195,14 +196,14 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		for _, ti := range m.lastImportTimes {
-			if !yield(ti, nil) {
-				return
-			}
+func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	m.lastImportTimeCalls.Add(1)
+	for _, importTime := range m.lastImportTimes {
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
 		}
 	}
+	return time.Time{}, nil
 }
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
@@ -471,13 +472,11 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 
 	const concurrency = 100
 	wg := sync.WaitGroup{}
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range concurrency {
+		wg.Go(func() {
 			<-start
 			_, _ = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
-		}()
+		})
 	}
 
 	// Wait a bit for goroutines to start (hopefully)
@@ -490,6 +489,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
 	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
 	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
+	require.Equal(t, int32(1), storage.lastImportTimeCalls.Load())
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -1348,14 +1348,14 @@ func TestRebuildIndexesForResource(t *testing.T) {
 func TestMaybeInjectFailure(t *testing.T) {
 	t.Run("disabled when percent is 0", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 0}
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			require.NoError(t, s.maybeInjectFailure())
 		}
 	})
 
 	t.Run("always fails when percent is 100", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 100}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			err := s.maybeInjectFailure()
 			require.Error(t, err)
 			require.Equal(t, "injected search failure", err.Error())
@@ -1480,7 +1480,7 @@ func TestJitterForKey(t *testing.T) {
 	})
 
 	t.Run("bounded to maxAge/2", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "g", Resource: "r"}
 			j := jitterForKey(key, maxAge)
 			require.GreaterOrEqual(t, j, time.Duration(0))
@@ -1508,7 +1508,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	numIndexes := 20
 	openIndexes := make([]NamespacedResource, numIndexes)
 	cache := make(map[NamespacedResource]ResourceIndex, numIndexes)
-	for i := 0; i < numIndexes; i++ {
+	for i := range numIndexes {
 		key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "group", Resource: "folder"}
 		openIndexes[i] = key
 		cache[key] = &MockResourceIndex{

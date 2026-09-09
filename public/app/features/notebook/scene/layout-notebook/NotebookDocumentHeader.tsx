@@ -1,11 +1,11 @@
-import { type GrafanaTheme2, type TimeRange, type TimeZone } from '@grafana/data';
+import { type TimeRange, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Stack, TagList, Text, useStyles2, type WeekStart } from '@grafana/ui';
+import { Stack, TagList, Text, type WeekStart } from '@grafana/ui';
 
-import { getNeutralTagListStyle } from '../../tagColors';
+import { NotebookTagsField } from '../../NotebookTagsField';
 
-import { NotebookTagPicker } from './NotebookTagPicker';
 import { NotebookTimeRangePicker } from './NotebookTimeRangePicker';
+import { NotebookTitleEditor } from './NotebookTitleEditor';
 
 const TAGS_INPUT_ID = 'notebook-tags';
 const TIME_LABEL_ID = 'notebook-time-label';
@@ -19,13 +19,14 @@ interface Props {
   hideTimeControls?: boolean;
   isEditing?: boolean;
   onTagsChange?: (tags: string[]) => void;
+  onTitleChange?: (title: string) => void;
   onTimeRangeChange: (timeRange: TimeRange) => void;
   onTimeZoneChange: (timeZone: TimeZone) => void;
 }
 
-// The notebook document header: a "Published Notebook" badge, the title, and the document's metadata
-// as labelled rows. Presentational only, so it stays out of the layout manager and can be tested on
-// its own — editing arrives as a callback rather than by reaching for the scene.
+// The notebook document header: the title and the document's metadata as labelled rows.
+// Presentational only, so it stays out of the layout manager and can be tested on its own — editing
+// arrives as a callback rather than by reaching for the scene.
 export function NotebookDocumentHeader({
   title,
   tags,
@@ -35,11 +36,12 @@ export function NotebookDocumentHeader({
   hideTimeControls,
   isEditing,
   onTagsChange,
+  onTitleChange,
   onTimeRangeChange,
   onTimeZoneChange,
 }: Props) {
-  const styles = useStyles2(getStyles);
   const canEditTags = Boolean(isEditing && onTagsChange);
+  const canEditTitle = Boolean(isEditing && onTitleChange);
   // While reading, an untagged notebook shows no Tags row at all; while editing it always shows one,
   // because that row is the only way to add the first tag.
   const showTags = canEditTags || Boolean(tags?.length);
@@ -47,8 +49,9 @@ export function NotebookDocumentHeader({
 
   return (
     <Stack direction="column" gap={1} alignItems="flex-start">
-      <Badge text={t('dashboard.notebook-layout.pill', 'Published Notebook')} color="blue" icon="book" />
-      {title ? (
+      {canEditTitle && onTitleChange ? (
+        <NotebookTitleEditor title={title ?? ''} onChange={onTitleChange} />
+      ) : title ? (
         <Text element="h1" variant="h1">
           {title}
         </Text>
@@ -71,25 +74,23 @@ export function NotebookDocumentHeader({
       )}
 
       {showTags ? (
-        // Full width so the picker can take the rest of the line: the outer Stack aligns to
-        // flex-start, which would otherwise shrink this row to its content.
-        <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined} fillWidth={canEditTags}>
+        <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined}>
           {canEditTags && onTagsChange ? (
-            // Its chips are neutral without being asked, ValuePill using the same two tokens the
-            // read-mode override in tagColors.ts applies.
-            <NotebookTagPicker id={TAGS_INPUT_ID} tags={tags} onChange={onTagsChange} />
+            <NotebookTagsField
+              inputId={TAGS_INPUT_ID}
+              value={tags ?? []}
+              onChange={onTagsChange}
+              allowCustomValue
+              placeholder={t('dashboard.notebook-layout.tags-placeholder', 'Add a tag')}
+            />
           ) : (
-            <TagList tags={tags ?? []} className={styles.neutralTags} />
+            <TagList tags={tags ?? []} />
           )}
         </MetaRow>
       ) : null}
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  neutralTags: getNeutralTagListStyle(theme),
-});
 
 /**
  * One line of document metadata: a dimmed label, then its value.
@@ -101,7 +102,6 @@ function MetaRow({
   label,
   htmlFor,
   labelId,
-  fillWidth,
   children,
 }: {
   label: string;
@@ -109,7 +109,6 @@ function MetaRow({
   htmlFor?: string;
   /** Set when the row's control can only be named by reference, rather than by wrapping it. */
   labelId?: string;
-  fillWidth?: boolean;
   children: React.ReactNode;
 }) {
   // A native label rather than grafana-ui's Label, so the two rows stay typographically identical
@@ -117,7 +116,7 @@ function MetaRow({
   const Wrapper = htmlFor ? 'label' : 'span';
 
   return (
-    <Stack direction="row" gap={2} alignItems="center" width={fillWidth ? '100%' : undefined}>
+    <Stack direction="row" gap={2} alignItems="center">
       <Wrapper htmlFor={htmlFor} id={labelId}>
         {/* `body` is the theme's 14px step; `bodySmall` would be 12. */}
         <Text variant="body" color="secondary">

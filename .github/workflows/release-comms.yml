@@ -130,11 +130,29 @@ jobs:
   #   with:
   #     version: ${{ needs.setup.outputs.version }}
   #     dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
+  create_release_tag:
+    # Tags the release PR's merge commit rather than a commit that predates it. Only meaningful
+    # on the real merge event — a workflow_dispatch run has no pull_request context to take a
+    # commit from.
+    name: Create release tag
+    needs: setup
+    if: ${{ github.event_name == 'pull_request' && needs.setup.outputs.dry_run != 'true' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/create-release-tag.yml
+    with:
+      tag: ${{ needs.setup.outputs.version }}
+      commit: ${{ github.event.pull_request.merge_commit_sha }}
   create_github_release:
     # a github release requires a git tag
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
     # endpoint.
-    needs: setup
+    needs:
+      - setup
+      - create_release_tag
+    # Run unless setup was skipped or something actually failed/cancelled — a skipped create_release_tag is fine.
+    if: ${{ !failure() && !cancelled() && needs.setup.result == 'success' }}
     permissions:
       contents: write
       id-token: write
