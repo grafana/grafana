@@ -35,9 +35,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     position: 'absolute',
     top: theme.spacing(0.5),
-    left: theme.spacing(4),
+    left: theme.spacing(7),
     [theme.breakpoints.up('md')]: {
-      left: theme.spacing(7),
+      left: theme.spacing(10),
     },
     zIndex: 1,
     display: 'flex',

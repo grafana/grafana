@@ -87,7 +87,7 @@ describe('NotebookCellFrame', () => {
     expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
   });
 
-  it('renders the handle and the insertion point in edit mode', async () => {
+  it('renders the handle and the add button in edit mode', async () => {
     renderFrame({ isEditing: true });
 
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
@@ -95,10 +95,10 @@ describe('NotebookCellFrame', () => {
     expect(screen.getByRole('button', { name: 'Add block' })).toBeInTheDocument();
   });
 
-  // The only behavioural pin on the insertion index. A divider belongs to the cell above it, so the
-  // frame at position i hands its divider i + 1; an off-by-one here would silently insert blocks in
+  // The only behavioural pin on the insertion index. The button belongs to the cell above it, so
+  // the frame at position i inserts at i + 1 — an off-by-one here would silently insert blocks in
   // the wrong place once edit mode wires onAdd up.
-  it('offers the insertion point below its own cell', async () => {
+  it('inserts below its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 

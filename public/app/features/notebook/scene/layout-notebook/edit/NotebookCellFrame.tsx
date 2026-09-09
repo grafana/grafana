@@ -11,9 +11,9 @@ import { type NotebookCellItem } from '../NotebookCellItem';
 import { NotebookCellRenderer } from '../NotebookCellRenderer';
 import { resolveScrollAlign } from '../cells/focusExtension';
 
-import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
+import { NotebookCellAddButton } from './NotebookCellAddButton';
 
 /**
  * Stable class name the frame's hover rule targets. Emotion class names are generated, so revealing a
@@ -37,8 +37,8 @@ interface Props {
   cell: NotebookCellItem;
   /**
    * The cell's position in `cells`. This doubles as the Draggable index, so it must stay dense and
-   * 0-based — dnd derives every drop boundary from it. The insertion index handed to the divider is
-   * `index + 1`, because the divider belongs to the cell above it.
+   * 0-based — dnd derives every drop boundary from it. Also the base for the add button's insertion
+   * index: `index + 1`, since it always inserts directly below this cell.
    */
   index: number;
   isEditing?: boolean;
@@ -62,7 +62,7 @@ interface Props {
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
-  /** Forwarded to this cell's divider, already offset to `index + 1`. See NotebookAddBlockDivider. */
+  /** Forwarded to this cell's add button, which offsets it to `index + 1`. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its
@@ -93,9 +93,9 @@ interface Props {
 }
 
 /**
- * One notebook cell plus its edit-mode affordances: a drag handle in the left gutter and the insertion
- * point below it, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays
- * a pure content dispatcher — everything editing-related lives here.
+ * One notebook cell plus its edit-mode affordances: a drag handle and an add-cell button in the left
+ * gutter, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays a pure
+ * content dispatcher — everything editing-related lives here.
  */
 export function NotebookCellFrame({
   cell,
@@ -210,6 +210,10 @@ export function NotebookCellFrame({
             </div>
           )}
 
+          {isEditing && (
+            <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
+          )}
+
           {isEditing && onDuplicate && onDelete && (
             <>
               <div
@@ -239,11 +243,6 @@ export function NotebookCellFrame({
               onNavigate={onNavigate}
             />
           </div>
-
-          {/* index + 1: this divider inserts *after* the cell it belongs to. */}
-          {isEditing && (
-            <NotebookAddBlockDivider index={index + 1} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
-          )}
         </div>
       )}
     </Draggable>
@@ -272,12 +271,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     scrollMarginBottom: theme.spacing(4),
   }),
   frameEditing: css({
-    paddingLeft: theme.spacing(4),
-    marginLeft: theme.spacing(-4),
+    // Wide enough for the drag handle and the add-cell button side by side — see the same numbers in
+    // NotebookCellActions.tsx, and dragging/dropLine below, which all anchor off this same gutter.
+    paddingLeft: theme.spacing(7),
+    marginLeft: theme.spacing(-7),
     paddingTop: theme.spacing(3),
     [theme.breakpoints.up('md')]: {
-      paddingLeft: theme.spacing(7),
-      marginLeft: theme.spacing(-7),
+      paddingLeft: theme.spacing(10),
+      marginLeft: theme.spacing(-10),
     },
     [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       opacity: 1,
@@ -331,9 +332,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       right: 0,
       bottom: 0,
-      left: theme.spacing(4),
+      left: theme.spacing(7),
       [theme.breakpoints.up('md')]: {
-        left: theme.spacing(7),
+        left: theme.spacing(10),
       },
       backgroundColor: theme.colors.background.primary,
       borderRadius: theme.shape.radius.default,
@@ -357,9 +358,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the
     // pointer has to drift right past the gutter before the actions bar appears.
     left: 0,
-    width: theme.spacing(12),
+    width: theme.spacing(15),
     [theme.breakpoints.up('md')]: {
-      width: theme.spacing(15),
+      width: theme.spacing(18),
     },
     height: theme.spacing(4),
     pointerEvents: 'auto',
@@ -382,10 +383,10 @@ function dropLine(theme: GrafanaTheme2, edge: NotebookCellDropIndicator) {
     position: 'absolute' as const,
     [edge]: 0,
     // Matches frameEditing's gutter padding-left, so the line still starts at the cell's own content
-    // edge rather than bleeding into the wider hit-box reserved for the drag handle.
-    left: theme.spacing(4),
+    // edge rather than bleeding into the wider hit-box reserved for the drag handle and add button.
+    left: theme.spacing(7),
     [theme.breakpoints.up('md')]: {
-      left: theme.spacing(7),
+      left: theme.spacing(10),
     },
     right: 0,
     height: 2,
