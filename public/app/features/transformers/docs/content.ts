@@ -964,11 +964,11 @@ Combine and analyze data from various queries with table joining for a comprehen
 
 #### Join on multiple fields
 
-A join drops any query that doesn't contain the selected field. That means you can't simply add a second **Join by field** transformation to join on a different field, because the query you wanted to join second has already been discarded.
+A join drops any query that doesn’t contain the field you’re joining on. So if you try to add another **Join by field** transformation using a different field, some of the queries you need may already have been removed by the first join.
 
-Use the **Keep unjoined** option to forward those queries instead of dropping them, so that a later **Join by field** transformation can join them on a different field. Enable it on every join except the last one.
+Use the **Keep unjoined** option to maintain those queries instead of dropping them, so that a later **Join by field** transformation can join them on a different field. Enable it on every join except the last one.
 
-For example, one query returns measurements with two IDs, and one query per ID returns that ID's name:
+For example, one query returns measurements with two IDs, and the query run on each ID returns that ID's name:
 
 **Query A:**
 
@@ -991,9 +991,9 @@ For example, one query returns measurements with two IDs, and one query per ID r
 Add two transformations:
 
 1. **Join by field** on \`GroupID\`, with **Keep unjoined** enabled. Query C has no \`GroupID\`, so it's passed through rather than dropped.
-1. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
+2. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
 
-The result looks like the following:
+The result looks like this:
 
 | ProductID | GroupID | Value | GroupName | ProductName |
 | --------- | ------- | ----- | --------- | ----------- |
@@ -1001,7 +1001,7 @@ The result looks like the following:
 
 The field being joined on moves to the first column, so the column order changes at each step. Add an **Organize fields by name** transformation afterwards if you need a specific order.
 
-Leave **Keep unjoined** disabled unless you're chaining joins. When it's disabled, a query that's missing the selected field is treated as a failed input to the join, which is what makes an inner join correctly return no rows when a query comes back without the field.
+Leave **Keep unjoined** disabled unless you're chaining joins. When it's disabled, a query that doesn't contain the selected field is treated as a failed input to the join. As a result, an inner join correctly returns no rows if a query doesn't contain that field.
   `;
     },
   },
