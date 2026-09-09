@@ -49,6 +49,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/inhibition-rules/
+  import-alertmanager-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/import-alertmanager-configuration/
 ---
 
 # Configure notifications
@@ -71,6 +76,7 @@ The topics in this section include step-by-step instructions for:
 - [Templating notifications](ref:configure-templates) to customize notification messages.
 - [Configuring silences](ref:configure-silences) or [mute timings](ref:configure-mute-timings) to stop notifications.
 - [Configuring inhibition rules](ref:configure-inhibition-rules) to suppress notifications for dependent alerts when a root-cause alert is already firing.
+- [Importing an Alertmanager configuration](ref:import-alertmanager-configuration) to convert an existing Prometheus or Mimir notification setup into Grafana-managed resources.
 
 ## Alertmanager architecture
 
