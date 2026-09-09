@@ -102,7 +102,6 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
-import { NamespaceMacro } from './features/dashboard-scene/scene/NamespaceMacro';
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
@@ -384,8 +383,6 @@ export class GrafanaApp {
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();
       }
-
-      sceneUtils.registerVariableMacro('__namespace', NamespaceMacro);
 
       if (config.featureToggles.dashboardLevelTimeMacros) {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
