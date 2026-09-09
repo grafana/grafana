@@ -214,7 +214,7 @@ func TestEvaluatorTest(t *testing.T) {
 		frame, err := engine.Test(context.Background(), nil, rule, from, to, "")
 		require.NoError(t, err)
 		expectedLen := frame.Rows()
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			jitter := time.Duration(rand.Int63n(ruleInterval.Milliseconds())) * time.Millisecond
 			frame, err = engine.Test(context.Background(), nil, rule, from, to.Add(jitter), "")
 			require.NoError(t, err)

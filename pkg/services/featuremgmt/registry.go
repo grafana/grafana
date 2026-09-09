@@ -3120,6 +3120,15 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "reporting.redirectReportSettingsToK8SApi",
+			Description:     "Redirect legacy report settings API endpoints to the Kubernetes reporting API",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "grafana.onDemandDiagnostics",
 			Description: "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
 			Stage:       FeatureStageExperimental,
@@ -3270,6 +3279,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "datasources.querier.newName",
+			Description:  "Data source query service, use the new name",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:        "grafana.panelPluginTransformations",
