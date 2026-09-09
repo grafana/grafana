@@ -61,7 +61,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
-  const styles = useStyles2(getStyles, headerCellWrap, sortable);
+  const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
@@ -157,11 +157,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button
-        tabIndex={0}
-        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelRefreshed)}
-        title={displayName}
-      >
+      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
         {displayName}
         {!tableRefreshEnabled && sortArrow}
       </button>
@@ -273,80 +269,82 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   );
 };
 
-const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sortable = true) => ({
-  headerCellRoot: css({
-    label: 'headerCellRoot',
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    // fill the header cell so the actions can sit against its trailing edge
-    flex: 1,
-    minWidth: 0,
-  }),
-  headerCellLabelGroup: css({
-    label: 'headerCellLabelGroup',
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    minWidth: 0,
-  }),
-  headerCellActions: css({
-    label: 'headerCellActions',
-    display: 'flex',
-    alignItems: 'center',
-    flexShrink: 0,
-    marginLeft: 'auto',
-  }),
-  headerCellLabel: css({
-    all: 'unset',
-    cursor: sortable ? 'pointer' : 'default',
-    fontWeight: theme.typography.fontWeightMedium,
-    color: theme.colors.text.secondary,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
-    borderRadius: theme.spacing(0.25),
-    lineHeight: '20px',
-    '&:hover': {
-      textDecoration: sortable ? 'underline' : 'none',
-    },
-    '&::selection': {
-      backgroundColor: 'var(--rdg-background-color)',
-      color: 'inherit',
-    },
-  }),
-  // `table.refresh` gives the header its own background, so the label no longer needs to be
-  // de-emphasised against the body rows to read as a header — it takes the body text colour.
-  headerCellLabelRefreshed: css({
-    label: 'headerCellLabelRefreshed',
-    color: theme.colors.text.primary,
-    // A flex item won't shrink below its own min-content width by default, which for a `nowrap`
-    // label is the whole title — so `overflow: hidden` and the ellipsis above never engage and the
-    // title runs under the column menu pinned to the trailing edge. Allow it to shrink instead.
-    minWidth: 0,
-  }),
-  headerCellIcon: css({
-    color: theme.colors.text.secondary,
-  }),
-  // The sort arrow reports the column's state, so it keeps its full size while the title beside it
-  // gives up width to the trailing controls.
-  headerCellSortIcon: css({
-    label: 'headerCellSortIcon',
-    flexShrink: 0,
-  }),
-  headerTooltipIcon: css({
-    cursor: 'default',
-  }),
-  // Wraps the filter icon without changing how it reads: no padding, border or background, so the
-  // button box is exactly the icon and the header's spacing and reserved width are unaffected.
-  headerCellFilterButton: css({
-    label: 'headerCellFilterButton',
-    display: 'flex',
-    alignItems: 'center',
-    background: 'transparent',
-    border: 'none',
-    padding: 0,
-    cursor: 'pointer',
-    borderRadius: theme.spacing(0.25),
-  }),
-}));
+const getStyles = memoize(
+  (theme: GrafanaTheme2, headerTextWrap?: boolean, sortable = true, tableRefreshEnabled = false) => ({
+    headerCellRoot: css({
+      label: 'headerCellRoot',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      // fill the header cell so the actions can sit against its trailing edge
+      flex: 1,
+      minWidth: 0,
+    }),
+    headerCellLabelGroup: css({
+      label: 'headerCellLabelGroup',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+    }),
+    headerCellActions: css({
+      label: 'headerCellActions',
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      marginLeft: 'auto',
+    }),
+    // The `table.refresh` differences live in this one rule rather than in a second class composed
+    // over it: two rules of equal specificity are resolved by their order in the stylesheet, and this
+    // one's hash changes with `headerTextWrap`, so toggling "Wrap header text" re-inserted it *after*
+    // the override and the label lost its colour.
+    headerCellLabel: css({
+      all: 'unset',
+      cursor: sortable ? 'pointer' : 'default',
+      fontWeight: theme.typography.fontWeightMedium,
+      // `table.refresh` gives the header its own background, so the label no longer needs to be
+      // de-emphasised against the body rows to read as a header — it takes the body text colour.
+      color: tableRefreshEnabled ? theme.colors.text.primary : theme.colors.text.secondary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+      borderRadius: theme.spacing(0.25),
+      lineHeight: '20px',
+      // A flex item won't shrink below its own min-content width by default, which for a `nowrap`
+      // label is the whole title — so `overflow: hidden` and the ellipsis above never engage and the
+      // title runs under the column menu pinned to the trailing edge. Allow it to shrink instead.
+      ...(tableRefreshEnabled && { minWidth: 0 }),
+      '&:hover': {
+        textDecoration: sortable ? 'underline' : 'none',
+      },
+      '&::selection': {
+        backgroundColor: 'var(--rdg-background-color)',
+        color: 'inherit',
+      },
+    }),
+    headerCellIcon: css({
+      color: theme.colors.text.secondary,
+    }),
+    // The sort arrow reports the column's state, so it keeps its full size while the title beside it
+    // gives up width to the trailing controls.
+    headerCellSortIcon: css({
+      label: 'headerCellSortIcon',
+      flexShrink: 0,
+    }),
+    headerTooltipIcon: css({
+      cursor: 'default',
+    }),
+    // Wraps the filter icon without changing how it reads: no padding, border or background, so the
+    // button box is exactly the icon and the header's spacing and reserved width are unaffected.
+    headerCellFilterButton: css({
+      label: 'headerCellFilterButton',
+      display: 'flex',
+      alignItems: 'center',
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      cursor: 'pointer',
+      borderRadius: theme.spacing(0.25),
+    }),
+  })
+);

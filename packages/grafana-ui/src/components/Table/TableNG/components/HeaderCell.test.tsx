@@ -91,6 +91,28 @@ describe('HeaderCell', () => {
     );
   });
 
+  it('keeps the refreshed label colour when Wrap header text is toggled', () => {
+    // The wrap option changes the label rule's own hash. While the refreshed colour lived in a second
+    // class composed over it, that re-inserted rule landed *after* the override in the stylesheet and
+    // won on order alone, so the label dropped back to the muted colour mid-session.
+    const theme = createTheme();
+    const { rerender } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    const labelColor = () => window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color;
+    expect(labelColor()).toBe(theme.colors.text.primary);
+
+    rerender(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({ config: { custom: { wrapHeaderText: true } } })}
+        tableRefreshEnabled
+      />
+    );
+    expect(labelColor()).toBe(theme.colors.text.primary);
+
+    rerender(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(labelColor()).toBe(theme.colors.text.primary);
+  });
+
   it('keeps the sort arrow outside the truncating label under table.refresh', () => {
     // The refreshed label clips its own overflow to ellipsize a long title, so an arrow inside it
     // would be the first thing to disappear — exactly when the sort state matters most.
