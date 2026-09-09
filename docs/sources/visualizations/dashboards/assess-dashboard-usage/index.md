@@ -148,7 +148,8 @@ You can sort the dashboards by:
 - Views total
 - Views 30 days (most and least)
 
-Grafana updates the insights data behind these sort options every 24 hours, so the values don't include views or errors from the current day.
+Grafana counts the data behind these sort options once a day, up to the end of the previous day.
+Because today's activity isn't included yet, these numbers can be lower than the view count in [dashboard insights](#dashboard-insights), which updates as activity happens.
 
 **Views total** and **Errors total** are aggregates.
 Depending on how long your instance has been collecting insights data, they might not cover the entire lifetime of a dashboard.
