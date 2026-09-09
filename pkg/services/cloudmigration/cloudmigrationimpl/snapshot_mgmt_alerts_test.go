@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -317,7 +318,7 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user 
 	require.NoError(t, json.Unmarshal([]byte(muteTiming), &mt))
 
 	interval := v1.NewTimeInterval(mt.Name, mt.TimeIntervals, models.ProvenanceNone)
-	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, interval, user.GetOrgID())
+	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, interval, user.GetOrgID(), utils.ManagerProperties{})
 	require.NoError(t, err)
 
 	return createdTiming
@@ -331,7 +332,7 @@ func createNotificationTemplate(t *testing.T, ctx context.Context, service *Serv
 		Content: "This is a test template\n{{ .ExternalURL }}",
 	}
 
-	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)
+	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl, utils.ManagerProperties{})
 	require.NoError(t, err)
 
 	return createdTemplate
