@@ -962,7 +962,7 @@ The result after applying the outer join transformation looks like the following
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
 
-#### Joining on more than one field
+#### Join on multiple fields
 
 A join drops any query that doesn't contain the selected field. That means you can't simply add a second **Join by field** transformation to join on a different field, because the query you wanted to join second has already been discarded.
 
