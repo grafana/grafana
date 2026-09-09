@@ -1,6 +1,6 @@
-import { type Configuration } from '@rspack/core';
+import { type Configuration, type Stats } from '@rspack/core';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { compile } from './testUtils.ts';
 import { widenStatsForAnalyzer } from './webpackStatsCompat.ts';
@@ -39,50 +39,47 @@ function createConfig(widen: boolean): Configuration {
 }
 
 describe('widenStatsForAnalyzer', () => {
-  it('leaves rspack reporting a bare summary without it', async () => {
-    const { stats } = await compile(createConfig(false));
+  let widened: Stats;
+  let plain: Stats;
 
+  // One compile per variant for the whole suite. Reading stats doesn't mutate them.
+  beforeAll(async () => {
+    const [widenedResult, plainResult] = await Promise.all([compile(createConfig(true)), compile(createConfig(false))]);
+    widened = widenedResult.stats;
+    plain = plainResult.stats;
+  });
+
+  it('leaves rspack reporting a bare summary without it', () => {
     // Documents the behaviour the plugin exists to correct: webpack-bundle-analyzer calls
     // `toJson()` with no arguments and would report an empty bundle. If rspack ever adopts
     // webpack's defaults this fails, and the plugin can go.
-    const json = stats.toJson();
+    const json = plain.toJson();
     expect(json.assets).toBeUndefined();
     expect(json.chunks).toBeUndefined();
     expect(json.modules).toBeUndefined();
   });
 
-  it('makes toJson() report the whole graph', async () => {
-    const { stats } = await compile(createConfig(true));
-
-    const json = stats.toJson();
-    expect(json.assets?.length).toBeGreaterThan(0);
+  it('makes toJson() report the whole graph, flat', () => {
+    const json = widened.toJson();
     expect(json.chunks?.length).toBeGreaterThan(0);
     expect(json.modules?.length).toBeGreaterThan(0);
-  });
-
-  it('reports assets flat, not grouped into synthetic tree nodes', async () => {
-    const { stats } = await compile(createConfig(true));
 
     // Grouping replaces real assets with `assets by path` parents holding `children`.
     // webpack-bundle-analyzer drops anything whose type isn't `asset`, so a grouped report
     // silently comes out near-empty rather than failing.
-    const assets = stats.toJson().assets ?? [];
+    const assets = json.assets ?? [];
     expect(assets.filter((asset) => asset.type !== 'asset')).toEqual([]);
     expect(assets.map((asset) => asset.name)).toContain('static/img/image.png');
   });
 
-  it('leaves console output alone', async () => {
-    const [widened, plain] = await Promise.all([compile(createConfig(true)), compile(createConfig(false))]);
-
+  it('leaves console output alone', () => {
     // `toString` goes through `toJson` too. Widening it would replace the build summary
     // with every module in the graph. The summary quotes its own build time, so drop that.
     const withoutDuration = (summary: string) => summary.replace(/in \d+ ms/, 'in <n> ms');
-    expect(withoutDuration(widened.stats.toString())).toBe(withoutDuration(plain.stats.toString()));
+    expect(withoutDuration(widened.toString())).toBe(withoutDuration(plain.toString()));
   });
 
-  it('does not override explicitly requested stats options', async () => {
-    const { stats } = await compile(createConfig(true));
-
-    expect(stats.toJson({ all: false, hash: true }).assets).toBeUndefined();
+  it('does not override explicitly requested stats options', () => {
+    expect(widened.toJson({ all: false, hash: true }).assets).toBeUndefined();
   });
 });
