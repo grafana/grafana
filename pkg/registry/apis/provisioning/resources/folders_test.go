@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -2245,6 +2246,173 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		require.ErrorAs(t, err, &validationErr, "a child reusing the parent UID must stay a ResourceValidationError")
 		require.ErrorContains(t, err, `folder UID "parent-uid" defined in "newparent/newchild" is already used by folder at path "newparent"`)
 	})
+}
+
+// TestEnsureFolderPathExist_NestedRelocations exercises a root rename combined
+// with nested and independent folder moves while the tree still contains old paths.
+// It checks that UIDs and parent links survive, stale path entries disappear, and
+// repeated ensures do not write again. Missing ancestor exemptions and duplicate
+// UIDs must remain validation errors, with folders beyond the failure retaining
+// their previous state.
+func TestEnsureFolderPathExist_NestedRelocations(t *testing.T) {
+	folderJSON := func(uid, title string) []byte {
+		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"` + title + `"}}`)
+	}
+	folders := []struct {
+		uid     string
+		oldPath string
+		path    string
+		parent  string
+	}{
+		{uid: "rd-uid", oldPath: "RnD", path: "RD"},
+		{uid: "grafana-uid", oldPath: "RnD/Grafana", path: "RD/Grafana", parent: "rd-uid"},
+		{uid: "backend-uid", oldPath: "RnD/Grafana/Grafana Backend", path: "RD/Grafana/Backend", parent: "grafana-uid"},
+		{uid: "as-code-uid", oldPath: "RnD/Grafana/Grafana Backend/As Code", path: "RD/Grafana/Backend/As Code", parent: "backend-uid"},
+		{uid: "alerts-uid", oldPath: "RnD/Grafana/Grafana Backend/Alerts", path: "RD/Grafana/Backend/Alerts", parent: "backend-uid"},
+		{uid: "frontend-uid", oldPath: "RnD/Grafana/UI", path: "RD/Grafana/Frontend", parent: "grafana-uid"},
+		{uid: "ops-uid", oldPath: "Ops", path: "Operations"},
+		{uid: "services-uid", oldPath: "Ops/Services", path: "Operations/Services", parent: "ops-uid"},
+		{uid: "unrelated-uid", oldPath: "unrelated", path: "unrelated"},
+	}
+	paths := []struct {
+		path string
+		uid  string
+	}{
+		{path: "RD/Grafana/Backend/As Code/dashboard.json", uid: "as-code-uid"},
+		{path: "RD/Grafana/Backend/Alerts/dashboard.json", uid: "alerts-uid"},
+		{path: "RD/Grafana/Frontend/dashboard.json", uid: "frontend-uid"},
+		{path: "Operations/Services/dashboard.json", uid: "services-uid"},
+	}
+
+	for _, tt := range []struct {
+		name            string
+		omittedUID      string
+		leafUIDOverride string
+		wantError       string
+		wantUpdated     []string
+	}{
+		{
+			name:        "renamed root and nested branches preserve both subtrees",
+			wantUpdated: []string{"rd-uid", "grafana-uid", "backend-uid", "as-code-uid", "alerts-uid", "frontend-uid", "ops-uid", "services-uid"},
+		},
+		{
+			name:        "missing intermediate ancestor exemption prevents descendant relocation",
+			omittedUID:  "backend-uid",
+			wantError:   `folder UID "backend-uid" defined in "RD/Grafana/Backend" is already used by folder at path "RnD/Grafana/Grafana Backend"`,
+			wantUpdated: []string{"rd-uid", "grafana-uid"},
+		},
+		{
+			name:            "deep descendant cannot reuse a relocating ancestor UID",
+			leafUIDOverride: "grafana-uid",
+			wantError:       `folder UID "grafana-uid" defined in "RD/Grafana/Backend/As Code" is already used by folder at path "RD/Grafana"`,
+			wantUpdated:     []string{"rd-uid", "grafana-uid", "backend-uid"},
+		},
+		{
+			name:            "deep descendant cannot reuse a relocating sibling UID",
+			leafUIDOverride: "frontend-uid",
+			wantError:       `folder UID "frontend-uid" defined in "RD/Grafana/Backend/As Code" is already used by folder at path "RnD/Grafana/UI"`,
+			wantUpdated:     []string{"rd-uid", "grafana-uid", "backend-uid"},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			config := newTestRepoConfig("test-repo")
+			rw := repository.NewMockReaderWriter(t)
+			rw.On("Config").Return(config)
+			tree := NewEmptyFolderTree()
+			storedFolders := make(map[string]*unstructured.Unstructured)
+			opts := []EnsurePathOption{WithForceWalk()}
+
+			for _, folder := range folders {
+				metadataUID := folder.uid
+				if folder.uid == "as-code-uid" && tt.leafUIDOverride != "" {
+					metadataUID = tt.leafUIDOverride
+				}
+				rw.On("Read", mock.Anything, folder.path+"/_folder.json", "test-ref").
+					Return(&repository.FileInfo{Data: folderJSON(metadataUID, folder.uid), Hash: folder.uid + "-hash"}, nil).Maybe()
+
+				tree.Add(Folder{ID: folder.uid, Title: folder.uid, Path: folder.oldPath, MetadataHash: folder.uid + "-hash"}, folder.parent)
+				obj := &unstructured.Unstructured{Object: map[string]interface{}{
+					"spec": map[string]interface{}{"title": folder.uid},
+				}}
+				obj.SetAPIVersion(FolderKind.GroupVersion().String())
+				obj.SetKind(FolderKind.Kind)
+				obj.SetName(folder.uid)
+				obj.SetNamespace(config.Namespace)
+				meta, err := utils.MetaAccessor(obj)
+				require.NoError(t, err)
+				meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: config.Name})
+				meta.SetSourceProperties(utils.SourceProperties{Path: folder.oldPath, Checksum: folder.uid + "-hash"})
+				meta.SetFolder(folder.parent)
+				storedFolders[folder.uid] = obj
+
+				if folder.oldPath != folder.path && folder.uid != tt.omittedUID {
+					opts = append(opts, WithRelocatingUIDs(folder.path+"/", folder.uid))
+				}
+			}
+
+			client := &fakeDynamicResourceClient{
+				getFn: func(name string) (*unstructured.Unstructured, error) {
+					obj, ok := storedFolders[name]
+					if !ok {
+						return nil, apierrors.NewNotFound(FolderResource.GroupResource(), name)
+					}
+					return obj.DeepCopy(), nil
+				},
+				updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+					require.Contains(t, storedFolders, obj.GetName())
+					storedFolders[obj.GetName()] = obj.DeepCopy()
+					return obj, nil
+				},
+			}
+			fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+			for _, path := range paths {
+				parent, err := fm.EnsureFolderPathExist(ctx, path.path, "test-ref", opts...)
+				if tt.wantError != "" {
+					var validationErr *ResourceValidationError
+					require.ErrorAs(t, err, &validationErr)
+					require.ErrorContains(t, err, tt.wantError)
+					require.Empty(t, parent)
+					break
+				}
+				require.NoError(t, err)
+				require.Equal(t, path.uid, parent)
+			}
+
+			require.Equal(t, tt.wantUpdated, client.updateCalls)
+			require.Empty(t, client.createCalls)
+			require.Equal(t, len(folders), tree.Count())
+			for _, folder := range folders {
+				wantPath := folder.oldPath
+				if slices.Contains(tt.wantUpdated, folder.uid) {
+					wantPath = folder.path
+					_, exists := tree.GetByPath(folder.oldPath)
+					require.False(t, exists, "stale path %s must be removed", folder.oldPath)
+				}
+				actual, exists := tree.GetByPath(wantPath)
+				require.True(t, exists, "folder %s must remain indexed by its path", folder.uid)
+				require.Equal(t, Folder{ID: folder.uid, Title: folder.uid, Path: wantPath, ParentID: folder.parent, MetadataHash: folder.uid + "-hash"}, actual)
+
+				meta, err := utils.MetaAccessor(storedFolders[folder.uid])
+				require.NoError(t, err)
+				source, ok := meta.GetSourceProperties()
+				require.True(t, ok)
+				require.Equal(t, wantPath, source.Path)
+				require.Equal(t, folder.parent, meta.GetFolder())
+			}
+
+			if tt.wantError == "" {
+				for _, path := range paths {
+					parent, err := fm.EnsureFolderPathExist(ctx, path.path, "test-ref")
+					require.NoError(t, err)
+					require.Equal(t, path.uid, parent)
+				}
+				require.Equal(t, tt.wantUpdated, client.updateCalls, "repeated ensures must not write the relocated folders again")
+				require.Empty(t, client.createCalls)
+			}
+		})
+	}
 }
 
 func TestEnsureFolderTreeExists(t *testing.T) {

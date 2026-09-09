@@ -47,7 +47,7 @@ func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
 // land at path. Binding the exemption to the destination path stops a folder
 // that reuses a relocating ancestor's UID from bypassing the conflict check at a
 // different point in the walk.
-func (c *ensurePathConfig) isRelocatingTo(uid, path string) bool {
+func (c *ensurePathConfig) isRelocatingTo(path, uid string) bool {
 	expected, ok := c.relocatingUIDs[uid]
 	if !ok {
 		return false
@@ -181,7 +181,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 			// When a folder is being relocated, its UID temporarily exists at both the old
 			// and new paths in the tree. Allow the duplicate UID only when this folder is
 			// the one relocating to this exact path.
-			if !epCfg.isRelocatingTo(f.ID, f.Path) &&
+			if !epCfg.isRelocatingTo(f.Path, f.ID) &&
 				safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
 				return "", NewResourceValidationError(fmt.Errorf(
 					"folder UID %q defined in %q is already used by folder at path %q",
@@ -205,7 +205,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 			return nil
 		}
 
-		if !epCfg.isRelocatingTo(f.ID, f.Path) && existsInTree &&
+		if !epCfg.isRelocatingTo(f.Path, f.ID) && existsInTree &&
 			safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
 			return NewResourceValidationError(fmt.Errorf(
 				"folder UID %q defined in %q is already used by folder at path %q",
