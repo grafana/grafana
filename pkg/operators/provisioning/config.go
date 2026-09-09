@@ -608,6 +608,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
+	resources.RegisterFolderMetadataMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
