@@ -467,11 +467,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:         net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler:      hs.web,
-		ReadTimeout:  hs.Cfg.ReadTimeout,
-		WriteTimeout: hs.Cfg.WriteTimeout,
-		IdleTimeout:  hs.Cfg.IdleTimeout,
+		Addr:              net.JoinHostPort(host, hs.Cfg.HTTPPort),
+		Handler:           hs.web,
+		ReadTimeout:       hs.Cfg.ReadTimeout,
+		ReadHeaderTimeout: hs.Cfg.ReadHeaderTimeout,
+		WriteTimeout:      hs.Cfg.WriteTimeout,
+		IdleTimeout:       hs.Cfg.IdleTimeout,
 	}
 
 	customErrorLogger := &customErrorLogger{

@@ -363,6 +363,12 @@ For example, given a CDN URL like `https://cdn.myserver.com`, Grafana tries to l
 Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
 `0` means there is no timeout for reading the request.
 
+#### `read_header_timeout`
+
+Sets the maximum amount of time using a duration format (5s/5m/5ms) allowed to read request headers.
+If `read_header_timeout` is zero, the value of `read_timeout` is used.
+If both are zero, there is no timeout.
+
 #### `write_timeout`
 
 Sets the maximum duration using a duration format (5s/5m/5ms) before timing out writes of the response.
