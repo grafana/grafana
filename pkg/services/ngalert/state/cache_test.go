@@ -164,8 +164,8 @@ func Test_expandAnnotationsAndLabels_sizeCap(t *testing.T) {
 
 		require.Len(t, lbs["big"], 10)
 		require.Len(t, anns["summary"], 10)
-		require.Equal(t, float64(1), testutil.ToFloat64(stateMetrics.ClampedLabelStrings.WithLabelValues("label")))
-		require.Equal(t, float64(1), testutil.ToFloat64(stateMetrics.ClampedLabelStrings.WithLabelValues("annotation")))
+		require.Equal(t, float64(1), testutil.ToFloat64(stateMetrics.TruncatedStrings.WithLabelValues("label")))
+		require.Equal(t, float64(1), testutil.ToFloat64(stateMetrics.TruncatedStrings.WithLabelValues("annotation")))
 	})
 
 	t.Run("non-positive cap disables the clamp", func(t *testing.T) {
