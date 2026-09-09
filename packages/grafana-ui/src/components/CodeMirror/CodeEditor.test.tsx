@@ -2,7 +2,8 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
-import { EditorView } from '@uiw/react-codemirror';
+import { EditorView, type ReactCodeMirrorProps, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import type * as ReactType from 'react';
 
 import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
@@ -13,18 +14,35 @@ import { CodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
-let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;
+let capturedProps: ReactCodeMirrorProps | undefined;
+let mockEditorValue = '';
 
 jest.mock('@uiw/react-codemirror', () => {
   const actual = jest.requireActual('@uiw/react-codemirror');
+  const React = jest.requireActual('react') as typeof ReactType;
+  const MockCodeMirror = React.forwardRef<ReactCodeMirrorRef, ReactCodeMirrorProps>((props, ref) => {
+    capturedProps = props;
+    React.useImperativeHandle(
+      ref,
+      () =>
+        ({
+          view: {
+            state: {
+              doc: {
+                toString: () => mockEditorValue,
+              },
+            },
+          },
+        }) as ReactCodeMirrorRef,
+      []
+    );
+    return null;
+  });
 
   return {
     __esModule: true,
     ...actual,
-    default: jest.fn((props) => {
-      capturedProps = props;
-      return null;
-    }),
+    default: MockCodeMirror,
   };
 });
 
@@ -82,6 +100,7 @@ const getContentAttributes = () =>
 describe('CodeMirror CodeEditor', () => {
   beforeEach(() => {
     capturedProps = undefined;
+    mockEditorValue = '';
     autocompletionMock.mockClear();
     startCompletionMock.mockClear();
     loadLanguageExtensionMock.mockClear();
@@ -184,6 +203,24 @@ describe('CodeMirror CodeEditor', () => {
     expect(getContentAttributes()).toEqual(
       expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
     );
+  });
+
+  it('calls onBlur with the current editor contents when the controlled value lags behind', () => {
+    const onBlur = jest.fn();
+
+    const { rerender } = render(<CodeEditor value="initial value" onChange={jest.fn()} onBlur={onBlur} />);
+
+    mockEditorValue = 'edited value';
+    rerender(<CodeEditor value="initial value" onChange={jest.fn()} onBlur={onBlur} aria-label="Code editor" />);
+    capturedProps?.onBlur?.({} as ReactType.FocusEvent<HTMLDivElement>);
+
+    expect(onBlur).toHaveBeenCalledWith('edited value');
+  });
+
+  it('does not attach a blur handler when onBlur is not provided', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} />);
+
+    expect(capturedProps?.onBlur).toBeUndefined();
   });
 
   it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {
