@@ -75,7 +75,7 @@ license_directory = /var/lib/grafana/marketplace-licenses
 }
 
 func TestMarketplaceLicenseDirectoryEnvironmentOverride(t *testing.T) {
-	t.Setenv("GF_MARKETPLACE_LICENSE_DIRECTORY", "/var/lib/grafana/marketplace-licenses")
+	t.Setenv("GF_PLUGINS_MARKETPLACE_LICENSE_DIRECTORY", "/var/lib/grafana/marketplace-licenses")
 	t.Setenv("GF_MARKETPLACE_LICENSE_PATH", "/var/lib/grafana/marketplace-licenses/license-acme-widget.jwt")
 
 	cfg := NewCfg()
