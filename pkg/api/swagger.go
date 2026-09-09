@@ -1,44 +1,20 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/middleware"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/util/errhttp"
+	"github.com/grafana/grafana/pkg/services/swagger"
 )
 
+// registerSwaggerUI mounts the swagger service's handler on the core HTTP server.
+// The same routes are served standalone by the swagger-server target.
 func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
+	handler := swagger.NewHandler(hs.Cfg, hs.License)
+
 	// Deprecated
-	r.Get("/swagger-ui", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "swagger", http.StatusMovedPermanently)
-	})
+	r.Get("/swagger-ui", swagger.HandleRedirect)
 	// Deprecated
-	r.Get("/openapi3", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "swagger", http.StatusMovedPermanently)
-	})
+	r.Get("/openapi3", swagger.HandleRedirect)
 
 	// The swagger based api navigator
-	r.Get("/swagger", func(c *contextmodel.ReqContext) {
-		ctx := c.Req.Context()
-		assets, err := webassets.GetWebAssets(ctx, "build-swagger", hs.Cfg, hs.License)
-		if err != nil {
-			errhttp.Write(ctx, err, c.Resp)
-			return
-		}
-
-		data := map[string]any{
-			"Nonce":  c.RequestNonce,
-			"Assets": assets,
-		}
-		if hs.Cfg.CSPEnabled {
-			data["CSPEnabled"] = true
-			hosts := middleware.CSPHostLists{FormActionAdditionalHosts: hs.Cfg.FormActionAdditionalHosts}
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, hosts, c.RequestNonce)
-		}
-
-		c.HTML(http.StatusOK, "swagger", data)
-	})
+	r.Get("/swagger", handler.HandleRequest)
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/swagger"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -253,7 +254,7 @@ func (s *ModuleServer) Run() error {
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
-		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) {
+		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) || m.IsModuleEnabled(modules.SwaggerServer) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
 		return s.initInstrumentationServer()
@@ -314,6 +315,10 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
+	})
+
+	m.RegisterModule(modules.SwaggerServer, func() (services.Service, error) {
+		return swagger.ProvideSwaggerService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
 	})
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)

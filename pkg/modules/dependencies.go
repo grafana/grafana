@@ -19,6 +19,7 @@ const (
 	UnifiedVectorBackend    string = "unified-vector-backend"
 	NATS                    string = "nats"
 	FrontendServer          string = "frontend-server"
+	SwaggerServer           string = "swagger-server"
 	OperatorServer          string = "operator"
 )
 
@@ -44,5 +45,6 @@ var dependencyMap = map[string][]string{
 	Core:                    {},
 	All:                     {Core},
 	FrontendServer:          {},
+	SwaggerServer:           {},
 	OperatorServer:          {InstrumentationServer},
 }
