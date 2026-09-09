@@ -153,7 +153,11 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 func (s *Service) starting(ctx context.Context) error {
 	if len(s.cfg.PreinstallPluginsSync) > 0 {
 		s.log.Info("Installing plugins", "plugins", s.cfg.PreinstallPluginsSync)
-		installCtx, cancel := context.WithTimeout(ctx, setting.PreinstallPluginsSyncTimeout(s.cfg))
+		installCtx := ctx
+		cancel := func() {}
+		if timeout := setting.PreinstallPluginsSyncTimeout(s.cfg); timeout > 0 {
+			installCtx, cancel = context.WithTimeout(ctx, timeout)
+		}
 		defer cancel()
 		if err := s.installPlugins(installCtx, s.cfg.PreinstallPluginsSync, true); err != nil {
 			s.log.Error("Failed to install plugins", "error", err)
