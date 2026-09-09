@@ -30,6 +30,7 @@ function resolveAccess(scene: DashboardScene): EnvelopeAccess {
     canDelete: meta.canDelete,
     canAdmin: meta.canAdmin,
     annotationsPermissions: meta.annotationsPermissions,
+    isPublic: meta.publicDashboardEnabled,
     slug: meta.slug,
     url: meta.url,
   };
