@@ -423,7 +423,7 @@ func TestUpsertTemplate(t *testing.T) {
 
 		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == tmpl.Title
-		}), orgID, utils.ManagerProperties{})
+		}), orgID, models.ProvenanceToManagerProperties(tmpl.Provenance))
 	})
 
 	t.Run("updates current template", func(t *testing.T) {
@@ -796,7 +796,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
 			return t.Title == tmpl.Title
-		}), orgID, utils.ManagerProperties{})
+		}), orgID, models.ProvenanceToManagerProperties(tmpl.Provenance))
 	})
 
 	t.Run("returns ErrTemplateExists if template exists", func(t *testing.T) {

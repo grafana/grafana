@@ -9,6 +9,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -234,17 +235,17 @@ func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Co
 
 type fakeReceiverService struct {
 	Calls                                  []call
-	GetReceiversFunc                       func(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
+	GetReceiversFunc                       func(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, map[string]utils.ManagerProperties, error)
 	RenameReceiverInDependentResourcesFunc func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
 	ReceiverNameUsedByRoutesFunc           func(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool
 }
 
-func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
+func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, map[string]utils.ManagerProperties, error) {
 	f.Calls = append(f.Calls, call{Method: "GetReceivers", Args: []interface{}{ctx, query, user}})
 	if f.GetReceiversFunc != nil {
 		return f.GetReceiversFunc(ctx, query, user)
 	}
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {

@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -14,6 +13,16 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
+
+// effectiveManager returns manager when it carries a rich kind; otherwise it derives a manager
+// from the resource's own (legacy) provenance, so callers that only set Provenance directly
+// (without knowing about ManagerProperties) still persist a consistent manager_kind.
+func effectiveManager(provenance models.Provenance, manager utils.ManagerProperties) utils.ManagerProperties {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return manager
+	}
+	return models.ProvenanceToManagerProperties(provenance)
+}
 
 type MuteTimingService struct {
 	configStore            alertmanagerConfigStore
@@ -177,7 +186,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetManagerProperties(ctx, &created, orgID, manager)
+		return svc.provenanceStore.SetManagerProperties(ctx, &created, orgID, effectiveManager(created.Provenance, manager))
 	})
 	if err != nil {
 		return v1.TimeInterval{}, err
@@ -234,20 +243,6 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, err
 	}
 
-	storedManager, err := svc.provenanceStore.GetManagerProperties(ctx, &existing, orgID)
-	if err != nil {
-		return v1.TimeInterval{}, err
-	}
-	if !validation.CanUpdateManagerInRuleGroup(storedManager, manager) {
-		return v1.TimeInterval{}, errProvenanceMismatch.Build(errutil.TemplateData{
-			Public: map[string]any{
-				"ProvidedProvenance": manager.Kind,
-				"StoredProvenance":   storedManager.Kind,
-				"Operation":          "update",
-			},
-		})
-	}
-
 	// check optimistic concurrency
 	if err = svc.checkOptimisticConcurrency(existing, mt.Provenance, mt.Version, "update"); err != nil {
 		return v1.TimeInterval{}, err
@@ -274,7 +269,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetManagerProperties(ctx, &updated, orgID, manager)
+		return svc.provenanceStore.SetManagerProperties(ctx, &updated, orgID, effectiveManager(updated.Provenance, manager))
 	})
 	if err != nil {
 		return v1.TimeInterval{}, err
@@ -311,20 +306,6 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	provenance := models.ManagerPropertiesToProvenance(manager)
 	if err := svc.validator(ctx, existing.Provenance, provenance); err != nil {
 		return err
-	}
-
-	storedManager, err := svc.provenanceStore.GetManagerProperties(ctx, &existing, orgID)
-	if err != nil {
-		return err
-	}
-	if !validation.CanUpdateManagerInRuleGroup(storedManager, manager) {
-		return errProvenanceMismatch.Build(errutil.TemplateData{
-			Public: map[string]any{
-				"ProvidedProvenance": manager.Kind,
-				"StoredProvenance":   storedManager.Kind,
-				"Operation":          "delete",
-			},
-		})
 	}
 
 	if revision.TimeIntervalUsedByRoutes(existing.Title) {

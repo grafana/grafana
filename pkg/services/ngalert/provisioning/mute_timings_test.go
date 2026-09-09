@@ -451,7 +451,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.Contains(t, revision.Config.TimeIntervals, v1.TimeIntervalUID("TEST2"))
 		require.Len(t, revision.Config.TimeIntervals, 3)
 
-		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, &result, orgID, utils.ManagerProperties{})
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, &result, orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -704,7 +704,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Equal(t, expected.Title, stored.Title)
 		require.EqualValues(t, expected.TimeIntervals, stored.TimeIntervals)
 
-		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, utils.ManagerProperties{})
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 
 		t.Run("bypass optimistic concurrency check if version is empty", func(t *testing.T) {
 			store.Calls = nil
@@ -793,7 +793,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Equal(t, expected.Title, stored.Title)
 		require.EqualValues(t, expected.TimeIntervals, stored.TimeIntervals)
 
-		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, utils.ManagerProperties{})
+		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool { return m.Title == timing.Title }), orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 	})
 
 	t.Run("renames interval and all its dependencies", func(t *testing.T) {
@@ -855,7 +855,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		prov.AssertCalled(t, "SetManagerProperties", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
 			return m.Title == interval.Title
-		}), orgID, utils.ManagerProperties{})
+		}), orgID, models.ProvenanceToManagerProperties(expectedProvenance))
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(m *v1.TimeInterval) bool {
 			return m.Title == original.Title
 		}), orgID)

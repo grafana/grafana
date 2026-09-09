@@ -13,6 +13,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -24,11 +25,11 @@ var (
 )
 
 type ReceiverService interface {
-	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*ngmodels.Receiver, error)
-	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
-	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
-	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
-	DeleteReceiver(ctx context.Context, name string, provenance ngmodels.Provenance, version string, orgID int64, user identity.Requester) error
+	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*ngmodels.Receiver, utils.ManagerProperties, error)
+	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, map[string]utils.ManagerProperties, error)
+	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, manager utils.ManagerProperties, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
+	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, manager utils.ManagerProperties, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
+	DeleteReceiver(ctx context.Context, name string, manager utils.ManagerProperties, version string, orgID int64, user identity.Requester) error
 }
 
 type MetadataService interface {
@@ -84,7 +85,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	res, err := s.service.GetReceivers(ctx, q, user)
+	res, managerPropsMap, err := s.service.GetReceivers(ctx, q, user)
 	if err != nil {
 		// This API should not be returning a forbidden error when the user does not have access to any resources.
 		// This can be true for a contact point creator role, for example.
@@ -106,7 +107,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
 	}
 
-	return convertToK8sResources(orgId, res, accesses, inUses, s.namespacer, opts.FieldSelector)
+	return convertToK8sResources(orgId, res, managerPropsMap, accesses, inUses, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -120,7 +121,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	r, err := s.service.GetReceiver(ctx, uid, false, user)
+	r, managerProps, err := s.service.GetReceiver(ctx, uid, false, user)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +146,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
 
-	return convertToK8sResource(info.OrgID, r, access, inUse, s.namespacer)
+	return convertToK8sResource(info.OrgID, r, managerProps, access, inUse, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -169,7 +170,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, apierrors.NewBadRequest("object's metadata.name should be empty")
 	}
-	model, _, err := convertToDomainModel(p)
+	model, _, managerProps, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
@@ -179,11 +180,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	out, err := s.service.CreateReceiver(ctx, model, info.OrgID, user)
+	out, err := s.service.CreateReceiver(ctx, model, managerProps, info.OrgID, user)
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, managerProps, nil, nil, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -221,17 +222,17 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if !ok {
 		return nil, false, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	model, storedSecureFields, err := convertToDomainModel(p)
+	model, storedSecureFields, managerProps, err := convertToDomainModel(p)
 	if err != nil {
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
+	updated, err := s.service.UpdateReceiver(ctx, model, managerProps, storedSecureFields, info.OrgID, user)
 	if err != nil {
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, managerProps, nil, nil, s.namespacer)
 	return r, false, err
 }
 
@@ -265,12 +266,15 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if !ok {
 		return nil, false, fmt.Errorf("expected receiver but got %s", old.GetObjectKind().GroupVersionKind())
 	}
-	prov, err := ngmodels.ProvenanceFromString(oldReceiver.GetProvenanceStatus())
+	// Derive manager properties the same way create/update do, so a resource managed by a
+	// specific manager (e.g. Terraform) is deleted with the matching manager and not the
+	// coarser provenance-derived equivalent.
+	managerProps, _, err := extractManagerProperties(oldReceiver)
 	if err != nil {
 		return nil, false, apierrors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteReceiver(ctx, uid, prov, version, info.OrgID, user) // TODO add support for dry-run option
-	return old, false, err                                                    // false - will be deleted async
+	err = s.service.DeleteReceiver(ctx, uid, managerProps, version, info.OrgID, user) // TODO add support for dry-run option
+	return old, false, err                                                            // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

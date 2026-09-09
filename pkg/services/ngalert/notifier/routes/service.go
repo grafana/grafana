@@ -7,7 +7,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,11 +28,6 @@ type routeProvenanceStore interface {
 	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
-
-var errManagerMismatch = errutil.NewBase(errutil.StatusConflict, "alerting.managerMismatch").MustTemplate(
-	"cannot {{ .Public.Operation }} with provided manager kind '{{ .Public.ProvidedProvenance }}', needs '{{ .Public.StoredProvenance }}'",
-	errutil.WithPublic("cannot {{ .Public.Operation }} with provided manager kind '{{ .Public.ProvidedProvenance }}', needs '{{ .Public.StoredProvenance }}'"),
-)
 
 type transactionManager interface {
 	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
@@ -280,20 +274,6 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	storedManager, err := nps.provenanceStore.GetManagerProperties(ctx, existing, orgID)
-	if err != nil {
-		return nil, err
-	}
-	if !validation.CanUpdateManagerInRuleGroup(storedManager, manager) {
-		return nil, errManagerMismatch.Build(errutil.TemplateData{
-			Public: map[string]any{
-				"ProvidedProvenance": manager.Kind,
-				"StoredProvenance":   storedManager.Kind,
-				"Operation":          "update",
-			},
-		})
-	}
-
 	updated, err := revision.UpdateNamedRoute(name, subtree)
 	if err != nil {
 		return nil, err
@@ -362,20 +342,6 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	}
 	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return err
-	}
-
-	storedManager, err := nps.provenanceStore.GetManagerProperties(ctx, existing, orgID)
-	if err != nil {
-		return err
-	}
-	if !validation.CanUpdateManagerInRuleGroup(storedManager, manager) {
-		return errManagerMismatch.Build(errutil.TemplateData{
-			Public: map[string]any{
-				"ProvidedProvenance": manager.Kind,
-				"StoredProvenance":   storedManager.Kind,
-				"Operation":          "delete",
-			},
-		})
 	}
 
 	action := "Deleted"

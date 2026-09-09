@@ -6,7 +6,6 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -233,7 +232,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return t.provenanceStore.SetManagerProperties(ctx, &created, orgID, manager)
+		return t.provenanceStore.SetManagerProperties(ctx, &created, orgID, effectiveManager(created.Provenance, manager))
 	})
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -295,20 +294,6 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		return v1.TemplateGroup{}, err
 	}
 
-	storedManager, err := t.provenanceStore.GetManagerProperties(ctx, &existing, orgID)
-	if err != nil {
-		return v1.TemplateGroup{}, err
-	}
-	if !validation.CanUpdateManagerInRuleGroup(storedManager, manager) {
-		return v1.TemplateGroup{}, errProvenanceMismatch.Build(errutil.TemplateData{
-			Public: map[string]any{
-				"ProvidedProvenance": manager.Kind,
-				"StoredProvenance":   storedManager.Kind,
-				"Operation":          "update",
-			},
-		})
-	}
-
 	err = t.checkOptimisticConcurrency(existing, tmpl.Provenance, tmpl.Version, "update")
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -334,7 +319,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return t.provenanceStore.SetManagerProperties(ctx, &updated, orgID, manager)
+		return t.provenanceStore.SetManagerProperties(ctx, &updated, orgID, effectiveManager(updated.Provenance, manager))
 	})
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -373,20 +358,6 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameO
 
 	if err = t.validator(ctx, existing.Provenance, provenance); err != nil {
 		return err
-	}
-
-	storedManager, err := t.provenanceStore.GetManagerProperties(ctx, &existing, orgID)
-	if err != nil {
-		return err
-	}
-	if !validation.CanUpdateManagerInRuleGroup(storedManager, manager) {
-		return errProvenanceMismatch.Build(errutil.TemplateData{
-			Public: map[string]any{
-				"ProvidedProvenance": manager.Kind,
-				"StoredProvenance":   storedManager.Kind,
-				"Operation":          "delete",
-			},
-		})
 	}
 
 	revision.DeleteTemplate(existing.UID)
