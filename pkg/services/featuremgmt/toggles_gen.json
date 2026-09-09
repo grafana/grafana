@@ -1678,6 +1678,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.searchFieldValueResults",
+        "resourceVersion": "1788883151754",
+        "creationTimestamp": "2026-09-08T15:59:11Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for dashboard search requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
