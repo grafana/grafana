@@ -84,7 +84,7 @@ describe('NotebookCellFrame', () => {
     renderFrame();
 
     expect(screen.queryByRole('button', { name: 'Drag to reorder' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
   });
 
   it('renders the handle and the add button in edit mode', async () => {
@@ -92,7 +92,7 @@ describe('NotebookCellFrame', () => {
 
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Drag to reorder' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add block' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
   });
 
   // The only behavioural pin on the insertion index. The button belongs to the cell above it, so
@@ -102,7 +102,7 @@ describe('NotebookCellFrame', () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 
-    await user.click(screen.getByRole('button', { name: 'Add block' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 2);

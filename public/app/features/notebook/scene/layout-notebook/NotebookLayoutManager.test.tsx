@@ -192,7 +192,7 @@ describe('NotebookLayoutManager', () => {
     it('does not offer them outside edit mode', () => {
       renderNotebook();
 
-      expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
     });
 
     // One "+" per cell — two real cells plus the trailing empty one the invariant appends.
@@ -200,7 +200,7 @@ describe('NotebookLayoutManager', () => {
       renderNotebook(true);
 
       await screen.findAllByRole('textbox', { name: 'Markdown' });
-      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Click to add below' })).toHaveLength(3);
     });
 
     // Revealed by hovering the cell, and carried along when the cell is reordered.
@@ -210,7 +210,7 @@ describe('NotebookLayoutManager', () => {
       const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
 
       expect(frame).not.toBeNull();
-      expect(within(frame!).getByRole('button', { name: 'Add block' })).toBeInTheDocument();
+      expect(within(frame!).getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
     });
 
     // The trailing-invariant bootstrap gives an empty notebook a first cell immediately (see 'the
@@ -218,13 +218,13 @@ describe('NotebookLayoutManager', () => {
     it('renders an add button once an empty notebook gets its first cell', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Click to add below' })).toHaveLength(1);
     });
 
     it('opens the block type menu', async () => {
       const { user } = renderNotebook(true);
 
-      await user.click(screen.getAllByRole('button', { name: 'Add block' })[0]);
+      await user.click(screen.getAllByRole('button', { name: 'Click to add below' })[0]);
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -530,9 +530,9 @@ describe('NotebookLayoutManager', () => {
     }
 
     // The trailing empty cell every notebook always has is a markdown cell in its own right, not a
-    // button — typing "/" into it opens the same menu the add buttons open by clicking "Add block",
-    // but picking a type from it converts *that* cell in place (see NotebookCellRenderer's
-    // handlePick) rather than inserting a fresh one alongside it the way an add button does. Always
+    // button — typing "/" into it opens the same menu the add buttons open, but picking a type from
+    // it converts *that* cell in place (see NotebookCellRenderer's handlePick) rather than inserting
+    // a fresh one alongside it the way an add button does. Always
     // re-queries the *current* last "Markdown" textbox rather than caching one, since the
     // trailing-invariant may have already appended a new one by the time this runs.
     async function pickFromTrailingCellMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
@@ -546,7 +546,7 @@ describe('NotebookLayoutManager', () => {
     it('inserts an empty code cell where its own add button offered it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
+      await pickCode(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'code-1', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
@@ -569,7 +569,7 @@ describe('NotebookLayoutManager', () => {
     // inserting before it keeps the empty cell at the tail and still records an "Add block".
     it('inserts before the trailing empty slot when its add button offers a position past it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const addButtons = screen.getAllByRole('button', { name: 'Add block' });
+      const addButtons = screen.getAllByRole('button', { name: 'Click to add below' });
 
       await pickCode(user, addButtons[addButtons.length - 1]);
 
@@ -583,7 +583,7 @@ describe('NotebookLayoutManager', () => {
     // on the undo stack. A fresh cell still has to land before the slot.
     it('inserts a paragraph before the trailing empty slot when its add button offers a position past it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const addButtons = screen.getAllByRole('button', { name: 'Add block' });
+      const addButtons = screen.getAllByRole('button', { name: 'Click to add below' });
 
       await pickParagraph(user, addButtons[addButtons.length - 1]);
 
@@ -727,7 +727,7 @@ describe('NotebookLayoutManager', () => {
     it('inserts a heading cell seeded with a heading marker', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickHeading(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
+      await pickHeading(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
@@ -739,7 +739,7 @@ describe('NotebookLayoutManager', () => {
     it('inserts an empty paragraph cell', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickParagraph(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
+      await pickParagraph(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });

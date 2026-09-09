@@ -6,7 +6,7 @@ describe('NotebookCellAddButton', () => {
   it('renders an accessible add-block trigger', () => {
     render(<NotebookCellAddButton index={1} />);
 
-    expect(screen.getByRole('button', { name: 'Add block' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
   });
 
   // The only behavioural pin on the insertion index. The button at position i always inserts at
@@ -15,7 +15,7 @@ describe('NotebookCellAddButton', () => {
     const onAdd = jest.fn();
     const { user } = render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
 
-    await user.click(screen.getByRole('button', { name: 'Add block' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 2);
@@ -29,7 +29,7 @@ describe('NotebookCellAddButton', () => {
     const { user } = render(<NotebookCellAddButton index={1} />);
     // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
     // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
-    const addButton = screen.getByRole('button', { name: 'Add block' });
+    const addButton = screen.getByRole('button', { name: 'Click to add below' });
     const wrapper = addButton.closest('div');
 
     await user.click(addButton);
