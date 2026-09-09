@@ -23,6 +23,7 @@ import {
 } from '../../types/logAnalyticsMetadata';
 import { type AzureMonitorQuery } from '../../types/query';
 import { type EngineSchema } from '../../types/types';
+import { type LogTier } from '../LogsQueryEditor/utils';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
@@ -34,7 +35,6 @@ import { LimitSection } from './LimitSection';
 import { OrderBySection } from './OrderBySection';
 import { TableSection, type TierAutoSwitchInfo } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
-import { type LogTier } from '../LogsQueryEditor/utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
