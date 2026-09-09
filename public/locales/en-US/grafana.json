@@ -6023,7 +6023,6 @@
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
       "tags": "Tags",
-      "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
       "time": "Time",
       "title-edit": "Edit title",
@@ -6313,6 +6312,19 @@
         "title-controls-menu": "Controls menu",
         "title-hidden": "Hidden"
       },
+      "cross-dashboard-variables": {
+        "description": "Choose which global and folder-scoped variables this dashboard receives.",
+        "empty-folder": "No folder variables in this folder.",
+        "empty-global": "No global variables in this organization.",
+        "folder-section": "Folder",
+        "global-section": "Global",
+        "load-error": "Could not load global and folder variables.",
+        "pane-header": "Cross-dashboard variables",
+        "select-all-folder": "All folder",
+        "select-all-global": "All global",
+        "title": "Cross-dashboard",
+        "tooltip": "Choose global and folder variables"
+      },
       "dashboard-options": {
         "annotations": "Annotations",
         "description": "Description",
@@ -6416,17 +6428,6 @@
           "empty": "(empty)",
           "no-title": "<no title>"
         }
-      },
-      "predefined-variables": {
-        "all": "All",
-        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
-        "folder": "Folder",
-        "global": "Global",
-        "label": "Predefined variables",
-        "none": "None",
-        "pane-header": "Predefined variables",
-        "title": "Predefined variables",
-        "tooltip": "Choose which global and folder variables this dashboard receives"
       },
       "redo": "Redo",
       "row": {
@@ -7043,6 +7044,10 @@
       "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
       "save-warning": "Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
     },
+    "cross-dashboard-variables": {
+      "label-all": "All",
+      "label-none": "None"
+    },
     "custom-variable-form": {
       "custom-options": "Custom options",
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
@@ -7085,6 +7090,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "The branch this preview was created on has been deleted, so the pull request can no longer be opened. Your changes only exist in this preview — save them to keep them, or discard them and return to the saved version.",
+      "branch-gone-discard": "Discard changes",
+      "branch-gone-refresh-body": "The branch this preview was created on has been deleted. You are now viewing the saved version of this dashboard.",
+      "branch-gone-save": "Save to a new branch",
+      "branch-gone-save-changes": "Save changes",
+      "branch-gone-title": "This branch no longer exists",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
@@ -7514,13 +7525,6 @@
       },
       "title-close": "Close"
     },
-    "predefined-variables": {
-      "label-all": "All",
-      "label-custom": "Custom",
-      "label-folder": "Folder",
-      "label-global": "Global",
-      "label-none": "None"
-    },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
       "tooltip": "Added by the {{pluginName}} plugin",
@@ -7639,6 +7643,10 @@
       "required": "Required"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "The provisioning repository managing this folder no longer exists. Choose a different folder or save at the repository root.",
+      "folder-repo-missing-title": "The selected folder cannot be saved to",
+      "save-to-database": "Save to Grafana database instead",
+      "save-to-git": "Save to Git repository instead",
       "tabs": {
         "label-changes": "Changes",
         "label-details": "Details",
@@ -9143,6 +9151,7 @@
       "share-export-json": "Export as JSON",
       "share-group": "Share",
       "share-tooltip": "Share and feedback",
+      "spans": "Spans",
       "start-time": "Start time",
       "success-indicator": "Trace succeeded",
       "target": "Target",
@@ -12565,6 +12574,7 @@
       "title": "Create"
     },
     "create-alert": {
+      "subtitle": "Create an alert rule",
       "title": "New alert rule"
     },
     "create-dashboard": {
@@ -12990,7 +13000,7 @@
     "add-block": {
       "code": "Code",
       "heading": "Heading",
-      "label": "Add block",
+      "label": "Click to add below",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
       "visualization": "Visualization"
@@ -13057,7 +13067,6 @@
       "create-name-required": "A notebook name is required",
       "create-name-taken": "A notebook with this name already exists",
       "create-tags": "Tags",
-      "create-tags-custom-value": "Add as a new tag",
       "create-tags-help": "Optional — used for search and filtering",
       "create-tags-placeholder": "Add a tag",
       "created-by-me": "Created by me",
@@ -13077,7 +13086,6 @@
       "submit": "Add to notebook",
       "success": "Panel added to {{title}}",
       "success-link": "View notebook",
-      "tag-label": "Filter by tag",
       "tag-placeholder": "Filter by tag",
       "target-description": "Choose where to add the panel.",
       "target-existing": "Existing notebook",
@@ -13132,6 +13140,7 @@
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
       "empty-title-read-only": "No notebooks available to you",
+      "filter-by-tag": "Filter by tag {{tag}}",
       "load-error": "Failed to load notebooks",
       "loading": "Loading notebooks",
       "new-notebook": "New notebook",
@@ -13148,6 +13157,7 @@
         "title": "Title",
         "updated": "Updated"
       },
+      "tag-filter-placeholder": "Filter by tag",
       "unknown-author": "Anonymous"
     },
     "new": {
@@ -13193,7 +13203,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Clear settings"
+      "clear-tooltip": "Clear settings",
+      "swatch-aria-label": "Pick a color, current selection {{color}}",
+      "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
       "color-by-label": "Color series by"
