@@ -1,7 +1,6 @@
 import { getPackagesSync } from '@manypkg/get-packages';
 import rspack, { type Configuration } from '@rspack/core';
 import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
-import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
 import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -48,12 +47,26 @@ function getDevServerOrigin(): { hostname: string; port: number } {
   const raw = getEnvConfig(grafanaRoot).frontend_dev_server_url;
 
   if (typeof raw !== 'string' || raw === '') {
+    // Note that blanking the key is not a way to turn HMR off: this side honours the blank but
+    // Grafana does not, so it would still point the browser at the dev server. Run
+    // `yarn start:rspack:noHmr` instead.
     throw new Error(
-      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini.'
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:rspack:noHmr`.'
     );
   }
 
-  const { hostname, port } = new URL(raw);
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    // Without this, `new URL` throws a bare `TypeError: Invalid URL` naming neither the setting
+    // nor the file it came from.
+    throw new Error(`Cannot start the dev server: \`[frontend_dev] server_url\` (${raw}) is not a URL.`);
+  }
+
+  const { hostname, port } = parsed;
+  // Grafana would fall back to the scheme's default port, so an explicit one is what keeps both
+  // sides pointing at the same origin.
   if (!/^\d+$/.test(port) || Number(port) <= 0) {
     throw new Error(`Cannot start the dev server: \`[frontend_dev] server_url\` (${raw}) names no port.`);
   }
@@ -61,12 +74,22 @@ function getDevServerOrigin(): { hostname: string; port: number } {
   return { hostname, port: Number(port) };
 }
 
+// Grafana serves the page from another port on the same machine, so every legitimate caller is
+// a loopback origin. Ports vary - `[server] http_port` is configurable - so only the host is
+// pinned.
+const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127(?:\.\d+){1,3}|\[::1\])(:\d+)?$/;
+
 function getDevServer(): DevServerConfiguration {
   const { hostname, port } = getDevServerOrigin();
   const grafanaRoot = path.resolve(import.meta.dirname, '../..');
 
   return {
     port,
+
+    // Without an explicit host the dev server binds every interface, which puts `static`
+    // below - the repository's own source tree - on whatever network the machine is joined to.
+    host: hostname,
+
     hot: true,
 
     // Grafana points the browser here for everything under `public/`, the same way it points
@@ -79,8 +102,18 @@ function getDevServer(): DevServerConfiguration {
     },
 
     // Everything the page loads from here is cross-origin, and fonts, `fetch`ed JSON and hot
-    // update manifests are all CORS requests. The server only ever listens on loopback.
-    headers: { 'Access-Control-Allow-Origin': '*' },
+    // update manifests are all CORS requests. Reflect the caller's origin only when it is
+    // loopback: binding to loopback does not stop a page the contributor has open from
+    // reaching this server, and a wildcard would let any such page read the source tree.
+    headers: (req): Record<string, string> => {
+      const origin = req.headers.origin;
+
+      if (typeof origin !== 'string' || !LOOPBACK_ORIGIN.test(origin)) {
+        return {};
+      }
+
+      return { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' };
+    },
 
     // Nothing travels further than loopback, so gzipping megabytes of dev bundle is pure cost.
     compress: false,
@@ -159,7 +192,6 @@ export default (env: Env = {}) => {
 
   if (hmr) {
     devConfig.devServer = getDevServer();
-    devConfig.plugins?.push(new ReactRefreshRspackPlugin());
 
     // `rspack serve` turns lazy compilation on for web-only builds unless the config says
     // otherwise, and its client posts to a root-relative /_rspack/lazy/trigger. The page is
@@ -206,5 +238,5 @@ export default (env: Env = {}) => {
     );
   }
 
-  return merge(common({ ...env, hmr: hmr ? '1' : undefined }), devConfig);
+  return merge(common(env, { hmr }), devConfig);
 };
