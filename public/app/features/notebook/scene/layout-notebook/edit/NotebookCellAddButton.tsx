@@ -20,9 +20,6 @@ interface Props {
  */
 export function NotebookCellAddButton({ index, onAdd, className }: Props) {
   const styles = useStyles2(getStyles);
-  // Kept revealed while the menu is open: opening it moves focus into the menu's own Portal (see
-  // Dropdown's FloatingFocusManager), which lives outside this cell's frame — so the frame's own
-  // :hover/:focus-within reveal rule stops matching and would otherwise fade this back out mid-interaction.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -32,7 +29,7 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
         placement="bottom-start"
         onVisibleChange={setIsMenuOpen}
       >
-        <IconButton name="plus" tooltip={t('notebook.add-block.label', 'Add block')} tooltipPlacement="left" />
+        <IconButton name="plus" tooltip={t('notebook.add-block.label', 'Click to add below')} tooltipPlacement="left" />
       </Dropdown>
     </div>
   );
@@ -41,9 +38,7 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     position: 'absolute',
-    // Sits immediately right of the drag handle's own spacing(3)-wide box, inside the same gutter.
     left: theme.spacing(3.5),
-    // Matches the drag handle's top offset (NotebookCellFrame's handle) so the two stay aligned.
     top: theme.spacing(4),
     width: theme.spacing(3),
     height: theme.spacing(3),

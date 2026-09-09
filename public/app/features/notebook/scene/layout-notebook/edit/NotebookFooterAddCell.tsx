@@ -1,4 +1,4 @@
-import { Button, Stack } from '@grafana/ui';
+import { Button, Divider, Stack } from '@grafana/ui';
 
 import { getNotebookBlockTypeOptions, type NotebookBlockType } from './NotebookBlockTypeMenu';
 
@@ -12,12 +12,15 @@ interface Props {
  */
 export function NotebookFooterAddCell({ onAdd }: Props) {
   return (
-    <Stack direction="row" gap={1} wrap="wrap" alignItems="center">
-      {getNotebookBlockTypeOptions().map((option) => (
-        <Button key={option.type} variant="secondary" size="sm" icon={option.icon} onClick={() => onAdd(option.type)}>
-          {option.label}
-        </Button>
-      ))}
-    </Stack>
+    <>
+      <Divider />
+      <Stack direction="row" gap={1} wrap="wrap" alignItems="center">
+        {getNotebookBlockTypeOptions().map((option) => (
+          <Button key={option.type} variant="secondary" size="sm" icon={option.icon} onClick={() => onAdd(option.type)}>
+            {option.label}
+          </Button>
+        ))}
+      </Stack>
+    </>
   );
 }
