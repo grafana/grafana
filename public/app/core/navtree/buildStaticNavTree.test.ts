@@ -22,13 +22,17 @@ describe('buildStaticNavTree', () => {
     });
 
     it('orders sections by sort weight', () => {
-      setup({ permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER] });
+      setup({
+        permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER, AccessControlAction.DataSourcesExplore],
+      });
 
       expect(ids(buildStaticNavTree())).toEqual([
         NavID.home,
         NavID.bookmarks,
         NavID.starred,
         NavID.dashboards,
+        NavID.explore,
+        NavID.drilldown,
         NavID.alerting,
         NavID.connections,
         NavID.cfg,
@@ -374,6 +378,19 @@ describe('pruneEmptyNavSections', () => {
     const tree = pruneEmptyNavSections(buildStaticNavTree());
 
     expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
+  });
+
+  // Drilldown's children are the drilldown apps, so with none attached the
+  // server drops the section (RemoveEmptyDrilldownSection) rather than leaving
+  // a top-level item that opens an empty landing page.
+  it('removes the drilldown shell when no drilldown apps attached', () => {
+    setup({ permissions: [AccessControlAction.DataSourcesExplore] });
+    const tree = pruneEmptyNavSections(buildStaticNavTree());
+
+    expect(findById(buildStaticNavTree(), NavID.drilldown)).toBeDefined();
+    expect(findById(tree, NavID.drilldown)).toBeUndefined();
+    // Explore is a leaf, not an attachment shell, so it survives
+    expect(findById(tree, NavID.explore)).toBeDefined();
   });
 
   it('keeps sections that gained children', () => {
