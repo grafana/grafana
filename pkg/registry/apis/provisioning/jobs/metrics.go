@@ -22,6 +22,8 @@ type JobMetrics struct {
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
+	throughputHist *prometheus.HistogramVec // resource ops per second achieved by a job, by action + variance
+
 	resourceOpsTotal   *prometheus.CounterVec   // per-resource outcome counter
 	resourceOpDuration *prometheus.HistogramVec // per-resource operation duration
 	resourceOpBytes    *prometheus.HistogramVec // per-resource content size in bytes
@@ -228,6 +230,25 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(syncDurationHist)
 
+		// Per-execution throughput: resources processed divided by the execution's
+		// wall-clock duration, observed once when the job finishes. Unlike
+		// rate(resource_operations_total), which is a fleet-wide rate over a scrape
+		// window, this captures the throughput of an individual run — so p50/p99 of
+		// this histogram answers "how fast is a single job going". The variance label
+		// breaks an action down further (full vs incremental for a pull job); it is
+		// empty for actions with no sub-type. The bucket range (0.1 -> 1000 ops/s)
+		// covers a slow large-resource run at the bottom and a fast, highly parallel
+		// run at the top.
+		throughputHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_throughput_ops_per_second",
+				Help:    "Resource operations per second achieved by a completed job (resources processed / job duration), by action and variance",
+				Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 12),
+			},
+			[]string{"action", "variance"},
+		)
+		registry.MustRegister(throughputHist)
+
 		resourceOpsTotal := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_resource_operations_total",
@@ -285,6 +306,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
+			throughputHist:                   throughputHist,
 			resourceOpsTotal:                 resourceOpsTotal,
 			resourceOpDuration:               resourceOpDuration,
 			resourceOpBytes:                  resourceOpBytes,
@@ -322,7 +344,7 @@ func (m *JobMetrics) RecordBusySeconds(driverID, action string, seconds float64)
 	m.busySeconds.WithLabelValues(driverID, action).Add(seconds)
 }
 
-func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
+func (m *JobMetrics) RecordJob(jobAction string, variance string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// Record duration for every outcome so slow-but-failing jobs are visible (a job
@@ -341,6 +363,30 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	} else {
 		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
 	}
+
+	// Per-execution throughput. A failed job's resource count is partial (see the
+	// bucket note above), so its ops/s would be misleading — record only jobs that
+	// ran to a success/warning state. Pull-request jobs measure work by resources
+	// dry-run rather than changed, matching the duration histogram's numerator.
+	if m.throughputHist != nil && outcome != utils.ErrorOutcome {
+		ops := resourceCountChanged
+		if jobAction == string(provisioning.JobActionPullRequest) {
+			ops = resourceCountDryRun
+		}
+		observeThroughput(m.throughputHist.WithLabelValues(jobAction, variance), ops, duration)
+	}
+}
+
+// observeThroughput records ops/seconds into obs, skipping the degenerate cases: a
+// non-positive duration would divide to +Inf, and a run that performed no operations
+// is not a throughput sample worth keeping (it would pile up in the lowest bucket and
+// drag the percentiles down). "Throughput we achieve" only has meaning when work
+// was done.
+func observeThroughput(obs prometheus.Observer, ops int, seconds float64) {
+	if ops <= 0 || seconds <= 0 {
+		return
+	}
+	obs.Observe(float64(ops) / seconds)
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

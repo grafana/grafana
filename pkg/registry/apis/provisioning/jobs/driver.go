@@ -248,12 +248,34 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	// duration (accurate even on timeout), and makes the `outcome` label reflect the
 	// job status (success/warning/error) — so a job that "completed with errors" is
 	// recorded as an error, not a success.
+	// Per-execution throughput: resources processed per second of wall-clock time.
+	// Pull-request jobs do their work as dry-runs (they never change anything), so
+	// they are measured by the dry-run count, matching RecordJob's numerator. The
+	// variance (e.g. full vs incremental for a pull) is set by the worker on the
+	// recorder while it ran.
+	variance := recorder.Variance()
+	resourcesChanged := sumTotalChanges(d.currentJob.Status.Summary)
+	resourcesDryRun := sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary)
+	resourcesProcessed := resourcesChanged
+	if d.currentJob.Spec.Action == provisioning.JobActionPullRequest {
+		resourcesProcessed = resourcesDryRun
+	}
+	var opsPerSecond float64
+	if secs := duration.Seconds(); secs > 0 {
+		opsPerSecond = float64(resourcesProcessed) / secs
+	}
+	span.SetAttributes(
+		attribute.String("variance", variance),
+		attribute.Int("resources_processed", resourcesProcessed),
+		attribute.Float64("throughput_ops_per_second", opsPerSecond),
+	)
 	if d.metrics != nil {
 		d.metrics.RecordJob(
 			string(d.currentJob.Spec.Action),
+			variance,
 			string(d.currentJob.Status.State),
-			sumTotalChanges(d.currentJob.Status.Summary),
-			sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
+			resourcesChanged,
+			resourcesDryRun,
 			duration.Seconds(),
 		)
 	}
@@ -272,6 +294,9 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		"errorCount", len(status.Errors),
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
+		"variance", variance,
+		"resourcesProcessed", resourcesProcessed,
+		"opsPerSecond", opsPerSecond,
 	}
 	if err != nil {
 		logFields = append(logFields, "error", err)

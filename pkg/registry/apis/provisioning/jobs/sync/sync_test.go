@@ -189,6 +189,10 @@ func TestSyncer_Sync(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn, fullSyncFn, incrementalSyncFn)
 
+			// Sync tags the recorder with the variance (full/incremental) it ran;
+			// allow it on any path without forcing every case to assert it.
+			progress.EXPECT().SetVariance(mock.Anything).Maybe()
+
 			syncer := NewSyncer(
 				compareFn.Execute,
 				fullSyncFn.Execute,
