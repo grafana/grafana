@@ -438,6 +438,12 @@ func (d *jobProcessor) leaseRenewalLoop(ctx context.Context, logger logging.Logg
 	}
 }
 
+// workerDrainGrace bounds how long processJobWithLeaseCheck waits for a canceled
+// worker to unwind after the job context fires. Long enough for a well-behaved
+// worker to abort its in-flight request and finish recording per-job telemetry,
+// short enough that a worker ignoring cancellation cannot pin the driver.
+const workerDrainGrace = 5 * time.Second
+
 // processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
 func (d *jobProcessor) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
 	// Derive a cancellable context for the worker so that losing the lease actively
@@ -469,6 +475,17 @@ func (d *jobProcessor) processJobWithLeaseCheck(ctx context.Context, recorder Jo
 		}
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
+		// ctx fired: job timeout or graceful shutdown. Cancel the worker and give it
+		// a brief grace period to unwind, so an in-flight nanogit request finishes
+		// recording into the per-job stats before the caller snapshots them for the
+		// completion span, log and metric — otherwise a timed-out job's git telemetry
+		// undercounts nondeterministically. The wait is capped so a worker that
+		// ignores cancellation still can't pin the driver.
+		cancelWorker()
+		select {
+		case <-resultChan:
+		case <-time.After(workerDrainGrace):
+		}
 		// Return context error directly - caller will determine if this is due to graceful shutdown
 		// or job timeout based on which context was cancelled
 		return ctx.Err()

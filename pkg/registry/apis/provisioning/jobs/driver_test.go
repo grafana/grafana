@@ -810,6 +810,59 @@ func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testin
 	}
 }
 
+// On job timeout the worker must be cancelled AND awaited before
+// processJobWithLeaseCheck returns, so any in-flight git work has finished
+// recording into the per-job stats the caller snapshots right after. Without the
+// bounded drain the snapshot would race a still-running worker and undercount.
+func TestProcessJobWithLeaseCheck_Timeout_DrainsWorkerBeforeReturning(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	workerStarted := make(chan struct{})
+	workerReturned := make(chan struct{})
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	// A well-behaved worker: block until its context is cancelled, then return.
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).
+		RunAndReturn(func(ctx context.Context, _ repository.Repository, _ provisioning.Job, _ JobProgressRecorder) error {
+			close(workerStarted)
+			<-ctx.Done()
+			close(workerReturned)
+			return ctx.Err()
+		})
+
+	// A job context that times out on its own, with no lease loss.
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- driver.processJobWithLeaseCheck(ctx, recorder, make(chan struct{}))
+	}()
+
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		// The worker must have returned before processJobWithLeaseCheck did.
+		select {
+		case <-workerReturned:
+		default:
+			t.Fatal("processJobWithLeaseCheck returned before the worker drained — a timed-out job's git telemetry would undercount")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("processJobWithLeaseCheck did not return after the job timed out")
+	}
+}
+
 func TestWithJobAuthorSignature(t *testing.T) {
 	tests := []struct {
 		name        string
