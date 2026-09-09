@@ -655,12 +655,10 @@ func (s *backgroundServiceScenario) run(ctx context.Context) {
 	s.ctxCancFunc = canc
 
 	// Start background service
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
+	s.wg.Go(func() {
 		err := s.svc.Run(ctx)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			panic(err)
 		}
-	}()
+	})
 }

@@ -1,8 +1,8 @@
 import {
-  AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
+  AnnoKeyUseCrossDashboardVariables,
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { type DashboardMeta } from 'app/types/dashboard';
@@ -21,7 +21,7 @@ describe('nextMetaAfterFolderPick', () => {
           [AnnoKeyManagerIdentity]: 'old-repo',
           [AnnoKeyManagerKind]: ManagerKind.Repo,
           [AnnoKeySourcePath]: 'old-folder/dash.json',
-          [AnnoKeyIgnorePredefinedVariables]: 'a,b',
+          [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"none"}',
         },
       },
     };
@@ -32,7 +32,7 @@ describe('nextMetaAfterFolderPick', () => {
       k8s: {
         name: 'dash-uid',
         resourceVersion: '42',
-        annotations: { [AnnoKeyIgnorePredefinedVariables]: 'a,b' },
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"none"}' },
       },
     });
   });

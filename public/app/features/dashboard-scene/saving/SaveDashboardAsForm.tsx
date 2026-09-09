@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -118,11 +118,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
 
     const data = getValues();
 
-    // Only forward the denylist annotation. Spreading full getK8SMetadata() would include
+    // Only forward the selection annotation. Spreading full getK8SMetadata() would include
     // name/resourceVersion and turn Save As into an update of the source dashboard.
-    const ignoreValue =
-      dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables] ??
-      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    const useCrossDashboardVariables =
+      dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables] ??
+      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUseCrossDashboardVariables];
 
     const result = await onSaveDashboard(dashboard, {
       overwrite,
@@ -135,11 +135,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
-      ...(ignoreValue !== undefined
+      ...(useCrossDashboardVariables !== undefined
         ? {
             k8s: {
               annotations: {
-                [AnnoKeyIgnorePredefinedVariables]: ignoreValue,
+                [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables,
               },
             },
           }

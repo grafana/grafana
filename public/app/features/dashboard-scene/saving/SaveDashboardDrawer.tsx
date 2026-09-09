@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
-import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
@@ -142,7 +142,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
   }
 
-  const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+  const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
   const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
 
   const renderForm = () => {
