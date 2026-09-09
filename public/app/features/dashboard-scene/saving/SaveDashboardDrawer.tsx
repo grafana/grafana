@@ -5,6 +5,7 @@ import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
+import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -29,10 +30,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
-  /** Provisioned recovery: open the save form defaulted to a brand-new branch. */
-  forceNewBranch?: boolean;
-  /** Provisioned recovery: the dashboard existed only on the deleted branch, so save must create the file. */
-  isUnmergedDraft?: boolean;
+  recoverToNewBranch?: RecoverToNewBranch;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -71,8 +69,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
-    forceNewBranch,
-    isUnmergedDraft,
+    recoverToNewBranch,
   } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
@@ -147,8 +144,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           changeInfo={changeInfo}
           drawer={model}
           saveAsCopy={saveAsCopy}
-          forceNewBranch={forceNewBranch}
-          isUnmergedDraft={isUnmergedDraft}
+          recoverToNewBranch={recoverToNewBranch}
         />
       );
     }

@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useState } from 'react';
+import { useMemo } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -12,15 +12,11 @@ import {
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
-} from '../components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow, shouldEnforceBranchTemplate } from '../components/defaults';
 import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
+import { type RecoverToNewBranch } from '../types';
 import { type ProvisionedDashboardFormData } from '../types/form';
 
 interface UseDefaultValuesParams {
@@ -29,6 +25,9 @@ interface UseDefaultValuesParams {
   defaultDescription?: string;
   loadedFromRef?: string;
   saveAsCopy?: boolean;
+  gitConventionsEnabled?: boolean;
+  /** Deleted-branch recovery: default to a fresh branch instead of the configured one or the (gone) preview ref. */
+  recoverToNewBranch?: RecoverToNewBranch;
 }
 
 export function useDefaultValues({
@@ -37,15 +36,66 @@ export function useDefaultValues({
   defaultDescription,
   loadedFromRef,
   saveAsCopy,
+  gitConventionsEnabled = false,
+  recoverToNewBranch,
 }: UseDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
+  const { folderUid, slug } = meta;
   const { repository, folder, isLoading, status, error } = useGetResourceRepositoryView({
     name: managerKind === 'repo' ? managerIdentity : undefined,
-    folderName: meta.folderUid,
+    folderName: folderUid,
   });
+  const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
+
+  // Memoized so the generated branch name and timestamped path don't change on every render: the form
+  // resets to these defaults with keepDirtyValues, so a regenerated value would silently replace a
+  // still-pristine field.
+  const values = useMemo(() => {
+    if (!repository) {
+      return null;
+    }
+
+    // The branch workflow is forced when recovering from a deleted branch (the loaded ref is gone) or
+    // when an enforced name template must be applied (useBranchTemplate then overwrites the ref).
+    const forceBranch = Boolean(recoverToNewBranch) || shouldEnforceBranchTemplate(repository, gitConventionsEnabled);
+    const workflow = forceBranch ? 'branch' : getDefaultWorkflow(repository, loadedFromRef);
+
+    return {
+      ref: workflow === 'branch' ? generateNewBranchName('dashboard') : (repository.branch ?? ''),
+      path: generatePath({
+        timestamp: generateTimestamp(),
+        pathFromAnnotation: saveAsCopy ? undefined : sourcePath,
+        slug: saveAsCopy ? undefined : slug,
+        folderPath,
+      }),
+      repo: managerIdentity || repository.name || '',
+      comment: '',
+      folder: {
+        uid: folderUid,
+        title: '',
+      },
+      title: saveAsCopy ? `${defaultTitle} Copy` : defaultTitle,
+      description: defaultDescription ?? '',
+      workflow,
+      copyTags: saveAsCopy ? false : true,
+    };
+  }, [
+    repository,
+    loadedFromRef,
+    saveAsCopy,
+    sourcePath,
+    slug,
+    folderPath,
+    folderUid,
+    managerIdentity,
+    defaultTitle,
+    defaultDescription,
+    gitConventionsEnabled,
+    recoverToNewBranch,
+  ]);
 
   if (isLoading || status === RepoViewStatus.Loading) {
     return {
@@ -77,31 +127,8 @@ export function useDefaultValues({
     };
   }
 
-  const timestamp = generateTimestamp();
-  const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
-
-  const dashboardPath = generatePath({
-    timestamp,
-    pathFromAnnotation: saveAsCopy ? undefined : sourcePath,
-    slug: saveAsCopy ? undefined : meta.slug,
-    folderPath,
-  });
-
   return {
-    values: {
-      ref: getDefaultRef(repository, 'dashboard', loadedFromRef),
-      path: dashboardPath,
-      repo: managerIdentity || repository?.name || '',
-      comment: '',
-      folder: {
-        uid: meta.folderUid,
-        title: '',
-      },
-      title: saveAsCopy ? `${defaultTitle} Copy` : defaultTitle,
-      description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repository, loadedFromRef),
-      copyTags: saveAsCopy ? false : true,
-    },
+    values,
     isNew: !meta.k8s?.name,
     repository,
     status,
@@ -128,22 +155,12 @@ export interface ProvisionedDashboardData {
 export function useProvisionedDashboardData(
   dashboard: DashboardScene,
   saveAsCopy?: boolean,
-  // Forces a fresh branch workflow regardless of the ref the preview was loaded from — used by the
-  // deleted-branch recovery so the draft is committed to a new branch instead of pushed at the
-  // (gone) preview ref or the configured default branch.
-  forceNewBranch?: boolean
+  recoverToNewBranch?: RecoverToNewBranch
 ): ProvisionedDashboardData {
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const [params] = useUrlParams();
-  // When recovering onto a new branch, ignore the preview's ref so the defaults don't fall back to
-  // the write workflow (which targets the configured branch) that a non-default ref would select.
-  const loadedFromRef = forceNewBranch ? undefined : (params.get('ref') ?? undefined);
+  const loadedFromRef = params.get('ref') ?? undefined;
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
-  // Generate the recovery branch once per hook lifetime (useState, not useMemo — React may discard
-  // a memo cache and recompute). A name that changed across renders would let the form's
-  // reset(defaultValues, { keepDirtyValues }) silently swap the still-pristine branch whenever an
-  // unrelated rerender occurs (e.g. toggling a save option).
-  const [recoveryBranch] = useState(() => generateNewBranchName('dashboard'));
 
   const defaultValuesResult = useDefaultValues({
     meta,
@@ -151,6 +168,8 @@ export function useProvisionedDashboardData(
     defaultDescription,
     loadedFromRef,
     saveAsCopy,
+    gitConventionsEnabled,
+    recoverToNewBranch,
   });
 
   if (defaultValuesResult.status !== RepoViewStatus.Ready) {
@@ -167,25 +186,12 @@ export function useProvisionedDashboardData(
   }
 
   const { values, isNew, repository } = defaultValuesResult;
-  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
-
-  // When the branch name template is enforced, dashboard pushes must go through the branch workflow
-  // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
-  // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
-  // useBranchTemplate then fills the `ref`.
-  let defaultValues = values;
-  if (values && forceNewBranch) {
-    // Seed a fresh branch name; useBranchTemplate overrides it when a name template is configured.
-    defaultValues = { ...values, workflow: 'branch' as const, ref: recoveryBranch };
-  } else if (values && shouldEnforceBranchTemplate(repository, gitConventionsEnabled) && values.workflow !== 'branch') {
-    defaultValues = { ...values, workflow: 'branch' as const };
-  }
 
   return {
-    defaultValues,
+    defaultValues: values,
     repository,
     loadedFromRef,
-    canPushToConfiguredBranch,
+    canPushToConfiguredBranch: getCanPushToConfiguredBranch(repository),
     isNew,
     readOnly: getIsReadOnlyRepo(repository),
     repoDataStatus: defaultValuesResult.status,

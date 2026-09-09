@@ -1,11 +1,13 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type ResourceObjects, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -36,10 +38,8 @@ jest.mock('../../hooks/useGetResourceRepositoryView', () => {
   };
 });
 
-const mockTriggerRefs = jest.fn();
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
-  useLazyGetRepositoryRefsQuery: () => [mockTriggerRefs, { isFetching: false }],
 }));
 
 const mockNavigate = jest.fn();
@@ -57,8 +57,7 @@ interface DashboardPreviewBannerProps {
   route?: string;
   slug?: string;
   path?: string;
-  onSaveToNewBranch?: (options: { isUnmergedDraft: boolean }) => void;
-  onDiscardChanges?: () => void;
+  dashboard: DashboardScene;
 }
 
 interface PullRequestParamReturn {
@@ -116,7 +115,19 @@ const defaultFileQueryReturn = {
   refetch: jest.fn(),
 };
 
-const defaultProps: DashboardPreviewBannerProps = {
+// The loader records the ref it actually loaded from as a `#ref` fragment on the sourcePath
+// annotation, and leaves it off when it fell back to the configured branch.
+function createDashboard({ loadedRef, isEditing = false }: { loadedRef?: string; isEditing?: boolean } = {}) {
+  const sourcePath = loadedRef ? `dashboards/foo.json#${loadedRef}` : 'dashboards/foo.json';
+  return {
+    state: { isEditing, meta: { k8s: { annotations: { [AnnoKeySourcePath]: sourcePath } } } },
+    onEnterEditMode: jest.fn(),
+    openSaveDrawer: jest.fn(),
+    exitEditMode: jest.fn(),
+  } as unknown as DashboardScene;
+}
+
+const defaultProps: Omit<DashboardPreviewBannerProps, 'dashboard'> = {
   queryParams: {},
   route: DashboardRoutes.Provisioning,
   slug: 'my-repo',
@@ -124,7 +135,7 @@ const defaultProps: DashboardPreviewBannerProps = {
 };
 
 function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: SetupOverrides = {}) {
-  const mergedProps = { ...defaultProps, ...props };
+  const mergedProps = { ...defaultProps, dashboard: createDashboard(), ...props };
 
   mockUsePullRequestParam.mockReturnValue({
     prURL: undefined,
@@ -179,7 +190,7 @@ describe('DashboardPreviewBanner', () => {
       setup();
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('link', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -187,7 +198,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ queryParams: { kiosk: 'tv' } });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('link', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -195,7 +206,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ path: undefined });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('link', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -203,7 +214,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ route: DashboardRoutes.Normal });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('link', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -211,7 +222,7 @@ describe('DashboardPreviewBanner', () => {
       setup({ slug: undefined });
 
       expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+        screen.queryByRole('link', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
     });
 
@@ -355,186 +366,120 @@ describe('DashboardPreviewBanner', () => {
 
       expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({ name: 'other-repo' });
     });
-  });
 
-  describe('branch pre-flight on open pull request', () => {
-    let windowOpenSpy: jest.SpyInstance;
+    it('refetches the file on focus so a branch deleted in another tab is noticed on return', () => {
+      setup({ queryParams: { ref: 'feature-branch' } });
 
-    beforeEach(() => {
-      windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({} as Window);
-    });
-
-    afterEach(() => {
-      windowOpenSpy.mockRestore();
-    });
-
-    const clickOpenPullRequest = () =>
-      userEvent.setup().click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
-
-    it('opens the pull request link after the check confirms the branch still exists', async () => {
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.resolve({ items: [{ name: 'feature-branch' }] }),
-      });
-      setup();
-
-      await clickOpenPullRequest();
-
-      await waitFor(() => expect(mockTriggerRefs).toHaveBeenCalledWith({ name: 'my-repo' }));
-      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
-      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
-    });
-
-    it('opens no tab at all and offers a way out when the branch is gone', async () => {
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
-      });
-      setup();
-
-      await clickOpenPullRequest();
-
-      expect(await screen.findByText('This branch no longer exists')).toBeInTheDocument();
-      // The check runs before any tab is opened, so there is no placeholder tab to flash or close.
-      expect(windowOpenSpy).not.toHaveBeenCalled();
-    });
-
-    it('re-opens the save flow from the modal', async () => {
-      const onSaveToNewBranch = jest.fn();
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
-      });
-      setup(
-        { onSaveToNewBranch },
-        {
-          fileQuery: {
-            data: { ...defaultFileQueryReturn.data, resource: { action: 'update' } },
-          },
-        }
+      expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith(
+        { name: 'my-repo', path: 'dashboards/foo.json', ref: 'feature-branch' },
+        { refetchOnFocus: true }
       );
-
-      await clickOpenPullRequest();
-      await screen.findByText('This branch no longer exists');
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
-
-      expect(onSaveToNewBranch).toHaveBeenCalledTimes(1);
-      // The dashboard also exists on the configured branch, so the recovery save can update it.
-      expect(onSaveToNewBranch).toHaveBeenCalledWith({ isUnmergedDraft: false });
-    });
-
-    it('flags the recovery save as a create when the dashboard only ever existed on the deleted branch', async () => {
-      const onSaveToNewBranch = jest.fn();
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
-      });
-      // A dry-run "create" means the file was born on the (now deleted) branch and never merged —
-      // the recovery branch is cut from the configured branch, where the file doesn't exist, so an
-      // update there would fail with file-not-found.
-      setup(
-        { onSaveToNewBranch },
-        {
-          fileQuery: {
-            data: { ...defaultFileQueryReturn.data, resource: { action: 'create' } },
-          },
-        }
-      );
-
-      await clickOpenPullRequest();
-      await screen.findByText('This branch no longer exists');
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
-
-      expect(onSaveToNewBranch).toHaveBeenCalledWith({ isUnmergedDraft: true });
-    });
-
-    it('discards changes by clearing the scene then navigating to the saved dashboard', async () => {
-      const onDiscardChanges = jest.fn();
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
-      });
-      setup(
-        { onDiscardChanges },
-        {
-          fileQuery: {
-            data: {
-              ...defaultFileQueryReturn.data,
-              resource: { existing: { metadata: { name: 'original-uid' } } },
-            },
-          },
-        }
-      );
-
-      await clickOpenPullRequest();
-      await screen.findByText('This branch no longer exists');
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Discard changes' }));
-
-      // The scene must be cleared before navigating, or the unsaved-changes prompt blocks it.
-      expect(onDiscardChanges).toHaveBeenCalledTimes(1);
-      expect(mockNavigate).toHaveBeenCalledWith('/d/original-uid');
-    });
-
-    it('falls back to opening the link when the refs check fails', async () => {
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.reject(new Error('boom')),
-      });
-      setup();
-
-      await clickOpenPullRequest();
-
-      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
-      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
-    });
-
-    // A live repo always lists at least its configured branch, so an empty or missing refs list
-    // means the check is unreliable, not that the branch is gone.
-    it.each([
-      { desc: 'empty', refs: { items: [] } },
-      { desc: 'missing', refs: {} },
-    ])('opens the link when the refs list is $desc (inconclusive, not branch-gone)', async ({ refs }) => {
-      mockTriggerRefs.mockReturnValue({
-        unwrap: () => Promise.resolve(refs),
-      });
-      setup();
-
-      await clickOpenPullRequest();
-
-      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
-      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
-    });
-
-    it('keeps a plain link (no pre-flight) when the repository lacks the branch workflow', async () => {
-      // Without the branch workflow the recovery modal would offer a save-to-new-branch the repo
-      // can't perform, so the pre-flight is skipped entirely.
-      setup({}, { repositoryView: { workflows: ['write'] } });
-
-      const link = screen.getByRole('link', { name: /Open pull request in GitHub/i });
-      expect(link).toHaveAttribute('href', 'https://github.com/org/repo/compare');
-      expect(screen.queryByRole('button', { name: /Open pull request in GitHub/i })).not.toBeInTheDocument();
-      expect(mockTriggerRefs).not.toHaveBeenCalled();
     });
   });
 
-  describe('when the preview ref no longer exists (after a refresh)', () => {
-    it('shows a dismissible recovery banner on a 404', async () => {
-      setup(
-        { queryParams: { ref: 'feature-branch' } },
-        { fileQuery: { data: undefined, isError: true, error: { status: 404, data: {} } } }
-      );
+  describe('when the preview branch has been deleted (file query 404s)', () => {
+    const notFound = { status: 404, data: {} };
+    const previewParams = { queryParams: { ref: 'feature-branch' } };
 
-      expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
+    // RTK keeps the last successful `data` after a failed refetch, so a live preview still has the
+    // dry-run result to drive the recovery actions from.
+    const liveQuery = (resource: FileQueryData['resource']) => ({
+      fileQuery: { data: { ...defaultFileQueryReturn.data, resource }, isError: true, error: notFound },
+    });
 
-      // The banner is purely informational (the loader already shows the saved version) — it dismisses.
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Close alert' }));
+    describe('while the scene still holds the content loaded from that branch', () => {
+      it('offers to save the draft to a new branch or discard it, instead of a dead pull request link', () => {
+        setup({ ...previewParams, dashboard: createDashboard({ loadedRef: 'feature-branch' }) }, liveQuery({}));
 
-      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
-      // Dismissing must not fall through to the preview banner: the query has no data, so it would
-      // otherwise render a misleading "created in a branch" default.
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
-      ).not.toBeInTheDocument();
+        expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Save to a new branch' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /pull request in GitHub/i })).not.toBeInTheDocument();
+      });
+
+      it('enters edit mode and opens the save drawer defaulted to a new branch', async () => {
+        const dashboard = createDashboard({ loadedRef: 'feature-branch' });
+        setup({ ...previewParams, dashboard }, liveQuery({ action: 'update' }));
+
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
+
+        expect(dashboard.onEnterEditMode).toHaveBeenCalledTimes(1);
+        // The dashboard also exists on the configured branch, so the recovery save can update it.
+        expect(dashboard.openSaveDrawer).toHaveBeenCalledWith({
+          recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+        });
+      });
+
+      it('flags the recovery save as a create when the dashboard only ever existed on the deleted branch', async () => {
+        const dashboard = createDashboard({ loadedRef: 'feature-branch' });
+        // A dry-run "create" means the file was born on the (now deleted) branch and never merged, so
+        // the recovery branch — cut from the configured branch — doesn't have it to update.
+        setup({ ...previewParams, dashboard }, liveQuery({ action: 'create' }));
+
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
+
+        expect(dashboard.openSaveDrawer).toHaveBeenCalledWith({
+          recoverToNewBranch: { fileExistsOnConfiguredBranch: false },
+        });
+      });
+
+      it('does not re-enter edit mode when already editing, which would reset the dirty state', async () => {
+        const dashboard = createDashboard({ loadedRef: 'feature-branch', isEditing: true });
+        setup({ ...previewParams, dashboard }, liveQuery({ action: 'update' }));
+
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
+
+        expect(dashboard.onEnterEditMode).not.toHaveBeenCalled();
+        expect(dashboard.openSaveDrawer).toHaveBeenCalledTimes(1);
+      });
+
+      it('discards by clearing the edit state before navigating to the saved dashboard', async () => {
+        const dashboard = createDashboard({ loadedRef: 'feature-branch', isEditing: true });
+        setup({ ...previewParams, dashboard }, liveQuery({ existing: { metadata: { name: 'original-uid' } } }));
+
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Discard changes' }));
+
+        // Otherwise the unsaved-changes prompt blocks the navigation.
+        expect(dashboard.exitEditMode).toHaveBeenCalledWith({ skipConfirm: true, restoreInitialState: true });
+        expect(mockNavigate).toHaveBeenCalledWith('/d/original-uid');
+      });
+
+      it('discards to the dashboard list when the dashboard was never saved to the configured branch', async () => {
+        const dashboard = createDashboard({ loadedRef: 'feature-branch' });
+        setup({ ...previewParams, dashboard }, liveQuery({ action: 'create' }));
+
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Discard changes' }));
+
+        expect(dashboard.exitEditMode).not.toHaveBeenCalled();
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboards');
+      });
+    });
+
+    describe('after a refresh, when the loader already fell back to the saved version', () => {
+      it('shows a dismissible notice with no recovery actions', async () => {
+        // The first fetch failed, so there is no data at all — and no `#ref` on the scene.
+        setup(
+          { ...previewParams, dashboard: createDashboard() },
+          { fileQuery: { data: undefined, isError: true, error: notFound } }
+        );
+
+        expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
+        expect(screen.getByText(/You are now viewing the saved version/)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Save to a new branch' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Discard changes' })).not.toBeInTheDocument();
+
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Close alert' }));
+
+        expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+        // Dismissing must not fall through to the preview banner: the query has no data, so it would
+        // otherwise render a misleading "created in a branch" default.
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
     });
 
     it('does not show the recovery banner for non-404 errors', () => {
       setup(
-        { queryParams: { ref: 'feature-branch' } },
+        { ...previewParams, dashboard: createDashboard({ loadedRef: 'feature-branch' }) },
         { fileQuery: { data: undefined, isError: true, error: { status: 500, data: {} } } }
       );
 
@@ -542,7 +487,7 @@ describe('DashboardPreviewBanner', () => {
     });
 
     it('does not show the recovery banner while the file query is still loading', () => {
-      setup({ queryParams: { ref: 'feature-branch' } }, { fileQuery: { data: undefined, isError: false } });
+      setup(previewParams, { fileQuery: { data: undefined, isError: false } });
 
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });

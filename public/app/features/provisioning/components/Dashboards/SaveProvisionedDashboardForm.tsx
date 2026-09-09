@@ -65,8 +65,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
-  forceNewBranch,
-  isUnmergedDraft,
+  recoverToNewBranch,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -105,26 +104,23 @@ export function SaveProvisionedDashboardForm({
   } = methods;
 
   const path = watch('path');
-  // isUnmergedDraft: the dashboard was created on a now-deleted branch and never merged, so the file
-  // doesn't exist on the configured branch the recovery branch is cut from. Treat it as having no
-  // original path so the save issues a create — an update would fail with file-not-found.
-  const originalPath = isNew || isUnmergedDraft ? undefined : defaultValues.path;
+  // Whether this commit creates the file (POST) rather than updates it (PUT). Distinct from isNew,
+  // which is about the dashboard never having been saved: the recovery branch is cut from the
+  // configured branch, so a file that only ever lived on the deleted branch has to be created there.
+  const createsFile = isNew || recoverToNewBranch?.fileExistsOnConfiguredBranch === false;
+  const originalPath = createsFile ? undefined : defaultValues.path;
   const isRename = Boolean(originalPath && path !== originalPath);
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
 
-  // Save is enabled when the form comment/path is dirty, the dashboard state is dirty, raw JSON was
-  // provided from the editor, or the target branch was changed. Retargeting to a different branch is
-  // a committable action on its own — e.g. moving an unchanged preview onto a fresh branch after the
-  // original branch was deleted. In that deleted-branch recovery (`forceNewBranch`) the generated
-  // branch is installed as a form default, so it never marks `ref` dirty; committing to the new
-  // branch is nonetheless the whole point, so Save must be enabled even with no other change.
+  // Retargeting to another branch is a committable change on its own. In the recovery flow the new
+  // branch is a form default (never dirty), so the flag itself has to enable Save.
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
   const isDirtyState =
     Boolean(dirtyFields.comment) ||
     Boolean(dirtyFields.path) ||
     Boolean(dirtyFields.ref) ||
-    Boolean(forceNewBranch) ||
+    Boolean(recoverToNewBranch) ||
     isDirty ||
     Boolean(rawDashboardJSON);
   const [workflow, ref] = watch(['workflow', 'ref']);
@@ -145,7 +141,7 @@ export function SaveProvisionedDashboardForm({
   }, [defaultValues, reset]);
 
   const templateVars: CommitTemplateVars = {
-    action: isNew ? 'create' : 'update',
+    action: createsFile ? 'create' : 'update',
     resourceKind: 'dashboard',
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: title ?? '',

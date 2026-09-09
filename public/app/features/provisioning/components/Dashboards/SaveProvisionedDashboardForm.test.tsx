@@ -189,7 +189,7 @@ function setupFolderless(
 }
 
 // An existing, unchanged dashboard scene — for tests where Save must be driven by something
-// other than the dashboard being dirty (branch retarget, forceNewBranch recovery).
+// other than the dashboard being dirty (branch retarget, recoverToNewBranch recovery).
 function makeNotDirtyDashboard(): DashboardScene {
   const state = {
     meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
@@ -1044,10 +1044,14 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
   });
 
-  it('should enable save in the deleted-branch recovery (forceNewBranch) with no other changes', () => {
+  it('should enable save in the deleted-branch recovery with no other changes', () => {
     // Recovery installs the generated branch as a default (never marks ref dirty) on an
-    // otherwise-unchanged preview, so Save must be enabled on the forceNewBranch flag alone.
-    setup({ dashboard: makeNotDirtyDashboard(), isNew: false, forceNewBranch: true });
+    // otherwise-unchanged preview, so Save must be enabled on the recovery flag alone.
+    setup({
+      dashboard: makeNotDirtyDashboard(),
+      isNew: false,
+      recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+    });
 
     expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
   });
@@ -1082,8 +1086,15 @@ describe('SaveProvisionedDashboardForm', () => {
     const { user } = setup({
       dashboard,
       isNew: false,
-      forceNewBranch: true,
-      isUnmergedDraft: true,
+      recoverToNewBranch: { fileExistsOnConfiguredBranch: false },
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
       defaultValues: {
         ref: 'dashboard/recovery-branch',
         path: 'test-dashboard.json',
@@ -1105,6 +1116,8 @@ describe('SaveProvisionedDashboardForm', () => {
     // A create has no original to point back at.
     expect(request.url.searchParams.get('originalPath')).toBeNull();
     expect(putCalled).toBe(false);
+    // The commit template must describe the same operation the request performs.
+    expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
   });
 
   it('should properly handle read-only state for a repository without workflows', () => {

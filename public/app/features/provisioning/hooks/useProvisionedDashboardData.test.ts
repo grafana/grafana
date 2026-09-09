@@ -281,6 +281,29 @@ describe('useProvisionedDashboardData', () => {
       await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
       // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
       expect(result.current.defaultValues?.workflow).toBe('branch');
+      // The ref follows the workflow: a branch default must never point at the configured branch.
+      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
+    });
+
+    it('keeps the same defaultValues object across rerenders when the override applies', async () => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+      server.use(
+        http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result, rerender } = renderHook(() => useProvisionedDashboardData(dashboard), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      const initial = result.current.defaultValues;
+
+      // The form resets to defaultValues whenever its identity changes, so a fresh object per render
+      // would reset the form on every unrelated rerender.
+      rerender();
+      expect(result.current.defaultValues).toBe(initial);
     });
 
     it('keeps the default write workflow when the gitConventions flag is off', async () => {
@@ -329,41 +352,53 @@ describe('useProvisionedDashboardData', () => {
     });
   });
 
-  describe('forceNewBranch', () => {
-    it('defaults to the branch workflow with a freshly generated branch name', async () => {
+  describe('generated branch name', () => {
+    // A rerender (e.g. from toggling a save option) must not regenerate the branch name: the form
+    // resets to the defaults with keepDirtyValues, so a new name would replace the pristine field.
+    it.each([
+      { desc: 'the default branch workflow', recoverToNewBranch: undefined },
+      { desc: 'the deleted-branch recovery', recoverToNewBranch: { fileExistsOnConfiguredBranch: true } },
+    ])('stays stable across rerenders for $desc', async ({ recoverToNewBranch }) => {
       server.use(
         http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
         http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
       );
 
       const dashboard = createDashboard();
-      const { result } = renderHook(() => useProvisionedDashboardData(dashboard, false, true), {
-        wrapper: getWrapper({ renderWithRouter: true }),
-      });
-
-      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
-      expect(result.current.defaultValues?.workflow).toBe('branch');
-      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
-    });
-
-    it('keeps the generated branch stable across rerenders', async () => {
-      server.use(
-        http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
-        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
-      );
-
-      const dashboard = createDashboard();
-      const { result, rerender } = renderHook(() => useProvisionedDashboardData(dashboard, false, true), {
+      const { result, rerender } = renderHook(() => useProvisionedDashboardData(dashboard, false, recoverToNewBranch), {
         wrapper: getWrapper({ renderWithRouter: true }),
       });
 
       await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
       const initialRef = result.current.defaultValues?.ref;
+      expect(result.current.defaultValues?.workflow).toBe('branch');
       expect(initialRef).toMatch(/^dashboard\//);
 
       rerender();
-      // A rerender (e.g. from toggling a save option) must not regenerate the branch name.
       expect(result.current.defaultValues?.ref).toBe(initialRef);
+    });
+  });
+
+  describe('recoverToNewBranch', () => {
+    it('defaults to a fresh branch even when the preview was loaded from a non-default ref', async () => {
+      server.use(
+        http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      // Loaded from an explicit ref the defaults would otherwise pick the write workflow at that ref.
+      const dashboard = createDashboard();
+      const { result } = renderHook(
+        () => useProvisionedDashboardData(dashboard, false, { fileExistsOnConfiguredBranch: true }),
+        {
+          wrapper: getWrapper({ renderWithRouter: true, historyOptions: { initialEntries: ['/?ref=feature-branch'] } }),
+        }
+      );
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      expect(result.current.defaultValues?.workflow).toBe('branch');
+      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
+      expect(result.current.defaultValues?.ref).not.toBe('feature-branch');
     });
   });
 });

@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { type ResourceObjects } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
@@ -31,14 +30,6 @@ interface Props {
   action?: ResourceObjects['action'];
   /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
-  /**
-   * Runs before opening the pull request link (e.g. to check the branch still exists).
-   * Resolve `true` to open the link, `false` when the caller handled it (e.g. shows recovery UI).
-   * When set, the primary action renders as a button instead of a plain link.
-   */
-  onOpenPullRequest?: () => Promise<boolean>;
-  /** Renders the pull request button in a "checking…" state while an async pre-flight runs. */
-  isCheckingBranch?: boolean;
 }
 
 export type PreviewBranchInfo = {
@@ -55,21 +46,9 @@ const commonAlertProps = {
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({
-  prURL,
-  isNewPr,
-  behindBranch,
-  repoUrl,
-  branchInfo,
-  action,
-  originalUrl,
-  onOpenPullRequest,
-  isCheckingBranch,
-}: Props) {
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action, originalUrl }: Props) {
   const styles = useStyles2(getStyles);
   const { repoType, action: paramAction, prTitle } = usePullRequestParam();
-  // If a popup blocker stops the tab, show a plain link instead — clicking that always works.
-  const [popupBlocked, setPopupBlocked] = useState(false);
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
@@ -131,49 +110,11 @@ export function PreviewBannerViewPR({
               {t('provisioned-resource-preview-banner.preview-banner.view-saved-version', 'View saved version')}
             </LinkButton>
           )}
-          {linkUrl &&
-            // When a caller needs to pre-flight before opening (e.g. verify the branch still exists),
-            // the primary action is a click handler; otherwise it stays a plain link so it opens in a
-            // new tab and cmd/middle-click work.
-            (onOpenPullRequest && !popupBlocked ? (
-              <Button
-                variant="primary"
-                icon="external-link-alt"
-                iconPlacement="right"
-                disabled={isCheckingBranch}
-                onClick={async () => {
-                  const shouldOpen = await onOpenPullRequest();
-                  if (!shouldOpen) {
-                    // The branch is gone — the caller shows recovery UI instead.
-                    return;
-                  }
-                  // No `noopener` feature here: per spec it makes window.open return null even on
-                  // success, which would falsely trip the popup-blocked fallback. Detach the opener
-                  // on the handle instead to keep the tabnabbing protection.
-                  const tab = window.open(textUtil.sanitizeUrl(linkUrl), '_blank');
-                  if (tab) {
-                    tab.opener = null;
-                  } else {
-                    // Strict popup blockers can block a tab opened after the check — fall back to a plain link.
-                    setPopupBlocked(true);
-                  }
-                }}
-              >
-                {isCheckingBranch
-                  ? t('provisioned-resource-preview-banner.preview-banner.checking-branch', 'Checking branch…')
-                  : actionText.button}
-              </Button>
-            ) : (
-              <LinkButton
-                href={linkUrl}
-                target="_blank"
-                variant="primary"
-                icon="external-link-alt"
-                iconPlacement="right"
-              >
-                {actionText.button}
-              </LinkButton>
-            ))}
+          {linkUrl && (
+            <LinkButton href={linkUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
+              {actionText.button}
+            </LinkButton>
+          )}
         </Stack>
       }
     >

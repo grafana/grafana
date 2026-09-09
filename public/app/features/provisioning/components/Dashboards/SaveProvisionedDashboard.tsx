@@ -4,6 +4,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import { type RecoverToNewBranch } from '../../types';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -13,14 +14,7 @@ export interface SaveProvisionedDashboardProps {
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
   saveAsCopy?: boolean;
-  /** Recovery entry point: default the form to a brand-new branch (see useProvisionedDashboardData). */
-  forceNewBranch?: boolean;
-  /**
-   * Recovery entry point: the dashboard was created on the deleted branch and never merged, so the
-   * file doesn't exist on the configured branch the recovery branch is cut from — save must create
-   * it rather than update it.
-   */
-  isUnmergedDraft?: boolean;
+  recoverToNewBranch?: RecoverToNewBranch;
 }
 
 export function SaveProvisionedDashboard({
@@ -28,11 +22,10 @@ export function SaveProvisionedDashboard({
   changeInfo,
   dashboard,
   saveAsCopy,
-  forceNewBranch,
-  isUnmergedDraft,
+  recoverToNewBranch,
 }: SaveProvisionedDashboardProps) {
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    useProvisionedDashboardData(dashboard, saveAsCopy, forceNewBranch);
+    useProvisionedDashboardData(dashboard, saveAsCopy, recoverToNewBranch);
 
   return (
     <ProvisionedFormGate
@@ -51,8 +44,7 @@ export function SaveProvisionedDashboard({
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
-        forceNewBranch={forceNewBranch}
-        isUnmergedDraft={isUnmergedDraft}
+        recoverToNewBranch={recoverToNewBranch}
       />
     </ProvisionedFormGate>
   );
