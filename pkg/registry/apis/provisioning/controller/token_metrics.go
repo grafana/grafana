@@ -22,12 +22,11 @@ type connectionTokenMetrics struct {
 	generatedDuration  prometheus.Histogram
 	refreshReasonTotal *prometheus.CounterVec
 	timeToExpiry       prometheus.Histogram
-	// nearExpiring and expired mirror the repository counters: incremented every
-	// reconcile that observes a connection token within its refresh window / past
-	// expiration, from the persisted status.token.expiration, and re-emitted each
-	// resync while the condition holds.
-	nearExpiring prometheus.Counter
-	expired      prometheus.Counter
+	// expired is incremented every reconcile that observes an already-expired
+	// connection token, from the persisted status.token.expiration, and re-emitted
+	// each resync while the condition holds (a token whose refresh keeps failing
+	// keeps incrementing). It mirrors the repository counter.
+	expired prometheus.Counter
 }
 
 func registerConnectionTokenMetrics(reg prometheus.Registerer) *connectionTokenMetrics {
@@ -63,12 +62,6 @@ func registerConnectionTokenMetrics(reg prometheus.Registerer) *connectionTokenM
 	})
 	reg.MustRegister(timeToExpiry)
 
-	nearExpiring := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "grafana_provisioning_connection_tokens_near_expiring_total",
-		Help: "Number of reconciliations that observed a connection token within its refresh window (re-emitted each resync while the condition holds)",
-	})
-	reg.MustRegister(nearExpiring)
-
 	expired := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "grafana_provisioning_connection_tokens_expired_total",
 		Help: "Number of reconciliations that observed an already-expired connection token (re-emitted each resync while the condition holds)",
@@ -81,7 +74,6 @@ func registerConnectionTokenMetrics(reg prometheus.Registerer) *connectionTokenM
 		generatedDuration:  generatedDuration,
 		refreshReasonTotal: refreshReasonTotal,
 		timeToExpiry:       timeToExpiry,
-		nearExpiring:       nearExpiring,
 		expired:            expired,
 	}
 }
@@ -118,13 +110,6 @@ func (m *connectionTokenMetrics) recordTimeToExpiry(seconds float64) {
 	m.timeToExpiry.Observe(seconds)
 }
 
-func (m *connectionTokenMetrics) recordNearExpiring() {
-	if m == nil {
-		return
-	}
-	m.nearExpiring.Inc()
-}
-
 func (m *connectionTokenMetrics) recordExpired() {
 	if m == nil {
 		return
@@ -139,13 +124,12 @@ type repositoryTokenMetrics struct {
 	generatedDuration  prometheus.Histogram
 	refreshReasonTotal *prometheus.CounterVec
 	timeToExpiry       prometheus.Histogram
-	// nearExpiring and expired are incremented every reconcile that observes a
-	// repository token within its refresh window / already past expiration. They
-	// are deliberately re-emitted on each resync rather than edge-triggered once:
-	// a token stuck expired (its refresh failing) keeps incrementing expired every
-	// resync, so increase()/rate() alerts fire for as long as the condition holds.
-	nearExpiring prometheus.Counter
-	expired      prometheus.Counter
+	// expired is incremented every reconcile that observes an already-expired
+	// repository token. It is deliberately re-emitted on each resync rather than
+	// edge-triggered once: a token stuck expired (its refresh failing) keeps
+	// incrementing, so increase()/rate() alerts fire for as long as the condition
+	// holds.
+	expired prometheus.Counter
 }
 
 func registerRepositoryTokenMetrics(reg prometheus.Registerer) *repositoryTokenMetrics {
@@ -181,12 +165,6 @@ func registerRepositoryTokenMetrics(reg prometheus.Registerer) *repositoryTokenM
 	})
 	reg.MustRegister(timeToExpiry)
 
-	nearExpiring := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "grafana_provisioning_repository_tokens_near_expiring_total",
-		Help: "Number of reconciliations that observed a repository token within its refresh window (re-emitted each resync while the condition holds)",
-	})
-	reg.MustRegister(nearExpiring)
-
 	expired := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "grafana_provisioning_repository_tokens_expired_total",
 		Help: "Number of reconciliations that observed an already-expired repository token (re-emitted each resync while the condition holds)",
@@ -199,7 +177,6 @@ func registerRepositoryTokenMetrics(reg prometheus.Registerer) *repositoryTokenM
 		generatedDuration:  generatedDuration,
 		refreshReasonTotal: refreshReasonTotal,
 		timeToExpiry:       timeToExpiry,
-		nearExpiring:       nearExpiring,
 		expired:            expired,
 	}
 }
@@ -234,13 +211,6 @@ func (m *repositoryTokenMetrics) recordTimeToExpiry(seconds float64) {
 		seconds = 0
 	}
 	m.timeToExpiry.Observe(seconds)
-}
-
-func (m *repositoryTokenMetrics) recordNearExpiring() {
-	if m == nil {
-		return
-	}
-	m.nearExpiring.Inc()
 }
 
 func (m *repositoryTokenMetrics) recordExpired() {

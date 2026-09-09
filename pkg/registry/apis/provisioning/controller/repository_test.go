@@ -2282,23 +2282,22 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
 }
 
-// TestRepositoryController_shouldGenerateTokenFromConnection_ExpiryCounters verifies
-// that the observed expiry state increments the near-expiring / expired counters,
+// TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies
+// that the expired counter is incremented only for an already-expired token,
 // independently of whether a refresh is triggered.
-func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiryCounters(t *testing.T) {
-	resyncInterval := 5 * time.Minute // refresh buffer = 2*5m + 10s = 10m10s
+func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t *testing.T) {
+	resyncInterval := 5 * time.Minute
 	oldEnough := time.Now().Add(-time.Hour)
 
 	tests := []struct {
-		name             string
-		expiration       int64 // epoch millis; 0 means non-expiring
-		wantNearExpiring float64
-		wantExpired      float64
+		name        string
+		expiration  int64 // epoch millis; 0 means non-expiring
+		wantExpired float64
 	}{
-		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 0, 1},
-		{"near expiring within refresh buffer", time.Now().Add(30 * time.Second).UnixMilli(), 1, 0},
-		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0, 0},
-		{"non-expiring returns before classification", 0, 0, 0},
+		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 1},
+		{"near expiry is not counted as expired", time.Now().Add(30 * time.Second).UnixMilli(), 0},
+		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0},
+		{"non-expiring returns before classification", 0, 0},
 	}
 
 	for _, tt := range tests {
@@ -2317,7 +2316,6 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiryCounters(t
 
 			rc.shouldGenerateTokenFromConnection(obj)
 
-			assert.Equal(t, tt.wantNearExpiring, counterValue(t, reg, "grafana_provisioning_repository_tokens_near_expiring_total"))
 			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_repository_tokens_expired_total"))
 		})
 	}

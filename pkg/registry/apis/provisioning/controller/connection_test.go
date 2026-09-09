@@ -1455,25 +1455,24 @@ func TestConnectionController_generateConnectionToken_ReturnsExpiry(t *testing.T
 	require.Len(t, ops, 1)
 }
 
-// TestConnectionController_shouldGenerateToken_ExpiryCounters verifies that the
-// observed expiry state (from the persisted status.token.expiration) increments
-// the near-expiring / expired counters, mirroring the repository path. A nil
+// TestConnectionController_shouldGenerateToken_ExpiredCounter verifies that the
+// expired counter (from the persisted status.token.expiration) is incremented
+// only for an already-expired token, mirroring the repository path. A nil
 // TokenConnection is fine: with an empty Secure.Token the method records the
-// expiry state and returns before it touches the connection.
-func TestConnectionController_shouldGenerateToken_ExpiryCounters(t *testing.T) {
-	resyncInterval := 5 * time.Minute // refresh buffer = 2*5m + 10s = 10m10s
+// expired state and returns before it touches the connection.
+func TestConnectionController_shouldGenerateToken_ExpiredCounter(t *testing.T) {
+	resyncInterval := 5 * time.Minute
 	lastUpdated := time.Now().Add(-time.Hour).UnixMilli()
 
 	tests := []struct {
-		name             string
-		expiration       int64 // epoch millis; 0 means non-expiring
-		wantNearExpiring float64
-		wantExpired      float64
+		name        string
+		expiration  int64 // epoch millis; 0 means non-expiring
+		wantExpired float64
 	}{
-		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 0, 1},
-		{"near expiring within refresh buffer", time.Now().Add(30 * time.Second).UnixMilli(), 1, 0},
-		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0, 0},
-		{"non-expiring", 0, 0, 0},
+		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 1},
+		{"near expiry is not counted as expired", time.Now().Add(30 * time.Second).UnixMilli(), 0},
+		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0},
+		{"non-expiring", 0, 0},
 	}
 
 	for _, tt := range tests {
@@ -1491,7 +1490,6 @@ func TestConnectionController_shouldGenerateToken_ExpiryCounters(t *testing.T) {
 
 			cc.shouldGenerateToken(context.Background(), obj, nil)
 
-			assert.Equal(t, tt.wantNearExpiring, counterValue(t, reg, "grafana_provisioning_connection_tokens_near_expiring_total"))
 			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
 		})
 	}

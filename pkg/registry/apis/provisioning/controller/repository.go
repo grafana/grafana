@@ -1556,14 +1556,13 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	now := time.Now()
 	rc.tokenMetrics.recordTimeToExpiry(expiration.Sub(now).Seconds())
 
-	// Record the observed expiry state independently of the refresh decision
-	// below. Both counters re-emit every resync while the condition holds, so an
-	// expired token whose refresh keeps failing keeps incrementing expired.
-	switch {
-	case !expiration.After(now):
+	// Record the expired state independently of the refresh decision below. It
+	// re-emits every resync while the token stays expired (its refresh failing),
+	// so increase()/rate() alerts fire for as long as the condition holds. We do
+	// not track a "near expiring" state: the refresh window and the near-expiry
+	// window are the same predicate, so it would fire on every healthy refresh.
+	if !expiration.After(now) {
 		rc.tokenMetrics.recordExpired()
-	case shouldRefreshBeforeExpiration(expiration, rc.resyncInterval):
-		rc.tokenMetrics.recordNearExpiring()
 	}
 
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))

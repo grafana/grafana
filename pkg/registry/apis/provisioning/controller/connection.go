@@ -466,18 +466,13 @@ func (cc *ConnectionController) shouldGenerateToken(
 	obj *provisioning.Connection,
 	c connection.TokenConnection,
 ) bool {
-	// Record the observed expiry state from the persisted expiration, independent
-	// of the refresh decision below and of live validation — an expired token that
-	// fails ValidateToken (and so takes the "invalid" path) still counts as
-	// expired here. Mirrors the repository path; re-emitted each resync.
+	// Record the expired state from the persisted expiration, independent of the
+	// refresh decision below and of live validation — an expired token that fails
+	// ValidateToken (and so takes the "invalid" path) still counts as expired here.
+	// Mirrors the repository path; re-emitted each resync.
 	if exp := obj.Status.Token.Expiration; exp != 0 {
-		expiration := time.UnixMilli(exp)
-		now := time.Now()
-		switch {
-		case !expiration.After(now):
+		if expiration := time.UnixMilli(exp); !expiration.After(time.Now()) {
 			cc.tokenMetrics.recordExpired()
-		case shouldRefreshBeforeExpiration(expiration, cc.resyncInterval):
-			cc.tokenMetrics.recordNearExpiring()
 		}
 	}
 
