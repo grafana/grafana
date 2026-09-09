@@ -581,13 +581,14 @@ const (
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
 )
 
-// Range operators for Requirement.Operator, which otherwise carries a k8s
-// selection operator. That set names only gt and lt. Sending these as operator
-// strings is what makes an older search server answer with a bad request rather
-// than drop the bound.
+// Non-standard operators for Requirement.Operator, which otherwise carries a
+// k8s selection operator. Sending these as operator strings is what makes an
+// older search server answer with a bad request rather than drop the query.
 const (
 	OperatorGreaterThanOrEqual selection.Operator = "gte"
 	OperatorLessThanOrEqual    selection.Operator = "lte"
+	OperatorRegex              selection.Operator = "regex"
+	OperatorNotRegex           selection.Operator = "notregex"
 )
 
 var standardSearchFieldsInit sync.Once

@@ -2370,7 +2370,7 @@ func (b *bleveIndex) Search(
 		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response, trashAuthz)
 	}
 
-	res, err := index.SearchInContext(ctx, searchrequest)
+	res, err := searchInContext(ctx, index, searchrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -2406,6 +2406,17 @@ func (b *bleveIndex) Search(
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
+}
+
+func searchInContext(ctx context.Context, index bleve.Index, req *bleve.SearchRequest) (*bleve.SearchResult, error) {
+	result, err := index.SearchInContext(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := regexErrorFromResult(result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // DocCount counts live documents, so callers using it as a size estimate
@@ -3458,6 +3469,13 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 // every value, while "in" is an OR, so at least one is enough. The numeric path
 // (numberOrBoolSetQuery) follows the same rules.
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	switch selection.Operator(req.Operator) {
+	case resource.OperatorRegex:
+		return b.regexRequirementQuery(req, false)
+	case resource.OperatorNotRegex:
+		return b.regexRequirementQuery(req, true)
+	}
+
 	// Boolean and numeric fields are indexed in their native form, which a term
 	// or match query cannot reach, so they take a separate path.
 	if nb, ok := b.numberOrBoolFieldFor(req.Key); ok {
