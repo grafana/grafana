@@ -1,0 +1,58 @@
+name: Modowners reviewers
+
+on:
+  pull_request:
+    paths:
+      - go.mod
+      - scripts/modowners/**
+      - .github/workflows/modowners-reviewers.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  request:
+    name: Request go.mod reviewers
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: go.mod
+          sparse-checkout-cone-mode: false
+          path: _modowners_base
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+          go-version-file: scripts/modowners/go.mod
+      - name: Request module owners
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          slugs=$(go run scripts/modowners/modowners.go reviewers _modowners_base/go.mod go.mod)
+          if [ -z "$slugs" ]; then
+            echo "No module-owner reviewers to request"
+            exit 0
+          fi
+          echo "Requesting: $slugs"
+          while IFS= read -r slug; do
+            [ -z "$slug" ] && continue
+            if ! jq -n --arg slug "$slug" '{reviewers: [], team_reviewers: [$slug]}' |
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/requested_reviewers" --input -; then
+              echo "::warning::Could not request @grafana/${slug}"
+            fi
+          done <<< "$slugs"
