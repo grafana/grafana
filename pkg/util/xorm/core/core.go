@@ -1160,7 +1160,7 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 
 	newDest := make([]interface{}, len(cols))
 
-	for j := 0; j < len(cols); j++ {
+	for j := range cols {
 		if j >= vvv.Len() {
 			newDest[j] = reflect.New(vvv.Type().Elem()).Interface()
 		} else {

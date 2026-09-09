@@ -1054,6 +1054,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	rv = k.snowflake.Generate().Int64()
 	namespace := event.Key.Namespace
 
+	var previousKey DataKey
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
@@ -1092,6 +1093,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
+		previousKey = latestKey
 	}
 
 	obj := event.Object
@@ -1297,6 +1299,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
+		PreviousAction:  previousKey.Action,
+		PreviousFolder:  previousKey.Folder,
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
@@ -2436,6 +2440,8 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Value:           data,
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
+			PreviousAction:  event.PreviousAction,
+			PreviousFolder:  event.PreviousFolder,
 			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 		}:
 		case <-ctx.Done():

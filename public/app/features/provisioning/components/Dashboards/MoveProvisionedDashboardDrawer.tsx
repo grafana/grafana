@@ -1,5 +1,6 @@
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { useDashboardRepositoryView } from '../../hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
@@ -21,6 +22,7 @@ export function MoveProvisionedDashboardDrawer({
   onDismiss,
   onSuccess,
 }: Props) {
+  const view = useDashboardRepositoryView(dashboard);
   const {
     defaultValues,
     loadedFromRef,
@@ -30,7 +32,7 @@ export function MoveProvisionedDashboardDrawer({
     repository,
     repoDataStatus,
     error,
-  } = useProvisionedDashboardData(dashboard);
+  } = useProvisionedDashboardData(dashboard, view);
 
   return (
     <ProvisionedFormGate
