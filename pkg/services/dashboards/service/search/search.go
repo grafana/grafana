@@ -115,9 +115,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 
 // nolint:gocyclo
 func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
-	if result.Results == nil {
-		return v0alpha1.SearchResults{}, nil
-	}
+	table := result.GetResults()
 
 	titleIDX := -1
 	folderIDX := -1
@@ -129,7 +127,7 @@ func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) 
 	managerIdIDX := -1
 	ownerRefsIDX := -1
 
-	for i, v := range result.Results.Columns {
+	for i, v := range table.GetColumns() {
 		switch v.Name {
 		case resource.SEARCH_FIELD_EXPLAIN:
 			explainIDX = i
@@ -157,11 +155,11 @@ func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) 
 		TotalHits: result.TotalHits,
 		QueryCost: result.QueryCost,
 		MaxScore:  result.MaxScore,
-		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
+		Hits:      make([]v0alpha1.DashboardHit, len(table.GetRows())),
 	}
 
-	for i, row := range result.Results.Rows {
-		if len(row.Cells) != len(result.Results.Columns) {
+	for i, row := range table.GetRows() {
+		if len(row.Cells) != len(table.GetColumns()) {
 			// there should never be mismatch len between # Columns and # Cells in a row. This indicates a bug in our
 			// code
 			return v0alpha1.SearchResults{}, fmt.Errorf("error parsing Search Response: mismatch number of columns and cells")
@@ -169,7 +167,7 @@ func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) 
 
 		// Dynamically defined fields
 		fields := &common.Unstructured{}
-		for colIndex, col := range result.Results.Columns {
+		for colIndex, col := range table.GetColumns() {
 			if _, ok := standardFields[col.Name]; !ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
