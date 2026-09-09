@@ -66,8 +66,9 @@
 /.github/workflows/sbom-on-release.yml @grafana/security
 
 # Backend code
-/go.mod @grafana/grafana-backend-services-squad
-/go.sum @grafana/grafana-backend-services-squad
+# go.mod reviewers come from // @team comments via .github/workflows/modowners-reviewers.yml
+/go.mod
+/go.sum
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
 /.citools @grafana/grafana-backend-services-squad
@@ -1326,6 +1327,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/release-pr.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/release-comms.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/migrate-prs.yml @grafana/grafana-backend-services-squad
+/.github/workflows/modowners-reviewers.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-next-release-branch.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-release-branch.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-branch.yml @grafana/grafana-backend-services-squad

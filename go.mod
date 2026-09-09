@@ -151,8 +151,8 @@ require (
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
+	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-services-squad
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-services-squad
 	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // @grafana/identity-access-team
@@ -179,7 +179,7 @@ require (
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.12.1 // @grafana/grafana-backend-group
 	github.com/testcontainers/testcontainers-go v0.43.0 //@grafana/grafana-app-platform-squad
-	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
+	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-services-squad
 	github.com/tjhop/slog-gokit v0.2.0 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20251207011819-db9adb27a0b8 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group

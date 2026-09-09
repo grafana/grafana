@@ -38,7 +38,7 @@ jobs:
           not_owned_checker_skip_patterns: ""
 
           # Specifies whether CODEOWNERS may have unowned files. For example, `/infra/oncall-rotator/oncall-config.yml` doesn't have owner and this is not reported.
-          owner_checker_allow_unowned_patterns: "false"
+          owner_checker_allow_unowned_patterns: "true"
 
           # Specifies whether only teams are allowed as owners of files.
           owner_checker_owners_must_be_teams: "false"
