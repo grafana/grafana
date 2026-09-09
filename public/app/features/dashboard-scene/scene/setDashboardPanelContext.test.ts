@@ -14,7 +14,8 @@ import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { findVizPanelByKey } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 

@@ -6,7 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
-import { getQueryRunnerFor, isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
