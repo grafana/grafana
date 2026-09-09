@@ -114,15 +114,38 @@
     "borderRadius": 8,
     "borderRadiusLg": 12
   },
+  "shadows": {
+    "z1": "0px 1px 2px hsl(from palette.ink900 h s l / 0.75)",
+    "z2": "0px 4px 8px hsl(from palette.ink900 h s l / 0.75)",
+    "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
+  },
   "components": {
+    "card": {
+      "background": "palette.ink850",
+      "borderColor": "palette.ink700"
+    },
     "checkbox": {
       "activeBackgroundHover": "palette.orange400"
+    },
+    "drawer": {
+      "background": "palette.ink900",
+      "borderColor": "palette.ink700"
+    },
+    "modal": {
+      "background": "palette.ink900",
+      "borderColor": "palette.ink700"
     },
     "overlay": {
       "background": "hsl(from palette.ink700 h s l / 0.6)"
     },
+    "dropdown": {
+      "borderColor": "palette.ink700"
+    },
     "switch": {
       "activeBackgroundHover": "palette.orange400"
+    },
+    "tooltip": {
+      "borderColor": "palette.ink700"
     },
     "input": {
       "background": "palette.ink850"
@@ -174,6 +197,38 @@
         "highlight": "palette.violet800",
         "right": "palette.orange800",
         "left": "palette.blue800"
+      }
+    },
+    "badge": {
+      "blue": {
+        "text": "palette.blue300",
+        "background": "palette.blue950",
+        "border": "palette.blue800"
+      },
+      "red": {
+        "text": "palette.red300",
+        "background": "palette.red950",
+        "border": "palette.red800"
+      },
+      "green": {
+        "text": "palette.sage300",
+        "background": "palette.sage950",
+        "border": "palette.sage800"
+      },
+      "orange": {
+        "text": "palette.orange300",
+        "background": "palette.orange950",
+        "border": "palette.orange800"
+      },
+      "purple": {
+        "text": "palette.violet300",
+        "background": "palette.violet950",
+        "border": "palette.violet800"
+      },
+      "darkgrey": {
+        "text": "palette.ink300",
+        "background": "palette.ink950",
+        "border": "palette.ink800"
       }
     }
   }

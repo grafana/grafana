@@ -549,8 +549,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return getLayoutForObject(dropTarget ?? dashboard) ?? dashboard;
   };
 
-  private _addNewPanelToLayout = (dropTarget: DashboardDropTarget | null) => {
-    const panel = getDefaultVizPanel();
+  private _addNewPanelToLayout = async (dropTarget: DashboardDropTarget | null) => {
+    const panel = await getDefaultVizPanel();
     this._getLayoutForDropTarget(dropTarget).addPanel(panel);
     DashboardInteractions.trackAddPanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
   };
@@ -1054,7 +1054,7 @@ const getPreviewStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.primary,
     border: `1px dashed ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     pointerEvents: 'none',
     zIndex: theme.zIndex.tooltip,
     overflow: 'hidden',

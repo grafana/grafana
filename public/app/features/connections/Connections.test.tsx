@@ -2,6 +2,7 @@ import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
@@ -162,5 +163,48 @@ describe('Connections', () => {
     // We expect not to see the text that would be rendered by the core "Add new connection" page
     expect(screen.queryByText('Data sources')).not.toBeInTheDocument();
     expect(screen.queryByText('No results matching your query were found')).not.toBeInTheDocument();
+  });
+
+  describe('with appSubUrl', () => {
+    beforeAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    afterAll(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    test('still resolves card metadata when the nav tree urls already carry the subpath', async () => {
+      config.pluginAdminExternalManageEnabled = false;
+
+      const prefixedStore = configureStore({
+        navIndex: {
+          ...navIndex,
+          connections: {
+            ...navIndex.connections,
+            children: navIndex.connections.children?.map((child) => ({
+              ...child,
+              url: child.url ? `/grafana${child.url}` : child.url,
+            })),
+          },
+        },
+        plugins: getPluginsStateMock([]),
+      });
+
+      renderPage(ROUTES.Base, prefixedStore);
+
+      // Metadata lookup must strip the subpath before matching CardMetadata's bare keys,
+      // otherwise these OSS-specific overrides silently fall back to the raw nav item text/subtitle.
+      expect(await screen.findByText('Connect to a new data source')).toBeVisible();
+      expect(await screen.findByText('View configured data sources')).toBeVisible();
+    });
   });
 });

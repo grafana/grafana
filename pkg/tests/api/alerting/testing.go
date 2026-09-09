@@ -198,7 +198,7 @@ func withDatasourceQuery(uid string) func(r *apimodels.PostableExtendedRuleNode)
 
 func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
 	rules := make([]apimodels.PostableExtendedRuleNode, 0, rulesCount)
-	for i := 0; i < rulesCount; i++ {
+	for range rulesCount {
 		rules = append(rules, gen())
 	}
 	return apimodels.PostableRuleGroupConfig{
@@ -1649,7 +1649,7 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

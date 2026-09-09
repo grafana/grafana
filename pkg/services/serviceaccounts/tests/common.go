@@ -51,7 +51,7 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -132,7 +132,7 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sqlStore), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

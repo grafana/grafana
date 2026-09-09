@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"iter"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeStorage stubs the bits of resource.StorageBackend the reconciler uses.
@@ -28,6 +31,15 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	latestRvOverride int64 // RV reported as the snapshot ceiling, instead of the highest in changes
+	lookback         int64 // widens the listing floor to sinceRv-lookback, like the backend's searchLookback
+
+	// onYield, if set, fires once per resource the ListModifiedSince
+	// iterator yields — lets tests observe iterator progress at each flush.
+	onYield func()
+
+	lastCalledWith []*time.Time // the lastCalledWithSinceRv argument of every ListModifiedSince call
 
 	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
 	// -> title. An unset entry reads as NotFound.
@@ -135,13 +147,10 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	return out, nil
 }
 
-func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	panic("not implemented")
-}
-
-func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.lastCalledWith = append(f.lastCalledWith, lastCalledWithSinceRv)
 	if f.listErr != nil {
 		err := f.listErr
 		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
@@ -155,25 +164,35 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	matches := make([]*resource.ModifiedResource, 0, len(f.changes))
 	var latestRv int64
 	for _, c := range f.changes {
+		// latestRv mirrors the KV backend: the latest event RV in the
+		// store, across every resource and independent of both the
+		// group/resource filter and the sinceRv cutoff below.
+		if c.ResourceVersion > latestRv {
+			latestRv = c.ResourceVersion
+		}
 		if c.Key.Group != key.Group || c.Key.Resource != key.Resource {
 			continue
 		}
 		if key.Namespace != "" && c.Key.Namespace != key.Namespace {
 			continue
 		}
-		// latestRv mirrors the real backend's behavior: it's the
-		// absolute latest event RV for this resource, independent
-		// of the sinceRv cutoff applied to the iterator.
-		if c.ResourceVersion > latestRv {
-			latestRv = c.ResourceVersion
+		// A non-nil lastCalledWithSinceRv makes the real backend skip its
+		// lookback window, so mirror that here.
+		floor := sinceRv
+		if lastCalledWithSinceRv == nil {
+			floor -= f.lookback
 		}
-		if c.ResourceVersion <= sinceRv {
+		if c.ResourceVersion <= floor {
 			continue
 		}
 		matches = append(matches, c)
 	}
+	if f.latestRvOverride != 0 {
+		latestRv = f.latestRvOverride
+	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
+	onYield := f.onYield
 	return latestRv, func(yield func(*resource.ModifiedResource, error) bool) {
 		for i, c := range matches {
 			if itemErr != nil && i == itemErrI {
@@ -181,6 +200,9 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 					return
 				}
 				continue
+			}
+			if onYield != nil {
+				onYield()
 			}
 			if !yield(c, nil) {
 				return
@@ -202,6 +224,10 @@ type fakeVector struct {
 	upsertErr    error
 	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
 	deleteErr    error
+
+	// onUpsert, if set, fires at the start of each upsert. Paired with
+	// fakeStorage.onYield to snapshot iterator progress at each flush.
+	onUpsert func()
 
 	lockUnavailable bool
 	lockAttempts    int
@@ -293,6 +319,9 @@ func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
+	if f.onUpsert != nil {
+		f.onUpsert()
+	}
 	if f.upsertErrFn != nil {
 		if err := f.upsertErrFn(vs); err != nil {
 			return err
@@ -324,6 +353,15 @@ func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel ve
 	}
 	return int64(len(sel.UIDs)), false, nil
 }
+
+// storedContentFor returns the subresource content currently indexed for
+// a UID, so tests can assert a replay left it alone.
+func (f *fakeVector) storedContentFor(ns, res, uid string) map[string]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return maps.Clone(f.storedSubs[subsKey(ns, testModel, res, uid)])
+}
+
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -335,6 +373,10 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
+func (f *fakeVector) UpdateMetadata(_ context.Context, _, _ string, _ *filter.Filter, _ json.RawMessage, _ []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }
@@ -343,9 +385,7 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 	defer f.mu.Unlock()
 	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[key] {
-		out[k] = v
-	}
+	maps.Copy(out, f.storedSubs[key])
 	if len(out) == 0 {
 		return nil, "", nil
 	}
@@ -543,4 +583,45 @@ func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
 
 func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
 	b.ch <- ev
+}
+
+// fakeBuilder is a second embed.Builder, for the cross-builder cursor
+// behavior the single real builder can't reach.
+type fakeBuilder struct {
+	group    string
+	resource string
+}
+
+func (b fakeBuilder) Group() string            { return b.group }
+func (b fakeBuilder) Resource() string         { return b.resource }
+func (b fakeBuilder) MaxItemsPerResource() int { return 0 }
+func (b fakeBuilder) Version() int             { return 1 }
+
+func (b fakeBuilder) Extract(_ context.Context, key *resourcepb.ResourceKey, value []byte, _ string) ([]embed.Item, error) {
+	if len(value) == 0 {
+		return nil, nil
+	}
+	if string(value) == "boom" {
+		return nil, errBoom
+	}
+	return []embed.Item{{
+		UID:     key.Name,
+		Title:   key.Name,
+		Content: string(value),
+	}}, nil
+}
+
+// hasUpsertFor reports whether any upsert wrote a vector for this
+// resource, for tests that care that a document was embedded at all.
+func (f *fakeVector) hasUpsertFor(namespace, resource, uid string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, batch := range f.upserts {
+		for _, v := range batch {
+			if v.Namespace == namespace && v.Resource == resource && v.UID == uid {
+				return true
+			}
+		}
+	}
+	return false
 }

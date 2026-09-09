@@ -913,6 +913,12 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutItemSpec(ref common.Ref
 							Ref: ref(DashboardConditionalRenderingGroupKind{}.OpenAPIModelName()),
 						},
 					},
+					"fitContent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"element"},
 			},
@@ -1013,6 +1019,42 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutSpec(ref common.Referen
 						},
 					},
 					"fillScreen": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"fitContent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"minHeightMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"minHeight": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"maxHeightMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"maxHeight": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"matchRowHeights": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
 							Format: "",

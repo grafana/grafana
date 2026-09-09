@@ -87,7 +87,7 @@ const parseEventFromCall = (
   // Names the event and its file so a parse failure points at the definition to fix.
   const location = `event '${eventName}' in ${path.relative(process.cwd(), callExpr.getSourceFile().getFilePath())}`;
   // Properties come from the TypeScript type, not the source text — e.g. the ClickProperties in createNavEvent<ClickProperties>('click').
-  const ownProperties = resolveEventProperties(type, callExpr, location);
+  const { properties: ownProperties, variants } = resolveEventProperties(type, callExpr, location);
 
   // Namespace defaults (e.g. schema_version) are merged first; event-specific properties take precedence on name collision, matching { ...defaultProps, ...props }.
   const defaultProperties = eventNamespace.defaultProperties ?? [];
@@ -107,6 +107,7 @@ const parseEventFromCall = (
     description: metadata.description,
     owner: metadata.owner,
     properties: mergedProperties,
+    variants,
     silent,
   };
 };
@@ -141,14 +142,15 @@ const parseEventMetadata = (eventCallExpr: CallExpression): JSDocMetadata => {
 
 /**
  * Given the type of an event function (e.g. `(props: ClickProperties) => void`),
- * returns the schema of its properties, or undefined if the event takes no properties.
+ * returns the schema of its properties, empty if the event takes no properties. Union properties
+ * also return one schema per variant, so the report can show which combinations are valid.
  * Reads from the TypeScript type system rather than source text.
  */
 const resolveEventProperties = (
   type: Type,
   callExpr: CallExpression,
   location: string
-): EventPropertySchema[] | undefined => {
+): { properties?: EventPropertySchema[]; variants?: EventPropertySchema[][] } => {
   // The factory call returns a function like (props: ClickProperties) => void — we want the parameter type.
   const [callSignature, ...restCallSignatures] = type.getCallSignatures();
   if (callSignature === undefined || restCallSignatures.length > 0) {
@@ -168,9 +170,9 @@ const resolveEventProperties = (
   const parameterType = parameter.getTypeAtLocation(declarations[0]);
 
   if (parameterType.isObject() || parameterType.isIntersection()) {
-    return requireDescriptions(describeObjectParameters(parameterType, location), location);
+    return { properties: requireDescriptions(describeObjectParameters(parameterType, location), location) };
   } else if (parameterType.isVoid()) {
-    return undefined;
+    return {};
   } else if (parameterType.isUnion()) {
     // Exact<P, A> distributes over a union P, and every distributed member resolves its properties
     // through A's constraint — which only exposes the keys common to all variants, as A["surface"].
@@ -180,7 +182,12 @@ const resolveEventProperties = (
       throw new Error(`Expected ${location} to declare its union properties as an explicit type argument`);
     }
 
-    return requireDescriptions(describeUnionParameters(typeArgument.getType(), location), location);
+    const variants = describeUnionVariants(typeArgument.getType(), location);
+
+    return {
+      properties: requireDescriptions(mergeUnionVariants(variants), location),
+      variants,
+    };
   }
 
   throw new Error(
@@ -251,15 +258,21 @@ const mergeTypeText = (a: string, b: string): string => {
   return [...new Set([...a.split(' | '), ...b.split(' | ')])].join(' | ');
 };
 
-const describeUnionParameters = (unionType: Type, location: string): EventPropertySchema[] => {
-  const merged = new Map<string, EventPropertySchema>();
-
-  for (const variant of unionType.getUnionTypes()) {
+const describeUnionVariants = (unionType: Type, location: string): EventPropertySchema[][] => {
+  return unionType.getUnionTypes().map((variant) => {
     if (!variant.isObject() && !variant.isIntersection()) {
       throw new Error(`Expected every variant of ${location} to be an object, got ${variant.getText()}`);
     }
 
-    for (const property of describeObjectParameters(variant, location)) {
+    return describeObjectParameters(variant, location);
+  });
+};
+
+const mergeUnionVariants = (variants: EventPropertySchema[][]): EventPropertySchema[] => {
+  const merged = new Map<string, EventPropertySchema>();
+
+  for (const variant of variants) {
+    for (const property of variant) {
       const existing = merged.get(property.name);
       if (!existing) {
         merged.set(property.name, property);

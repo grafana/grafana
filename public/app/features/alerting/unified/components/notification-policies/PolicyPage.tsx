@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
@@ -21,10 +22,11 @@ const PoliciesTreeWrapper = () => {
   const { selectedAlertmanager = '' } = useAlertmanager();
   const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { currentData: alertGroups, refetch: refetchAlertGroups } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
-    { amSourceName: selectedAlertmanager },
-    { skip: !canSeeAlertGroups || !selectedAlertmanager }
+  const skipAlertGroups = !canSeeAlertGroups || !selectedAlertmanager;
+  const { currentData: alertGroups, refetch } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
+    skipAlertGroups ? skipToken : { amSourceName: selectedAlertmanager }
   );
+  const refetchAlertGroups = skipAlertGroups ? undefined : refetch;
 
   const routeName = decodeURIComponent(name);
 

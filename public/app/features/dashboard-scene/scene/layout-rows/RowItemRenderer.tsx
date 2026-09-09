@@ -149,6 +149,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               className={cx(styles.rowHeader, 'dashboard-row-header')}
               onMouseEnter={isSelectable ? onHeaderEnter : undefined}
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+              data-dashboard-element-key={key}
+              data-dashboard-element-type="row"
               {...dragProvided.dragHandleProps}
             >
               <button
@@ -354,6 +356,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flex: 1,
       minHeight: 0,
+      height: '100%',
     }),
   };
 }

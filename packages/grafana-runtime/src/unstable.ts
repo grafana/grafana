@@ -20,20 +20,23 @@ export {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
   getDataSourceInstanceList,
-  getDefaultDataSourceInstance,
+  getDefaultDataSourceInstanceListItem,
   hasDataSourceInstance,
   reloadDataSourceInstanceSettings,
 } from './services/dataSource/settings';
 export { getDataSourceInstance, registerRuntimeDataSourceInstance } from './services/dataSource/dataSource';
+export { getDataSourceInstanceListItem } from './services/dataSource/listItem';
 export {
   useDataSourceInstanceSettings,
   useDataSourceInstance,
   useDataSourceInstanceList,
-  useDefaultDataSourceInstance,
+  useDataSourceInstanceListItem,
+  useDefaultDataSourceInstanceListItem,
   useHasDataSourceInstance,
   type UseDataSourceInstanceSettingsResult,
   type UseDataSourceInstanceResult,
   type UseDataSourceInstanceListResult,
-  type UseDefaultDataSourceInstanceResult,
+  type UseDataSourceInstanceListItemResult,
+  type UseDefaultDataSourceInstanceListItemResult,
   type UseHasDataSourceInstanceResult,
 } from './services/dataSource/hooks';

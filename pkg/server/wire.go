@@ -15,7 +15,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -60,6 +62,20 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(wireExtsStandaloneAPIServerSet)
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
+}
+
+// Initialize the standalone router factory
+func InitializeRouterFactory() (router.RouterFactory, error) {
+	wire.Build(wireExtsRouterFactorySet)
+	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
+}
+
+// InitializeZanzanaReconcilerState builds the MT reconciler's state store for
+// the zanzana-server target, which runs without the SQL store the full server
+// graph provides.
+func InitializeZanzanaReconcilerState(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (reconciler.StateStore, error) {
+	wire.Build(wireExtsZanzanaReconcilerStateSet)
+	return nil, nil
 }
 
 // InitializeSearchSupport builds the document builders together with the

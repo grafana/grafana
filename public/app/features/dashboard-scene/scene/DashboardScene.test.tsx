@@ -28,13 +28,7 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  AnnoKeyManagerKind,
-  DENY_ALL_GLOBAL_PREDEFINED,
-  DENY_ALL_PREDEFINED,
-  ManagerKind,
-} from 'app/features/apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -50,7 +44,6 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
@@ -93,6 +86,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -489,11 +487,11 @@ describe('DashboardScene', () => {
         expect(scene.state.meta).toEqual(prevMeta);
       });
 
-      it('A change to predefined variables denylist should set isDirty true', () => {
+      it('A change to cross-dashboard variables selection should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
-        const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+        const annotation = '{"global":"all","folder":"all"}';
         scene.setState({
           meta: {
             ...prevMeta,
@@ -501,7 +499,7 @@ describe('DashboardScene', () => {
               ...prevMeta.k8s,
               annotations: {
                 ...prevMeta.k8s?.annotations,
-                [AnnoKeyIgnorePredefinedVariables]: annotation,
+                [AnnoKeyUseCrossDashboardVariables]: annotation,
               },
             },
           },
@@ -714,11 +712,11 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBeFalsy();
       });
 
-      it('Should create and add a new panel to the dashboard', () => {
+      it('Should create and add a new panel to the dashboard', async () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        const panel = scene.onCreateNewPanel();
+        const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
@@ -2730,23 +2728,21 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
 
-      // First refresh: inject all (explicit empty denylist). Fetch stays pending.
+      // First refresh: inject all. Fetch stays pending.
       const staleRefresh = scene.refreshPredefinedVariables();
 
-      // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
+      // Second refresh: inject none — applies immediately and invalidates the in-flight fetch.
       scene.setState({
         meta: {
           ...scene.state.meta,
           k8s: {
-            annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
-            },
+            annotations: {},
           },
         },
       });
@@ -2797,22 +2793,22 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
 
-      // First: All (explicit empty denylist)
+      // First: All
       const firstRefresh = scene.refreshPredefinedVariables();
 
-      // Second: Folder only (deny globals) — starts while first fetch is still pending.
+      // Second: Folder only — starts while first fetch is still pending.
       scene.setState({
         meta: {
           ...scene.state.meta,
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_GLOBAL_PREDEFINED]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":"all"}',
             },
           },
         },
@@ -2849,7 +2845,7 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
@@ -2862,7 +2858,7 @@ describe('DashboardScene', () => {
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
     });
 
-    it('should ignore in-flight refresh results after discard restores the denylist', async () => {
+    it('should ignore in-flight refresh results after discard restores the selection', async () => {
       const globalVar = {
         kind: 'CustomVariable' as const,
         spec: {
@@ -2883,11 +2879,9 @@ describe('DashboardScene', () => {
         $variables: new SceneVariableSet({ variables: [] }),
         meta: {
           folderUid: 'folder-1',
-          // Baseline: deny all predefined variables.
+          // Baseline: not opted in (annotation absent).
           k8s: {
-            annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
-            },
+            annotations: {},
           },
         },
       });
@@ -2901,18 +2895,16 @@ describe('DashboardScene', () => {
           ...scene.state.meta,
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
       const staleRefresh = scene.refreshPredefinedVariables();
 
-      // Discard restores the deny-all baseline (and serializer annotations).
+      // Discard restores the not-opted-in baseline (and serializer annotations).
       scene.exitEditMode({ skipConfirm: true });
-      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(
-        serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED])
-      );
+      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
 
       // Stale All fetch must not re-inject after discard.
@@ -3267,6 +3259,40 @@ describe('DashboardScene', () => {
 
       expect(pageNav.text).toBe('Edit panel');
       expect(pageNav.parentItem?.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+  });
+
+  describe('getDefaultLayout', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('returns a clone of the persisted layout preference regardless of the auto grid flag', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const defaultLayoutTemplate = DefaultGridLayoutManager.createEmpty();
+      const scene = buildTestScene({ preferences: { defaultLayoutTemplate } });
+
+      const layout = scene.getDefaultLayout();
+
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(layout).not.toBe(defaultLayoutTemplate);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to auto grid when no preference is persisted and the auto grid flag is enabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(AutoGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(AutoGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to custom grid when no preference is persisted and the auto grid flag is disabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
     });
   });
 });

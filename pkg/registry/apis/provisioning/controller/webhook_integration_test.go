@@ -157,7 +157,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	// paths match mockhub's matchers). It satisfies repository.WebhookClient.
 	factory := githubrepo.ProvideFactory()
 	factory.Client = mockHandler
-	ghClient, err := factory.New(context.Background(), owner, repoName, "")
+	ghClient, err := factory.New(owner, repoName, "")
 	require.NoError(t, err)
 
 	// A repo whose spec enables a workflow so the hooks actually register a webhook.

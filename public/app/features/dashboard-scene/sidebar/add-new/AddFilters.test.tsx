@@ -19,12 +19,12 @@ describe('openAddFilterForm', () => {
     addVariableMock.mockClear();
   });
 
-  it('adds an adhoc filter to the dashboard variable set', () => {
+  it('adds an adhoc filter to the dashboard variable set', async () => {
     const variableSet = new SceneVariableSet({ variables: [] });
     const dashboard = new DashboardScene({ $variables: variableSet, isEditing: true });
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
-    openAddFilterForm(dashboard, dashboard);
+    await openAddFilterForm(dashboard, dashboard);
 
     expect(addVariableMock).toHaveBeenCalledTimes(1);
     const { source, addedObject } = addVariableMock.mock.calls[0][0];
@@ -33,7 +33,7 @@ describe('openAddFilterForm', () => {
     expect(dashboard.state.sidebar.selectObject).toHaveBeenCalledWith(addedObject, { force: true, multi: false });
   });
 
-  it('adds an adhoc filter to a section variable set', () => {
+  it('adds an adhoc filter to a section variable set', async () => {
     const sectionVarSet = new SceneVariableSet({ variables: [] });
     const row = new RowItem({
       $variables: sectionVarSet,
@@ -45,7 +45,7 @@ describe('openAddFilterForm', () => {
     });
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
-    openAddFilterForm(dashboard, row);
+    await openAddFilterForm(dashboard, row);
 
     expect(addVariableMock).toHaveBeenCalledTimes(1);
     const { source, addedObject } = addVariableMock.mock.calls[0][0];
@@ -54,7 +54,7 @@ describe('openAddFilterForm', () => {
     expect(dashboard.state.sidebar.selectObject).toHaveBeenCalledWith(addedObject, { force: true, multi: false });
   });
 
-  it('creates a variable set on the section if none exists', () => {
+  it('creates a variable set on the section if none exists', async () => {
     const row = new RowItem({ layout: AutoGridLayoutManager.createEmpty() });
     const dashboard = new DashboardScene({
       body: new RowsLayoutManager({ rows: [row] }),
@@ -64,7 +64,7 @@ describe('openAddFilterForm', () => {
 
     expect(row.state.$variables).toBeUndefined();
 
-    openAddFilterForm(dashboard, row);
+    await openAddFilterForm(dashboard, row);
 
     expect(row.state.$variables).toBeInstanceOf(SceneVariableSet);
     expect(addVariableMock).toHaveBeenCalledTimes(1);
@@ -73,7 +73,7 @@ describe('openAddFilterForm', () => {
     expect(addedObject).toBeInstanceOf(AdHocFiltersVariable);
   });
 
-  it('generates a unique name when filters already exist', () => {
+  it('generates a unique name when filters already exist', async () => {
     const existingFilter = new AdHocFiltersVariable({ name: 'filter0', type: 'adhoc' });
     const sectionVarSet = new SceneVariableSet({ variables: [existingFilter] });
     const row = new RowItem({
@@ -86,7 +86,7 @@ describe('openAddFilterForm', () => {
     });
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
-    openAddFilterForm(dashboard, row);
+    await openAddFilterForm(dashboard, row);
 
     const { addedObject } = addVariableMock.mock.calls[0][0];
     expect(addedObject.state.name).not.toBe('filter0');

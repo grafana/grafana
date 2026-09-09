@@ -31,6 +31,7 @@ describe('FeatureControlFlags', () => {
     jest.clearAllMocks();
     window.localStorage.clear();
     getLocalStorageProvider().clearFlags();
+    delete window.__grafanaPreviewAssets;
   });
 
   it('renders flags from local storage', async () => {
@@ -54,5 +55,36 @@ describe('FeatureControlFlags', () => {
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
     expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('true');
+  });
+
+  it('does not show the preview assets message by default', () => {
+    renderComponent();
+
+    expect(screen.queryByText('Frontend preview active')).not.toBeInTheDocument();
+  });
+
+  it('shows the preview assets message when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+
+    renderComponent();
+
+    const previewStatus = screen.getByRole('status');
+    expect(previewStatus).toHaveTextContent('Frontend preview active');
+    expect(previewStatus).toHaveTextContent('Build pr_grafana_123456 live for just you.');
+    expect(screen.getByRole('button', { name: 'Stop preview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy share link' })).toBeInTheDocument();
+  });
+
+  it('copies a link that enables the active preview assets', async () => {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    const user = userEvent.setup();
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+
+    renderComponent();
+    await user.click(screen.getByRole('button', { name: 'Copy share link' }));
+
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/-/set-preview-assets?assets=pr_grafana_123456`
+    );
   });
 });

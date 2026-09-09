@@ -127,6 +127,7 @@
                 "analyzer": "keyword",
                 "store": true,
                 "index": true,
+                "docvalues": true,
                 "skip_freq_norm": true
               }
             ]
@@ -164,6 +165,7 @@
                 "analyzer": "keyword",
                 "store": true,
                 "index": true,
+                "docvalues": true,
                 "skip_freq_norm": true
               }
             ]
