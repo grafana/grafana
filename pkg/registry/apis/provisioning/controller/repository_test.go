@@ -2282,6 +2282,45 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
 }
 
+// TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies
+// that the expired counter is incremented only for an already-expired token,
+// independently of whether a refresh is triggered.
+func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t *testing.T) {
+	resyncInterval := 5 * time.Minute
+	oldEnough := time.Now().Add(-time.Hour)
+
+	tests := []struct {
+		name        string
+		expiration  int64 // epoch millis; 0 means non-expiring
+		wantExpired float64
+	}{
+		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 1},
+		{"near expiry is not counted as expired", time.Now().Add(30 * time.Second).UnixMilli(), 0},
+		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0},
+		{"non-expiring returns before classification", 0, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				tokenMetrics:   registerRepositoryTokenMetrics(reg),
+				resyncInterval: resyncInterval,
+			}
+			obj := &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Token: provisioning.TokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
+				},
+				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Create: "existing-token"}},
+			}
+
+			rc.shouldGenerateTokenFromConnection(obj)
+
+			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_repository_tokens_expired_total"))
+		})
+	}
+}
+
 // TestRepositoryController_process_TokenRefreshedWhileOverQuota verifies that auth token
 // refresh is not skipped when a repository is blocked due to namespace quota being exceeded.
 func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T) {
@@ -2609,6 +2648,41 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
 	})
+}
+
+// TestShouldRotateWebhookSecret_OverdueCounter verifies the overdue counter is
+// incremented only when a secret is actually due for rotation.
+func TestShouldRotateWebhookSecret_OverdueCounter(t *testing.T) {
+	interval := 30 * 24 * time.Hour
+	writeWorkflow := []provisioning.Workflow{provisioning.WriteWorkflow}
+
+	tests := []struct {
+		name        string
+		lastRotated int64
+		wantOverdue float64
+	}{
+		{"overdue past interval", time.Now().Add(-31 * 24 * time.Hour).UnixMilli(), 1},
+		{"never rotated", 0, 1},
+		{"within interval", time.Now().Add(-1 * 24 * time.Hour).UnixMilli(), 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				webhookSecretRotationInterval: interval,
+				webhookMetrics:                registerWebhookSecretMetrics(reg),
+			}
+			obj := &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{Workflows: writeWorkflow},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: tt.lastRotated}},
+			}
+
+			rc.shouldRotateWebhookSecret(obj)
+
+			assert.Equal(t, tt.wantOverdue, counterValue(t, reg, "grafana_provisioning_webhook_secret_rotation_overdue_total"))
+		})
+	}
 }
 
 // hookRepoStub implements repository.WebhookRepository so we can observe whether
