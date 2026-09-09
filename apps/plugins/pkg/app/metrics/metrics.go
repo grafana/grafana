@@ -102,8 +102,7 @@ func MustRegister(registerer prometheus.Registerer) {
 
 	for _, metric := range metricsToRegister {
 		if err := registerer.Register(metric); err != nil {
-			var alreadyRegistered prometheus.AlreadyRegisteredError
-			if errors.As(err, &alreadyRegistered) {
+			if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 				continue
 			}
 			panic(err)

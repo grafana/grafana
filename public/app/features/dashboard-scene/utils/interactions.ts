@@ -7,7 +7,7 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
-import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
 
 let isScenesContextSet = false;
 
@@ -165,10 +165,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('global_variables_loaded', properties);
   },
 
-  // dashboards_global_variables_mode_changed
-  // when a user changes the predefined variables radio (None / All / Global / Folder)
-  globalVariablesModeChanged: (properties: { from_mode?: GlobalVariablesMode; to_mode: GlobalVariablesMode }) => {
-    reportDashboardInteraction('global_variables_mode_changed', properties);
+  // dashboards_predefined_variable_toggled
+  // when a user checks or unchecks a global or folder variable on the dashboard.
+  // Do not send variable names — they are customer-authored (cardinality + leak).
+  predefinedVariableToggled: (properties: { scope: PredefinedVariableScope; checked: boolean }) => {
+    reportDashboardInteraction('predefined_variable_toggled', properties);
   },
 
   // dashboards_add_annotation_button_clicked
