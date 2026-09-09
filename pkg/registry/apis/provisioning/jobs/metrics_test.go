@@ -207,8 +207,12 @@ func TestRecordGitClientStats(t *testing.T) {
 	count := func() uint64 {
 		metrics, err := reg.Gather()
 		require.NoError(t, err)
+		// A histogram with no observations yet is absent from Gather output, so a
+		// missing family reads as zero rather than a failure.
 		hist := findMetric(metrics, "grafana_provisioning_jobs_git_http_requests")
-		require.NotNil(t, hist, "git_http_requests histogram should be registered")
+		if hist == nil {
+			return 0
+		}
 		return histogramSampleCount(hist, map[string]string{"action": action})
 	}
 

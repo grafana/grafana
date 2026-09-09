@@ -202,11 +202,11 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
 	defer cancel() // Ensure resources are released when the function returns
 
-	// Accumulate the git client work (round trips, retries, fetched objects/bytes,
-	// cache hits/misses) this job drives, so its cost can be attributed back to the
+	// Scope the git client stats to this job, so the round trips, retries, fetched
+	// objects/bytes and cache hits/misses it drives can be attributed back to the
 	// one execution at completion. Populated only when the repository makes git
 	// calls; stays zero otherwise (e.g. local repositories).
-	jobctx, gitStats := gitrepo.WithJobStats(jobctx)
+	jobctx, gitStats := gitrepo.WithClientStats(jobctx)
 
 	// Set up lease renewal goroutine
 	leaseRenewalCtx, cancelLeaseRenewal := context.WithCancel(jobctx)

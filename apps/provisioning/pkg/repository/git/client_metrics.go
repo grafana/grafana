@@ -132,7 +132,7 @@ func (r *clientRecorder) HTTPRequest(ctx context.Context, sample metrics.HTTPReq
 		r.metrics.httpRetries.WithLabelValues(r.repoType, sample.Operation).Inc()
 	}
 
-	if stats := jobStatsFromContext(ctx); stats != nil {
+	if stats := clientStatsFromContext(ctx); stats != nil {
 		stats.httpRequests.Add(1)
 		if retry {
 			stats.httpRetries.Add(1)
@@ -144,7 +144,7 @@ func (r *clientRecorder) ObjectsFetched(ctx context.Context, sample metrics.Obje
 	r.metrics.objectsFetched.WithLabelValues(r.repoType).Add(float64(sample.Count))
 	r.metrics.fetchedBytes.WithLabelValues(r.repoType).Add(float64(sample.Bytes))
 
-	if stats := jobStatsFromContext(ctx); stats != nil {
+	if stats := clientStatsFromContext(ctx); stats != nil {
 		stats.objectsFetched.Add(int64(sample.Count))
 		stats.bytesFetched.Add(sample.Bytes)
 	}
@@ -157,7 +157,7 @@ func (r *clientRecorder) CacheAccess(ctx context.Context, sample metrics.CacheAc
 	}
 	r.metrics.cacheAccesses.WithLabelValues(r.repoType, result).Inc()
 
-	if stats := jobStatsFromContext(ctx); stats != nil {
+	if stats := clientStatsFromContext(ctx); stats != nil {
 		if sample.Hit {
 			stats.cacheHits.Add(1)
 		} else {

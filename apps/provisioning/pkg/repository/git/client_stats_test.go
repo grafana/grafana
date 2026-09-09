@@ -12,14 +12,14 @@ import (
 	"github.com/grafana/nanogit/metrics"
 )
 
-// TestClientStats_AccumulatesFromRecorder pins the seam that makes per-job stats
+// TestClientStats_AccumulatesFromRecorder pins the seam that makes scoped stats
 // work: the same client recorder that feeds the fleet counters also folds each
-// event into the ClientStats attached to the context it is handed, so a job that
-// scopes a context with WithJobStats gets the git work of that one run.
+// event into the ClientStats attached to the context it is handed, so a caller
+// that scopes a context with WithClientStats gets the git work done on it.
 func TestClientStats_AccumulatesFromRecorder(t *testing.T) {
 	rec := newClientMetrics(prometheus.NewRegistry()).Recorder(provisioning.GitRepositoryType)
 
-	ctx, stats := WithJobStats(context.Background())
+	ctx, stats := WithClientStats(context.Background())
 
 	rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: time.Millisecond, Attempt: 1})
 	rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 500, Duration: time.Millisecond, Attempt: 2}) // a retry
@@ -40,8 +40,8 @@ func TestClientStats_AccumulatesFromRecorder(t *testing.T) {
 }
 
 // A recorder handed a context with no stats attached must simply not record any,
-// so instrumentation outside a job (health checks, tests, ad-hoc calls) is a
-// no-op rather than a panic.
+// so instrumentation on an unscoped context (health checks, tests, ad-hoc calls)
+// is a no-op rather than a panic.
 func TestClientStats_NoStatsInContextIsNoop(t *testing.T) {
 	rec := newClientMetrics(prometheus.NewRegistry()).Recorder(provisioning.GitRepositoryType)
 
@@ -53,8 +53,8 @@ func TestClientStats_NoStatsInContextIsNoop(t *testing.T) {
 }
 
 // The zero value of a freshly scoped context reads as all-zero, which is how a
-// job that did no git work (or ran on a local repository) reports.
+// scope that did no git work reports.
 func TestClientStats_ZeroWhenNoWork(t *testing.T) {
-	_, stats := WithJobStats(context.Background())
+	_, stats := WithClientStats(context.Background())
 	assert.Equal(t, ClientStatsSnapshot{}, stats.Snapshot())
 }
