@@ -72,19 +72,8 @@ export type TabDragState = {
   index: number;
 };
 
-/**
- * Layout-specific hooks for a grid item drag started via `startDraggingSync`. The orchestrator
- * owns the document-level pointermove/pointerup listeners for the whole drag; a layout that needs
- * to react to the raw pointer events (e.g. to move its own drag preview, or detect hovering over
- * a sibling item) does so through these callbacks instead of registering its own listeners.
- */
-export interface GridItemDragCallbacks {
-  /** Called on every pointermove for the duration of the drag. */
+interface GridItemDragCallbacks {
   onDrag?: (evt: PointerEvent) => void;
-  /**
-   * Called once the drop decision has been made (and, for a same-layout drop, already committed)
-   * so the layout can reset its own local drag state.
-   */
   onDragEnd?: () => void;
 }
 
