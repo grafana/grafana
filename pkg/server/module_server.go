@@ -546,6 +546,7 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 						Config:         s.cfg,
 						Registerer:     s.registerer,
 						HealthNotifier: s.healthNotifier,
+						Tracer:         s.tracer,
 					}
 					return op.RunFunc(ctx, deps)
 				},

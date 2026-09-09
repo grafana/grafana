@@ -53,6 +53,7 @@ import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scro
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
+import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -750,11 +751,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    recoverToNewBranch?: RecoverToNewBranch;
   }) {
     if (!this.state.isEditing) {
       return;
@@ -767,6 +770,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         saveAsDashboardTemplate,
         saveDashboardTemplate,
         onSaveSuccess,
+        recoverToNewBranch,
         showVariablesWarning: this.hasVariableErrors(),
       }),
     });
