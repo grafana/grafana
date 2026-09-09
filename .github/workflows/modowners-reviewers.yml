@@ -54,11 +54,38 @@ jobs:
             exit 0
           fi
           echo "Requesting: $slugs"
-          assigned=$(jq -n --arg slugs "$slugs" '{reviewers: [], team_reviewers: ($slugs | split("\n") | map(select(length > 0)))}' |
-            gh api --method POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/requested_reviewers" --input - |
-            jq -r '.requested_teams[].slug')
-          echo "Assigned: $assigned"
-          if [ -z "$assigned" ]; then
-            echo "::error::GitHub accepted the request but assigned no teams"
-            exit 1
-          fi
+          # GitHub caps reviewers + team_reviewers at 15 per request.
+          # requested_teams is the PR's full current set, so check each slug we asked for.
+          failed=0
+          batch=""
+          n=0
+          request_batch() {
+            local assigned slug
+            [ -z "$batch" ] && return 0
+            assigned=$(jq -n --arg slugs "$batch" '{reviewers: [], team_reviewers: ($slugs | split("\n") | map(select(length > 0)))}' |
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/requested_reviewers" --input - |
+              jq -r '.requested_teams[].slug')
+            echo "Assigned: $assigned"
+            while IFS= read -r slug; do
+              [ -z "$slug" ] && continue
+              if ! grep -Fxq "$slug" <<< "$assigned"; then
+                echo "::error::Did not assign @grafana/${slug}"
+                failed=1
+              fi
+            done <<< "$batch"
+            batch=""
+            n=0
+          }
+          while IFS= read -r slug; do
+            [ -z "$slug" ] && continue
+            if [ -n "$batch" ]; then
+              batch+=$'\n'
+            fi
+            batch+="$slug"
+            n=$((n + 1))
+            if [ "$n" -eq 15 ]; then
+              request_batch
+            fi
+          done <<< "$slugs"
+          request_batch
+          exit "$failed"
