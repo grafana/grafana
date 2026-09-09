@@ -2424,6 +2424,9 @@ func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
 		return
 	}
 
+	// defaults.ini ships a server_url, and a config file cannot take it back: the custom-config
+	// merge skips empty values, as does the env override. Only a `cfg:frontend_dev.server_url=`
+	// argument blanks it. The conditions below are what actually keeps it out of the way.
 	raw := valueAsString(iniFile.Section("frontend_dev"), "server_url", "")
 	if raw == "" {
 		return

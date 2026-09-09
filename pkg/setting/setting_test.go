@@ -859,10 +859,31 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		require.Empty(t, cfg.FrontendDevServerURL)
 	})
 
-	t.Run("an empty url disables the dev server", func(t *testing.T) {
+	t.Run("no url means no dev server", func(t *testing.T) {
 		cfg, err := NewCfgFromBytes(devServerINI(""))
 		require.NoError(t, err)
 		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+
+	// Blanking the key in a config file looks like it should turn the dev server off. It does
+	// not: loadSpecifiedConfigFile skips empty values, so the defaults.ini value survives.
+	// Only a `cfg:` argument gets through. Pinned because the obvious reading is the wrong one.
+	t.Run("a config file cannot blank the shipped default, but a cfg: argument can", func(t *testing.T) {
+		blanked := filepath.Join(t.TempDir(), "custom.ini")
+		require.NoError(t, os.WriteFile(blanked, devServerINI(""), 0600))
+
+		load := func(args ...string) *Cfg {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   blanked,
+				Args:     append([]string{"cfg:app_mode=development"}, args...),
+			}))
+			return cfg
+		}
+
+		require.Equal(t, "http://localhost:3333", load().FrontendDevServerURL)
+		require.Empty(t, load("cfg:frontend_dev.server_url=").FrontendDevServerURL)
 	})
 
 	t.Run("only the origin is kept", func(t *testing.T) {
@@ -889,9 +910,12 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		require.Empty(t, cfg.FrontendDevServerURL)
 	})
 
-	// The harness runs in development mode, so it would otherwise pick up the shipped default.
-	// It must exercise the built assets, not a dev server a contributor happens to have
-	// running, and its ini clears the setting to say so.
+	// The harness runs in development mode, so it picks up the shipped default, and its ini
+	// cannot blank it. Its enforced CSP is what keeps it on the built assets instead of a dev
+	// server a contributor happens to have running. Guard that, because the CSP is the whole
+	// mechanism: turning it off here would silently hand the suite a contributor's bundles.
+	// (The harness also never enables grafana.rspackBuild, so the dev server branch is
+	// unreachable either way - but that is a second line of defence, not this one.)
 	t.Run("the e2e harness never uses the dev server", func(t *testing.T) {
 		cfg := NewCfg()
 		require.NoError(t, cfg.Load(CommandLineArgs{

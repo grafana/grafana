@@ -128,7 +128,7 @@ listens on the port named by `[frontend_dev] server_url`. Grafana treats it as a
 the hot-update websocket connects there too. When a module cannot be hot-applied, rspack
 reloads the page.
 
-Two things follow from this setup:
+Some consequences of this setup:
 
 - Nothing is written to `public/build/rspack`. Serving the build from a static file server, as
   `make frontend-service` does, needs `yarn start:rspack:noHmr` instead.
@@ -136,7 +136,11 @@ Two things follow from this setup:
   A stale page usually means the dev server stopped.
 - Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy
   will not let the page load assets from another origin, so Grafana logs a line and serves the
-  build on disk. This is also what keeps the e2e suite off the dev server.
+  build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs
+  in development mode.
+- Blanking `server_url` in a config file does not turn the dev server off. Grafana ignores empty
+  values in `custom.ini`, so the default survives. Pass `cfg:frontend_dev.server_url=` on the
+  command line instead.
 
 #### Plugins
 
