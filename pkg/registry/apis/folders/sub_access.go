@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -156,6 +157,53 @@ var folderAccessProbes = []folderProbe{
 	{correlationID: "silence-write", group: notificationsGroup, resource: "silences", verb: utils.VerbUpdate, action: "alert.silences:write", inFolder: true},
 }
 
+// item builds the BatchCheck item for folder `name`, using `parent` as the
+// folder hint for probes about the folder object itself.
+func (p folderProbe) item(name, parent string) authlib.BatchCheckItem {
+	item := authlib.BatchCheckItem{
+		CorrelationID: p.correlationID,
+		Verb:          p.verb,
+		Group:         p.group,
+		Resource:      p.resource,
+		Subresource:   p.subresource,
+	}
+	if p.inFolder {
+		item.Folder = name
+	} else {
+		item.Name = name
+		item.Folder = parent
+	}
+	return item
+}
+
+// probeBatch is the set of probes sharing one group/resource pair.
+type probeBatch struct {
+	probes []folderProbe
+}
+
+// folderAccessProbeBatches splits the probes by group/resource because
+// rolloutAccessClient picks one backend per BatchCheck call from the first
+// item, and falls back to RBAC for the whole batch when the items disagree.
+// Sending one batch per group/resource keeps each call routable, so folders
+// participating in a Zanzana rollout are still answered by Zanzana.
+var folderAccessProbeBatches = batchProbesByResource(folderAccessProbes)
+
+func batchProbesByResource(probes []folderProbe) []probeBatch {
+	var batches []probeBatch
+	index := make(map[string]int)
+	for _, p := range probes {
+		key := p.group + "/" + p.resource
+		i, ok := index[key]
+		if !ok {
+			i = len(batches)
+			index[key] = i
+			batches = append(batches, probeBatch{})
+		}
+		batches[i].probes = append(batches[i].probes, p)
+	}
+	return batches
+}
+
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -196,42 +244,43 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 // hint for object-level probes) and assembles the FolderAccessInfo, mirroring
 // legacy newToFolderDto in pkg/api/folder.go.
 func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user identity.Requester, name, parent string) (*foldersV1.FolderAccessInfo, error) {
-	checks := make([]authlib.BatchCheckItem, len(folderAccessProbes))
-	for i, p := range folderAccessProbes {
-		item := authlib.BatchCheckItem{
-			CorrelationID: p.correlationID,
-			Verb:          p.verb,
-			Group:         p.group,
-			Resource:      p.resource,
-			Subresource:   p.subresource,
-		}
-		if p.inFolder {
-			item.Folder = name
-		} else {
-			item.Name = name
-			item.Folder = parent
-		}
-		checks[i] = item
+	// The batches are independent, so they run concurrently and the endpoint
+	// costs one round trip rather than one per resource.
+	responses := make([]authlib.BatchCheckResponse, len(folderAccessProbeBatches))
+	g, gctx := errgroup.WithContext(ctx)
+	for i, batch := range folderAccessProbeBatches {
+		g.Go(func() error {
+			checks := make([]authlib.BatchCheckItem, len(batch.probes))
+			for j, p := range batch.probes {
+				checks[j] = p.item(name, parent)
+			}
+			resp, err := r.accessClient.BatchCheck(gctx, user, authlib.BatchCheckRequest{
+				Namespace: namespace,
+				Checks:    checks,
+			})
+			if err != nil {
+				return err
+			}
+			responses[i] = resp
+			return nil
+		})
 	}
-
-	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
-		Namespace: namespace,
-		Checks:    checks,
-	})
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
 	allowed := make(map[string]bool, len(folderAccessProbes))
 	accessControl := make(map[string]bool, len(folderAccessProbes))
-	for _, p := range folderAccessProbes {
-		result := batchResp.Results[p.correlationID]
-		if result.Error != nil {
-			return nil, result.Error
-		}
-		allowed[p.correlationID] = result.Allowed
-		if result.Allowed {
-			accessControl[p.action] = true
+	for i, batch := range folderAccessProbeBatches {
+		for _, p := range batch.probes {
+			result := responses[i].Results[p.correlationID]
+			if result.Error != nil {
+				return nil, result.Error
+			}
+			allowed[p.correlationID] = result.Allowed
+			if result.Allowed {
+				accessControl[p.action] = true
+			}
 		}
 	}
 

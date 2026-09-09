@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -90,12 +91,37 @@ func TestFolderAccessProbes(t *testing.T) {
 	}
 }
 
+func TestFolderAccessProbeBatches(t *testing.T) {
+	// rolloutAccessClient routes a batch by its first item and falls back to
+	// RBAC when the items disagree, so every batch must be homogeneous.
+	batched := 0
+	seenKey := map[string]bool{}
+	for _, batch := range folderAccessProbeBatches {
+		require.NotEmpty(t, batch.probes, "empty batch")
+		first := batch.probes[0]
+		key := first.group + "/" + first.resource
+		require.False(t, seenKey[key], "group/resource %q is split across batches", key)
+		seenKey[key] = true
+
+		for _, p := range batch.probes {
+			require.Equal(t, first.group, p.group, "batch mixes groups")
+			require.Equal(t, first.resource, p.resource, "batch mixes resources")
+		}
+		batched += len(batch.probes)
+	}
+	require.Equal(t, len(folderAccessProbes), batched, "every probe belongs to exactly one batch")
+}
+
+// itemErrProbe is the probe a test case's itemErr is attached to. Naming one
+// probe keeps the failure deterministic now that probes span several batches.
+const itemErrProbe = "folder-get"
+
 func TestSubAccessREST_getAccessInfo(t *testing.T) {
 	type testCase struct {
 		name            string
 		allowed         []string // correlation IDs the access client allows
 		checkErr        error
-		itemErr         error // attached to the first BatchCheckItem's result
+		itemErr         error // attached to the itemErrProbe result
 		parentFolder    string
 		expectCanAdmin  bool
 		expectCanEdit   bool
@@ -252,14 +278,10 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 					if tc.checkErr != nil {
 						return authlib.BatchCheckResponse{}, tc.checkErr
 					}
-					require.Len(t, req.Checks, len(folderAccessProbes), "every probe is sent in one batch")
-					if tc.assertItems != nil {
-						tc.assertItems(t, req.Checks)
-					}
 					results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
-					for idx, item := range req.Checks {
+					for _, item := range req.Checks {
 						res := authlib.BatchCheckResult{Allowed: allowed[item.CorrelationID]}
-						if tc.itemErr != nil && idx == 0 {
+						if tc.itemErr != nil && item.CorrelationID == itemErrProbe {
 							res.Error = tc.itemErr
 						}
 						results[item.CorrelationID] = res
@@ -280,6 +302,11 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, got)
+
+			require.Equal(t, len(folderAccessProbeBatches), ac.calls(), "one BatchCheck per group/resource")
+			if tc.assertItems != nil {
+				tc.assertItems(t, ac.items())
+			}
 			require.Equal(t, tc.expectCanAdmin, got.CanAdmin, "CanAdmin")
 			require.Equal(t, tc.expectCanEdit, got.CanEdit, "CanEdit")
 			require.Equal(t, tc.expectCanDelete, got.CanDelete, "CanDelete")
@@ -303,10 +330,8 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 				// Bare mock with no expectations: fails if Get is called.
 				store := grafanarest.NewMockStorage(t)
 
-				var gotChecks []authlib.BatchCheckItem
 				ac := &subAccessMockClient{
 					batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-						gotChecks = req.Checks
 						results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 						for _, item := range req.Checks {
 							// Editor-like: can edit the folder and create dashboards in it.
@@ -328,6 +353,7 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 				require.NotNil(t, got)
 
 				// Legacy empty UID is normalised to "general".
+				gotChecks := ac.items()
 				require.Len(t, gotChecks, len(folderAccessProbes))
 				inFolder := make(map[string]bool, len(folderAccessProbes))
 				for _, p := range folderAccessProbes {
@@ -377,9 +403,28 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 	})
 }
 
-// subAccessMockClient is a minimal authlib.AccessClient used by subAccessREST tests.
+// subAccessMockClient is a minimal authlib.AccessClient used by subAccessREST
+// tests. checkAccess fans the probes out across goroutines, so the recorded
+// items are guarded and only safe to read once getAccessInfo has returned.
 type subAccessMockClient struct {
 	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
+
+	mu         sync.Mutex
+	gotItems   []authlib.BatchCheckItem
+	batchCalls int
+}
+
+// items returns every BatchCheckItem the client was asked about.
+func (m *subAccessMockClient) items() []authlib.BatchCheckItem {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]authlib.BatchCheckItem(nil), m.gotItems...)
+}
+
+func (m *subAccessMockClient) calls() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.batchCalls
 }
 
 func (m *subAccessMockClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
@@ -391,6 +436,11 @@ func (m *subAccessMockClient) Compile(_ context.Context, _ authlib.AuthInfo, _ a
 }
 
 func (m *subAccessMockClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	m.mu.Lock()
+	m.batchCalls++
+	m.gotItems = append(m.gotItems, req.Checks...)
+	m.mu.Unlock()
+
 	if m.batchCheckFunc != nil {
 		return m.batchCheckFunc(ctx, info, req)
 	}
