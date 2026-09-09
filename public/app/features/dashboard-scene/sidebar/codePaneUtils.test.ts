@@ -2,6 +2,8 @@ import yaml from 'js-yaml';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+
 import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
 jest.mock('../serialization/transformSceneToSaveModelSchemaV2', () => ({
@@ -41,9 +43,9 @@ function buildDashboard(uid?: string): DashboardScene {
   return { state: { uid } } as unknown as DashboardScene;
 }
 
-function buildApplyDashboard(uid?: string): DashboardScene {
+function buildApplyDashboard(uid?: string, meta: Record<string, unknown> = {}): DashboardScene {
   return {
-    state: { uid, key: 'key-1', isEditing: true, meta: {}, body: { editModeChanged: jest.fn() } },
+    state: { uid, key: 'key-1', isEditing: true, meta, body: { editModeChanged: jest.fn() } },
     serializer: { metadata: {} },
     onEnterEditMode: jest.fn(),
     setState: jest.fn(),
@@ -221,6 +223,19 @@ describe('applyJsonToDashboard', () => {
     );
     expect(result.success).toBe(false);
     expect(result.error).toContain('metadata');
+  });
+
+  it('passes access.isPublic from the live scene so the rebuild keeps publicDashboardEnabled', () => {
+    const dashboard = buildApplyDashboard('abc-123', { publicDashboardEnabled: true });
+    const text = getDashboardResourceText(buildDashboard('abc-123'));
+
+    applyJsonToDashboard(dashboard, text);
+
+    expect(jest.mocked(transformSaveModelSchemaV2ToScene)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        access: expect.objectContaining({ isPublic: true }),
+      })
+    );
   });
 
   it('applies the resource text generated for a saved dashboard', () => {

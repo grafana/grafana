@@ -244,6 +244,17 @@ describe('APPLY_SPEC with a panel open for editing', () => {
   });
 });
 
+describe('APPLY_SPEC preserves access flags through the rebuild', () => {
+  it('keeps publicDashboardEnabled when the live scene had a public dashboard', async () => {
+    const scene = buildScene(makeSpec());
+    scene.setState({ meta: { ...scene.state.meta, publicDashboardEnabled: true } });
+
+    expect((await applySpec(scene, makeSpec())).success).toBe(true);
+
+    expect(scene.state.meta.publicDashboardEnabled).toBe(true);
+  });
+});
+
 describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`

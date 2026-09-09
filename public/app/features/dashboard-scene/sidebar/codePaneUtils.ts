@@ -196,6 +196,9 @@ export function applyJsonToDashboard(
         annotationsPermissions: meta.annotationsPermissions,
         url: meta.url,
         slug: meta.slug,
+        // transformSaveModelSchemaV2ToScene maps this back onto meta.publicDashboardEnabled.
+        // Dropping it would clear the public-dashboard flag on every JSON apply rebuild.
+        isPublic: meta.publicDashboardEnabled,
       },
     };
 

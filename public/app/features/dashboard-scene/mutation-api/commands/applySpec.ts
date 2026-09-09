@@ -57,6 +57,10 @@ function dtoFromScene(scene: MutationContextScene, spec: DashboardV2Spec): Dashb
       canAdmin: meta.canAdmin !== false,
       slug: meta.slug,
       url: meta.url,
+      // transformSaveModelSchemaV2ToScene maps this back onto meta.publicDashboardEnabled.
+      // Dropping it would clear the public-dashboard flag on every APPLY_SPEC rebuild.
+      isPublic: meta.publicDashboardEnabled,
+      annotationsPermissions: meta.annotationsPermissions,
     },
     // Whichever v2 version the backend serves (stable v2 or v2beta1). It is
     // stamped onto the scene, so a wrong literal would mislabel it on save.
@@ -104,6 +108,8 @@ type MutationContextScene = {
       slug?: string;
       url?: string;
       key?: string;
+      publicDashboardEnabled?: boolean;
+      annotationsPermissions?: DashboardWithAccessInfo<DashboardV2Spec>['access']['annotationsPermissions'];
     };
   };
   serializer: { getK8SMetadata: () => Partial<ObjectMeta> | undefined };
