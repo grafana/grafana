@@ -94,6 +94,25 @@ type folderProbe struct {
 	inFolder bool
 }
 
+// item builds the BatchCheck item for folder `name`, using `parent` as the
+// folder hint for probes about the folder object itself.
+func (p folderProbe) item(name, parent string) authlib.BatchCheckItem {
+	item := authlib.BatchCheckItem{
+		CorrelationID: p.correlationID,
+		Verb:          p.verb,
+		Group:         p.group,
+		Resource:      p.resource,
+		Subresource:   p.subresource,
+	}
+	if p.inFolder {
+		item.Folder = name
+	} else {
+		item.Name = name
+		item.Folder = parent
+	}
+	return item
+}
+
 // folderAccessProbes covers every action the legacy
 // /api/folders/:uid?accesscontrol=true endpoint could report for a folder, so
 // the response is the user's real permission set rather than a bundle inferred
@@ -157,25 +176,6 @@ var folderAccessProbes = []folderProbe{
 	{correlationID: "silence-write", group: notificationsGroup, resource: "silences", verb: utils.VerbUpdate, action: "alert.silences:write", inFolder: true},
 }
 
-// item builds the BatchCheck item for folder `name`, using `parent` as the
-// folder hint for probes about the folder object itself.
-func (p folderProbe) item(name, parent string) authlib.BatchCheckItem {
-	item := authlib.BatchCheckItem{
-		CorrelationID: p.correlationID,
-		Verb:          p.verb,
-		Group:         p.group,
-		Resource:      p.resource,
-		Subresource:   p.subresource,
-	}
-	if p.inFolder {
-		item.Folder = name
-	} else {
-		item.Name = name
-		item.Folder = parent
-	}
-	return item
-}
-
 // probeBatch is the set of probes sharing one group/resource pair.
 type probeBatch struct {
 	probes []folderProbe
@@ -187,22 +187,6 @@ type probeBatch struct {
 // Sending one batch per group/resource keeps each call routable, so folders
 // participating in a Zanzana rollout are still answered by Zanzana.
 var folderAccessProbeBatches = batchProbesByResource(folderAccessProbes)
-
-func batchProbesByResource(probes []folderProbe) []probeBatch {
-	var batches []probeBatch
-	index := make(map[string]int)
-	for _, p := range probes {
-		key := p.group + "/" + p.resource
-		i, ok := index[key]
-		if !ok {
-			i = len(batches)
-			index[key] = i
-			batches = append(batches, probeBatch{})
-		}
-		batches[i].probes = append(batches[i].probes, p)
-	}
-	return batches
-}
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -301,4 +285,22 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 	}
 
 	return rsp, nil
+}
+
+// batchProbesByResource groups probes that share a group/resource pair,
+// preserving the order they are declared in.
+func batchProbesByResource(probes []folderProbe) []probeBatch {
+	var batches []probeBatch
+	index := make(map[string]int)
+	for _, p := range probes {
+		key := p.group + "/" + p.resource
+		i, ok := index[key]
+		if !ok {
+			i = len(batches)
+			index[key] = i
+			batches = append(batches, probeBatch{})
+		}
+		batches[i].probes = append(batches[i].probes, p)
+	}
+	return batches
 }
