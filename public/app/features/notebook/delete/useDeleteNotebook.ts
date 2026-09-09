@@ -16,7 +16,7 @@ import { type NotebookDeleteSource } from '../analytics/types';
  * Resolves to whether the delete succeeded rather than throwing, so a caller can close its modal
  * either way and only navigate on success.
  *
- * The surface is given once, at the hook, because it belongs to the caller rather than to each delete.
+ * The caller gives the surface once, at the hook: it belongs to the caller, not to each delete.
  */
 export function useDeleteNotebook(source: NotebookDeleteSource) {
   const [deleteNotebook, { isLoading }] = useDeleteNotebookMutation();

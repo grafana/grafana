@@ -22,7 +22,7 @@ function setupHook(source: NotebookDeleteSource) {
   return renderHook(() => useDeleteNotebook(source), { wrapper });
 }
 
-/** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */
+/** Stands in for the delete mutation hook. The hook awaits its result through `.unwrap()`. */
 function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
   const trigger = jest.fn().mockReturnValue({ unwrap });
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the trigger and isLoading are used

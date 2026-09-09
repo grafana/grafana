@@ -30,9 +30,9 @@ const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('creat
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
 
 /**
- * Every notebook event, so a call site reads as analytics rather than as a stray helper. The
- * wrappers exist because the events take a snake_case payload and their call sites hold a scene, so
- * the mapping lives here once instead of at each place that fires one.
+ * Every notebook event, so a call site reads as analytics rather than as a stray helper. The events
+ * take a snake_case payload, and their call sites hold a scene. The wrappers map one to the other
+ * here, once, instead of at each place that fires an event.
  */
 export const notebookAnalytics = {
   loaded(scene: NotebookScene, wasCached: boolean): void {

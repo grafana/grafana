@@ -13,13 +13,13 @@ export interface NotebookLoadedProperties extends EventProperty {
   panel_count: number;
   /** Deduplicated datasource plugin IDs used by the notebook's panels. */
   datasource_types: string[];
-  /** Cells among cell_count whose element was authored by the assistant. */
+  /** Cells among cell_count whose element the assistant wrote. */
   assistant_cell_count: number;
-  /** Whether the page opened already in edit mode. */
+  /** Whether the url opened the notebook in edit mode. A toggle later in the session does not change it. */
   mode: 'view' | 'edit';
-  /** Whether this load was served from the page's in-memory scene cache rather than fetched. */
+  /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
   was_cached: boolean;
-  /** Cells among cell_count that are not untouched empty markdown or an unconfigured panel. */
+  /** Cells among cell_count with real content: markdown someone typed in, or a configured panel. */
   meaningful_cell_count: number;
   /** Markdown cells among cell_count. */
   text_cell_count: number;
@@ -75,8 +75,8 @@ export type NotebookDeleteSource = (typeof NOTEBOOK_DELETE_SOURCE)[keyof typeof 
 
 export interface NotebookDeletedProperties extends EventProperty {
   /**
-   * Identifier and join key for this notebook. Its size comes from the last `loaded` for this uid, and
-   * how long it survived from the `created` for this uid.
+   * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, and the
+   * `created` for this uid gives how long it survived.
    */
   notebook_uid: string;
   /** Which surface the delete was confirmed on. */

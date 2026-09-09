@@ -41,11 +41,12 @@ export function readNotebookShape(scene: NotebookScene): NotebookShape {
   };
 }
 
-// A panel cell only counts once it's configured, since a freshly added visualization block still
-// gets a synthetic placeholder query with no datasource, so its query runner is never actually
-// empty. Datasource presence is the real signal, not queries.length. A narrative cell counts unless
-// it's untouched empty markdown; a code cell always counts, because even an empty one carries a
-// language choice somebody made.
+// A panel cell only counts once it is configured. A freshly added visualization block still gets a
+// synthetic placeholder query with no datasource, so its query runner is never empty. Datasource
+// presence is the real signal, not queries.length.
+//
+// A narrative cell counts unless it is empty markdown nobody touched. A code cell always counts,
+// because even an empty one carries a language choice somebody made.
 function isMeaningfulCell(cell: NotebookCellItem): boolean {
   if (cell.state.body) {
     return isConfiguredPanel(cell.state.body);
@@ -64,7 +65,7 @@ function cellType(cell: NotebookCellItem): string {
   if (cell.state.content) {
     return cell.state.content.kind.toLowerCase();
   }
-  // Never both, never neither, per NotebookCellItemState's own contract — this is defensive, not a
+  // Never both, never neither, per NotebookCellItemState's own contract. This is defensive, not a
   // real cell shape.
   return 'unknown';
 }
