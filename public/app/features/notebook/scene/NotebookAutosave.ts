@@ -570,6 +570,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       } finally {
         this.adoptingUid = false;
       }
+      // Only a blank notebook reaches this create, and the list is the only link to the blank route
+      // today. A second way in has to hand its own source to the autosave.
       notebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
       return { generation };
     });

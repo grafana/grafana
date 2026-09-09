@@ -40,6 +40,8 @@ export function NotebookScenePage() {
         stateManager.loadNotebook(uid);
       } else if (isNew) {
         stateManager.newNotebook();
+        // The list's create button is the only link to this route today, so the source is fixed here.
+        // A second way in has to pass its own, or this event keeps naming the list.
         notebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
       }
     }
