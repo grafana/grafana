@@ -77,6 +77,12 @@ describe('buildDashboardWithAccessInfoFromScene', () => {
     expect(Number.isNaN(Date.parse(result.metadata.creationTimestamp!))).toBe(false);
   });
 
+  it('leaves the name empty when the scene has neither k8s metadata nor a uid', () => {
+    const result = buildDashboardWithAccessInfoFromScene(buildFakeScene(), spec);
+
+    expect(result.metadata.name).toBe('');
+  });
+
   it('preserves existing k8s metadata fields instead of overwriting them with defaults', () => {
     const result = buildDashboardWithAccessInfoFromScene(
       buildFakeScene({
