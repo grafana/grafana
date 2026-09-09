@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -315,6 +315,72 @@ describe('buildFilteredTable', () => {
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 0, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+});
+
+describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
+  const GRID_WIDTH = 500;
+  const SCROLLBAR_WIDTH = 11;
+
+  // jsdom does no layout, so the grid's own vertical scrollbar has to be faked: TableNG derives it
+  // from offsetWidth - clientWidth on the grid element and lays the columns out inside what is left.
+  // Without it the space available to the columns always equals the width the table is handed, and a
+  // set of column widths that overflows by exactly the scrollbar looks fine.
+  const mockedSizes = [
+    { property: 'offsetWidth', target: HTMLElement.prototype, gridValue: GRID_WIDTH },
+    { property: 'clientWidth', target: Element.prototype, gridValue: GRID_WIDTH - SCROLLBAR_WIDTH },
+  ] as const;
+
+  const originalDescriptors = mockedSizes.map(({ property, target }) => ({
+    property,
+    target,
+    descriptor: Object.getOwnPropertyDescriptor(target, property)!,
+  }));
+
+  const mockGridScrollbar = () => {
+    for (const { property, target, gridValue } of mockedSizes) {
+      Object.defineProperty(target, property, {
+        configurable: true,
+        get(this: Element) {
+          return this.classList.contains('rdg') ? gridValue : 0;
+        },
+      });
+    }
+  };
+
+  afterEach(() => {
+    for (const { property, target, descriptor } of originalDescriptors) {
+      Object.defineProperty(target, property, descriptor);
+    }
+  });
+
+  it('fits the columns in the space the scrollbar leaves rather than the full width', async () => {
+    // Needed for AutoSizer to work in test
+    mockBoundingClientRect({ width: GRID_WIDTH, height: GRID_WIDTH });
+    mockGridScrollbar();
+
+    const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+        enableVirtualization={false}
+      />
+    );
+
+    await waitFor(() => {
+      const grid = document.querySelector<HTMLElement>('.rdg')!;
+      // The wrapper the TableNG branch sizes, i.e. the width the table was handed.
+      const handedWidth = parseFloat(grid.parentElement!.style.width);
+      const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
+
+      expect(columnWidths).toHaveLength(4);
+      expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(handedWidth - SCROLLBAR_WIDTH);
     });
   });
 });

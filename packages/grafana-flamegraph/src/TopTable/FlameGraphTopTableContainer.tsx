@@ -192,7 +192,13 @@ function buildTableDataFrame(
     name: 'Symbol',
     values: [],
     config: {
-      custom: { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
+      // TableNG lays its columns out inside `width` minus its own vertical scrollbar, so spelling out
+      // a width here that fills `width` overflows by the scrollbar and leaves the grid scrolling
+      // sideways a few pixels. Leaving Symbol unsized instead makes it the one column TableNG hands
+      // the leftover space to, which is the same "fill whatever the fixed columns don't use" intent
+      // without having to know the scrollbar's width. The legacy table has no such notion, so it
+      // still gets told exactly how wide to make it.
+      custom: useTableNG ? {} : { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
       links: [
         {
           title: 'Highlight symbol',
@@ -210,7 +216,9 @@ function buildTableDataFrame(
   let frame;
 
   if (data.isDiffFlamegraph()) {
-    symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 3;
+    if (!useTableNG) {
+      symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 3;
+    }
 
     const baselineField = createNumberField('Baseline', 'percent');
     const comparisonField = createNumberField('Comparison', 'percent');
