@@ -11247,9 +11247,9 @@ __metadata:
   linkType: hard
 
 "@types/luxon@npm:^3.0.0":
-  version: 3.7.4
-  resolution: "@types/luxon@npm:3.7.4"
-  checksum: 10/f062cbf6cfac319b88abcedd253308c6dc98e0b76e1ab991fb9fb1573c602097f2d54a95ea874d3678f3963a73478bcce260c621deb6c779c83ff891611e46d7
+  version: 3.7.5
+  resolution: "@types/luxon@npm:3.7.5"
+  checksum: 10/656e6e5c057f5e9769d2f2c0d84795de3d68d461557dca432dbdf6b98d1e57b15f273d99781c1e8d786f1fd15dcc29eeb48496685aa77fc3f14e186b6230ab0e
   languageName: node
   linkType: hard
 
@@ -16998,7 +16998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.4.13, dompurify@npm:^3.4.0":
+"dompurify@npm:3.4.13":
   version: 3.4.13
   resolution: "dompurify@npm:3.4.13"
   dependencies:
@@ -17007,6 +17007,18 @@ __metadata:
     "@types/trusted-types":
       optional: true
   checksum: 10/0db0a309a868a38aca042f606b37446977c35ee4501850a8c1bf2781337d79871daf1f4344bbf5b545f2a8c62e4d4e192c8fd6f1ff49ecec7c865c55a0aefee3
+  languageName: node
+  linkType: hard
+
+"dompurify@npm:^3.4.0":
+  version: 3.4.15
+  resolution: "dompurify@npm:3.4.15"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: 10/159f592307578405c5217ba40ab467d4ac35f23eb20abc7f32b85698b8c1aff92f71b00c80779f891a8e463edafab05d9a4db53052d5c67005240ac4fff7fc72
   languageName: node
   linkType: hard
 
@@ -18010,13 +18022,14 @@ __metadata:
   linkType: hard
 
 "eslint-no-restricted@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "eslint-no-restricted@npm:0.1.1"
+  version: 0.1.2
+  resolution: "eslint-no-restricted@npm:0.1.2"
   dependencies:
+    "@typescript-eslint/types": "npm:^8.56.0"
     "@typescript-eslint/utils": "npm:^8.56.0"
   peerDependencies:
     eslint: ^8.57.0 || ^9 || ^10
-  checksum: 10/27bd70a4461291d9825e505c86fdb4000f31dfc7ff362d711f4f977ae76150ed90e297eaae15d6362cf34530e5366f35c69edb84121878be8389b1f1e22665aa
+  checksum: 10/ffe710fba964604d075195e409fb34723b7205a4df29cf20cd8423b929e0219a3bde8b633a77c26a7b0854b354fae4c9955b5cfb1fae93e76ad40da91b776f89
   languageName: node
   linkType: hard
 
