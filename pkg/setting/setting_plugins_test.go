@@ -56,7 +56,7 @@ func TestMarketplaceLicenseDirectory(t *testing.T) {
 		{
 			name: "parses configured directory",
 			ini: `
-[marketplace]
+[plugins_marketplace]
 license_directory = /var/lib/grafana/marketplace-licenses
 `,
 			want: "/var/lib/grafana/marketplace-licenses",
