@@ -387,8 +387,7 @@ const LogsQueryEditor = ({
                     const { fromTier } = tierAutoSwitchNotice;
                     const tierValue = fromTier === 'Analytics' ? undefined : fromTier;
                     let updated = setLogTier(query, tierValue);
-                    // When reverting to Analytics, clear the builder table selection to avoid tier mismatch
-                    if (fromTier === 'Analytics' && updated.azureLogAnalytics?.builderQuery) {
+                    if (updated.azureLogAnalytics?.builderQuery) {
                       updated = {
                         ...updated,
                         azureLogAnalytics: {
@@ -402,6 +401,7 @@ const LogsQueryEditor = ({
                           },
                         },
                       };
+                      updated = setKustoQuery(updated, '');
                     }
                     onChange(updated);
                     setTierAutoSwitchNotice(null);

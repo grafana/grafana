@@ -903,6 +903,14 @@ describe('LogsQueryEditor', () => {
             related: { solutions: [], functions: [], categories: [] },
             plan: TablePlan.Basic,
           },
+          {
+            id: 'AuxiliaryTable',
+            name: 'AuxiliaryTable',
+            timespanColumn: 'TimeGenerated',
+            columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+            related: { solutions: [], functions: [], categories: [] },
+            plan: TablePlan.Auxiliary,
+          },
         ],
         functions: [],
         majorVersion: 0,
@@ -938,9 +946,10 @@ describe('LogsQueryEditor', () => {
       });
       const onChange = jest.fn();
       const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
 
       await act(async () => {
-        render(
+        ({ rerender } = render(
           <LogsQueryEditor
             query={query}
             datasource={mockDatasource}
@@ -950,11 +959,28 @@ describe('LogsQueryEditor', () => {
             setError={() => {}}
             basicLogsEnabled={true}
           />
-        );
+        ));
       });
 
       const tableSelect = await screen.findByLabelText('Table');
       await selectOptionInTest(tableSelect, 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
 
       // Alert appears with the new tier in the title and the table name in the body
       const alertTitle = await screen.findByText(/Query tier set to Basic/);
@@ -972,10 +998,81 @@ describe('LogsQueryEditor', () => {
         const revertedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.basicLogsQuery === false);
         expect(revertedCall).toBeDefined();
         expect(revertedCall![0].azureLogAnalytics.logTier).toBeUndefined();
+        expect(revertedCall![0].azureLogAnalytics.builderQuery.from.property.name).toBe('');
+        expect(revertedCall![0].azureLogAnalytics.query).toBe('');
       });
 
       // Alert is dismissed after revert
       expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+    });
+
+    it('clears the selected table and KQL when reverting from Auxiliary to Basic', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'AuxiliaryTable' ? TablePlan.Auxiliary : TablePlan.Basic)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+          basicLogsQuery: true,
+          logTier: 'Basic',
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+            auxiliaryLogsEnabled={true}
+          />
+        ));
+      });
+
+      const tableSelect = await screen.findByLabelText('Table');
+      await selectOptionInTest(tableSelect, 'AuxiliaryTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Auxiliary');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      await userEvent.click(await screen.findByRole('button', { name: /Revert to Basic/ }));
+
+      await waitFor(() => {
+        const revertedCall = onChange.mock.calls.find(
+          (call) =>
+            call[0]?.azureLogAnalytics?.logTier === 'Basic' &&
+            call[0]?.azureLogAnalytics?.builderQuery?.from?.property.name === ''
+        );
+        expect(revertedCall).toBeDefined();
+        expect(revertedCall![0].azureLogAnalytics.query).toBe('');
+      });
     });
   });
 });
