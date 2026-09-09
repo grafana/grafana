@@ -1,3 +1,5 @@
+import { of, throwError } from 'rxjs';
+
 import { getAPINamespace } from '@grafana/api-clients';
 import {
   createDataFrame,
@@ -10,7 +12,7 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
-import { lokiHasRecentLabels, resetLokiLabels } from './solutionDataProbes';
+import { lokiHasRecentLabels } from './solutionDataProbes';
 import {
   fetchLogsActivity,
   fetchMetricsActivity,
@@ -52,7 +54,7 @@ jest.mock('@grafana/api-clients', () => ({
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
 const mockRunInstantQueries = jest.mocked(runInstantQueries);
 const mockRunRangeQuery = jest.mocked(runRangeQuery);
-const mockProxyGet = jest.fn();
+const mockProxyFetch = jest.fn();
 const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 const mockGetAPINamespace = jest.mocked(getAPINamespace);
 
@@ -70,13 +72,12 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockResolveBackendInstance.mockReset();
-  resetLokiLabels();
-  mockProxyGet.mockReset();
+  mockProxyFetch.mockReset();
   mockRunInstantQueries.mockReset();
   mockRunInstantQueries.mockResolvedValue([]);
   mockRunRangeQuery.mockReset();
   mockRunRangeQuery.mockResolvedValue([]);
-  jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
+  jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockProxyFetch } as unknown as BackendSrv);
   mockGetDataSourceInstanceSettings.mockReset();
   mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
   mockGetAPINamespace.mockReset();
@@ -138,7 +139,7 @@ describe('fetchLogsActivity', () => {
 
     const end = Date.now() * NS_IN_MS;
     const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * 1e9;
-    const silent = { showErrorAlert: false };
+    const silent = { showErrorAlert: false, abortSignal: expect.any(AbortSignal) };
     expect(getResource).toHaveBeenCalledWith('labels', { start: end - DATA_LOOKBACK_HOURS * 3600 * 1e9, end }, silent);
     expect(getResource).toHaveBeenCalledWith(
       'index/volume',
@@ -265,16 +266,23 @@ describe('fetchLogsActivity', () => {
     expect(activity.series).toBeNull();
   });
 
-  it('reuses the label list the logs probe already fetched', async () => {
+  it('fetches its own label list after the probe of the same datasource was aborted', async () => {
     const getResource = jest.fn(async (path: string) =>
       path === 'labels' ? { data: ['job'] } : { data: { result: [] } }
     );
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(lokiHasRecentLabels(loki as DataSourceInstanceListItem)).resolves.toBe(true);
-    await fetchLogsActivity(loki);
+    const controller = new AbortController();
+    controller.abort();
+    // The aborted probe never issues its request.
+    await expect(lokiHasRecentLabels(loki as DataSourceInstanceListItem, controller.signal)).resolves.toBe(false);
 
-    expect(getResource.mock.calls.filter(([path]) => path === 'labels')).toHaveLength(1);
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
+    expect(getResource).toHaveBeenCalledWith(
+      'labels',
+      expect.anything(),
+      expect.objectContaining({ abortSignal: expect.objectContaining({ aborted: false }) })
+    );
     expect(getResource).toHaveBeenCalledWith(
       'index/volume',
       expect.objectContaining({ targetLabels: 'job' }),
@@ -285,21 +293,22 @@ describe('fetchLogsActivity', () => {
 
 describe('fetchTracesServices', () => {
   it('counts tag values through the datasource proxy over the lookback in unix seconds', async () => {
-    mockProxyGet.mockResolvedValue({ tagValues: [{ value: 'a' }, { value: 'b' }] });
+    mockProxyFetch.mockReturnValue(of({ data: { tagValues: [{ value: 'a' }, { value: 'b' }] } }));
 
     await expect(fetchTracesServices(tempo)).resolves.toBe(2);
 
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenCalledWith(
-      '/api/datasources/proxy/uid/tempo-uid/api/v2/search/tag/resource.service.name/values',
-      { start: end - DATA_LOOKBACK_HOURS * 3600, end },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenCalledWith({
+      url: '/api/datasources/proxy/uid/tempo-uid/api/v2/search/tag/resource.service.name/values',
+      params: { start: end - DATA_LOOKBACK_HOURS * 3600, end },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('propagates a proxy rejection (callers fail soft)', async () => {
-    mockProxyGet.mockRejectedValue(new Error('tempo 404'));
+    mockProxyFetch.mockReturnValue(throwError(() => new Error('tempo 404')));
 
     await expect(fetchTracesServices(tempo)).rejects.toThrow('tempo 404');
   });
@@ -307,17 +316,21 @@ describe('fetchTracesServices', () => {
 
 describe('fetchTracesActivity', () => {
   it('sums the query_range samples into a span count and throughput series', async () => {
-    mockProxyGet.mockResolvedValue({
-      series: [
-        {
-          samples: [
-            { timestampMs: '1000', value: 100 },
-            { timestampMs: '2000', value: 200 },
-            { timestampMs: '3000', value: 300 },
+    mockProxyFetch.mockReturnValue(
+      of({
+        data: {
+          series: [
+            {
+              samples: [
+                { timestampMs: '1000', value: 100 },
+                { timestampMs: '2000', value: 200 },
+                { timestampMs: '3000', value: 300 },
+              ],
+            },
           ],
         },
-      ],
-    });
+      })
+    );
 
     const activity = await fetchTracesActivity(tempo);
 
@@ -326,84 +339,93 @@ describe('fetchTracesActivity', () => {
     expect(activity.series?.y.values).toEqual([100, 200, 300]);
     expect(activity.lookbackHours).toBe(24);
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenCalledWith(
-      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
-      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenCalledWith({
+      url: '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      params: { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('reports null spans when the response has no samples', async () => {
-    mockProxyGet.mockResolvedValue({ series: [] });
+    mockProxyFetch.mockReturnValue(of({ data: { series: [] } }));
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 24 });
   });
 
   it('retries the known Tempo 2.x duration limit with a three-hour lookback', async () => {
-    mockProxyGet
-      .mockRejectedValueOnce({
-        status: 400,
-        data: { message: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s' },
-      })
-      .mockResolvedValueOnce({
-        series: [
-          {
-            samples: [
-              { timestampMs: '1000', value: 100 },
-              { timestampMs: '2000', value: 200 },
+    mockProxyFetch
+      .mockReturnValueOnce(
+        throwError(() => ({
+          status: 400,
+          data: { message: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s' },
+        }))
+      )
+      .mockReturnValueOnce(
+        of({
+          data: {
+            series: [
+              {
+                samples: [
+                  { timestampMs: '1000', value: 100 },
+                  { timestampMs: '2000', value: 200 },
+                ],
+              },
             ],
           },
-        ],
-      });
+        })
+      );
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual(
       expect.objectContaining({ spans: 300, lookbackHours: 3 })
     );
 
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenNthCalledWith(
-      1,
-      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
-      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
-      undefined,
-      { showErrorAlert: false }
-    );
-    expect(mockProxyGet).toHaveBeenNthCalledWith(
-      2,
-      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
-      { q: '{} | count_over_time()', start: end - 3 * 3600, end, step: '30m' },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenNthCalledWith(1, {
+      url: '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      params: { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
+    expect(mockProxyFetch).toHaveBeenNthCalledWith(2, {
+      url: '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      params: { q: '{} | count_over_time()', start: end - 3 * 3600, end, step: '30m' },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('retries when Tempo returns the duration limit as a string response body', async () => {
-    mockProxyGet
-      .mockRejectedValueOnce({
-        status: 400,
-        data: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s',
-      })
-      .mockResolvedValueOnce({ series: [] });
+    mockProxyFetch
+      .mockReturnValueOnce(
+        throwError(() => ({
+          status: 400,
+          data: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s',
+        }))
+      )
+      .mockReturnValueOnce(of({ data: { series: [] } }));
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 3 });
-    expect(mockProxyGet).toHaveBeenCalledTimes(2);
+    expect(mockProxyFetch).toHaveBeenCalledTimes(2);
   });
 
   it('preserves a malformed Tempo error response', async () => {
     const error = { status: 400, data: {} };
-    mockProxyGet.mockRejectedValue(error);
+    mockProxyFetch.mockReturnValue(throwError(() => error));
 
     await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
-    expect(mockProxyGet).toHaveBeenCalledTimes(1);
+    expect(mockProxyFetch).toHaveBeenCalledTimes(1);
   });
 
   it('does not retry unrelated Tempo errors', async () => {
     const error = { status: 400, data: { message: 'invalid TraceQL query' } };
-    mockProxyGet.mockRejectedValue(error);
+    mockProxyFetch.mockReturnValue(throwError(() => error));
 
     await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
-    expect(mockProxyGet).toHaveBeenCalledTimes(1);
+    expect(mockProxyFetch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -442,7 +464,7 @@ describe('metrics telemetry', () => {
     expect(getResource).toHaveBeenCalledWith(
       'api/v1/cardinality/label_values',
       { 'label_names[]': '__name__', count_method: 'active' },
-      { showErrorAlert: false }
+      { showErrorAlert: false, abortSignal: expect.any(AbortSignal) }
     );
     // The 7d name list runs to megabytes on large tenants; a series count makes it redundant.
     expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
@@ -753,7 +775,7 @@ describe('metrics telemetry', () => {
     expect(getResource).toHaveBeenCalledWith(
       'api/v1/label/__name__/values',
       { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
-      { showErrorAlert: false }
+      { showErrorAlert: false, abortSignal: expect.any(AbortSignal) }
     );
   });
 

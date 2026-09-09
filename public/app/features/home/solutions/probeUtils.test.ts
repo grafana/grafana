@@ -1,16 +1,20 @@
+import { lastValueFrom, Observable, of } from 'rxjs';
+
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import {
+  abortNotifier,
   findDatasourceWithData,
   HEALTH_CHECK_TIMEOUT_MS,
   isDatasourceHealthy,
   listProbeCandidates,
   MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
+  probeProxyGet,
   resetProbeHealth,
-  withTimeout,
+  withDeadline,
 } from './probeUtils';
 import { detectSignal, SIGNAL_BUDGET_MS } from './solutionState';
 
@@ -37,19 +41,155 @@ function listItem(ds: { uid?: string; name: string; isDefault?: boolean }): Data
   };
 }
 
-describe('withTimeout', () => {
-  it('resolves with the promise value when it settles inside the deadline', async () => {
-    await expect(withTimeout(Promise.resolve('ok'), 50)).resolves.toBe('ok');
+describe('withDeadline', () => {
+  it('resolves with the work value when it settles inside the deadline', async () => {
+    await expect(withDeadline(50, undefined, async () => 'ok')).resolves.toBe('ok');
   });
 
   it('propagates a rejection that happens inside the deadline', async () => {
-    await expect(withTimeout(Promise.reject(new Error('boom')), 50)).rejects.toThrow('boom');
+    await expect(withDeadline(50, undefined, () => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
   });
 
-  it('rejects once the deadline passes while the promise hangs', async () => {
-    const hang = new Promise<never>(() => {});
+  it('rejects at the deadline and aborts the signal of work that ignores it', async () => {
+    jest.useFakeTimers();
+    try {
+      let captured: AbortSignal | undefined;
+      const promise = withDeadline(20, undefined, (signal) => {
+        captured = signal;
+        return new Promise<never>(() => {});
+      });
+      const assertion = expect(promise).rejects.toThrow(/timed out/i);
+      await jest.advanceTimersByTimeAsync(20);
 
-    await expect(withTimeout(hang, 20)).rejects.toThrow(/timed out/i);
+      await assertion;
+      expect(captured?.aborted).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('rejects with the timeout error when the work rejects in reaction to the abort', async () => {
+    jest.useFakeTimers();
+    try {
+      const promise = withDeadline(
+        20,
+        undefined,
+        (signal) =>
+          new Promise<never>((_, reject) => signal.addEventListener('abort', () => reject(new Error('aborted'))))
+      );
+      const assertion = expect(promise).rejects.toThrow(/timed out/i);
+      await jest.advanceTimersByTimeAsync(20);
+
+      await assertion;
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('rejects with the timeout error when the work resolves in reaction to the abort', async () => {
+    jest.useFakeTimers();
+    try {
+      const promise = withDeadline(
+        20,
+        undefined,
+        (signal) => new Promise<string>((resolve) => signal.addEventListener('abort', () => resolve('cancelled')))
+      );
+      const assertion = expect(promise).rejects.toThrow(/timed out/i);
+      await jest.advanceTimersByTimeAsync(20);
+
+      await assertion;
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('forwards a parent abort to the work signal', async () => {
+    const parent = new AbortController();
+    const promise = withDeadline(
+      1_000,
+      parent.signal,
+      (signal) => new Promise<string>((resolve) => signal.addEventListener('abort', () => resolve('aborted')))
+    );
+
+    parent.abort();
+
+    await expect(promise).resolves.toBe('aborted');
+  });
+
+  it('hands an already-aborted signal to the work when the parent is already aborted', async () => {
+    const parent = new AbortController();
+    parent.abort();
+
+    await expect(withDeadline(1_000, parent.signal, async (signal) => signal.aborted)).resolves.toBe(true);
+  });
+});
+
+describe('abortNotifier', () => {
+  it('errors with an AbortError for an already-aborted signal', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(lastValueFrom(abortNotifier(controller.signal))).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('errors with an AbortError once a live signal aborts', async () => {
+    const controller = new AbortController();
+    const promise = lastValueFrom(abortNotifier(controller.signal));
+
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+describe('probeProxyGet', () => {
+  const mockFetch = jest.fn();
+  const params = { q: '{}', limit: 1 };
+
+  beforeEach(() => {
+    mockFetch.mockReset();
+    jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockFetch } as unknown as BackendSrv);
+  });
+
+  it('resolves with the response body of a proxied GET', async () => {
+    mockFetch.mockReturnValue(of({ data: { traces: [] } }));
+
+    await expect(probeProxyGet('tempo', 'api/search', params)).resolves.toEqual({ traces: [] });
+    expect(mockFetch).toHaveBeenCalledWith({
+      url: '/api/datasources/proxy/uid/tempo/api/search',
+      params,
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
+  });
+
+  it('unsubscribes a request still pending when the parent aborts', async () => {
+    const teardown = jest.fn();
+    mockFetch.mockReturnValue(new Observable(() => teardown));
+    const controller = new AbortController();
+    const promise = probeProxyGet('tempo', 'api/search', params, PROBE_TIMEOUT_MS, controller.signal);
+
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(teardown).toHaveBeenCalled();
+  });
+
+  it('unsubscribes a request still pending at the deadline', async () => {
+    jest.useFakeTimers();
+    try {
+      const teardown = jest.fn();
+      mockFetch.mockReturnValue(new Observable(() => teardown));
+      const promise = probeProxyGet('tempo', 'api/search', params);
+      const assertion = expect(promise).rejects.toThrow(/timed out/);
+      await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
+
+      await assertion;
+      expect(teardown).toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 
@@ -139,6 +279,7 @@ describe('isDatasourceHealthy', () => {
     await expect(isDatasourceHealthy('healthy')).resolves.toBe(true);
     expect(healthGetMock).toHaveBeenCalledWith('/api/datasources/uid/healthy/health', undefined, undefined, {
       showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
     });
   });
 
@@ -163,6 +304,7 @@ describe('isDatasourceHealthy', () => {
       await jest.advanceTimersByTimeAsync(HEALTH_CHECK_TIMEOUT_MS + 1);
 
       await expect(promise).resolves.toBe(false);
+      expect(healthGetMock.mock.calls[0][3].abortSignal.aborted).toBe(true);
     } finally {
       jest.useRealTimers();
     }
@@ -255,6 +397,19 @@ describe('findDatasourceWithData', () => {
 
     await expect(findDatasourceWithData([first, hung], hasData)).resolves.toBe(first);
     expect(signals.get('hung')?.aborted).toBe(true);
+  });
+
+  it('aborts the batch signal after a miss', async () => {
+    const a = listItem({ uid: 'a', name: 'a' });
+    const b = listItem({ uid: 'b', name: 'b' });
+    const signals = new Map<string, AbortSignal>();
+    const hasData = async (ds: DataSourceInstanceListItem, signal: AbortSignal) => {
+      signals.set(ds.uid, signal);
+      return false;
+    };
+
+    await expect(findDatasourceWithData([a, b], hasData)).resolves.toBeNull();
+    expect(signals.get('a')?.aborted).toBe(true);
   });
 
   it('never probes a sibling whose health settles after the hit', async () => {

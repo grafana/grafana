@@ -1,16 +1,11 @@
+import { of, throwError } from 'rxjs';
+
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { type BackendSrv, config, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { resetProbeHealth } from './probeUtils';
-import {
-  lokiHasRecentLabels,
-  lokiRecentLabels,
-  probeFound,
-  prometheusHasRecentMetrics,
-  resetLokiLabels,
-  tempoHasTraces,
-} from './solutionDataProbes';
+import { PROBE_TIMEOUT_MS, resetProbeHealth } from './probeUtils';
+import { lokiHasRecentLabels, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -26,6 +21,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
 const mockList = jest.mocked(getDataSourceInstanceList);
 const mockInstance = jest.mocked(getDataSourceInstance);
 const mockProxyGet = jest.fn();
+const mockProxyFetch = jest.fn();
 
 function datasource(type: string, name = `${type}-ds`): DataSourceInstanceListItem {
   return {
@@ -43,11 +39,11 @@ beforeEach(() => {
   mockList.mockReset();
   mockInstance.mockReset();
   mockProxyGet.mockReset();
+  mockProxyFetch.mockReset();
   resetProbeHealth();
-  resetLokiLabels();
   // Health checks share getBackendSrv().get: answer /health OK by default so every candidate is probed.
   mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
-  jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
+  jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet, fetch: mockProxyFetch } as unknown as BackendSrv);
 });
 
 function backendInstance(getResource: jest.Mock): DataSourceWithBackend {
@@ -55,6 +51,16 @@ function backendInstance(getResource: jest.Mock): DataSourceWithBackend {
   instance.getResource = getResource;
   return instance;
 }
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
+const flush = () => jest.advanceTimersByTimeAsync(0);
 
 afterEach(() => {
   jest.useRealTimers();
@@ -133,7 +139,7 @@ describe('lokiHasRecentLabels', () => {
     expect(getResource).toHaveBeenCalledWith(
       'labels',
       { start: end - 24 * 3600 * 1e9, end },
-      { showErrorAlert: false }
+      { showErrorAlert: false, abortSignal: expect.any(AbortSignal) }
     );
   });
 
@@ -150,15 +156,48 @@ describe('lokiHasRecentLabels', () => {
     await expect(lokiHasRecentLabels(datasource('loki'))).resolves.toBe(false);
   });
 
-  it('shares one label request per datasource', async () => {
-    const getResource = jest.fn().mockResolvedValue({ data: ['job', 'service_name'] });
+  it('ignores non-string entries', async () => {
+    const getResource = jest.fn().mockResolvedValue({ data: [null, {}] });
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+
+    await expect(lokiHasRecentLabels(datasource('loki'))).resolves.toBe(false);
+
+    getResource.mockResolvedValue({ data: [null, 'job'] });
+    await expect(lokiHasRecentLabels(datasource('loki'))).resolves.toBe(true);
+  });
+
+  it('probes again with a fresh signal after an earlier probe of the same datasource was aborted', async () => {
+    const getResource = jest.fn(async (_path: string, _params: unknown, options: { abortSignal: AbortSignal }) => {
+      if (options.abortSignal.aborted) {
+        throw new Error('aborted');
+      }
+      return { data: ['job'] };
+    });
     mockInstance.mockResolvedValue(backendInstance(getResource));
     const ds = datasource('loki');
 
-    await expect(lokiHasRecentLabels(ds)).resolves.toBe(true);
-    await expect(lokiRecentLabels(ds.uid)).resolves.toEqual(['job', 'service_name']);
+    const first = new AbortController();
+    await expect(lokiHasRecentLabels(ds, first.signal)).resolves.toBe(true);
+    first.abort();
+    jest.setSystemTime(Date.now() + 61_000);
 
-    expect(getResource).toHaveBeenCalledTimes(1);
+    await expect(lokiHasRecentLabels(ds, new AbortController().signal)).resolves.toBe(true);
+    expect(getResource).toHaveBeenCalledTimes(2);
+    expect(getResource.mock.calls[1][2].abortSignal.aborted).toBe(false);
+  });
+
+  it('never issues the request when the lookup outlives the deadline', async () => {
+    const lookup = deferred<DataSourceWithBackend>();
+    mockInstance.mockReturnValue(lookup.promise);
+    const getResource = jest.fn();
+
+    const assertion = expect(lokiHasRecentLabels(datasource('loki'))).rejects.toThrow(/timed out/);
+    await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
+    await assertion;
+
+    lookup.resolve(backendInstance(getResource));
+    await flush();
+    expect(getResource).not.toHaveBeenCalled();
   });
 });
 
@@ -173,7 +212,7 @@ describe('prometheusHasRecentMetrics', () => {
     expect(getResource).toHaveBeenCalledWith(
       'api/v1/label/__name__/values',
       { start: end - 24 * 3600, end, limit: 4 },
-      { showErrorAlert: false }
+      { showErrorAlert: false, abortSignal: expect.any(AbortSignal) }
     );
   });
 
@@ -197,6 +236,7 @@ describe('prometheusHasRecentMetrics', () => {
       await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(false);
       expect(getResource).toHaveBeenCalledWith('api/v1/label/__name__/values', expect.objectContaining({ limit: 4 }), {
         showErrorAlert: false,
+        abortSignal: expect.any(AbortSignal),
       });
 
       getResource.mockResolvedValue({ data: ['MY_ALERTS', 'up'] });
@@ -212,31 +252,57 @@ describe('prometheusHasRecentMetrics', () => {
 
     await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
   });
+
+  it('cancels the request when the probe deadline passes', async () => {
+    const getResource = jest.fn().mockReturnValue(new Promise(() => {}));
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+
+    const assertion = expect(prometheusHasRecentMetrics(datasource('prometheus'))).rejects.toThrow(/timed out/);
+    await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
+
+    await assertion;
+    expect(getResource.mock.calls[0][2].abortSignal.aborted).toBe(true);
+  });
+
+  it('never issues the request when the lookup outlives the deadline', async () => {
+    const lookup = deferred<DataSourceWithBackend>();
+    mockInstance.mockReturnValue(lookup.promise);
+    const getResource = jest.fn();
+
+    const assertion = expect(prometheusHasRecentMetrics(datasource('prometheus'))).rejects.toThrow(/timed out/);
+    await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
+    await assertion;
+
+    lookup.resolve(backendInstance(getResource));
+    await flush();
+    expect(getResource).not.toHaveBeenCalled();
+  });
 });
 
 describe('tempoHasTraces', () => {
   it('reports data when the Tempo search API returns a trace', async () => {
-    mockProxyGet.mockResolvedValue({ traces: [{ traceID: 'abc' }] });
+    mockProxyFetch.mockReturnValue(of({ data: { traces: [{ traceID: 'abc' }] } }));
 
     await expect(tempoHasTraces(datasource('tempo'))).resolves.toBe(true);
 
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenCalledWith(
-      '/api/datasources/proxy/uid/tempo-ds/api/search',
-      { q: '{}', limit: 1, start: end - 24 * 3600, end },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenCalledWith({
+      url: '/api/datasources/proxy/uid/tempo-ds/api/search',
+      params: { q: '{}', limit: 1, start: end - 24 * 3600, end },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('reports no data when the Tempo search is empty', async () => {
-    mockProxyGet.mockResolvedValue({ traces: [] });
+    mockProxyFetch.mockReturnValue(of({ data: { traces: [] } }));
 
     await expect(tempoHasTraces(datasource('tempo'))).resolves.toBe(false);
   });
 
   it('throws when the search endpoint fails', async () => {
-    mockProxyGet.mockRejectedValue(new Error('HTTP 404'));
+    mockProxyFetch.mockReturnValue(throwError(() => new Error('HTTP 404')));
 
     await expect(tempoHasTraces(datasource('tempo'))).rejects.toThrow('HTTP 404');
   });

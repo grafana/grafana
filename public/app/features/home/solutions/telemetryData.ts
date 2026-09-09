@@ -10,9 +10,9 @@ import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import { probeProxyGet, resolveBackendInstance, withTimeout } from './probeUtils';
+import { probeProxyGet, resolveBackendInstance, withDeadline } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
-import { DATA_LOOKBACK_HOURS, lokiRecentLabels } from './solutionDataProbes';
+import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
 /** Stats window for the logs card (design-fixed), distinct from the 24h sparkline lookback. */
 export const LOGS_STATS_LOOKBACK_DAYS = 7;
@@ -53,7 +53,9 @@ interface TempoTagValuesResponse {
 
 // Failures are expected (endpoint disabled, 403s) and handled by the caller; never toast.
 function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
-  return withTimeout(instance.getResource<T>(path, params, { showErrorAlert: false }), DETAIL_QUERY_TIMEOUT_MS);
+  return withDeadline(DETAIL_QUERY_TIMEOUT_MS, undefined, (signal) =>
+    instance.getResource<T>(path, params, { showErrorAlert: false, abortSignal: signal })
+  );
 }
 
 // Points are [unix ms, value]; a real trend needs at least two of them.
@@ -84,11 +86,20 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   if (!instance) {
     return empty;
   }
-  const label = pickLogsLabel(await lokiRecentLabels(ds.uid).catch(() => null));
+  const end = Date.now() * NS_IN_MS;
+  // 24h, not the 7d stats window: index-only like the probe, and a label with no recent streams is a poor aggregation key.
+  const labels = await getResource<{ data?: unknown }>(instance, 'labels', {
+    start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
+    end,
+  })
+    .then((res) =>
+      Array.isArray(res?.data) ? res.data.filter((label): label is string => typeof label === 'string') : null
+    )
+    .catch(() => null);
+  const label = pickLogsLabel(labels);
   if (!label) {
     return empty;
   }
-  const end = Date.now() * NS_IN_MS;
   const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * NS_IN_S;
   const query = `{${label}=~".+"}`;
   // aggregateBy=labels totals by label NAME, not value — one series; Loki's series limit cannot truncate it.

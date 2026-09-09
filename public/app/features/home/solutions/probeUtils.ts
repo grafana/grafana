@@ -1,4 +1,6 @@
 import memoize from 'micro-memoize';
+import { fromEvent, lastValueFrom, type Observable, throwError } from 'rxjs';
+import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
@@ -40,11 +42,12 @@ export const PROBE_TTL_MS = 60_000;
 // ponytail: 3s /health cutoff (drilldown's) — suspected too tight for OPS-scale instances; revisit as follow-up.
 export const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
-// Batches bound the probes in flight across the scans. BackendSrv dispatches at most five data
+// Batches bound the probes each scan has in flight. BackendSrv dispatches at most five data
 // requests at once (http2Enabled is false behind a load balancer) and every in-flight request
 // counts against those slots, so an unbounded fan-out starves the proxy-routed probes and card
 // stats, and a probe queued there burns its timeout unsent. Five covers MAX_PROBED_DATASOURCES in
-// two rounds that fit SIGNAL_BUDGET_MS.
+// two rounds that fit SIGNAL_BUDGET_MS. The bound is per scan, not across the homepage's
+// concurrent scans.
 const PROBE_BATCH_SIZE = 5;
 
 // Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
@@ -64,8 +67,9 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
 }
 
 /**
- * GET through the classic datasource proxy, timeout-bounded, never toasts. Some datasource
- * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router.
+ * GET through the classic datasource proxy, deadline-bounded, never toasts. Some datasource
+ * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router. An abort
+ * also unsubscribes, so a request still queued in BackendSrv leaves the queue unsent.
  */
 export async function probeProxyGet<T>(
   uid: string,
@@ -75,25 +79,63 @@ export async function probeProxyGet<T>(
   signal?: AbortSignal
 ): Promise<T> {
   const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withTimeout(
-    getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false, abortSignal: signal }),
-    timeoutMs
+  return withDeadline(timeoutMs, signal, (s) =>
+    lastValueFrom(
+      getBackendSrv()
+        .fetch<T>({ url, params, method: 'GET', showErrorAlert: false, abortSignal: s })
+        .pipe(
+          map((res) => res.data),
+          takeUntil(abortNotifier(s))
+        )
+    )
   );
 }
 
-/** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */
-export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+/**
+ * Runs `work` with a signal that aborts when `parent` aborts or after `ms`, whichever comes first,
+ * so a deadline cancels the request rather than only releasing the caller. The deadline always
+ * rejects with the timeout error, even when `work` ignores its signal or settles in reaction to
+ * the abort. A parent abort is only forwarded: work that honors the signal rejects on its own,
+ * work that ignores it runs to the deadline.
+ */
+export async function withDeadline<T>(
+  ms: number,
+  parent: AbortSignal | undefined,
+  work: (signal: AbortSignal) => Promise<T>
+): Promise<T> {
+  const controller = new AbortController();
+  const forward = () => controller.abort();
+  if (parent?.aborted) {
+    forward();
+  } else {
+    parent?.addEventListener('abort', forward);
+  }
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      promise,
+      work(controller.signal),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`Probe timed out after ${ms}ms`)), ms);
+        timer = setTimeout(() => {
+          // Reject first: an abort listener may settle `work` synchronously and would otherwise win the race.
+          reject(new Error(`Probe timed out after ${ms}ms`));
+          controller.abort();
+        }, ms);
       }),
     ]);
   } finally {
     clearTimeout(timer);
+    parent?.removeEventListener('abort', forward);
   }
+}
+
+/**
+ * Errors with an AbortError when `signal` aborts — immediately if it already has. As a `takeUntil`
+ * notifier it is subscribed before the source, so an already-aborted signal never starts the work,
+ * and unsubscribing the source tears it down (for BackendSrv: a queued entry leaves the fetch queue).
+ */
+export function abortNotifier(signal: AbortSignal): Observable<never> {
+  const abortError = () => throwError(() => new DOMException('Request aborted', 'AbortError'));
+  return signal.aborted ? abortError() : fromEvent(signal, 'abort').pipe(mergeMap(abortError));
 }
 
 export interface TtlCachedPromise<T> {
@@ -146,21 +188,21 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
 
 /**
  * Whether /health reports OK for `uid`, shared by every scan that meets the datasource within the
- * TTL window. Rejections and the 3s cutoff read as unhealthy and are cached like any answer.
+ * TTL window. Rejections and the 3s cutoff read as unhealthy and are cached like any answer; each
+ * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
   let cache = healthCache.get(uid);
   if (!cache) {
     cache = createTtlCachedPromise(
       () =>
-        withTimeout(
+        withDeadline(HEALTH_CHECK_TIMEOUT_MS, undefined, (signal) =>
           getBackendSrv().get<{ status?: string }>(
             `/api/datasources/uid/${encodeURIComponent(uid)}/health`,
             undefined,
             undefined,
-            { showErrorAlert: false }
-          ),
-          HEALTH_CHECK_TIMEOUT_MS
+            { showErrorAlert: false, abortSignal: signal }
+          )
         )
           .then((res) => res?.status === 'OK')
           .catch(() => false),
@@ -179,8 +221,10 @@ export function resetProbeHealth(): void {
  * First candidate (priority order) whose probe confirms data, or null. Scans at most
  * MAX_PROBED_DATASOURCES candidates in batches of PROBE_BATCH_SIZE; each is probed once its own
  * /health is OK, and a hit returns as soon as every higher-priority candidate in its batch has
- * settled without one. Unhealthy candidates and probe errors read as no data. Lower-priority
- * siblings are aborted on a hit; health checks are shared and never aborted.
+ * settled without one. Unhealthy candidates and probe errors read as no data. Each batch's
+ * requests are cancelled when the batch ends (lower-priority siblings after a hit, stragglers
+ * after a miss). A batch does not abort shared health checks; each health check owns its
+ * 3-second cutoff.
  */
 export async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
@@ -190,18 +234,22 @@ export async function findDatasourceWithData(
   for (let i = 0; i < capped.length; i += PROBE_BATCH_SIZE) {
     const batch = capped.slice(i, i + PROBE_BATCH_SIZE);
     const abort = new AbortController();
-    const probes = batch.map((ds) =>
-      isDatasourceHealthy(ds.uid)
-        .then((ok) => ok && !abort.signal.aborted && hasData(ds, abort.signal))
-        .catch(() => false)
-    );
-    // Awaited in priority order: a hit returns without waiting for lower-priority siblings and
-    // aborts them, so their queued requests never leave the browser.
-    for (let j = 0; j < probes.length; j++) {
-      if (await probes[j]) {
-        abort.abort();
-        return batch[j];
+    try {
+      const probes = batch.map((ds) =>
+        isDatasourceHealthy(ds.uid)
+          .then((ok) => ok && !abort.signal.aborted && hasData(ds, abort.signal))
+          .catch(() => false)
+      );
+      // Awaited in priority order: a hit returns without waiting for lower-priority siblings.
+      for (let j = 0; j < probes.length; j++) {
+        if (await probes[j]) {
+          return batch[j];
+        }
       }
+    } finally {
+      // The batch is over either way: cancel whatever is still in flight — lower-priority siblings
+      // after a hit, stragglers after a miss.
+      abort.abort();
     }
   }
   return null;
