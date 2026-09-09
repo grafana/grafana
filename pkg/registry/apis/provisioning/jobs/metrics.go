@@ -304,9 +304,11 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			prometheus.HistogramOpts{
 				Name: "grafana_provisioning_jobs_git_http_requests",
 				Help: "Number of git HTTP round trips a single job made to its remote, observed once per job at completion. Zero for jobs on repositories with no remote (e.g. local).",
-				// 1 -> 16384. A trivial job is a handful of round trips; a large full sync
-				// on a slow remote can be thousands, so the top bucket leaves headroom.
-				Buckets: prometheus.ExponentialBuckets(1, 2, 15),
+				// A leading 0 bucket so the documented zero-round-trip case (local/no-remote
+				// jobs) is distinguishable from a single request; then 1 -> 16384, since a
+				// trivial job is a handful of round trips and a large full sync on a slow
+				// remote can be thousands.
+				Buckets: append([]float64{0}, prometheus.ExponentialBuckets(1, 2, 15)...),
 			},
 			// variance mirrors the throughput metric: full vs incremental for a pull
 			// job, empty for actions with no sub-type.
