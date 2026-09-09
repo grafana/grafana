@@ -72,6 +72,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
+	github.com/go-logr/logr v1.4.4 // @grafana/grafana-app-platform-squad
 	github.com/go-openapi/loads v0.25.1 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.33.0 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.27.0 // @grafana/alerting-backend
@@ -105,7 +106,7 @@ require (
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.59.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.59.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/plugin v0.59.0 // indirect; @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/plugin v0.59.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
@@ -217,7 +218,7 @@ require (
 	google.golang.org/api v0.288.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
-	google.golang.org/grpc v1.83.1 // @grafana/grafana-catalog
+	google.golang.org/grpc v1.83.2 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
@@ -441,7 +442,6 @@ require (
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
-	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-openapi/analysis v0.26.0 // indirect

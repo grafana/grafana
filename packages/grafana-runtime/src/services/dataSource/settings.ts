@@ -212,7 +212,6 @@ export function toListItem(settings: DataSourceInstanceSettings): DataSourceInst
     apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
-    readOnly: settings.readOnly,
     isDefault: settings.isDefault ?? false,
   };
 }

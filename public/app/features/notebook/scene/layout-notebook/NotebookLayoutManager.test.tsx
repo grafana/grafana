@@ -4,7 +4,7 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

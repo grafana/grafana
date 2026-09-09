@@ -234,15 +234,15 @@ describe('dashboard tracking', () => {
       });
     });
 
-    it('reports dashboards_global_variables_mode_changed', () => {
-      DashboardInteractions.globalVariablesModeChanged({
-        from_mode: 'all',
-        to_mode: 'none',
+    it('reports dashboards_predefined_variable_toggled without a variable name', () => {
+      DashboardInteractions.predefinedVariableToggled({
+        scope: 'global',
+        checked: true,
       });
 
-      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_mode_changed', {
-        from_mode: 'all',
-        to_mode: 'none',
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_predefined_variable_toggled', {
+        scope: 'global',
+        checked: true,
         isDynamicDashboard: true,
       });
     });
