@@ -164,6 +164,29 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		close(release)
 	})
 
+	t.Run("drops when local queue is full", func(t *testing.T) {
+		mockAM := alertmanager_mock.NewAlertmanagerMock(t)
+		mockAM.On("Ready").Return(true)
+		entered := make(chan struct{})
+		release := make(chan struct{})
+		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(mock.Arguments) { close(entered); <-release }).Return(nil)
+
+		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: map[int64]Alertmanager{1: mockAM}}
+		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state.queue = make(chan AlertBroadcastPayload, 1)
+		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
+		require.NoError(t, err)
+
+		require.NoError(t, state.Merge(payload))
+		require.Eventually(t, func() bool { select { case <-entered: return true; default: return false } }, time.Second, 10*time.Millisecond)
+		require.NoError(t, state.Merge(payload))
+		start := time.Now()
+		require.NoError(t, state.Merge(payload))
+		require.Less(t, time.Since(start), 100*time.Millisecond)
+		require.Len(t, state.queue, 1)
+		close(release)
+	})
+
 	t.Run("skips when alertmanager not found", func(t *testing.T) {
 		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: make(map[int64]Alertmanager)}
 		state := newAlertBroadcastState(log.NewNopLogger(), moa)
