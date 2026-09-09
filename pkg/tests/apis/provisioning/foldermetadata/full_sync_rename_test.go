@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_FullSync_SimultaneousParentAndChildRename(t *te
 }
 
 // TestIntegrationProvisioning_FullSync_RenameNestedSubtree covers renaming the top
-// folder of a tree with five levels, sibling branches, empty folders, and dashboards
+// folder of a tree with four levels, sibling branches, empty folders, and dashboards
 // throughout. A second case also renames nested branches before the same full sync.
 // Both cases must preserve folder objects and dashboard UIDs, update every source
 // path and parent link, and leave no stale folders. Another full sync verifies that
@@ -88,17 +88,20 @@ func TestIntegrationProvisioning_FullSync_SimultaneousParentAndChildRename(t *te
 func TestIntegrationProvisioning_FullSync_RenameNestedSubtree(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
-		backendDir  string
-		frontendDir string
+		servicesDir string
+		appsDir     string
 	}{
-		{name: "top folder rename", backendDir: "Grafana Backend", frontendDir: "Frontend"},
-		{name: "top folder and nested branches renamed together", backendDir: "Backend", frontendDir: "UI"},
+		{name: "top folder rename", servicesDir: "services", appsDir: "apps"},
+		{name: "top folder and nested branches renamed together", servicesDir: "workers", appsDir: "clients"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			helper := sharedHelper(t)
 			const repo = "folder-rename-nested"
-			backendPath := "RD/Grafana/" + tt.backendDir
-			frontendPath := "RD/Grafana/" + tt.frontendDir
+			servicesPath := "gamma/projects/" + tt.servicesDir
+			appsPath := "gamma/projects/" + tt.appsDir
+			// The repository target folder also counts toward the depth limit.
+			// Keep repository paths within four levels so creation succeeds with
+			// the default configuration before exercising the renames.
 			folders := []struct {
 				uid     string
 				title   string
@@ -107,18 +110,18 @@ func TestIntegrationProvisioning_FullSync_RenameNestedSubtree(t *testing.T) {
 				parent  string
 				empty   bool
 			}{
-				{uid: "rd-uid", title: "Research and Development", oldPath: "RnD", newPath: "RD", parent: repo},
-				{uid: "grafana-uid", title: "Grafana", oldPath: "RnD/Grafana", newPath: "RD/Grafana", parent: "rd-uid"},
-				{uid: "backend-uid", title: "Grafana Backend", oldPath: "RnD/Grafana/Grafana Backend", newPath: backendPath, parent: "grafana-uid"},
-				{uid: "as-code-uid", title: "As Code", oldPath: "RnD/Grafana/Grafana Backend/As Code", newPath: backendPath + "/As Code", parent: "backend-uid"},
-				{uid: "provisioning-uid", title: "Provisioning", oldPath: "RnD/Grafana/Grafana Backend/As Code/Provisioning", newPath: backendPath + "/As Code/Provisioning", parent: "as-code-uid"},
-				{uid: "alerts-uid", title: "Alerting", oldPath: "RnD/Grafana/Grafana Backend/Alerting", newPath: backendPath + "/Alerting", parent: "backend-uid"},
-				{uid: "frontend-uid", title: "Frontend", oldPath: "RnD/Grafana/Frontend", newPath: frontendPath, parent: "grafana-uid"},
-				{uid: "scenes-uid", title: "Scenes", oldPath: "RnD/Grafana/Frontend/Scenes", newPath: frontendPath + "/Scenes", parent: "frontend-uid"},
-				{uid: "infra-uid", title: "Infrastructure", oldPath: "RnD/Infrastructure", newPath: "RD/Infrastructure", parent: "rd-uid"},
-				{uid: "clusters-uid", title: "Clusters", oldPath: "RnD/Infrastructure/Clusters", newPath: "RD/Infrastructure/Clusters", parent: "infra-uid"},
-				{uid: "empty-uid", title: "Empty", oldPath: "RnD/Grafana/Grafana Backend/Empty", newPath: backendPath + "/Empty", parent: "backend-uid", empty: true},
-				{uid: "ops-uid", title: "Operations", oldPath: "Operations", newPath: "Operations", parent: repo},
+				{uid: "alpha-folder-uid", title: "Alpha Team", oldPath: "alpha", newPath: "gamma", parent: repo},
+				{uid: "projects-folder-uid", title: "Projects", oldPath: "alpha/projects", newPath: "gamma/projects", parent: "alpha-folder-uid"},
+				{uid: "services-folder-uid", title: "Services Group", oldPath: "alpha/projects/services", newPath: servicesPath, parent: "projects-folder-uid"},
+				{uid: "api-folder-uid", title: "API", oldPath: "alpha/projects/services/api", newPath: servicesPath + "/api", parent: "services-folder-uid"},
+				{uid: "jobs-folder-uid", title: "Jobs", oldPath: "alpha/projects/services/jobs", newPath: servicesPath + "/jobs", parent: "services-folder-uid"},
+				{uid: "alerts-folder-uid", title: "Alerts", oldPath: "alpha/projects/services/alerts", newPath: servicesPath + "/alerts", parent: "services-folder-uid"},
+				{uid: "apps-folder-uid", title: "Applications", oldPath: "alpha/projects/apps", newPath: appsPath, parent: "projects-folder-uid"},
+				{uid: "web-folder-uid", title: "Web", oldPath: "alpha/projects/apps/web", newPath: appsPath + "/web", parent: "apps-folder-uid"},
+				{uid: "infra-folder-uid", title: "Infrastructure", oldPath: "alpha/infrastructure", newPath: "gamma/infrastructure", parent: "alpha-folder-uid"},
+				{uid: "clusters-folder-uid", title: "Clusters", oldPath: "alpha/infrastructure/clusters", newPath: "gamma/infrastructure/clusters", parent: "infra-folder-uid"},
+				{uid: "empty-folder-uid", title: "Empty", oldPath: "alpha/projects/services/empty", newPath: servicesPath + "/empty", parent: "services-folder-uid", empty: true},
+				{uid: "beta-folder-uid", title: "Beta Team", oldPath: "beta", newPath: "beta", parent: repo},
 			}
 
 			dashboardsBefore := make(map[string]common.ExpectedDashboard)
@@ -155,12 +158,12 @@ func TestIntegrationProvisioning_FullSync_RenameNestedSubtree(t *testing.T) {
 				initialSnapshots[initialFolders[i].GetName()] = common.SnapshotObject(t, &initialFolders[i])
 			}
 
-			moveInProvisioningPath(t, helper, "RnD", "RD")
-			if tt.backendDir != "Grafana Backend" {
-				moveInProvisioningPath(t, helper, "RD/Grafana/Grafana Backend", backendPath)
+			moveInProvisioningPath(t, helper, "alpha", "gamma")
+			if tt.servicesDir != "services" {
+				moveInProvisioningPath(t, helper, "gamma/projects/services", servicesPath)
 			}
-			if tt.frontendDir != "Frontend" {
-				moveInProvisioningPath(t, helper, "RD/Grafana/Frontend", frontendPath)
+			if tt.appsDir != "apps" {
+				moveInProvisioningPath(t, helper, "gamma/projects/apps", appsPath)
 			}
 			helper.SyncAndWait(t, repo, nil)
 
