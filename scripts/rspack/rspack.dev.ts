@@ -12,7 +12,7 @@ import WebpackBar from 'webpackbar';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
 
 const require = createRequire(import.meta.url);
@@ -180,7 +180,7 @@ export default (env: Env = {}) => {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH)),
       new WebpackBar({
         color: '#eb7b18',
         name: 'Grafana',

@@ -129,7 +129,7 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         return `[name]${contentHash}.js`;
       },
       chunkFilename: `[name]${contentHash}.js`,
-      publicPath: PUBLIC_PATH,
+      publicPath: 'auto',
       // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
       trustedTypes: { policyName: 'grafana#rspack' },
       // Enable es module output
