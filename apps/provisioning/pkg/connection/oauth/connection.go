@@ -156,9 +156,9 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 
 // ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
 // Implements the connection.OAuthConnection interface.
-func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error) {
+func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (*connection.ExpirableSecureValue, error) {
 	if code == "" {
-		return "", errors.New("an authorization code is required")
+		return nil, errors.New("an authorization code is required")
 	}
 
 	cfg := oauth2.Config{
@@ -170,10 +170,16 @@ func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, r
 
 	token, err := cfg.Exchange(ctx, code)
 	if err != nil {
-		return "", fmt.Errorf("exchange authorization code: %w", err)
+		return nil, fmt.Errorf("exchange authorization code: %w", err)
 	}
 
-	return marshalToken(token)
+	raw, err := marshalToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	// token.Expiry is zero when the provider issues a non-expiring access token.
+	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: token.Expiry}, nil
 }
 
 // ValidateToken checks the stored token. A missing expiry means the provider

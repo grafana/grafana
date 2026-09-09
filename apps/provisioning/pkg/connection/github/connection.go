@@ -108,7 +108,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	if c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
-		token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
+		token, _, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 		if err != nil {
 			// Error generating JWT token means the privateKey is not valid.
 			logger.Info("JWT token generation failed during connection test", "appID", c.cfg.AppID())
@@ -403,11 +403,7 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (*connection.Exp
 		return nil, errors.New("connection is not a GitHub connection")
 	}
 
-	// Compute the expiry before minting so it is never later than the JWT's own
-	// exp claim (GenerateJWTToken uses the same JWTExpirationMinutes window from its
-	// own slightly-later now); erring early means we refresh before, not after.
-	expiresAt := time.Now().Add(JWTExpirationMinutes * time.Minute)
-	token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
+	token, expiresAt, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
 		return nil, err
 	}

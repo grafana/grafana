@@ -55,6 +55,9 @@ type TokenConnection interface {
 //go:generate mockery --name OAuthConnection --structname MockOAuthConnection --inpackage --filename connection_oauth_mock.go --with-expecter
 type OAuthConnection interface {
 	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
-	// Returns the value to store as the connection token.
-	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (common.RawSecureValue, error)
+	// Returns the value to store as the connection token together with when it
+	// expires (zero ExpiresAt when the token never expires), so the authorization
+	// handler can persist the expiration on the connection status — matching the
+	// refresh path, so an OAuth token's very first lifetime is also observable.
+	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (*ExpirableSecureValue, error)
 }

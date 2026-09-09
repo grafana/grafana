@@ -311,11 +311,14 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
 			assert.Equal(t, "access", token.AccessToken)
 			assert.Equal(t, "refresh", token.RefreshToken)
+			// The persisted expiration mirrors the exchanged token's expiry.
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 		})
 	}
 }

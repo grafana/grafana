@@ -41,10 +41,12 @@ type ConnectionUsageStatus struct {
 	WebhookDisabled bool
 	// TokenLastUpdatedAt is when the connection's token was last generated
 	// (status.token.lastUpdated), in epoch milliseconds; 0 when no token has been
-	// generated. now-TokenLastUpdatedAt is the token age. Connections do not persist
-	// an expiration (it is re-derived live each reconcile), so there is no
-	// expiration counterpart here.
+	// generated. now-TokenLastUpdatedAt is the token age.
 	TokenLastUpdatedAt int64
+	// TokenExpiresAt is when the connection's token expires (status.token.expiration),
+	// in epoch milliseconds; 0 when the provider issues non-expiring tokens or there
+	// is no token. A value in the past means the token is expired.
+	TokenExpiresAt int64
 }
 
 // LogConnectionUsageStatus emits the connection usage-status snapshot on logger.
@@ -81,6 +83,7 @@ func ConnectionUsageStatusFromConnection(conn *provisioning.Connection) Connecti
 		ReadyReason:        readyReason,
 		WebhookDisabled:    conn.Spec.Webhook != nil && conn.Spec.Webhook.Disabled,
 		TokenLastUpdatedAt: conn.Status.Token.LastUpdated,
+		TokenExpiresAt:     conn.Status.Token.Expiration,
 	}
 }
 
@@ -96,5 +99,6 @@ func (s ConnectionUsageStatus) LogValues() []any {
 		"readyReason", s.ReadyReason,
 		"webhookDisabled", boolToInt(s.WebhookDisabled),
 		"tokenLastUpdatedAt", s.TokenLastUpdatedAt,
+		"tokenExpiresAt", s.TokenExpiresAt,
 	}
 }

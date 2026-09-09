@@ -70,6 +70,7 @@ func TestConnectionUsageStatus_LogValues(t *testing.T) {
 		ReadyReason:        provisioning.ReasonAuthenticationFailed,
 		WebhookDisabled:    false,
 		TokenLastUpdatedAt: 1_600_000_000_000,
+		TokenExpiresAt:     1_600_003_600_000,
 	}
 
 	assert.Equal(t, []any{
@@ -80,5 +81,6 @@ func TestConnectionUsageStatus_LogValues(t *testing.T) {
 		"readyReason", provisioning.ReasonAuthenticationFailed,
 		"webhookDisabled", 0,
 		"tokenLastUpdatedAt", int64(1_600_000_000_000),
+		"tokenExpiresAt", int64(1_600_003_600_000),
 	}, s.LogValues())
 }
