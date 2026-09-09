@@ -267,6 +267,355 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/alertrules/searchRules": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "listAlertRuleSearchRulesV0alpha1",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"apiVersion": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"continue": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Opaque token from the previous page.",
+																	},
+																},
+																"facetLimit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Per-facet term limit. Zero uses the default; larger values are clamped.",
+																	},
+																},
+																"facets": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+																"fields": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+																"kind": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"labelSelector": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelector"),
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Page size. Zero uses the default; larger values are clamped.",
+																	},
+																},
+																"sort": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchSortField"),
+																				}},
+																		},
+																	},
+																},
+																"where": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "Omitted where matches all authorised rules satisfying labelSelector.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
+																	},
+																},
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type:        []string{"object"},
+																	Description: "SearchResults supplies its own metadata; omit listMeta.",
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"facets": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"object"},
+																				Description: "Counts use a bounded sample and are best-effort.",
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"array"},
+																							Items: &spec.SchemaOrArray{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+
+																										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1FacetValue"),
+																									}},
+																							},
+																						},
+																					},
+																				},
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultHit"),
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"metadata": {
+																			SchemaProps: spec.SchemaProps{
+
+																				Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultsMetadata"),
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"metadata",
+																		"items",
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+					"/recordingrules/searchRules": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "listRecordingRuleSearchRulesV0alpha1",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"apiVersion": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"continue": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Opaque token from the previous page.",
+																	},
+																},
+																"facetLimit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Per-facet term limit. Zero uses the default; larger values are clamped.",
+																	},
+																},
+																"facets": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+																"fields": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+																"kind": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"string"},
+																	},
+																},
+																"labelSelector": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelector"),
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Page size. Zero uses the default; larger values are clamped.",
+																	},
+																},
+																"sort": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchSortField"),
+																				}},
+																		},
+																	},
+																},
+																"where": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "Omitted where matches all authorised rules satisfying labelSelector.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
+																	},
+																},
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"facets": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"object"},
+																				Description: "Counts use a bounded sample and are best-effort.",
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"array"},
+																							Items: &spec.SchemaOrArray{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+
+																										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1FacetValue"),
+																									}},
+																							},
+																						},
+																					},
+																				},
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultHit"),
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"metadata": {
+																			SchemaProps: spec.SchemaProps{
+
+																				Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata"),
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"metadata",
+																		"items",
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/searchRules": {
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -762,6 +1111,818 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"listAlertRuleSearchRulesV0alpha1FacetValue": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"value",
+								"count",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchExistsLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchFilterLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"operator": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"In",
+											"NotIn",
+											"All",
+										},
+									},
+								},
+								"values": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"operator",
+								"values",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchLabelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Selects metadata.labels, not alerting labels, and is ANDed with where.\nFilter alerting labels through the indexed \"labels\" field instead.",
+							Properties: map[string]spec.Schema{
+								"matchExpressions": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"),
+												}},
+										},
+									},
+								},
+								"matchLabels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Only In and NotIn are accepted by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"key": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"operator": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"In",
+											"NotIn",
+											"Exists",
+											"DoesNotExist",
+										},
+									},
+								},
+								"values": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"key",
+								"operator",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchRangeLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"gt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+								"gte": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+								"lt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+								"lte": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchResultHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"fields": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"object"},
+										Description: "Open to match the generic endpoint's unstructured field values.",
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+										},
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultResource"),
+									},
+								},
+								"score": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"number"},
+										Description: "Present only when a text query was evaluated.",
+									},
+								},
+							},
+							Required: []string{
+								"resource",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchResultResource": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Namespace is implicit in the URL.",
+							Properties: map[string]spec.Schema{
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"group",
+								"resource",
+								"kind",
+								"name",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchResultsMetadata": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"continue": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Opaque next-page token; clients must not construct it.",
+									},
+								},
+								"totalHits": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Interpret with totalHitsRelation, not as an exact count unconditionally.",
+									},
+								},
+								"totalHitsRelation": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1TotalHitsRelation"),
+									},
+								},
+							},
+							Required: []string{
+								"totalHits",
+								"totalHitsRelation",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchSortField": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Defaults to ascending; only scalar fields with the sort capability are valid.",
+							Properties: map[string]spec.Schema{
+								"direction": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"asc",
+											"desc",
+										},
+									},
+								},
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchTextLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Omitted fields default to title. All whitespace-separated terms must match\nin any order; punctuation and short-term matching are backend-defined.",
+							Properties: map[string]spec.Schema{
+								"boost": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"number"},
+										Description: "boost is a future per-leaf score multiplier. Setting it is rejected.",
+									},
+								},
+								"fields": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"value",
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1SearchWhereNode": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+							Properties: map[string]spec.Schema{
+								"and": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
+												}},
+										},
+									},
+								},
+								"exists": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchExistsLeaf"),
+									},
+								},
+								"filter": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchFilterLeaf"),
+									},
+								},
+								"not": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
+									},
+								},
+								"or": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode"),
+												}},
+										},
+									},
+								},
+								"range": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf"),
+									},
+								},
+								"text": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf"),
+									},
+								},
+							},
+						},
+					},
+					"listAlertRuleSearchRulesV0alpha1TotalHitsRelation": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"string"},
+							Description: "\"eq\" means exact; \"lte\" means totalHits is an upper bound after authorisation.",
+							Enum: []interface{}{
+								"eq",
+								"lte",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1FacetValue": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"value",
+								"count",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"operator": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"In",
+											"NotIn",
+											"All",
+										},
+									},
+								},
+								"values": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"operator",
+								"values",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchLabelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Selects metadata.labels, not alerting labels, and is ANDed with where.\nFilter alerting labels through the indexed \"labels\" field instead.",
+							Properties: map[string]spec.Schema{
+								"matchExpressions": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"),
+												}},
+										},
+									},
+								},
+								"matchLabels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Only In and NotIn are accepted by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"key": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"operator": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"In",
+											"NotIn",
+											"Exists",
+											"DoesNotExist",
+										},
+									},
+								},
+								"values": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"key",
+								"operator",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"gt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+								"gte": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+								"lt": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+								"lte": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"number"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchResultHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"fields": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"object"},
+										Description: "Open to match the generic endpoint's unstructured field values.",
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+										},
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultResource"),
+									},
+								},
+								"score": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"number"},
+										Description: "Present only when a text query was evaluated.",
+									},
+								},
+							},
+							Required: []string{
+								"resource",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchResultResource": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Namespace is implicit in the URL.",
+							Properties: map[string]spec.Schema{
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"group",
+								"resource",
+								"kind",
+								"name",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"continue": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Opaque next-page token; clients must not construct it.",
+									},
+								},
+								"totalHits": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Interpret with totalHitsRelation, not as an exact count unconditionally.",
+									},
+								},
+								"totalHitsRelation": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1TotalHitsRelation"),
+									},
+								},
+							},
+							Required: []string{
+								"totalHits",
+								"totalHitsRelation",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchSortField": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Defaults to ascending; only scalar fields with the sort capability are valid.",
+							Properties: map[string]spec.Schema{
+								"direction": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"asc",
+											"desc",
+										},
+									},
+								},
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchTextLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Omitted fields default to title. All whitespace-separated terms must match\nin any order; punctuation and short-term matching are backend-defined.",
+							Properties: map[string]spec.Schema{
+								"boost": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"number"},
+										Description: "boost is a future per-leaf score multiplier. Setting it is rejected.",
+									},
+								},
+								"fields": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"value",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+							Properties: map[string]spec.Schema{
+								"and": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
+												}},
+										},
+									},
+								},
+								"exists": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf"),
+									},
+								},
+								"filter": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf"),
+									},
+								},
+								"not": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
+									},
+								},
+								"or": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode"),
+												}},
+										},
+									},
+								},
+								"range": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"),
+									},
+								},
+								"text": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf"),
+									},
+								},
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1TotalHitsRelation": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"string"},
+							Description: "\"eq\" means exact; \"lte\" means totalHits is an upper bound after authorisation.",
+							Enum: []interface{}{
+								"eq",
+								"lte",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -790,7 +1951,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/searchRules|POST": v0alpha1.CreateSearchRulesResponse{},
+	"v0alpha1||<namespace>/alertrules/searchRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1Response{},
+	"v0alpha1||<namespace>/recordingrules/searchRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response{},
+	"v0alpha1||<namespace>/searchRules|POST":                v0alpha1.CreateSearchRulesResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -816,7 +1979,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1||<namespace>/searchRules|POST": v0alpha1.CreateSearchRulesRequestBody{},
+	"v0alpha1||<namespace>/alertrules/searchRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody{},
+	"v0alpha1||<namespace>/recordingrules/searchRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
+	"v0alpha1||<namespace>/searchRules|POST":                v0alpha1.CreateSearchRulesRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
