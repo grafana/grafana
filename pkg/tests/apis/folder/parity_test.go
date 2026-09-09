@@ -194,8 +194,9 @@ func newParityFixture(t *testing.T) *parityFixture {
 	// Mirrors the custom roles that surfaced this gap: sub-resource actions granted
 	// directly at folder scope, deliberately without folders:write. Basic role None
 	// so the grant below is the only source of permissions.
+	dashCreatorBName := "parity-dash-creator-B"
 	dashCreatorOnB := helper.CreateUser(
-		"parity-dash-creator-B", apis.Org1,
+		dashCreatorBName, apis.Org1,
 		org.RoleNone,
 		[]resourcepermissions.SetResourcePermissionCommand{{
 			Actions: []string{
@@ -212,8 +213,9 @@ func newParityFixture(t *testing.T) *parityFixture {
 	)
 
 	// The inverse shape: folder edit rights without any dashboard actions.
+	folderWriterB1Name := "parity-folder-writer-B1"
 	folderWriterOnB1 := helper.CreateUser(
-		"parity-folder-writer-B1", apis.Org1,
+		folderWriterB1Name, apis.Org1,
 		org.RoleNone,
 		[]resourcepermissions.SetResourcePermissionCommand{{
 			Actions:           []string{folder.ActionFoldersRead, folder.ActionFoldersWrite},
