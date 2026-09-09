@@ -531,7 +531,7 @@ export class RowsLayoutManager
     }
 
     const sidebar = getDashboardSceneFor(this).state.sidebar;
-    sidebar.selectObject(row!, { force: true, multi: false, openPane: sidebar.state.autoOpenPane });
+    sidebar.selectObjectFromCanvas(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {

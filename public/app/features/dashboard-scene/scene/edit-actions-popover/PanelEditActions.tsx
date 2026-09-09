@@ -10,7 +10,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
-import { useMultiSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
+import { useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {
@@ -85,7 +85,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const theme = useTheme2();
   const isPopoverSupported = useHoverPopoverSupported();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
-  const selectionCount = useMultiSelectionCountFor(panel.state.key);
+  const selectionCount = useSelectionCountFor(panel.state.key);
 
   const onClickEdit = useCallback(() => {
     getDashboardSceneLike(panel).state.sidebar.editElement(panel.state.key!);

@@ -37,6 +37,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
   selectObject(obj: SceneObject, options?: SelectObjectOptions): void;
+  selectObjectFromCanvas(obj: SceneObject, options?: SelectObjectOptions): void;
   editElement(key: string): void;
   editSelection(): void;
   setAutoOpenPane(autoOpenPane: boolean): void;

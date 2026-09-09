@@ -170,7 +170,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     if (action.movedObject) {
-      this.selectObject(action.movedObject, { force: true, openPane: this.state.autoOpenPane });
+      this.selectObjectFromCanvas(action.movedObject, { force: true });
     }
 
     if (action.removedObject) {
@@ -192,7 +192,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     if (action.movedObject) {
-      this.selectObject(action.movedObject, { force: true, openPane: this.state.autoOpenPane });
+      this.selectObjectFromCanvas(action.movedObject, { force: true });
     }
 
     // If action removed an object and not added a new one we need to update selection
@@ -294,6 +294,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     // Canvas selection follows the user preference unless the caller explicitly asks for the pane
     this.selectObject(obj, { ...options, openPane: options.openPane ?? this.state.autoOpenPane });
+  }
+
+  /**
+   * Selection caused by a canvas interaction, so it follows the auto-open preference.
+   */
+  public selectObjectFromCanvas(obj: SceneObject, options: SelectObjectOptions = {}) {
+    this.selectObject(obj, { ...options, openPane: this.state.autoOpenPane });
   }
 
   public selectObject(obj: SceneObject, { multi, force, openPane = true }: SelectObjectOptions = {}) {
@@ -447,7 +454,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this.state.isDocked && !force) {
       const dashboard = getDashboardSceneFor(this);
       if (this.getSelectedObject() !== dashboard) {
-        this.selectObject(dashboard, { openPane: this.state.autoOpenPane });
+        this.selectObjectFromCanvas(dashboard);
       }
       return;
     }

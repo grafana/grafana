@@ -13,13 +13,13 @@ export function useIsMultiSelection(): boolean {
 }
 
 /**
- * Number of selected elements when the given element is part of a multi-selection, 0 otherwise.
+ * Number of selected elements when the given element is part of the selection, 0 otherwise.
  */
-export function useMultiSelectionCountFor(id: string | undefined): number {
+export function useSelectionCountFor(id: string | undefined): number {
   const context = useContext(ElementSelectionContext);
   const selected = context?.selected ?? [];
 
-  if (!id || selected.length < 2 || !selected.some((item) => item.id === id)) {
+  if (!id || !selected.some((item) => item.id === id)) {
     return 0;
   }
 
