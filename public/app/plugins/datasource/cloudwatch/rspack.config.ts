@@ -1,6 +1,6 @@
-import type { Configuration } from 'webpack';
+import type { Configuration } from '@rspack/core';
 
-import grafanaConfig, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
+import grafanaConfig, { type Env } from '@grafana/plugin-configs/rspack.config.ts';
 
 const config = async (env: Env): Promise<Configuration> => {
   return await grafanaConfig(env, import.meta.dirname);

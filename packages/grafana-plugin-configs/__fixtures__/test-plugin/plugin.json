@@ -1,0 +1,9 @@
+{
+  "type": "datasource",
+  "name": "Test Plugin",
+  "id": "grafana-testfixture-datasource",
+  "info": {
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  }
+}
