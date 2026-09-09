@@ -133,6 +133,27 @@ export function DeleteActionButton({
   );
 }
 
+export function GroupActionsButton({ count, onClick }: { count: number; onClick: () => void }) {
+  const styles = useStyles2(getActionStyles);
+  const tooltip = t('dashboard-scene.control-edit-actions.group-actions-tooltip', '', {
+    count,
+    defaultValue_one: 'Edit selection ({{count}} element)',
+    defaultValue_other: 'Edit selection ({{count}} elements)',
+  });
+
+  return (
+    <IconButton
+      name="layer-group"
+      variant="secondary"
+      size="md"
+      className={styles.action}
+      onClick={onClick}
+      tooltip={tooltip}
+      tooltipPlacement="top"
+    />
+  );
+}
+
 export const getActionStyles = (theme: GrafanaTheme2) => ({
   action: css({
     margin: 0,

@@ -54,7 +54,7 @@ export function DashboardOutlineNode({
   const styles = useStyles2(getStyles);
   const key = sceneObject.state.key;
   const [isCollapsed, setIsCollapsed] = useState(() => outline.isNodeCollapsed(key, depth > 0));
-  const { isSelected, onSelect } = useElementSelection(key);
+  const { isSelected } = useElementSelection(key);
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
@@ -95,10 +95,10 @@ export function DashboardOutlineNode({
     if (!isSelected) {
       if (sceneObject instanceof LinkEdit) {
         // Select directly via sidebar.selectObject because these objects are not
-        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        // in the scene graph, so sceneGraph.findByKey (used by editElement) can't find them.
         sidebar.selectObject(sceneObject);
-      } else {
-        onSelect?.(e);
+      } else if (key) {
+        sidebar.editElement(key);
       }
     }
 

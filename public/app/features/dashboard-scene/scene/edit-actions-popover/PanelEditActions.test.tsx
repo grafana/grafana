@@ -54,12 +54,16 @@ async function hoverAndRest(element: HTMLElement) {
   }
 }
 
-function renderPanelEditActions({ isRepeated = false }: { isRepeated?: boolean } = {}) {
+function renderPanelEditActions({
+  isRepeated = false,
+  selectionCount = 1,
+}: { isRepeated?: boolean; selectionCount?: number } = {}) {
   const onClickEdit = jest.fn();
   const onClickEditVisualization = jest.fn();
   const onClickCopy = jest.fn();
   const onClickDuplicate = jest.fn();
   const onClickDelete = jest.fn();
+  const onClickGroupActions = jest.fn();
 
   const renderResult = render(
     <PanelEditActions
@@ -68,7 +72,9 @@ function renderPanelEditActions({ isRepeated = false }: { isRepeated?: boolean }
       onClickCopy={onClickCopy}
       onClickDuplicate={onClickDuplicate}
       onClickDelete={onClickDelete}
+      onClickGroupActions={onClickGroupActions}
       isRepeated={isRepeated}
+      selectionCount={selectionCount}
     />
   );
 
@@ -79,6 +85,7 @@ function renderPanelEditActions({ isRepeated = false }: { isRepeated?: boolean }
     onClickCopy,
     onClickDuplicate,
     onClickDelete,
+    onClickGroupActions,
   };
 }
 

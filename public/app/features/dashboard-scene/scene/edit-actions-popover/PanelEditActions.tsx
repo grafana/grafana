@@ -10,6 +10,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
+import { useMultiSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {
@@ -17,6 +18,7 @@ import {
   DeleteActionButton,
   DuplicateActionButton,
   getActionStyles,
+  GroupActionsButton,
   SettingsActionButton,
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
@@ -28,14 +30,18 @@ export function PanelEditActions({
   onClickCopy,
   onClickDuplicate,
   onClickDelete,
+  onClickGroupActions,
   isRepeated,
+  selectionCount,
 }: {
   onClickEdit: () => void;
   onClickEditVisualization: () => void;
   onClickCopy: () => void;
   onClickDuplicate: () => void;
   onClickDelete: () => void;
+  onClickGroupActions: () => void;
   isRepeated: boolean;
+  selectionCount: number;
 }) {
   const styles = useStyles2(getActionStyles);
 
@@ -65,6 +71,12 @@ export function PanelEditActions({
         onConfirm={onClickDelete}
         isRepeated={isRepeated}
       />
+      {selectionCount > 1 && (
+        <>
+          <div className={styles.actionsDivider} />
+          <GroupActionsButton count={selectionCount} onClick={onClickGroupActions} />
+        </>
+      )}
     </>
   );
 }
@@ -73,10 +85,10 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const theme = useTheme2();
   const isPopoverSupported = useHoverPopoverSupported();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
+  const selectionCount = useMultiSelectionCountFor(panel.state.key);
 
   const onClickEdit = useCallback(() => {
-    const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
-    selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    getDashboardSceneLike(panel).state.sidebar.editElement(panel.state.key!);
   }, [panel]);
 
   const onClickEditVisualization = useCallback(() => {
@@ -103,6 +115,10 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
     getLayoutManagerFor(panel).removePanel?.(panel);
   }, [panel]);
 
+  const onClickGroupActions = useCallback(() => {
+    getDashboardSceneLike(panel).state.sidebar.editSelection();
+  }, [panel]);
+
   const editActions = useMemo(
     () => (
       <PanelEditActions
@@ -111,10 +127,21 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
         onClickCopy={onClickCopy}
         onClickDuplicate={onClickDuplicate}
         onClickDelete={onClickDelete}
+        onClickGroupActions={onClickGroupActions}
         isRepeated={isRepeatCloneOrChildOf(panel)}
+        selectionCount={selectionCount}
       />
     ),
-    [onClickEdit, onClickEditVisualization, onClickCopy, onClickDuplicate, onClickDelete, panel]
+    [
+      onClickEdit,
+      onClickEditVisualization,
+      onClickCopy,
+      onClickDuplicate,
+      onClickDelete,
+      onClickGroupActions,
+      panel,
+      selectionCount,
+    ]
   );
 
   return (
