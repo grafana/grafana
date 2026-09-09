@@ -17,10 +17,9 @@ function resolveMetadata(scene: DashboardScene): EnvelopeMetadata {
   return {
     ...existing,
     name,
-    generation: typeof existing.generation === 'number' ? existing.generation : 1,
-    creationTimestamp:
-      typeof existing.creationTimestamp === 'string' ? existing.creationTimestamp : new Date().toISOString(),
-    resourceVersion: typeof existing.resourceVersion === 'string' ? existing.resourceVersion : '0',
+    generation: existing.generation ?? 1,
+    creationTimestamp: existing.creationTimestamp ?? new Date().toISOString(),
+    resourceVersion: existing.resourceVersion ?? '0',
   };
 }
 
