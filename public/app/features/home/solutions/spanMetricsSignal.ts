@@ -5,7 +5,7 @@ import { readScalar, runInstantQueries } from './promQuery';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound, SPAN_METRICS_PROBE } from './solutionDataProbes';
 
 async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem, signal?: AbortSignal): Promise<boolean> {
-  const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS, false, signal);
+  const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
   return (readScalar(frames, 'probe') ?? 0) > 0;
 }
 

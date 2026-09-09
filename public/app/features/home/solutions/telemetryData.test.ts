@@ -494,8 +494,7 @@ describe('metrics telemetry', () => {
         diskWorst: expect.stringMatching(/^topk\(1, \(1 - node_filesystem_avail_bytes\{/),
       }),
       prom,
-      30_000,
-      true
+      { timeoutMs: 30_000, partial: true }
     );
   });
 
@@ -507,7 +506,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
       prom,
-      30_000
+      { timeoutMs: 30_000 }
     );
   });
 
@@ -567,8 +566,7 @@ describe('metrics telemetry', () => {
         dataPointsPerMinute: '60 * sum(max by (id) (grafanacloud_instance_samples_per_second{stack_id="12345"}))',
       },
       { uid: 'grafanacloud-usage', type: 'prometheus' },
-      undefined,
-      true
+      { partial: true }
     );
     // The trend works on Cloud via usage metrics even though the product datasource is Mimir-typed.
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
@@ -661,12 +659,9 @@ describe('metrics telemetry', () => {
 
     expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalledWith('grafanacloud-usage');
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
-    expect(mockRunInstantQueries).toHaveBeenCalledWith(
-      expect.not.objectContaining({ dpm: expect.anything() }),
-      prom,
-      undefined,
-      true
-    );
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(expect.not.objectContaining({ dpm: expect.anything() }), prom, {
+      partial: true,
+    });
     expect(activity.dataPointsPerMinute).toBeNull();
   });
 
@@ -680,8 +675,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ dpm: '60 * sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))' }),
       prom,
-      undefined,
-      true
+      { partial: true }
     );
     expect(activity.dataPointsPerMinute).toBe(250_000);
   });
@@ -709,8 +703,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ hosts: 'count(node_uname_info)' }),
       prom,
-      undefined,
-      true
+      { partial: true }
     );
   });
 

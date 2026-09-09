@@ -43,7 +43,7 @@ async function hasSyntheticChecks(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   signal?: AbortSignal
 ): Promise<boolean> {
-  const frames = await runInstantQueries({ checks: SM_CHECK_PROBE }, ds, PROBE_TIMEOUT_MS, false, signal);
+  const frames = await runInstantQueries({ checks: SM_CHECK_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
   return (readScalar(frames, 'checks') ?? 0) > 0;
 }
 
@@ -57,7 +57,7 @@ export async function fetchSyntheticsStats(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<SyntheticsStats> {
   // partial: readers are null-safe; one failed query keeps the rest.
-  const frames = await runInstantQueries(STATS_QUERIES, ds, undefined, true);
+  const frames = await runInstantQueries(STATS_QUERIES, ds, { partial: true });
   return {
     checks: readScalar(frames, 'checks'),
     successRatio: readScalar(frames, 'successRatio'),
@@ -69,7 +69,7 @@ export async function fetchSyntheticsHealth(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<SyntheticsHealth> {
   // partial: readers are null-safe; one failed query keeps the rest.
-  const frames = await runInstantQueries(HEALTH_QUERIES, ds, undefined, true);
+  const frames = await runInstantQueries(HEALTH_QUERIES, ds, { partial: true });
   // A check is a (job, instance) pair and several checks can share a job name; fall back to
   // the target (instance) when the job label is missing.
   const worst = readLabeledScalar(frames, 'worst', 'job');

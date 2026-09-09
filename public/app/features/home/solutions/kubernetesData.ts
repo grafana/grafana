@@ -83,7 +83,7 @@ async function hasKubernetesNamespaces(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   signal?: AbortSignal
 ): Promise<boolean> {
-  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS, false, signal);
+  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
   return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 

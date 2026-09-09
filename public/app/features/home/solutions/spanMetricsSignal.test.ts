@@ -39,13 +39,10 @@ it('returns the Prometheus datasource whose span-metrics query finds data', asyn
   ]);
 
   await expect(probeSpanMetrics()).resolves.toBe(datasource);
-  expect(runInstantQueriesMock).toHaveBeenCalledWith(
-    { probe: SPAN_METRICS_PROBE },
-    datasource,
-    expect.any(Number),
-    false,
-    expect.any(AbortSignal)
-  );
+  expect(runInstantQueriesMock).toHaveBeenCalledWith({ probe: SPAN_METRICS_PROBE }, datasource, {
+    timeoutMs: expect.any(Number),
+    signal: expect.any(AbortSignal),
+  });
 });
 
 it('returns null when no span-metrics series exists', async () => {

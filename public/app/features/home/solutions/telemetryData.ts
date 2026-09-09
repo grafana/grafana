@@ -297,7 +297,7 @@ export async function fetchMetricsDiskHoursToFull(
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
     },
     ds,
-    DETAIL_QUERY_TIMEOUT_MS
+    { timeoutMs: DETAIL_QUERY_TIMEOUT_MS }
   )
     .then((frames) => readScalar(frames, 'eta'))
     .catch(() => null);
@@ -313,8 +313,7 @@ export async function fetchMetricsDiskPressure(
       diskWorst: `topk(1, ${FS_USED})`,
     },
     ds,
-    DETAIL_QUERY_TIMEOUT_MS,
-    true
+    { timeoutMs: DETAIL_QUERY_TIMEOUT_MS, partial: true }
   ).catch(() => null);
   if (!frames) {
     return null;
@@ -401,8 +400,7 @@ function fetchUsageStats(usage: UsageQueries): Promise<UsageStats | null> {
   return runInstantQueries(
     { activeSeries: usage.activeSeries, dataPointsPerMinute: usage.dataPointsPerMinute },
     usage.ds,
-    undefined,
-    true
+    { partial: true }
   )
     .then((frames) => ({
       series: positive(readScalar(frames, 'activeSeries')),
@@ -443,9 +441,8 @@ export async function fetchMetricsActivity(
   const fleet = runInstantQueries(
     { ...(mimir ? {} : { dpm: PROM_DPM_QUERY }), hosts: 'count(node_uname_info)' },
     ds,
-    undefined,
     // partial: readers are null-safe; one failed query keeps the rest.
-    true
+    { partial: true }
   ).catch(() => null);
   const trend = usage
     ? runRangeQuery('series', usage.activeSeries, DATA_LOOKBACK_HOURS, usage.ds)
