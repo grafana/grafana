@@ -2215,9 +2215,6 @@
   "public/app/features/query/components/QueryEditorRows.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/query/components/QueryGroup.tsx": {
