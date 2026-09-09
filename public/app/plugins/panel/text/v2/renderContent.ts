@@ -26,6 +26,12 @@ export const MAX_RENDERED_CHARS = 100_000;
 /** How far back from the cap a line break is still worth cutting on. */
 const CUT_BACKTRACK_CHARS = 1000;
 
+/** Counted across all frames. */
+export interface RowWindow {
+  start: number;
+  count: number;
+}
+
 /** What to render, built from either the panel options or the editor's draft. */
 export interface TextTemplate {
   content: string;
@@ -33,6 +39,8 @@ export interface TextTemplate {
   series?: DataFrame[];
   renderMode?: RenderMode;
   format?: string;
+  /** Per-row renders only. */
+  rowWindow?: RowWindow;
 }
 
 /** A finished render pass, or the error that stopped it. */
@@ -145,9 +153,13 @@ function interpolateEveryRow(
   replaceVariables: InterpolateFunction,
   compiled?: CompiledTemplate
 ): string {
-  const { content, mode, format } = template;
+  const { content, mode, format, rowWindow } = template;
+  const windowStart = rowWindow?.start ?? 0;
+  const maxBlocks = Math.min(rowWindow?.count ?? MAX_RENDERED_ROWS, MAX_RENDERED_ROWS);
   const blocks: string[] = [];
   let renderedChars = 0;
+  // The window spans frames.
+  let skipped = 0;
 
   for (const [frameIndex, frame] of series.entries()) {
     const field = getMacroField(frame);
@@ -155,15 +167,19 @@ function interpolateEveryRow(
       continue;
     }
 
-    const rowCount = Math.min(frame.length, MAX_RENDERED_ROWS - blocks.length);
-    const rows = compiled ? buildRows(frame, series, rowCount) : [];
+    const firstRow = Math.min(windowStart - skipped, frame.length);
+    skipped += firstRow;
 
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const rowCount = Math.min(frame.length - firstRow, maxBlocks - blocks.length);
+    const rows = compiled ? buildRows(frame, series, rowCount, firstRow) : [];
+
+    for (let offset = 0; offset < rowCount; offset++) {
+      const rowIndex = firstRow + offset;
       const scopedVars: ScopedVars = {
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      const block = replaceVariables(compiled ? compiled(rows[rowIndex]) : content, scopedVars, format);
+      const block = replaceVariables(compiled ? compiled(rows[offset]) : content, scopedVars, format);
 
       blocks.push(block);
       renderedChars += block.length;
@@ -173,7 +189,7 @@ function interpolateEveryRow(
       }
     }
 
-    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= MAX_RENDERED_ROWS) {
+    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxBlocks) {
       break;
     }
   }

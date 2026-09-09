@@ -16631,7 +16631,13 @@
       "label": "Query"
     },
     "options": {
+      "page-size": "Page size",
+      "page-size-description": "Number of rows per page. When empty, the page size is based on the panel height.",
+      "page-size-placeholder": "auto",
       "render-mode": "Render mode"
+    },
+    "pagination": {
+      "summary": "{{rangeStart}} - {{rangeEnd}} of {{rowCount}} rows"
     },
     "render": {
       "handlebars-error": "Handlebars error: {{message}}"
