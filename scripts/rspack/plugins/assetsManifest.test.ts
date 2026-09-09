@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import FeatureFlaggedSRIPlugin from './FeatureFlaggedSriPlugin.ts';
 import {
-  assetsManifestOptions,
+  createAssetsManifestOptions,
   generateAssetsManifest,
   type ManifestAssets,
   type ManifestEntrypoints,
@@ -61,7 +61,7 @@ function sriPlugin(): RspackPluginInstance {
 }
 
 function manifestPlugin(): RspackPluginInstance {
-  return new RspackManifestPlugin(assetsManifestOptions);
+  return new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH));
 }
 
 function expectedIntegrity(content: Buffer | string): string {
@@ -202,15 +202,19 @@ describe('assets manifest', () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const compilation = { outputOptions: { publicPath: PUBLIC_PATH } } as Parameters<
       typeof generateAssetsManifest
-    >[3]['compilation'];
+    >[4]['compilation'];
 
-    const { entrypoints } = generateAssetsManifest(undefined, [], entries, { compilation });
+    const { entrypoints } = generateAssetsManifest(undefined, [], entries, PUBLIC_PATH, { compilation });
 
-    expect(entrypoints.app.assets).toEqual({
-      js: ['public/build/runtime.js', 'public/build/app.js'],
-      css: ['public/build/grafana.app.css'],
+    expect(entrypoints).toEqual({
+      app: {
+        assets: {
+          js: ['public/build/runtime.js', 'public/build/app.js'],
+          css: ['public/build/grafana.app.css'],
+        },
+      },
+      esModule: false,
     });
-    expect(Object.keys(entrypoints.app.assets)).not.toContain('json');
   });
 
   it('excludes sourcemaps from the entrypoint file lists', async () => {
