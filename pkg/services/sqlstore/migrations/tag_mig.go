@@ -20,4 +20,8 @@ func addTagMigration(mg *Migrator) {
 
 	// create indices
 	mg.AddMigration("add index tag.key_value", NewAddIndexMigration(tagTable, tagTable.Indices[0]))
+
+	mg.AddMigration("Increase tag.value column to length 512", NewRawSQLMigration("").
+		Postgres("ALTER TABLE tag ALTER COLUMN value TYPE VARCHAR(512);").
+		Mysql("ALTER TABLE tag MODIFY value VARCHAR(512) NOT NULL;"))
 }
