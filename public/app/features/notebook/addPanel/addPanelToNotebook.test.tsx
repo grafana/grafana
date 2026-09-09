@@ -7,13 +7,13 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { notebookAnalytics } from '../analytics/main';
+import { NotebookAnalytics } from '../analytics/main';
 import { NotebookConflictError } from '../api/notebookResource';
 import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { addPanelErrorMessage, addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
 
-jest.mock('../analytics/main', () => ({ notebookAnalytics: { created: jest.fn() } }));
+jest.mock('../analytics/main', () => ({ NotebookAnalytics: { created: jest.fn() } }));
 
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
 const NOTEBOOK_URL = `${NOTEBOOKS_URL}/:name`;
@@ -45,7 +45,7 @@ jest.mock('app/store/store', () => {
 
 beforeEach(() => {
   testStore = createTestStore();
-  jest.mocked(notebookAnalytics.created).mockClear();
+  jest.mocked(NotebookAnalytics.created).mockClear();
 });
 
 function panel(title: string): PanelKind {
@@ -204,8 +204,8 @@ describe('createNotebookWithPanel', () => {
 
     await createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'explore');
 
-    expect(notebookAnalytics.created).toHaveBeenCalledTimes(1);
-    expect(notebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1);
+    expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1);
   });
 
   it('does not report a create when the write fails', async () => {
@@ -213,7 +213,7 @@ describe('createNotebookWithPanel', () => {
 
     await expect(createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'explore')).rejects.toThrow();
 
-    expect(notebookAnalytics.created).not.toHaveBeenCalled();
+    expect(NotebookAnalytics.created).not.toHaveBeenCalled();
   });
 });
 

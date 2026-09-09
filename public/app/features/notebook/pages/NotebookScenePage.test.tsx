@@ -5,7 +5,7 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/sc
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { notebookAnalytics } from '../analytics/main';
+import { NotebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 
@@ -16,7 +16,7 @@ import { NotebookScenePage } from './NotebookScenePage';
 // existing notebook run loadNotebook, which imports it from here.
 jest.mock('../analytics/main', () => {
   const actual = jest.requireActual('../analytics/main');
-  return { ...actual, notebookAnalytics: { ...actual.notebookAnalytics, newStarted: jest.fn() } };
+  return { ...actual, NotebookAnalytics: { ...actual.NotebookAnalytics, newStarted: jest.fn() } };
 });
 
 // The route is registered unconditionally, so the page itself enforces this OpenFeature flag.
@@ -24,7 +24,7 @@ const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 describe('NotebookScenePage', () => {
   beforeEach(() => {
-    jest.mocked(notebookAnalytics.newStarted).mockClear();
+    jest.mocked(NotebookAnalytics.newStarted).mockClear();
   });
 
   afterEach(async () => {
@@ -156,8 +156,8 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
       await screen.findByRole('radio', { name: 'Edit' });
 
-      expect(jest.mocked(notebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(notebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
+      expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
     });
 
     // The flag gate is what makes this route real, and a page that renders not-found started nothing.
@@ -168,7 +168,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
       await screen.findByText('Page not found');
 
-      expect(jest.mocked(notebookAnalytics.newStarted)).not.toHaveBeenCalled();
+      expect(jest.mocked(NotebookAnalytics.newStarted)).not.toHaveBeenCalled();
     });
 
     it('opens in edit mode, since a blank notebook exists only to be written into', async () => {
@@ -223,7 +223,7 @@ describe('NotebookScenePage', () => {
 
       await renderLoaded(scene, '/notebooks/nb-1');
 
-      expect(jest.mocked(notebookAnalytics.newStarted)).not.toHaveBeenCalled();
+      expect(jest.mocked(NotebookAnalytics.newStarted)).not.toHaveBeenCalled();
     });
 
     it('ignores the url for a user without edit permission', async () => {

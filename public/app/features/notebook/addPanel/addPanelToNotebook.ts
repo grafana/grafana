@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { notebookAnalytics } from '../analytics/main';
+import { NotebookAnalytics } from '../analytics/main';
 import { type NotebookEntryPoint } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
 import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
@@ -51,7 +51,7 @@ export async function createNotebookWithPanel(
   );
 
   const created = await createNotebook(spec);
-  notebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
+  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
 
   return { uid: created.uid, title: spec.title };
 }

@@ -4,31 +4,31 @@ import { type EventProperty } from '@grafana/runtime/unstable';
 
 export interface NotebookLoadedProperties extends EventProperty {
   /** Identifier and join key for this notebook. Never the title, see the decisions doc. */
-  notebook_uid: string;
+  notebookUid: string;
   /** Cells in the notebook, excluding the trailing empty editor block. */
-  cell_count: number;
-  /** The type of each cell in cell_count, in order. */
-  cells_by_type: string[];
-  /** Panel cells among cell_count. */
-  panel_count: number;
+  cellCount: number;
+  /** The type of each cell in cellCount, in order. */
+  cellsByType: string[];
+  /** Panel cells among cellCount. */
+  panelCount: number;
   /** Deduplicated datasource plugin IDs used by the notebook's panels. */
-  datasource_types: string[];
-  /** Cells among cell_count whose element the assistant wrote. */
-  assistant_cell_count: number;
+  datasourceTypes: string[];
+  /** Cells among cellCount whose element the assistant wrote. */
+  assistantCellCount: number;
   /** Whether the url opened the notebook in edit mode. A toggle later in the session does not change it. */
   mode: 'view' | 'edit';
   /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
-  was_cached: boolean;
-  /** Cells among cell_count with real content: markdown someone typed in, or a configured panel. */
-  non_empty_cell_count: number;
-  /** Markdown cells among cell_count. */
-  text_cell_count: number;
-  /** Code cells among cell_count. */
-  code_cell_count: number;
-  /** Panels among panel_count that have at least one real query configured. */
-  configured_panel_count: number;
-  /** Distinct datasource types among datasource_types. */
-  datasource_count: number;
+  wasCached: boolean;
+  /** Cells among cellCount with real content: markdown someone typed in, or a configured panel. */
+  nonEmptyCellCount: number;
+  /** Markdown cells among cellCount. */
+  textCellCount: number;
+  /** Code cells among cellCount. */
+  codeCellCount: number;
+  /** Panels among panelCount that have at least one real query configured. */
+  configuredPanelCount: number;
+  /** Distinct datasource types among datasourceTypes. */
+  datasourceCount: number;
 }
 
 /**
@@ -54,11 +54,11 @@ export interface NotebookNewStartedProperties extends EventProperty {
 
 export interface NotebookCreatedProperties extends EventProperty {
   /** Identifier and join key for this notebook. */
-  notebook_uid: string;
+  notebookUid: string;
   /** Which surface the notebook was created from. */
   source: NotebookEntryPoint;
   /** Cells in the notebook at the moment it was created, excluding the trailing empty editor block. */
-  cell_count: number;
+  cellCount: number;
 }
 
 /**
@@ -78,7 +78,7 @@ export interface NotebookDeletedProperties extends EventProperty {
    * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, and the
    * `created` for this uid gives how long it survived.
    */
-  notebook_uid: string;
+  notebookUid: string;
   /** Which surface the delete was confirmed on. */
   source: NotebookDeleteSource;
 }

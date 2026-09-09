@@ -7,7 +7,7 @@ import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 
-import { notebookAnalytics } from './main';
+import { NotebookAnalytics } from './main';
 
 function notebookScene(): NotebookScene {
   const cell = new NotebookCellItem({
@@ -30,7 +30,7 @@ function notebookScene(): NotebookScene {
  * The url decides the mode, not the scene. `loaded` fires while the notebook still loads, before
  * the page mounts the scene and syncs edit mode onto it.
  */
-describe('notebookAnalytics.loaded', () => {
+describe('NotebookAnalytics.loaded', () => {
   let modes: unknown[];
   let unsubscribe: () => void;
 
@@ -49,7 +49,7 @@ describe('notebookAnalytics.loaded', () => {
   it('reports edit mode when the url opened the notebook in edit mode', () => {
     locationService.push('/notebooks/nb-1?edit=true');
 
-    notebookAnalytics.loaded(notebookScene(), false);
+    NotebookAnalytics.loaded(notebookScene(), false);
 
     expect(modes).toEqual(['edit']);
   });
@@ -57,7 +57,7 @@ describe('notebookAnalytics.loaded', () => {
   it('reports view mode without the edit param', () => {
     locationService.push('/notebooks/nb-1');
 
-    notebookAnalytics.loaded(notebookScene(), false);
+    NotebookAnalytics.loaded(notebookScene(), false);
 
     expect(modes).toEqual(['view']);
   });
@@ -68,7 +68,7 @@ describe('notebookAnalytics.loaded', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     locationService.push('/notebooks/nb-1?edit=true');
 
-    notebookAnalytics.loaded(notebookScene(), false);
+    NotebookAnalytics.loaded(notebookScene(), false);
 
     expect(modes).toEqual(['view']);
   });
@@ -79,7 +79,7 @@ describe('notebookAnalytics.loaded', () => {
     scene.setState({ isEditing: true });
     locationService.push('/notebooks/nb-1');
 
-    notebookAnalytics.loaded(scene, true);
+    NotebookAnalytics.loaded(scene, true);
 
     expect(modes).toEqual(['view']);
   });

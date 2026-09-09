@@ -30,33 +30,21 @@ const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('creat
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
 
 /**
- * Every notebook event, so a call site reads as analytics rather than as a stray helper. The events
- * take a snake_case payload, and their call sites hold a scene. The wrappers map one to the other
- * here, once, instead of at each place that fires an event.
+ * Every notebook event, so a call site reads as analytics rather than as a stray helper. The wrappers
+ * turn a scene into what each event sends, here and once, instead of at every place that fires one.
  */
-export const notebookAnalytics = {
+export const NotebookAnalytics = {
   loaded(scene: NotebookScene, wasCached: boolean): void {
-    const shape = readNotebookShape(scene);
-
     createLoadedEvent({
       // Both call sites only reach this with a scene that already has a uid, so the fallback here is
       // defensive, not expected to trigger.
-      notebook_uid: scene.state.uid ?? '',
-      cell_count: shape.cellCount,
-      cells_by_type: shape.cellsByType,
-      panel_count: shape.panelCount,
-      datasource_types: shape.datasourceTypes,
-      assistant_cell_count: shape.assistantCellCount,
+      notebookUid: scene.state.uid ?? '',
+      ...readNotebookShape(scene),
       // The url decides the mode, not the scene. This fires while the notebook still loads, and the
       // scene only picks the mode up when the page renders it inside UrlSyncContextProvider.
       // Permission counts too: the sync refuses `?edit=true` for a reader and clears the param.
       mode: isNotebookEditUrl() && canEditNotebooks() ? 'edit' : 'view',
-      was_cached: wasCached,
-      non_empty_cell_count: shape.nonEmptyCellCount,
-      text_cell_count: shape.textCellCount,
-      code_cell_count: shape.codeCellCount,
-      configured_panel_count: shape.configuredPanelCount,
-      datasource_count: shape.datasourceCount,
+      wasCached,
     });
   },
 
@@ -65,10 +53,10 @@ export const notebookAnalytics = {
   },
 
   created(notebookUid: string, source: NotebookEntryPoint, cellCount: number): void {
-    createCreatedEvent({ notebook_uid: notebookUid, source, cell_count: cellCount });
+    createCreatedEvent({ notebookUid, source, cellCount });
   },
 
   deleted(notebookUid: string, source: NotebookDeleteSource): void {
-    createDeletedEvent({ notebook_uid: notebookUid, source });
+    createDeletedEvent({ notebookUid, source });
   },
 };

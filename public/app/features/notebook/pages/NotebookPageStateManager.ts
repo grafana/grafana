@@ -7,7 +7,7 @@ import { getMessageFromError, getMessageIdFromError, getStatusFromError } from '
 import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
-import { notebookAnalytics } from '../analytics/main';
+import { NotebookAnalytics } from '../analytics/main';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
@@ -103,7 +103,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         if (this.isSuperseded(seq)) {
           return;
         }
-        notebookAnalytics.loaded(cached.scene, true);
+        NotebookAnalytics.loaded(cached.scene, true);
         this.setState({ scene: cached.scene, isLoading: false });
         return;
       }
@@ -119,7 +119,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       if (this.isSuperseded(seq)) {
         return;
       }
-      notebookAnalytics.loaded(scene, false);
+      NotebookAnalytics.loaded(scene, false);
       this.setState({ scene, isLoading: false });
     } catch (error) {
       // A superseded failure must not surface either, or a stale 404 would replace the notebook the

@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { notebookAnalytics } from '../analytics/main';
+import { NotebookAnalytics } from '../analytics/main';
 import { type NotebookDeleteSource } from '../analytics/types';
 
 /**
@@ -25,7 +25,7 @@ export function useDeleteNotebook(source: NotebookDeleteSource) {
   const remove = async (uid: string, title: string): Promise<boolean> => {
     try {
       await deleteNotebook({ name: uid }).unwrap();
-      notebookAnalytics.deleted(uid, source);
+      NotebookAnalytics.deleted(uid, source);
       notifyApp.success(t('notebooks.delete.success', 'Notebook deleted'), title);
       return true;
     } catch (error) {

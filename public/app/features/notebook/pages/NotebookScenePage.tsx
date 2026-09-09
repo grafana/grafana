@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
-import { notebookAnalytics } from '../analytics/main';
+import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookToolbar } from '../toolbar/NotebookToolbar';
@@ -42,7 +42,7 @@ export function NotebookScenePage() {
         stateManager.newNotebook();
         // The list's create button is the only link to this route today, so the source is fixed here.
         // A second way in has to pass its own, or this event keeps naming the list.
-        notebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
+        NotebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
       }
     }
 
