@@ -751,8 +751,7 @@ func (ds *DataSource) executeGetQueryResults(ctx context.Context, logsClient mod
 
 	getQueryResultsResponse, err := logsClient.GetQueryResults(ctx, queryInput)
 	if err != nil {
-		var awsErr smithy.APIError
-		if errors.As(err, &awsErr) {
+		if awsErr, ok := errors.AsType[smithy.APIError](err); ok {
 			err = &AWSError{Code: awsErr.ErrorCode(), Message: awsErr.ErrorMessage()}
 		}
 		err = backend.DownstreamError(err)
