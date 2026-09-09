@@ -259,6 +259,29 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
 	})
 
+	// The realistic failure is not "nothing is listening" but a dev server that is up and
+	// answering wrongly - mid-build, or with a drifted publicPath.
+	t.Run("falls back to the build on disk when the dev server answers badly", func(t *testing.T) {
+		for name, handler := range map[string]http.HandlerFunc{
+			"a 500":      func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusInternalServerError) },
+			"a 404":      func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNotFound) },
+			"not json":   func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("<html>nope</html>")) },
+			"no entries": func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`{}`)) },
+		} {
+			t.Run(name, func(t *testing.T) {
+				devServer := httptest.NewServer(handler)
+				defer devServer.Close()
+
+				cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
+				assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+				require.NoError(t, err)
+
+				require.Empty(t, assets.ContentDeliveryURL)
+				require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+			})
+		}
+	})
+
 	t.Run("is ignored for the webpack build, which has no dev server", func(t *testing.T) {
 		devServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 			t.Error("the webpack build must not read its manifest from the dev server")
@@ -266,7 +289,8 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 		defer devServer.Close()
 
 		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
-		_, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 		require.NoError(t, err)
+		require.Empty(t, assets.ContentDeliveryURL)
 	})
 }
