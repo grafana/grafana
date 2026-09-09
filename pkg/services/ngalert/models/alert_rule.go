@@ -143,8 +143,9 @@ const (
 	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
 
 	// RuleGroupLabel is the label that will contain the name of an alert's rule group.
-	// It is omitted for rules that belong to a rule sequence, since their RuleGroup holds
-	// a synthetic sentinel value (see IsRuleSequenceGroup) rather than a user-facing name.
+	// For rules that belong to a rule sequence, this holds the sequence's synthetic
+	// sentinel value (see IsRuleSequenceGroup) rather than a user-facing name; the
+	// value is still stable and unique per sequence, so it remains useful for grouping.
 	RuleGroupLabel = GrafanaReservedLabelPrefix + "rule_group"
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).

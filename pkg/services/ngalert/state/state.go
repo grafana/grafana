@@ -789,9 +789,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 		extraLabels[models.FolderTitleLabel] = folderTitle
 	}
 
-	if !models.IsRuleSequenceGroup(rule.RuleGroup) {
-		extraLabels[models.RuleGroupLabel] = rule.RuleGroup
-	}
+	extraLabels[models.RuleGroupLabel] = rule.RuleGroup
 
 	if rule.NotificationSettings != nil {
 		maps.Copy(extraLabels, rule.NotificationSettings.ToLabels(features))

@@ -821,6 +821,10 @@ func TestGetRuleExtraLabels(t *testing.T) {
 	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
 	folderTitle := uuid.NewString()
 
+	seqGroup, err := ngmodels.NewRuleSequenceGroup(uuid.NewString())
+	require.NoError(t, err)
+	sequenceSentinelGroup := seqGroup.String()
+
 	cpr := ngmodels.ContactPointRouting{
 		Receiver:  "Test",
 		GroupBy:   []string{"alertname"},
@@ -905,18 +909,17 @@ func TestGetRuleExtraLabels(t *testing.T) {
 				ngmodels.RuleGroupLabel:  rule.RuleGroup,
 			},
 		},
-		"rule_sequence_member_omits_rule_group": {
+		"rule_sequence_member_uses_sentinel_group": {
 			rule: func() *ngmodels.AlertRule {
 				r := ngmodels.CopyRule(rule)
-				seqGroup, err := ngmodels.NewRuleSequenceGroup(uuid.NewString())
-				require.NoError(t, err)
-				r.RuleGroup = seqGroup.String()
+				r.RuleGroup = sequenceSentinelGroup
 				return r
 			}(),
 			expected: map[string]string{
 				models.NamespaceUIDLabel: rule.NamespaceUID,
 				model.AlertNameLabel:     rule.Title,
 				models.RuleUIDLabel:      rule.UID,
+				ngmodels.RuleGroupLabel:  sequenceSentinelGroup,
 			},
 		},
 	}
