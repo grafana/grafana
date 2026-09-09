@@ -27,6 +27,8 @@ type JobMetrics struct {
 	resourceOpBytes    *prometheus.HistogramVec // per-resource content size in bytes
 	inFlight           *prometheus.GaugeVec     // jobs currently being processed, by driver + action
 	busySeconds        *prometheus.CounterVec   // job duration credited at completion, by driver + action
+
+	gitHTTPRequestsPerJob *prometheus.HistogramVec // git HTTP round trips a single job made, by action
 }
 
 // claimTrigger records what enqueued the work-queue key that a worker is now
@@ -277,6 +279,18 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(busySeconds)
 
+		gitHTTPRequestsPerJob := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name: "grafana_provisioning_jobs_git_http_requests",
+				Help: "Number of git HTTP round trips a single job made to its remote, observed once per job at completion. Zero for jobs on repositories with no remote (e.g. local).",
+				// 1 -> 16384. A trivial job is a handful of round trips; a large full sync
+				// on a slow remote can be thousands, so the top bucket leaves headroom.
+				Buckets: prometheus.ExponentialBuckets(1, 2, 15),
+			},
+			[]string{"action"},
+		)
+		registry.MustRegister(gitHTTPRequestsPerJob)
+
 		jobMetrics = JobMetrics{
 			registry:                         registry,
 			processedTotal:                   processedTotal,
@@ -290,6 +304,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			resourceOpBytes:                  resourceOpBytes,
 			inFlight:                         inFlight,
 			busySeconds:                      busySeconds,
+			gitHTTPRequestsPerJob:            gitHTTPRequestsPerJob,
 		}
 	})
 	return jobMetrics
@@ -341,6 +356,18 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	} else {
 		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
 	}
+}
+
+// RecordGitClientStats records the git client work a single job did, observed
+// once at completion. Only the round-trip count feeds a metric (its
+// per-execution distribution is what a fleet-wide counter cannot give); the full
+// breakdown — retries, objects, bytes, cache hits/misses — is emitted on the
+// completion span and log line instead of as extra series. Nil-safe.
+func (m *JobMetrics) RecordGitClientStats(action string, httpRequests int64) {
+	if m == nil || m.gitHTTPRequestsPerJob == nil {
+		return
+	}
+	m.gitHTTPRequestsPerJob.WithLabelValues(action).Observe(float64(httpRequests))
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

@@ -113,6 +113,8 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6/go.mod h1:BpUYFztGINSLZmkzcS9dSHdNwBZAb8w1KD5unG1oNeg=
 github.com/grafana/nanogit v1.4.3-0.20260909102848-e27ebfb82b40 h1:x5A3MoYggpfQsh+FR03WYenXcuSDXL38G2xamIBQ1Wo=
 github.com/grafana/nanogit v1.4.3-0.20260909102848-e27ebfb82b40/go.mod h1:rfcbHdtP6HRGq4swBiDMbaPgUTQ8Z9xWRnUKW6HMbPA=
+github.com/grafana/nanogit v1.4.3-0.20260909110904-7ec377b156f6 h1:ZmDdX3ArwquivpOIsd0MPAJ/8k9ClqPweCSrPZL14Io=
+github.com/grafana/nanogit v1.4.3-0.20260909110904-7ec377b156f6/go.mod h1:rfcbHdtP6HRGq4swBiDMbaPgUTQ8Z9xWRnUKW6HMbPA=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

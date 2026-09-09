@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -124,24 +123,45 @@ type clientRecorder struct {
 	repoType string
 }
 
-func (r *clientRecorder) HTTPRequest(_ context.Context, operation metrics.Operation, statusCode int, duration time.Duration, attempt int) {
-	r.metrics.httpRequests.WithLabelValues(r.repoType, operation, strconv.Itoa(statusCode)).Inc()
-	r.metrics.httpDuration.WithLabelValues(r.repoType, operation).Observe(duration.Seconds())
-	// attempt is 1-indexed, so anything past the first is a retry.
-	if attempt > 1 {
-		r.metrics.httpRetries.WithLabelValues(r.repoType, operation).Inc()
+func (r *clientRecorder) HTTPRequest(ctx context.Context, sample metrics.HTTPRequestSample) {
+	retry := sample.Attempt > 1 // Attempt is 1-indexed, so anything past the first is a retry.
+
+	r.metrics.httpRequests.WithLabelValues(r.repoType, sample.Operation, strconv.Itoa(sample.StatusCode)).Inc()
+	r.metrics.httpDuration.WithLabelValues(r.repoType, sample.Operation).Observe(sample.Duration.Seconds())
+	if retry {
+		r.metrics.httpRetries.WithLabelValues(r.repoType, sample.Operation).Inc()
+	}
+
+	if stats := jobStatsFromContext(ctx); stats != nil {
+		stats.httpRequests.Add(1)
+		if retry {
+			stats.httpRetries.Add(1)
+		}
 	}
 }
 
-func (r *clientRecorder) ObjectsFetched(_ context.Context, count int, bytes int64) {
-	r.metrics.objectsFetched.WithLabelValues(r.repoType).Add(float64(count))
-	r.metrics.fetchedBytes.WithLabelValues(r.repoType).Add(float64(bytes))
+func (r *clientRecorder) ObjectsFetched(ctx context.Context, sample metrics.ObjectsFetchedSample) {
+	r.metrics.objectsFetched.WithLabelValues(r.repoType).Add(float64(sample.Count))
+	r.metrics.fetchedBytes.WithLabelValues(r.repoType).Add(float64(sample.Bytes))
+
+	if stats := jobStatsFromContext(ctx); stats != nil {
+		stats.objectsFetched.Add(int64(sample.Count))
+		stats.bytesFetched.Add(sample.Bytes)
+	}
 }
 
-func (r *clientRecorder) CacheAccess(_ context.Context, hit bool) {
+func (r *clientRecorder) CacheAccess(ctx context.Context, sample metrics.CacheAccessSample) {
 	result := "miss"
-	if hit {
+	if sample.Hit {
 		result = "hit"
 	}
 	r.metrics.cacheAccesses.WithLabelValues(r.repoType, result).Inc()
+
+	if stats := jobStatsFromContext(ctx); stats != nil {
+		if sample.Hit {
+			stats.cacheHits.Add(1)
+		} else {
+			stats.cacheMisses.Add(1)
+		}
+	}
 }

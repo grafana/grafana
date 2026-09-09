@@ -29,9 +29,9 @@ func TestClientMetrics_Recorder(t *testing.T) {
 		m := newClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
-		rec.HTTPRequest(ctx, metrics.OperationUploadPack, 200, 5*time.Millisecond, 1)
-		rec.HTTPRequest(ctx, metrics.OperationUploadPack, 200, 5*time.Millisecond, 1)
-		rec.HTTPRequest(ctx, metrics.OperationSmartInfo, 401, time.Millisecond, 1)
+		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: 5 * time.Millisecond, Attempt: 1})
+		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: 5 * time.Millisecond, Attempt: 1})
+		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationSmartInfo, StatusCode: 401, Duration: time.Millisecond, Attempt: 1})
 
 		assert.Equal(t, 2.0, testutil.ToFloat64(m.httpRequests.WithLabelValues("git", metrics.OperationUploadPack, "200")))
 		assert.Equal(t, 1.0, testutil.ToFloat64(m.httpRequests.WithLabelValues("git", metrics.OperationSmartInfo, "401")))
@@ -42,9 +42,9 @@ func TestClientMetrics_Recorder(t *testing.T) {
 		m := newClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
-		rec.HTTPRequest(ctx, metrics.OperationUploadPack, 500, time.Millisecond, 1)
-		rec.HTTPRequest(ctx, metrics.OperationUploadPack, 500, time.Millisecond, 2)
-		rec.HTTPRequest(ctx, metrics.OperationUploadPack, 200, time.Millisecond, 3)
+		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 500, Duration: time.Millisecond, Attempt: 1})
+		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 500, Duration: time.Millisecond, Attempt: 2})
+		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: time.Millisecond, Attempt: 3})
 
 		assert.Equal(t, 2.0, testutil.ToFloat64(m.httpRetries.WithLabelValues("git", metrics.OperationUploadPack)))
 	})
@@ -53,8 +53,8 @@ func TestClientMetrics_Recorder(t *testing.T) {
 		m := newClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
-		rec.ObjectsFetched(ctx, 10, 2048)
-		rec.ObjectsFetched(ctx, 5, 1024)
+		rec.ObjectsFetched(ctx, metrics.ObjectsFetchedSample{Count: 10, Bytes: 2048})
+		rec.ObjectsFetched(ctx, metrics.ObjectsFetchedSample{Count: 5, Bytes: 1024})
 
 		assert.Equal(t, 15.0, testutil.ToFloat64(m.objectsFetched.WithLabelValues("git")))
 		assert.Equal(t, 3072.0, testutil.ToFloat64(m.fetchedBytes.WithLabelValues("git")))
@@ -64,9 +64,9 @@ func TestClientMetrics_Recorder(t *testing.T) {
 		m := newClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
-		rec.CacheAccess(ctx, true)
-		rec.CacheAccess(ctx, true)
-		rec.CacheAccess(ctx, false)
+		rec.CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
+		rec.CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
+		rec.CacheAccess(ctx, metrics.CacheAccessSample{Hit: false})
 
 		assert.Equal(t, 2.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("git", "hit")))
 		assert.Equal(t, 1.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("git", "miss")))
@@ -74,7 +74,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 
 	t.Run("labels follow the configured repository type", func(t *testing.T) {
 		m := newClientMetrics(prometheus.NewRegistry())
-		m.Recorder(provisioning.GitHubRepositoryType).CacheAccess(ctx, true)
+		m.Recorder(provisioning.GitHubRepositoryType).CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
 
 		assert.Equal(t, 1.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("github", "hit")))
 		assert.Equal(t, 0.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("git", "hit")))

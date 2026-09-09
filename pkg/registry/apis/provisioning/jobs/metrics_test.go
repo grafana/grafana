@@ -197,6 +197,32 @@ func TestRecordResourceOperationBytes(t *testing.T) {
 	assert.Equal(t, uint64(1), deletedCount, "a delete with a byte count is still a real op and observed")
 }
 
+func TestRecordGitClientStats(t *testing.T) {
+	reg := testRegistry
+	m := testMetrics
+
+	// The registry is a binary-wide singleton, so measure the delta this test adds
+	// rather than absolute counts other tests may have contributed to.
+	const action = "gitstats-test-action"
+	count := func() uint64 {
+		metrics, err := reg.Gather()
+		require.NoError(t, err)
+		hist := findMetric(metrics, "grafana_provisioning_jobs_git_http_requests")
+		require.NotNil(t, hist, "git_http_requests histogram should be registered")
+		return histogramSampleCount(hist, map[string]string{"action": action})
+	}
+
+	before := count()
+	m.RecordGitClientStats(action, 128)
+	m.RecordGitClientStats(action, 256)
+	assert.Equal(t, uint64(2), count()-before, "one observation per job completion")
+
+	t.Run("nil-safe", func(t *testing.T) {
+		var nilMetrics *JobMetrics
+		assert.NotPanics(t, func() { nilMetrics.RecordGitClientStats(action, 1) })
+	})
+}
+
 // --- helpers ---
 
 func histogramSampleCount(mf *dto.MetricFamily, labels map[string]string) uint64 {

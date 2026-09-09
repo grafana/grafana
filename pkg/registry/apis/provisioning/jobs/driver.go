@@ -19,6 +19,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -201,6 +202,12 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
 	defer cancel() // Ensure resources are released when the function returns
 
+	// Accumulate the git client work (round trips, retries, fetched objects/bytes,
+	// cache hits/misses) this job drives, so its cost can be attributed back to the
+	// one execution at completion. Populated only when the repository makes git
+	// calls; stays zero otherwise (e.g. local repositories).
+	jobctx, gitStats := gitrepo.WithJobStats(jobctx)
+
 	// Set up lease renewal goroutine
 	leaseRenewalCtx, cancelLeaseRenewal := context.WithCancel(jobctx)
 	leaseExpired := make(chan struct{})
@@ -243,6 +250,19 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
 	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
+
+	// Attribute the git client work to this one execution. The round-trip count
+	// also feeds a histogram (per-execution percentiles a fleet counter cannot
+	// give); the rest ride the span and log line for forensics on a single job.
+	git := gitStats.Snapshot()
+	span.SetAttributes(
+		attribute.Int64("git.http_requests", git.HTTPRequests),
+		attribute.Int64("git.http_retries", git.HTTPRetries),
+		attribute.Int64("git.objects_fetched", git.ObjectsFetched),
+		attribute.Int64("git.bytes_fetched", git.BytesFetched),
+		attribute.Int64("git.cache_hits", git.CacheHits),
+		attribute.Int64("git.cache_misses", git.CacheMisses),
+	)
 	// Record the job metric here, from the authoritative final status, rather than in
 	// each worker: this covers every action uniformly, uses the driver-measured
 	// duration (accurate even on timeout), and makes the `outcome` label reflect the
@@ -256,6 +276,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 			sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
+		d.metrics.RecordGitClientStats(string(d.currentJob.Spec.Action), git.HTTPRequests)
 	}
 	defer func() {
 		d.currentJob = nil
@@ -272,6 +293,12 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		"errorCount", len(status.Errors),
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
+		"gitHTTPRequests", git.HTTPRequests,
+		"gitHTTPRetries", git.HTTPRetries,
+		"gitObjectsFetched", git.ObjectsFetched,
+		"gitBytesFetched", git.BytesFetched,
+		"gitCacheHits", git.CacheHits,
+		"gitCacheMisses", git.CacheMisses,
 	}
 	if err != nil {
 		logFields = append(logFields, "error", err)
