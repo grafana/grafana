@@ -236,7 +236,7 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	defer logger.Info("Shutting down RepositoryController")
 
 	logger.Info("Starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
+	for i := range workerCount {
 		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
 		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
 	}

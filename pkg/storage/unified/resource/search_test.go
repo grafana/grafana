@@ -1348,14 +1348,14 @@ func TestRebuildIndexesForResource(t *testing.T) {
 func TestMaybeInjectFailure(t *testing.T) {
 	t.Run("disabled when percent is 0", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 0}
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			require.NoError(t, s.maybeInjectFailure())
 		}
 	})
 
 	t.Run("always fails when percent is 100", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 100}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			err := s.maybeInjectFailure()
 			require.Error(t, err)
 			require.Equal(t, "injected search failure", err.Error())
@@ -1480,7 +1480,7 @@ func TestJitterForKey(t *testing.T) {
 	})
 
 	t.Run("bounded to maxAge/2", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "g", Resource: "r"}
 			j := jitterForKey(key, maxAge)
 			require.GreaterOrEqual(t, j, time.Duration(0))
@@ -1508,7 +1508,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	numIndexes := 20
 	openIndexes := make([]NamespacedResource, numIndexes)
 	cache := make(map[NamespacedResource]ResourceIndex, numIndexes)
-	for i := 0; i < numIndexes; i++ {
+	for i := range numIndexes {
 		key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "group", Resource: "folder"}
 		openIndexes[i] = key
 		cache[key] = &MockResourceIndex{
