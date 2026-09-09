@@ -12995,7 +12995,7 @@
     "add-block": {
       "code": "Code",
       "heading": "Heading",
-      "label": "Add block",
+      "label": "Click to add below",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
       "visualization": "Visualization"
