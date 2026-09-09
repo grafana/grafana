@@ -251,12 +251,7 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 		AuthModule:  row.AuthModule.String,
 		HasAuthInfo: row.AuthInfoID.Valid,
 	}
-	// External-session credentials are authoritative only when improved external
-	// session handling is enabled. The legacy path keeps reading OAuth fields
-	// from user_auth.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	useExternalSession := s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling)
-	if !useExternalSession || !row.ExternalSessionID.Valid || !strings.HasPrefix(result.AuthModule, "oauth") {
+	if !row.ExternalSessionID.Valid || !strings.HasPrefix(result.AuthModule, "oauth") {
 		return result, nil
 	}
 

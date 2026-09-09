@@ -77,11 +77,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 
 	ctxLogger := s.log.FromContext(ctx).New("userID", userID)
 
-	cacheKey := fmt.Sprintf("token-check-%s", id.GetID())
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		cacheKey = fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
-	}
+	cacheKey := fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
 
 	// The session authentication fast path already loaded this exact external
 	// session row. A current token needs neither another query nor the refresh

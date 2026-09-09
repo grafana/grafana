@@ -10,6 +10,7 @@ import {
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
+  VariableSuggestionsScope,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
@@ -48,7 +49,11 @@ export function TextNGPanel(props: Props) {
   const currentFrameIndex = getCurrentFrameIndex(frames, options);
   const series = useMemo(() => (frames.length > 1 ? [frames[currentFrameIndex]] : frames), [frames, currentFrameIndex]);
 
-  const suggestions = useMemo(() => (isEditing ? getDataLinksVariableSuggestions(series) : []), [isEditing, series]);
+  // Values scope, so the ${__value} macros the renderer resolves are offered.
+  const suggestions = useMemo(
+    () => (isEditing ? getDataLinksVariableSuggestions(series, VariableSuggestionsScope.Values) : []),
+    [isEditing, series]
+  );
 
   // Adding or removing a query toggles the frame picker, which changes the tree
   // shape and remounts the editor, so its view mode is held here instead.
@@ -87,6 +92,7 @@ export function TextNGPanel(props: Props) {
       options.content,
       options.mode,
       options.renderMode,
+      options.maxRows,
       options.code?.language,
       series,
       replaceVariables,
@@ -106,6 +112,7 @@ export function TextNGPanel(props: Props) {
         showLineNumbers={options.code?.showLineNumbers ?? false}
         codeLanguage={options.code?.language}
         renderMode={options.renderMode}
+        maxRows={options.maxRows}
         series={series}
         replaceVariables={replaceVariables}
         suggestions={suggestions}
@@ -281,6 +288,7 @@ function renderPanelContent(
           mode: options.mode,
           series,
           renderMode: options.renderMode,
+          maxRows: options.maxRows,
           format: getInterpolateFormat(options.mode, options.code?.language),
         },
         replaceVariables,
