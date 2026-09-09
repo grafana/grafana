@@ -2,9 +2,9 @@ import { config } from '@grafana/runtime';
 import { type FormatVariable, type SceneObject } from '@grafana/scenes';
 
 /**
- * Handles expressions like ${__namespace}, the Kubernetes namespace of the current
- * Grafana instance. App Platform API paths are all namespaced, so queries against
- * them need it to build the URL.
+ * Handles expressions like ${__namespace}, the Kubernetes namespace backing the current
+ * organization. App Platform API paths are all namespaced, so queries against them need
+ * it to build the URL.
  */
 export class NamespaceMacro implements FormatVariable {
   public state: { name: string; type: string };
