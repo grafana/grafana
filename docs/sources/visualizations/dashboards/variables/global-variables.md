@@ -74,6 +74,10 @@ This variable is only available in the **Singlestat** panel and can be used in t
 The **Singlestat** panel is no longer available from Grafana 8.0.
 {{< /admonition >}}
 
+## `$__namespace`
+
+This variable is the Kubernetes namespace of the current Grafana instance, for example `stacks-123` in Grafana Cloud or `default` in a self-managed instance. Use it to build URLs for Grafana APIs that are namespaced, such as `/apis/<group>/<version>/namespaces/${__namespace}/<resource>`.
+
 ## `$__org`
 
 This variable is the ID of the current organization.
