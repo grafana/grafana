@@ -364,29 +364,20 @@ func (m *JobMetrics) RecordJob(jobAction string, variance string, outcome string
 		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
 	}
 
-	// Per-execution throughput. A failed job's resource count is partial (see the
-	// bucket note above), so its ops/s would be misleading — record only jobs that
-	// ran to a success/warning state. Pull-request jobs measure work by resources
-	// dry-run rather than changed, matching the duration histogram's numerator.
-	if m.throughputHist != nil && outcome != utils.ErrorOutcome {
-		ops := resourceCountChanged
-		if jobAction == string(provisioning.JobActionPullRequest) {
-			ops = resourceCountDryRun
-		}
-		observeThroughput(m.throughputHist.WithLabelValues(jobAction, variance), ops, duration)
+	// Per-execution throughput: ops/second. A failed job's resource count is partial
+	// (see the bucket note above), so its ops/s would be misleading — record only jobs
+	// that ran to a success/warning state. Pull-request jobs measure work by resources
+	// dry-run rather than changed, matching the duration histogram's numerator. Skip
+	// the degenerate cases too: a non-positive duration would divide to +Inf, and a run
+	// that did no work is not a throughput sample worth keeping (it would pile up in the
+	// lowest bucket and drag the percentiles down).
+	ops := resourceCountChanged
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		ops = resourceCountDryRun
 	}
-}
-
-// observeThroughput records ops/seconds into obs, skipping the degenerate cases: a
-// non-positive duration would divide to +Inf, and a run that performed no operations
-// is not a throughput sample worth keeping (it would pile up in the lowest bucket and
-// drag the percentiles down). "Throughput we achieve" only has meaning when work
-// was done.
-func observeThroughput(obs prometheus.Observer, ops int, seconds float64) {
-	if ops <= 0 || seconds <= 0 {
-		return
+	if m.throughputHist != nil && outcome != utils.ErrorOutcome && ops > 0 && duration > 0 {
+		m.throughputHist.WithLabelValues(jobAction, variance).Observe(float64(ops) / duration)
 	}
-	obs.Observe(float64(ops) / seconds)
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {
