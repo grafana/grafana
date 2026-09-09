@@ -44,10 +44,9 @@ describe('sortLogsToMatchTable', () => {
     const first = createLogLine({ uid: 'first', rowIndex: 0, timeEpochMs: 1000, dataFrame: frame });
     const second = createLogLine({ uid: 'second', rowIndex: 1, timeEpochMs: 2000, dataFrame: frame });
 
-    expect(sortLogsToMatchTable([first, second], [{ displayName: 'Line', desc: false }]).map((log) => log.uid)).toEqual([
-      'second',
-      'first',
-    ]);
+    expect(sortLogsToMatchTable([first, second], [{ displayName: 'Line', desc: false }]).map((log) => log.uid)).toEqual(
+      ['second', 'first']
+    );
   });
 
   test('does not mutate the input array', () => {
