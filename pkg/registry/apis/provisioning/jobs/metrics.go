@@ -308,7 +308,9 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 				// on a slow remote can be thousands, so the top bucket leaves headroom.
 				Buckets: prometheus.ExponentialBuckets(1, 2, 15),
 			},
-			[]string{"action"},
+			// variance mirrors the throughput metric: full vs incremental for a pull
+			// job, empty for actions with no sub-type.
+			[]string{"action", "variance"},
 		)
 		registry.MustRegister(gitHTTPRequestsPerJob)
 
@@ -400,11 +402,11 @@ func (m *JobMetrics) RecordJob(jobAction string, variance string, outcome string
 // per-execution distribution is what a fleet-wide counter cannot give); the full
 // breakdown — retries, objects, bytes, cache hits/misses — is emitted on the
 // completion span and log line instead of as extra series. Nil-safe.
-func (m *JobMetrics) RecordGitClientStats(action string, httpRequests int64) {
+func (m *JobMetrics) RecordGitClientStats(action string, variance string, httpRequests int64) {
 	if m == nil || m.gitHTTPRequestsPerJob == nil {
 		return
 	}
-	m.gitHTTPRequestsPerJob.WithLabelValues(action).Observe(float64(httpRequests))
+	m.gitHTTPRequestsPerJob.WithLabelValues(action, variance).Observe(float64(httpRequests))
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

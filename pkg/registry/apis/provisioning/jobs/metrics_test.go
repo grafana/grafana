@@ -205,7 +205,7 @@ func TestRecordGitClientStats(t *testing.T) {
 	// The registry is a binary-wide singleton, so measure the delta this test adds
 	// rather than absolute counts other tests may have contributed to.
 	const action = "gitstats-test-action"
-	count := func() uint64 {
+	count := func(variance string) uint64 {
 		metrics, err := reg.Gather()
 		require.NoError(t, err)
 		// A histogram with no observations yet is absent from Gather output, so a
@@ -214,17 +214,20 @@ func TestRecordGitClientStats(t *testing.T) {
 		if hist == nil {
 			return 0
 		}
-		return histogramSampleCount(hist, map[string]string{"action": action})
+		return histogramSampleCount(hist, map[string]string{"action": action, "variance": variance})
 	}
 
-	before := count()
-	m.RecordGitClientStats(action, 128)
-	m.RecordGitClientStats(action, 256)
-	assert.Equal(t, uint64(2), count()-before, "one observation per job completion")
+	beforeFull := count("full")
+	beforeIncremental := count("incremental")
+	m.RecordGitClientStats(action, "full", 128)
+	m.RecordGitClientStats(action, "full", 256)
+	m.RecordGitClientStats(action, "incremental", 4)
+	assert.Equal(t, uint64(2), count("full")-beforeFull, "one observation per job completion, split by variance")
+	assert.Equal(t, uint64(1), count("incremental")-beforeIncremental)
 
 	t.Run("nil-safe", func(t *testing.T) {
 		var nilMetrics *JobMetrics
-		assert.NotPanics(t, func() { nilMetrics.RecordGitClientStats(action, 1) })
+		assert.NotPanics(t, func() { nilMetrics.RecordGitClientStats(action, "full", 1) })
 	})
 }
 

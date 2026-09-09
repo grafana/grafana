@@ -301,7 +301,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 			resourcesDryRun,
 			duration.Seconds(),
 		)
-		d.metrics.RecordGitClientStats(string(d.currentJob.Spec.Action), git.HTTPRequests)
+		d.metrics.RecordGitClientStats(string(d.currentJob.Spec.Action), variance, git.HTTPRequests)
 	}
 	defer func() {
 		d.currentJob = nil
