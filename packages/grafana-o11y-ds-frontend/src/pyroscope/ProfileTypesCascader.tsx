@@ -22,9 +22,9 @@ export function ProfileTypesCascader(props: Props) {
       displayAllSelectedLevels={true}
       initialValue={props.initialProfileTypeId}
       allowCustomValue={true}
+      changeOnSelect={false}
       onSelect={props.onChange}
       options={cascaderOptions}
-      changeOnSelect={false}
       width={props.width ?? 26}
     />
   );
