@@ -29,6 +29,7 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
       data={props.data.series[0]}
       stickyHeader={false}
       getTheme={() => theme}
+      fillHeight={true}
       useTableNG={useTableNG}
       showFlameGraphOnly={props.options?.showFlameGraphOnly ?? false}
       onTableSymbolClick={() => interaction('table_item_selected')}

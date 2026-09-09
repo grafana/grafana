@@ -364,31 +364,9 @@ describe('FlameGraphContainer with useTableNG', () => {
   });
 });
 
-describe('FlameGraphContainer height fallback', () => {
-  // Simulates a host like Explore that doesn't bound our height: everything genuinely collapses to ~0,
-  // except the outermost .container element itself, which still measures taller than the 10px threshold
-  // because it hugs the header's (or, in a split layout, the flame graph's) organic height - the "the
-  // header alone is taller than 10" scenario the fallback needs to see past by watching the table wrapper
-  // itself rather than .container.
-  function mockUnboundedHostWithTallOuterContainer() {
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      configurable: true,
-      value: function (this: Element) {
-        const isOuterContainer = this.className
-          .toString()
-          .split(' ')
-          .some((cls) => cls.endsWith('-container'));
-        const height = isOuterContainer ? 40 : 0;
-        return { width: 500, height, top: 0, left: 0, bottom: height, right: 500, x: 0, y: 0, toJSON: () => {} };
-      },
-    });
-  }
-
-  // Restore the default (bounded-looking) measurement other describe blocks in this file rely on, since
-  // getBoundingClientRect mocks mutate a shared prototype.
-  afterEach(() => {
-    mockBoundingClientRect({ width: 500, height: 500 });
-  });
+describe('FlameGraphContainer top table height', () => {
+  // Needed for AutoSizer to work in test
+  mockBoundingClientRect({ width: 500, height: 500 });
 
   const getTheme = () => createTheme({ colors: { mode: 'dark' } });
   const makeFlameGraphData = () => {
@@ -397,63 +375,60 @@ describe('FlameGraphContainer height fallback', () => {
     return flameGraphData;
   };
 
-  // The fallback height is applied to the table's own wrapper div (not the outermost .container - see
-  // useHeightFallback in FlameGraphContainer), which is always the immediate parent of the div carrying the
-  // "topTable" testid.
-  const getTableWrapper = (container: HTMLElement) =>
-    container.querySelector<HTMLElement>('[data-testid="topTable"]')?.parentElement ?? null;
+  // The height is applied to the table's own wrapper, which is always the immediate parent of the div
+  // carrying the "topTable" testid.
+  const getTableWrapper = async () => (await screen.findByTestId('topTable')).parentElement;
 
-  it('falls back to a fixed height when an unbounded host collapses the table wrapper (vertical)', async () => {
-    mockUnboundedHostWithTallOuterContainer();
-    const { container } = render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} vertical />);
+  describe('without fillHeight (a host like Explore that does not bound our height)', () => {
+    it('caps the side-by-side table at a fixed height, so it can only ever be as tall as the flame graph', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} />);
+      expect(await getTableWrapper()).toHaveStyle({ maxHeight: '800px' });
+    });
 
-    await waitFor(() => {
-      expect(getTableWrapper(container)).toHaveStyle({ height: '800px' });
+    it('gives the top-table-only view a fixed height', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} />);
+      await userEvent.click(screen.getByText(/Top Table/));
+      expect(await getTableWrapper()).toHaveStyle({ height: '800px' });
+    });
+
+    it('gives the vertical view a fixed height', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} vertical />);
+      expect(await getTableWrapper()).toHaveStyle({ height: '800px' });
+    });
+
+    it('gives the new UI a fixed height', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} enableNewUI />);
+      expect(await getTableWrapper()).toHaveStyle({ height: '800px' });
+      // The mocked container width puts the new UI in its default split layout, so the table is sharing a row
+      // with the flame graph - the layout that regressed in Explore.
+      expect(document.querySelector('canvas')).toBeInTheDocument();
     });
   });
 
-  it('falls back to a fixed height when an unbounded host collapses the table wrapper (top table only)', async () => {
-    mockUnboundedHostWithTallOuterContainer();
-    const { container } = render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} />);
-    await userEvent.click(screen.getByText(/Top Table/));
-
-    await waitFor(() => {
-      expect(getTableWrapper(container)).toHaveStyle({ height: '800px' });
+  describe('with fillHeight (a host like a dashboard panel that bounds our height)', () => {
+    it('fills the available height in the side-by-side view', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} fillHeight />);
+      const wrapper = await getTableWrapper();
+      expect(wrapper).toHaveStyle({ height: '100%' });
+      // The cap the unbounded host needs would stop the table from filling a taller panel.
+      expect(wrapper).not.toHaveStyle({ maxHeight: '800px' });
     });
-  });
 
-  it('falls back to a fixed height when an unbounded host collapses the table wrapper (new UI, single view)', async () => {
-    mockUnboundedHostWithTallOuterContainer();
-    const { container } = render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} enableNewUI />);
-    await userEvent.click(screen.getByRole('radio', { name: /Single/ }));
-    await userEvent.click(screen.getByRole('radio', { name: /Top Table/ }));
-
-    await waitFor(() => {
-      expect(getTableWrapper(container)).toHaveStyle({ height: '800px' });
+    it('fills the available height in the top-table-only view', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} fillHeight />);
+      await userEvent.click(screen.getByText(/Top Table/));
+      expect(await getTableWrapper()).toHaveStyle({ height: '100%' });
     });
-  });
 
-  it('re-arms the fallback in the new UI when switching views, rather than only checking on first mount', async () => {
-    // The flame graph pane (mounted first) reports a real height, so the fallback must not have fired yet
-    // by the time we switch to Top Table - it needs to measure that pane's own wrapper fresh, not rely on
-    // a stale measurement of a persistent ancestor from before the switch.
-    mockBoundingClientRect({ width: 500, height: 500 });
-    const { container } = render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} enableNewUI />);
-    await userEvent.click(screen.getByRole('radio', { name: /Single/ }));
-
-    mockUnboundedHostWithTallOuterContainer();
-    await userEvent.click(screen.getByRole('radio', { name: /Top Table/ }));
-
-    await waitFor(() => {
-      expect(getTableWrapper(container)).toHaveStyle({ height: '800px' });
+    it('takes the space the flame graph leaves in the vertical view', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} fillHeight vertical />);
+      expect(await getTableWrapper()).toHaveStyle({ flex: '1 1 0' });
     });
-  });
 
-  it('does not apply a fallback when the table wrapper measures a real height', async () => {
-    mockBoundingClientRect({ width: 500, height: 500 });
-    const { container } = render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} vertical />);
-    await screen.findAllByTitle('Highlight symbol');
-
-    expect(getTableWrapper(container)).not.toHaveStyle({ height: '800px' });
+    it('fills the available height in the new UI', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} fillHeight enableNewUI />);
+      expect(await getTableWrapper()).toHaveStyle({ height: '100%' });
+      expect(document.querySelector('canvas')).toBeInTheDocument();
+    });
   });
 });

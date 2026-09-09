@@ -24,27 +24,6 @@ import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
 
-/**
- * .container is styled height: 100%, which correctly reflects whatever bounded height a real host (e.g. a
- * dashboard panel) gives it. Some hosts (e.g. Explore) don't bound our height at all, in which case
- * height: 100% collapses several layers down, wherever a descendant first tries to resolve a percentage
- * height against that indefinite ancestor - not necessarily on .container itself, which can still measure
- * taller than a naive "near zero" check thanks to the header (or, in a split flame-graph/table layout, the
- * flame graph's own organic height) padding it out. So rather than measuring .container, this is meant to
- * be attached directly to the thing that actually needs a concrete height - the table wrapper - via a
- * callback ref, which also naturally re-checks whenever that wrapper (re)mounts, e.g. once real data
- * replaces an initial `null` render, instead of a one-shot check tied to this component's own mount.
- */
-function useHeightFallback(fallbackHeight: number) {
-  const [needsFallback, setNeedsFallback] = useState(false);
-  const measureRef = useCallback((node: HTMLDivElement | null) => {
-    if (node && node.getBoundingClientRect().height < 10) {
-      setNeedsFallback(true);
-    }
-  }, []);
-  return { measureRef, style: needsFallback ? { height: fallbackHeight } : undefined };
-}
-
 export type Props = {
   /**
    * DataFrame with the profile data. The dataFrame needs to have the following fields:
@@ -120,6 +99,14 @@ export type Props = {
   enableNewUI?: boolean;
 
   /**
+   * Set this when the host bounds our height (e.g. a dashboard panel), so the top table sizes itself to the
+   * space actually available instead of a fixed height that can run past the host's bottom edge. Leave it off
+   * for hosts that don't bound us (e.g. Explore, where the page scrolls and the flame graph grows organically):
+   * there is no height to fill, so the table falls back to FLAMEGRAPH_CONTAINER_HEIGHT.
+   */
+  fillHeight?: boolean;
+
+  /**
    * Render the top table with TableNG instead of the legacy Table.
    */
   useTableNG?: boolean;
@@ -147,6 +134,7 @@ const FlameGraphContainer = ({
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   enableNewUI,
+  fillHeight,
   useTableNG,
   enableVirtualization,
 }: Props) => {
@@ -169,6 +157,7 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
         showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+        fillHeight={fillHeight}
         useTableNG={useTableNG}
         enableVirtualization={enableVirtualization}
       />
@@ -191,6 +180,7 @@ const FlameGraphContainer = ({
       keepFocusOnDataChange={keepFocusOnDataChange}
       getExtraContextMenuButtons={getExtraContextMenuButtons}
       showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+      fillHeight={fillHeight}
       useTableNG={useTableNG}
       enableVirtualization={enableVirtualization}
     />
@@ -212,6 +202,7 @@ type InternalProps = {
   keepFocusOnDataChange?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   showAnalyzeWithAssistant: boolean;
+  fillHeight?: boolean;
   useTableNG?: boolean;
   enableVirtualization?: boolean;
 };
@@ -231,6 +222,7 @@ const LegacyContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  fillHeight,
   useTableNG,
   enableVirtualization,
 }: InternalProps) => {
@@ -241,7 +233,6 @@ const LegacyContainer = ({
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  const heightFallback = useHeightFallback(FLAMEGRAPH_CONTAINER_HEIGHT);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
@@ -265,7 +256,7 @@ const LegacyContainer = ({
     return container;
   }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, Boolean(fillHeight));
   const matchedLabels = useLabelSearch(search, dataContainer);
 
   // If user resizes window with both as the selected view
@@ -412,27 +403,19 @@ const LegacyContainer = ({
   if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
     body = flameGraph;
   } else if (selectedView === SelectedView.TopTable) {
-    body = (
-      <div ref={heightFallback.measureRef} className={styles.tableContainer} style={heightFallback.style}>
-        {table}
-      </div>
-    );
+    body = <div className={styles.tableContainer}>{table}</div>;
   } else if (selectedView === SelectedView.Both) {
     if (vertical) {
       body = (
         <div className={styles.verticalContainer}>
           <div className={styles.verticalGraphContainer}>{flameGraph}</div>
-          <div ref={heightFallback.measureRef} className={styles.verticalTableContainer} style={heightFallback.style}>
-            {table}
-          </div>
+          <div className={styles.verticalTableContainer}>{table}</div>
         </div>
       );
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          <div ref={heightFallback.measureRef} className={styles.horizontalTableContainer} style={heightFallback.style}>
-            {table}
-          </div>
+          <div className={styles.horizontalTableContainer}>{table}</div>
           <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
         </div>
       );
@@ -497,6 +480,7 @@ const NewUIContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  fillHeight,
   useTableNG,
   enableVirtualization,
 }: InternalProps) => {
@@ -507,7 +491,6 @@ const NewUIContainer = ({
   const [singleView, setSingleView] = useState<PaneView>(PaneView.FlameGraph);
   const [panesSwapped, setPanesSwapped] = useState(false);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  const heightFallback = useHeightFallback(FLAMEGRAPH_CONTAINER_HEIGHT);
   const [resetKey, setResetKey] = useState(0);
   const [focusedItemIndexes, setFocusedItemIndexes] = useState<number[] | undefined>(undefined);
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
@@ -544,7 +527,7 @@ const NewUIContainer = ({
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
 
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, Boolean(fillHeight));
   const matchedLabels = useLabelSearch(search, dataContainer);
 
   const effectiveViewMode = canShowSplitView ? viewMode : ViewMode.Single;
@@ -582,8 +565,7 @@ const NewUIContainer = ({
     setFocusedItemIndexes,
     useTableNG,
     enableVirtualization,
-    heightFallbackRef: heightFallback.measureRef,
-    heightFallbackStyle: heightFallback.style,
+    fillHeight,
   };
 
   let body;
@@ -777,7 +759,14 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
   return foundLabels;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+/**
+ * `fillHeight` hosts (e.g. a dashboard panel) bound our height, so the table wrappers take their share of it
+ * and the table's bottom edge lands on the host's. Hosts that don't bound us (e.g. Explore) have no height to
+ * share out, so those same wrappers keep the fixed FLAMEGRAPH_CONTAINER_HEIGHT they have always used - a
+ * percentage would resolve against an indefinite ancestor and collapse to the table's header. Either way the
+ * flame graph's own wrapper is left to grow organically, which is what it did before and still does.
+ */
+function getStyles(theme: GrafanaTheme2, fillHeight: boolean) {
   return {
     container: css({
       label: 'container',
@@ -792,19 +781,15 @@ function getStyles(theme: GrafanaTheme2) {
     body: css({
       label: 'body',
       flexGrow: 1,
-      // Without this, a flex item's automatic minimum size defaults to its content's natural size, which
-      // let this (and everything under it, including the table) grow to match the flame graph's organic,
-      // unbounded height instead of shrinking to fit the real space .container has available.
+      // Without this, a flex item's automatic minimum size is its content's natural size, which lets this
+      // (and the table under it) grow to the flame graph's organic height instead of shrinking to the space
+      // .container actually has.
       minHeight: 0,
     }),
 
-    // Single-pane (Top Table only) view. The table manages its own internal scrolling (react-data-grid /
-    // react-window), so this just needs to give it its real allotted height to measure against, rather than
-    // a fixed constant that could be taller than the panel's actual space - which let the table's bottom
-    // run past the panel's bottom.
+    // Single-pane (Top Table only) view.
     tableContainer: css({
-      height: '100%',
-      minHeight: 0,
+      ...(fillHeight ? { height: '100%', minHeight: 0 } : { height: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 
     horizontalContainer: css({
@@ -817,27 +802,16 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
 
-    // Deliberately left with its original (organic, unbounded) sizing - opts out of the row's default
-    // stretch behavior so the flame graph keeps rendering at its natural height, same as before.
     horizontalGraphContainer: css({
       flexBasis: '50%',
       minWidth: 0,
-      alignSelf: 'flex-start',
     }),
 
-    // Also opts out of the row's default stretch (like horizontalGraphContainer above): without this, an
-    // indefinite-height row (e.g. Explore, which doesn't bound our height) stretches this to match the flame
-    // graph's organic height instead of collapsing to its own (near-zero) content size - which hid the
-    // near-zero measurement useHeightFallback relies on to apply FLAMEGRAPH_CONTAINER_HEIGHT, so a shallow
-    // profile's short flame graph left the table stretched just as short instead of getting its fallback
-    // height. height: '100%' keeps it filling a real bounded row (dashboard panel) same as before.
     horizontalTableContainer: css({
       flexBasis: '50%',
       minWidth: 0,
-      minHeight: 0,
-      height: '100%',
-      alignSelf: 'flex-start',
       overflow: 'auto',
+      ...(fillHeight ? { height: '100%', minHeight: 0 } : { maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 
     verticalGraphContainer: css({
@@ -845,9 +819,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
 
     verticalTableContainer: css({
-      flex: '1 1 0',
-      minHeight: 0,
-      overflow: 'auto',
+      ...(fillHeight ? { flex: '1 1 0', minHeight: 0, overflow: 'auto' } : { height: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 
     verticalContainer: css({
@@ -861,15 +833,15 @@ function getStyles(theme: GrafanaTheme2) {
     horizontalPaneContainer: css({
       label: 'horizontalPaneContainer',
       flexBasis: '50%',
-      maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT,
       minWidth: 0,
       overflow: 'auto',
+      ...(fillHeight ? { height: '100%', minHeight: 0 } : { maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 
     verticalPaneContainer: css({
       label: 'verticalPaneContainer',
       marginBottom: theme.spacing(1),
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
+      ...(fillHeight ? { flex: '1 1 0', minHeight: 0 } : { height: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
   };
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { escapeStringForRegex } from '@grafana/data';
 
@@ -8,6 +8,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
+import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
 import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
 
@@ -34,11 +35,8 @@ type FlameGraphPaneProps = {
   useTableNG?: boolean;
   // Test-only escape hatch to disable top-table virtualization in jsdom.
   enableVirtualization?: boolean;
-  // Attached to this pane's table wrapper (not a persistent ancestor) so it fires fresh whenever the pane
-  // switches into a table view, and applied directly to that wrapper so an indefinite-height host doesn't
-  // leave the actual table with too little space. See useHeightFallback in FlameGraphContainer.
-  heightFallbackRef?: (node: HTMLDivElement | null) => void;
-  heightFallbackStyle?: CSSProperties;
+  // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
+  fillHeight?: boolean;
 };
 
 const FlameGraphPane = ({
@@ -63,8 +61,7 @@ const FlameGraphPane = ({
   setSharedSandwichItem,
   useTableNG,
   enableVirtualization,
-  heightFallbackRef,
-  heightFallbackStyle,
+  fillHeight,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
@@ -87,7 +84,7 @@ const FlameGraphPane = ({
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
-  const styles = getStyles();
+  const styles = getStyles(Boolean(fillHeight));
 
   useLayoutEffect(() => {
     setCollapsedMap(dataContainer.getCollapsedMap());
@@ -240,7 +237,7 @@ const FlameGraphPane = ({
   switch (paneView) {
     case PaneView.TopTable:
       content = (
-        <div ref={heightFallbackRef} className={styles.tableContainer} style={heightFallbackStyle}>
+        <div className={styles.tableContainer}>
           <FlameGraphTopTableContainer
             data={dataContainer}
             onSymbolClick={onSymbolClick}
@@ -302,7 +299,7 @@ const FlameGraphPane = ({
       break;
     case PaneView.CallTree:
       content = (
-        <div ref={heightFallbackRef} className={styles.tableContainer} style={heightFallbackStyle}>
+        <div className={styles.tableContainer}>
           <FlameGraphCallTreeContainer
             data={dataContainer}
             onSymbolClick={onCallTreeSymbolClick}
@@ -325,20 +322,19 @@ const FlameGraphPane = ({
   return <div className={styles.paneWrapper}>{content}</div>;
 };
 
-function getStyles() {
+function getStyles(fillHeight: boolean) {
   return {
     paneWrapper: css({
       width: '100%',
       height: '100%',
     }),
-    // The table manages its own internal scrolling (react-data-grid / react-window), so this just needs to
-    // give it its real allotted height to measure against, rather than a fixed constant taller than the
-    // pane's actual available space - which let the table's bottom run past the panel's bottom.
+    // The table does its own internal scrolling, so it just needs a definite height to measure against: the
+    // pane's real share of a bounded host, or the fixed fallback when the host doesn't bound us at all.
+    // See the `fillHeight` prop on FlameGraphContainer.
     tableContainer: css({
-      height: '100%',
       minWidth: 0,
-      minHeight: 0,
       overflow: 'hidden',
+      ...(fillHeight ? { height: '100%', minHeight: 0 } : { height: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
   };
 }
