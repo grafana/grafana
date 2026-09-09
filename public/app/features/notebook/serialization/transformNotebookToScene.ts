@@ -1,9 +1,10 @@
 import { config } from '@grafana/runtime';
-import { SceneRefreshPicker, SceneTimePicker } from '@grafana/scenes';
+import { SceneRefreshPicker } from '@grafana/scenes';
 import { type Resource } from 'app/features/apiserver/types';
 import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 
 import { NotebookScene } from '../scene/NotebookScene';
+import { NotebookTimePicker } from '../scene/NotebookTimePicker';
 import { type Spec as NotebookSpec } from '../types';
 
 import { deserializeNotebookLayout } from './deserializeNotebookLayout';
@@ -24,13 +25,9 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
     description: spec.description,
     tags: spec.tags,
     uid: resource.metadata.name,
-    body: deserializeNotebookLayout(spec.layout, spec.elements, {
-      title: spec.title,
-      tags: spec.tags,
-      hideTimeControls: timeSettings.hideTimepicker,
-    }),
+    body: deserializeNotebookLayout(spec.layout, spec.elements, { title: spec.title, tags: spec.tags }),
     $timeRange: buildSceneTimeRange(timeSettings),
-    timePicker: new SceneTimePicker({
+    timePicker: new NotebookTimePicker({
       quickRanges: timeSettings.quickRanges,
       defaultQuickRanges: config.quickRanges,
     }),

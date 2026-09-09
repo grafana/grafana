@@ -14,14 +14,7 @@ import {
   setLocationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
-import {
-  sceneGraph,
-  SceneRefreshPicker,
-  SceneTimePicker,
-  SceneTimeRange,
-  ScopesVariable,
-  VizPanel,
-} from '@grafana/scenes';
+import { sceneGraph, SceneRefreshPicker, SceneTimeRange, ScopesVariable, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -31,6 +24,7 @@ import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
 import { NotebookScene } from './NotebookScene';
+import { NotebookTimePicker } from './NotebookTimePicker';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -72,7 +66,7 @@ function buildScene(hideTimeControls: boolean) {
       ],
     }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    timePicker: new SceneTimePicker({}),
+    timePicker: new NotebookTimePicker({}),
     refreshPicker: new SceneRefreshPicker({ refresh: '10s', intervals: ['10s', '1m'] }),
     hideTimeControls,
   });
@@ -86,7 +80,7 @@ function buildSceneWithPanel() {
       cells: [new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel })],
     }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    timePicker: new SceneTimePicker({}),
+    timePicker: new NotebookTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
   });
 
@@ -120,29 +114,24 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  // The time range is picked in the document body now. A picker left in the controls row as well
-  // would give the notebook two of them, disagreeing about which window it is showing.
-  it('renders its only time picker in the document, and no refresh picker at all', () => {
+  it('renders an absolute time picker in the controls row, and no refresh picker', () => {
     const scene = buildScene(false);
     activate(scene);
 
     render(<scene.Component model={scene} />);
 
-    const pickers = screen.getAllByTestId(selectors.components.TimePicker.openButton);
-    expect(pickers).toHaveLength(1);
-    expect(screen.getByRole('group', { name: 'Time' })).toContainElement(pickers[0]);
+    expect(screen.getByTestId(selectors.components.TimePicker.openButton)).not.toHaveTextContent('Last 6 hours');
     expect(screen.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
   });
 
-  // hideTimeControls is read off the spec here but rendered by the body, so it has to be pushed
-  // down — including after a whole-state swap replaces the body with a rebuilt one.
-  it('pushes hideTimeControls down to the body', () => {
-    const scene = buildScene(false);
+  // timeSettings.hideTimepicker is a spec field a notebook can arrive with, and it means this row.
+  it('renders no time picker when the notebook hides its time controls', () => {
+    const scene = buildScene(true);
     activate(scene);
 
-    scene.setState({ hideTimeControls: true });
+    render(<scene.Component model={scene} />);
 
-    expect(scene.state.body.state.hideTimeControls).toBe(true);
+    expect(screen.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
   });
 
   describe('edit mode', () => {
@@ -219,7 +208,7 @@ describe('NotebookScene', () => {
         title: 'My notebook',
         body: new NotebookLayoutManager({ cells: [cell] }),
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
+        timePicker: new NotebookTimePicker({}),
         refreshPicker: new SceneRefreshPicker({}),
       });
       scene.onEnterEditMode();

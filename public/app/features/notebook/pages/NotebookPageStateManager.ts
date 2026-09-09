@@ -8,9 +8,10 @@ import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { notebookResourceFor } from '../api/notebookResource';
+import { newNotebookSpec } from '../newNotebookSpec';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
-import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
+import { type Spec as NotebookSpec } from '../types';
 
 /**
  * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`
@@ -149,7 +150,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     this.requestSeq++;
 
     const spec: NotebookSpec = {
-      ...defaultNotebookSpec(),
+      ...newNotebookSpec(),
       title: t('notebooks.new.default-title', 'Notebook #{{token}}', { token: generateTitleToken() }),
     };
 

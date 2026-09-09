@@ -12,7 +12,6 @@ import { type NotebookElement, type NotebookLayoutKind } from '../types';
 interface NotebookHeader {
   title?: string;
   tags?: string[];
-  hideTimeControls?: boolean;
 }
 
 /**
@@ -71,10 +70,5 @@ export function deserializeNotebookLayout(
     }
   }
 
-  return new NotebookLayoutManager({
-    cells,
-    title: header?.title,
-    tags: header?.tags,
-    hideTimeControls: header?.hideTimeControls,
-  });
+  return new NotebookLayoutManager({ cells, title: header?.title, tags: header?.tags });
 }

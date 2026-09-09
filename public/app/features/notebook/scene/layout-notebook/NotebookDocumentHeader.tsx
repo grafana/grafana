@@ -1,27 +1,20 @@
-import { type TimeRange, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, TagList, Text, type WeekStart } from '@grafana/ui';
+import { Stack, TagList, Text } from '@grafana/ui';
 
 import { NotebookTagsField } from '../../NotebookTagsField';
 
-import { NotebookTimeRangePicker } from './NotebookTimeRangePicker';
 import { NotebookTitleEditor } from './NotebookTitleEditor';
 
 const TAGS_INPUT_ID = 'notebook-tags';
-const TIME_LABEL_ID = 'notebook-time-label';
 
 interface Props {
   title?: string;
   tags?: string[];
-  timeRange: TimeRange;
-  timeZone: TimeZone;
-  weekStart?: WeekStart;
-  hideTimeControls?: boolean;
+  timeFrom: string;
+  timeTo: string;
   isEditing?: boolean;
   onTagsChange?: (tags: string[]) => void;
   onTitleChange?: (title: string) => void;
-  onTimeRangeChange: (timeRange: TimeRange) => void;
-  onTimeZoneChange: (timeZone: TimeZone) => void;
 }
 
 // The notebook document header: the title and the document's metadata as labelled rows.
@@ -30,15 +23,11 @@ interface Props {
 export function NotebookDocumentHeader({
   title,
   tags,
-  timeRange,
-  timeZone,
-  weekStart,
-  hideTimeControls,
+  timeFrom,
+  timeTo,
   isEditing,
   onTagsChange,
   onTitleChange,
-  onTimeRangeChange,
-  onTimeZoneChange,
 }: Props) {
   const canEditTags = Boolean(isEditing && onTagsChange);
   const canEditTitle = Boolean(isEditing && onTitleChange);
@@ -57,21 +46,11 @@ export function NotebookDocumentHeader({
         </Text>
       ) : null}
 
-      {!hideTimeControls && (
-        // Grouped and labelled by the row's own label: the picker is a button, so htmlFor would
-        // associate with nothing and its only name would be the range it is currently showing.
-        <MetaRow label={t('dashboard.notebook-layout.time', 'Time')} labelId={TIME_LABEL_ID}>
-          <div role="group" aria-labelledby={TIME_LABEL_ID}>
-            <NotebookTimeRangePicker
-              value={timeRange}
-              timeZone={timeZone}
-              weekStart={weekStart}
-              onChange={onTimeRangeChange}
-              onChangeTimeZone={onTimeZoneChange}
-            />
-          </div>
-        </MetaRow>
-      )}
+      <MetaRow label={t('dashboard.notebook-layout.time', 'Time')}>
+        <Text variant="bodySmall">
+          {timeFrom} → {timeTo}
+        </Text>
+      </MetaRow>
 
       {showTags ? (
         <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined}>
@@ -101,14 +80,11 @@ export function NotebookDocumentHeader({
 function MetaRow({
   label,
   htmlFor,
-  labelId,
   children,
 }: {
   label: string;
   /** Set when the row owns a form control, so the visible label is really its label. */
   htmlFor?: string;
-  /** Set when the row's control can only be named by reference, rather than by wrapping it. */
-  labelId?: string;
   children: React.ReactNode;
 }) {
   // A native label rather than grafana-ui's Label, so the two rows stay typographically identical
@@ -117,7 +93,7 @@ function MetaRow({
 
   return (
     <Stack direction="row" gap={2} alignItems="center">
-      <Wrapper htmlFor={htmlFor} id={labelId}>
+      <Wrapper htmlFor={htmlFor}>
         {/* `body` is the theme's 14px step; `bodySmall` would be 12. */}
         <Text variant="body" color="secondary">
           {label}

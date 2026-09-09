@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, type TimeRange, type TimeZone } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -57,8 +57,6 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
-  /** Mirrored from the scene the same way `tags` is, and for the same reason. */
-  hideTimeControls?: boolean;
 }
 
 // Keep typing useful to undo without storing every keystroke as a separate action.
@@ -227,11 +225,6 @@ export class NotebookLayoutManager
   /** Refreshes the header's copy of the title, pushed by NotebookScene exactly as setTags is. */
   public setTitle(title: string | undefined): void {
     this.setState({ title });
-  }
-
-  /** Same arrangement as setTags: the scene reads it off the spec, the header is what renders it. */
-  public setHideTimeControls(hideTimeControls: boolean | undefined): void {
-    this.setState({ hideTimeControls });
   }
 
   /**
@@ -798,26 +791,12 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags, isEditing, hideTimeControls, key } = model.useState();
+  const { cells, title, tags, isEditing, key } = model.useState();
 
-  const sceneTimeRange = sceneGraph.getTimeRange(model);
-  const { value: timeRange, weekStart } = sceneTimeRange.useState();
-  // getTimeZone rather than the state field: it falls back to the default when the range carries none.
-  const timeZone = sceneTimeRange.getTimeZone();
+  const timeRange = sceneGraph.getTimeRange(model).useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
   const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
-  // Straight onto the scene's own time range rather than up through NotebookScene: sceneGraph finds
-  // it by walking the graph, so the header gets a writable range without this file importing the
-  // scene as a value — the cycle this layout is arranged to avoid.
-  const onTimeRangeChange = useCallback(
-    (nextRange: TimeRange) => sceneTimeRange.onTimeRangeChange(nextRange),
-    [sceneTimeRange]
-  );
-  const onTimeZoneChange = useCallback(
-    (nextTimeZone: TimeZone) => sceneTimeRange.onTimeZoneChange(nextTimeZone),
-    [sceneTimeRange]
-  );
 
   // Only the drop position lives in React state; the reorder itself lives on the model. onDragUpdate
   // fires when the drop index changes, not on every pointer move, so this re-renders the list a
@@ -908,15 +887,11 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
         <NotebookDocumentHeader
           title={title}
           tags={tags}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          weekStart={weekStart}
-          hideTimeControls={hideTimeControls}
+          timeFrom={timeRange.from}
+          timeTo={timeRange.to}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
           onTitleChange={onTitleChange}
-          onTimeRangeChange={onTimeRangeChange}
-          onTimeZoneChange={onTimeZoneChange}
         />
       </header>
 

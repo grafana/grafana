@@ -45,14 +45,11 @@ export interface NotebookSceneState extends SceneObjectState {
   uid?: string;
   /** The vertical document of cells. */
   body: NotebookLayoutManager;
-  /**
-   * Not rendered — the notebook's time range is picked in the document header. It is kept because it
-   * is the only carrier of `timeSettings.quickRanges`, which `buildTimeSettingsSpec` reads back out.
-   */
+  /** The controls row's time picker — a NotebookTimePicker in practice, so the range stays fixed. */
   timePicker: SceneTimePicker;
-  /** Not rendered either, but activated by this scene so a spec's autoRefresh interval still runs. */
+  /** Not rendered at all, but activated by this scene so a spec's autoRefresh interval still runs. */
   refreshPicker: SceneRefreshPicker;
-  /** From `timeSettings.hideTimepicker`. Pushed down to the body, which renders the picker. */
+  /** From `timeSettings.hideTimepicker`. Takes the time picker out of the controls row. */
   hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
@@ -130,11 +127,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         // `title` is mirrored on the same terms as `tags` above.
         if (newState.body !== prevState.body || newState.title !== prevState.title) {
           newState.body.setTitle?.(newState.title);
-        }
-        // Mirrored for the same reason as `tags`: the spec field is read here, the time picker it
-        // hides is rendered in the document header.
-        if (newState.body !== prevState.body || newState.hideTimeControls !== prevState.hideTimeControls) {
-          newState.body.setHideTimeControls?.(newState.hideTimeControls);
         }
         // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
         // the steps cannot run any more.
@@ -296,7 +288,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
-  const { body, overlay, isEditing } = model.useState();
+  const { body, timePicker, hideTimeControls, overlay, isEditing } = model.useState();
 
   return (
     <div className={styles.container}>
@@ -307,6 +299,9 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
         <NotebookSaveStatus autosave={model.autosave} />
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         <NotebookEditToggle notebook={model} />
+        {/* No refresh picker beside it: a notebook holds a fixed window. The spec's autoRefresh still
+            runs — the activation handler above starts it. */}
+        {!hideTimeControls && <timePicker.Component model={timePicker} />}
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
@@ -360,9 +355,8 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     [theme.breakpoints.up('md')]: {
       position: 'sticky',
       top: headerHeight,
-      // Above the docked sidebar, so the row is not overlapped as the document scrolls under it. Same
-      // token the dashboard's controls chrome uses. The document's own time picker opens at
-      // zIndex.modal, so its popover still clears this row.
+      // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
+      // token the dashboard's controls chrome uses.
       zIndex: theme.zIndex.sidemenu,
     },
   }),
