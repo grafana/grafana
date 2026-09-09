@@ -1637,6 +1637,8 @@ github.com/grafana/nanogit v1.4.3-0.20260909102848-e27ebfb82b40 h1:x5A3MoYggpfQs
 github.com/grafana/nanogit v1.4.3-0.20260909102848-e27ebfb82b40/go.mod h1:rfcbHdtP6HRGq4swBiDMbaPgUTQ8Z9xWRnUKW6HMbPA=
 github.com/grafana/nanogit v1.4.3-0.20260909110904-7ec377b156f6 h1:ZmDdX3ArwquivpOIsd0MPAJ/8k9ClqPweCSrPZL14Io=
 github.com/grafana/nanogit v1.4.3-0.20260909110904-7ec377b156f6/go.mod h1:rfcbHdtP6HRGq4swBiDMbaPgUTQ8Z9xWRnUKW6HMbPA=
+github.com/grafana/nanogit v1.4.3-0.20260909133545-284b5f1d4000 h1:lddde/qNN0qQgLfNsb1RGI1/9tKuXxpNncfctA8J27c=
+github.com/grafana/nanogit v1.4.3-0.20260909133545-284b5f1d4000/go.mod h1:qO3mxnZfV46b+Lc8ePwH3M2q8+/TNAF7kOJMEb5FlSE=
 github.com/grafana/nanogit/gittest v1.4.1 h1:xm6Wd9KlfTbh1Yqyjez1JtW0V88PVDluulN0TXq8mB8=
 github.com/grafana/nanogit/gittest v1.4.1/go.mod h1:Rg7kXKLrpgOMLl+LiC89WXrHOS9xr+uNAoMBVXzo9Xo=
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=
@@ -2982,6 +2984,8 @@ golang.org/x/sync v0.10.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
 golang.org/x/sync v0.11.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
 golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
 golang.org/x/sync v0.22.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
+golang.org/x/sync v0.23.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
 golang.org/x/sys v0.0.0-20170830134202-bb24a47a89ea/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180823144017-11551d06cbcc/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180830151530-49385e6e1522/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

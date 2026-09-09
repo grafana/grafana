@@ -115,6 +115,8 @@ github.com/grafana/nanogit v1.4.3-0.20260909102848-e27ebfb82b40 h1:x5A3MoYggpfQs
 github.com/grafana/nanogit v1.4.3-0.20260909102848-e27ebfb82b40/go.mod h1:rfcbHdtP6HRGq4swBiDMbaPgUTQ8Z9xWRnUKW6HMbPA=
 github.com/grafana/nanogit v1.4.3-0.20260909110904-7ec377b156f6 h1:ZmDdX3ArwquivpOIsd0MPAJ/8k9ClqPweCSrPZL14Io=
 github.com/grafana/nanogit v1.4.3-0.20260909110904-7ec377b156f6/go.mod h1:rfcbHdtP6HRGq4swBiDMbaPgUTQ8Z9xWRnUKW6HMbPA=
+github.com/grafana/nanogit v1.4.3-0.20260909133545-284b5f1d4000 h1:lddde/qNN0qQgLfNsb1RGI1/9tKuXxpNncfctA8J27c=
+github.com/grafana/nanogit v1.4.3-0.20260909133545-284b5f1d4000/go.mod h1:qO3mxnZfV46b+Lc8ePwH3M2q8+/TNAF7kOJMEb5FlSE=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
@@ -217,6 +219,8 @@ golang.org/x/oauth2 v0.36.0 h1:peZ/1z27fi9hUOFCAZaHyrpWG5lwe0RJEEEeH0ThlIs=
 golang.org/x/oauth2 v0.36.0/go.mod h1:YDBUJMTkDnJS+A4BP4eZBjCqtokkg1hODuPjwiGPO7Q=
 golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
 golang.org/x/sync v0.22.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
+golang.org/x/sync v0.23.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
 golang.org/x/sys v0.47.0 h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=
 golang.org/x/sys v0.47.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 golang.org/x/term v0.45.0 h1:NwWyBmoJCbfTHpxrWoZ9C6/VxOf7ic219I8xZZFdrf0=
