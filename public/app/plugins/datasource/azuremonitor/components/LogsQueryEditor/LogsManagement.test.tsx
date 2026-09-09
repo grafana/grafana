@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
 
@@ -131,7 +132,16 @@ describe('LogsQueryEditor.LogsManagement', () => {
     it('clears the existing kusto query when switching to Basic', async () => {
       const mockDatasource = createMockDatasource();
       const query = createMockQuery({
-        azureLogAnalytics: { basicLogsQuery: undefined, query: 'table | my test query' },
+        azureLogAnalytics: {
+          basicLogsQuery: undefined,
+          query: 'table | my test query',
+          builderQuery: {
+            from: {
+              type: BuilderQueryEditorExpressionType.Property,
+              property: { type: BuilderQueryEditorPropertyType.String, name: 'AnalyticsTable' },
+            },
+          },
+        },
       });
       const onChange = jest.fn();
 
@@ -156,6 +166,9 @@ describe('LogsQueryEditor.LogsManagement', () => {
             logTier: 'Basic',
             query: '',
             dashboardTime: true,
+            builderQuery: expect.objectContaining({
+              from: expect.objectContaining({ property: expect.objectContaining({ name: '' }) }),
+            }),
           }),
         })
       );
@@ -201,7 +214,17 @@ describe('LogsQueryEditor.LogsManagement', () => {
     it('shows the Auxiliary modal (not Basic) when switching from Basic to Auxiliary', async () => {
       const mockDatasource = createMockDatasource();
       const query = createMockQuery({
-        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Basic' },
+        azureLogAnalytics: {
+          basicLogsQuery: true,
+          logTier: 'Basic',
+          query: 'BasicTable | take 10',
+          builderQuery: {
+            from: {
+              type: BuilderQueryEditorExpressionType.Property,
+              property: { type: BuilderQueryEditorPropertyType.String, name: 'BasicTable' },
+            },
+          },
+        },
       });
 
       render(
@@ -250,6 +273,9 @@ describe('LogsQueryEditor.LogsManagement', () => {
             basicLogsQuery: false,
             logTier: undefined,
             query: '',
+            builderQuery: expect.objectContaining({
+              from: expect.objectContaining({ property: expect.objectContaining({ name: '' }) }),
+            }),
           }),
         })
       );

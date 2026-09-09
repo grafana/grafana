@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { ResultFormat } from '../../dataquery.gen';
+import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType, ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
 import { type EngineSchema, TablePlan } from '../../types/types';
@@ -478,6 +478,12 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
           logTier: undefined,
           query: 'BasicTable | take 10',
+          builderQuery: {
+            from: {
+              type: BuilderQueryEditorExpressionType.Property,
+              property: { type: BuilderQueryEditorPropertyType.String, name: 'BasicTable' },
+            },
+          },
         },
       });
       const onChange = jest.fn();
@@ -537,6 +543,9 @@ describe('LogsQueryEditor', () => {
               basicLogsQuery: false,
               logTier: undefined,
               query: '',
+              builderQuery: expect.objectContaining({
+                from: expect.objectContaining({ property: expect.objectContaining({ name: '' }) }),
+              }),
             }),
           })
         )

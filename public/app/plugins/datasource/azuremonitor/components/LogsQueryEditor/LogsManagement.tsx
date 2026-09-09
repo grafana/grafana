@@ -5,7 +5,7 @@ import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import { type AzureQueryEditorFieldProps } from '../../types/types';
 
-import { setDashboardTime, setKustoQuery, setLogTier } from './setQueryValue';
+import { setDashboardTime, setLogTierAndClearQuery } from './setQueryValue';
 import { getSelectedLogTier, type SelectedLogTier, type LogTier } from './utils';
 
 interface LogsManagementProps extends AzureQueryEditorFieldProps {
@@ -58,9 +58,9 @@ export function LogsManagement({
       );
 
   const commitTier = (tier: LogTier) => {
-    let updated = setLogTier(query, tier);
+    let updated = setLogTierAndClearQuery(query, tier);
     updated = setDashboardTime(updated, 'dashboard');
-    onChange(setKustoQuery(updated, ''));
+    onChange(updated);
   };
 
   return (
@@ -92,8 +92,7 @@ export function LogsManagement({
               return;
             }
             if (val === 'Analytics') {
-              const cleared = setLogTier(query, undefined);
-              onChange(setKustoQuery(cleared, ''));
+              onChange(setLogTierAndClearQuery(query, undefined));
               return;
             }
             setPendingTier(val);

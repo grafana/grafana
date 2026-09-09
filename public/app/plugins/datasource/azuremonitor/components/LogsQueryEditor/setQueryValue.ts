@@ -1,6 +1,6 @@
 import { type SelectableValue } from '@grafana/data';
 
-import { ResultFormat } from '../../dataquery.gen';
+import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType, ResultFormat } from '../../dataquery.gen';
 import { type AzureMonitorQuery } from '../../types/query';
 
 import { type LogTier } from './utils';
@@ -55,6 +55,29 @@ export function setLogTier(query: AzureMonitorQuery, logTier: LogTier | undefine
     },
   };
 }
+
+export function setLogTierAndClearQuery(query: AzureMonitorQuery, logTier: LogTier | undefined): AzureMonitorQuery {
+  const updated = setLogTier(query, logTier);
+  const builderQuery = updated.azureLogAnalytics?.builderQuery;
+
+  return {
+    ...updated,
+    azureLogAnalytics: {
+      ...updated.azureLogAnalytics,
+      query: '',
+      ...(builderQuery && {
+        builderQuery: {
+          ...builderQuery,
+          from: {
+            type: BuilderQueryEditorExpressionType.Property,
+            property: { type: BuilderQueryEditorPropertyType.String, name: '' },
+          },
+        },
+      }),
+    },
+  };
+}
+
 export function onLoad(
   query: AzureMonitorQuery,
   defaultValue: ResultFormat,

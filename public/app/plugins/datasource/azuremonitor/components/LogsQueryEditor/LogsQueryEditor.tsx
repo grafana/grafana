@@ -6,12 +6,7 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, Button, LinkButton, Space, Stack, Text, TextLink } from '@grafana/ui';
 
-import {
-  BuilderQueryEditorExpressionType,
-  BuilderQueryEditorPropertyType,
-  LogsEditorMode,
-  ResultFormat,
-} from '../../dataquery.gen';
+import { LogsEditorMode, ResultFormat } from '../../dataquery.gen';
 import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { type AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
@@ -28,7 +23,7 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { onLoad, setFormatAs, setKustoQuery, setLogTier } from './setQueryValue';
+import { onLoad, setFormatAs, setKustoQuery, setLogTierAndClearQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
 import { getSelectedLogTier, shouldShowBasicLogsToggle } from './utils';
 
@@ -149,8 +144,7 @@ const LogsQueryEditor = ({
         ? true
         : !!query.azureLogAnalytics?.basicLogsQuery && !tierStillEnabled;
     if (shouldClear) {
-      const cleared = setLogTier(query, undefined);
-      onChange(setKustoQuery(cleared, ''));
+      onChange(setLogTierAndClearQuery(query, undefined));
     }
   }, [searchLogsEnabled, basicLogsEnabled, auxiliaryLogsEnabled, onChange, query, selectedTier, showBasicLogsToggle]);
 
@@ -386,24 +380,7 @@ const LogsQueryEditor = ({
                   onClick={() => {
                     const { fromTier } = tierAutoSwitchNotice;
                     const tierValue = fromTier === 'Analytics' ? undefined : fromTier;
-                    let updated = setLogTier(query, tierValue);
-                    if (updated.azureLogAnalytics?.builderQuery) {
-                      updated = {
-                        ...updated,
-                        azureLogAnalytics: {
-                          ...updated.azureLogAnalytics,
-                          builderQuery: {
-                            ...updated.azureLogAnalytics.builderQuery,
-                            from: {
-                              type: BuilderQueryEditorExpressionType.Property,
-                              property: { type: BuilderQueryEditorPropertyType.String, name: '' },
-                            },
-                          },
-                        },
-                      };
-                      updated = setKustoQuery(updated, '');
-                    }
-                    onChange(updated);
+                    onChange(setLogTierAndClearQuery(query, tierValue));
                     setTierAutoSwitchNotice(null);
                   }}
                 >
