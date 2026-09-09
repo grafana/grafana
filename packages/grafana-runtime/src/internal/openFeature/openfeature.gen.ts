@@ -43,6 +43,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query service, use the new name */
+  DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
@@ -175,6 +177,10 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Enables the configurable footer settings for PDF reports */
+  ReportingFooterSettings: "reportingFooterSettings",
+  /** Enables configuration of PDF report settings */
+  ReportingHeaderSettings: "reportingHeaderSettings",
   /** Routes snapshot requests from /api to the /apis endpoint */
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -364,6 +370,17 @@ export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvalua
  */
 export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Data source query service, use the new name
+ *
+ * **Details:**
+ * - flag key: `datasources.querier.newName`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.querier.newName", false, options).value;
 };
 
 /**
@@ -1090,6 +1107,28 @@ export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Enables the configurable footer settings for PDF reports
+ *
+ * **Details:**
+ * - flag key: `reportingFooterSettings`
+ * - default value: `false`
+ */
+export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reportingFooterSettings", false, options).value;
+};
+
+/**
+ * Enables configuration of PDF report settings
+ *
+ * **Details:**
+ * - flag key: `reportingHeaderSettings`
+ * - default value: `false`
+ */
+export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reportingHeaderSettings", false, options).value;
 };
 
 /**
