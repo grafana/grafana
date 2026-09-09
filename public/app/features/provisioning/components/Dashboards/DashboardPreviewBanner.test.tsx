@@ -423,14 +423,18 @@ describe('DashboardPreviewBanner', () => {
         });
       });
 
-      it('does not offer to save to a new branch when the repository only allows writes', () => {
-        setup(
-          { ...previewParams, dashboard: createDashboard({ loadedRef: 'feature-branch' }) },
-          { ...liveQuery({}), repositoryView: { workflows: ['write'] } }
-        );
+      it('offers a plain save when the repository only allows writes, since it cannot branch', async () => {
+        const dashboard = createDashboard({ loadedRef: 'feature-branch' });
+        setup({ ...previewParams, dashboard }, { ...liveQuery({}), repositoryView: { workflows: ['write'] } });
 
-        expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Save to a new branch' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument();
+
+        // The draft is still recoverable: the form defaults to the configured branch instead.
+        await userEvent.setup().click(screen.getByRole('button', { name: 'Save changes' }));
+        expect(dashboard.openSaveDrawer).toHaveBeenCalledWith({
+          recoverToNewBranch: { fileExistsOnConfiguredBranch: false },
+        });
       });
 
       it('still offers recovery when the last dry-run had errors', () => {

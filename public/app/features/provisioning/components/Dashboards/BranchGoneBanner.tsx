@@ -13,13 +13,16 @@ interface BranchGoneBannerProps {
   existingUid?: string;
   /** Set while the scene still holds the deleted branch's content; undefined once the loader fell back to the saved version. */
   draft?: RecoverToNewBranch;
+  /** Whether the repository allows the branch workflow; a write-only repo saves the draft to its configured branch instead. */
+  canSaveToNewBranch?: boolean;
 }
 
 /**
  * Shown when the branch a provisioned preview was loaded from has been deleted. With a draft it offers
- * to commit it to a fresh branch or discard it; otherwise it just explains why the saved version is shown.
+ * to save it (to a fresh branch where the repo allows) or discard it; otherwise it just explains why
+ * the saved version is shown.
  */
-export function BranchGoneBanner({ dashboard, existingUid, draft }: BranchGoneBannerProps) {
+export function BranchGoneBanner({ dashboard, existingUid, draft, canSaveToNewBranch }: BranchGoneBannerProps) {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
 
@@ -40,11 +43,12 @@ export function BranchGoneBanner({ dashboard, existingUid, draft }: BranchGoneBa
     );
   }
 
-  const saveToNewBranch = () => {
+  const saveDraft = () => {
     // Re-entering edit mode would re-snapshot the baseline and clear isDirty.
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
+    // The form defaults to a fresh branch, or to the configured branch when the repo is write-only.
     dashboard.openSaveDrawer({ recoverToNewBranch: draft });
   };
 
@@ -66,15 +70,17 @@ export function BranchGoneBanner({ dashboard, existingUid, draft }: BranchGoneBa
           <Button variant="secondary" fill="outline" onClick={discardChanges}>
             {t('dashboard-scene.dashboard-preview-banner.branch-gone-discard', 'Discard changes')}
           </Button>
-          <Button variant="primary" onClick={saveToNewBranch}>
-            {t('dashboard-scene.dashboard-preview-banner.branch-gone-save', 'Save to a new branch')}
+          <Button variant="primary" onClick={saveDraft}>
+            {canSaveToNewBranch
+              ? t('dashboard-scene.dashboard-preview-banner.branch-gone-save', 'Save to a new branch')
+              : t('dashboard-scene.dashboard-preview-banner.branch-gone-save-changes', 'Save changes')}
           </Button>
         </Stack>
       }
     >
       {t(
         'dashboard-scene.dashboard-preview-banner.branch-gone-body',
-        'The branch this preview was created on has been deleted, so the pull request can no longer be opened. Your changes only exist in this preview — save them to a new branch to keep them, or discard them and return to the saved version.'
+        'The branch this preview was created on has been deleted, so the pull request can no longer be opened. Your changes only exist in this preview — save them to keep them, or discard them and return to the saved version.'
       )}
     </Alert>
   );

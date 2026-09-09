@@ -64,15 +64,14 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
   if (file.isError && isRefNotFoundError(file.error, queryParams.ref)) {
     // The loader only records the ref when it actually loaded, so a match means the scene still holds
     // the branch's content; after a refresh it fell back to the saved version and there is no draft.
-    // Recovery saves to a new branch, so it is only offered when the repo allows that workflow.
-    const hasDraft =
-      getLoadedRef(dashboard.state.meta) === queryParams.ref && Boolean(repository?.workflows?.includes('branch'));
+    const hasDraft = getLoadedRef(dashboard.state.meta) === queryParams.ref;
     return (
       <BranchGoneBanner
         dashboard={dashboard}
         existingUid={existingUid}
         // No `existing` means the file was born on the deleted branch and never merged.
         draft={hasDraft ? { fileExistsOnConfiguredBranch: Boolean(existingUid) } : undefined}
+        canSaveToNewBranch={Boolean(repository?.workflows?.includes('branch'))}
       />
     );
   }
