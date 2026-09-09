@@ -27,7 +27,6 @@ export const FlameGraphExploreContainer = (props: Props) => {
         data={props.dataFrames[0]}
         stickyHeader={true}
         getTheme={() => theme}
-        enableNewUI={true}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
         onTextAlignSelected={(align: string) => interaction('text_align_selected', { align })}
