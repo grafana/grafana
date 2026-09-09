@@ -24497,9 +24497,9 @@ __metadata:
   linkType: hard
 
 "lossless-json@npm:^4.1.1":
-  version: 4.3.0
-  resolution: "lossless-json@npm:4.3.0"
-  checksum: 10/a984a882c79b6e62a917d0202518472c17587bdee002f1427d7ec61115f9fbdeb5f0baa9f0e9fff8d9dbacd17da6b6c910012b2dcab69dd33d151cb7c13d5a37
+  version: 4.3.1
+  resolution: "lossless-json@npm:4.3.1"
+  checksum: 10/15d41ebc7b2c4a20e62b1041542f21895a457d8fa26120c5d68837b1e6426e944588ea56cd67763607b8481915e317c0cfa346436e60b0b2188a24db4932b936
   languageName: node
   linkType: hard
 
