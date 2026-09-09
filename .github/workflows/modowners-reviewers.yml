@@ -20,8 +20,13 @@ jobs:
     runs-on: ubuntu-arm64-small
     permissions:
       contents: read
-      pull-requests: write
+      id-token: write
     steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-pr-automation
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
@@ -39,7 +44,7 @@ jobs:
           go-version-file: scripts/modowners/go.mod
       - name: Request module owners
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
@@ -49,10 +54,11 @@ jobs:
             exit 0
           fi
           echo "Requesting: $slugs"
-          while IFS= read -r slug; do
-            [ -z "$slug" ] && continue
-            if ! jq -n --arg slug "$slug" '{reviewers: [], team_reviewers: [$slug]}' |
-              gh api --method POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/requested_reviewers" --input -; then
-              echo "::warning::Could not request @grafana/${slug}"
-            fi
-          done <<< "$slugs"
+          assigned=$(jq -n --arg slugs "$slugs" '{reviewers: [], team_reviewers: ($slugs | split("\n") | map(select(length > 0)))}' |
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/requested_reviewers" --input - |
+            jq -r '.requested_teams[].slug')
+          echo "Assigned: $assigned"
+          if [ -z "$assigned" ]; then
+            echo "::error::GitHub accepted the request but assigned no teams"
+            exit 1
+          fi
