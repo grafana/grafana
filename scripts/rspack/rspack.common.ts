@@ -137,6 +137,7 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       chunkFormat: 'module',
       chunkLoading: 'import',
       workerChunkLoading: 'import',
+      crossOriginLoading: 'anonymous',
     },
     resolve: {
       conditionNames: ['@grafana-app/source', '...'],

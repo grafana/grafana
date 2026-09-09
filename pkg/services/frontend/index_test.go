@@ -126,8 +126,9 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		// The response should contain references to the assets
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/runtime.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/app.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/app.js\"")
+		assert.Contains(t, body, "type=\"text/javascript\"")
 	})
 
 	t.Run("should serve preview assets when the preview cookie is set", func(t *testing.T) {
@@ -240,8 +241,9 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"module\"")
-		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"module\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/app.js\"")
+		assert.Contains(t, body, "type=\"module\"")
 		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
 		assert.Contains(t, body, "// test boot stub for build/rspack")
 		// Static images are copied into the build directory, so they move with it.
