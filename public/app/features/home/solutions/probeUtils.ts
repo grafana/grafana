@@ -97,6 +97,10 @@ export async function probeProxyGet<T>(
  * rejects with the timeout error, even when `work` ignores its signal or settles in reaction to
  * the abort. A parent abort is only forwarded: work that honors the signal rejects on its own,
  * work that ignores it runs to the deadline.
+ *
+ * Known gap, accepted: BackendSrv honors `abortSignal` only until response headers arrive, so a
+ * `get`/`getResource` whose body stalls afterwards keeps its fetch-queue slot until the server
+ * finishes. Probe bodies are small JSON, so headers and body normally arrive together.
  */
 export async function withDeadline<T>(
   ms: number,
