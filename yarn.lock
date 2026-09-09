@@ -18022,13 +18022,14 @@ __metadata:
   linkType: hard
 
 "eslint-no-restricted@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "eslint-no-restricted@npm:0.1.1"
+  version: 0.1.2
+  resolution: "eslint-no-restricted@npm:0.1.2"
   dependencies:
+    "@typescript-eslint/types": "npm:^8.56.0"
     "@typescript-eslint/utils": "npm:^8.56.0"
   peerDependencies:
     eslint: ^8.57.0 || ^9 || ^10
-  checksum: 10/27bd70a4461291d9825e505c86fdb4000f31dfc7ff362d711f4f977ae76150ed90e297eaae15d6362cf34530e5366f35c69edb84121878be8389b1f1e22665aa
+  checksum: 10/ffe710fba964604d075195e409fb34723b7205a4df29cf20cd8423b929e0219a3bde8b633a77c26a7b0854b354fae4c9955b5cfb1fae93e76ad40da91b776f89
   languageName: node
   linkType: hard
 
