@@ -2182,7 +2182,7 @@ __metadata:
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.3.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
-    "@openfeature/web-sdk": "npm:^1.8.0"
+    "@openfeature/web-sdk": "npm:^1.10.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -3027,7 +3027,7 @@ __metadata:
     "@openfeature/localstorage-provider": "npm:^0.1.2"
     "@openfeature/ofrep-web-provider": "npm:^0.4.1"
     "@openfeature/react-sdk": "npm:^1.3.0"
-    "@openfeature/web-sdk": "npm:^1.8.0"
+    "@openfeature/web-sdk": "npm:^1.10.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
@@ -6419,12 +6419,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfeature/web-sdk@npm:^1.8.0":
-  version: 1.9.0
-  resolution: "@openfeature/web-sdk@npm:1.9.0"
+"@openfeature/web-sdk@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "@openfeature/web-sdk@npm:1.10.0"
   peerDependencies:
-    "@openfeature/core": ^1.11.0
-  checksum: 10/44c98436ee31fcaf08f9655bec374f4e0dc471224c3a2d873ffcff33f060af786710cab74bbb5dc3af734e64c1078658c1ce687bb22d750a1785a5fe809fc8b3
+    "@openfeature/core": ^1.12.0
+  checksum: 10/a9dcfaa93c3093580526db4ee24ffbb3ff81a2c2bf52827d8e64a0e673e5faae5dda9ca31f58801739a7d0b92d5cc5d76111bbc2fc00621e4e002cd964a3dc09
   languageName: node
   linkType: hard
 
@@ -20005,7 +20005,7 @@ __metadata:
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^6.0.0"
     "@openfeature/react-sdk": "npm:^1.3.0"
-    "@openfeature/web-sdk": "npm:^1.8.0"
+    "@openfeature/web-sdk": "npm:^1.10.0"
     "@opentelemetry/api": "npm:1.9.1"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@playwright/test": "npm:1.56.1"
