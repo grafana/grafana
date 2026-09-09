@@ -154,7 +154,8 @@ Because today's activity isn't included yet, these numbers can be lower than the
 **Views total** and **Errors total** are aggregates.
 Grafana starts counting from the first time it aggregates data for a dashboard. That first pass looks back 30 days, so any activity older than that isn't included.
 
-To sort by activity that tracks more closely to the present, use **Views 30 days**, **Errors 30 days**, or [visualize the daily usage insights data](#visualize-usage-insights-data).
+For activity closer to the present, use **Views 30 days** or **Errors 30 days**, or open [dashboard insights](#dashboard-insights) on a specific dashboard to see today's views.
+To get same-day detail across all dashboards, [export logs of usage insights](ref:export-logs-of-usage-insights) and [visualize the exported logs](#visualize-usage-insights-data).
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-sort-9.5.png" max-width="650px" class="docs-image--no-shadow" alt="Open list of dashboard sort options" >}}
 
