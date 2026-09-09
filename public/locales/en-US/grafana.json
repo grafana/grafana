@@ -7090,6 +7090,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "The branch this preview was created on has been deleted, so the pull request can no longer be opened. Your changes only exist in this preview — save them to keep them, or discard them and return to the saved version.",
+      "branch-gone-discard": "Discard changes",
+      "branch-gone-refresh-body": "The branch this preview was created on has been deleted. You are now viewing the saved version of this dashboard.",
+      "branch-gone-save": "Save to a new branch",
+      "branch-gone-save-changes": "Save changes",
+      "branch-gone-title": "This branch no longer exists",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
