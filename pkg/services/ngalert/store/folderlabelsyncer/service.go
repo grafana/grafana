@@ -15,12 +15,15 @@ package folderlabelsyncer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -65,6 +68,7 @@ type Service struct {
 	log              log.Logger
 	metrics          *metrics.FolderLabelSyncer
 	fullSyncInterval time.Duration
+	retryBackoff     wait.Backoff
 
 	mu    sync.Mutex
 	dirty map[models.FolderKey]struct{}
@@ -82,6 +86,7 @@ func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource
 		log:              log.New("ngalert.folderlabelsyncer"),
 		metrics:          m,
 		fullSyncInterval: cfg.UnifiedAlerting.FolderLabelFullSyncInterval,
+		retryBackoff:     retry.DefaultBackoff,
 		dirty:            make(map[models.FolderKey]struct{}),
 		wake:             make(chan struct{}, 1),
 	}
@@ -142,6 +147,17 @@ func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) erro
 	}
 }
 
+func isRetriable(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	return apierrors.IsConflict(err) ||
+		apierrors.IsTooManyRequests(err) ||
+		apierrors.IsServerTimeout(err) ||
+		apierrors.IsTimeout(err) ||
+		apierrors.IsInternalError(err)
+}
+
 func (s *Service) drain(ctx context.Context) {
 	processed := 0
 	keys := s.take()
@@ -152,18 +168,24 @@ func (s *Service) drain(ctx context.Context) {
 		if ctx.Err() != nil {
 			return
 		}
-		if err := s.partialSync(ctx, key); err != nil {
+		attempts := 0
+		err := retry.OnError(s.retryBackoff, isRetriable, func() error {
+			attempts++
+			if err := s.partialSync(ctx, key); err != nil {
+				s.log.Debug("Attempt to sync folder rules label failed",
+					"org_id", key.OrgID, "folder_uid", key.UID, "attempt", attempts, "error", err)
+				return err
+			}
+			return nil
+		})
+		if err != nil {
 			s.syncFailed(metrics.SyncTypePartial)
 			s.log.Warn("Failed to sync folder rules label",
-				"org_id", key.OrgID, "folder_uid", key.UID, "error", err)
-			s.mu.Lock()
-			// re-queue failures so the next wake cycle retries them
-			s.dirty[key] = struct{}{}
-			s.mu.Unlock()
+				"org_id", key.OrgID, "folder_uid", key.UID, "attempts", attempts, "error", err)
 		} else {
 			s.syncSucceeded(metrics.SyncTypePartial)
+			processed++
 		}
-		processed++
 	}
 
 	s.log.Info("Synced rules labels on folders", "count", processed)

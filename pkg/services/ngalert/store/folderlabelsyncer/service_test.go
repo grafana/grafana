@@ -14,6 +14,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -70,7 +72,11 @@ type fakeFolderClient struct {
 	failNamespaces map[string]struct{}
 
 	patchErr error
-	patches  []resource.PatchRequest
+	// patchErrQueue is consumed one entry per Patch call, before patchErr applies, so a fake can fail
+	// a set number of times and then succeed.
+	patchErrQueue []error
+	patchCalls    int
+	patches       []resource.PatchRequest
 
 	list       []*folderv1.Folder
 	listErr    error
@@ -93,8 +99,16 @@ func (f *fakeFolderClient) Get(_ context.Context, id resource.Identifier) (*fold
 }
 
 func (f *fakeFolderClient) Patch(_ context.Context, id resource.Identifier, req resource.PatchRequest, _ resource.PatchOptions) (*folderv1.Folder, error) {
+	f.patchCalls++
 	if _, ok := f.failNamespaces[id.Namespace]; ok {
 		return nil, errors.New("failure")
+	}
+	if len(f.patchErrQueue) > 0 {
+		err := f.patchErrQueue[0]
+		f.patchErrQueue = f.patchErrQueue[1:]
+		if err != nil {
+			return nil, err
+		}
 	}
 	if f.patchErr != nil {
 		return nil, f.patchErr
@@ -133,9 +147,11 @@ func newTestService(store syncerStore, folders folderPatcher) *Service {
 		// Long enough that no test triggers a tick; Run is only exercised for its startup sync and
 		// context-cancellation behavior.
 		fullSyncInterval: time.Hour,
-		dirty:            make(map[models.FolderKey]struct{}),
-		wake:             make(chan struct{}, 1),
-		folders:          folders,
+		// Same attempt count as production, without the delays.
+		retryBackoff: wait.Backoff{Steps: retry.DefaultBackoff.Steps},
+		dirty:        make(map[models.FolderKey]struct{}),
+		wake:         make(chan struct{}, 1),
+		folders:      folders,
 	}
 }
 
@@ -323,18 +339,19 @@ func TestHasRulesLabelPathIsEscaped(t *testing.T) {
 }
 
 func TestDrain(t *testing.T) {
-	t.Run("requeues folders that failed to sync", func(t *testing.T) {
+	t.Run("drops folders that failed after retries are exhausted", func(t *testing.T) {
+		// Not re-queued: the periodic full sync is what picks the folder back up, so a persistently
+		// failing folder cannot occupy the queue indefinitely.
 		folders := &fakeFolderClient{
 			folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
-			patchErr: errors.New("boom"),
+			patchErr: apierrors.NewConflict(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("boom")),
 		}
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
 		s.drain(context.Background())
 
-		require.Equal(t, []models.FolderKey{{OrgID: 1, UID: "folder-1"}}, s.take(),
-			"a failed folder should stay queued for the next wake-up")
+		require.Empty(t, s.take())
 	})
 
 	t.Run("clears folders that synced", func(t *testing.T) {
@@ -372,6 +389,107 @@ func TestRunStopsOnContextCancellation(t *testing.T) {
 	cancel()
 
 	require.NoError(t, s.Run(ctx, nil))
+}
+
+func TestIsRetriable(t *testing.T) {
+	gr := schema.GroupResource{Resource: "folders"}
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		// Clear on their own, so another attempt has a real chance.
+		{"conflict", apierrors.NewConflict(gr, "f", errors.New("boom")), true},
+		{"too many requests", apierrors.NewTooManyRequests("slow down", 1), true},
+		{"server timeout", apierrors.NewServerTimeout(gr, "patch", 1), true},
+		{"timeout", apierrors.NewTimeoutError("timed out", 1), true},
+		{"internal error", apierrors.NewInternalError(errors.New("boom")), true},
+
+		// Never clear, so retrying only multiplies load.
+		{"forbidden", apierrors.NewForbidden(gr, "f", errors.New("nope")), false},
+		{"invalid", apierrors.NewInvalid(schema.GroupKind{Kind: "Folder"}, "f", nil), false},
+		{"not found", apierrors.NewNotFound(gr, "f"), false},
+		{"unauthorized", apierrors.NewUnauthorized("nope"), false},
+
+		// Would otherwise sleep out the ladder during shutdown.
+		{"context canceled", context.Canceled, false},
+		{"context deadline exceeded", context.DeadlineExceeded, false},
+
+		// A plain error carries no reason, so it is not assumed transient.
+		{"unclassified", errors.New("boom"), false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, isRetriable(tc.err))
+
+			// partialSync wraps every error it returns, so the predicate has to see through %w.
+			require.Equal(t, tc.want, isRetriable(fmt.Errorf("patch folder label: %w", tc.err)),
+				"classification must survive wrapping")
+		})
+	}
+}
+
+func TestDrainRetries(t *testing.T) {
+	key := models.FolderKey{OrgID: 1, UID: "folder-1"}
+	conflict := func() error {
+		return apierrors.NewConflict(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("boom"))
+	}
+	newFolders := func(errs ...error) *fakeFolderClient {
+		return &fakeFolderClient{
+			folders:       map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+			patchErrQueue: errs,
+		}
+	}
+
+	t.Run("retries a transient failure until it succeeds", func(t *testing.T) {
+		folders := newFolders(conflict(), conflict())
+		reg := prometheus.NewPedanticRegistry()
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
+		s.markDirty([]models.FolderKey{key})
+
+		s.drain(context.Background())
+
+		require.Equal(t, 3, folders.patchCalls, "should have retried twice before succeeding")
+		require.Equal(t, float64(1), counterValue(t, reg,
+			"grafana_alerting_folder_label_syncer_total",
+			map[string]string{"sync_type": metrics.SyncTypePartial}))
+		require.Zero(t, counterValue(t, reg,
+			"grafana_alerting_folder_label_syncer_failures_total",
+			map[string]string{"sync_type": metrics.SyncTypePartial}))
+	})
+
+	t.Run("gives up after the attempt budget and counts one failure", func(t *testing.T) {
+		folders := newFolders()
+		folders.patchErr = conflict()
+		reg := prometheus.NewPedanticRegistry()
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
+		s.markDirty([]models.FolderKey{key})
+
+		s.drain(context.Background())
+
+		require.Equal(t, retry.DefaultBackoff.Steps, folders.patchCalls,
+			"should stop at the configured attempt budget")
+		// Once per folder, not once per attempt, or the failure rate stops being comparable to the
+		// success rate.
+		require.Equal(t, float64(1), counterValue(t, reg,
+			"grafana_alerting_folder_label_syncer_failures_total",
+			map[string]string{"sync_type": metrics.SyncTypePartial}))
+	})
+
+	t.Run("does not retry a failure that cannot clear", func(t *testing.T) {
+		folders := newFolders()
+		folders.patchErr = apierrors.NewForbidden(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("nope"))
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s.markDirty([]models.FolderKey{key})
+
+		s.drain(context.Background())
+
+		require.Equal(t, 1, folders.patchCalls, "a non-retriable error should fail on the first attempt")
+	})
 }
 
 func TestFailureMetrics(t *testing.T) {
