@@ -39,6 +39,10 @@ import (
 // HasRulesLabel marks a folder as holding at least one Grafana-managed alert or recording rule.
 const HasRulesLabel = "alerting.grafana.app/has-rules"
 
+// fullSyncJitterFactor randomizes each full sync interval by up to this fraction, so replicas that
+// started together drift apart rather than all walking every folder at the same moment.
+const fullSyncJitterFactor = 0.1
+
 type syncerStore interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error)
@@ -125,8 +129,12 @@ func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) erro
 		s.log.Warn("Failed to run startup folder rules label full sync", "error", err)
 	}
 
-	ticker := time.NewTicker(s.fullSyncInterval)
-	defer ticker.Stop()
+	// Jitter each interval independently so replicas that started together do not full sync in
+	// lockstep: the full sync walks every folder in every org, and there is no leader election, so
+	// each replica does that work. A fresh timer per pass rather than a fixed ticker lets the delay
+	// vary every time, so replicas drift apart instead of staying aligned.
+	fullSync := time.NewTimer(wait.Jitter(s.fullSyncInterval, fullSyncJitterFactor))
+	defer fullSync.Stop()
 
 	for {
 		select {
@@ -134,7 +142,11 @@ func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) erro
 			return nil
 		case <-s.wake:
 			s.drain(ctx)
-		case <-ticker.C:
+		case <-fullSync.C:
+			// Re-armed before the sync runs so a slow walk is not added to the interval, keeping the
+			// cadence start-to-start as the ticker did. Reset is safe here: the timer has fired and its
+			// channel has been drained.
+			fullSync.Reset(wait.Jitter(s.fullSyncInterval, fullSyncJitterFactor))
 			if err := s.FullSync(ctx, disabledOrgs); err != nil {
 				s.log.Warn("Failed to run periodic folder rules label full sync", "error", err)
 			}
