@@ -55,6 +55,16 @@ export interface NotebookSceneState extends SceneObjectState {
    * the cells gain no real editing UI beyond becoming writable.
    */
   isEditing?: boolean;
+  /**
+   * Rendered somewhere other than the notebooks route, with no Grafana app header above it — the
+   * assistant's canvas tab.
+   *
+   * Only the sticky controls row cares. Its offset is the app header's height, because on the route
+   * that header is fixed over the document and a row stuck to 0 would sit underneath it. In a host
+   * that has no such header the same offset pushes the row down into the document instead, where it
+   * floats over the first cells as they scroll past.
+   */
+  embedded?: boolean;
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -287,8 +297,10 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing, embedded } = model.useState();
+  // Called unconditionally above so the hook order never changes, then discarded when there is no app
+  // header for it to describe.
+  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
 
   return (
     <div className={styles.container}>
