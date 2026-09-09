@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -9,7 +9,7 @@ import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
-import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, { buildFilteredTable, getTruncatedSummary } from './FlameGraphTopTableContainer';
 
 // AutoSizer needs a measurable rect, and react-data-grid additionally sizes its virtualized viewport
 // from the client box - jsdom reports 0 for both.
@@ -233,6 +233,83 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
 
     expect(onTableSort).not.toHaveBeenCalled();
   });
+});
+
+describe('truncated nodes', () => {
+  const truncatedContainer = () =>
+    new FlameGraphDataContainer(
+      createDataFrame({
+        fields: [
+          { name: 'level', values: [0, 1, 1] },
+          { name: 'value', values: [10, 6, 4] },
+          { name: 'self', values: [0, 6, 4] },
+          { name: 'label', values: ['total', 'a', 'other'], type: FieldType.string },
+        ],
+      }),
+      { collapsing: true }
+    );
+
+  it('keeps truncated nodes out of the symbol ranking', () => {
+    expect(Object.keys(buildFilteredTable(truncatedContainer())).sort()).toEqual(['a', 'total']);
+  });
+
+  it('reports how much self time the truncated nodes hold', () => {
+    expect(getTruncatedSummary(truncatedContainer())).toEqual({ self: 4, count: 1, share: 0.4 });
+  });
+
+  it('reports nothing when the profile is not truncated', () => {
+    const container = textToDataContainer(`
+[0///]
+[1][2]
+    `);
+
+    expect(getTruncatedSummary(container!)).toBeUndefined();
+  });
+
+  describe.each([{ useTableNG: false }, { useTableNG: true }])(
+    'with useTableNG=$useTableNG',
+    ({ useTableNG }: { useTableNG: boolean }) => {
+      const setup = (container: FlameGraphDataContainer) => {
+        mockTableSize();
+
+        return render(
+          <FlameGraphTopTableContainer
+            data={container}
+            onSymbolClick={jest.fn()}
+            onSearch={jest.fn()}
+            onSandwich={jest.fn()}
+            colorScheme={ColorScheme.ValueBased}
+            useTableNG={useTableNG}
+          />
+        );
+      };
+
+      it('states what the ranking is missing on the symbol header', async () => {
+        setup(truncatedContainer());
+
+        const symbolHeader = screen.getAllByRole('columnheader')[1];
+        const notice = await within(symbolHeader).findByRole('button', { name: /not attributed to a symbol/ });
+
+        expect(notice).toHaveAccessibleName(
+          '4 of self time (40.0%) is not attributed to a symbol: 1 truncated group below the detail limit.'
+        );
+      });
+
+      it('leaves the symbol header alone when the profile is not truncated', () => {
+        setup(
+          textToDataContainer(`
+[0///]
+[1][2]
+      `)!
+        );
+
+        const symbolHeader = screen.getAllByRole('columnheader')[1];
+        expect(
+          within(symbolHeader).queryByRole('button', { name: /not attributed to a symbol/ })
+        ).not.toBeInTheDocument();
+      });
+    }
+  );
 });
 
 describe('buildFilteredTable', () => {

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import { memo, type ReactNode, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -11,6 +11,8 @@ import {
   type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
+  formattedValueToString,
+  getValueFormat,
 } from '@grafana/data';
 import {
   IconButton,
@@ -26,7 +28,7 @@ import { TableNG } from '@grafana/ui/unstable';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { TOP_TABLE_COLUMN_WIDTH, TRUNCATED_NODE_NAME } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
 type Props = {
@@ -64,6 +66,10 @@ const FlameGraphTopTableContainer = memo(
     contentAwareWidthsEnabled,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const truncationNotice = useMemo(() => {
+      const truncated = getTruncatedSummary(data);
+      return truncated && formatTruncationNotice(data, truncated);
+    }, [data]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -89,7 +95,8 @@ const FlameGraphTopTableContainer = memo(
               colorScheme,
               Boolean(useTableNG),
               search,
-              sandwichItem
+              sandwichItem,
+              truncationNotice
             );
 
             const onSortByChange = (s: TableSortByFieldState[]) => {
@@ -130,6 +137,37 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
+type TruncatedSummary = { self: number; count: number; share: number };
+
+function getTruncatedSummary(data: FlameGraphDataContainer): TruncatedSummary | undefined {
+  let self = 0;
+  let count = 0;
+
+  for (let i = 0; i < data.data.length; i++) {
+    if (data.getLabel(i) === TRUNCATED_NODE_NAME) {
+      self += data.getSelf(i);
+      count++;
+    }
+  }
+
+  if (!count) {
+    return undefined;
+  }
+
+  const levels = data.getLevels();
+  const rootTotal = levels.length && levels[0].length ? data.getValue(levels[0][0].itemIndexes) : 0;
+
+  return { self, count, share: rootTotal > 0 ? self / rootTotal : 0 };
+}
+
+function formatTruncationNotice(data: FlameGraphDataContainer, truncated: TruncatedSummary) {
+  const self = formattedValueToString(getValueFormat(data.selfField.config.unit)(truncated.self));
+  const share = (truncated.share * 100).toFixed(1);
+  const groups = truncated.count === 1 ? 'group' : 'groups';
+
+  return `${self} of self time (${share}%) is not attributed to a symbol: ${truncated.count.toLocaleString()} truncated ${groups} below the detail limit.`;
+}
+
 function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
@@ -154,7 +192,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     const isRecursive = callStack.some((entry) => entry === label);
 
     // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
-    if (!matchedLabels || matchedLabels.has(label)) {
+    if (label !== TRUNCATED_NODE_NAME && (!matchedLabels || matchedLabels.has(label))) {
       filteredTable[label] = filteredTable[label] || {};
       filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
 
@@ -185,7 +223,8 @@ function buildTableDataFrame(
   colorScheme: ColorScheme | ColorSchemeDiff,
   useTableNG: boolean,
   search?: string,
-  sandwichItem?: string
+  sandwichItem?: string,
+  truncationNotice?: string
 ): DataFrame {
   const actionField: Field = createActionField(onSandwich, onSearch, useTableNG, search, sandwichItem);
 
@@ -214,6 +253,25 @@ function buildTableDataFrame(
       ],
     },
   };
+
+  if (truncationNotice) {
+    if (useTableNG) {
+      symbolField.config.custom.headerTooltip = truncationNotice;
+    } else {
+      symbolField.config.custom.headerComponent = ({ defaultContent }: { defaultContent: ReactNode }) => (
+        <>
+          {defaultContent}
+          <IconButton
+            name="info-circle"
+            size="sm"
+            tooltip={truncationNotice}
+            className={styleHeaderTooltipIcon}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </>
+      );
+    }
+  }
 
   let frame;
 
@@ -442,6 +500,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+const styleHeaderTooltipIcon = css({
+  cursor: 'default',
+  marginRight: 0,
+});
+
 const getStylesActionCell = () => {
   return {
     actionCellWrapper: css({
@@ -457,6 +520,6 @@ const getStylesActionCell = () => {
   };
 };
 
-export { buildFilteredTable };
+export { buildFilteredTable, getTruncatedSummary };
 
 export default FlameGraphTopTableContainer;
