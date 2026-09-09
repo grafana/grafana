@@ -314,7 +314,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		}
 
 		var updates []RuleDelta
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			ruleCopy := models.CopyRule(copies[i])
 			ruleCopy.Title += util.GenerateShortUID()
 			updates = append(updates, RuleDelta{

@@ -43,9 +43,9 @@ func benchScheduler(b *testing.B, numWorkers, numTenants, itemsPerTenant int) {
 		totalItems := numTenants * itemsPerTenant
 		wg.Add(totalItems)
 
-		for i := 0; i < numTenants; i++ {
+		for i := range numTenants {
 			tenantID := tenantIDs[i]
-			for j := 0; j < itemsPerTenant; j++ {
+			for range itemsPerTenant {
 				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
 					processed.Add(1)
 					wg.Done()
@@ -162,10 +162,10 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 		totalItems := numTenants * itemsPerTenant
 		wg.Add(totalItems)
 
-		for i := 0; i < numTenants; i++ {
+		for i := range numTenants {
 			tenantID := tenantIDs[i]
 			tenantIdx := i
-			for j := 0; j < itemsPerTenant; j++ {
+			for range itemsPerTenant {
 				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
 					processedPerTenant[tenantIdx].Add(1)
 					wg.Done()
@@ -186,7 +186,7 @@ func BenchmarkSchedulerFairness(b *testing.B) {
 		}
 
 		min, max, total := int64(itemsPerTenant+1), int64(0), int64(0)
-		for i := 0; i < numTenants; i++ {
+		for i := range numTenants {
 			count := processedPerTenant[i].Load()
 			total += count
 			if count < min {
@@ -228,7 +228,7 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	const itemsPerTenant = 1000
 
 	tenantIDs := make([]string, numTenants)
-	for i := 0; i < numTenants; i++ {
+	for i := range numTenants {
 		tenantIDs[i] = fmt.Sprintf("tenant-%d", i)
 	}
 	processedPerTenant := make([]atomic.Int64, numTenants)
@@ -236,7 +236,7 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		for i := 0; i < numTenants; i++ {
+		for i := range numTenants {
 			processedPerTenant[i].Store(0)
 		}
 		var wg sync.WaitGroup
@@ -244,8 +244,8 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 		wg.Add(totalItems)
 
 		// Enqueue in a round-robin pattern: 1 item per tenant per round
-		for j := 0; j < itemsPerTenant; j++ {
-			for i := 0; i < numTenants; i++ {
+		for range itemsPerTenant {
+			for i := range numTenants {
 				tenantID := tenantIDs[i]
 				tenantIdx := i
 				require.NoError(b, q.Enqueue(context.Background(), tenantID, func() {
@@ -268,7 +268,7 @@ func BenchmarkSchedulerFairnessAlternating(b *testing.B) {
 		}
 
 		min, max, total := int64(itemsPerTenant+1), int64(0), int64(0)
-		for i := 0; i < numTenants; i++ {
+		for i := range numTenants {
 			count := processedPerTenant[i].Load()
 			total += count
 			if count < min {

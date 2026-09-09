@@ -2510,7 +2510,7 @@ func createV0V1FlatPanels(numPanels, queriesPerPanel int) map[string]interface{}
 	panels := make([]interface{}, numPanels)
 	for i := range numPanels {
 		targets := make([]interface{}, queriesPerPanel)
-		for q := 0; q < queriesPerPanel; q++ {
+		for q := range queriesPerPanel {
 			targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}
 		}
 		panels[i] = map[string]interface{}{
@@ -2527,12 +2527,12 @@ func createV0V1WithCollapsedRows(numRows, panelsPerRow, queriesPerPanel int) map
 	panels := make([]interface{}, 0)
 	panelID := 1
 
-	for r := 0; r < numRows; r++ {
+	for r := range numRows {
 		// Create collapsed panels for this row
 		collapsedPanels := make([]interface{}, panelsPerRow)
-		for p := 0; p < panelsPerRow; p++ {
+		for p := range panelsPerRow {
 			targets := make([]interface{}, queriesPerPanel)
-			for q := 0; q < queriesPerPanel; q++ {
+			for q := range queriesPerPanel {
 				targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}
 			}
 			collapsedPanels[p] = map[string]interface{}{
@@ -2560,7 +2560,7 @@ func createV0V1WithExpandedRows(numRows, panelsPerRow, queriesPerPanel int) map[
 	panels := make([]interface{}, 0)
 	panelID := 1
 
-	for r := 0; r < numRows; r++ {
+	for r := range numRows {
 		// Add expanded row (no nested panels)
 		panels = append(panels, map[string]interface{}{
 			"id":    float64(100 + r),
@@ -2570,9 +2570,9 @@ func createV0V1WithExpandedRows(numRows, panelsPerRow, queriesPerPanel int) map[
 		})
 
 		// Add panels after the row
-		for p := 0; p < panelsPerRow; p++ {
+		for range panelsPerRow {
 			targets := make([]interface{}, queriesPerPanel)
-			for q := 0; q < queriesPerPanel; q++ {
+			for q := range queriesPerPanel {
 				targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}
 			}
 			panels = append(panels, map[string]interface{}{
