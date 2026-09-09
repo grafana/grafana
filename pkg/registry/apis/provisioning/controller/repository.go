@@ -91,6 +91,7 @@ type RepositoryController struct {
 	quotaGetter                   quotas.QuotaGetter
 	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
+	webhookMetrics                *webhookSecretMetrics
 	deletionMetrics               *repositoryDeletionMetrics
 	reconcileMetrics              *reconcileErrorMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
@@ -125,6 +126,7 @@ func NewRepositoryController(
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
+	webhookMetrics := registerWebhookSecretMetrics(registry)
 	quotaMetrics := registerRepositoryQuotaMetrics(registry)
 	deletionMetrics := registerRepositoryDeletionMetrics(registry)
 	reconcileMetrics := registerReconcileErrorMetrics(registry)
@@ -163,6 +165,7 @@ func NewRepositoryController(
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
+		webhookMetrics:                webhookMetrics,
 		deletionMetrics:               deletionMetrics,
 		reconcileMetrics:              reconcileMetrics,
 		incrementalPolicy:             incrementalPolicy,
@@ -1509,11 +1512,18 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if repository.GetID(obj.Status.Webhook).IsEmpty() {
 		return false
 	}
+	// A never-rotated secret (legacy webhooks predating rotation tracking; new
+	// webhooks stamp LastRotated on create) is due for its first rotation.
 	if obj.Status.Webhook.LastRotated == 0 {
+		rc.webhookMetrics.recordRotationOverdue()
 		return true
 	}
 	age := time.Since(time.UnixMilli(obj.Status.Webhook.LastRotated))
-	return age >= rc.webhookSecretRotationInterval
+	if age >= rc.webhookSecretRotationInterval {
+		rc.webhookMetrics.recordRotationOverdue()
+		return true
+	}
+	return false
 }
 
 // HACK: we need a proper way of doing this check by adding Conditions
@@ -1543,7 +1553,17 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	}
 
 	expiration := time.UnixMilli(obj.Status.Token.Expiration)
-	rc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
+	now := time.Now()
+	rc.tokenMetrics.recordTimeToExpiry(expiration.Sub(now).Seconds())
+
+	// Record the expired state independently of the refresh decision below. It
+	// re-emits every resync while the token stays expired (its refresh failing),
+	// so increase()/rate() alerts fire for as long as the condition holds. We do
+	// not track a "near expiring" state: the refresh window and the near-expiry
+	// window are the same predicate, so it would fire on every healthy refresh.
+	if !expiration.After(now) {
+		rc.tokenMetrics.recordExpired()
+	}
 
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
 	if !recentlyCreated && shouldRefreshBeforeExpiration(expiration, rc.resyncInterval) {
