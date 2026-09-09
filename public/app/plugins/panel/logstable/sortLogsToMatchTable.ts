@@ -9,20 +9,14 @@ function findSortField(log: LogRowModel, displayName: string) {
   );
 }
 
+// Same collator as TableNG so arrow-key order matches the visible table.
+const compareStrings = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
+
 function compareValues(a: unknown, b: unknown): number {
-  if (a == null && b == null) {
-    return 0;
-  }
-  if (a == null) {
-    return -1;
-  }
-  if (b == null) {
-    return 1;
-  }
   if (typeof a === 'number' && typeof b === 'number') {
     return a - b;
   }
-  return String(a).localeCompare(String(b), undefined, { numeric: true });
+  return compareStrings(String(a ?? ''), String(b ?? ''));
 }
 
 function compareLogsByColumn(a: LogRowModel, b: LogRowModel, displayName: string): number {

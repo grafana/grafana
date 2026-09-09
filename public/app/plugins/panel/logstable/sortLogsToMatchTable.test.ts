@@ -34,6 +34,18 @@ describe('sortLogsToMatchTable', () => {
     ]);
   });
 
+  test('keeps mixed-case ties in query order, matching TableNG', () => {
+    const apple = createLogLine({ uid: 'apple', labels: { env: 'apple' } });
+    const banana = createLogLine({ uid: 'banana', labels: { env: 'Banana' } });
+    const APPLE = createLogLine({ uid: 'APPLE', labels: { env: 'APPLE' } });
+
+    // TableNG Collator('en', { sensitivity: 'base' }) treats 'apple' and 'APPLE' as
+    // equal, so Array.sort keeps their query order. localeCompare reorders them.
+    expect(
+      sortLogsToMatchTable([APPLE, banana, apple], [{ displayName: 'env', desc: false }]).map((log) => log.uid)
+    ).toEqual(['APPLE', 'apple', 'banana']);
+  });
+
   test('sorts by a non-time field on the data frame', () => {
     const frame = toDataFrame({
       fields: [
