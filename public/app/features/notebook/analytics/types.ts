@@ -20,7 +20,7 @@ export interface NotebookLoadedProperties extends EventProperty {
   /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
   was_cached: boolean;
   /** Cells among cell_count with real content: markdown someone typed in, or a configured panel. */
-  meaningful_cell_count: number;
+  non_empty_cell_count: number;
   /** Markdown cells among cell_count. */
   text_cell_count: number;
   /** Code cells among cell_count. */

@@ -11,7 +11,7 @@ export interface NotebookShape {
   panelCount: number;
   datasourceTypes: string[];
   assistantCellCount: number;
-  meaningfulCellCount: number;
+  nonEmptyCellCount: number;
   textCellCount: number;
   codeCellCount: number;
   configuredPanelCount: number;
@@ -33,7 +33,7 @@ export function readNotebookShape(scene: NotebookScene): NotebookShape {
     panelCount: panels.length,
     datasourceTypes,
     assistantCellCount: cells.filter((cell) => cell.state.source === 'assistant').length,
-    meaningfulCellCount: cells.filter(isMeaningfulCell).length,
+    nonEmptyCellCount: cells.filter(isNonEmptyCell).length,
     textCellCount: cellsByType.filter((type) => type === 'markdown').length,
     codeCellCount: cellsByType.filter((type) => type === 'code').length,
     configuredPanelCount: panels.filter(isConfiguredPanel).length,
@@ -47,7 +47,7 @@ export function readNotebookShape(scene: NotebookScene): NotebookShape {
 //
 // A narrative cell counts unless it is empty markdown nobody touched. A code cell always counts,
 // because even an empty one carries a language choice somebody made.
-function isMeaningfulCell(cell: NotebookCellItem): boolean {
+function isNonEmptyCell(cell: NotebookCellItem): boolean {
   if (cell.state.body) {
     return isConfiguredPanel(cell.state.body);
   }

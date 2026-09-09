@@ -52,7 +52,7 @@ export const notebookAnalytics = {
       // Permission counts too: the sync refuses `?edit=true` for a reader and clears the param.
       mode: isNotebookEditUrl() && canEditNotebooks() ? 'edit' : 'view',
       was_cached: wasCached,
-      meaningful_cell_count: shape.meaningfulCellCount,
+      non_empty_cell_count: shape.nonEmptyCellCount,
       text_cell_count: shape.textCellCount,
       code_cell_count: shape.codeCellCount,
       configured_panel_count: shape.configuredPanelCount,

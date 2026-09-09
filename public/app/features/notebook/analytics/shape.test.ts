@@ -61,7 +61,7 @@ describe('readNotebookShape', () => {
       panelCount: 1,
       datasourceTypes: ['prometheus'],
       assistantCellCount: 1,
-      meaningfulCellCount: 4,
+      nonEmptyCellCount: 4,
       textCellCount: 2,
       codeCellCount: 1,
       configuredPanelCount: 1,
@@ -78,7 +78,7 @@ describe('readNotebookShape', () => {
       panelCount: 0,
       datasourceTypes: [],
       assistantCellCount: 0,
-      meaningfulCellCount: 0,
+      nonEmptyCellCount: 0,
       textCellCount: 0,
       codeCellCount: 0,
       configuredPanelCount: 0,
@@ -86,16 +86,16 @@ describe('readNotebookShape', () => {
     });
   });
 
-  it('reports activation counts that treat empty markdown and unconfigured panels as not meaningful', () => {
+  it('reports activation counts that treat empty markdown and unconfigured panels as empty', () => {
     const scene = sceneWithCells([markdownCell('empty', 'user', ''), panelCell('unconfigured', 'user')]);
 
     const shape = readNotebookShape(scene);
     expect(shape.cellCount).toBe(2);
-    expect(shape.meaningfulCellCount).toBe(0);
+    expect(shape.nonEmptyCellCount).toBe(0);
     expect(shape.configuredPanelCount).toBe(0);
   });
 
-  it('counts a configured panel and non-empty text/code cells as meaningful', () => {
+  it('counts a configured panel and non-empty text/code cells', () => {
     const scene = sceneWithCells([
       markdownCell('intro', 'user', 'hello'),
       codeCell('query', 'user'),
@@ -103,7 +103,7 @@ describe('readNotebookShape', () => {
     ]);
 
     const shape = readNotebookShape(scene);
-    expect(shape.meaningfulCellCount).toBe(3);
+    expect(shape.nonEmptyCellCount).toBe(3);
     expect(shape.textCellCount).toBe(1);
     expect(shape.codeCellCount).toBe(1);
     expect(shape.configuredPanelCount).toBe(1);
