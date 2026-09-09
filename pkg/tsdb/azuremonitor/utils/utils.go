@@ -73,7 +73,8 @@ func ParseSubscriptions(res *http.Response, logger log.Logger) ([]string, error)
 }
 
 func ApplySourceFromError(errorMessage error, err error) error {
-	if errorWithSource, ok := errors.AsType[backend.ErrorWithSource](err); ok {
+	var errorWithSource backend.ErrorWithSource
+	if errors.As(err, &errorWithSource) {
 		if errorWithSource.ErrorSource() == backend.ErrorSourcePlugin {
 			return backend.PluginError(errorMessage)
 		}
