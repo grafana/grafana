@@ -9,6 +9,10 @@ import {
   type NotebookCreatedProperties,
   type NotebookDeletedProperties,
   type NotebookDeleteSource,
+  type NotebookEditSessionEndReason,
+  type NotebookEditSessionEndedProperties,
+  type NotebookEditSessionSource,
+  type NotebookEditSessionStartedProperties,
   type NotebookEntryPoint,
   type NotebookLoadedProperties,
   type NotebookNewStartedProperties,
@@ -22,6 +26,16 @@ const createLoadedEvent = createNotebookEvent<NotebookLoadedProperties>('loaded'
 
 /** Fired when the blank notebook route opens, so nothing exists yet: pairs with `created` to give the abandonment rate. */
 const createNewStartedEvent = createNotebookEvent<NotebookNewStartedProperties>('new_started');
+
+/** Fired when edit mode begins. Pairs with `edit_session_ended` for the length and the totals. */
+const createEditSessionStartedEvent = createNotebookEvent<NotebookEditSessionStartedProperties>('edit_session_started');
+
+/**
+ * Fired when edit mode ends. Carries how long the session ran, how much was edited, and the shape
+ * the notebook was left in. Save outcomes are not here: they are reported by `autosave_failed` at
+ * the moment they happen, which this event cannot do because it fires while a save is still open.
+ */
+const createEditSessionEndedEvent = createNotebookEvent<NotebookEditSessionEndedProperties>('edit_session_ended');
 
 /** Fired the moment a notebook first exists: autosave's first write, or the add-panel modal's create route. */
 const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('created');
@@ -50,6 +64,20 @@ export const NotebookAnalytics = {
 
   newStarted(source: NotebookEntryPoint): void {
     createNewStartedEvent({ source });
+  },
+
+  editSessionStarted(notebookUid: string, source: NotebookEditSessionSource): void {
+    createEditSessionStartedEvent({ notebookUid, source });
+  },
+
+  editSessionEnded(scene: NotebookScene, endReason: NotebookEditSessionEndReason): void {
+    createEditSessionEndedEvent({
+      notebookUid: scene.state.uid ?? '',
+      // Reading the totals also resets them, so the next session starts from nothing.
+      ...scene.editSession.end(),
+      endReason,
+      ...readNotebookShape(scene),
+    });
   },
 
   created(notebookUid: string, source: NotebookEntryPoint, cellCount: number): void {

@@ -52,28 +52,14 @@ describe('NotebookEditSession', () => {
     expect(session.end().editCount).toBe(1);
   });
 
-  it('counts save outcomes on both sides', () => {
-    const session = new NotebookEditSession();
-    session.start();
-
-    session.saveLanded();
-    session.saveFailed();
-    session.saveLanded();
-    session.saveFailed();
-    session.saveFailed();
-
-    expect(session.end()).toMatchObject({ savesLanded: 2, savesFailed: 3 });
-  });
-
   it('starts the next session from nothing', () => {
     const session = new NotebookEditSession();
     session.start();
 
     session.onRecord();
-    session.saveLanded();
     session.end();
 
-    expect(session.end()).toMatchObject({ editCount: 0, savesLanded: 0, savesFailed: 0 });
+    expect(session.end().editCount).toBe(0);
   });
 
   it('reports how long the session lasted', () => {

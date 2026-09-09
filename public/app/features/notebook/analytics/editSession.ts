@@ -3,8 +3,6 @@ import { type NotebookEditHistoryObserver } from '../scene/NotebookEditHistory';
 export interface NotebookEditSessionTotals {
   durationMs: number;
   editCount: number;
-  savesLanded: number;
-  savesFailed: number;
 }
 
 /**
@@ -17,14 +15,10 @@ export interface NotebookEditSessionTotals {
 export class NotebookEditSession implements NotebookEditHistoryObserver {
   private startedAt = 0;
   private editCount = 0;
-  private savesLanded = 0;
-  private savesFailed = 0;
 
   public start(): void {
     this.startedAt = Date.now();
     this.editCount = 0;
-    this.savesLanded = 0;
-    this.savesFailed = 0;
   }
 
   /** Reads the totals and clears them, so the next session starts from nothing. */
@@ -32,8 +26,6 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
     const totals: NotebookEditSessionTotals = {
       durationMs: Date.now() - this.startedAt,
       editCount: this.editCount,
-      savesLanded: this.savesLanded,
-      savesFailed: this.savesFailed,
     };
 
     this.start();
@@ -49,13 +41,5 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
     if (this.editCount > 0) {
       this.editCount--;
     }
-  }
-
-  public saveLanded(): void {
-    this.savesLanded++;
-  }
-
-  public saveFailed(): void {
-    this.savesFailed++;
   }
 }

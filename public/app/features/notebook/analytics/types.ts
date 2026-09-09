@@ -47,6 +47,74 @@ export const NOTEBOOK_ENTRY_POINT = {
 
 export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTEBOOK_ENTRY_POINT];
 
+/**
+ * How an edit session began. `TOGGLE` is the Edit control inside an open notebook. `NAVIGATION` is
+ * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
+ * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
+ * the more useful fact.
+ *
+ * Nothing sends an assistant value. The assistant writes cells without entering edit mode.
+ */
+export const NOTEBOOK_EDIT_SESSION_SOURCE = {
+  TOGGLE: 'toggle',
+  NAVIGATION: 'navigation',
+  NEW: 'new',
+} as const;
+
+export type NotebookEditSessionSource =
+  (typeof NOTEBOOK_EDIT_SESSION_SOURCE)[keyof typeof NOTEBOOK_EDIT_SESSION_SOURCE];
+
+export interface NotebookEditSessionStartedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for a notebook that has no uid yet. */
+  notebookUid: string;
+  /** How this edit session began. */
+  source: NotebookEditSessionSource;
+}
+
+/**
+ * How an edit session ended. `TOGGLE` covers the Edit control turning edit mode off and the url
+ * losing `?edit=true` while the notebook stays open. `NAVIGATION` is the notebook page itself
+ * being torn down while a session was still open, such as navigating away or closing the tab.
+ */
+export const NOTEBOOK_EDIT_SESSION_END_REASON = {
+  TOGGLE: 'toggle',
+  NAVIGATION: 'navigation',
+} as const;
+
+export type NotebookEditSessionEndReason =
+  (typeof NOTEBOOK_EDIT_SESSION_END_REASON)[keyof typeof NOTEBOOK_EDIT_SESSION_END_REASON];
+
+export interface NotebookEditSessionEndedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for a session that ended before autosave created one. */
+  notebookUid: string;
+  /** How long the session ran, from entering edit mode to leaving it. */
+  durationMs: number;
+  /** Edits recorded during the session. An edit rolled back before it stood is not counted. */
+  editCount: number;
+  /** How the session ended. */
+  endReason: NotebookEditSessionEndReason;
+  /** Cells in the notebook when the session ended, excluding the trailing empty editor block. */
+  cellCount: number;
+  /** The type of each cell in cellCount, in order. */
+  cellsByType: string[];
+  /** Panel cells among cellCount. */
+  panelCount: number;
+  /** Deduplicated datasource plugin IDs used by the notebook's panels. */
+  datasourceTypes: string[];
+  /** Cells among cellCount whose element the assistant wrote. */
+  assistantCellCount: number;
+  /** Cells among cellCount with real content: markdown someone typed in, or a configured panel. */
+  nonEmptyCellCount: number;
+  /** Markdown cells among cellCount. */
+  textCellCount: number;
+  /** Code cells among cellCount. */
+  codeCellCount: number;
+  /** Panels among panelCount that have at least one real query configured. */
+  configuredPanelCount: number;
+  /** Distinct datasource types among datasourceTypes. */
+  datasourceCount: number;
+}
+
 export interface NotebookNewStartedProperties extends EventProperty {
   /** Which surface the new notebook was started from. */
   source: NotebookEntryPoint;
