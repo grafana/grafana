@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/quotas
 
-go 1.26.5
+go 1.26.6
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(
@@ -383,7 +383,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	gocloud.dev v0.45.0 // indirect
-	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.57.0 // indirect

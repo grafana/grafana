@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.4

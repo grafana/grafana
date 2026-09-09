@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.26.5
+go 1.26.6
 
 // transitive dependencies that need replaced
 // TODO: stop depending on grafana core(

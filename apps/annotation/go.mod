@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/annotation
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/grafana/grafana-app-sdk v0.56.6
