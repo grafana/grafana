@@ -53,6 +53,8 @@ describe('NestedFolderPicker', () => {
   beforeEach(() => {
     // These tests were written against the legacy folder tree, so pin the flag off by default.
     // The describes below that need the app-platform tree opt in explicitly.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
     setTestFlags({ foldersAppPlatformAPI: false });
 
     const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');

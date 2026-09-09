@@ -48,6 +48,8 @@ describe('useCreateTeamOrchestrate', () => {
 
     // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy folder
     // handlers, so pin it off and let the app-platform cases opt in.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
     setTestFlags({ foldersAppPlatformAPI: false });
 
     contextSrv.fetchUserPermissions = jest.fn().mockResolvedValue(undefined);

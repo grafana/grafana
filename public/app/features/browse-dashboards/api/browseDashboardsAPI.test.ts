@@ -115,6 +115,8 @@ describe('browseDashboardsAPI', () => {
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
     // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy endpoints.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
     setTestFlags({ foldersAppPlatformAPI: false });
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });

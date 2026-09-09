@@ -25,6 +25,8 @@ const folderASelection = {
 
 describe('AffectedFolderContents', () => {
   // foldersAppPlatformAPI defaults to on, but the counts handler here is the legacy one.
+  // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+  // that production actually uses.
   beforeEach(() => {
     setTestFlags({ foldersAppPlatformAPI: false });
   });

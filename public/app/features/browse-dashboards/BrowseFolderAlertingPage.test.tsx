@@ -40,6 +40,8 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   beforeEach(() => {
     // foldersAppPlatformAPI defaults to on, but the alerting mock server only serves the legacy
     // /api/folders endpoints, so pin it off.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
     setTestFlags({ foldersAppPlatformAPI: false });
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
