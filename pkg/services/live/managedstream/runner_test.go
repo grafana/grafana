@@ -36,7 +36,7 @@ func TestManagedStreamMinuteRate(t *testing.T) {
 	require.Equal(t, int64(2), c.minuteRate("test1"))
 
 	nowUnix := time.Now().Unix()
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		unixTime := nowUnix + int64(i)
 		c.incRate("test3", unixTime)
 	}
