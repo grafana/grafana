@@ -20,6 +20,7 @@ function resolveMetadata(scene: DashboardScene): EnvelopeMetadata {
     generation: typeof existing.generation === 'number' ? existing.generation : 1,
     creationTimestamp:
       typeof existing.creationTimestamp === 'string' ? existing.creationTimestamp : new Date().toISOString(),
+    resourceVersion: typeof existing.resourceVersion === 'string' ? existing.resourceVersion : '0',
   };
 }
 
