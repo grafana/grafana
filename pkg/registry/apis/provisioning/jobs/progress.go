@@ -63,6 +63,7 @@ type jobProgressRecorder struct {
 	resultReasons       map[string]struct{}
 	metrics             *JobMetrics
 	action              provisioning.JobAction
+	variance            string
 }
 
 func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
@@ -79,6 +80,22 @@ func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action p
 
 func (r *jobProgressRecorder) Started() time.Time {
 	return r.started
+}
+
+// SetVariance tags the job with a sub-type of its action (e.g. full vs incremental
+// for a pull job) so the driver's throughput metric can break the action down
+// further. It is optional: jobs that leave it unset report an empty variance.
+func (r *jobProgressRecorder) SetVariance(variance string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.variance = variance
+}
+
+// Variance returns the action sub-type set via SetVariance, or "" if none was set.
+func (r *jobProgressRecorder) Variance() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.variance
 }
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
