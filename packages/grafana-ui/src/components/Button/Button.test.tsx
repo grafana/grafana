@@ -75,7 +75,7 @@ describe('LinkButton', () => {
     );
 
     const link = screen.getByRole('link');
-    const icon = screen.getByTitle('');
+    const icon = screen.getByTestId('icon-cloud');
     const textSpan = link.querySelector('span');
 
     // Assert that the text span comes before the icon in the DOM
@@ -91,7 +91,7 @@ describe('LinkButton', () => {
     );
 
     const link = screen.getByRole('link');
-    const icon = screen.getByTitle('');
+    const icon = screen.getByTestId('icon-cloud');
     const textSpan = link.querySelector('span');
 
     // Assert that the icon comes before the text span in the DOM

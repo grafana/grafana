@@ -48,7 +48,8 @@ describe('DataLinksListItem', () => {
       };
       setupTestContext({ item });
 
-      expect(screen.getByText(/some data link title/i)).toBeInTheDocument();
+      // the drag handle icon repeats the title in its <title>, so only look at the visible text
+      expect(screen.getByText(/some data link title/i, { selector: 'div' })).toBeInTheDocument();
     });
   });
 
