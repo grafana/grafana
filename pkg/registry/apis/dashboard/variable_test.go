@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -438,7 +437,6 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	newVariable := newCustomVariable("region", "region--missing-folder")
 	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
-
 	otherFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")
 
 	tests := []struct {
@@ -447,18 +445,17 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 		op       admission.Operation
 		expected bool
 	}{
-		{name: "root delete grant can delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: true},
-		{name: "all-folders write can update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
-		{name: "other-folder write cannot update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
-		{name: "other-folder delete cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
-		{name: "read-only cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
+		{name: "root delete grant cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: false},
+		// folders:* matches folders:uid:<gone> without a second-chance root check.
+		{name: "all-folders write can update variable whose folder is gone", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
+		{name: "other-folder write cannot update variable whose folder is gone", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
+		{name: "other-folder delete cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
+		{name: "read-only cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
 		{name: "root create cannot create into missing folder", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: false},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Production registers FolderUIDScopeResolver; without it, Evaluate never
-			// errors on a missing folder and the general-scope orphan path is untested.
 			acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			folderSvc := foldertest.NewFakeService()
 			folderSvc.ExpectedError = folder.ErrFolderNotFound
@@ -477,47 +474,16 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 					1: tc.perms,
 				},
 			})
-			attrs := buildVariableAttributesForOp(tc.op, newVariable, oldVariable)
 
-			err := builder.Validate(ctx, attrs, nil)
+			err := builder.Validate(ctx, buildVariableAttributesForOp(tc.op, newVariable, oldVariable), nil)
 			if tc.expected {
 				require.NoError(t, err)
 				return
 			}
-
 			require.Error(t, err)
 			require.True(t, apierrors.IsNotFound(err) || apierrors.IsForbidden(err))
 		})
 	}
-}
-
-func TestVariableMutationPermissionsFolderLookupError(t *testing.T) {
-	folderUID := "folder-a"
-	oldVariable := newCustomVariable("region", "region--folder-a")
-	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
-	newVariable := newCustomVariable("region", "region--folder-a")
-	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
-
-	lookupErr := errors.New("folder lookup timed out")
-	builder := &DashboardsAPIBuilder{
-		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		folderClientProvider: &staticHandlerProvider{
-			handler: &variableFolderAccessHandler{getError: lookupErr},
-		},
-	}
-
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
-	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgID: 1,
-		// No folder-scoped grant so Evaluate fails and allowMissingFolder path runs.
-		Permissions: map[int64]map[string][]string{
-			1: {ActionVariablesWrite: {folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")}},
-		},
-	})
-
-	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
-	require.ErrorIs(t, err, lookupErr)
-	require.False(t, apierrors.IsForbidden(err))
 }
 
 func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {

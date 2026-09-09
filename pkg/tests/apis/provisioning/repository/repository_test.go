@@ -263,9 +263,24 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 					stats[k] = v
 				}
 			}
+			// Two read-only repositories (github + local), neither syncing, both
+			// healthy. The github repo has no token, so it authenticates
+			// anonymously; the local repo needs no auth.
 			assert.Equal(collect, map[string]any{
-				"stats.repository.github.count": 1.0,
-				"stats.repository.local.count":  1.0,
+				"stats.repository.count":                        2.0,
+				"stats.repository.github.count":                 1.0,
+				"stats.repository.local.count":                  1.0,
+				"stats.repository.healthy.count":                2.0,
+				"stats.repository.unhealthy.count":              0.0,
+				"stats.repository.sync_enabled.count":           0.0,
+				"stats.repository.read_only.count":              2.0,
+				"stats.repository.webhook_disabled.count":       0.0,
+				"stats.repository.workflow.write.count":         0.0,
+				"stats.repository.workflow.branch.count":        0.0,
+				"stats.repository.sync_target.folder.count":     2.0,
+				"stats.repository.auth_method.anonymous.count":  1.0,
+				"stats.repository.auth_method.none.count":       1.0,
+				"stats.repository.ready_reason.available.count": 2.0,
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
@@ -643,8 +658,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repository with path: %s", test.path)
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for path: %s", test.path)
-					var statusError *apierrors.StatusError
-					if errors.As(err, &statusError) {
+					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 					}
@@ -807,8 +821,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for branch=%s path=%s", test.branch, test.path)
-					var statusError *apierrors.StatusError
-					if errors.As(err, &statusError) {
+					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 					}
@@ -846,8 +859,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
-		var statusError *apierrors.StatusError
-		if errors.As(err, &statusError) {
+		if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 			require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 		}

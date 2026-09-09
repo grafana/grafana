@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -105,9 +106,7 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 	}
 
 	configurableProviders := make(map[string]bool)
-	for provider, enabled := range cfg.SSOSettingsConfigurableProviders {
-		configurableProviders[provider] = enabled
-	}
+	maps.Copy(configurableProviders, cfg.SSOSettingsConfigurableProviders)
 
 	providersList := ssosettings.AllOAuthProviders
 	providersList = append(providersList, social.LDAPProviderName)
@@ -382,12 +381,8 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 	}
 
 	newSettingsMap := make(map[string]any)
-	for k, v := range storedSettings.Settings {
-		newSettingsMap[k] = v
-	}
-	for k, v := range data {
-		newSettingsMap[k] = v
-	}
+	maps.Copy(newSettingsMap, storedSettings.Settings)
+	maps.Copy(newSettingsMap, data)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,
@@ -642,9 +637,7 @@ func (s *Service) mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings *mo
 	s.logger.Debug("Merging SSO Settings, MT-Settings authoritative", "systemSettings", removeSecrets(systemSettings.Settings), "dbSettings", removeSecrets(dbSettings.Settings))
 
 	settings := make(map[string]any, len(systemSettings.Settings))
-	for k, v := range systemSettings.Settings {
-		settings[k] = v
-	}
+	maps.Copy(settings, systemSettings.Settings)
 	for k, v := range dbSettings.Settings {
 		if existing, ok := settings[k]; !ok || isEmptyString(existing) {
 			settings[k] = v
@@ -739,9 +732,7 @@ func getConfigMaps(settings map[string]any) []map[string]any {
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
-	for k, v := range storedSettings {
-		settings[k] = v
-	}
+	maps.Copy(settings, storedSettings)
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
@@ -798,12 +789,10 @@ func mergeSecrets(settings map[string]any, storedSettings map[string]any) (map[s
 	return settingsWithSecrets, nil
 }
 
-func overrideMaps(maps ...map[string]any) map[string]any {
+func overrideMaps(input ...map[string]any) map[string]any {
 	result := make(map[string]any)
-	for _, m := range maps {
-		for k, v := range m {
-			result[k] = v
-		}
+	for _, m := range input {
+		maps.Copy(result, m)
 	}
 	return result
 }

@@ -111,8 +111,7 @@ func newMTSettingsClient(cfg *setting.Cfg, promRegister prometheus.Registerer) (
 	}
 
 	if err := promRegister.Register(settingsService); err != nil {
-		var alreadyRegisteredErr prometheus.AlreadyRegisteredError
-		if !errors.As(err, &alreadyRegisteredErr) {
+		if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); !ok {
 			return nil, fmt.Errorf("failed to register settings service metrics: %w", err)
 		}
 	}

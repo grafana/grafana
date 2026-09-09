@@ -37,12 +37,10 @@ const MIMIR_CORTEX_IMPLEMENTATIONS: AlertManagerImplementation[] = [
 export const SYNCED_CONDITION_TYPE = 'ExternalAlertmanagerSynced';
 export const SYNC_REASON_NOT_CONFIGURED = 'NotConfigured';
 
-/** Wired up by a later PR in this migration's stack; not consumed yet. @lintignore */
 export function hasConfiguredUid(state: AutoSyncState): state is Extract<AutoSyncState, { uid: string }> {
   return state.kind === 'configured' || state.kind === 'orphan-uid' || state.kind === 'operator-managed';
 }
 
-/** Wired up by a later PR in this migration's stack; not consumed yet. @lintignore */
 export function isOperatorManaged(state: AutoSyncState): state is Extract<AutoSyncState, { kind: 'operator-managed' }> {
   return state.kind === 'operator-managed';
 }
@@ -122,7 +120,6 @@ export function deriveReadiness(configResource: Config | undefined, configError:
   };
 }
 
-/** Wired up by a later PR in this migration's stack; not consumed externally yet. @lintignore */
 export function autoSyncInitializingMessage(): string {
   return t(
     'alerting.settings.auto-sync.not-ready-body',
