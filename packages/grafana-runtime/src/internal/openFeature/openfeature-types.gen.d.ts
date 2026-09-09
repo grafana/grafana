@@ -20,6 +20,8 @@ declare module "@openfeature/core" {
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
+    | "reportingHeaderSettings"
+    | "reportingFooterSettings"
     | "snapshots.kubernetesSnapshots"
     | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
