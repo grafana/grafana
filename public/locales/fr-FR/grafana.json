@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Gestionnaires d’alerte",
+        "alert-managers": "",
         "import": "Importer"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Annotations",
         "description": "Description",
@@ -6416,17 +6429,6 @@
           "empty": "(vide)",
           "no-title": "<sans titre>"
         }
-      },
-      "predefined-variables": {
-        "all": "Tout",
-        "description": "",
-        "folder": "Dossier",
-        "global": "Global",
-        "label": "Variables prédéfinies",
-        "none": "Aucun",
-        "pane-header": "Variables prédéfinies",
-        "title": "Variables prédéfinies",
-        "tooltip": "Choisissez les variables globales et de dossier que ce tableau de bord reçoit"
       },
       "redo": "Rétablir",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "Une fois la fonctionnalité réactivée, vos tableaux de bord s’afficheront normalement dans leur format de tableau de bord dynamique. Pour cette raison, nous vous recommandons fortement de ne pas modifier ces tableaux de bord tant que la fonctionnalité n’est pas rétablie, car les modifications effectuées en mode classique peuvent entraîner des résultats inattendus. Vous pouvez également enregistrer une copie du tableau de bord à l’aide de l’option « Enregistrer comme copie » dans le menu d’enregistrement du tableau de bord.",
       "save-warning": "Tout tableau de bord créé en tant que tableau de bord dynamique ou converti en tableau de bord dynamique s’ouvrira comme un tableau de bord classique. L’enregistrement du tableau de bord peut entraîner la perte des fonctionnalités de tableau de bord dynamique déjà configurées."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Personnaliser les options",
       "json-values-tooltip": "Fournissez un fichier JSON représentant un tableau d’objets, chaque objet pouvant comporter un nombre quelconque de propriétés.<br/>Consultez <4>notre documentation</4> pour plus d’informations.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Fermer"
-    },
-    "predefined-variables": {
-      "label-all": "Tout",
-      "label-custom": "Personnalisé",
-      "label-folder": "Dossier",
-      "label-global": "Global",
-      "label-none": "Aucun"
     },
     "provisioned-controls-section": {
       "label": "Provisionnement par la source de données",
@@ -9125,6 +9124,7 @@
       "critical-path": "Chemin critique",
       "critical-path-tooltip": "Sélectionne les traces du chemin critique, la plus longue séquence de tâches dépendantes déterminant la durée minimale de la trace.",
       "duration": "Durée",
+      "error-indicator": "",
       "errors": "Erreurs",
       "errors-tooltip": "Sélectionne les traces dont l’état est égal à erreur.",
       "export-started": "Exportation lancée",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Heure de début",
+      "success-indicator": "",
       "target": "Cible",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
       "trace-id": "Identifiant de trace",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

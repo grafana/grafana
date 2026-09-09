@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Administradores de alertas",
+        "alert-managers": "",
         "import": "Importar"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anotaciones",
         "description": "Descripción",
@@ -6416,17 +6429,6 @@
           "empty": "(vacío)",
           "no-title": "<sin título>"
         }
-      },
-      "predefined-variables": {
-        "all": "Todas",
-        "description": "",
-        "folder": "Carpeta",
-        "global": "Global",
-        "label": "Variables predefinidas",
-        "none": "Ninguna",
-        "pane-header": "Variables predefinidas",
-        "title": "Variables predefinidas",
-        "tooltip": "Elige qué variables globales y de carpeta recibe este dashboard"
       },
       "redo": "Rehacer",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "Una vez que la función se vuelva a habilitar, tus dashboards se mostrarán normalmente en su formato de dashboard dinámico. Por este motivo, es recomendable no realizar cambios en estos dashboards hasta que la función se vuelva a activar, ya que las modificaciones realizadas en el modo clásico pueden dar lugar a resultados inesperados. Como alternativa, puedes guardar una copia del dashboard utilizando la opción «Guardar como copia», en el menú para guardar el dashboard.",
       "save-warning": "Cualquier dashboard creado o convertido en un dashboard dinámico se abrirá como un dashboard clásico. Guardar el dashboard podría provocar la pérdida de las funciones del dashboard dinámico ya configuradas."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
       "json-values-tooltip": "Proporciona un JSON que represente una matriz de objetos, donde cada objeto puede tener cualquier número de propiedades.<br/>Consulta <4>nuestra documentación</4> para obtener más información.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Cerrar"
-    },
-    "predefined-variables": {
-      "label-all": "Todas",
-      "label-custom": "Personalizada",
-      "label-folder": "Carpeta",
-      "label-global": "Global",
-      "label-none": "Ninguna"
     },
     "provisioned-controls-section": {
       "label": "Aprovisionado por la fuente de datos",
@@ -9125,6 +9124,7 @@
       "critical-path": "Ruta crítica",
       "critical-path-tooltip": "Selecciona los intervalos en la ruta crítica, la secuencia más larga de tareas dependientes que determina la duración mínima de la traza.",
       "duration": "Duración",
+      "error-indicator": "",
       "errors": "Errores",
       "errors-tooltip": "Selecciona los intervalos donde el estado es igual a error.",
       "export-started": "Exportación iniciada",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Fecha de inicio",
+      "success-indicator": "",
       "target": "Destino",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
       "trace-id": "ID de traza",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

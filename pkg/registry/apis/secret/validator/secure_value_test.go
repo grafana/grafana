@@ -247,7 +247,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("`decrypters` cannot have more than 64 items", func(t *testing.T) {
 		decrypters := make([]string, 0, 64+1)
-		for i := 0; i < 64+1; i++ {
+		for i := range 64 + 1 {
 			decrypters = append(decrypters, fmt.Sprintf("app%d", i))
 		}
 

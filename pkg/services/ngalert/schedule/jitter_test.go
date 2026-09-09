@@ -30,7 +30,7 @@ func TestJitter(t *testing.T) {
 			baseInterval := 10 * time.Second
 			original := jitterOffsetInTicks(rule, baseInterval, JitterByGroup)
 
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				offset := jitterOffsetInTicks(rule, baseInterval, JitterByGroup)
 				require.Equal(t, original, offset, "jitterOffsetInTicks should return the same value for the same rule")
 			}
@@ -74,7 +74,7 @@ func TestJitter(t *testing.T) {
 			baseInterval := 10 * time.Second
 			original := jitterOffsetInTicks(rule, baseInterval, JitterByRule)
 
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				offset := jitterOffsetInTicks(rule, baseInterval, JitterByRule)
 				require.Equal(t, original, offset, "jitterOffsetInTicks should return the same value for the same rule")
 			}
