@@ -1,6 +1,8 @@
 import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
+import { canEditNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { isNotebookEditUrl } from '../urls';
 
 import { readNotebookShape } from './shape';
 import {
@@ -45,7 +47,10 @@ export const notebookAnalytics = {
       panel_count: shape.panelCount,
       datasource_types: shape.datasourceTypes,
       assistant_cell_count: shape.assistantCellCount,
-      mode: scene.state.isEditing ? 'edit' : 'view',
+      // The url decides the mode, not the scene. This fires while the notebook still loads, and the
+      // scene only picks the mode up when the page renders it inside UrlSyncContextProvider.
+      // Permission counts too: the sync refuses `?edit=true` for a reader and clears the param.
+      mode: isNotebookEditUrl() && canEditNotebooks() ? 'edit' : 'view',
       was_cached: wasCached,
       meaningful_cell_count: shape.meaningfulCellCount,
       text_cell_count: shape.textCellCount,
