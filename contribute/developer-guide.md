@@ -138,9 +138,11 @@ Some consequences of this setup:
   will not let the page load assets from another origin, so Grafana logs a line and serves the
   build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs
   in development mode.
-- Blanking `server_url` in a config file does not turn the dev server off. Grafana ignores empty
-  values in `custom.ini`, so the default survives. Pass `cfg:frontend_dev.server_url=` on the
-  command line instead.
+- Blanking `server_url` in a config file does not turn the dev server off, and leaves the two
+  halves disagreeing: `yarn start:rspack` refuses to start, while Grafana ignores empty values in
+  `custom.ini` and still points the browser at the dev server. To build without one, run
+  `yarn start:rspack:noHmr`. To stop Grafana looking for one, pass
+  `cfg:frontend_dev.server_url=` on the command line.
 
 #### Plugins
 
