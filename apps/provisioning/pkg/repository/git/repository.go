@@ -235,7 +235,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	}
 
 	// Check authorization
-	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
+	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
