@@ -24,6 +24,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -66,6 +67,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -166,11 +168,17 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   }
 
   return (
-    <div className={styles.container}>
-      <ElementSelectionContext.Provider value={selectionContext}>
-        <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
-        {renderBody()}
-      </ElementSelectionContext.Provider>
+    <div ref={containerRef} className={styles.container}>
+      <EditActionsLayoutProvider
+        containerRef={containerRef}
+        isDocked={sidebarContext.isDocked}
+        isHidden={sidebarContext.isHidden}
+      >
+        <ElementSelectionContext.Provider value={selectionContext}>
+          <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+          {renderBody()}
+        </ElementSelectionContext.Provider>
+      </EditActionsLayoutProvider>
     </div>
   );
 }
@@ -248,6 +256,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
+      // creates a stacking context above the mega menu (z-index=2, so the date pickers appear on top) and
+      // below the app top bar (z-index=1000, so the popovers appears below)
+      zIndex: 3,
     }),
     bodyWrapper: css({
       label: 'body-wrapper',

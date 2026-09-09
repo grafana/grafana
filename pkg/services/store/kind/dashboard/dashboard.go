@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -413,10 +414,8 @@ var logger = log.New("services.store.kind.dashboard")
 // If the type matches, it returns true, otherwise it skips the element, logs an error, and returns false.
 func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, logContext map[string]any, allowedValues ...jsoniter.ValueType) bool {
 	next := iter.WhatIsNext()
-	for _, a := range allowedValues {
-		if next == a {
-			return true
-		}
+	if slices.Contains(allowedValues, next) {
+		return true
 	}
 
 	// Skip unexpected element.

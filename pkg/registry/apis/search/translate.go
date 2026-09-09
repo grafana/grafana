@@ -327,10 +327,17 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 						errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, err.Error()))
 					}
 				}
+				// A field holding one value cannot hold two, so this would always come
+				// back empty and the caller would have no way to tell that apart from
+				// nothing matching.
+				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
+						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
+				}
 			}
 		}
-		if f.Operator != "In" && f.Operator != "NotIn" {
-			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn"}))
+		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
 		}
 		if len(f.Values) == 0 {
 			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
@@ -609,8 +616,16 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 
 func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	op := "in"
-	if f.Operator == "NotIn" {
+	switch f.Operator {
+	case "NotIn":
 		op = "notin"
+	case "All":
+		// The backend combines several values of "=" with AND, which is what All
+		// asks for. A single value stays on the "in" path so All and In agree on it,
+		// including on title, where only "in" matches exactly.
+		if len(f.Values) > 1 {
+			op = string(selection.Equals)
+		}
 	}
 	return &resourcepb.Requirement{Key: f.Field, Operator: op, Values: f.Values}
 }
@@ -701,7 +716,7 @@ func trashReturnFields(fields []string) []string {
 	if len(fields) == 0 {
 		fields = []string{trashFieldTitle, trashFieldFolder, trashFieldDeletedBy, trashFieldDeletionTime}
 	}
-	// deleted_rv is mandatory in the response; it drives restore.
+	// Always returned, so a client can restore from a trash hit without a second read.
 	if !slices.Contains(fields, trashFieldDeletedRV) {
 		fields = append(fields, trashFieldDeletedRV)
 	}

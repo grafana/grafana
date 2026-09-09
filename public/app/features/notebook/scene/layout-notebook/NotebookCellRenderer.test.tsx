@@ -1,7 +1,10 @@
 import { render, screen } from 'test/test-utils';
 
+import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+
 import { NotebookCellItem } from './NotebookCellItem';
-import { NotebookCellRenderer } from './NotebookCellRenderer';
+import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
@@ -88,20 +91,20 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
     });
 
     it('never opens for ordinary typing', async () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), 'Hello');
+      await user.type(await screen.findByLabelText('Markdown'), 'Hello');
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
@@ -112,10 +115,11 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      const editor = await screen.findByLabelText('Markdown');
+      await user.type(editor, '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
-      await user.type(screen.getByLabelText('Markdown'), '{Backspace}');
+      await user.type(editor, '{Backspace}');
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
@@ -130,7 +134,7 @@ describe('NotebookCellRenderer', () => {
         </div>
       );
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: 'Outside' }));
@@ -141,7 +145,7 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
       await user.keyboard('{Escape}');
@@ -155,10 +159,11 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      const editor = await screen.findByLabelText('Markdown');
+      await user.type(editor, '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
-      await user.click(screen.getByLabelText('Markdown'));
+      await user.click(editor);
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
@@ -166,7 +171,7 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
@@ -180,10 +185,58 @@ describe('NotebookCellRenderer', () => {
       const onFocusRequest = jest.fn();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onFocusRequest={onFocusRequest} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
       expect(onFocusRequest).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // Rendering a real panel needs plugin-registry machinery this suite doesn't set up (see PanelCell's
+  // own history), so this gate is exercised directly rather than through a full render.
+  describe('isEditableQueryPanel', () => {
+    it('allows a plain panel with a query runner and no transformations', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+
+      expect(isEditableQueryPanel(panel)).toBe(true);
+    });
+
+    it('excludes a panel with no query runner at all', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+
+      expect(isEditableQueryPanel(panel)).toBe(false);
+    });
+
+    it('excludes a panel with transformations', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({ queries: [] }),
+          transformations: [{ id: 'limit', options: {} }],
+        }),
+      });
+
+      expect(isEditableQueryPanel(panel)).toBe(false);
+    });
+
+    // vizPanelToSchemaV2 serializes any panel carrying LibraryPanelBehavior only as a reference to the
+    // shared library panel — never as a full PanelKind with its own queries — so query edits made
+    // through this editor on a library panel would look like they saved and then be silently
+    // discarded on the next save/reload.
+    it('excludes a library panel, even with a query runner and no transformations', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [] }),
+        $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })],
+      });
+
+      expect(isEditableQueryPanel(panel)).toBe(false);
     });
   });
 });

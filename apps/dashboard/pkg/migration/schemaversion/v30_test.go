@@ -9,6 +9,117 @@ import (
 func TestV30(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "already-new-format value mappings are consolidated and moved to the front",
+			input: map[string]interface{}{
+				"schemaVersion": 29,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"mappings": []interface{}{
+									map[string]interface{}{"type": "range", "options": map[string]interface{}{"from": 1, "to": 2, "result": map[string]interface{}{"text": "R"}}},
+									map[string]interface{}{"type": "value", "options": map[string]interface{}{"a": map[string]interface{}{"text": "A"}}},
+									map[string]interface{}{"type": "value", "options": map[string]interface{}{"b": map[string]interface{}{"text": "B"}}},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 30,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"mappings": []interface{}{
+									map[string]interface{}{"type": "value", "options": map[string]interface{}{"a": map[string]interface{}{"text": "A"}, "b": map[string]interface{}{"text": "B"}}},
+									map[string]interface{}{"type": "range", "options": map[string]interface{}{"from": 1, "to": 2, "result": map[string]interface{}{"text": "R"}}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "legacy value mapping with null value is skipped, not turned into an empty-key entry",
+			input: map[string]interface{}{
+				"schemaVersion": 29,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"mappings": []interface{}{
+									map[string]interface{}{"type": 1, "value": nil, "text": "X"},
+									map[string]interface{}{"type": 1, "value": "5", "text": "Five"},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 30,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"mappings": []interface{}{
+									map[string]interface{}{"type": "value", "options": map[string]interface{}{"5": map[string]interface{}{"text": "Five"}}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "legacy value mapping color is read from thresholds including a step with value -1",
+			input: map[string]interface{}{
+				"schemaVersion": 29,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"thresholds": map[string]interface{}{
+									"steps": []interface{}{
+										map[string]interface{}{"value": nil, "color": "base"},
+										map[string]interface{}{"value": -1, "color": "red"},
+										map[string]interface{}{"value": 10, "color": "blue"},
+									},
+								},
+								"mappings": []interface{}{
+									map[string]interface{}{"type": 1, "value": "x", "text": "5"},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 30,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"fieldConfig": map[string]interface{}{
+							"defaults": map[string]interface{}{
+								"thresholds": map[string]interface{}{
+									"steps": []interface{}{
+										map[string]interface{}{"value": nil, "color": "base"},
+										map[string]interface{}{"value": -1, "color": "red"},
+										map[string]interface{}{"value": 10, "color": "blue"},
+									},
+								},
+								"mappings": []interface{}{
+									map[string]interface{}{"type": "value", "options": map[string]interface{}{"x": map[string]interface{}{"text": "5", "color": "red"}}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "panel with legacy value mappings gets upgraded to new format",
 			input: map[string]interface{}{
 				"title":         "V30 Value Mappings Migration Test Dashboard",
@@ -466,6 +577,8 @@ func TestV30(t *testing.T) {
 						"id":    1,
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
+								// The frontend upgradeValueMappings consolidates all
+								// type:"value" mappings into a single value map.
 								"mappings": []interface{}{
 									map[string]interface{}{
 										"type": "value",
@@ -474,20 +587,10 @@ func TestV30(t *testing.T) {
 												"color": nil,
 												"text":  "test",
 											},
-										},
-									},
-									map[string]interface{}{
-										"type": "value",
-										"options": map[string]interface{}{
 											"30": map[string]interface{}{
 												"color": nil,
 												"text":  "test1",
 											},
-										},
-									},
-									map[string]interface{}{
-										"type": "value",
-										"options": map[string]interface{}{
 											"40": map[string]interface{}{
 												"color": "orange",
 												"text":  "50",

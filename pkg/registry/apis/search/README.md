@@ -98,7 +98,7 @@ Capabilities:
 
 | Capability | What it allows |
 | --- | --- |
-| `filter` | Exact matching on a value or set of values: `In` and `NotIn`. |
+| `filter` | Exact matching on a value or set of values: `In`, `NotIn` and `All`. `In` matches **any** of the values, `All` requires **every** one (see [Requiring every value](#requiring-every-value)). |
 | `text` | Free-text search over the field's tokens. |
 | `partial` | Substring matching. Requires `text`. Costs index size. |
 | `sort` | The field may be named in `sort`. |
@@ -185,10 +185,41 @@ In practice that means when your kind graduates from `v1beta1` to `v1`, the URL 
 **`where`** is a predicate tree. Today it accepts either a single leaf, or a single `and` of leaves. Leaf types:
 
 - `text`: the free-text query, the thing a user types into a search box. `value` is required. `text.fields` says which fields to match it against, defaulting to `title`, and each field named there needs the `text` capability. At most one text leaf. Omitting `text` is fine and common: the query then matches on the other leaves alone, results come back ordered by `name` rather than by relevance, and no `score` is returned.
-- `filter`: `field`, `operator` (`In` or `NotIn`), `values`. Values are always strings, whatever the field's type: a boolean field takes `"true"` or `"false"`, a number is written out. `*` in a value is rejected.
+- `filter`: `field`, `operator` (`In`, `NotIn` or `All`), `values`. `In` matches **any** of the values, `NotIn` excludes all of them, and `All` requires the field to hold **every** value, see [Requiring every value](#requiring-every-value). Values are always strings, whatever the field's type: a boolean field takes `"true"` or `"false"`, a number is written out. `*` in a value is rejected.
 - `range`: numeric fields only, and the field must declare `filter`. There is no separate range capability, so a field you cannot filter is also a field you cannot range over. `gt`/`gte`/`lt`/`lte`, at least one bound, and you cannot combine `gt` with `gte` or `lt` with `lte`. On an `int64` field bounds must be whole numbers.
 
 Omitting `where` matches everything of that kind in the namespace, subject to authorization.
+
+#### Requiring every value
+
+`In` with several values is an OR: this returns dashboards tagged `prod`, or `eu-west`, or both.
+
+```json
+{ "filter": { "field": "tags", "operator": "In", "values": ["prod", "eu-west"] } }
+```
+
+`All` requires **both**:
+
+```json
+{ "filter": { "field": "tags", "operator": "All", "values": ["prod", "eu-west"] } }
+```
+
+One filter leaf per value inside an `and` means the same thing and stays valid:
+
+```json
+{
+  "where": {
+    "and": [
+      { "filter": { "field": "tags", "operator": "In", "values": ["prod"] } },
+      { "filter": { "field": "tags", "operator": "In", "values": ["eu-west"] } }
+    ]
+  }
+}
+```
+
+`All` only means something on a field that holds a list of values, such as `tags` or `ownerReferences`. On a field holding a single value, such as `folder`, `All` with more than one value can never match, so it is rejected with 422 rather than returning an empty result. With exactly one value `All` and `In` mean the same thing, on any field.
+
+`In` is the shape people get wrong, because dashboard live search behaves the other way round: the old `/api/search` path sends its `tag` parameters as a single requirement that the backend combines with AND (`pkg/registry/apis/dashboard/search.go`). So a UI tag filter ported from live search to this endpoint keeps the same request shape and quietly changes meaning, from "has all these tags" to "has any of them".
 
 `or`, `not` and `exists` are in the schema for later and rejected today.
 
@@ -245,7 +276,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 
 ## 6. Errors
 
-- **422 Unprocessable Entity**: the request parsed but is not valid. A field your kind does not declare, a field missing the capability the request needs, an unsupported operator, a `not`/`or`/`exists` node, a second text leaf. The response body names the offending field path.
+- **422 Unprocessable Entity**: the request parsed but is not valid. A field your kind does not declare, a field missing the capability the request needs, an unsupported operator, `All` with several values on a field holding a single value, a `not`/`or`/`exists` node, a second text leaf. The response body names the offending field path.
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
 - **405 Method Not Allowed**: the kind is served, but has no search endpoint. It declares no search fields, it opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.

@@ -28,11 +28,11 @@ func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		close(processingStarted)
 		<-processCh
 		processed.Store(true)
-		return nil
+		return "", nil
 	}
 
 	rc.queue.Add("test/repo")
@@ -85,7 +85,7 @@ func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 	}
 
 	// processFn blocks forever to simulate a stuck reconciliation
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		close(processingStarted)
 		select {}
 	}
@@ -130,10 +130,10 @@ func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(key string) (string, error) {
 		close(processingStarted)
 		<-processCh
-		return nil
+		return "", nil
 	}
 
 	rc.queue.Add("test/ordering")

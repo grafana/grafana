@@ -372,10 +372,8 @@ func (s *SocialGoogle) isHDAllowed(hd string) error {
 		return nil
 	}
 
-	for _, allowedDomain := range s.info.AllowedDomains {
-		if hd == allowedDomain {
-			return nil
-		}
+	if slices.Contains(s.info.AllowedDomains, hd) {
+		return nil
 	}
 
 	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains", errutil.WithPublicMessage("Invalid domain"))
