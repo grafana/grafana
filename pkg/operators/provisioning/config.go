@@ -588,11 +588,13 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 }
 
 func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
-	// Folder metadata read metrics are a process-global singleton recorded by
-	// resources.ReadFolderMetadata rather than threaded through the returned
-	// extras, so they must be registered regardless of which extras path is taken
-	// below — including the custom RepositoryExtrasFunc path, which returns early.
+	// Folder metadata read metrics and nanogit client metrics are process-global
+	// singletons recorded by the code that uses them rather than threaded through
+	// the returned extras, so they must be registered regardless of which extras
+	// path is taken below — including the custom RepositoryExtrasFunc path, which
+	// returns early.
 	resources.RegisterFolderMetadataMetrics(c.Registry())
+	gitrepo.RegisterClientMetrics(c.Registry())
 
 	if c.repositoryExtras != nil {
 		return c.repositoryExtras, nil

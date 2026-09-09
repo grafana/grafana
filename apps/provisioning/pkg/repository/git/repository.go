@@ -24,6 +24,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
+	"github.com/grafana/nanogit/metrics"
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
@@ -54,6 +55,9 @@ type gitRepository struct {
 	writerOptions []nanogit.WriterOption
 	maxBytes      atomic.Int64
 	metrics       *repository.OperationRecorder
+	// clientMetrics is injected into the context nanogit operates on, so its
+	// HTTP/fetch/cache signals are recorded. Nil when no metrics are registered.
+	clientMetrics metrics.Recorder
 }
 
 func NewRepository(
@@ -98,6 +102,7 @@ func NewRepository(
 		client:        client,
 		writerOptions: writerOptions,
 		metrics:       metrics.Recorder(config.Spec.Type),
+		clientMetrics: clientMetrics.Recorder(config.Spec.Type),
 	}, nil
 }
 
@@ -1116,6 +1121,12 @@ func ensureRetryContext(ctx context.Context) context.Context {
 func (r *gitRepository) withGitContext(ctx context.Context, ref string) (context.Context, logging.Logger) {
 	// Ensure retry logic is configured first, before any early returns
 	ctx = ensureRetryContext(ctx)
+
+	// Report nanogit's HTTP/fetch/cache signals for this repository. Injected
+	// unconditionally so it survives even the early return below.
+	if r.clientMetrics != nil {
+		ctx = metrics.ToContext(ctx, r.clientMetrics)
+	}
 
 	logger := logging.FromContext(ctx)
 

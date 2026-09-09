@@ -38,6 +38,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 ) []repository.Extra {
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
 	operationMetrics := repository.RegisterOperationMetrics(reg)
+	git.RegisterClientMetrics(reg)
 	resources.RegisterFolderMetadataMetrics(reg)
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
