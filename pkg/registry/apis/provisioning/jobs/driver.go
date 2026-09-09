@@ -250,10 +250,16 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	// recorded as an error, not a success.
 	// Per-execution throughput: resources processed per second of wall-clock time.
 	// Pull-request jobs do their work as dry-runs (they never change anything), so
-	// they are measured by the dry-run count, matching RecordJob's numerator. The
-	// variance (e.g. full vs incremental for a pull) is set by the worker on the
-	// recorder while it ran.
-	variance := recorder.Variance()
+	// they are measured by the dry-run count, matching RecordJob's numerator.
+	//
+	// variance further breaks an action down (full vs incremental) and only applies
+	// to pull jobs. The sync worker is reused internally by delete/move/migrate to
+	// reconcile, tagging their shared recorder as "full" — so only trust the variance
+	// when the top-level job is actually a pull, otherwise it leaks onto other actions.
+	variance := ""
+	if d.currentJob.Spec.Action == provisioning.JobActionPull {
+		variance = recorder.Variance()
+	}
 	resourcesChanged := sumTotalChanges(d.currentJob.Status.Summary)
 	resourcesDryRun := sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary)
 	resourcesProcessed := resourcesChanged
