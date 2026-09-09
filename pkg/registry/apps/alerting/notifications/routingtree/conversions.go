@@ -12,6 +12,7 @@ import (
 	promModel "github.com/prometheus/common/model"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -19,7 +20,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
+func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, managerPropsMap map[string]utils.ManagerProperties, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
 	result := &model.RoutingTreeList{
 		Items: make([]model.RoutingTree, 0, len(routes)),
 	}
@@ -30,7 +31,7 @@ func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, nam
 				access = &a
 			}
 		}
-		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer, access)
+		k8sResource, err := ConvertToK8sResource(orgID, r, managerPropsMap[r.ResourceID()], namespacer, access)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
 		}
@@ -39,7 +40,7 @@ func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, nam
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, managerProps utils.ManagerProperties, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
 			GroupBy:        r.GroupBy,
@@ -80,8 +81,21 @@ func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespace
 			}
 		}
 	}
-	result.SetProvenanceStatus(string(r.Provenance))
+	// Prefer the richer manager-derived provenance; fall back to whatever provenance the
+	// caller already resolved (e.g. imported routes' converted-Prometheus provenance).
+	provenance := r.Provenance
+	if managerProps.Kind != utils.ManagerKindUnknown {
+		provenance = ngmodels.ManagerPropertiesToProvenance(managerProps)
+	}
+	result.SetProvenanceStatus(string(provenance))
 	result.UID = gapiutil.CalculateClusterWideUID(result)
+
+	if managerProps.Kind != utils.ManagerKindUnknown {
+		if meta, err := utils.MetaAccessor(result); err == nil {
+			meta.SetManagerProperties(managerProps)
+		}
+	}
+
 	return result, nil
 }
 
@@ -157,7 +171,7 @@ func convertRouteToK8sSubRoute(r *v1.Route) model.RoutingTreeRoute {
 	return result
 }
 
-func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, error) {
+func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, utils.ManagerProperties, error) {
 	defaults := obj.Spec.Defaults
 	result := v1.Route{
 		Receiver:   defaults.Receiver,
@@ -187,10 +201,42 @@ func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, error) {
 		}
 	}
 	if len(errs) > 0 {
-		return v1.Route{}, "", errors.Join(errs...)
+		return v1.Route{}, "", utils.ManagerProperties{}, errors.Join(errs...)
 	}
 	result.Provenance = ""
-	return result, obj.ResourceVersion, nil
+
+	managerProps, _, err := extractManagerProperties(obj)
+	if err != nil {
+		return v1.Route{}, "", utils.ManagerProperties{}, err
+	}
+	return result, obj.ResourceVersion, managerProps, nil
+}
+
+// extractManagerProperties resolves the ManagerProperties for an inbound object, preferring the
+// manager annotations (richer than the coarse provenance annotation) when present and validating
+// that they agree with any explicit provenance annotation. It falls back to deriving
+// ManagerProperties from the provenance annotation for objects that pre-date ManagerProperties.
+func extractManagerProperties(obj *model.RoutingTree) (utils.ManagerProperties, ngmodels.Provenance, error) {
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return utils.ManagerProperties{}, "", fmt.Errorf("failed to get metadata: %w", err)
+	}
+	if mp, ok := meta.GetManagerProperties(); ok {
+		if sourceProv := obj.GetProvenanceStatus(); sourceProv != "" && sourceProv != string(ngmodels.ProvenanceNone) {
+			derivedProv := string(ngmodels.ManagerPropertiesToProvenance(mp))
+			if derivedProv != sourceProv {
+				return utils.ManagerProperties{}, "", fmt.Errorf("manager properties (kind=%s) and provenance annotation (%s) are inconsistent: manager properties imply provenance %q",
+					mp.Kind, sourceProv, derivedProv)
+			}
+		}
+		return mp, ngmodels.ManagerPropertiesToProvenance(mp), nil
+	}
+
+	prov, err := ngmodels.ProvenanceFromString(obj.GetProvenanceStatus())
+	if err != nil {
+		return utils.ManagerProperties{}, "", err
+	}
+	return ngmodels.ProvenanceToManagerProperties(prov), prov, nil
 }
 
 func convertK8sSubRouteToRoute(r model.RoutingTreeRoute, path string) (v1.Route, []error) {

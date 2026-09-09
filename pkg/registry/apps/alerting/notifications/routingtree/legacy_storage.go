@@ -12,6 +12,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,11 +25,11 @@ var (
 )
 
 type RouteService interface {
-	GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error)
-	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
-	DeleteManagedRoute(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string, user identity.Requester) error
-	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error)
-	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
+	GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, map[string]utils.ManagerProperties, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, utils.ManagerProperties, error)
+	DeleteManagedRoute(ctx context.Context, orgID int64, name string, manager utils.ManagerProperties, version string, user identity.Requester) error
+	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, manager utils.ManagerProperties, user identity.Requester) (*legacy_storage.ManagedRoute, error)
+	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, manager utils.ManagerProperties, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
 }
 
 type MetadataService interface {
@@ -75,7 +76,7 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 		return nil, err
 	}
 
-	managedRoutes, err := s.service.GetManagedRoutes(ctx, orgId, user)
+	managedRoutes, managerPropsMap, err := s.service.GetManagedRoutes(ctx, orgId, user)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	if err != nil {
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
-	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer, set)
+	return ConvertToK8sResources(orgId, managedRoutes, managerPropsMap, s.namespacer, set)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -97,7 +98,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	managedRoute, err := s.service.GetManagedRoute(ctx, info.OrgID, name, user)
+	managedRoute, managerProps, err := s.service.GetManagedRoute(ctx, info.OrgID, name, user)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	if a, ok := accesses[managedRoute.GetUID()]; ok {
 		access = &a
 	}
-	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer, access)
+	return ConvertToK8sResource(info.OrgID, &managedRoute, managerProps, s.namespacer, access)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -136,15 +137,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	domainModel, _, err := convertToDomainModel(p)
+	domainModel, _, managerProps, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
-	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
-	if err != nil {
-		return nil, errors.NewBadRequest(err.Error())
-	}
-	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, user)
+	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, managerProps, user)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +154,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if a, ok := accesses[created.GetUID()]; ok {
 		access = &a
 	}
-	return ConvertToK8sResource(info.OrgID, created, s.namespacer, access)
+	return ConvertToK8sResource(info.OrgID, created, managerProps, s.namespacer, access)
 }
 
 func (s *legacyStorage) Update(
@@ -197,15 +194,11 @@ func (s *legacyStorage) Update(
 		return nil, false, err
 	}
 
-	domainModel, version, err := convertToDomainModel(p)
+	domainModel, version, managerProps, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, false, err
 	}
-	prov, err := alerting_models.ProvenanceFromString(p.GetProvenanceStatus())
-	if err != nil {
-		return nil, false, errors.NewBadRequest(err.Error())
-	}
-	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, version, user)
+	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, managerProps, version, user)
 	if err != nil {
 		return nil, false, err
 	}
@@ -218,7 +211,7 @@ func (s *legacyStorage) Update(
 	if a, ok := accesses[updated.GetUID()]; ok {
 		access = &a
 	}
-	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer, access)
+	obj, err = ConvertToK8sResource(info.OrgID, updated, managerProps, s.namespacer, access)
 	return obj, false, err
 }
 
@@ -257,11 +250,14 @@ func (s *legacyStorage) Delete(
 	if !ok {
 		return nil, false, fmt.Errorf("expected %s but got %s", ResourceInfo.GroupVersionKind(), old.GetObjectKind().GroupVersionKind())
 	}
-	prov, err := alerting_models.ProvenanceFromString(oldTree.GetProvenanceStatus())
+	// Derive manager properties the same way create/update do, so a resource managed by a
+	// specific manager (e.g. Terraform) is deleted with the matching manager and not the
+	// coarser provenance-derived equivalent.
+	managerProps, _, err := extractManagerProperties(oldTree)
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, prov, version, user) // TODO add support for dry-run option
+	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, managerProps, version, user) // TODO add support for dry-run option
 	return old, false, err
 }
 
