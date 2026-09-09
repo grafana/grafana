@@ -288,7 +288,6 @@ const FlameGraphPane = ({
           showFlameGraphOnly={showFlameGraphOnly}
           collapsing={!disableCollapsing}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
-          enableNewUI={true}
           viewMode={viewMode}
           paneView={paneViewForContextMenu}
           search={search}

@@ -3,8 +3,10 @@ import { cloneDeep } from 'lodash';
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
 import { adminNavEntry } from './sections/admin.navEntry';
+import { connectionsNavEntry } from './sections/connections.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
 import { helpNavEntry } from './sections/help.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
@@ -67,6 +69,8 @@ const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
   dashboardsNavEntry,
   profileNavEntry,
+  alertingNavEntry,
+  connectionsNavEntry,
   adminNavEntry,
   helpNavEntry,
   bookmarksNavEntry,

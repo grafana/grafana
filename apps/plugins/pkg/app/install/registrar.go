@@ -300,7 +300,7 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 	}
 
 	var written []string
-	for pass := 0; pass < maxSyncNamespacePasses; pass++ {
+	for pass := range maxSyncNamespacePasses {
 		existing, err := client.ListAll(ctx, namespace, resource.ListOptions{})
 		if err != nil {
 			return err
