@@ -423,6 +423,16 @@ describe('DashboardPreviewBanner', () => {
         });
       });
 
+      it('does not offer to save to a new branch when the repository only allows writes', () => {
+        setup(
+          { ...previewParams, dashboard: createDashboard({ loadedRef: 'feature-branch' }) },
+          { ...liveQuery({}), repositoryView: { workflows: ['write'] } }
+        );
+
+        expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Save to a new branch' })).not.toBeInTheDocument();
+      });
+
       it('still offers recovery when the last dry-run had errors', () => {
         // The stale payload (kept by RTK after the 404) carried errors; the deleted branch matters more.
         setup(

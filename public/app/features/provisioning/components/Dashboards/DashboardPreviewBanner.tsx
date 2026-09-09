@@ -64,7 +64,9 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
   if (file.isError && isRefNotFoundError(file.error, queryParams.ref)) {
     // The loader only records the ref when it actually loaded, so a match means the scene still holds
     // the branch's content; after a refresh it fell back to the saved version and there is no draft.
-    const hasDraft = getLoadedRef(dashboard.state.meta) === queryParams.ref;
+    // Recovery saves to a new branch, so it is only offered when the repo allows that workflow.
+    const hasDraft =
+      getLoadedRef(dashboard.state.meta) === queryParams.ref && Boolean(repository?.workflows?.includes('branch'));
     return (
       <BranchGoneBanner
         dashboard={dashboard}

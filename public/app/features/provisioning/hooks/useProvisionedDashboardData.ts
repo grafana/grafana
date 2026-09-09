@@ -96,12 +96,12 @@ export function getDefaultValues({
     folderPath,
   });
 
-  // Deleted-branch recovery: the loaded ref is gone, so force the branch workflow onto a fresh
-  // branch instead of the configured one or the (gone) preview ref.
-  const workflow = recoverToNewBranch ? 'branch' : getDefaultWorkflow(repository, loadedFromRef);
-  const ref = recoverToNewBranch
-    ? generateNewBranchName('dashboard')
-    : getDefaultRef(repository, 'dashboard', loadedFromRef);
+  // Deleted-branch recovery: the loaded ref is gone, so default to a fresh branch instead of the
+  // configured one or the (gone) preview ref. Only when the repo allows branches; otherwise the
+  // regular default (a write to the configured branch) is the only place the draft can go.
+  const forceBranch = Boolean(recoverToNewBranch) && Boolean(repository.workflows?.includes('branch'));
+  const workflow = forceBranch ? 'branch' : getDefaultWorkflow(repository, loadedFromRef);
+  const ref = forceBranch ? generateNewBranchName('dashboard') : getDefaultRef(repository, 'dashboard', loadedFromRef);
 
   return {
     values: {

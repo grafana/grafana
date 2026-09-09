@@ -490,5 +490,23 @@ describe('useProvisionedDashboardData', () => {
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
       expect(result.current.defaultValues?.ref).not.toBe('feature-branch');
     });
+
+    it('does not force the branch workflow when the repository does not allow it', () => {
+      // A write-only repo can only take the draft on its configured branch.
+      const writeOnlyRepo: RepositoryView = { ...folderRepo, workflows: ['write'] };
+      const dashboard = createDashboard();
+      const { result } = renderHook(
+        () =>
+          useProvisionedDashboardData(dashboard, readyView(writeOnlyRepo, folder('dashboards')), {
+            recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+          }),
+        {
+          wrapper: getWrapper({ renderWithRouter: true, historyOptions: { initialEntries: ['/?ref=feature-branch'] } }),
+        }
+      );
+
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('main');
+    });
   });
 });
