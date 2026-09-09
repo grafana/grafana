@@ -58,7 +58,7 @@
     "@grafana/faro-web-sdk": "^2.8.2",
     "@grafana/schema": "13.3.0-pre",
     "@grafana/ui": "13.3.0-pre",
-    "@openfeature/core": "^1.10.0",
+    "@openfeature/core": "^1.12.0",
     "@openfeature/localstorage-provider": "^0.1.2",
     "@openfeature/ofrep-web-provider": "^0.4.1",
     "@openfeature/react-sdk": "^1.3.0",
