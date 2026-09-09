@@ -2,7 +2,7 @@ import type { Compilation } from '@rspack/core';
 import type { FileDescriptor, ManifestPluginOptions } from 'rspack-manifest-plugin';
 
 // Must match webassets.AssetsManifestFile on the Go side.
-export const ASSETS_MANIFEST_FILE = 'assets-manifest.json';
+const ASSETS_MANIFEST_FILE = 'assets-manifest.json';
 
 // Hot module replacement patches are transport, not application code. rspack-manifest-plugin
 // strips them from its own `files` list but builds `entries` from an unfiltered
