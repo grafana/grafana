@@ -98,6 +98,10 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 
 func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting.InstallPlugin, failOnErr bool) error {
 	for _, installPlugin := range pluginsToInstall {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
 		if exists {
