@@ -8,6 +8,7 @@ import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alert
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
+import { drilldownNavEntry, exploreNavEntry } from './sections/explore.navEntry';
 import { helpNavEntry } from './sections/help.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
@@ -68,6 +69,8 @@ export function getInitialNavTree(): NavModelItem[] {
 const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
   dashboardsNavEntry,
+  exploreNavEntry,
+  drilldownNavEntry,
   profileNavEntry,
   alertingNavEntry,
   connectionsNavEntry,
