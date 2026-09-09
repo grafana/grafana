@@ -119,9 +119,10 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			expectActions:   allProbeIDs(),
 		},
 		{
-			// The escalation case: a custom role granting dashboard and alert rule
-			// actions at folder scope, without folders:write. These actions used to be
-			// dropped because the folder tier resolved to Viewer.
+			// The escalation case (https://github.com/grafana/support-escalations/issues/23712): a custom role
+			// granting dashboard and alert rule actions at folder scope, without
+			// folders:write. These actions used to be dropped because the folder tier
+			// resolved to Viewer.
 			name: "custom role without folders:write keeps its dashboard and alert rule actions",
 			allowed: []string{
 				"folder-get",
