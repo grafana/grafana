@@ -8,8 +8,10 @@ import {
   config,
   HistoryWrapper,
   locationService,
+  onInteraction,
   ScopesContext,
   type ScopesContextValue,
+  setEchoSrv,
   setLocationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
@@ -23,13 +25,16 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
+import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
 import { NotebookScene } from './NotebookScene';
+import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -58,9 +63,10 @@ jest.mock('@grafana/ui/unstable', () => ({
   ),
 }));
 
-function buildScene(hideTimeControls: boolean) {
+function buildScene(hideTimeControls: boolean, uid?: string) {
   return new NotebookScene({
     title: 'My notebook',
+    uid,
     body: new NotebookLayoutManager({
       cells: [
         new NotebookCellItem({
@@ -216,6 +222,188 @@ describe('NotebookScene', () => {
 
       scene.editHistory.undo();
       expect(runner.state.queries).toEqual(before);
+    });
+
+    describe('edit session analytics', () => {
+      let started: Array<Record<string, unknown>>;
+      let unsubscribe: () => void;
+
+      beforeEach(() => {
+        setEchoSrv(new Echo());
+        started = [];
+        unsubscribe = onInteraction('grafana_notebook_edit_session_started', (properties) => started.push(properties));
+      });
+
+      afterEach(() => {
+        unsubscribe();
+      });
+
+      it('reports a toggle when the Edit control turns edit mode on', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+      });
+
+      it('reports a navigation when the url brought the reader into edit mode', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.NAVIGATION);
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+      });
+
+      // The blank route opens in edit mode before autosave creates the notebook, so there is no uid yet.
+      it('reports a new notebook while it has no uid, whichever control opened it', () => {
+        const scene = buildScene(false);
+
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: '', source: 'new' }]);
+      });
+
+      it('reports one session when edit mode is entered again while already editing', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onEnterEditMode();
+        scene.onEnterEditMode();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'toggle' }]);
+      });
+
+      it('counts nothing from the previous session when edit mode is entered again', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+        scene.onExitEditMode();
+
+        scene.onEnterEditMode();
+
+        expect(scene.editSession.end().editCount).toBe(0);
+      });
+    });
+
+    describe('edit session ended', () => {
+      let ended: Array<Record<string, unknown>>;
+      let unsubscribe: () => void;
+
+      beforeEach(() => {
+        setEchoSrv(new Echo());
+        ended = [];
+        unsubscribe = onInteraction('grafana_notebook_edit_session_ended', (properties) => ended.push(properties));
+      });
+
+      afterEach(() => {
+        unsubscribe();
+      });
+
+      it('reports the session totals and the notebook shape when the toggle turns edit mode off', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+
+        scene.onExitEditMode();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({
+          notebookUid: 'nb1',
+          editCount: 1,
+          endReason: 'toggle',
+          cellCount: 1,
+          cellsByType: ['markdown'],
+          nonEmptyCellCount: 1,
+        });
+        expect(typeof ended[0].durationMs).toBe('number');
+      });
+
+      it('does not fire when the notebook was already in view mode', () => {
+        const scene = buildScene(false, 'nb1');
+
+        scene.onExitEditMode();
+
+        expect(ended).toEqual([]);
+      });
+
+      it('reports a navigation end reason when the notebook deactivates mid-edit', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+
+        expect(ended).toEqual([expect.objectContaining({ notebookUid: 'nb1', endReason: 'navigation' })]);
+      });
+
+      // Typing is one coalescing undo step that stays open until it is committed, and only
+      // onExitEditMode commits it. Leaving the page mid-word has to count that typing anyway.
+      it('counts typing that was still open when the notebook deactivated', () => {
+        const scene = buildScene(false, 'nb1');
+        const cell = scene.state.body.state.cells[0];
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Half a sen' } });
+
+        deactivate();
+
+        expect(ended).toEqual([expect.objectContaining({ endReason: 'navigation', editCount: 1 })]);
+      });
+
+      // The page keeps its scenes in a module-level cache, so this same scene comes back on the next
+      // visit. A scene left mid-session reported a second end for a visit that only read it.
+      it('leaves edit mode with the session, so reopening to read reports nothing more', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        deactivate();
+        // Reopened by its title, so the url carries no edit param.
+        new NotebookSceneUrlSync(scene).updateFromUrl({ edit: null });
+
+        expect(ended).toEqual([expect.objectContaining({ endReason: 'navigation' })]);
+      });
+
+      it('reports a fresh session when a cached notebook is reopened in edit mode', () => {
+        const started: Array<Record<string, unknown>> = [];
+        const unsubscribeStarted = onInteraction('grafana_notebook_edit_session_started', (properties) =>
+          started.push(properties)
+        );
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        deactivate();
+        started.length = 0;
+
+        // The list's Edit action again, on a scene the previous visit left behind.
+        new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
+        unsubscribeStarted();
+
+        expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('does not fire on deactivation when the notebook was never editing', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+
+        deactivate();
+
+        expect(ended).toEqual([]);
+      });
+
+      it('does not double-fire when a toggle-off is followed by a deactivation', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(1);
+        expect(ended[0]).toMatchObject({ endReason: 'toggle' });
+      });
     });
 
     it('clears history when the notebook body is replaced', () => {

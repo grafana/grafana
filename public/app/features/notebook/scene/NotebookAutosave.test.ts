@@ -22,7 +22,9 @@ jest.mock('../api/notebookResource', () => ({
   updateNotebook: jest.fn(),
 }));
 
-jest.mock('../analytics/main', () => ({ NotebookAnalytics: { created: jest.fn() } }));
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: { created: jest.fn(), editSessionStarted: jest.fn(), editSessionEnded: jest.fn() },
+}));
 
 // Mirrors the constants in NotebookAutosave. Duplicated rather than exported so that changing a timing
 // number has to be a deliberate edit here too.
