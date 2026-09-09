@@ -111,7 +111,8 @@ export function validateDashboardResourceEnvelope(
     metadata?: Record<string, unknown>;
   }
 ): { success: boolean; error?: string } {
-  const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
+  const { group, version } = getK8sV2DashboardApiConfig();
+  const expectedAPIVersion = `${group}/${version}`;
   const { apiVersion, kind, spec, metadata } = resource;
 
   if (!spec) {
