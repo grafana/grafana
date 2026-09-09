@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/mail"
+	"slices"
 	"strconv"
 
 	"golang.org/x/oauth2"
@@ -183,10 +184,8 @@ func (s *SocialGenericOAuth) isTeamMember(ctx context.Context, client *http.Clie
 	}
 
 	for _, teamId := range s.teamIds {
-		for _, membershipId := range teamMemberships {
-			if teamId == membershipId {
-				return true
-			}
+		if slices.Contains(teamMemberships, teamId) {
+			return true
 		}
 	}
 
@@ -204,10 +203,8 @@ func (s *SocialGenericOAuth) isOrganizationMember(ctx context.Context, client *h
 	}
 
 	for _, allowedOrganization := range s.allowedOrganizations {
-		for _, organization := range organizations {
-			if organization == allowedOrganization {
-				return true
-			}
+		if slices.Contains(organizations, allowedOrganization) {
+			return true
 		}
 	}
 

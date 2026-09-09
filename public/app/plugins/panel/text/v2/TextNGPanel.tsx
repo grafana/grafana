@@ -10,9 +10,10 @@ import {
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
+  VariableSuggestionsScope,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -28,7 +29,7 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
-import { renderContent } from './renderContent';
+import { catchTemplateError, renderContent, type RenderedContent } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -48,27 +49,27 @@ export function TextNGPanel(props: Props) {
   const currentFrameIndex = getCurrentFrameIndex(frames, options);
   const series = useMemo(() => (frames.length > 1 ? [frames[currentFrameIndex]] : frames), [frames, currentFrameIndex]);
 
-  const suggestions = useMemo(() => (isEditing ? getDataLinksVariableSuggestions(series) : []), [isEditing, series]);
+  // Values scope, so the ${__value} macros the renderer resolves are offered.
+  const suggestions = useMemo(
+    () => (isEditing ? getDataLinksVariableSuggestions(series, VariableSuggestionsScope.Values) : []),
+    [isEditing, series]
+  );
 
   // Adding or removing a query toggles the frame picker, which changes the tree
   // shape and remounts the editor, so its view mode is held here instead.
   const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
 
-  const [processed, setProcessed] = useState<Options>(() => ({
-    mode: options.mode,
+  const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
-    content: isEditing ? EMPTY_CONTENT : renderPanelContent(options, series, replaceVariables),
-  }));
+    isEditing ? { mode: options.mode, content: EMPTY_CONTENT } : renderPanelContent(options, series, replaceVariables)
+  );
 
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes.
   const [wasEditing, setWasEditing] = useState(isEditing);
   if (wasEditing !== isEditing) {
     setWasEditing(isEditing);
     if (!isEditing) {
-      setProcessed({
-        mode: options.mode,
-        content: renderPanelContent(options, series, replaceVariables),
-      });
+      setProcessed(renderPanelContent(options, series, replaceVariables));
     }
   }
 
@@ -81,11 +82,8 @@ export function TextNGPanel(props: Props) {
         return;
       }
       const next = renderPanelContent(options, series, replaceVariables);
-      if (next !== processed.content || options.mode !== processed.mode) {
-        setProcessed({
-          mode: options.mode,
-          content: next,
-        });
+      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+        setProcessed(next);
       }
     },
     100,
@@ -122,7 +120,7 @@ export function TextNGPanel(props: Props) {
       />
     </Suspense>
   ) : (
-    <TextNGView mode={processed.mode} content={processed.content} code={options.code} fitContent={fitContentOn} />
+    <TextNGView {...processed} code={options.code} fitContent={fitContentOn} />
   );
 
   if (frames.length <= 1) {
@@ -167,15 +165,21 @@ export function TextNGPanel(props: Props) {
   );
 }
 
-interface TextNGViewProps {
+interface ProcessedContent extends RenderedContent {
   mode: TextMode;
-  content: string;
+}
+
+interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
   fitContent?: boolean;
 }
 
-function TextNGView({ mode, content, code, fitContent }: TextNGViewProps) {
+function TextNGView({ mode, content, error, code, fitContent }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
+
+  if (error) {
+    return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
+  }
 
   if (mode === TextMode.Code) {
     const codeOptions = code ?? defaultCodeOptions;
@@ -232,7 +236,7 @@ function EditorLoadingFallback({
 }) {
   const theme = useTheme2();
   const layout = useStyles2(getEditorLayoutStyles);
-  const content = useMemo(
+  const rendered = useMemo(
     () => renderPanelContent(options, series, replaceVariables),
     [options, series, replaceVariables]
   );
@@ -243,7 +247,7 @@ function EditorLoadingFallback({
       <Stack minHeight={theme.components.height.md} />
       <div className={layout.body}>
         <div className={cx(layout.pane, layout.previewPane, !isCode && layout.htmlPreviewPane)}>
-          <TextNGView mode={options.mode} content={content} code={options.code} />
+          <TextNGView {...rendered} code={options.code} />
         </div>
       </div>
       {isCode && <Stack minHeight={theme.components.height.md} />}
@@ -268,18 +272,27 @@ function applyEditorChange(options: Options, change: TextNGEditorChange): Option
   return { ...options, content, mode, code };
 }
 
-function renderPanelContent(options: Options, series: DataFrame[], replaceVariables: InterpolateFunction): string {
-  return renderContent(
-    {
-      content: options.content ?? '',
-      mode: options.mode,
-      series,
-      renderMode: options.renderMode,
-      format: getInterpolateFormat(options.mode, options.code?.language),
-    },
-    replaceVariables,
-    config.disableSanitizeHtml
-  );
+function renderPanelContent(
+  options: Options,
+  series: DataFrame[],
+  replaceVariables: InterpolateFunction
+): ProcessedContent {
+  return {
+    mode: options.mode,
+    ...catchTemplateError(() =>
+      renderContent(
+        {
+          content: options.content ?? '',
+          mode: options.mode,
+          series,
+          renderMode: options.renderMode,
+          format: getInterpolateFormat(options.mode, options.code?.language),
+        },
+        replaceVariables,
+        config.disableSanitizeHtml
+      )
+    ),
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

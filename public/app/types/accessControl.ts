@@ -95,6 +95,11 @@ export enum AccessControlAction {
   PlaylistsRead = 'playlists:read',
   PlaylistsWrite = 'playlists:write',
 
+  VariablesCreate = 'variables:create',
+  VariablesRead = 'variables:read',
+  VariablesWrite = 'variables:write',
+  VariablesDelete = 'variables:delete',
+
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
   ActionSupportBundlesRead = 'support.bundles:read',
@@ -148,6 +153,7 @@ export enum AccessControlAction {
   AlertingReceiversCreate = 'alert.notifications.receivers:create',
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
+  AlertingReceiversReadSecrets = 'alert.notifications.receivers.secrets:read',
   AlertingReceiversDelete = 'alert.notifications.receivers:delete',
   /** @deprecated Use AlertingReceiversTestCreate instead */
   AlertingReceiversTest = 'alert.notifications.receivers:test',

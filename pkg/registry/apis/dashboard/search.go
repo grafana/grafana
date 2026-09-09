@@ -587,6 +587,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
+		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
@@ -994,18 +998,10 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	if searchRequest.Query == "*" {
 		searchRequest.Query = "" // will match everything
 	} else if searchRequest.Query != "" {
-		// Explicitly configure the query for dashboard+folder matching.
+		// Name the title field once. The server picks which stored form of the
+		// title to query, and how to weight each one.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{
-				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Boost: 2, // standard analyzer (word-level matching)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-				Boost: 1, // ngram analyzer (partial/prefix matching)
-			},
+			{Name: resource.SEARCH_FIELD_TITLE},
 		}
 
 		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {

@@ -159,7 +159,8 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// Reconciling a tenant writes its pending-delete record to the experimental
 	// KV while the resource label update goes through the main backend.
-	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", backend.snowflake.Generate().Int64(), nil)
+	previousRV := backend.snowflake.Generate().Int64()
+	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
 
 	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
@@ -184,7 +185,7 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.NoError(t, resource.UnmarshalJSON(value))
 	require.Equal(t, "true", resource.GetLabels()[labelPendingDelete])
 
-	_, err = backend.eventStore.Get(t.Context(), EventKey{
+	event, err := backend.eventStore.Get(t.Context(), EventKey{
 		Namespace:       latest.Namespace,
 		Group:           latest.Group,
 		Resource:        latest.Resource,
@@ -193,6 +194,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 		Action:          latest.Action,
 	})
 	require.NoError(t, err)
+	require.Equal(t, previousRV, event.PreviousRV)
+	require.Equal(t, DataActionCreated, event.PreviousAction)
+	require.Empty(t, event.PreviousFolder)
 
 	// The experimental KV is metadata-only: resource data and events remain in
 	// the main KV even when tenant metadata routing is enabled.
@@ -485,16 +489,30 @@ func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *
 }
 
 func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
-	for _, useChannel := range []bool{true, false} {
-		backend := setupTestStorageBackend(t)
-		name := "pollingNotifier"
-
-		if useChannel {
-			backend = setupTestStorageBackend(t, withChannelNotifier)
-			name = "channelNotifier"
-		}
-
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		configure func(*KVBackendOptions)
+	}{
+		{name: "pollingNotifier"},
+		{name: "channelNotifier", configure: withChannelNotifier},
+		{name: "natsNotifier", configure: func(opts *KVBackendOptions) {
+			sub := &fakeEventSubscriber{enabled: true}
+			opts.EnableNatsNotifier = true
+			opts.EventSubscriber = sub
+			opts.EventPublisher = &fakeEventPublisher{
+				enabled: true,
+				onPublish: func(subject string, data []byte) {
+					sub.currentHandler()(subject, data)
+				},
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				if tc.configure != nil {
+					tc.configure(opts)
+				}
+			})
 			ctx, stop := context.WithTimeout(t.Context(), 3*time.Second)
 			defer stop()
 
@@ -584,6 +602,15 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 
 					if j > 0 {
 						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
+						previousAction := DataActionCreated
+						if j > 1 {
+							previousAction = DataActionUpdated
+						}
+						require.Equal(t, previousAction, writtenEvent.PreviousAction)
+						require.Equal(t, events[j-1].Object.GetFolder(), writtenEvent.PreviousFolder) // #nosec G602 -- bounds checked by `j > 0`
+					} else {
+						require.Empty(t, writtenEvent.PreviousAction)
+						require.Empty(t, writtenEvent.PreviousFolder)
 					}
 				case <-ctx.Done():
 					require.FailNow(t, "timed out waiting for events")
@@ -593,18 +620,23 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
-// countingKV wraps a KV and counts the reads issued against the data section,
-// so a test can tell how many storage round trips resolving a set of events
-// took, and how many keys those round trips covered.
+// countingKV counts data and event reads so tests can verify storage round trips
+// and detect per-event lookups.
 type countingKV struct {
 	KV
 	mu         sync.Mutex
 	roundTrips int
 	keysRead   int
 	keysListed int
+	eventReads int
 }
 
 func (k *countingKV) count(section string, keys int) {
+	if section == kv.EventsSection {
+		k.mu.Lock()
+		k.eventReads += keys
+		k.mu.Unlock()
+	}
 	if section != kv.DataSection {
 		return
 	}
@@ -620,6 +652,12 @@ func (k *countingKV) stats() (roundTrips, keysRead int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	return k.roundTrips, k.keysRead
+}
+
+func (k *countingKV) eventsRead() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.eventReads
 }
 
 func (k *countingKV) listed() int {
@@ -1531,6 +1569,205 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	require.Equal(t, []string{"resource-1", "resource-2", "resource-3", "resource-4", "resource-5"}, allItems)
 }
 
+type keysOnlyItem struct {
+	namespace       string
+	name            string
+	folder          string
+	resourceVersion int64
+	value           []byte
+}
+
+// seedResource writes one object, optionally in a folder, and returns its RV.
+func seedResource(t *testing.T, backend *kvStorageBackend, ctx context.Context, name, folder string) int64 {
+	t.Helper()
+	obj, err := createTestObjectWithName(name, appsNamespace, "data-"+name)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	if folder != "" {
+		meta.SetFolder(folder)
+	}
+
+	rv, err := backend.WriteEvent(ctx, WriteEvent{
+		Type:       resourcepb.WatchEvent_ADDED,
+		Key:        appsKey(name),
+		Value:      objectToJSONBytes(t, obj),
+		Object:     meta,
+		PreviousRV: 0,
+	})
+	require.NoError(t, err)
+	return rv
+}
+
+// deleteResource writes the deletion marker for an existing object.
+func deleteResource(t *testing.T, backend *kvStorageBackend, ctx context.Context, name, folder string, previousRV int64) {
+	t.Helper()
+	obj, err := createTestObjectWithName(name, appsNamespace, "data-"+name)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	if folder != "" {
+		meta.SetFolder(folder)
+	}
+
+	_, err = backend.WriteEvent(ctx, WriteEvent{
+		Type:  resourcepb.WatchEvent_DELETED,
+		Key:   appsKey(name),
+		Value: objectToJSONBytes(t, obj),
+		// Validate requires Object; the delete path reads ObjectOld.
+		Object:     meta,
+		ObjectOld:  meta,
+		PreviousRV: previousRV,
+	})
+	require.NoError(t, err)
+}
+
+func appsKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
+		Namespace: appsNamespace.Namespace,
+		Group:     appsNamespace.Group,
+		Resource:  appsNamespace.Resource,
+		Name:      name,
+	}
+}
+
+func appsCollectionRequest(keysOnly bool) *resourcepb.ListRequest {
+	return &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: appsNamespace.Namespace,
+			Group:     appsNamespace.Group,
+			Resource:  appsNamespace.Resource,
+		}},
+		KeysOnly: keysOnly,
+	}
+}
+
+func collectListItems(t *testing.T, backend *kvStorageBackend, ctx context.Context, req *resourcepb.ListRequest) ([]keysOnlyItem, int64) {
+	t.Helper()
+	var items []keysOnlyItem
+	rv, err := backend.ListIterator(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			items = append(items, keysOnlyItem{
+				namespace:       iter.Namespace(),
+				name:            iter.Name(),
+				folder:          iter.Folder(),
+				resourceVersion: iter.ResourceVersion(),
+				value:           iter.Value(),
+			})
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	return items, rv
+}
+
+// A keys-only list must report the same identities as a normal list, and read no
+// values doing it. The value-read assertion is the load-bearing one: a nil Value()
+// would also hold if the iterator fetched every object and discarded it.
+func TestKvStorageBackend_ListIterator_KeysOnly(t *testing.T) {
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := t.Context()
+
+	rvs := map[string]int64{}
+	for _, res := range []struct{ name, folder string }{
+		{"resource-1", "folder-a"},
+		{"resource-2", ""}, // no folder
+		{"resource-3", "folder-b"},
+		{"resource-4", "folder-b"},
+	} {
+		rvs[res.name] = seedResource(t, backend, ctx, res.name, res.folder)
+	}
+	// Deletes must stay invisible to a keys-only list too.
+	deleteResource(t, backend, ctx, "resource-4", "folder-b", rvs["resource-4"])
+
+	// Both are measured so the zero below cannot pass for the wrong reason.
+	fullTripsBefore, fullReadsBefore := kvStore.stats()
+	fullItems, fullRV := collectListItems(t, backend, ctx, appsCollectionRequest(false))
+	fullTripsAfter, fullReadsAfter := kvStore.stats()
+
+	tripsBefore, keysReadBefore := kvStore.stats()
+	listedBefore := kvStore.listed()
+	keyItems, keysRV := collectListItems(t, backend, ctx, appsCollectionRequest(true))
+	tripsAfter, keysReadAfter := kvStore.stats()
+	listedAfter := kvStore.listed()
+
+	require.Greater(t, fullTripsAfter-fullTripsBefore, 0, "the normal list is expected to read values")
+	require.Greater(t, fullReadsAfter-fullReadsBefore, 0, "the normal list is expected to read values")
+
+	assert.Equal(t, 0, tripsAfter-tripsBefore, "a keys-only list must not read any values")
+	assert.Equal(t, 0, keysReadAfter-keysReadBefore, "a keys-only list must not read any values")
+	assert.Greater(t, listedAfter-listedBefore, 0, "the key scan must still happen")
+
+	require.Equal(t, fullRV, keysRV, "both paths list at the same snapshot")
+	require.Greater(t, keysRV, int64(0))
+
+	require.Len(t, keyItems, 3)
+	require.Len(t, fullItems, 3)
+	for i, item := range keyItems {
+		require.Nil(t, item.value, "keys-only items carry no value")
+		require.NotEmpty(t, fullItems[i].value, "the normal list did read values")
+		assert.Equal(t, fullItems[i].namespace, item.namespace)
+		assert.Equal(t, fullItems[i].name, item.name)
+		assert.Equal(t, fullItems[i].folder, item.folder)
+		assert.Equal(t, fullItems[i].resourceVersion, item.resourceVersion)
+	}
+
+	assert.Equal(t, []string{"resource-1", "resource-2", "resource-3"},
+		[]string{keyItems[0].name, keyItems[1].name, keyItems[2].name})
+	assert.Equal(t, []string{"folder-a", "", "folder-b"},
+		[]string{keyItems[0].folder, keyItems[1].folder, keyItems[2].folder})
+}
+
+// Every page of a walk must be taken at one resource version, so a snapshot
+// cannot shift underneath a paging client.
+func TestKvStorageBackend_ListIterator_KeysOnly_ContinueTokenPinsSnapshot(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	for i := 1; i <= 5; i++ {
+		seedResource(t, backend, ctx, fmt.Sprintf("resource-%d", i), "")
+	}
+
+	req := appsCollectionRequest(true)
+	var names []string
+	var listRVs []int64
+	token := ""
+	for range 3 {
+		req.NextPageToken = token
+		token = ""
+		rv, err := backend.ListIterator(ctx, req, func(iter ListIterator) error {
+			count := 0
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return err
+				}
+				names = append(names, iter.Name())
+				count++
+				if count >= 2 {
+					token = iter.ContinueToken()
+					break
+				}
+			}
+			return iter.Error()
+		})
+		require.NoError(t, err)
+		listRVs = append(listRVs, rv)
+		if token == "" {
+			break
+		}
+	}
+
+	require.Equal(t, []string{"resource-1", "resource-2", "resource-3", "resource-4", "resource-5"}, names)
+	require.Len(t, listRVs, 3)
+	for _, rv := range listRVs[1:] {
+		require.Equal(t, listRVs[0], rv, "every page after the first must reuse the snapshot RV from the token")
+	}
+}
+
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -2126,7 +2363,7 @@ func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx contex
 	action := resourcepb.WatchEvent_ADDED
 	rv, testObj := addTestObject(t, backend, ctx, ns, name, uniqueStringGen())
 
-	for i := 0; i < updates; i += 1 {
+	for range updates {
 		rv = updateTestObject(t, backend, ctx, testObj, rv, ns, name, uniqueStringGen())
 		action = resourcepb.WatchEvent_MODIFIED
 	}
@@ -2671,7 +2908,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit times. This will create one more event than the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2749,7 +2986,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit-1 times. This will create same number of events as the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
+		for i := range defaultPrunerHistoryLimit - 1 {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2817,7 +3054,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
 			metaAccessor, err := utils.MetaAccessor(testObj)
 			require.NoError(t, err)
@@ -2904,7 +3141,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit times to exceed the pruner limit
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2984,7 +3221,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update defaultPrunerHistoryLimit-1 times (total events = limit, nothing to prune)
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
+		for i := range defaultPrunerHistoryLimit - 1 {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -3052,7 +3289,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// Update the dashboard dashboardVersionsToKeep times to exceed the configured limit.
 		// Total events: 1 (create) + dashboardVersionsToKeep (updates) = limit + 1.
 		previousRV := rv1
-		for i := 0; i < dashboardVersionsToKeep; i++ {
+		for i := range dashboardVersionsToKeep {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -3960,184 +4197,4 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 		})
 		require.IsType(t, &NoopPruner{}, backend.historyPruner)
 	})
-}
-
-func TestKvStorageBackend_ListEventsSince(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	testObj, err := createTestObject()
-	require.NoError(t, err)
-	metaAccessor, err := utils.MetaAccessor(testObj)
-	require.NoError(t, err)
-
-	writeEvent := func(name string) int64 {
-		rv, err := backend.WriteEvent(ctx, WriteEvent{
-			Type: resourcepb.WatchEvent_ADDED,
-			Key: &resourcepb.ResourceKey{
-				Namespace: "default",
-				Group:     "apps",
-				Resource:  "resources",
-				Name:      name,
-			},
-			Value:     objectToJSONBytes(t, testObj),
-			Object:    metaAccessor,
-			ObjectOld: metaAccessor,
-		})
-		require.NoError(t, err)
-		return rv
-	}
-
-	rv1 := writeEvent("resource-1")
-	rv2 := writeEvent("resource-2")
-	rv3 := writeEvent("resource-3")
-
-	collect := func(sinceRV int64) []int64 {
-		var rvs []int64
-		for event, err := range backend.ListEventsSince(ctx, sinceRV) {
-			require.NoError(t, err)
-			// Replay events are metadata-only; the server reads the value lazily.
-			require.Nil(t, event.Value)
-			rvs = append(rvs, event.ResourceVersion)
-		}
-		return rvs
-	}
-
-	// Only settled events are replayable, so wait for the writes above to fall
-	// outside the (1ms) settle window before asserting on them.
-	require.Eventually(t, func() bool {
-		return len(collect(0)) == 3
-	}, time.Second, 5*time.Millisecond)
-
-	// Events are returned in ascending order, and sinceRV is exclusive.
-	assert.Equal(t, []int64{rv1, rv2, rv3}, collect(0))
-	assert.Equal(t, []int64{rv2, rv3}, collect(rv1))
-	assert.Empty(t, collect(rv3))
-}
-
-// TestKvStorageBackend_ListEventsSince_SkipsUnsettled makes sure events still
-// inside the settle window are not replayed: they may have concurrent, lower-RV
-// writes in flight, so replaying them could advance a watch past an event that
-// has not landed yet. The settled broadcaster stream delivers them instead.
-func TestKvStorageBackend_ListEventsSince_SkipsUnsettled(t *testing.T) {
-	backend := setupTestStorageBackend(t, withSettleDelay(time.Hour))
-	ctx := context.Background()
-
-	testObj, err := createTestObject()
-	require.NoError(t, err)
-	metaAccessor, err := utils.MetaAccessor(testObj)
-	require.NoError(t, err)
-
-	_, err = backend.WriteEvent(ctx, WriteEvent{
-		Type: resourcepb.WatchEvent_ADDED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "apps",
-			Resource:  "resources",
-			Name:      "recent-resource",
-		},
-		Value:     objectToJSONBytes(t, testObj),
-		Object:    metaAccessor,
-		ObjectOld: metaAccessor,
-	})
-	require.NoError(t, err)
-
-	var rvs []int64
-	for event, err := range backend.ListEventsSince(ctx, 0) {
-		require.NoError(t, err)
-		rvs = append(rvs, event.ResourceVersion)
-	}
-	assert.Empty(t, rvs, "events inside the settle window must not be replayed")
-}
-
-func TestKvStorageBackend_CanReplayFrom(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	now := time.Now()
-	saveEvent := func(name string, rv int64) {
-		require.NoError(t, backend.eventStore.Save(ctx, Event{
-			Namespace:       "default",
-			Group:           "apps",
-			Resource:        "resources",
-			Name:            name,
-			ResourceVersion: rv,
-			Action:          DataActionCreated,
-		}))
-	}
-
-	// An empty store has nothing to replay.
-	require.NoError(t, backend.CanReplayFrom(ctx, snowflakeFromTime(now.Add(-2*time.Hour))))
-
-	recentRV := snowflakeFromTime(now.Add(-time.Minute))
-	saveEvent("recent-resource", recentRV)
-
-	// Inside the replay window (younger than half the retention period), events
-	// are guaranteed to still be there.
-	require.NoError(t, backend.CanReplayFrom(ctx, recentRV))
-
-	// Older than the replay window: events written after it may already have been
-	// pruned, so the resume is refused.
-	oldRV := snowflakeFromTime(now.Add(-2 * time.Hour))
-	err := backend.CanReplayFrom(ctx, oldRV)
-	require.Error(t, err)
-	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
-
-	err = backend.CanReplayFrom(ctx, 1)
-	require.Error(t, err)
-	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
-
-	// rv ahead of the latest write: there is nothing to replay, so it is allowed
-	// regardless of age.
-	require.NoError(t, backend.CanReplayFrom(ctx, recentRV+1))
-}
-
-func TestKvStorageBackend_MaxEventReplayAge(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-
-	// Half the retention period.
-	assert.Equal(t, 30*time.Minute, backend.maxEventReplayAge())
-
-	backend.eventRetentionPeriod = 8 * time.Minute
-	assert.Equal(t, 4*time.Minute, backend.maxEventReplayAge())
-}
-
-func TestKvStorageBackend_EventRetentionPeriodMinimum(t *testing.T) {
-	// A retention below the minimum is ignored in favour of the default.
-	belowMin := setupTestStorageBackend(t, func(o *KVBackendOptions) {
-		o.EventRetentionPeriod = time.Minute
-	})
-	assert.Equal(t, defaultEventRetentionPeriod, belowMin.eventRetentionPeriod)
-
-	// A retention at or above the minimum is honoured as configured.
-	honoured := setupTestStorageBackend(t, func(o *KVBackendOptions) {
-		o.EventRetentionPeriod = 20 * time.Minute
-	})
-	assert.Equal(t, 20*time.Minute, honoured.eventRetentionPeriod)
-}
-
-func TestKvStorageBackend_ListEventsSince_DoesNotReadValues(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	// An event whose object value was never written to the data store.
-	rv := snowflakeFromTime(time.Now().Add(-time.Hour))
-	require.NoError(t, backend.eventStore.Save(ctx, Event{
-		Namespace:       "default",
-		Group:           "apps",
-		Resource:        "resources",
-		Name:            "valueless-resource",
-		ResourceVersion: rv,
-		Action:          DataActionCreated,
-	}))
-
-	var events []*WrittenEvent
-	for event, err := range backend.ListEventsSince(ctx, 0) {
-		require.NoError(t, err)
-		events = append(events, event)
-	}
-
-	require.Len(t, events, 1)
-	assert.Equal(t, rv, events[0].ResourceVersion)
-	assert.Nil(t, events[0].Value, "replay must not read object values")
 }

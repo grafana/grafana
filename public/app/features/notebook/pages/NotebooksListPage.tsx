@@ -1,24 +1,19 @@
-import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
-import { useCreateNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
-import { extractErrorMessage, handleError } from 'app/api/utils';
+import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { contextSrv } from 'app/core/services/context_srv';
-import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
-// Notebook schema types come from this module and nowhere else, so the eventual stable-v2
-// migration only has to change that one seam.
-import { defaultSpec as defaultNotebookSpec } from '../types';
-import { notebookViewUrl } from '../urls';
+import { notebookNewEditUrl } from '../urls';
 
 export function NotebooksListPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
@@ -40,52 +35,26 @@ export function NotebooksListPage() {
     createdByMe,
     setCreatedByMe,
     canFilterByMe,
+    tagFilter,
+    setTagFilter,
+    loadedTags,
+    addTagFilter,
     isLoading,
     isReloading,
     filterKey,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
 
-  const [createNotebook] = useCreateNotebookMutation();
-  const [isCreating, setIsCreating] = useState(false);
-
   if (!notebooksEnabled) {
     return <PageNotFound />;
   }
 
-  const onCreate = async () => {
-    setIsCreating(true);
-    try {
-      const created = await createNotebook({
-        notebook: {
-          metadata: { generateName: 'nb' },
-          spec: {
-            ...defaultNotebookSpec(),
-            // The schema and generated-client element unions are structurally identical but
-            // nominally distinct; a new notebook has no elements, so state that here rather
-            // than casting the whole spec across the seam.
-            elements: {},
-            title: t('notebooks.list.new-notebook-title', 'New notebook'),
-          },
-        },
-      }).unwrap();
-
-      if (created.metadata.name) {
-        navigate(notebookViewUrl(created.metadata.name));
-      } else {
-        // The notebook was persisted but we have nowhere to send the user, so say so rather than
-        // leaving the click looking like it did nothing.
-        handleError(created, dispatch, t('notebooks.list.create-error', 'Failed to create notebook'));
-      }
-    } catch (e) {
-      handleError(e, dispatch, t('notebooks.list.create-error', 'Failed to create notebook'));
-    } finally {
-      setIsCreating(false);
-    }
-  };
+  // Opens a blank notebook rather than writing one. Nothing is created until there is something to
+  // save, so a click that goes nowhere leaves no notebook behind in the library.
+  const onCreate = () => navigate(notebookNewEditUrl());
 
   const createButton = canCreate ? (
-    <Button icon="plus" onClick={onCreate} disabled={isCreating}>
+    <Button icon="plus" onClick={onCreate}>
       <Trans i18nKey="notebooks.list.new-notebook">New notebook</Trans>
     </Button>
   ) : undefined;
@@ -160,14 +129,20 @@ export function NotebooksListPage() {
               )}
               <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                 <Stack alignItems="center" gap={1} wrap="wrap">
-                  {/* Without an explicit width FilterInput fills the row and pushes the author
-                      checkbox onto the next line. */}
                   <FilterInput
                     width={40}
                     value={searchQuery}
                     onChange={setSearchQuery}
                     escapeRegex={false}
                     placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  />
+                  <NotebookTagsField
+                    value={tagFilter}
+                    onChange={setTagFilter}
+                    // Where the search route is not served the facet cannot answer, and these are
+                    // the only tags there are to offer.
+                    fallbackTags={loadedTags}
+                    placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                   />
                   {canFilterByMe && (
                     <Checkbox
@@ -204,7 +179,7 @@ export function NotebooksListPage() {
               ) : rows.length > 0 ? (
                 // Keyed by the filters so narrowing the set drops the page index the reader was on,
                 // which is the one case the table itself no longer resets for.
-                <NotebooksTable key={filterKey} notebooks={rows} />
+                <NotebooksTable key={filterKey} notebooks={rows} onTagClick={addTagFilter} />
               ) : (
                 // Only when the request answered: after a failure the alert above explains the
                 // empty table, and "No notebooks found" would report a result nobody returned.

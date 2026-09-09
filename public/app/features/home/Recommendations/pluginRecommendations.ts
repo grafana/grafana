@@ -5,7 +5,12 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
+import {
+  APP_OBSERVABILITY_APP_ID,
+  HOSTED_TRACES_APP_ID,
+  SYNTHETIC_MONITORING_APP_ID,
+  SYNTHETIC_MONITORING_CHECKS_WRITE,
+} from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withTimeout } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
@@ -22,6 +27,8 @@ export interface PluginRecommendationCard extends RecommendationItem {
   appHref: string;
   /** Uses signal onboarding instead of the app page when the plugin is enabled but silent. */
   telemetryType?: TelemetryType;
+  /** Permission the setup flow itself requires, beyond access to the app page. */
+  setupPermission?: string;
 }
 
 /** Guided-connection card: never "enabled-but-silent", so no setup variant. */
@@ -152,6 +159,25 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       href: KUBERNETES_LOGS_SETUP_DOCS,
       cta: 'learn_more',
     },
+    'synthetic-monitoring': pluginCard({
+      id: 'synthetic-monitoring',
+      pluginId: SYNTHETIC_MONITORING_APP_ID,
+      appPath: '/checks/choose-type',
+      icon: 'globe',
+      color: (theme) => theme.visualization.getColorByName('blue'),
+      title: t('home.recommendations.synthetic-monitoring.title', 'Monitor uptime from the outside'),
+      context: t(
+        'home.recommendations.synthetic-monitoring.context',
+        'Black-box checks for the services your cluster runs'
+      ),
+      description: t(
+        'home.recommendations.synthetic-monitoring.description',
+        'Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.'
+      ),
+      action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
+      setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
+      setupPermission: SYNTHETIC_MONITORING_CHECKS_WRITE,
+    }),
   };
 }
 

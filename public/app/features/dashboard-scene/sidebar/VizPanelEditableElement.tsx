@@ -26,7 +26,8 @@ import {
 } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 
@@ -114,8 +115,8 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public useSidebarOptions = useSidebarOptions.bind(this);
 
-  public onDelete() {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
+  public onDelete(source: PanelActionSource = 'edit_pane') {
+    DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(this.panel), source);
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
   }
@@ -136,14 +137,14 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     );
   }
 
-  public onDuplicate() {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
+  public onDuplicate(source: PanelActionSource = 'edit_pane') {
+    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
   }
 
-  public onCopy() {
-    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), 'edit_pane');
+  public onCopy(source: PanelActionSource = 'edit_pane') {
+    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
@@ -162,6 +163,8 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     }
   }
 }
+
+type PanelActionSource = 'edit_pane' | 'edit_popover';
 
 type OpenPanelEditVizProps = { panel: VizPanel };
 

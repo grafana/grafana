@@ -3,8 +3,8 @@ module github.com/grafana/grafana/pkg/storage/unified/resourcepb
 go 1.26.6
 
 require (
-	google.golang.org/grpc v1.83.0
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
+	google.golang.org/grpc v1.83.2
+	google.golang.org/protobuf v1.36.12
 )
 
 require (

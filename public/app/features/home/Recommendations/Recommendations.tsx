@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -25,6 +26,9 @@ interface RecommendationsProps {
 }
 
 export function Recommendations({ solutions }: RecommendationsProps) {
+  if (isOnPrem()) {
+    return null;
+  }
   // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
   // datasource creation qualifies — everyone else is spared the recommendation work.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
@@ -88,9 +92,11 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
             },
           ];
         }
-        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
-          ? [toSetupItem(card)]
-          : [];
+        // App access gates the destination page; setupPermission gates the flow itself.
+        const canSetup =
+          contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin) &&
+          (!card.setupPermission || contextSrv.hasPermission(card.setupPermission));
+        return canSetup ? [toSetupItem(card)] : [];
       }
       // plugins:write is scoped to this plugin.
       return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
@@ -106,6 +112,7 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
     metrics: forSolution('metrics'),
     logs: forSolution('logs'),
     traces: forSolution('traces'),
+    synthetics: forSolution('synthetics'),
   };
 
   return { selection, recommendations, recommendationsBySolution };
@@ -165,4 +172,5 @@ const EMPTY_BY_SOLUTION: Record<SolutionId, RecommendationItem[]> = {
   metrics: [],
   logs: [],
   traces: [],
+  synthetics: [],
 };
