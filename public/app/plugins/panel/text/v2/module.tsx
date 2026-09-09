@@ -5,7 +5,7 @@ import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
-import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
+import { hasRenderableData } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 function newFeaturesEnabled(): boolean {
@@ -53,18 +53,6 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
         },
       ],
     },
-    showIf: showForData,
-  });
-
-  builder.addNumberInput({
-    path: 'maxRows',
-    name: t('textng.options.max-rows', 'Row limit'),
-    description: t(
-      'textng.options.max-rows-description',
-      'Rows of query data to render. High values can slow the panel, especially with complex HTML.'
-    ),
-    category: dataCategory,
-    settings: { min: 1, max: MAX_RENDERED_ROWS, integer: true, placeholder: String(MAX_RENDERED_ROWS) },
     showIf: showForData,
   });
 };
