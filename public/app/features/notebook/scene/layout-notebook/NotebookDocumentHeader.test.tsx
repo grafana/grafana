@@ -141,20 +141,10 @@ describe('NotebookDocumentHeader', () => {
     expect(onTagsChange).toHaveBeenCalledWith(['slo']);
   });
 
-  // A custom value is the raw string typed, so this is the only thing standing between the user and a
-  // tag with trailing whitespace that renders identically to an existing one. Trailing rather than
-  // leading: react-select swallows a leading space, so one cannot be typed into this control.
-  it('trims a tag typed by hand', async () => {
-    const { user, onTagsChange } = setup({ isEditing: true, tags: [] });
-
-    await user.type(tagInput(), 'incident  ');
-    await user.keyboard('{enter}');
-
-    expect(onTagsChange).toHaveBeenCalledWith(['incident']);
-  });
-
-  // Lowercasing would rewrite tags the notebook already carried, not just the one being typed.
-  it('leaves the case of a typed tag alone', async () => {
+  // Left exactly as typed, as TagsInput leaves a dashboard's tags: no trim, no case folding. A tag is
+  // the string the user chose, and rewriting it here would also rewrite the ones already on the
+  // notebook, which arrive through this same callback.
+  it('leaves a typed tag exactly as it was entered', async () => {
     const { user, onTagsChange } = setup({ isEditing: true, tags: [] });
 
     await user.type(tagInput(), 'Production');

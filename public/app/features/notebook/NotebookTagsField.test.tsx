@@ -87,7 +87,8 @@ describe('NotebookTagsField', () => {
 
     await user.click(screen.getByLabelText(TAG_FILTER));
 
-    expect(trigger).toHaveBeenCalledWith({ field: 'tags', limit: 100 });
+    // `true` is preferCacheValue: the facet is asked once per mount rather than on every focus.
+    expect(trigger).toHaveBeenCalledWith({ field: 'tags', limit: 1000 }, true);
   });
 
   // The count is what makes one tag worth reaching for over another, and the facet already carries
@@ -111,9 +112,9 @@ describe('NotebookTagsField', () => {
     expect(await screen.findByText('retired-tag')).toBeInTheDocument();
   });
 
-  // The facet returns the hundred most-used tags, so in a bigger library the rarest are not in the
-  // options at all. Typing is the only route to filtering on one of those.
-  it('reports a typed tag the facet never offered', async () => {
+  // Only the callers that set a notebook's tags opt into this — a tag has to be invented somewhere.
+  // The ones that filter leave it off, so their dropdown is the only route in.
+  it('reports a typed tag when the caller allows creating one', async () => {
     setFacet([{ value: 'cost', count: 11 }]);
     const onChange = jest.fn();
     const { user } = render(

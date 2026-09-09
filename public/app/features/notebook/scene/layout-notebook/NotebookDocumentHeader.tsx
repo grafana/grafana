@@ -53,9 +53,7 @@ export function NotebookDocumentHeader({
       </MetaRow>
 
       {showTags ? (
-        // Full width so the picker can take the rest of the line: the outer Stack aligns to
-        // flex-start, which would otherwise shrink this row to its content.
-        <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined} fillWidth={canEditTags}>
+        <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined}>
           {canEditTags && onTagsChange ? (
             <NotebookTagsField
               inputId={TAGS_INPUT_ID}
@@ -82,13 +80,11 @@ export function NotebookDocumentHeader({
 function MetaRow({
   label,
   htmlFor,
-  fillWidth,
   children,
 }: {
   label: string;
   /** Set when the row owns a form control, so the visible label is really its label. */
   htmlFor?: string;
-  fillWidth?: boolean;
   children: React.ReactNode;
 }) {
   // A native label rather than grafana-ui's Label, so the two rows stay typographically identical
@@ -96,7 +92,7 @@ function MetaRow({
   const Wrapper = htmlFor ? 'label' : 'span';
 
   return (
-    <Stack direction="row" gap={2} alignItems="center" width={fillWidth ? '100%' : undefined}>
+    <Stack direction="row" gap={2} alignItems="center">
       <Wrapper htmlFor={htmlFor}>
         {/* `body` is the theme's 14px step; `bodySmall` would be 12. */}
         <Text variant="body" color="secondary">

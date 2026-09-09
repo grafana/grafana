@@ -73,9 +73,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0]?.value;
 
   const picker = useNotebookPicker();
-  // Every tag in the library, not only the ones the current results carry: this is what narrows the
-  // results, so offering only co-occurring tags would let the filter talk itself into a corner. The
-  // selected ones are unioned in so a tag cannot vanish from the list while it is doing the filtering.
   const [selectedUid, setSelectedUid] = useState<string>();
 
   // A selection the filters have since hidden is derived away rather than cleared in an effect: the
@@ -202,7 +199,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                       value={picker.tagFilter}
                       onChange={picker.setTagFilter}
                       fallbackTags={picker.loadedTags}
-                      allowCustomValue
                       disabled={picker.isLoading}
                       placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
                     />

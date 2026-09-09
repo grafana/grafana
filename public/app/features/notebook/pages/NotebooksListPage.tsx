@@ -129,8 +129,6 @@ export function NotebooksListPage() {
               )}
               <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                 <Stack alignItems="center" gap={1} wrap="wrap">
-                  {/* Without an explicit width FilterInput fills the row and pushes the filters
-                      beside it onto the next line. */}
                   <FilterInput
                     width={40}
                     value={searchQuery}
@@ -144,9 +142,6 @@ export function NotebooksListPage() {
                     // Where the search route is not served the facet cannot answer, and these are
                     // the only tags there are to offer.
                     fallbackTags={loadedTags}
-                    // The facet returns the hundred most-used tags, so a rarer one has to be
-                    // typeable or it cannot be filtered on at all.
-                    allowCustomValue
                     placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                   />
                   {canFilterByMe && (
