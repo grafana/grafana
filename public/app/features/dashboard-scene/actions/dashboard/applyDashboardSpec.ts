@@ -69,6 +69,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
     },
     undo: () => {
       scene.setState(previousState);
+      scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
     },
   });
 }

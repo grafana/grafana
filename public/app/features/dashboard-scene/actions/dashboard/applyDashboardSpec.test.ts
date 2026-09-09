@@ -1,3 +1,4 @@
+import { NewSceneObjectAddedEvent } from '@grafana/scenes';
 import {
   defaultPanelKind,
   defaultSpec as defaultDashboardV2Spec,
@@ -120,6 +121,20 @@ describe('applyDashboardSpec', () => {
     scene.state.sidebar.redoAction();
     expect(scene.state.title).toBe('New title');
     expect(scene.state.body).toBe(newBody);
+  });
+
+  it('re-publishes NewSceneObjectAddedEvent for the restored children on undo, so url sync re-attaches', () => {
+    const scene = buildScene(makeSpec('Old title'));
+    const originalBody = scene.state.body;
+
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+
+    const addedObjects: unknown[] = [];
+    scene.subscribeToEvent(NewSceneObjectAddedEvent, (evt) => addedObjects.push(evt.payload));
+
+    scene.state.sidebar.undoAction();
+
+    expect(addedObjects).toContain(originalBody);
   });
 
   it('marks the scene dirty on perform, and restores the prior dirty state on undo', () => {
