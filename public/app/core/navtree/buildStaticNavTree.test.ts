@@ -15,10 +15,10 @@ describe('buildStaticNavTree', () => {
   describe('sections', () => {
     it('builds the minimal tree for a user with no permissions', () => {
       setup();
-      // cfg is an attachment-parent shell here; pruneEmptyNavSections removes it
+      // Connections and cfg are attachment-parent shells here; pruneEmptyNavSections removes them
       const tree = buildStaticNavTree();
 
-      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.cfg, NavID.profile, NavID.help]);
+      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.connections, NavID.cfg, NavID.profile, NavID.help]);
     });
 
     it('orders sections by sort weight', () => {
@@ -30,6 +30,7 @@ describe('buildStaticNavTree', () => {
         NavID.starred,
         NavID.dashboards,
         NavID.alerting,
+        NavID.connections,
         NavID.cfg,
         NavID.profile,
         NavID.help,
@@ -239,6 +240,28 @@ describe('buildStaticNavTree', () => {
     });
   });
 
+  describe('connections section', () => {
+    it('is always present as a plugin attachment parent', () => {
+      setup();
+      expect(findById(buildStaticNavTree(), NavID.connections)?.children).toEqual([]);
+    });
+
+    it('adds datasource children with configuration page access', () => {
+      setup({ permissions: [AccessControlAction.DataSourcesRead, AccessControlAction.DataSourcesWrite] });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.connections)?.children ?? [])).toEqual([
+        'connections-add-new-connection',
+        'connections-datasources',
+      ]);
+    });
+
+    it('withholds datasource children on read-only access', () => {
+      setup({ permissions: [AccessControlAction.DataSourcesRead] });
+
+      expect(findById(buildStaticNavTree(), NavID.connections)?.children).toEqual([]);
+    });
+  });
+
   describe('administration section', () => {
     it('always contains the subsection shells so plugin pages and enterprise items can inject into them', () => {
       setup();
@@ -346,7 +369,7 @@ describe('buildStaticNavTree', () => {
 });
 
 describe('pruneEmptyNavSections', () => {
-  it('removes empty cfg/access and cfg shells like the server does', () => {
+  it('removes empty connections, cfg/access and cfg shells like the server does', () => {
     setup();
     const tree = pruneEmptyNavSections(buildStaticNavTree());
 
@@ -354,9 +377,17 @@ describe('pruneEmptyNavSections', () => {
   });
 
   it('keeps sections that gained children', () => {
-    setup({ orgRole: 'Admin', permissions: [AccessControlAction.OrgUsersRead] });
+    setup({
+      orgRole: 'Admin',
+      permissions: [
+        AccessControlAction.DataSourcesRead,
+        AccessControlAction.DataSourcesWrite,
+        AccessControlAction.OrgUsersRead,
+      ],
+    });
     const tree = pruneEmptyNavSections(buildStaticNavTree());
 
+    expect(ids(tree)).toContain(NavID.connections);
     expect(ids(tree)).toContain(NavID.cfg);
     const cfg = findById(tree, NavID.cfg);
     expect(ids(cfg?.children ?? [])).toContain(NavID.cfgAccess);
