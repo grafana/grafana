@@ -1152,6 +1152,60 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
   });
 
+  it('lands on the saved dashboard after a deleted-branch recovery that writes to the configured branch', async () => {
+    // A write-only repo saves the draft straight to the configured branch. Staying on the preview
+    // URL would keep showing the deleted branch (and its recovery banner) for a draft already saved.
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const dashboard = makeNotDirtyDashboard();
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    });
+
+    const { user } = setup({
+      dashboard,
+      isNew: false,
+      recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['write'],
+        branch: 'main',
+        target: 'folder',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    const request = requireCapturedRequest(capturedRequest);
+    // Configured branch: no ref, and an update since the file exists there.
+    expect(request.url.searchParams.get('ref')).toBeNull();
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+
+    await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
+    expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
+  });
+
   it('should properly handle read-only state for a repository without workflows', () => {
     setup({
       isNew: false,

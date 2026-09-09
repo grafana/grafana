@@ -266,12 +266,30 @@ export function SaveProvisionedDashboardForm({
         return;
       }
 
+      // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
+      // for a draft that was just saved, so go to the saved dashboard instead.
+      if (recoverToNewBranch && upsert?.metadata?.name) {
+        navigate(`/d/${upsert.metadata.name}`);
+        return;
+      }
+
       locationService.partial({
         viewPanel: null,
         editPanel: null,
       });
     },
-    [isNew, path, ref, repository?.branch, repository?.type, handleDismiss, handleNewDashboard, navigateToPreview]
+    [
+      isNew,
+      path,
+      ref,
+      repository?.branch,
+      repository?.type,
+      recoverToNewBranch,
+      navigate,
+      handleDismiss,
+      handleNewDashboard,
+      navigateToPreview,
+    ]
   );
 
   const onBranchSuccess = useCallback(
