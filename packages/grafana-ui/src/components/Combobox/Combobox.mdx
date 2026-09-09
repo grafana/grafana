@@ -51,19 +51,19 @@ Combobox uses its default content for generated custom-value and select-all opti
   onChange={setValue}
   width={32}
   renderOption={(option) => (
-    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Stack direction="row" alignItems="center" justifyContent="space-between">
       <span>{option.label ?? option.value}</span>
       <Badge text="Available" color="green" />
-    </span>
+    </Stack>
   )}
 />
 ```
 
 Custom option renderers must meet these requirements:
 
-- Keep the renderer pure and free of side effects. Virtualized rows can render repeatedly.
-- Custom content can use variable heights. Combobox starts with a conservative two-line estimate, includes group-header metadata, then measures each mounted custom row together with its group header and updates the virtual layout. It does not render or measure rows outside the mounted virtual range.
-- Supply accurate string `label` and `description` metadata. Menu width is estimated from that metadata and the option icon, not from custom content. Set `width` when custom content needs more space.
+- Keep the renderer pure and free of side effects. Virtualized rows can render repeatedly, and the render function _may_ be called before an option is rendered, such as to measure layout.
+- Custom content can use variable heights. Combobox starts with a conservative two-line estimate, then measures each mounted custom row and updates the virtual layout.
+- Menu and option width is estimated from that `label` and `description` on items. It is currently not measured from the custom content, so ensure your custom content fits within the estimated width or can wrap.
 - Include the option label or equivalent accessible text in the rendered content. The plain string `label` is still used for filtering and for the selected input value.
 - Do not nest buttons, links, inputs, or other interactive controls. The option row owns focus and selection.
 
