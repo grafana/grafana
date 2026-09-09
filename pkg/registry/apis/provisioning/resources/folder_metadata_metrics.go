@@ -99,10 +99,16 @@ func folderReadOutcome(err error) string {
 	switch {
 	case err == nil:
 		return folderReadOutcomeFound
-	case errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err):
-		return folderReadOutcomeMissing
 	case errors.Is(err, ErrInvalidFolderMetadata):
 		return folderReadOutcomeInvalid
+	// A missing ref (branch gone) is a genuine read failure, not an absent
+	// _folder.json. It must be checked before the not-found catch-all below,
+	// which would otherwise swallow it — ErrRefNotFound is itself a NotFound
+	// status error — and mislabel it as missing.
+	case errors.Is(err, repository.ErrRefNotFound):
+		return folderReadOutcomeError
+	case errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err):
+		return folderReadOutcomeMissing
 	default:
 		return folderReadOutcomeError
 	}

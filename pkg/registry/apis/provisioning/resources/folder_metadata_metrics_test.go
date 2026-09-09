@@ -25,6 +25,9 @@ func TestFolderReadOutcome(t *testing.T) {
 		{"missing via repository error", repository.ErrFileNotFound, folderReadOutcomeMissing},
 		{"missing via apierror", apierrors.NewNotFound(schema.GroupResource{}, "x"), folderReadOutcomeMissing},
 		{"invalid", NewInvalidFolderMetadata("f", errors.New("bad json")), folderReadOutcomeInvalid},
+		// ErrRefNotFound is a NotFound status error too, but a missing ref is a
+		// real failure, not an absent _folder.json.
+		{"ref not found is an error, not missing", repository.ErrRefNotFound, folderReadOutcomeError},
 		{"error", errors.New("boom"), folderReadOutcomeError},
 	}
 	for _, tt := range tests {

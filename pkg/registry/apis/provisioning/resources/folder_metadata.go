@@ -186,9 +186,10 @@ func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath,
 		span.SetAttributes(attribute.String("outcome", outcome))
 		// A missing _folder.json is an expected state, not a failure, so it does
 		// not mark the span as errored — only a malformed or otherwise unreadable
-		// file does.
+		// file does. tracing.Error (not RecordError) sets the span status to
+		// codes.Error so these show up in status-based trace queries.
 		if outcome == folderReadOutcomeInvalid || outcome == folderReadOutcomeError {
-			span.RecordError(err)
+			tracing.Error(span, err)
 		}
 		span.End()
 		folderMetadataMetrics.recordRead(repo, start, err)
