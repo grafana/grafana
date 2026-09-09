@@ -201,10 +201,11 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return s.validateToken(ctx, cfg, dbHelper, &model, hashedToken, unhashedToken)
 }
 
-// LookupTokenForAuthn resolves the session token, its exact auth provider, and
-// the OAuth credentials associated with that session in a single query. It is
-// intentionally separate from LookupToken so non-authentication callers do not
-// pay for joins or secret decryption they do not need.
+// LookupTokenForAuthn resolves the session token together with the auth provider
+// and OAuth credentials needed for OAuth passthrough. It is separate from
+// LookupToken so callers that only need session-token state, including token
+// rotation and normal session authentication, avoid unnecessary joins and
+// secret decryption.
 func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*auth.SessionTokenAuthnInfo, error) {
 	ctx, span := s.tracer.Start(ctx, "authtoken.LookupTokenForAuthn")
 	defer span.End()
