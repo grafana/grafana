@@ -36,13 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	// HasRulesLabel marks a folder as holding at least one Grafana-managed alert or recording rule.
-	HasRulesLabel = "alerting.grafana.app/has-rules"
-
-	// The slash in the label key is escaped as "~1" to avoid the apiserver reading it as two path segments
-	hasRulesLabelPath = "/metadata/labels/alerting.grafana.app~1has-rules"
-)
+// HasRulesLabel marks a folder as holding at least one Grafana-managed alert or recording rule.
+const HasRulesLabel = "alerting.grafana.app/has-rules"
 
 type syncerStore interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
@@ -52,7 +47,7 @@ type syncerStore interface {
 
 type folderPatcher interface {
 	Get(ctx context.Context, id resource.Identifier) (*folderv1.Folder, error)
-	Patch(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*folderv1.Folder, error)
+	Update(ctx context.Context, obj *folderv1.Folder, opts resource.UpdateOptions) (*folderv1.Folder, error)
 	ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*folderv1.FolderList, error)
 }
 
@@ -256,13 +251,19 @@ func (s *Service) partialSync(ctx context.Context, key models.FolderKey) error {
 		}
 	}
 
-	patchOperation := generatePatch(count, folder)
+	if folder.Labels == nil {
+		folder.Labels = map[string]string{}
+	}
+	if count > 0 {
+		folder.Labels[HasRulesLabel] = "true"
+	} else {
+		delete(folder.Labels, HasRulesLabel)
+	}
 
-	_, err = folders.Patch(ctx, id, resource.PatchRequest{
-		Operations: []resource.PatchOperation{patchOperation},
-	}, resource.PatchOptions{})
-	if err != nil {
-		return fmt.Errorf("patch folder label: %w", err)
+	if _, err := folders.Update(ctx, folder, resource.UpdateOptions{
+		ResourceVersion: folder.ResourceVersion,
+	}); err != nil {
+		return fmt.Errorf("update folder label: %w", err)
 	}
 
 	s.log.Debug("Updated folder rules label",
@@ -276,29 +277,6 @@ func (s *Service) partialSync(ctx context.Context, key models.FolderKey) error {
 	}
 
 	return nil
-}
-
-func generatePatch(count int64, folder *folderv1.Folder) resource.PatchOperation {
-	if count > 0 {
-		if folder.Labels == nil {
-			return resource.PatchOperation{
-				Operation: resource.PatchOpAdd,
-				Path:      "/metadata/labels",
-				Value:     map[string]string{HasRulesLabel: "true"},
-			}
-		}
-
-		return resource.PatchOperation{
-			Operation: resource.PatchOpAdd,
-			Path:      hasRulesLabelPath,
-			Value:     "true",
-		}
-	}
-
-	return resource.PatchOperation{
-		Operation: resource.PatchOpRemove,
-		Path:      hasRulesLabelPath,
-	}
 }
 
 func (s *Service) folderClient() (folderPatcher, error) {

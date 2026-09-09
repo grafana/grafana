@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -71,12 +70,13 @@ type fakeFolderClient struct {
 
 	failNamespaces map[string]struct{}
 
-	patchErr error
-	// patchErrQueue is consumed one entry per Patch call, before patchErr applies, so a fake can fail
-	// a set number of times and then succeed.
-	patchErrQueue []error
-	patchCalls    int
-	patches       []resource.PatchRequest
+	updateErr error
+	// updateErrQueue is consumed one entry per Update call, before updateErr applies, so a fake can
+	// fail a set number of times and then succeed.
+	updateErrQueue         []error
+	updateCalls            int
+	updated                []map[string]string
+	updateResourceVersions []string
 
 	list       []*folderv1.Folder
 	listErr    error
@@ -95,26 +95,36 @@ func (f *fakeFolderClient) Get(_ context.Context, id resource.Identifier) (*fold
 	if !ok {
 		return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "folders"}, id.Name)
 	}
-	return folder, nil
+	// A copy, with the namespace set as a real Get would: partialSync mutates the object it reads, so
+	// handing out the stored pointer would let one attempt's mutation leak into the next.
+	out := folder.DeepCopy()
+	out.Namespace = id.Namespace
+	return out, nil
 }
 
-func (f *fakeFolderClient) Patch(_ context.Context, id resource.Identifier, req resource.PatchRequest, _ resource.PatchOptions) (*folderv1.Folder, error) {
-	f.patchCalls++
-	if _, ok := f.failNamespaces[id.Namespace]; ok {
+func (f *fakeFolderClient) Update(_ context.Context, obj *folderv1.Folder, opts resource.UpdateOptions) (*folderv1.Folder, error) {
+	f.updateCalls++
+	f.updateResourceVersions = append(f.updateResourceVersions, opts.ResourceVersion)
+	if _, ok := f.failNamespaces[obj.Namespace]; ok {
 		return nil, errors.New("failure")
 	}
-	if len(f.patchErrQueue) > 0 {
-		err := f.patchErrQueue[0]
-		f.patchErrQueue = f.patchErrQueue[1:]
+	if len(f.updateErrQueue) > 0 {
+		err := f.updateErrQueue[0]
+		f.updateErrQueue = f.updateErrQueue[1:]
 		if err != nil {
 			return nil, err
 		}
 	}
-	if f.patchErr != nil {
-		return nil, f.patchErr
+	if f.updateErr != nil {
+		return nil, f.updateErr
 	}
-	f.patches = append(f.patches, req)
-	return nil, nil
+	// Copied, since the caller mutates the object it read.
+	labels := make(map[string]string, len(obj.Labels))
+	for k, v := range obj.Labels {
+		labels[k] = v
+	}
+	f.updated = append(f.updated, labels)
+	return obj, nil
 }
 
 func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.ListOptions) (*folderv1.FolderList, error) {
@@ -237,16 +247,25 @@ func TestPartialSync(t *testing.T) {
 
 		require.NoError(t, s.partialSync(context.Background(), key))
 
-		require.Len(t, folders.patches, 1)
-		require.Equal(t, []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      hasRulesLabelPath,
-			Value:     "true",
-		}}, folders.patches[0].Operations)
+		require.Equal(t, []map[string]string{{
+			HasRulesLabel: "true",
+			"unrelated":   "keep",
+		}}, folders.updated, "other labels must survive")
 	})
 
-	t.Run("seeds the whole labels map when the folder has none", func(t *testing.T) {
-		// "add" on a sub-path of a missing object fails, so the map has to be created wholesale.
+	t.Run("writes conditionally on the version it read", func(t *testing.T) {
+		folder := folderWithLabels("folder-1", map[string]string{"unrelated": "keep"})
+		folder.ResourceVersion = "5"
+		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{"folder-1": folder}}
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+
+		require.NoError(t, s.partialSync(context.Background(), key))
+
+		require.Equal(t, []string{"5"}, folders.updateResourceVersions,
+			"the update must carry the version the folder was read at")
+	})
+
+	t.Run("creates the labels map when the folder has none", func(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", nil),
 		}}
@@ -254,27 +273,22 @@ func TestPartialSync(t *testing.T) {
 
 		require.NoError(t, s.partialSync(context.Background(), key))
 
-		require.Len(t, folders.patches, 1)
-		require.Equal(t, []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/labels",
-			Value:     map[string]string{HasRulesLabel: "true"},
-		}}, folders.patches[0].Operations)
+		require.Equal(t, []map[string]string{{HasRulesLabel: "true"}}, folders.updated)
 	})
 
 	t.Run("removes the label when the last rule goes", func(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
-			"folder-1": folderWithLabels("folder-1", map[string]string{HasRulesLabel: "true"}),
+			"folder-1": folderWithLabels("folder-1", map[string]string{
+				HasRulesLabel: "true",
+				"unrelated":   "keep",
+			}),
 		}}
 		s := newTestService(&fakeSyncerStore{}, folders)
 
 		require.NoError(t, s.partialSync(context.Background(), key))
 
-		require.Len(t, folders.patches, 1)
-		require.Equal(t, []resource.PatchOperation{{
-			Operation: resource.PatchOpRemove,
-			Path:      hasRulesLabelPath,
-		}}, folders.patches[0].Operations)
+		require.Equal(t, []map[string]string{{"unrelated": "keep"}}, folders.updated,
+			"only the has-rules label may be removed")
 	})
 
 	t.Run("does nothing when the label already matches", func(t *testing.T) {
@@ -294,7 +308,7 @@ func TestPartialSync(t *testing.T) {
 				s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": tc.count}}, folders)
 
 				require.NoError(t, s.partialSync(context.Background(), key))
-				require.Empty(t, folders.patches, "expected no patch when state already matches")
+				require.Empty(t, folders.updated, "expected no write when state already matches")
 			})
 		}
 	})
@@ -304,7 +318,7 @@ func TestPartialSync(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
 		require.NoError(t, s.partialSync(context.Background(), key))
-		require.Empty(t, folders.patches)
+		require.Empty(t, folders.updated)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -319,23 +333,15 @@ func TestPartialSync(t *testing.T) {
 			require.ErrorContains(t, s.partialSync(context.Background(), key), "get folder")
 		})
 
-		t.Run("patching the folder", func(t *testing.T) {
+		t.Run("updating the folder", func(t *testing.T) {
 			folders := &fakeFolderClient{
-				folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
-				patchErr: errors.New("boom"),
+				folders:   map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+				updateErr: errors.New("boom"),
 			}
 			s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
-			require.ErrorContains(t, s.partialSync(context.Background(), key), "patch folder label")
+			require.ErrorContains(t, s.partialSync(context.Background(), key), "update folder label")
 		})
 	})
-}
-
-// The label key contains a slash, which RFC6901 requires be escaped as "~1". The app-sdk passes
-// /metadata/... paths through verbatim, so getting this wrong sends the apiserver a nested path.
-func TestHasRulesLabelPathIsEscaped(t *testing.T) {
-	require.Equal(t, "/metadata/labels/alerting.grafana.app~1has-rules", hasRulesLabelPath)
-	require.Contains(t, hasRulesLabelPath, "~1")
-	require.NotContains(t, strings.TrimPrefix(hasRulesLabelPath, "/metadata/labels/"), "/")
 }
 
 func TestDrain(t *testing.T) {
@@ -343,8 +349,8 @@ func TestDrain(t *testing.T) {
 		// Not re-queued: the periodic full sync is what picks the folder back up, so a persistently
 		// failing folder cannot occupy the queue indefinitely.
 		folders := &fakeFolderClient{
-			folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
-			patchErr: apierrors.NewConflict(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("boom")),
+			folders:   map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+			updateErr: apierrors.NewConflict(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("boom")),
 		}
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
@@ -438,8 +444,8 @@ func TestDrainRetries(t *testing.T) {
 	}
 	newFolders := func(errs ...error) *fakeFolderClient {
 		return &fakeFolderClient{
-			folders:       map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
-			patchErrQueue: errs,
+			folders:        map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+			updateErrQueue: errs,
 		}
 	}
 
@@ -452,7 +458,7 @@ func TestDrainRetries(t *testing.T) {
 
 		s.drain(context.Background())
 
-		require.Equal(t, 3, folders.patchCalls, "should have retried twice before succeeding")
+		require.Equal(t, 3, folders.updateCalls, "should have retried twice before succeeding")
 		require.Equal(t, float64(1), counterValue(t, reg,
 			"grafana_alerting_folder_label_syncer_total",
 			map[string]string{"sync_type": metrics.SyncTypePartial}))
@@ -463,7 +469,7 @@ func TestDrainRetries(t *testing.T) {
 
 	t.Run("gives up after the attempt budget and counts one failure", func(t *testing.T) {
 		folders := newFolders()
-		folders.patchErr = conflict()
+		folders.updateErr = conflict()
 		reg := prometheus.NewPedanticRegistry()
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
@@ -471,7 +477,7 @@ func TestDrainRetries(t *testing.T) {
 
 		s.drain(context.Background())
 
-		require.Equal(t, retry.DefaultBackoff.Steps, folders.patchCalls,
+		require.Equal(t, retry.DefaultBackoff.Steps, folders.updateCalls,
 			"should stop at the configured attempt budget")
 		// Once per folder, not once per attempt, or the failure rate stops being comparable to the
 		// success rate.
@@ -482,13 +488,13 @@ func TestDrainRetries(t *testing.T) {
 
 	t.Run("does not retry a failure that cannot clear", func(t *testing.T) {
 		folders := newFolders()
-		folders.patchErr = apierrors.NewForbidden(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("nope"))
+		folders.updateErr = apierrors.NewForbidden(schema.GroupResource{Resource: "folders"}, "folder-1", errors.New("nope"))
 		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{key})
 
 		s.drain(context.Background())
 
-		require.Equal(t, 1, folders.patchCalls, "a non-retriable error should fail on the first attempt")
+		require.Equal(t, 1, folders.updateCalls, "a non-retriable error should fail on the first attempt")
 	})
 }
 
@@ -518,11 +524,11 @@ func TestFailureMetrics(t *testing.T) {
 				folder: &fakeFolderClient{getErr: errors.New("boom")},
 			},
 			{
-				name:  "patching the folder",
+				name:  "updating the folder",
 				store: &fakeSyncerStore{counts: map[string]int64{"folder-1": 1}},
 				folder: &fakeFolderClient{
-					folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
-					patchErr: errors.New("boom"),
+					folders:   map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+					updateErr: errors.New("boom"),
 				},
 			},
 		} {
