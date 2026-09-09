@@ -22,31 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// actionsOf returns the actions the given probes contribute when allowed.
-func actionsOf(t *testing.T, correlationIDs ...string) map[string]bool {
-	t.Helper()
-	byID := make(map[string]string, len(folderAccessProbes))
-	for _, p := range folderAccessProbes {
-		byID[p.correlationID] = p.action
-	}
-	out := make(map[string]bool, len(correlationIDs))
-	for _, id := range correlationIDs {
-		action, ok := byID[id]
-		require.True(t, ok, "unknown probe %q", id)
-		out[action] = true
-	}
-	return out
-}
-
-// allProbeIDs returns every probe's correlation ID.
-func allProbeIDs() []string {
-	ids := make([]string, 0, len(folderAccessProbes))
-	for _, p := range folderAccessProbes {
-		ids = append(ids, p.correlationID)
-	}
-	return ids
-}
-
 func TestFolderAccessProbes(t *testing.T) {
 	// Enforced downstream on BatchCheck correlation IDs.
 	validID := regexp.MustCompile(`^[\w-]{1,36}$`)
@@ -445,4 +420,29 @@ func (m *subAccessMockClient) BatchCheck(ctx context.Context, info authlib.AuthI
 		return m.batchCheckFunc(ctx, info, req)
 	}
 	return authlib.BatchCheckResponse{}, nil
+}
+
+// actionsOf returns the actions the given probes contribute when allowed.
+func actionsOf(t *testing.T, correlationIDs ...string) map[string]bool {
+	t.Helper()
+	byID := make(map[string]string, len(folderAccessProbes))
+	for _, p := range folderAccessProbes {
+		byID[p.correlationID] = p.action
+	}
+	out := make(map[string]bool, len(correlationIDs))
+	for _, id := range correlationIDs {
+		action, ok := byID[id]
+		require.True(t, ok, "unknown probe %q", id)
+		out[action] = true
+	}
+	return out
+}
+
+// allProbeIDs returns every probe's correlation ID.
+func allProbeIDs() []string {
+	ids := make([]string, 0, len(folderAccessProbes))
+	for _, p := range folderAccessProbes {
+		ids = append(ids, p.correlationID)
+	}
+	return ids
 }
