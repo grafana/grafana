@@ -825,10 +825,18 @@ function getStyles(theme: GrafanaTheme2) {
       alignSelf: 'flex-start',
     }),
 
+    // Also opts out of the row's default stretch (like horizontalGraphContainer above): without this, an
+    // indefinite-height row (e.g. Explore, which doesn't bound our height) stretches this to match the flame
+    // graph's organic height instead of collapsing to its own (near-zero) content size - which hid the
+    // near-zero measurement useHeightFallback relies on to apply FLAMEGRAPH_CONTAINER_HEIGHT, so a shallow
+    // profile's short flame graph left the table stretched just as short instead of getting its fallback
+    // height. height: '100%' keeps it filling a real bounded row (dashboard panel) same as before.
     horizontalTableContainer: css({
       flexBasis: '50%',
       minWidth: 0,
       minHeight: 0,
+      height: '100%',
+      alignSelf: 'flex-start',
       overflow: 'auto',
     }),
 
