@@ -17,6 +17,8 @@ const (
 	TeamLBACRuleConditionReasonDatasourceNotFound = "DatasourceNotFound"
 	// TeamLBACRuleConditionReasonDatasourceLookupFailed accompanies Enforceable=Unknown.
 	TeamLBACRuleConditionReasonDatasourceLookupFailed = "DatasourceLookupFailed"
+	// TeamLBACRuleConditionReasonNamespaceResolutionFailed accompanies Enforceable=Unknown.
+	TeamLBACRuleConditionReasonNamespaceResolutionFailed = "NamespaceResolutionFailed"
 	// TeamLBACRuleConditionReasonUnsupportedDatasourceType accompanies Enforceable=False.
 	TeamLBACRuleConditionReasonUnsupportedDatasourceType = "UnsupportedDatasourceType"
 )

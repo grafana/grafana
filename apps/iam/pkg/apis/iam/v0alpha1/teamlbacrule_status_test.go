@@ -60,6 +60,7 @@ func TestTeamLBACRuleStatusContractConstants(t *testing.T) {
 	require.Equal(t, "BasicAuthUserMissing", TeamLBACRuleConditionReasonBasicAuthUserMissing)
 	require.Equal(t, "DatasourceNotFound", TeamLBACRuleConditionReasonDatasourceNotFound)
 	require.Equal(t, "DatasourceLookupFailed", TeamLBACRuleConditionReasonDatasourceLookupFailed)
+	require.Equal(t, "NamespaceResolutionFailed", TeamLBACRuleConditionReasonNamespaceResolutionFailed)
 	require.Equal(t, "UnsupportedDatasourceType", TeamLBACRuleConditionReasonUnsupportedDatasourceType)
 }
 
