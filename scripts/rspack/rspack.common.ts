@@ -1,4 +1,5 @@
 import rspack, { type Configuration, type RuleSetRule } from '@rspack/core';
+import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,9 +21,9 @@ export type Env = Record<string, string | true | undefined>;
 // webassets.PublicPathFor on the Go side.
 export const PUBLIC_PATH = 'public/build/rspack/';
 
-// `reactRefresh` must be kept in step with ReactRefreshRspackPlugin: the transform emits calls
-// into a runtime only that plugin injects. It also needs the development JSX transform, which
-// is why the flag turns both on together.
+// `reactRefresh` emits calls into a runtime that only ReactRefreshRspackPlugin injects, so the
+// caller must register that plugin too. The `hmr` branch below does both; nothing else should
+// set this. It also needs the development JSX transform, which is why the flag turns both on.
 export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   return {
     test: /\.tsx?$/,
@@ -81,10 +82,19 @@ export const sassRule: RuleSetRule = {
   ],
 };
 
-export default (env: Env = {}): Configuration => {
+export interface CommonOptions {
   // Hot module replacement is incompatible with content hashes, so HMR builds fall back to
   // plain names. Nothing caches them: they are served straight from the dev server.
-  const hmr = Boolean(Number(env.hmr));
+  //
+  // Only rspack.dev.ts may set this. It is deliberately not read from `env`: `--env` is a
+  // user-facing CLI surface, and an HMR-flavoured production build compiles clean but ships
+  // unhashed filenames and Fast Refresh calls with no runtime to receive them.
+  hmr?: boolean;
+}
+
+export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configuration => {
+  // Content hashes let the CDN cache immutably; HMR needs stable names to patch instead.
+  const contentHash = hmr ? '' : '.[contenthash]';
 
   return {
     target: 'browserslist',
@@ -111,12 +121,13 @@ export default (env: Env = {}): Configuration => {
       // keep `path` and `publicPath` aligned otherwise 404s will occur.
       path: path.resolve(import.meta.dirname, '../..', PUBLIC_PATH),
       filename: (pathData) => {
-        if (hmr || pathData.chunk?.name === 'boot') {
+        // boot.js is referenced by name from the Go template, so it never carries a hash.
+        if (pathData.chunk?.name === 'boot') {
           return '[name].js';
         }
-        return '[name].[contenthash].js';
+        return `[name]${contentHash}.js`;
       },
-      chunkFilename: hmr ? '[name].js' : '[name].[contenthash].js',
+      chunkFilename: `[name]${contentHash}.js`,
       publicPath: PUBLIC_PATH,
       // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
       trustedTypes: { policyName: 'grafana#rspack' },
@@ -178,9 +189,12 @@ export default (env: Env = {}): Configuration => {
         ],
       }),
       new rspack.CssExtractRspackPlugin({
-        filename: hmr ? 'grafana.[name].css' : 'grafana.[name].[contenthash].css',
+        filename: `grafana.[name]${contentHash}.css`,
       }),
       new rspack.EnvironmentPlugin(envConfig),
+      // Paired with `createSwcRule({ reactRefresh })` below: the transform emits calls this
+      // plugin's runtime receives, so the two are registered from the same flag.
+      ...(hmr ? [new ReactRefreshRspackPlugin()] : []),
     ],
     module: {
       parser: {
