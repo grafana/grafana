@@ -892,7 +892,27 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		require.Equal(t, "http://127.0.0.1:9999", cfg.FrontendDevServerURL)
 	})
 
-	for _, invalid := range []string{"localhost:3001", "http://", "://nope"} {
+	// Credentials must not reach index.html, where every browser would send them on.
+	t.Run("credentials in the url are dropped", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(devServerINI("http://user:pass@localhost:3333"))
+		require.NoError(t, err)
+		require.Equal(t, "http://localhost:3333", cfg.FrontendDevServerURL)
+	})
+
+	// A second parse of the same Cfg must not keep an origin the new config rejects.
+	t.Run("a re-parse clears a previously accepted origin", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(devServerINI("http://localhost:3333"))
+		require.NoError(t, err)
+		require.Equal(t, "http://localhost:3333", cfg.FrontendDevServerURL)
+
+		disabled, err := ini.Load([]byte("app_mode = production\n"))
+		require.NoError(t, err)
+		require.NoError(t, cfg.parseINIFile(disabled))
+		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+
+	// The scheme allowlist matters: this value becomes the origin every bundle loads from.
+	for _, invalid := range []string{"localhost:3001", "http://", "://nope", "ftp://evil.example", "javascript://x"} {
 		t.Run("an unusable url is ignored: "+invalid, func(t *testing.T) {
 			cfg, err := NewCfgFromBytes(devServerINI(invalid))
 			require.NoError(t, err)
