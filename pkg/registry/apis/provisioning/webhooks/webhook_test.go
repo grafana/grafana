@@ -230,7 +230,7 @@ func TestWebhookConnector_webhook_replay(t *testing.T) {
 
 	// An empty replay key is never treated as a duplicate.
 	hooks.replayKey = ""
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		result, err := s.webhook(t.Context(), &http.Request{}, hooks)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, result.response.Code)

@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Warnungsmanager",
+        "alert-managers": "",
         "import": "Import"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anmerkungen",
         "description": "Beschreibung",
@@ -6416,17 +6429,6 @@
           "empty": "(leer)",
           "no-title": "<kein Titel>"
         }
-      },
-      "predefined-variables": {
-        "all": "Alles",
-        "description": "",
-        "folder": "Ordner",
-        "global": "Global",
-        "label": "Vordefinierte Variablen",
-        "none": "Keine",
-        "pane-header": "Vordefinierte Variablen",
-        "title": "Vordefinierte Variablen",
-        "tooltip": "Wählen Sie, welche globalen Variablen und Ordnervariablen dieses Dashboard erhält"
       },
       "redo": "Wiederherstellen",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "Sobald die Funktion wieder aktiviert ist, werden Ihre Dashboards normal in ihrem Format von Dynamic Dashboard dargestellt. Daher empfehlen wir Ihnen dringend, keine Änderungen an diesen Dashboards vorzunehmen, bis die Funktion wieder aktiviert ist, da Änderungen, die im klassischen Modus vorgenommen werden, zu unerwarteten Ergebnissen führen können. Alternativ können Sie mithilfe der Option „Als Kopie speichern“ im Menü „Dashboard speichern“ eine Kopie des Dashboards speichern.",
       "save-warning": "Jedes Dashboard, das als Dynamic Dashboard erstellt oder dazu konvertiert wurde, wird als klassisches Dashboard geöffnet. Durch das Speichern des Dashboards könnten bereits eingerichtete Funktionen von Dynamic Dashboard verloren gehen."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Benutzerdefinierte Optionen",
       "json-values-tooltip": "Stellen Sie eine JSON-Datei bereit, die ein Array von Objekten darstellt, wobei jedes Objekt eine beliebige Anzahl an Eigenschaften haben kann.<br/>Weitere Informationen finden Sie in <4>unserer Dokumentation</4>.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Schließen"
-    },
-    "predefined-variables": {
-      "label-all": "Alles",
-      "label-custom": "Benutzerdefiniert",
-      "label-folder": "Ordner",
-      "label-global": "Global",
-      "label-none": "Keine"
     },
     "provisioned-controls-section": {
       "label": "Von der Datenquelle bereitgestellt",
@@ -9125,6 +9124,7 @@
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
+      "error-indicator": "",
       "errors": "Fehler",
       "errors-tooltip": "Wählt Spannen aus, in denen der Status „Fehler“ ist.",
       "export-started": "Export gestartet",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Startzeitpunkt",
+      "success-indicator": "",
       "target": "Ziel",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
       "trace-id": "Trace-ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
