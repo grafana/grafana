@@ -59,6 +59,22 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
     return null;
   }
 
+  // Checked before the dry-run errors: RTK keeps the last good `data` after a failed refetch, so a
+  // stale error payload must not hide the recovery, and the actions can still read `existing`.
+  if (file.isError && isRefNotFoundError(file.error, queryParams.ref)) {
+    // The loader only records the ref when it actually loaded, so a match means the scene still holds
+    // the branch's content; after a refresh it fell back to the saved version and there is no draft.
+    const hasDraft = getLoadedRef(dashboard.state.meta) === queryParams.ref;
+    return (
+      <BranchGoneBanner
+        dashboard={dashboard}
+        existingUid={existingUid}
+        // No `existing` means the file was born on the deleted branch and never merged.
+        draft={hasDraft ? { fileExistsOnConfiguredBranch: Boolean(existingUid) } : undefined}
+      />
+    );
+  }
+
   // early return if there is an error loading dashboard file from repository
   if (file.data?.errors) {
     return (
@@ -77,22 +93,6 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
   // Authoritative change type from the dry-run, so the banner title reflects the real action
   // (create/update/delete/move) instead of inferring "new resource" from the absence of a PR URL.
   const resourceAction = file.data?.resource?.action;
-
-  // RTK keeps the last good `data` after a failed refetch, so the recovery actions can still read the
-  // dry-run result.
-  if (file.isError && isRefNotFoundError(file.error, queryParams.ref)) {
-    // The loader only records the ref when it actually loaded, so a match means the scene still holds
-    // the branch's content; after a refresh it fell back to the saved version and there is no draft.
-    const hasDraft = getLoadedRef(dashboard.state.meta) === queryParams.ref;
-    return (
-      <BranchGoneBanner
-        dashboard={dashboard}
-        existingUid={existingUid}
-        // A dry-run "create" means the file was born on the deleted branch and never merged.
-        draft={hasDraft ? { fileExistsOnConfiguredBranch: resourceAction !== 'create' } : undefined}
-      />
-    );
-  }
 
   // Vars
   const targetRef = file.data?.ref;

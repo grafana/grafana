@@ -399,7 +399,7 @@ describe('DashboardPreviewBanner', () => {
 
       it('enters edit mode and opens the save drawer defaulted to a new branch', async () => {
         const dashboard = createDashboard({ loadedRef: 'feature-branch' });
-        setup({ ...previewParams, dashboard }, liveQuery({ action: 'update' }));
+        setup({ ...previewParams, dashboard }, liveQuery({ existing: { metadata: { name: 'original-uid' } } }));
 
         await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
 
@@ -412,8 +412,8 @@ describe('DashboardPreviewBanner', () => {
 
       it('flags the recovery save as a create when the dashboard only ever existed on the deleted branch', async () => {
         const dashboard = createDashboard({ loadedRef: 'feature-branch' });
-        // A dry-run "create" means the file was born on the (now deleted) branch and never merged, so
-        // the recovery branch — cut from the configured branch — doesn't have it to update.
+        // No `existing` means the file was born on the (now deleted) branch and never merged, so the
+        // recovery branch — cut from the configured branch — doesn't have it to update.
         setup({ ...previewParams, dashboard }, liveQuery({ action: 'create' }));
 
         await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
@@ -423,9 +423,26 @@ describe('DashboardPreviewBanner', () => {
         });
       });
 
+      it('still offers recovery when the last dry-run had errors', () => {
+        // The stale payload (kept by RTK after the 404) carried errors; the deleted branch matters more.
+        setup(
+          { ...previewParams, dashboard: createDashboard({ loadedRef: 'feature-branch' }) },
+          {
+            fileQuery: {
+              data: { ...defaultFileQueryReturn.data, errors: ['Invalid dashboard'] },
+              isError: true,
+              error: notFound,
+            },
+          }
+        );
+
+        expect(screen.getByRole('button', { name: 'Save to a new branch' })).toBeInTheDocument();
+        expect(screen.queryByText('Error loading dashboard')).not.toBeInTheDocument();
+      });
+
       it('does not re-enter edit mode when already editing, which would reset the dirty state', async () => {
         const dashboard = createDashboard({ loadedRef: 'feature-branch', isEditing: true });
-        setup({ ...previewParams, dashboard }, liveQuery({ action: 'update' }));
+        setup({ ...previewParams, dashboard }, liveQuery({ existing: { metadata: { name: 'original-uid' } } }));
 
         await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
 

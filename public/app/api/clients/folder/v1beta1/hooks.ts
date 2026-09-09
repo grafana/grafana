@@ -235,7 +235,9 @@ export function useGetFolderQueryFacade(uid?: string) {
   }, [needsUserData, resultFolder, triggerGetUserDisplayMapping]);
 
   if (!shouldUseAppPlatformAPI) {
-    return legacyFolderResult;
+    // RTK keeps `data` from the last fetched folder once the arg flips to skipToken; a caller that
+    // cleared its uid must not keep seeing that folder
+    return uid ? legacyFolderResult : { ...legacyFolderResult, data: undefined };
   }
 
   // For virtual folders the folder object is hardcoded and there are no parents, but access
@@ -257,7 +259,14 @@ export function useGetFolderQueryFacade(uid?: string) {
     // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
     // api client.
     let newData: CombinedFolder | undefined;
-    if (resultFolder.data && resultParents.data && resultAccess.data && (!needsUserData || resultUserDisplay.data)) {
+    // Guarded on `uid` for the same reason as the legacy branch: a cleared uid must not keep the last folder
+    if (
+      uid &&
+      resultFolder.data &&
+      resultParents.data &&
+      resultAccess.data &&
+      (!needsUserData || resultUserDisplay.data)
+    ) {
       newData = combineFolderResponses(
         resultFolder.data,
         resultAccess.data,
