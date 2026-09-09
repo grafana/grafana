@@ -1494,3 +1494,28 @@ func TestConnectionController_shouldGenerateToken_ExpiredCounter(t *testing.T) {
 		})
 	}
 }
+
+// TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
+// verifies that a token persisted before expiration tracking (no
+// status.token.expiration) still counts as expired via the live validated
+// expiry, so pre-upgrade tokens are covered during rollout.
+func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	cc := &ConnectionController{
+		tokenMetrics:   registerConnectionTokenMetrics(reg),
+		resyncInterval: 5 * time.Minute,
+	}
+	obj := &provisioning.Connection{
+		Status: provisioning.ConnectionStatus{
+			// Pre-upgrade token: LastUpdated set, but no persisted expiration.
+			Token: provisioning.TokenStatus{LastUpdated: time.Now().Add(-time.Hour).UnixMilli(), Expiration: 0},
+		},
+		Secure: provisioning.ConnectionSecure{Token: common.InlineSecureValue{Create: "existing-token"}},
+	}
+	mockConn := connection.NewMockTokenConnection(t)
+	mockConn.EXPECT().ValidateToken().Return(time.Now().Add(-time.Minute), nil)
+
+	cc.shouldGenerateToken(context.Background(), obj, mockConn)
+
+	assert.Equal(t, 1.0, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
+}

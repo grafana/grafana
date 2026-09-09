@@ -492,6 +492,15 @@ func (cc *ConnectionController) shouldGenerateToken(
 		return true
 	}
 
+	// Backfill the expired classification for tokens persisted before expiration
+	// tracking (status.token.expiration == 0): use the live validated expiry, so a
+	// pre-upgrade token that lapses before its first refresh still counts as
+	// expired. Tokens with a persisted expiration are already classified above;
+	// ValidateToken returns the (possibly past) expiry without erroring on expiry.
+	if obj.Status.Token.Expiration == 0 && !expiresAt.IsZero() && !expiresAt.After(time.Now()) {
+		cc.tokenMetrics.recordExpired()
+	}
+
 	if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
 		return false
 	}
