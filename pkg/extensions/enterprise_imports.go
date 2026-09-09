@@ -534,6 +534,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	_ "github.com/grafana/grafana/pkg/storage/unified"
 	_ "github.com/grafana/grafana/pkg/storage/unified/apistore"
+	_ "github.com/grafana/grafana/pkg/storage/unified/federated"
 	_ "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
