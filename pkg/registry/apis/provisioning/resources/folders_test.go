@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -2149,6 +2150,269 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		require.ErrorAs(t, err, &validationErr, "UID conflict should be a ResourceValidationError")
 		require.ErrorContains(t, err, `folder UID "shared-uid" defined in "team-a" is already used by folder at path "team-b"`)
 	})
+
+	// Reproduces the folder-rename bug: a single commit renames a parent
+	// ("oldparent" -> "newparent") and its child ("oldchild" -> "newchild"),
+	// both keeping their stable _folder.json UID. During reconcile the old
+	// folders are still in the tree at their old paths, so ensuring the new
+	// child path walks its ancestors and resolves the parent's UID at the old
+	// path. Only when EVERY relocating UID is supplied can the walk avoid a
+	// false duplicate-UID conflict.
+	t.Run("simultaneous parent and child relocation needs the full relocating set", func(t *testing.T) {
+		newManager := func() (*FolderManager, *fakeDynamicResourceClient) {
+			config := newTestRepoConfig("test-repo")
+			rw := repository.NewMockReaderWriter(t)
+			rw.On("Config").Return(config)
+			rw.On("Read", mock.Anything, "newparent/newchild/_folder.json", "test-ref").
+				Return(&repository.FileInfo{Data: folderJSON("child-uid", "Child"), Hash: "child-hash"}, nil)
+			rw.On("Read", mock.Anything, "newparent/_folder.json", "test-ref").
+				Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Parent"), Hash: "parent-hash"}, nil)
+
+			// Old state: both folders present at their old paths under their stable UIDs.
+			tree := NewEmptyFolderTree()
+			tree.Add(Folder{ID: "parent-uid", Path: "oldparent", Title: "Parent", MetadataHash: "parent-hash"}, "")
+			tree.Add(Folder{ID: "child-uid", Path: "oldparent/oldchild", Title: "Child", MetadataHash: "child-hash"}, "parent-uid")
+
+			client := &fakeDynamicResourceClient{
+				getFn: func(name string) (*unstructured.Unstructured, error) {
+					if name == "parent-uid" || name == "child-uid" {
+						return managedFolder(name, "Folder", config.Name), nil
+					}
+					return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+				},
+				updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
+				createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
+			}
+			return NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true)), client
+		}
+
+		t.Run("an incomplete relocating set still conflicts on the parent ancestor", func(t *testing.T) {
+			fm, _ := newManager()
+			_, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
+				WithForceWalk(), WithRelocatingUIDs("newparent/newchild/", "child-uid"))
+			require.Error(t, err)
+			require.ErrorContains(t, err, `folder UID "parent-uid" defined in "newparent" is already used by folder at path "oldparent"`)
+		})
+
+		t.Run("the full relocating set relocates both folders without conflict", func(t *testing.T) {
+			fm, client := newManager()
+			leaf, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
+				WithForceWalk(),
+				WithRelocatingUIDs("newparent/", "parent-uid"),
+				WithRelocatingUIDs("newparent/newchild/", "child-uid"))
+			require.NoError(t, err)
+			require.Equal(t, "child-uid", leaf)
+			// Both relocating folders were re-ensured (re-parented) at their new paths.
+			require.Contains(t, client.updateCalls, "parent-uid")
+			require.Contains(t, client.updateCalls, "child-uid")
+		})
+	})
+
+	// A relocation exemption must be bound to the UID's destination path. Here the
+	// parent legitimately relocates to "newparent/", but the child's _folder.json
+	// reuses the parent's UID. A UID-only exemption would bypass the duplicate-UID
+	// guard at the child leaf and repoint the parent's object to the child path;
+	// binding the exemption to "newparent/" keeps the collision a hard error.
+	t.Run("relocation exemption does not leak to a child that reuses the parent UID", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "newparent/_folder.json", "test-ref").
+			Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Parent"), Hash: "parent-hash"}, nil)
+		// The child reuses the parent's UID.
+		rw.On("Read", mock.Anything, "newparent/newchild/_folder.json", "test-ref").
+			Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Child"), Hash: "child-hash"}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "parent-uid", Path: "oldparent", Title: "Parent", MetadataHash: "parent-hash"}, "")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				if name == "parent-uid" {
+					return managedFolder(name, "Folder", config.Name), nil
+				}
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
+		}
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		_, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
+			WithForceWalk(), WithRelocatingUIDs("newparent/", "parent-uid"))
+
+		require.Error(t, err)
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "a child reusing the parent UID must stay a ResourceValidationError")
+		require.ErrorContains(t, err, `folder UID "parent-uid" defined in "newparent/newchild" is already used by folder at path "newparent"`)
+	})
+}
+
+// TestEnsureFolderPathExist_NestedRelocations exercises a root rename combined
+// with nested and independent folder moves while the tree still contains old paths.
+// It checks that UIDs and parent links survive, stale path entries disappear, and
+// repeated ensures do not write again. Missing ancestor exemptions and duplicate
+// UIDs must remain validation errors, with folders beyond the failure retaining
+// their previous state.
+func TestEnsureFolderPathExist_NestedRelocations(t *testing.T) {
+	folderJSON := func(uid, title string) []byte {
+		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"` + title + `"}}`)
+	}
+	folders := []struct {
+		uid     string
+		oldPath string
+		path    string
+		parent  string
+	}{
+		{uid: "rd-uid", oldPath: "RnD", path: "RD"},
+		{uid: "grafana-uid", oldPath: "RnD/Grafana", path: "RD/Grafana", parent: "rd-uid"},
+		{uid: "backend-uid", oldPath: "RnD/Grafana/Grafana Backend", path: "RD/Grafana/Backend", parent: "grafana-uid"},
+		{uid: "as-code-uid", oldPath: "RnD/Grafana/Grafana Backend/As Code", path: "RD/Grafana/Backend/As Code", parent: "backend-uid"},
+		{uid: "alerts-uid", oldPath: "RnD/Grafana/Grafana Backend/Alerts", path: "RD/Grafana/Backend/Alerts", parent: "backend-uid"},
+		{uid: "frontend-uid", oldPath: "RnD/Grafana/UI", path: "RD/Grafana/Frontend", parent: "grafana-uid"},
+		{uid: "ops-uid", oldPath: "Ops", path: "Operations"},
+		{uid: "services-uid", oldPath: "Ops/Services", path: "Operations/Services", parent: "ops-uid"},
+		{uid: "unrelated-uid", oldPath: "unrelated", path: "unrelated"},
+	}
+	paths := []struct {
+		path string
+		uid  string
+	}{
+		{path: "RD/Grafana/Backend/As Code/dashboard.json", uid: "as-code-uid"},
+		{path: "RD/Grafana/Backend/Alerts/dashboard.json", uid: "alerts-uid"},
+		{path: "RD/Grafana/Frontend/dashboard.json", uid: "frontend-uid"},
+		{path: "Operations/Services/dashboard.json", uid: "services-uid"},
+	}
+
+	for _, tt := range []struct {
+		name            string
+		omittedUID      string
+		leafUIDOverride string
+		wantError       string
+		wantUpdated     []string
+	}{
+		{
+			name:        "renamed root and nested branches preserve both subtrees",
+			wantUpdated: []string{"rd-uid", "grafana-uid", "backend-uid", "as-code-uid", "alerts-uid", "frontend-uid", "ops-uid", "services-uid"},
+		},
+		{
+			name:        "missing intermediate ancestor exemption prevents descendant relocation",
+			omittedUID:  "backend-uid",
+			wantError:   `folder UID "backend-uid" defined in "RD/Grafana/Backend" is already used by folder at path "RnD/Grafana/Grafana Backend"`,
+			wantUpdated: []string{"rd-uid", "grafana-uid"},
+		},
+		{
+			name:            "deep descendant cannot reuse a relocating ancestor UID",
+			leafUIDOverride: "grafana-uid",
+			wantError:       `folder UID "grafana-uid" defined in "RD/Grafana/Backend/As Code" is already used by folder at path "RD/Grafana"`,
+			wantUpdated:     []string{"rd-uid", "grafana-uid", "backend-uid"},
+		},
+		{
+			name:            "deep descendant cannot reuse a relocating sibling UID",
+			leafUIDOverride: "frontend-uid",
+			wantError:       `folder UID "frontend-uid" defined in "RD/Grafana/Backend/As Code" is already used by folder at path "RnD/Grafana/UI"`,
+			wantUpdated:     []string{"rd-uid", "grafana-uid", "backend-uid"},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			config := newTestRepoConfig("test-repo")
+			rw := repository.NewMockReaderWriter(t)
+			rw.On("Config").Return(config)
+			tree := NewEmptyFolderTree()
+			storedFolders := make(map[string]*unstructured.Unstructured)
+			opts := []EnsurePathOption{WithForceWalk()}
+
+			for _, folder := range folders {
+				metadataUID := folder.uid
+				if folder.uid == "as-code-uid" && tt.leafUIDOverride != "" {
+					metadataUID = tt.leafUIDOverride
+				}
+				rw.On("Read", mock.Anything, folder.path+"/_folder.json", "test-ref").
+					Return(&repository.FileInfo{Data: folderJSON(metadataUID, folder.uid), Hash: folder.uid + "-hash"}, nil).Maybe()
+
+				tree.Add(Folder{ID: folder.uid, Title: folder.uid, Path: folder.oldPath, MetadataHash: folder.uid + "-hash"}, folder.parent)
+				obj := &unstructured.Unstructured{Object: map[string]interface{}{
+					"spec": map[string]interface{}{"title": folder.uid},
+				}}
+				obj.SetAPIVersion(FolderKind.GroupVersion().String())
+				obj.SetKind(FolderKind.Kind)
+				obj.SetName(folder.uid)
+				obj.SetNamespace(config.Namespace)
+				meta, err := utils.MetaAccessor(obj)
+				require.NoError(t, err)
+				meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: config.Name})
+				meta.SetSourceProperties(utils.SourceProperties{Path: folder.oldPath, Checksum: folder.uid + "-hash"})
+				meta.SetFolder(folder.parent)
+				storedFolders[folder.uid] = obj
+
+				if folder.oldPath != folder.path && folder.uid != tt.omittedUID {
+					opts = append(opts, WithRelocatingUIDs(folder.path+"/", folder.uid))
+				}
+			}
+
+			client := &fakeDynamicResourceClient{
+				getFn: func(name string) (*unstructured.Unstructured, error) {
+					obj, ok := storedFolders[name]
+					if !ok {
+						return nil, apierrors.NewNotFound(FolderResource.GroupResource(), name)
+					}
+					return obj.DeepCopy(), nil
+				},
+				updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+					require.Contains(t, storedFolders, obj.GetName())
+					storedFolders[obj.GetName()] = obj.DeepCopy()
+					return obj, nil
+				},
+			}
+			fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+			for _, path := range paths {
+				parent, err := fm.EnsureFolderPathExist(ctx, path.path, "test-ref", opts...)
+				if tt.wantError != "" {
+					var validationErr *ResourceValidationError
+					require.ErrorAs(t, err, &validationErr)
+					require.ErrorContains(t, err, tt.wantError)
+					require.Empty(t, parent)
+					break
+				}
+				require.NoError(t, err)
+				require.Equal(t, path.uid, parent)
+			}
+
+			require.Equal(t, tt.wantUpdated, client.updateCalls)
+			require.Empty(t, client.createCalls)
+			require.Equal(t, len(folders), tree.Count())
+			for _, folder := range folders {
+				wantPath := folder.oldPath
+				if slices.Contains(tt.wantUpdated, folder.uid) {
+					wantPath = folder.path
+					_, exists := tree.GetByPath(folder.oldPath)
+					require.False(t, exists, "stale path %s must be removed", folder.oldPath)
+				}
+				actual, exists := tree.GetByPath(wantPath)
+				require.True(t, exists, "folder %s must remain indexed by its path", folder.uid)
+				require.Equal(t, Folder{ID: folder.uid, Title: folder.uid, Path: wantPath, ParentID: folder.parent, MetadataHash: folder.uid + "-hash"}, actual)
+
+				meta, err := utils.MetaAccessor(storedFolders[folder.uid])
+				require.NoError(t, err)
+				source, ok := meta.GetSourceProperties()
+				require.True(t, ok)
+				require.Equal(t, wantPath, source.Path)
+				require.Equal(t, folder.parent, meta.GetFolder())
+			}
+
+			if tt.wantError == "" {
+				for _, path := range paths {
+					parent, err := fm.EnsureFolderPathExist(ctx, path.path, "test-ref")
+					require.NoError(t, err)
+					require.Equal(t, path.uid, parent)
+				}
+				require.Equal(t, tt.wantUpdated, client.updateCalls, "repeated ensures must not write the relocated folders again")
+				require.Empty(t, client.createCalls)
+			}
+		})
+	}
 }
 
 func TestEnsureFolderTreeExists(t *testing.T) {
@@ -2637,10 +2901,10 @@ func TestRenameFolderPath(t *testing.T) {
 
 		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 
-		// Without WithRelocatingUIDs("parent-uid"), this would fail because
-		// parent-uid is still registered at old-parent/ in the tree.
+		// Without the parent-uid relocation bound to new-parent/, this would fail
+		// because parent-uid is still registered at old-parent/ in the tree.
 		oldID, err := fm.RenameFolderPath(ctx, "old-parent/child/", "ref-old", "new-parent/child/", "ref-new",
-			WithRelocatingUIDs("parent-uid"))
+			WithRelocatingUIDs("new-parent/", "parent-uid"))
 		require.NoError(t, err)
 		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
 	})
