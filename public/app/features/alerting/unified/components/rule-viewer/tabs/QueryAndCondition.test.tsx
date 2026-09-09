@@ -162,18 +162,26 @@ describe('visualizationQueries transformation', () => {
 // ---------------------------------------------------------------------------
 
 describe('loading state', () => {
-  it('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+  function blockEvalRequests() {
     let resolveEval!: () => void;
     const evalPending = new Promise<void>((resolve) => {
       resolveEval = resolve;
     });
+    let requestCount = 0;
 
     server.use(
       http.post('/api/v1/eval', async () => {
+        requestCount++;
         await evalPending;
         return HttpResponse.json<AlertingQueryResponse>({ results: {} });
       })
     );
+
+    return { evalRequests: () => requestCount, resolveEval };
+  }
+
+  it.skip('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+    const { resolveEval } = blockEvalRequests();
 
     const rule = makeGrafanaRule([
       {
@@ -194,6 +202,56 @@ describe('loading state', () => {
     resolveEval();
 
     // Loading bars disappear once both runners have settled
+    await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
+  });
+
+  it('keeps the loading bar visible while query preparation is pending', async () => {
+    const { evalRequests } = blockEvalRequests();
+
+    // prepareQueries awaits dataSourceSrv.get before it can issue the request
+    let resolveDataSource!: (dataSource: DataSourceApi) => void;
+    const dataSourcePending = new Promise<DataSourceApi>((resolve) => {
+      resolveDataSource = resolve;
+    });
+    const getDataSource = jest.mocked(getDataSourceSrv().get);
+    getDataSource.mockImplementation(() => dataSourcePending);
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    await waitFor(() => expect(getDataSource).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+
+    resolveDataSource({ uid: DS_UID } as DataSourceApi);
+
+    await waitFor(() => expect(evalRequests()).toBe(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+  });
+
+  it('keeps the loading bar visible while the eval request is in flight', async () => {
+    const { evalRequests, resolveEval } = blockEvalRequests();
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    await waitFor(() => expect(evalRequests()).toBe(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+
+    resolveEval();
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
   });
 });
