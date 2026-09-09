@@ -152,7 +152,7 @@ Grafana counts the data behind these sort options once a day, up to the end of t
 Because today's activity isn't included yet, these numbers can be lower than the view count in [dashboard insights](#dashboard-insights), which updates as activity happens.
 
 **Views total** and **Errors total** are aggregates.
-Depending on how long your instance has been collecting insights data, they might not cover the entire lifetime of a dashboard.
+Grafana starts counting from the first time it aggregates data for a dashboard. That first pass looks back 30 days, so any activity older than that isn't included.
 
 To sort by activity that tracks more closely to the present, use **Views 30 days**, **Errors 30 days**, or [visualize the daily usage insights data](#visualize-usage-insights-data).
 
