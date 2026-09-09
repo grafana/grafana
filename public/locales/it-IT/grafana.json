@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Gestori avvisi",
+        "alert-managers": "",
         "import": "Importa"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Annotazioni",
         "description": "Descrizione",
@@ -6416,17 +6429,6 @@
           "empty": "(vuoto)",
           "no-title": "<nessun titolo>"
         }
-      },
-      "predefined-variables": {
-        "all": "Tutti",
-        "description": "",
-        "folder": "Cartella",
-        "global": "Globale",
-        "label": "Variabili predefinite",
-        "none": "Nessuna",
-        "pane-header": "Variabili predefinite",
-        "title": "Variabili predefinite",
-        "tooltip": "Scegli quali variabili globali e di cartella riceve questa dashboard"
       },
       "redo": "Ripeti",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "Una volta che la funzionalità sarà nuovamente abilitata, le dashboard verranno visualizzate normalmente nel formato Dashboard dinamica. Per questo motivo, consigliamo vivamente di non apportare modifiche a queste dashboard fino a quando la funzionalità non viene riattivata, poiché le modifiche apportate in modalità classica potrebbero portare a risultati imprevisti. In alternativa, puoi salvare una copia della dashboard utilizzando l'opzione \"Salva come copia\", nel menu Salva dashboard.",
       "save-warning": "Qualsiasi dashboard creata o convertita in una Dashboard dinamica verrà aperta come una dashboard classica. Il salvataggio della dashboard potrebbe comportare la perdita delle funzionalità Dashboard dinamica già configurate."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opzioni personalizzate",
       "json-values-tooltip": "Fornisci un file JSON che rappresenti una serie di oggetti, in cui ogni oggetto può avere un numero qualsiasi di proprietà.<br/>Consulta <4>la nostra documentazione</4> per ulteriori informazioni.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Chiudi"
-    },
-    "predefined-variables": {
-      "label-all": "Tutti",
-      "label-custom": "Personalizza",
-      "label-folder": "Cartella",
-      "label-global": "Globale",
-      "label-none": "Nessuna"
     },
     "provisioned-controls-section": {
       "label": "Con provisioning dall'origine di dati",
@@ -9125,6 +9124,7 @@
       "critical-path": "Percorso critico",
       "critical-path-tooltip": "Seleziona gli intervalli nel percorso critico, la sequenza più lunga di attività dipendenti che determina la durata minima della traccia.",
       "duration": "Durata",
+      "error-indicator": "",
       "errors": "Errori",
       "errors-tooltip": "Seleziona gli intervalli in cui lo stato è uguale a errore.",
       "export-started": "Esportazione iniziata",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Ora di inizio",
+      "success-indicator": "",
       "target": "Destinazione",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
       "trace-id": "ID traccia",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

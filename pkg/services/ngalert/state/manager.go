@@ -39,6 +39,12 @@ type StatePersister interface {
 // Sender is an optional callback intended for sending the states to an alertmanager.
 type Sender func(context.Context, StateTransitions)
 
+// DefaultMaxLabelValueSize is the default byte cap applied to any single
+// expanded label/annotation value written into alert state, complementing
+// the sender-side clamp (pkg/services/ngalert/sender). Chosen generously as
+// a safety net, not a routine content limit.
+const DefaultMaxLabelValueSize = 1 << 22 // 4 MiB
+
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
