@@ -2652,6 +2652,41 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 	})
 }
 
+// TestShouldRotateWebhookSecret_OverdueCounter verifies the overdue counter is
+// incremented only when a secret is actually due for rotation.
+func TestShouldRotateWebhookSecret_OverdueCounter(t *testing.T) {
+	interval := 30 * 24 * time.Hour
+	writeWorkflow := []provisioning.Workflow{provisioning.WriteWorkflow}
+
+	tests := []struct {
+		name        string
+		lastRotated int64
+		wantOverdue float64
+	}{
+		{"overdue past interval", time.Now().Add(-31 * 24 * time.Hour).UnixMilli(), 1},
+		{"never rotated", 0, 1},
+		{"within interval", time.Now().Add(-1 * 24 * time.Hour).UnixMilli(), 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				webhookSecretRotationInterval: interval,
+				webhookMetrics:                registerWebhookSecretMetrics(reg),
+			}
+			obj := &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{Workflows: writeWorkflow},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: tt.lastRotated}},
+			}
+
+			rc.shouldRotateWebhookSecret(obj)
+
+			assert.Equal(t, tt.wantOverdue, counterValue(t, reg, "grafana_provisioning_webhook_secret_rotation_overdue_total"))
+		})
+	}
+}
+
 // hookRepoStub implements repository.WebhookRepository so we can observe whether
 // the reconcile path attempts to run the webhook lifecycle. It doubles as its own
 // repository.WebhookClient, recording create/edit calls.
