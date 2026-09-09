@@ -588,6 +588,12 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 }
 
 func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
+	// Folder metadata read metrics are a process-global singleton recorded by
+	// resources.ReadFolderMetadata rather than threaded through the returned
+	// extras, so they must be registered regardless of which extras path is taken
+	// below — including the custom RepositoryExtrasFunc path, which returns early.
+	resources.RegisterFolderMetadataMetrics(c.Registry())
+
 	if c.repositoryExtras != nil {
 		return c.repositoryExtras, nil
 	}
@@ -608,7 +614,6 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
-	resources.RegisterFolderMetadataMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
