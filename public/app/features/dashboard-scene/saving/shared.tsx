@@ -91,12 +91,14 @@ export interface SaveButtonProps {
   onSave: (overwrite: boolean) => void;
   isLoading: boolean;
   isValid?: boolean;
+  /** Blocks the save for a reason other than validity or an in-flight save; the caller explains it in its own UI */
+  disabled?: boolean;
 }
 
-export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
+export function SaveButton({ overwrite, isLoading, isValid, onSave, disabled = false }: SaveButtonProps) {
   return (
     <Button
-      disabled={!isValid || isLoading}
+      disabled={disabled || !isValid || isLoading}
       icon={isLoading ? 'spinner' : undefined}
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}

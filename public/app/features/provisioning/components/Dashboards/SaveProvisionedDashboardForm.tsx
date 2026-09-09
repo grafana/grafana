@@ -290,7 +290,7 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleCreateFolder = useCallback(async () => {
-    if (isCreatingFolderRef.current) {
+    if (isCreatingFolderRef.current || isHeld) {
       return;
     }
     setFolderError(undefined);
@@ -367,7 +367,7 @@ export function SaveProvisionedDashboardForm({
     }
     isCreatingFolderRef.current = false;
     setIsCreatingFolder(false);
-  }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder]);
+  }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder, isHeld]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
@@ -520,6 +520,7 @@ export function SaveProvisionedDashboardForm({
                           setFolderError(undefined);
                           setShowNewFolderForm(true);
                         }}
+                        disabled={isHeld}
                       >
                         <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">New folder</Trans>
                       </Button>
@@ -550,7 +551,7 @@ export function SaveProvisionedDashboardForm({
                           size="sm"
                           icon={isCreatingFolder ? 'spinner' : undefined}
                           onClick={handleCreateFolder}
-                          disabled={!newFolderName || isCreatingFolder}
+                          disabled={!newFolderName || isCreatingFolder || isHeld}
                         >
                           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.create-folder">Create</Trans>
                         </Button>

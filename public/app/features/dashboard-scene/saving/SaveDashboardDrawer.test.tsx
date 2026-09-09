@@ -616,6 +616,13 @@ describe('SaveDashboardDrawer', () => {
       expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
       expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
       expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeDisabled();
+      // Enter in the title field submits through the form's onSubmit, not the button; the hold must block that path too
+      mockSaveDashboard();
+      await userEvent.type(titleInput, '{enter}');
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+      expect(saveDashboardMutationMock).not.toHaveBeenCalled();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
 
       repoState = view({ isProvisioned: false, folderUid: 'f1' });
       act(() => {
@@ -626,6 +633,9 @@ describe('SaveDashboardDrawer', () => {
       expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
       expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /instead$/ })).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeEnabled()
+      );
     });
 
     it("warns when a new save's first lookup already dead-ends, and still offers the database form", async () => {

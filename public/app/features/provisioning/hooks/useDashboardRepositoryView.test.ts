@@ -115,6 +115,17 @@ describe('useDashboardRepositoryView', () => {
     expect(result.current.folderUid).toBe('f1');
   });
 
+  it('treats the general uid as the root, like an empty one', () => {
+    const { result } = renderHook(() => useDashboardRepositoryView(createDashboard({ folderUid: 'general' })));
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
+      folderName: undefined,
+      includeFolderless: true,
+    });
+    expect(result.current.folderUid).toBeUndefined();
+  });
+
   it('resolves a Save As copy like a new save, from its annotation and folder rather than isManagedRepository', () => {
     const { result } = renderHook(() =>
       useDashboardRepositoryView(

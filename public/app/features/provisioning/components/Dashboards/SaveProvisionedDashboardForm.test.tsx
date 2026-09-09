@@ -188,9 +188,11 @@ function setupFolderless(
   overrides: {
     repository?: Partial<NonNullable<Props['repository']>>;
     defaultValues?: Partial<Props['defaultValues']>;
+    isHeld?: boolean;
   } = {}
 ) {
   return setup({
+    isHeld: overrides.isHeld ?? false,
     repository: {
       type: 'github',
       name: 'test-repo',
@@ -1403,6 +1405,34 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('blocks folder creation while the view is held', async () => {
+    let folderPosts = 0;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () => {
+        folderPosts++;
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+        });
+      })
+    );
+    const { user, props, rerender } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+
+    // The pick that starts a hold can land after the inline form is already open
+    rerender(<SaveProvisionedDashboardForm {...props} isHeld />);
+
+    expect(screen.getByRole('button', { name: /^create$/i })).toBeDisabled();
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), '{enter}');
+    expect(folderPosts).toBe(0);
+  });
+
+  it('disables New folder while the view is held', async () => {
+    setupFolderless({ isHeld: true });
+    expect(await screen.findByRole('button', { name: /new folder/i })).toBeDisabled();
   });
 
   it('passes the root uid to the picker so root shows as selected', async () => {

@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind } from 'app/features/apiserver/types';
 import { isNewDashboard } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { RepoViewStatus, type RepositoryViewData, useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
@@ -32,7 +33,8 @@ export interface DashboardRepositoryView extends Omit<RepositoryViewData, 'isLoa
 export function useDashboardRepositoryView(dashboard: DashboardScene, saveAsCopy?: boolean): DashboardRepositoryView {
   const state = dashboard.useState();
   const isNewSave = Boolean(saveAsCopy) || isNewDashboard(state);
-  const folderUid = state.meta.folderUid || undefined;
+  // "" and "general" both mean the root; only a real folder uid is looked up
+  const folderUid = isRootFolderUID(state.meta.folderUid) ? undefined : state.meta.folderUid;
   const annotations = state.meta.k8s?.annotations;
   const managerName = annotations?.[AnnoKeyManagerKind] === 'repo' ? annotations[AnnoKeyManagerIdentity] : undefined;
   const live = useGetResourceRepositoryView({

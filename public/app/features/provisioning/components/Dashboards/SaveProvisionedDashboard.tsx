@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -21,8 +23,11 @@ interface Props extends SaveProvisionedDashboardProps {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy, view }: Props) {
+  // Read once: the draft is what the previous form showed at the swap. Following it per render would recompute the
+  // defaults on every keystroke the form parks and rewrite the path the user is editing
+  const [draft] = useState(() => drawer.saveFormDraft);
   const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    useProvisionedDashboardData(dashboard, view, { saveAsCopy, ...drawer.saveFormDraft });
+    useProvisionedDashboardData(dashboard, view, { saveAsCopy, ...draft });
 
   return (
     <ProvisionedFormGate

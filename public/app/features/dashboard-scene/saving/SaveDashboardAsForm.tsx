@@ -34,9 +34,11 @@ export interface Props {
   changeInfo: DashboardChangeInfo;
   /** Owns cancel (restoring Save As folder/meta mutations) and carries title/description across a swap to another save form */
   drawer: SaveDashboardDrawer;
+  /** The drawer's view is held: a folder pick's lookup is still loading or dead-ended, so where this save would land is not known yet and saving must wait */
+  isHeld: boolean;
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: Props) {
   const { changedSaveModel } = changeInfo;
   const draft = drawer.saveFormDraft;
 
@@ -105,6 +107,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
   );
 
   const onSave = async (overwrite: boolean) => {
+    if (isHeld) {
+      return;
+    }
+
     if (validationTimeoutRef.current) {
       clearTimeout(validationTimeoutRef.current);
     }
@@ -163,7 +169,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => {
-    return <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
+    return (
+      <SaveButton isValid={isValid} isLoading={state.loading} disabled={isHeld} onSave={onSave} overwrite={overwrite} />
+    );
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =

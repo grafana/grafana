@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
@@ -328,5 +328,40 @@ describe('SaveProvisionedDashboard in the save drawer', () => {
     await waitFor(() => expect(filename()).toBe('my-dash.json'));
     expect(screen.queryByText('The selected folder cannot be saved to')).not.toBeInTheDocument();
     expect(screen.queryByText(/no longer exists/)).not.toBeInTheDocument();
+  });
+
+  it('resolves a new dashboard opened with the general folder uid at the folderless root', async () => {
+    renderDrawer({ folderUid: 'general' });
+
+    // The Git form for the folderless root, with the database switch: not a folder lookup for "general"
+    expect(await screen.findByRole('textbox', { name: /^title$/i })).toBeInTheDocument();
+    expect(repositoryFolder()).toBe('');
+    await waitFor(() => expect(filename()).toBe('my-dash.json'));
+    expect(screen.getByRole('button', { name: 'Save to Grafana database instead' })).toBeInTheDocument();
+  });
+
+  it('keeps a directory created without sync across a Changes/Details tab round trip', async () => {
+    // Sync disabled: the commit lands but no folder resource comes back, so the directory lives only in the form
+    server.use(http.post(`${BASE}/repositories/test-repo/files/*`, () => HttpResponse.json({ resource: {} })));
+    const { user, drawer } = setupNewDashboard();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'team-c');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+    await waitFor(() => expect(repositoryFolder()).toBe('team-c'));
+
+    const title = screen.getByRole('textbox', { name: /^title$/i });
+    await user.clear(title);
+    await user.type(title, 'Renamed');
+    // The form stays mounted under the Changes tab; the drawer re-render must not recompute the defaults from the
+    // typed title and re-home the directory
+    act(() => {
+      drawer.setState({ showDiff: true });
+    });
+    act(() => {
+      drawer.setState({ showDiff: false });
+    });
+
+    expect(repositoryFolder()).toBe('team-c');
   });
 });

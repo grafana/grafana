@@ -45,10 +45,9 @@ export interface SaveFormDraft {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   /**
-   * Title/description a save form shows, parked by useParkSaveFormDraft as they change. Read by the
-   * form that replaces it after a folder pick or target switch, and on every render by the Git form's
-   * defaults so a recomputed filename tracks the live title. Not scene state: it changes per keystroke,
-   * and reactivity would re-render the drawer (and re-diff the dashboard) each time.
+   * Title/description a save form shows, parked by useParkSaveFormDraft as they change and read once by
+   * the form that replaces it after a folder pick or target switch. Not scene state: it changes per
+   * keystroke, and reactivity would re-render the drawer (and re-diff the dashboard) each time.
    */
   public saveFormDraft: SaveFormDraft | undefined;
 
@@ -178,7 +177,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     }
 
     if (isNewSave) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} isHeld={view.isHeld} />;
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {
