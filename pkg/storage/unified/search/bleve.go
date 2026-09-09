@@ -3489,10 +3489,10 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 // every value, while "in" is an OR, so at least one is enough. The numeric path
 // (numberOrBoolSetQuery) follows the same rules.
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
-	switch selection.Operator(req.Operator) {
-	case resource.OperatorRegex:
+	if selection.Operator(req.Operator) == resource.OperatorRegex {
 		return b.regexRequirementQuery(req, false)
-	case resource.OperatorNotRegex:
+	}
+	if selection.Operator(req.Operator) == resource.OperatorNotRegex {
 		return b.regexRequirementQuery(req, true)
 	}
 

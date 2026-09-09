@@ -102,6 +102,11 @@ func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.Inde
 		return nil, err
 	}
 	defer func() {
+		bytesRead := dict.BytesRead()
+		if callback, ok := ctx.Value(blevesearch.SearchIOStatsCallbackKey).(blevesearch.SearchIOStatsCallbackFunc); ok {
+			callback(bytesRead)
+		}
+		blevesearch.RecordSearchCost(ctx, blevesearch.AddM, bytesRead)
 		if closeErr := dict.Close(); err == nil && closeErr != nil {
 			err = closeErr
 		}
@@ -132,7 +137,6 @@ func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.Inde
 			terms = append(terms, entry.Term)
 		}
 	}
-	blevesearch.RecordSearchCost(ctx, blevesearch.AddM, dict.BytesRead())
 	return terms, nil
 }
 
@@ -145,9 +149,7 @@ func matchesEntireTerm(pattern *regexp.Regexp, value string) bool {
 // terms are always matched in their entirety. Anchors elsewhere remain in the
 // syntax tree and are rejected by validatePortableRegex.
 func stripOuterRegexAnchors(expression string) string {
-	if strings.HasPrefix(expression, "^") {
-		expression = expression[1:]
-	}
+	expression = strings.TrimPrefix(expression, "^")
 	if strings.HasSuffix(expression, "$") && !isEscaped(expression) {
 		expression = expression[:len(expression)-1]
 	}
@@ -210,6 +212,8 @@ func validatePortableRegex(parsed *syntax.Regexp) error {
 		if parsed.Flags&syntax.NonGreedy != 0 {
 			return errors.New("regular expression uses unsupported lazy quantifier")
 		}
+	default:
+		// Other parser operations are part of the supported RE2-style subset.
 	}
 
 	for _, child := range parsed.Sub {

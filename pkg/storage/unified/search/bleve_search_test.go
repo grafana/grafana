@@ -1057,6 +1057,14 @@ func TestRegexFilterOnKeywordField(t *testing.T) {
 	}
 }
 
+func TestRegexFilterIncludesDictionaryReadCost(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	// No term matches this prefix, so the query cost comes from expanding the
+	// dictionary rather than reading matching postings.
+	res := searchResponse(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "green.*"))
+	require.Greater(t, res.QueryCost, float64(0))
+}
+
 func TestRegexFilterRejectsUnsupportedPattern(t *testing.T) {
 	key, index := newRegexKeywordFieldIndex(t)
 	for _, tc := range []struct {
