@@ -4,7 +4,7 @@ import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } fr
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 
-import { setCrossDashboardVariablesCommand } from './setCrossDashboardVariables';
+import { updateMetadataAnnotationsCommand } from './updateMetadataAnnotations';
 
 const CHANGE_PATH = `/metadata/annotations/${AnnoKeyUseCrossDashboardVariables}`;
 
@@ -48,13 +48,21 @@ function buildScene(
   return scene as unknown as DashboardScene;
 }
 
-describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
+function selectionPayload(global: 'all' | 'none' | string[], folder: 'all' | 'none' | string[]) {
+  return {
+    annotations: {
+      [AnnoKeyUseCrossDashboardVariables]: { global, folder },
+    },
+  };
+}
+
+describe('UPDATE_METADATA_ANNOTATIONS', () => {
   afterEach(() => {
     setTestFlags({});
   });
 
   it('refuses when the feature toggle is off', () => {
-    const result = setCrossDashboardVariablesCommand.permission(buildScene());
+    const result = updateMetadataAnnotationsCommand.permission(buildScene());
 
     expect(result).toEqual({
       allowed: false,
@@ -69,7 +77,7 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
       annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo },
     });
 
-    const result = setCrossDashboardVariablesCommand.permission(scene);
+    const result = updateMetadataAnnotationsCommand.permission(scene);
 
     expect(result).toEqual({
       allowed: false,
@@ -80,7 +88,7 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
   it('refuses when the dashboard cannot be edited', () => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
 
-    const result = setCrossDashboardVariablesCommand.permission(buildScene({ canEdit: false }));
+    const result = updateMetadataAnnotationsCommand.permission(buildScene({ canEdit: false }));
 
     expect(result.allowed).toBe(false);
     if (!result.allowed) {
@@ -92,13 +100,15 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
     const scene = buildScene();
 
-    const result = await setCrossDashboardVariablesCommand.handler({ global: ['env'], folder: 'none' }, { scene });
+    const result = await updateMetadataAnnotationsCommand.handler(selectionPayload(['env'], 'none'), { scene });
 
     expect(result.success).toBe(true);
     expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
       '{"global":["env"],"folder":"none"}'
     );
-    expect(result.data).toEqual({ selection: { global: ['env'], folder: 'none' } });
+    expect(result.data).toEqual({
+      annotations: { [AnnoKeyUseCrossDashboardVariables]: { global: ['env'], folder: 'none' } },
+    });
     expect(result.changes).toEqual([
       {
         path: CHANGE_PATH,
@@ -116,7 +126,7 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
       annotations: { [AnnoKeyUseCrossDashboardVariables]: '{"global":["env"],"folder":"none"}' },
     });
 
-    const result = await setCrossDashboardVariablesCommand.handler({ global: 'all', folder: 'none' }, { scene });
+    const result = await updateMetadataAnnotationsCommand.handler(selectionPayload('all', 'none'), { scene });
 
     expect(result.success).toBe(true);
     expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
@@ -135,11 +145,13 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
       annotations: { [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}' },
     });
 
-    const result = await setCrossDashboardVariablesCommand.handler({ global: 'none', folder: 'none' }, { scene });
+    const result = await updateMetadataAnnotationsCommand.handler(selectionPayload('none', 'none'), { scene });
 
     expect(result.success).toBe(true);
     expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
-    expect(result.data).toEqual({ selection: undefined });
+    expect(result.data).toEqual({
+      annotations: { [AnnoKeyUseCrossDashboardVariables]: null },
+    });
     expect(result.changes).toEqual([
       {
         path: CHANGE_PATH,
@@ -149,13 +161,32 @@ describe('SET_CROSS_DASHBOARD_VARIABLES', () => {
     ]);
   });
 
+  it('deletes the annotation when the value is null', async () => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
+    const scene = buildScene({
+      annotations: { [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}' },
+    });
+
+    const result = await updateMetadataAnnotationsCommand.handler(
+      { annotations: { [AnnoKeyUseCrossDashboardVariables]: null } },
+      { scene }
+    );
+
+    expect(result.success).toBe(true);
+    expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
+    expect(result.data).toEqual({
+      annotations: { [AnnoKeyUseCrossDashboardVariables]: null },
+    });
+    expect(result.changes[0].newValue).toBeNull();
+  });
+
   it('drops grafana.app/ignorePredefinedVariables when writing', async () => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
     const scene = buildScene({
       annotations: { 'grafana.app/ignorePredefinedVariables': 'global:*' },
     });
 
-    const result = await setCrossDashboardVariablesCommand.handler({ global: 'all', folder: 'none' }, { scene });
+    const result = await updateMetadataAnnotationsCommand.handler(selectionPayload('all', 'none'), { scene });
 
     expect(result.success).toBe(true);
     expect(Object.keys(scene.state.meta.k8s?.annotations ?? {})).toEqual([AnnoKeyUseCrossDashboardVariables]);

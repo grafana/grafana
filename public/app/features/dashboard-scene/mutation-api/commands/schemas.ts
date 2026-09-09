@@ -774,10 +774,30 @@ const scopeSelectionSchema = z.union([
   z.array(z.string()).describe('Variable names in this scope'),
 ]);
 
-const setCrossDashboardVariablesPayloadSchema = z.object({
+// Literal (not the AnnoKey import) so this file stays free of the apiserver/scene graph.
+const useCrossDashboardVariablesAnnoKey = 'grafana.app/useCrossDashboardVariables';
+
+const useCrossDashboardVariablesValueSchema = z.object({
   global: scopeSelectionSchema.describe('Which org-wide variables this dashboard receives'),
   folder: scopeSelectionSchema.describe('Which folder-scoped variables this dashboard receives'),
 });
+
+const updateMetadataAnnotationsPayloadSchema = z
+  .object({
+    annotations: z
+      .object({
+        [useCrossDashboardVariablesAnnoKey]: z
+          .union([useCrossDashboardVariablesValueSchema, z.null()])
+          .describe(
+            'Which global and folder-scoped variables this dashboard receives. null or both scopes "none" clears the opt-in.'
+          ),
+      })
+      .strict()
+      .describe(
+        'Metadata annotations to write. Only grafana.app/useCrossDashboardVariables is allowed today; unknown keys are rejected. This is not a query annotation layer.'
+      ),
+  })
+  .strict();
 
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
@@ -825,7 +845,7 @@ export const payloads = {
   getCrossDashboardVariables: emptyPayloadSchema.describe(
     'Get which global and folder-scoped variables this dashboard receives, plus the names available in each scope'
   ),
-  setCrossDashboardVariables: setCrossDashboardVariablesPayloadSchema.describe(
-    'Replace which global and folder-scoped variables this dashboard receives. Both scopes "none" clears the opt-in.'
+  updateMetadataAnnotations: updateMetadataAnnotationsPayloadSchema.describe(
+    'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
 };

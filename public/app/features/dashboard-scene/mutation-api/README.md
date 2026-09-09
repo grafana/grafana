@@ -1025,7 +1025,7 @@ Get dashboard identity/folder metadata plus every dashboard-level setting that `
 
 Read which global and folder-scoped variables this dashboard receives (`grafana.app/useCrossDashboardVariables` on `metadata.annotations`), plus the names available in each scope. Requires the `grafana.dashboardGlobalVariables` feature toggle. Read-only.
 
-This is **not** the dashboard spec and is **not** a query annotation layer. `GET_SPEC` / `APPLY_SPEC` / `LIST_ANNOTATIONS` do not include this selection.
+This is **not** the dashboard spec and is **not** a query annotation layer. `GET_SPEC` / `APPLY_SPEC` / `LIST_ANNOTATIONS` do not include this selection. Write the selection with `UPDATE_METADATA_ANNOTATIONS`.
 
 **Request:**
 
@@ -1048,16 +1048,24 @@ This is **not** the dashboard spec and is **not** a query annotation layer. `GET
 
 `selection` is omitted/`undefined` when the annotation is missing or invalid (the dashboard is not opted in). A failed Variable-list fetch still returns the current `selection` with empty `available` and a warning.
 
-### `SET_CROSS_DASHBOARD_VARIABLES`
+### `UPDATE_METADATA_ANNOTATIONS`
 
-Replace the selection. Full replace of both scopes. Both `"none"` deletes the annotation (opt out). Requires edit permissions, the `grafana.dashboardGlobalVariables` toggle, and a dashboard that is not a locked managed resource. Enters edit mode and re-injects predefined variables.
+Write allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`ADD_ANNOTATION` / `UPDATE_ANNOTATION` / `LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
+
+Today the only writable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Use `GET_CROSS_DASHBOARD_VARIABLES` to read the current selection plus available names.
+
+Requires edit permissions, the `grafana.dashboardGlobalVariables` toggle, and a dashboard that is not a locked managed resource. Enters edit mode and re-injects predefined variables.
 
 **Request:**
 
 ```json
 {
-  "type": "SET_CROSS_DASHBOARD_VARIABLES",
-  "payload": { "global": "all", "folder": ["cluster"] }
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["cluster"] }
+    }
+  }
 }
 ```
 
@@ -1065,8 +1073,25 @@ Replace the selection. Full replace of both scopes. Both `"none"` deletes the an
 
 ```json
 {
-  "type": "SET_CROSS_DASHBOARD_VARIABLES",
-  "payload": { "global": "none", "folder": "none" }
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "none", "folder": "none" }
+    }
+  }
+}
+```
+
+`null` is the same as both scopes `"none"`:
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": null
+    }
+  }
 }
 ```
 
@@ -1075,7 +1100,11 @@ Replace the selection. Full replace of both scopes. Both `"none"` deletes the an
 ```json
 {
   "success": true,
-  "data": { "selection": { "global": "all", "folder": ["cluster"] } },
+  "data": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["cluster"] }
+    }
+  },
   "changes": [
     {
       "path": "/metadata/annotations/grafana.app/useCrossDashboardVariables",
@@ -1086,7 +1115,7 @@ Replace the selection. Full replace of both scopes. Both `"none"` deletes the an
 }
 ```
 
-Each scope is `"all"`, `"none"`, or a name array. `"all"` auto-includes new variables in that scope; a name array does not.
+Each scope is `"all"`, `"none"`, or a name array. `"all"` auto-includes new variables in that scope; a name array does not. After a clear, the response value is `null`.
 
 ---
 

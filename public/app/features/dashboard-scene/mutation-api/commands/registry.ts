@@ -27,11 +27,11 @@ import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
-import { setCrossDashboardVariablesCommand } from './setCrossDashboardVariables';
 import type { MutationCommand } from './types';
 import { updateAnnotationCommand } from './updateAnnotation';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
+import { updateMetadataAnnotationsCommand } from './updateMetadataAnnotations';
 import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
@@ -65,7 +65,7 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   listPanelsCommand,
   getDashboardInfoCommand,
   getCrossDashboardVariablesCommand,
-  setCrossDashboardVariablesCommand,
+  updateMetadataAnnotationsCommand,
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,

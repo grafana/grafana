@@ -1,8 +1,11 @@
 /**
- * SET_CROSS_DASHBOARD_VARIABLES command
+ * UPDATE_METADATA_ANNOTATIONS command
  *
- * Replaces `grafana.app/useCrossDashboardVariables` on the live dashboard.
- * Both scopes `"none"` omit the annotation (opt out). Does not write spec.
+ * Writes allowlisted keys on `metadata.annotations`. This is not the dashboard
+ * spec and is not a query annotation layer (ADD_ANNOTATION / UPDATE_ANNOTATION).
+ *
+ * Today the only writable key is `grafana.app/useCrossDashboardVariables`.
+ * Add further keys here (schema + persist) rather than a new command per annotation.
  */
 
 import type * as z from 'zod';
@@ -18,17 +21,20 @@ import {
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresGlobalDashboardVariables, type MutationCommand } from './types';
 
-const setCrossDashboardVariablesPayloadSchema = payloads.setCrossDashboardVariables;
+const updateMetadataAnnotationsPayloadSchema = payloads.updateMetadataAnnotations;
 
-export type SetCrossDashboardVariablesPayload = z.infer<typeof setCrossDashboardVariablesPayloadSchema>;
+export type UpdateMetadataAnnotationsPayload = z.infer<typeof updateMetadataAnnotationsPayloadSchema>;
 
 const CHANGE_PATH = `/metadata/annotations/${AnnoKeyUseCrossDashboardVariables}`;
 
-export const setCrossDashboardVariablesCommand: MutationCommand<SetCrossDashboardVariablesPayload> = {
-  name: 'SET_CROSS_DASHBOARD_VARIABLES',
-  description: payloads.setCrossDashboardVariables.description ?? '',
+const CLEARED_SELECTION = { global: 'none' as const, folder: 'none' as const };
 
-  payloadSchema: setCrossDashboardVariablesPayloadSchema,
+export const updateMetadataAnnotationsCommand: MutationCommand<UpdateMetadataAnnotationsPayload> = {
+  name: 'UPDATE_METADATA_ANNOTATIONS',
+  description: payloads.updateMetadataAnnotations.description ?? '',
+
+  payloadSchema: updateMetadataAnnotationsPayloadSchema,
+  // Permission stays tied to the only allowlisted key. Split per-key when more are added.
   permission: requiresGlobalDashboardVariables,
   readOnly: false,
 
@@ -40,14 +46,19 @@ export const setCrossDashboardVariablesCommand: MutationCommand<SetCrossDashboar
       const previousSelection = parseUseCrossDashboardVariablesFromHost(scene);
       const previousValue = previousSelection ? serializeUseCrossDashboardVariables(previousSelection) : undefined;
 
-      await persistUseCrossDashboardVariables(scene, payload);
+      const nextSelection = payload.annotations[AnnoKeyUseCrossDashboardVariables] ?? CLEARED_SELECTION;
+      await persistUseCrossDashboardVariables(scene, nextSelection);
 
       const newSelection = parseUseCrossDashboardVariablesFromHost(scene);
       const newValue = newSelection ? serializeUseCrossDashboardVariables(newSelection) : undefined;
 
       return {
         success: true,
-        data: { selection: newSelection },
+        data: {
+          annotations: {
+            [AnnoKeyUseCrossDashboardVariables]: newSelection ?? null,
+          },
+        },
         changes: [{ path: CHANGE_PATH, previousValue: previousValue ?? null, newValue: newValue ?? null }],
       };
     } catch (error) {
