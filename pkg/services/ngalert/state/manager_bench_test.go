@@ -97,7 +97,7 @@ func makeBenchResults(count int) eval.Results {
 	}
 	one := 1.0
 	results := make([]eval.Result, 0, count)
-	for i := 0; i < count; i++ {
+	for range count {
 		results = append(results, eval.Result{
 			Instance:           labels,
 			State:              eval.Alerting,

@@ -16,7 +16,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
 

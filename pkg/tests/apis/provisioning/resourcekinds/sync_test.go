@@ -33,8 +33,8 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 			})
 
 			const count = 3
-			var names []string
-			for i := 0; i < count; i++ {
+			names := make([]string, 0, count)
+			for i := range count {
 				name, title := rk.instance(i)
 				names = append(names, name)
 				// Folder-scoped kinds must live inside a folder to receive the folder annotation;

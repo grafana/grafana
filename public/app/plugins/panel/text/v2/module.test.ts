@@ -24,46 +24,51 @@ function getItems() {
   return builder.getItems();
 }
 
-function getRenderModeItem() {
-  const item = getItems().find((option) => option.path === 'renderMode');
+function getItem(path: string) {
+  const item = getItems().find((option) => option.path === path);
   if (!item) {
-    throw new Error('renderMode option is not registered');
+    throw new Error(`${path} option is not registered`);
   }
   return item;
 }
 
+/** The options pane shows only these; everything else is edited in the panel itself. */
+const paneOptions = ['renderMode'];
+
 describe('textNGPanelOptions', () => {
   it('registers renderMode with a default that preserves a single render', () => {
-    expect(getRenderModeItem().defaultValue).toBe(RenderMode.Once);
+    expect(getItem('renderMode').defaultValue).toBe(RenderMode.Once);
   });
 
-  it('is the only option visible in the pane', () => {
+  it('are the only options visible in the pane', () => {
     const visible = getItems().filter((option) =>
       option.showIf?.({} as Options, [toDataFrame({ fields: [{ name: 'a', values: [1] }] })])
     );
 
-    expect(visible.map((option) => option.path)).toEqual(['renderMode']);
+    expect(visible.map((option) => option.path)).toEqual(paneOptions);
   });
 
-  it.each([
-    ['there is no data', undefined],
-    ['no frames were returned', []],
-    ['the frame has no rows', [toDataFrame({ fields: [{ name: 'a', values: [] }] })]],
-  ])('hides renderMode when %s', (_name, data) => {
-    expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(false);
-  });
+  describe.each(paneOptions)('%s', (path) => {
+    it.each([
+      ['there is no data', undefined],
+      ['no frames were returned', []],
+      ['the frame has no rows', [toDataFrame({ fields: [{ name: 'a', values: [] }] })]],
+    ])('is hidden when %s', (_name, data) => {
+      expect(getItem(path).showIf?.({} as Options, data)).toBe(false);
+    });
 
-  it('shows renderMode once a frame has rows', () => {
-    const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
+    it('is shown once a frame has rows', () => {
+      const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
-    expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(true);
-  });
+      expect(getItem(path).showIf?.({} as Options, data)).toBe(true);
+    });
 
-  it('hides renderMode when the text.newFeatures flag is off, even with rows', () => {
-    setTestFlags({ [FlagKeys.TextNewFeatures]: false });
-    const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
+    it('is hidden when the text.newFeatures flag is off, even with rows', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
-    expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(false);
+      expect(getItem(path).showIf?.({} as Options, data)).toBe(false);
+    });
   });
 });
 
