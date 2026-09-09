@@ -1,9 +1,6 @@
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import {
-  DASHBOARD_API_GROUP,
-  dashboardAPIVersionResolver,
-} from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { getK8sV2DashboardApiConfig } from 'app/features/dashboard/api/v2';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -17,10 +14,9 @@ function resolveMetadata(scene: DashboardScene): EnvelopeMetadata {
   return {
     ...existing,
     name,
-    generation: typeof existing.generation === 'number' ? existing.generation : 1,
-    creationTimestamp:
-      typeof existing.creationTimestamp === 'string' ? existing.creationTimestamp : new Date().toISOString(),
-    resourceVersion: typeof existing.resourceVersion === 'string' ? existing.resourceVersion : '0',
+    generation: existing.generation ?? 1,
+    creationTimestamp: existing.creationTimestamp ?? new Date().toISOString(),
+    resourceVersion: existing.resourceVersion ?? '0',
   };
 }
 
@@ -34,6 +30,7 @@ function resolveAccess(scene: DashboardScene): EnvelopeAccess {
     canDelete: meta.canDelete,
     canAdmin: meta.canAdmin,
     annotationsPermissions: meta.annotationsPermissions,
+    isPublic: meta.publicDashboardEnabled,
     slug: meta.slug,
     url: meta.url,
   };
@@ -43,11 +40,12 @@ export function buildDashboardWithAccessInfoFromScene(
   scene: DashboardScene,
   spec: DashboardV2Spec
 ): DashboardWithAccessInfo<DashboardV2Spec> {
+  const { group, version } = getK8sV2DashboardApiConfig();
   return {
     kind: 'DashboardWithAccessInfo',
     metadata: resolveMetadata(scene),
     access: resolveAccess(scene),
-    apiVersion: `${DASHBOARD_API_GROUP}/${dashboardAPIVersionResolver.getV2()}`,
+    apiVersion: `${group}/${version}`,
     spec,
   };
 }

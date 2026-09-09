@@ -80,15 +80,9 @@ function interpolate(
   content: string,
   series: DataFrame[] | undefined,
   renderMode: RenderMode | undefined,
-  mode = TextMode.Markdown,
-  maxRows?: number
+  mode = TextMode.Markdown
 ) {
-  return interpolateTemplate({ content, series, renderMode, mode, maxRows }, createReplaceVariables());
-}
-
-/** `interpolate` with an explicit row limit, in markdown mode. */
-function withLimit(content: string, series: DataFrame[], renderMode: RenderMode, maxRows?: number) {
-  return interpolate(content, series, renderMode, TextMode.Markdown, maxRows);
+  return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
 }
 
 const theme = createTheme();
@@ -239,41 +233,19 @@ describe('interpolateTemplate', () => {
       );
     });
 
-    it('renders at most the requested number of rows', () => {
-      const blocks = withLimit('${__data.fields.n}', [numberedFrame(50)], RenderMode.PerRow, 10).split('\n\n');
-
-      expect(blocks).toHaveLength(10);
-      expect(blocks[9]).toBe('9');
+    it('renders every row of a frame smaller than the hard ceiling', () => {
+      expect(interpolate('${__data.fields.n}', [numberedFrame(3)], RenderMode.PerRow)).toBe('0\n\n1\n\n2');
     });
 
-    it('renders every row when the limit is never reached', () => {
-      expect(withLimit('${__data.fields.n}', [numberedFrame(3)], RenderMode.PerRow, 10)).toBe('0\n\n1\n\n2');
-    });
-
-    it.each([
-      ['unset, on a panel saved before the option existed', undefined],
-      ['zero', 0],
-      ['not a number', NaN],
-    ])('renders every row up to the hard ceiling when the limit is %s', (_name, maxRows) => {
+    it('renders every row up to the hard ceiling', () => {
       const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
-      const blocks = withLimit('${__data.fields.n}', series, RenderMode.PerRow, maxRows).split('\n\n');
+      const blocks = interpolate('${__data.fields.n}', series, RenderMode.PerRow).split('\n\n');
 
       expect(blocks).toHaveLength(MAX_RENDERED_ROWS);
       expect(blocks[MAX_RENDERED_ROWS - 1]).toBe(String(MAX_RENDERED_ROWS - 1));
     });
 
-    it.each([
-      ['above the hard ceiling', MAX_RENDERED_ROWS + 500, MAX_RENDERED_ROWS],
-      ['below one', -5, 1],
-    ])('clamps a row limit %s', (_name, maxRows, expected) => {
-      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
-      const blocks = withLimit('${__data.fields.n}', series, RenderMode.PerRow, maxRows).split('\n\n');
-
-      expect(blocks).toHaveLength(expected);
-      expect(blocks[expected - 1]).toBe(String(expected - 1));
-    });
-
-    it('stops at the size backstop before reaching the row limit', () => {
+    it('stops at the size backstop before reaching the hard ceiling', () => {
       const rendered = interpolate('x'.repeat(1000), [numberedFrame(MAX_RENDERED_ROWS)], RenderMode.PerRow);
 
       expect(rendered.length).toBeLessThanOrEqual(MAX_RENDERED_CHARS);
@@ -371,13 +343,6 @@ describe('interpolateTemplate', () => {
       const rendered = interpolate('{{#each data}}{{n}},{{/each}}', series, RenderMode.Once);
 
       expect(rendered.split(',').filter(Boolean)).toHaveLength(MAX_RENDERED_ROWS);
-    });
-
-    it('applies the row limit to Once as well, so both modes see the same rows', () => {
-      const template = '{{#each data}}{{n}},{{/each}}';
-      const rendered = withLimit(template, [numberedFrame(50)], RenderMode.Once, 10);
-
-      expect(rendered.split(',').filter(Boolean)).toHaveLength(10);
     });
 
     it('truncates a Once template that passes the size backstop', () => {
