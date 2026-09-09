@@ -34,20 +34,17 @@ func isRetryableTxnError(err error) bool {
 	if sqlite.IsBusyOrLocked(err) {
 		return true
 	}
-	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) {
+	if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		switch mysqlErr.Number {
 		case mysqlErrLockDeadlock, mysqlErrLockWaitTimeout:
 			return true
 		}
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == postgresErrDeadlockDetected ||
 			pgErr.Code == postgresErrSerializationFailure
 	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
 		return string(pqErr.Code) == postgresErrDeadlockDetected ||
 			string(pqErr.Code) == postgresErrSerializationFailure
 	}

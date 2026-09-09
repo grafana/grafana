@@ -49,7 +49,7 @@ func minimalDashboard(uid, title string) []byte {
 // per-dashboard embedding does one EmbedText call regardless of panel count.
 func multiPanelDashboard(uid, title string, n int) []byte {
 	panels := make([]any, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		panels[i] = map[string]any{"id": i + 1, "title": uid, "description": "panel"}
 	}
 	body, _ := json.Marshal(map[string]any{"uid": uid, "title": title, "panels": panels})
@@ -699,7 +699,7 @@ func TestReconciler_RetryCap_DropsEventAfterMaxAttempts(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "boom", 100, minimalDashboard("boom", "Boom")))
 
-	for i := 0; i < maxEventAttempts; i++ {
+	for range maxEventAttempts {
 		s.processPending(context.Background())
 	}
 
@@ -893,7 +893,7 @@ func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
 		})
 
 		st := &fakeStorage{}
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			rv := snowflakeRV(int64(100 + i*10))
 			name := fmt.Sprintf("dash-%d", i)
 			st.changes = append(st.changes,
@@ -936,7 +936,7 @@ func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
 // real progress until a new write arrives.
 func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing.T) {
 	st := &fakeStorage{}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
@@ -961,7 +961,7 @@ func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing
 // path, which re-enqueues every embedded event.
 func TestReconciler_StartupReconcile_FreesEmbeddedValues(t *testing.T) {
 	st := &fakeStorage{}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
@@ -987,7 +987,7 @@ func TestReconciler_StartupReconcile_FreesEmbeddedValues(t *testing.T) {
 // cursor. Distinct from FreesEmbeddedValues, which pins the release itself.
 func TestReconciler_StartupReconcile_ReleasedValuesReplayAsNoOps(t *testing.T) {
 	st := &fakeStorage{}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
@@ -1028,7 +1028,7 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 	t.Cleanup(func() { startupBatchSize = prev })
 
 	st := &fakeStorage{}
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("iter-%d", i)
 		st.changes = append(st.changes,

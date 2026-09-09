@@ -45,8 +45,8 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         icon="plus"
         size="sm"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
-        onClick={() => {
-          layoutManager.addPanel(getDefaultVizPanel());
+        onClick={async () => {
+          layoutManager.addPanel(await getDefaultVizPanel());
           DashboardInteractions.trackAddPanelClick();
         }}
       >

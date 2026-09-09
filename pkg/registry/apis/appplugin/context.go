@@ -17,7 +17,7 @@ import (
 func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error) {
 	ctx = pluginsettings.WithSecureContextShim(ctx)
 	raw, err := b.getter(ctx, schema.GroupVersionResource{
-		Group:    b.pluginJSON.ID,
+		Group:    b.group,
 		Version:  apppluginV0.VERSION,
 		Resource: apppluginV0.APP_RESOURCE_NAME,
 	}, apppluginV0.INSTANCE_NAME)
