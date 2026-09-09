@@ -164,6 +164,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
 		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -237,6 +238,9 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"text/javascript\"")
 		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
 		assert.Contains(t, body, "// test boot stub for build/rspack")
+		// Static images are copied into the build directory, so they move with it.
+		assert.Contains(t, body, "href=\"public/build/rspack/img/fav32.png\"")
+		assert.NotContains(t, body, "href=\"public/build/img/fav32.png\"")
 	})
 
 	t.Run("should start without an rspack build and fail the request when the flag is on", func(t *testing.T) {
