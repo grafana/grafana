@@ -1,6 +1,11 @@
 import { type TimeZone } from '../types/time';
 
-import { type MomentInput, type MomentLike as Moment, type MomentUnit } from './luxon_moment_compat/moment';
+import {
+  type MomentDurationInputObject,
+  type MomentInput,
+  type MomentLike as Moment,
+  type MomentUnit,
+} from './luxon_moment_compat/moment';
 import moment from './moment_implementation';
 
 export type { Moment };
@@ -12,7 +17,7 @@ export interface DateTimeBuiltinFormat {
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
-export type DurationInput = string | number | DateTimeDuration;
+export type DurationInput = string | number | DateTimeDuration | MomentDurationInputObject;
 // same member set as the shim's MomentUnit; aliased so the two cannot drift apart
 export type DurationUnit = MomentUnit;
 
@@ -30,9 +35,9 @@ export interface DateTimeDuration {
 }
 
 export interface DateTime extends Object {
-  add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
+  add: (amount?: DateTimeInput | MomentDurationInputObject, unit?: DurationUnit) => DateTime;
   set: (unit: DurationUnit | 'date', amount: DateTimeInput) => void;
-  diff: (amount: DateTimeInput, unit?: DurationUnit, truncate?: boolean) => number;
+  diff: (amount: DateTimeInput, unit?: DurationUnit, asFloat?: boolean) => number;
   endOf: (unitOfTime: DurationUnit) => DateTime;
   format: (formatInput?: FormatInput) => string;
   fromNow: (withoutSuffix?: boolean) => string;
@@ -43,7 +48,7 @@ export interface DateTime extends Object {
   local: () => DateTime;
   locale: (locale: string) => DateTime;
   startOf: (unitOfTime: DurationUnit) => DateTime;
-  subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
+  subtract: (amount?: DateTimeInput | MomentDurationInputObject, unit?: DurationUnit) => DateTime;
   toDate: () => Date;
   toISOString: (keepOffset?: boolean) => string;
   isoWeekday: (day?: number | string) => number | string;
@@ -117,9 +122,12 @@ export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTime
     return moment.duration(input, unit);
   }
 
-  // duration-like objects carry their own magnitude, so `unit` does not apply (same as before,
-  // when the shim took the object's `valueOf()` in milliseconds and ignored the unit).
-  return moment.duration(input.asMilliseconds());
+  // The public duration interface exposes totals, not calendar fields.
+  if ('asMilliseconds' in input) {
+    return moment.duration(input.asMilliseconds());
+  }
+
+  return moment.duration(input, unit);
 };
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
