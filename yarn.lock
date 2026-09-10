@@ -7301,17 +7301,17 @@ __metadata:
   linkType: hard
 
 "@rc-component/cascader@npm:^1.9.0":
-  version: 1.23.0
-  resolution: "@rc-component/cascader@npm:1.23.0"
+  version: 1.25.0
+  resolution: "@rc-component/cascader@npm:1.25.0"
   dependencies:
-    "@rc-component/select": "npm:~1.10.0"
+    "@rc-component/select": "npm:~1.11.0"
     "@rc-component/tree": "npm:~1.5.0"
     "@rc-component/util": "npm:^1.11.1"
     clsx: "npm:^2.1.1"
   peerDependencies:
     react: ">=18.0.0"
     react-dom: ">=18.0.0"
-  checksum: 10/4a022dba1aeca3cf2760a1090bb4934a9b3129fa39717481801f8b56474013806a16bbd648381fbe5902cf3c27c4dd60380a9ea1d6e08d9963a8b10398a263a6
+  checksum: 10/d39af7210fc3b6c609cf70ea4bf2539c55a0531de6ef0103a742b564c1e882fe1e78cfb3258d62a73e2cd943a043d23ac88c7bb5f5eb2c06cd6d772b7bf913e9
   languageName: node
   linkType: hard
 
@@ -7383,9 +7383,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/select@npm:~1.10.0":
-  version: 1.10.0
-  resolution: "@rc-component/select@npm:1.10.0"
+"@rc-component/select@npm:~1.11.0":
+  version: 1.11.0
+  resolution: "@rc-component/select@npm:1.11.0"
   dependencies:
     "@rc-component/overflow": "npm:^1.0.0"
     "@rc-component/trigger": "npm:^3.0.0"
@@ -7395,7 +7395,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/b2a36d2ba15417755c7f116dd6d34684b116b2793aa2a9219898bb44d5a1bc2404fda4b390e1c8c91f0f4565c3f84fb93423c2cfbc5bfff0d2df01b67e705d55
+  checksum: 10/1933696829caecb4572dd8dbdd9cf63256706216734eb599094057e05d9a3c19e7de5aca9537b88035b69515dce9ac8ed0355abe646daac43dea06514e06386f
   languageName: node
   linkType: hard
 
