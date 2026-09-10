@@ -1,4 +1,8 @@
----
+GET /api/org/ HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+X-Grafana-Org-Id: 2
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>---
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/
 description: 'You can authenticate HTTP API requests using basic authentication or a service account token.'
 keywords:
