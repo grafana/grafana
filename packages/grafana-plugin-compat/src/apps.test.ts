@@ -61,6 +61,22 @@ describe('getPluginSettings', () => {
       }
     );
   });
+
+  it('should default to showErrorAlert === false when getPluginSettings does not exists', async () => {
+    await getPluginSettings(mockId, undefined, null as unknown as typeof runtimeGetPluginSettings);
+
+    expect(mockRuntimeGetAppPluginSettings).not.toHaveBeenCalled();
+    expect(mockBackendSrv.get).toHaveBeenCalled();
+    expect(mockBackendSrv.get).toHaveBeenCalledWith(
+      `/api/plugins/grafana-exploretraces-app/settings`,
+      undefined,
+      undefined,
+      {
+        showErrorAlert: false,
+        validatePath: true,
+      }
+    );
+  });
 });
 
 describe('updatePluginSettings', () => {
@@ -69,6 +85,7 @@ describe('updatePluginSettings', () => {
     setBackendSrv(mockBackendSrv);
     mockRuntimeUpdateAppPluginSettings.mockResolvedValue(mockData as PluginMeta);
     mockBackendSrv.post = jest.fn().mockResolvedValue(mockData);
+    mockBackendSrv.get = jest.fn().mockResolvedValue(mockData);
   });
 
   it('should call correct function when updateAppPluginSettings exists', async () => {
@@ -77,6 +94,12 @@ describe('updatePluginSettings', () => {
     expect(mockRuntimeUpdateAppPluginSettings).toHaveBeenCalled();
     expect(mockRuntimeUpdateAppPluginSettings).toHaveBeenCalledWith(mockId, { ...mockData });
     expect(mockBackendSrv.fetch).not.toHaveBeenCalled();
+  });
+
+  it('should return correct response when updateAppPluginSettings exists', async () => {
+    const result = await updatePluginSettings(mockId, mockData);
+
+    expect(result).toStrictEqual(mockData);
   });
 
   it('should call correct function when updateAppPluginSettings does not exists', async () => {
@@ -89,5 +112,15 @@ describe('updatePluginSettings', () => {
       { ...mockData },
       { validatePath: true }
     );
+  });
+
+  it('should return correct response when updateAppPluginSettings does not exists', async () => {
+    const result = await updatePluginSettings(
+      mockId,
+      mockData,
+      null as unknown as typeof runtimeUpdateAppPluginSettings
+    );
+
+    expect(result).toStrictEqual(mockData);
   });
 });

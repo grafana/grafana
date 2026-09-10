@@ -17,7 +17,7 @@ export function getPluginSettings(
   return runtimeGetPluginSettings(pluginId, showErrorAlert);
 }
 
-function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
+function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
   return getBackendSrv().get(`/api/plugins/${pluginId}/settings`, undefined, undefined, {
     showErrorAlert,
     validatePath: true,
@@ -36,6 +36,10 @@ export function updatePluginSettings(
   return runtimeUpdateAppPluginSettings(pluginId, data);
 }
 
-function backwardsCompatibleUpdatePluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
-  return getBackendSrv().post(`/api/plugins/${pluginId}/settings`, data, { validatePath: true });
+async function backwardsCompatibleUpdatePluginSettings(
+  pluginId: string,
+  data: Partial<PluginMeta>
+): Promise<PluginMeta> {
+  await getBackendSrv().post(`/api/plugins/${pluginId}/settings`, data, { validatePath: true });
+  return backwardsCompatibleGetPluginSettings(pluginId);
 }
