@@ -1,7 +1,7 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Pagination, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertState, AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
@@ -39,10 +39,13 @@ function alertStateToFilterFlags(
   }
 }
 
+const GROUPS_PER_PAGE = 1000;
+
 const AlertGroups = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useQueryParams();
   const { groupBy = [], queryString, alertState, receivers } = getFiltersFromUrlParams(queryParams);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
@@ -66,6 +69,7 @@ const AlertGroups = () => {
     {
       skip: !selectedAlertmanager,
       pollingInterval: NOTIFICATIONS_POLL_INTERVAL_MS,
+      skipPollingIfUnfocused: true,
     }
   );
 
@@ -76,6 +80,21 @@ const AlertGroups = () => {
     receivers && receivers.length > 1
       ? groupedAlerts.filter((g) => receivers.includes(g.receiver.name))
       : groupedAlerts;
+
+  // Pagination
+  const totalGroups = filteredAlertGroups.length;
+  const totalPages = Math.ceil(totalGroups / GROUPS_PER_PAGE);
+  const startIndex = (currentPage - 1) * GROUPS_PER_PAGE;
+  const endIndex = startIndex + GROUPS_PER_PAGE;
+  const paginatedGroups = filteredAlertGroups.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  const filterKey = JSON.stringify({ groupBy, queryString, alertState, receivers });
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setCurrentPage(1);
+    setPrevFilterKey(filterKey);
+  }
 
   const grafanaAmDeliveryDisabled =
     selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME &&
@@ -113,7 +132,7 @@ const AlertGroups = () => {
       {selectedAlertmanager && <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />}
 
       {results &&
-        filteredAlertGroups.map((group, index) => {
+        paginatedGroups.map((group, index) => {
           return (
             <Fragment key={`${JSON.stringify(group.labels)}-group-${index}`}>
               {((index === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
@@ -137,6 +156,16 @@ const AlertGroups = () => {
         <p>
           <Trans i18nKey="alerting.alert-groups.no-results">No results.</Trans>
         </p>
+      )}
+      {results && totalPages > 1 && (
+        <Box paddingTop={2}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={totalPages}
+            onNavigate={setCurrentPage}
+            hideWhenSinglePage
+          />
+        </Box>
       )}
     </>
   );
