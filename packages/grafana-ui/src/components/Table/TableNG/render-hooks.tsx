@@ -10,6 +10,14 @@ import {
   useCallback,
   useMemo,
 } from 'react';
+import {
+  Cell,
+  type CellRendererProps,
+  type DataGridHandle,
+  type RenderCellProps,
+  type RenderRowProps,
+  Row,
+} from 'react-data-grid';
 
 import {
   DataHoverClearEvent,
@@ -22,14 +30,6 @@ import {
   getDisplayProcessor,
   type TimeRange,
 } from '@grafana/data';
-import {
-  Cell,
-  type CellRendererProps,
-  type DataGridHandle,
-  type RenderCellProps,
-  type RenderRowProps,
-  Row,
-} from '@grafana/react-data-grid';
 import {
   FieldColorModeId,
   TableCellDisplayMode,
@@ -573,7 +573,7 @@ function buildColumnsFromFields(
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
           selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });
           }}
         />
       ),

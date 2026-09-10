@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type Column } from 'react-data-grid';
 
 import { createTheme, type Field, FieldType } from '@grafana/data';
-import { type Column } from '@grafana/react-data-grid';
 
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 

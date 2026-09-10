@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
+import { type DataGridHandle } from 'react-data-grid';
 
 import { createTheme } from '@grafana/data';
-import { type DataGridHandle } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 

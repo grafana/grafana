@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
+import type { ColumnWidth, ColumnWidths, SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -21,7 +22,6 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
-import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -249,11 +249,27 @@ export function createTypographyContext(
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
   const { count } = varPreLine(ctx);
 
+  // The grid applies `font-variant-numeric: tabular-nums`, so every digit renders at the font's
+  // uniform (widest) figure advance. Canvas can't set that feature, so measure each digit and take
+  // the max as a safe over-estimate of the tabular advance.
+  let maxDigitWidth = 0;
+  for (let d = 0; d <= 9; d++) {
+    maxDigitWidth = Math.max(maxDigitWidth, ctx.measureText(String(d)).width);
+  }
+  const numericCharWidth = maxDigitWidth + letterSpacing;
+
+  // JSON/Geo cells render in a monospace font; measure one character there (all are equal-width).
+  ctx.font = `${fontWeight != null ? `${fontWeight} ` : ''}${fontSize}px monospace`;
+  const monoCharWidth = ctx.measureText('0').width + letterSpacing;
+  ctx.font = font; // restore the primary font on the shared context
+
   return {
     ctx,
     fontFamily,
     letterSpacing,
     avgCharWidth,
+    numericCharWidth,
+    monoCharWidth,
     estimateHeight: getTextHeightEstimator(avgCharWidth),
     measureHeight: getTextHeightMeasurerFromUwrapCount(count),
   };
@@ -1535,9 +1551,14 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
 const TEXT_WIDTH_WIGGLE = TABLE.CELL_PADDING;
 
 const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
-  const width = measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
-  const isText = field.type === FieldType.string || field.type === FieldType.time;
-  return isText ? width + TEXT_WIDTH_WIGGLE : width;
+  // Numeric and date/time columns are digit-dominated and render with tabular-nums, so estimate them
+  // with the (wider, uniform) tabular digit width rather than the prose average.
+  const isNumericLike = field.type === FieldType.number || field.type === FieldType.time;
+  const charWidth = isNumericLike ? typographyCtx.numericCharWidth : typographyCtx.avgCharWidth;
+  const width = measureLongestContentWidth(field, sampleSize, charWidth) + CELL_HORIZONTAL_CHROME;
+  // String columns still get slack because the prose average under-measures them; numeric/time now
+  // use the wider tabular width, so they no longer need the extra wiggle.
+  return field.type === FieldType.string ? width + TEXT_WIDTH_WIGGLE : width;
 };
 
 // Markdown always wraps and renders formatted, so its raw source is a poor proxy for rendered width
@@ -1551,7 +1572,8 @@ const measureMarkdownColWidth: MeasureColWidth = () => 0;
 // under-measure and clip it.
 const measureJsonColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
   const measure = shouldTextWrap(field) ? measureLongestLineWidth : measureLongestContentWidth;
-  return measure(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+  // JSON renders in a monospace font, so size with the monospace character width.
+  return measure(field, sampleSize, typographyCtx.monoCharWidth) + CELL_HORIZONTAL_CHROME;
 };
 
 // Cell types that size differently from plain text register here; anything absent falls back to

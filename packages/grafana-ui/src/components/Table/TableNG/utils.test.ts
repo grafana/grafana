@@ -1,5 +1,6 @@
 import WKT from 'ol/format/WKT';
 import { type Geometry, Point } from 'ol/geom';
+import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -14,7 +15,6 @@ import {
   type LinkModel,
   type ValueLinkConfig,
 } from '@grafana/data';
-import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
@@ -1182,6 +1182,8 @@ describe('TableNG utils', () => {
           measureHeight: expect.any(Function),
           estimateHeight: expect.any(Function),
           avgCharWidth: expect.any(Number),
+          numericCharWidth: expect.any(Number),
+          monoCharWidth: expect.any(Number),
         })
       );
       expect(ctx.measureHeight('the quick brown fox jumps over the lazy dog', 100, field, 0, 20)).toEqual(
@@ -1811,6 +1813,11 @@ describe('TableNG utils', () => {
           width: String(text).length * CHAR_W,
         })) as typeof typographyCtx.ctx.measureText);
       typographyCtx.avgCharWidth = CHAR_W;
+      // numeric/date columns use numericCharWidth and JSON uses monoCharWidth; pin them to CHAR_W too
+      // so the existing char-count math stays deterministic (tests that exercise the difference set
+      // these explicitly).
+      typographyCtx.numericCharWidth = CHAR_W;
+      typographyCtx.monoCharWidth = CHAR_W;
       return typographyCtx;
     };
 
@@ -1832,6 +1839,41 @@ describe('TableNG utils', () => {
 
       expect(width).toBe(75);
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
+    });
+
+    it('sizes numeric/date columns by numericCharWidth, so tabular-nums digits are not under-measured', () => {
+      const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+      const widthWith = (numericCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+        typographyCtx.numericCharWidth = numericCharWidth;
+        // availWidth 1 => no leftover, so the column is sized purely to its content.
+        return computeContentAwareColWidths([numberField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
+      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
+    });
+
+    it('sizes a JSON column by monoCharWidth (its monospace font), not avgCharWidth', () => {
+      const jsonField: Field = {
+        name: 'J',
+        type: FieldType.other,
+        values: [{ hello: 'world' }],
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      };
+      const widthWith = (monoCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx();
+        typographyCtx.monoCharWidth = monoCharWidth;
+        return computeContentAwareColWidths([jsonField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
     });
 
     it('keeps a configured width verbatim and grows the auto column into the leftover space', () => {

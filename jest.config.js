@@ -27,7 +27,7 @@ const esModules = [
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
-  '@grafana/react-data-grid',
+  'react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
   'quickselect',

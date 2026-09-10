@@ -1,4 +1,5 @@
 import { type FC, type SyntheticEvent } from 'react';
+import { type CellRendererProps, type Column } from 'react-data-grid';
 
 import {
   type DataFrame,
@@ -13,7 +14,6 @@ import {
   type SelectableValue,
   type FieldState,
 } from '@grafana/data';
-import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';
@@ -295,6 +295,14 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
+  /**
+   * Width of a single digit under `font-variant-numeric: tabular-nums` (which react-data-grid applies
+   * to every cell): all digits render at this uniform, wider advance. Used to size digit-heavy
+   * numeric/date columns, which `avgCharWidth` (a prose average) under-measures.
+   */
+  numericCharWidth: number;
+  /** Width of a single character in the monospace font used by JSON/Geo cells (all chars are equal). */
+  monoCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
 }
