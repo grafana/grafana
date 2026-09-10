@@ -1629,6 +1629,14 @@ export const versionedComponents = {
         '13.3.0': 'data-testid TraceViewer share feedback-link',
       },
     },
+    traceBanner: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer trace-banner',
+      },
+      row: {
+        '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+    },
   },
   QueryField: {
     container: {

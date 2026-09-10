@@ -946,6 +946,10 @@ const (
 	// Uses field-value results for requests from the /api/search endpoint
 	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
 
+	// FlagSearchApiFieldValueResults
+	// Uses field-value results for generic resource search API requests
+	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1021,6 +1025,10 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagSamlGosaml2Provider
+	// Use the gosaml2 library instead of the crewjam SAML library for SAML authentication
+	FlagSamlGosaml2Provider = "saml.gosaml2Provider"
 
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
