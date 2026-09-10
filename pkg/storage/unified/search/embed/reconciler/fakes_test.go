@@ -58,18 +58,6 @@ func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
 	f.folders[namespace+"/"+uid] = title
 }
 
-// emit synchronously delivers a watch event on the channel set up by
-// startWatch. Tests use it to drive the watch path.
-func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
-	f.mu.Lock()
-	ch := f.watchCh
-	f.mu.Unlock()
-	if ch == nil {
-		return
-	}
-	ch <- ev
-}
-
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	panic("not implemented")
 }
@@ -98,7 +86,7 @@ func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func
 }
 
 // WatchWriteEvents returns a channel the test can push events onto via
-// emit(). Closing happens when the parent ctx ends (handled by the test
+// its channel. Closing happens when the parent ctx ends (handled by the test
 // harness). Tests that need watch errors set watchErr.
 func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	f.mu.Lock()

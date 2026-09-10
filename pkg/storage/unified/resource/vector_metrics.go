@@ -92,11 +92,11 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 		}, []string{"group", "resource", "status"}),
 		ReconcilerPendingEvents: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "vector_storage_reconciler_pending_events",
-			Help: "Current number of events pending processing in the embedding reconciler dedup map.",
+			Help: "Current number of failed resources awaiting another embedding reconciler attempt.",
 		}),
 		ReconcilerRetriesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "vector_storage_reconciler_retries_total",
-			Help: "Total number of reconciler events re-queued after a failure.",
+			Help: "Total number of reconciler failures scheduled for another attempt.",
 		}, []string{"group", "resource"}),
 		ReconcilerEventsDroppedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "vector_storage_reconciler_events_dropped_total",
