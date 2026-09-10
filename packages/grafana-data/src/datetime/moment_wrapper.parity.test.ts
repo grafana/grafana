@@ -1,8 +1,10 @@
+import type * as MomentWrapper from './moment_wrapper';
+
 describe('Luxon-backed DateTime wrapper', () => {
   const flagName = '__grafanaUseLuxon';
   let originalDescriptor: PropertyDescriptor | undefined;
   let originalLocale: string;
-  let wrapper: typeof import('./moment_wrapper');
+  let wrapper: typeof MomentWrapper;
 
   beforeAll(async () => {
     originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
