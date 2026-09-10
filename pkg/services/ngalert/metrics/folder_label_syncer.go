@@ -15,10 +15,10 @@ const (
 // FolderLabelSyncer tracks the job that keeps the has-rules label on folders in step with the rules
 // they hold, split by sync_type into the startup/periodic full sync and the event-driven partial sync.
 type FolderLabelSyncer struct {
-	// Total counts syncs that completed without error, whether or not they found anything to change.
-	// It is the denominator for Failures, and on its own answers "did the syncer run at all" — which a
-	// failure counter cannot, since zero failures and never having run look identical. For a full sync
-	// this is per org; for a partial sync, per folder.
+	// Total counts every finished sync, successful or not, whether or not it found anything to change.
+	// Failures is a strict subset, so Failures/Total is the error rate. On its own Total answers "did
+	// the syncer run at all" — which a failure counter cannot, since zero failures and never having
+	// run look identical. For a full sync this is per org; for a partial sync, per folder.
 	Total *prometheus.CounterVec
 	// Failures counts syncs that could not complete. A non-zero full sync failure means some folders
 	// may carry a stale label until the next pass; a non-zero partial sync failure means a folder
@@ -32,7 +32,7 @@ func NewFolderLabelSyncerMetrics(r prometheus.Registerer) *FolderLabelSyncer {
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "folder_label_syncer_total",
-			Help:      "The total number of folder label syncs completed without error, by sync_type.",
+			Help:      "The total number of folder label syncs attempted, by sync_type.",
 		}, []string{"sync_type"}),
 		Failures: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,

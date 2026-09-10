@@ -185,12 +185,13 @@ func (s *Service) drain(ctx context.Context) {
 			}
 			return nil
 		})
+		// Recorded once per folder rather than per attempt, so a retried folder does not inflate
+		// either counter.
+		s.syncCompleted(metrics.SyncTypePartial, err)
 		if err != nil {
-			s.syncFailed(metrics.SyncTypePartial)
 			s.log.Warn("Failed to sync folder rules label",
 				"org_id", key.OrgID, "folder_uid", key.UID, "attempts", attempts, "error", err)
 		} else {
-			s.syncSucceeded(metrics.SyncTypePartial)
 			processed++
 		}
 	}
@@ -212,17 +213,18 @@ func (s *Service) take() []models.FolderKey {
 	return keys
 }
 
-// syncFailed and syncSucceeded record an attempt against its sync_type. Both tolerate nil metrics so
-// a Service can be constructed without them.
-func (s *Service) syncFailed(syncType string) {
-	if s.metrics != nil {
-		s.metrics.Failures.WithLabelValues(syncType).Inc()
+// syncCompleted records one finished sync against its sync_type, and additionally a failure when err
+// is non-nil. Total counts every attempt rather than only successes, so Failures is a strict subset
+// of it and Failures/Total is a meaningful error rate. Recording both from one place keeps that
+// invariant out of reach of the call sites. Tolerates nil metrics so a Service can be built without
+// them.
+func (s *Service) syncCompleted(syncType string, err error) {
+	if s.metrics == nil {
+		return
 	}
-}
-
-func (s *Service) syncSucceeded(syncType string) {
-	if s.metrics != nil {
-		s.metrics.Total.WithLabelValues(syncType).Inc()
+	s.metrics.Total.WithLabelValues(syncType).Inc()
+	if err != nil {
+		s.metrics.Failures.WithLabelValues(syncType).Inc()
 	}
 }
 

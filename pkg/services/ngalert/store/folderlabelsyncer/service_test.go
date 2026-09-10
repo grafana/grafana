@@ -479,10 +479,13 @@ func TestDrainRetries(t *testing.T) {
 
 		require.Equal(t, retry.DefaultBackoff.Steps, folders.updateCalls,
 			"should stop at the configured attempt budget")
-		// Once per folder, not once per attempt, or the failure rate stops being comparable to the
-		// success rate.
+		// Once per folder, not once per retry attempt, or the counters stop being comparable.
 		require.Equal(t, float64(1), counterValue(t, reg,
 			"grafana_alerting_folder_label_syncer_failures_total",
+			map[string]string{"sync_type": metrics.SyncTypePartial}))
+		// A failed sync is still an attempt, so it counts toward the total and failures stay a subset.
+		require.Equal(t, float64(1), counterValue(t, reg,
+			"grafana_alerting_folder_label_syncer_total",
 			map[string]string{"sync_type": metrics.SyncTypePartial}))
 	})
 
@@ -603,11 +606,17 @@ func TestFailureMetrics(t *testing.T) {
 		})
 	})
 
-	t.Run("full sync successes are counted per org", func(t *testing.T) {
+	t.Run("full sync attempts are counted per org", func(t *testing.T) {
 		fullSyncTotal := func(t *testing.T, reg prometheus.Gatherer) float64 {
 			t.Helper()
 			return counterValue(t, reg,
 				"grafana_alerting_folder_label_syncer_total", map[string]string{"sync_type": metrics.SyncTypeFull})
+		}
+		fullSyncFailures := func(t *testing.T, reg prometheus.Gatherer) float64 {
+			t.Helper()
+			return counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_failures_total",
+				map[string]string{"sync_type": metrics.SyncTypeFull})
 		}
 
 		t.Run("including orgs with nothing to do", func(t *testing.T) {
@@ -617,19 +626,19 @@ func TestFailureMetrics(t *testing.T) {
 
 			require.NoError(t, s.FullSync(context.Background(), nil))
 			require.Equal(t, float64(2), fullSyncTotal(t, reg))
+			require.Zero(t, fullSyncFailures(t, reg))
 		})
 
-		t.Run("counting only the orgs that did not fail", func(t *testing.T) {
+		t.Run("counting failed orgs too, so failures stay a subset of total", func(t *testing.T) {
 			store := &fakeSyncerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
-			// org-1's folder calls fail, so only org 2 succeeds.
+			// org-1's folder calls fail, so one org fails and one succeeds.
 			folders := &fakeFolderClient{failNamespaces: map[string]struct{}{"org-1": {}}}
 			s, reg := newMetered(store, folders)
 
 			require.NoError(t, s.FullSync(context.Background(), nil))
-			require.Equal(t, float64(1), fullSyncTotal(t, reg))
-			require.Equal(t, float64(1), counterValue(t, reg,
-				"grafana_alerting_folder_label_syncer_failures_total",
-				map[string]string{"sync_type": metrics.SyncTypeFull}))
+			require.Equal(t, float64(2), fullSyncTotal(t, reg), "both orgs were attempted")
+			require.Equal(t, float64(1), fullSyncFailures(t, reg))
+			require.LessOrEqual(t, fullSyncFailures(t, reg), fullSyncTotal(t, reg))
 		})
 
 		t.Run("skipped orgs are counted as neither", func(t *testing.T) {
@@ -640,11 +649,13 @@ func TestFailureMetrics(t *testing.T) {
 			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 		})
 
-		t.Run("not counted when org enumeration fails", func(t *testing.T) {
+		t.Run("counted once for the whole pass when org enumeration fails", func(t *testing.T) {
+			// No org was reached, so there is no per-org outcome; the pass itself is the attempt.
 			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
 
 			require.Error(t, s.FullSync(context.Background(), nil))
-			require.Zero(t, fullSyncTotal(t, reg))
+			require.Equal(t, float64(1), fullSyncTotal(t, reg))
+			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 	})
 

@@ -24,7 +24,9 @@ import (
 func (s *Service) FullSync(ctx context.Context, disabledOrgs map[int64]struct{}) error {
 	orgIDs, err := s.store.FetchOrgIds(ctx)
 	if err != nil {
-		s.syncFailed(metrics.SyncTypeFull)
+		// Counted as one whole-pass attempt: it failed before any org could be attempted, so there is
+		// no per-org outcome to record.
+		s.syncCompleted(metrics.SyncTypeFull, err)
 		return fmt.Errorf("fetch orgs: %w", err)
 	}
 
@@ -39,15 +41,14 @@ func (s *Service) FullSync(ctx context.Context, disabledOrgs map[int64]struct{})
 		}
 
 		n, err := s.fullSyncOrg(ctx, orgID)
+		// Counted whether or not anything was queued: finding nothing to do is the healthy outcome on
+		// an already-correct install, and is still evidence the pass ran.
+		s.syncCompleted(metrics.SyncTypeFull, err)
 		if err != nil {
-			s.syncFailed(metrics.SyncTypeFull)
 			// One unhealthy org must not abort the pass for the rest.
 			s.log.Error("Failed to full sync folder rules labels", "org_id", orgID, "error", err)
 			continue
 		}
-		// Counted whether or not anything was queued: finding nothing to do is the healthy outcome on
-		// an already-correct install, and is still evidence the pass ran.
-		s.syncSucceeded(metrics.SyncTypeFull)
 		if n > 0 {
 			s.log.Info("Queued folder rules label full sync", "org_id", orgID, "folder_count", n)
 			total += n
