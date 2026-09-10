@@ -1,4 +1,4 @@
-import type { DateTime } from './luxon';
+import { DateTime } from './luxon';
 
 const LOWER_MERIDIEM_FORMAT = "'__mls__'a'__mle__'";
 const ONE_TO_TWENTY_FOUR_HOUR_FORMAT = "'__khs__'H'__khe__'";
@@ -6,9 +6,8 @@ const PADDED_ONE_TO_TWENTY_FOUR_HOUR_FORMAT = "'__khs__'HH'__khe__'";
 
 const TOKEN_MAP: Record<string, string> = {
   // moment's L* tokens are locale-aware (word order changes per locale), so map them to luxon's
-  // localized macro tokens rather than fixed patterns. `L` and `llll` have no exact luxon macro
-  // (`D` is unpadded while moment's `L` pads, and no macro uses an abbreviated weekday), so they
-  // keep en-US shaped patterns.
+  // localized macro tokens rather than fixed patterns. `L` is expanded separately to pad the date.
+  // No macro uses an abbreviated weekday, so `llll` keeps an en-US shaped pattern.
   LLLL: 'DDDD t',
   LLL: 'DDD t',
   LL: 'DDD',
@@ -91,12 +90,12 @@ interface ConvertedFormat {
 }
 
 // format conversion runs on every format() call in hot paths (table cells, axis ticks) and format
-// strings are highly repetitive, so cache the regex work. Keys only come from config/code-supplied
-// format strings, so the cache stays small for the lifetime of the page.
+// strings are highly repetitive, so cache the regex work. Keys come from config/code-supplied
+// format strings and locales, so the cache stays small for the lifetime of the page.
 const convertedFormatCache = new Map<string, ConvertedFormat>();
 
-function convertFormat(format: string, omitZoneName = false, forParsing = false): ConvertedFormat {
-  const cacheKey = `${forParsing ? 'parse' : 'format'}|${omitZoneName ? 'local' : 'zoned'}|${format}`;
+function convertFormat(format: string, omitZoneName = false, forParsing = false, locale = 'en-US'): ConvertedFormat {
+  const cacheKey = `${forParsing ? 'parse' : 'format'}|${omitZoneName ? 'local' : 'zoned'}|${locale}|${format}`;
   let converted = convertedFormatCache.get(cacheKey);
 
   if (!converted) {
@@ -104,7 +103,7 @@ function convertFormat(format: string, omitZoneName = false, forParsing = false)
     // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
     const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
     const luxonFormat = withEscapedLiterals.replace(TOKEN_PATTERN, (match, escapedText?: string) =>
-      replaceMomentToken(match, escapedText, omitZoneName, forParsing)
+      replaceMomentToken(match, escapedText, omitZoneName, forParsing, locale)
     );
 
     converted = {
@@ -119,7 +118,13 @@ function convertFormat(format: string, omitZoneName = false, forParsing = false)
   return converted;
 }
 
-function replaceMomentToken(match: string, escapedText?: string, omitZoneName = false, forParsing = false): string {
+function replaceMomentToken(
+  match: string,
+  escapedText?: string,
+  omitZoneName = false,
+  forParsing = false,
+  locale = 'en-US'
+): string {
   if (escapedText != null) {
     return toLuxonLiteral(escapedText);
   }
@@ -136,6 +141,16 @@ function replaceMomentToken(match: string, escapedText?: string, omitZoneName = 
     return `d'${ORDINAL_MARKER}'`;
   }
 
+  if (match === 'L') {
+    const localizedFormat = DateTime.parseFormatForOpts(
+      { year: 'numeric', month: '2-digit', day: '2-digit' },
+      { locale }
+    );
+    // Luxon generates a parser-only numeric-year token; adapt only this generated pattern,
+    // not the user's tokens or escaped literals, so the same pattern also formats correctly.
+    return (localizedFormat ?? TOKEN_MAP.L).replace('yyyyy', 'yyyy');
+  }
+
   return (forParsing ? PARSING_TOKEN_MAP : TOKEN_MAP)[match] ?? match;
 }
 
@@ -147,12 +162,12 @@ function toLuxonLiteral(literal: string): string {
     .join("''");
 }
 
-export function convertMomentToLuxonWithOrdinal(format: string): string {
-  return convertFormat(format).luxonFormat;
+export function convertMomentToLuxonWithOrdinal(format: string, locale?: string): string {
+  return convertFormat(format, false, false, locale).luxonFormat;
 }
 
-export function convertMomentToLuxonForParsing(format: string): string {
-  return convertFormat(format, false, true).luxonFormat.split(LOWER_MERIDIEM_FORMAT).join('a');
+export function convertMomentToLuxonForParsing(format: string, locale?: string): string {
+  return convertFormat(format, false, true, locale).luxonFormat.split(LOWER_MERIDIEM_FORMAT).join('a');
 }
 
 function getOrdinal(day: number): string {
@@ -163,7 +178,9 @@ function getOrdinal(day: number): string {
 export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string): string {
   const { luxonFormat, hasOrdinal, hasMeridiem, hasOneToTwentyFourHour } = convertFormat(
     momentFormat,
-    luxonDateTime.zone.type === 'system'
+    luxonDateTime.zone.type === 'system',
+    false,
+    luxonDateTime.locale ?? undefined
   );
   // ZZZZ doesnt work
   // https://github.com/moment/luxon/discussions/1041

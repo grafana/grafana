@@ -1,7 +1,12 @@
 package controller
 
 import (
+	"errors"
+
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 type refreshReason string
@@ -12,20 +17,44 @@ const (
 	refreshReasonExpiring refreshReason = "expiring"
 )
 
+// classifyTokenErrorCause maps a token generation/refresh failure to a cause
+// label. "user" means the customer must act (GitHub App uninstalled or
+// suspended, permissions revoked, installation gone, repository not selected);
+// "system" covers transient/infrastructure failures that are safe to retry.
+// Alerts should page on cause="system" and route cause="user" to a
+// customer-action runbook. The token path surfaces connection-level sentinels
+// while other reconcile paths use repository-level ones, so both are matched
+// here to keep classification consistent across metrics.
+func classifyTokenErrorCause(err error) string {
+	switch {
+	case errors.Is(err, connection.ErrAuthentication),
+		errors.Is(err, connection.ErrNotFound),
+		errors.Is(err, connection.ErrRepositoryAccess),
+		errors.Is(err, repository.ErrUnauthorized),
+		errors.Is(err, repository.ErrPermissionDenied):
+		return reconcileCauseUser
+	default:
+		return reconcileCauseSystem
+	}
+}
+
 var timeToExpiryBuckets = []float64{0, 30, 60, 120, 300, 600, 1800, 3600}
 var generationDurationBuckets = []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0}
 
 // connectionTokenMetrics tracks token lifecycle events for connections.
 type connectionTokenMetrics struct {
 	generatedTotal     prometheus.Counter
-	generationErrors   prometheus.Counter
+	generationErrors   *prometheus.CounterVec
 	generatedDuration  prometheus.Histogram
 	refreshReasonTotal *prometheus.CounterVec
 	timeToExpiry       prometheus.Histogram
 	// expired is incremented every reconcile that observes an already-expired
 	// connection token, from the persisted status.token.expiration, and re-emitted
 	// each resync while the condition holds (a token whose refresh keeps failing
-	// keeps incrementing). It mirrors the repository counter.
+	// keeps incrementing). It mirrors the repository counter. It is deliberately
+	// unlabeled by cause: expiry is read from persisted status, not from a live
+	// generation attempt, so the failure cause is not known here. Correlate with
+	// generationErrors' cause label for triage.
 	expired prometheus.Counter
 }
 
@@ -36,10 +65,10 @@ func registerConnectionTokenMetrics(reg prometheus.Registerer) *connectionTokenM
 	})
 	reg.MustRegister(generatedTotal)
 
-	generationErrors := prometheus.NewCounter(prometheus.CounterOpts{
+	generationErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_provisioning_connection_token_generation_errors_total",
-		Help: "Total number of connection token generation errors",
-	})
+		Help: "Total number of connection token generation errors by cause. Filter cause!=\"user\" to exclude user-caused failures (e.g. revoked credentials, app uninstalled) from SLOs.",
+	}, []string{"cause"})
 	reg.MustRegister(generationErrors)
 
 	generatedDuration := prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -86,11 +115,11 @@ func (m *connectionTokenMetrics) recordGeneration(seconds float64) {
 	m.generatedDuration.Observe(seconds)
 }
 
-func (m *connectionTokenMetrics) recordGenerationError() {
+func (m *connectionTokenMetrics) recordGenerationError(cause string) {
 	if m == nil {
 		return
 	}
-	m.generationErrors.Inc()
+	m.generationErrors.WithLabelValues(cause).Inc()
 }
 
 func (m *connectionTokenMetrics) recordRefreshReason(reason refreshReason) {
@@ -120,7 +149,7 @@ func (m *connectionTokenMetrics) recordExpired() {
 // repositoryTokenMetrics tracks token lifecycle events for repositories.
 type repositoryTokenMetrics struct {
 	generatedTotal     prometheus.Counter
-	generationErrors   prometheus.Counter
+	generationErrors   *prometheus.CounterVec
 	generatedDuration  prometheus.Histogram
 	refreshReasonTotal *prometheus.CounterVec
 	timeToExpiry       prometheus.Histogram
@@ -128,7 +157,9 @@ type repositoryTokenMetrics struct {
 	// repository token. It is deliberately re-emitted on each resync rather than
 	// edge-triggered once: a token stuck expired (its refresh failing) keeps
 	// incrementing, so increase()/rate() alerts fire for as long as the condition
-	// holds.
+	// holds. It is intentionally unlabeled by cause: expiry is read from persisted
+	// status, not from a live generation attempt, so the failure cause is not
+	// known here. Correlate with generationErrors' cause label for triage.
 	expired prometheus.Counter
 }
 
@@ -139,10 +170,10 @@ func registerRepositoryTokenMetrics(reg prometheus.Registerer) *repositoryTokenM
 	})
 	reg.MustRegister(generatedTotal)
 
-	generationErrors := prometheus.NewCounter(prometheus.CounterOpts{
+	generationErrors := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_provisioning_repository_token_generation_errors_total",
-		Help: "Total number of repository token generation errors",
-	})
+		Help: "Total number of repository token generation errors by cause. Filter cause!=\"user\" to exclude user-caused failures (e.g. revoked credentials, app uninstalled) from SLOs.",
+	}, []string{"cause"})
 	reg.MustRegister(generationErrors)
 
 	generatedDuration := prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -189,11 +220,11 @@ func (m *repositoryTokenMetrics) recordGeneration(seconds float64) {
 	m.generatedDuration.Observe(seconds)
 }
 
-func (m *repositoryTokenMetrics) recordGenerationError() {
+func (m *repositoryTokenMetrics) recordGenerationError(cause string) {
 	if m == nil {
 		return
 	}
-	m.generationErrors.Inc()
+	m.generationErrors.WithLabelValues(cause).Inc()
 }
 
 func (m *repositoryTokenMetrics) recordRefreshReason(reason refreshReason) {

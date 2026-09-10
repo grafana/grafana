@@ -2451,6 +2451,83 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
 }
 
+// TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused verifies that when
+// token generation fails because access was lost (e.g. the GitHub App was uninstalled or its
+// permissions revoked, surfaced as connection.ErrAuthentication), the failure is classified as
+// cause="user" on both the token-generation-error metric and the reconcile-error metric, so an
+// SLO/alert filtering cause!="user" does not page on-call for a condition only the customer can fix.
+func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	connName := "my-connection"
+
+	// A missing token makes shouldGenerateTokenFromConnection return true, so the token phase runs.
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type:       provisioning.LocalRepositoryType,
+			Sync:       provisioning.SyncOptions{Enabled: false},
+			Connection: &provisioning.ConnectionInfo{Name: connName},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// Access lost: the connection can no longer mint a repository token.
+	authErr := fmt.Errorf("unable to create token for repository: %w", connection.ErrAuthentication)
+	mockConn := connection.NewMockConnection(t)
+	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(nil, authErr).Once()
+
+	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	provClient := &mockProvisioningV0alpha1Interface{
+		connectionsFunc: func(_ string) client.ConnectionInterface {
+			return mockConnectionInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+					return connObj, nil
+				},
+			}
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:             repoGetter,
+		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
+		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
+		statusPatcher:     &capturePatcher{},
+		connectionFactory: mockConnFactory,
+		client:            provClient,
+		tokenMetrics:      registerRepositoryTokenMetrics(reg),
+		reconcileMetrics:  registerReconcileErrorMetrics(reg),
+		resyncInterval:    5 * time.Minute,
+		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.Error(t, err, "a lost-access token failure must be returned to the workqueue")
+
+	assert.Equal(t, 1.0,
+		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
+		"token generation error must be labeled cause=user")
+	assert.Equal(t, 1.0,
+		reconcileErrorCount(t, reg, reconcilePhaseToken, reconcileCauseUser),
+		"reconcile error must be counted under phase=token, cause=user")
+}
+
 // TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound verifies that when the
 // repository token references a secret that can no longer be decrypted (e.g. it was deleted),
 // the controller regenerates it from the connection and rebuilds instead of failing forever.
