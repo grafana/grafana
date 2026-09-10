@@ -17,12 +17,8 @@ import { uniqueId } from '../../utils/uniqueId';
 import { Alert } from '../Alert/Alert';
 import { useFieldContext } from '../Forms/FieldContext';
 
-import {
-  type BackwardsCompatibleDropzoneOptions,
-  type DropzoneFile,
-  type FileDropzoneProps,
-  FileDropzoneDefaultChildren,
-} from './FileDropzone';
+import type { BackwardsCompatibleDropzoneOptions, DropzoneFile, FileDropzoneProps } from './FileDropzone';
+import { FileDropzoneDefaultChildren } from './FileDropzoneDefaultChildren';
 import { FileListItem } from './FileListItem';
 
 export function FileDropzoneInner({

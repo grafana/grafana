@@ -1,11 +1,7 @@
-import { css, cx } from '@emotion/css';
 import { lazy, Suspense, type ReactNode } from 'react';
 import type { Accept, DropzoneOptions } from 'react-dropzone';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-
-import { useTheme2 } from '../../themes/ThemeContext';
-import { Icon } from '../Icon/Icon';
+export { FileDropzoneDefaultChildren } from './FileDropzoneDefaultChildren';
 
 export type BackwardsCompatibleDropzoneOptions = Omit<DropzoneOptions, 'accept'> & {
   // For backward compatibility we are still allowing the old `string | string[]` format for adding accepted file types (format changed in v13.0.0)
@@ -77,34 +73,4 @@ export function FileDropzone(props: FileDropzoneProps) {
       <FileDropzoneInner {...props} />
     </Suspense>
   );
-}
-
-export function FileDropzoneDefaultChildren({ primaryText = 'Drop file here or click to upload', secondaryText = '' }) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-
-  return (
-    <div className={cx(styles.defaultDropZone)} data-testid="file-drop-zone-default-children">
-      <Icon className={cx(styles.icon)} name="upload" size="xl" />
-      <h6 className={cx(styles.primaryText)}>{primaryText}</h6>
-      <small className={styles.small}>{secondaryText}</small>
-    </div>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    defaultDropZone: css({
-      textAlign: 'center',
-    }),
-    icon: css({
-      marginBottom: theme.spacing(1),
-    }),
-    primaryText: css({
-      marginBottom: theme.spacing(1),
-    }),
-    small: css({
-      color: theme.colors.text.secondary,
-    }),
-  };
 }

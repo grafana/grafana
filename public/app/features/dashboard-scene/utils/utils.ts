@@ -152,12 +152,6 @@ export function getIntervalsFromQueryString(query: string | undefined): string[]
   return Array.from(intervals);
 }
 
-// Transform new interval scene model to old interval core model
-export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): string {
-  const variableQuery = Array.isArray(intervals) ? intervals.join(',') : '';
-  return variableQuery;
-}
-
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
   // Handle missing current object or value
   const currentValue = variable.current?.value;

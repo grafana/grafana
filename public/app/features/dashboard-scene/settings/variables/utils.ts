@@ -23,8 +23,8 @@ import {
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 
+import { getIntervalsQueryFromNewIntervalModel } from '../../utils/getIntervalsQueryFromNewIntervalModel';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
-import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 // NOTE: type names/descriptions live in `editableVariablesMetadata.ts` and the editor
 // component registry lives in `editableVariablesRegistry.ts`. Keep editor imports out

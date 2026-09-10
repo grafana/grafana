@@ -33,6 +33,7 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
+import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -59,12 +60,18 @@ import { registerPanelInteractionsReporter } from '../scene/registerPanelInterac
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
+
+setPanelInspectorOpener(async (panel, tab) => {
+  const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
+
+  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
+});
 
 type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
