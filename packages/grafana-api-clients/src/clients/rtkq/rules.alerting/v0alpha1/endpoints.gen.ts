@@ -1230,6 +1230,7 @@ export type AlertRuleStatus = {
   additionalFields?: {
     [key: string]: any;
   };
+  /** duration of the last evaluation in seconds */
   evaluationDuration?: number;
   health?: AlertRuleAlertRuleHealth;
   lastError?: string;
@@ -1473,6 +1474,7 @@ export type RecordingRuleStatus = {
   additionalFields?: {
     [key: string]: any;
   };
+  /** duration of the last evaluation in seconds */
   evaluationDuration?: number;
   health?: RecordingRuleRecordingRuleHealth;
   lastError?: string;
