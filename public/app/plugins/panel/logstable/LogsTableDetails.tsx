@@ -18,9 +18,9 @@ import { LogLineDetailsHeader } from 'app/features/logs/components/panel/LogLine
 import { LogListContextProvider } from 'app/features/logs/components/panel/LogListContext';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { sortLogsToMatchTable } from './sortLogsToMatchTable';
 import { SETTING_KEY_ROOT } from './constants';
 import { type Options } from './options/types';
+import { sortLogsToMatchTable } from './sortLogsToMatchTable';
 import { isCoreApp, isIsLabelFilterActive } from './types';
 
 interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
