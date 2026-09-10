@@ -53,11 +53,10 @@ dropped `Router` while unifying the serving types — the interface was future-f
 (fire-and-forget goroutine + a `routerState` machine behind `Ready`/`Alive`), and `HandleFunc(w, r,
 next)` is the single serving handler. **There is no `http.Server` in this package.**
 
-The HTTP listener is owned by the enterprise `router` command (`pkg/extensions/router`, `cli.go`),
-which builds the `http.Server`, terminates listener TLS, does bounded graceful shutdown, and mounts
-`gr.HandleFunc` (plus `/livez`/`/readyz` backed by `Ready`/`Alive`). It serves on **its own port**,
-deliberately **outside** any kubernetes handler chain (no authn, authz, audit, or
-priority-and-fairness).
+The dskit `router` target runs through `Service` (`service.go`). It mounts `gr.HandleFunc` on the
+module server's instrumentation listener, alongside `/metrics`, `/livez`, and `/readyz`; readiness
+is reflected through the shared health notifier. The legacy enterprise `router` command still owns
+its separate listener and TLS configuration.
 
 `HandleFunc` is the one serving entry point: it covers `/apis` (by group) **and** `/openapi/v3`
 (there is no exported OpenAPI handler — `serveOpenAPIV3` is private, reached only through
@@ -288,15 +287,21 @@ writeup:
 
 ## Lifecycle / ownership
 
-The `GrafanaRouter` runs as its **own process**, the `grafana router` command. It is a pure reverse
-proxy: it sources RouteBackend/AppManifest from a **remote** apiserver over its own clients and does
-not live inside the appmanifest apiserver (an earlier experiment wired it there via the App/apiserver
-factory; that coupling was removed).
+`GrafanaRouter` can run as the dskit `router` target or through the legacy enterprise `grafana
+router` command. It also runs as a background service in the full Grafana server when the router
+middleware feature is enabled; the embedded API server invokes it after Grafana authentication and
+identity setup, with the regular Kubernetes API server handler as its fallback. The dskit target
+gets its edition-specific `RoutesLoader` from a Wire sub-injector. OSS uses the same full dependency
+graph as app-plugin API registration; enterprise receives the configured module storage/search and
+authlib clients explicitly.
 
-Wiring follows the standalone-apiserver factory pattern:
+Wiring keeps the standalone command factory separate from the dskit loader provider:
 
-- **OSS (`pkg/router`)** — `RouterFactory` interface + `NoOpRouterFactory` (`factory.go`).
-  `ProvideRouterFactory` returns the no-op, so the `router` command is hidden in OSS builds.
+- **OSS (`pkg/router`)** — `ProvideRoutesLoader` currently returns two dummy API groups so the
+  dskit router target can be exercised end to end. Its dependencies intentionally mirror
+  `appplugin.RegisterAPIService` except for `builder.APIRegistrar`, plus the authlib access client.
+  A later iteration will replace the dummy backends with manifests from installed plugins. The older
+  `RouterFactory` remains a no-op, so the legacy top-level command is still hidden in OSS builds.
 - **enterprise (`pkg/extensions/router`)** — the real factory (`cli.go`): a urfave `router` command
   whose flags drive runtime config. Its `run` builds one `rest.Config` for the whole apps group,
   a `k8s.ClientRegistry`, the enterprise `Loader`, two informers (RouteBackend + AppManifest,
@@ -304,6 +309,9 @@ Wiring follows the standalone-apiserver factory pattern:
   `http.Server` that serves `gr.HandleFunc`** — then runs informers, the reconcile loop, the
   listener, and graceful shutdown as `g.Go`s under a single errgroup. The listener config
   (addr/TLS/timeouts) is a factory concern, not part of `pkg/router`.
+- **dskit target binding** — OSS constructs the dummy loader from the bootstrap CLI/server
+  graph; enterprise wires its provider from the module's configured unified-storage and authlib
+  clients. Both use the generic `Service`.
 - **binding** — `server.InitializeRouterFactory()` (wire) returns the no-op in OSS
   (`wire_gen.go`) and the enterprise factory in enterprise/pro (`enterprise_wire_gen.go`);
   `cmd/grafana/main.go` appends the command when non-nil. Keep the wire source
