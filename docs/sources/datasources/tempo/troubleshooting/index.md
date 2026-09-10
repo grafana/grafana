@@ -32,6 +32,10 @@ This guide covers issues related to connecting Grafana to Tempo and using the da
 
 Where troubleshooting steps differ between these setups, the guide calls it out. Sections labeled _Grafana Cloud only_ or _self-managed Tempo_ apply only to those environments.
 
+{{< admonition type="note" >}}
+The error messages in this guide are representative examples. Recent versions of the Tempo data source return clearer, more descriptive messages that add context, such as the query time range or the specific reason a request failed, so the exact wording you see might differ from these examples. Match on the general error rather than the exact string.
+{{< /admonition >}}
+
 ### Resources for troubleshooting Tempo
 
 For issues with Tempo itself (not the data source), refer to the Tempo product documentation:
