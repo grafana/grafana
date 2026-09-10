@@ -163,6 +163,10 @@ type Cfg struct {
 	EnforceDomain     bool
 	MinTLSVersion     string
 
+	// FrontendDevServerURL is the origin of the frontend bundler's dev server. Empty unless
+	// Env is Dev. See readFrontendDevSettings.
+	FrontendDevServerURL string
+
 	// Security settings
 	SecretKey             string
 	EmailCodeValidMinutes int
@@ -196,6 +200,7 @@ type Cfg struct {
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
+	ProvisioningConnectionTypes               []string
 	ProvisioningLokiURL                       string
 	ProvisioningLokiUser                      string
 	ProvisioningLokiPassword                  string
@@ -330,6 +335,7 @@ type Cfg struct {
 	PanelSeriesLimit                 int
 	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
+	ReportRenderQueryGracePeriod     time.Duration
 
 	// Auth
 	LoginCookieName                   string
@@ -502,6 +508,7 @@ type Cfg struct {
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 	MeticulousAIRecordingToken          string
+	PluginImportTelemetryPackages       []string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -764,6 +771,10 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchEnforceSortCapability rejects a sort on a field that does not declare
+	// sorting. Off by default: violations are counted first, so they can be fixed
+	// before requests start failing.
+	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -1602,6 +1613,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	// After readSecuritySettings: the dev server origin depends on whether a CSP is enforced.
+	cfg.readFrontendDevSettings(iniFile)
+
 	if err := readSnapshotsSettings(cfg, iniFile); err != nil {
 		return err
 	}
@@ -1629,6 +1643,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
+	cfg.ReportRenderQueryGracePeriod = dashboards.Key("report_render_query_grace_period").MustDuration(3 * time.Second)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1676,6 +1691,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
+	cfg.PluginImportTelemetryPackages = util.SplitString(analytics.Key("plugin_import_telemetry_packages").MustString(""))
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1811,8 +1827,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
-	marketplace := iniFile.Section("marketplace")
-	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
+	pluginsMarketplace := iniFile.Section("plugins_marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(pluginsMarketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
@@ -2115,7 +2131,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	auth := iniFile.Section("auth")
 
-	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
@@ -2131,7 +2147,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Default to the translation key used in the frontend
 	cfg.OAuthLoginErrorMessage = valueAsString(auth, "oauth_login_error_message", "oauth.login.error")
 	readOAuthCookieMaxAge(iniFile, cfg)
-	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
+	readOAuthRefreshLockSettings(iniFile, cfg)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// Deprecated
@@ -2400,6 +2416,47 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	return nil
 }
 
+// readFrontendDevSettings resolves the frontend bundler's dev server origin. It stays empty
+// outside a development app_mode so a deployed Grafana can never be pointed at a bundler,
+// however the ini file is set up.
+func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
+	// Assigned up front so re-parsing an existing Cfg cannot leave a stale origin behind when
+	// one of the gates below now rejects it.
+	cfg.FrontendDevServerURL = ""
+
+	if cfg.Env != Dev {
+		return
+	}
+
+	// defaults.ini ships a server_url and a config file cannot take it back: the custom-config
+	// merge skips empty values, as does the env override. Only `cfg:frontend_dev.server_url=`
+	// blanks it, so the gates below are what keep it out of the way.
+	raw := valueAsString(iniFile.Section("frontend_dev"), "server_url", "")
+	if raw == "" {
+		return
+	}
+
+	// No `'self'` policy admits the dev server's own origin, so the browser would block every
+	// bundle. Warn rather than fail, because defaults.ini ships a server_url: refusing to start
+	// would strand anyone who enables a policy and never touched this setting.
+	if cfg.CSPEnabled {
+		cfg.Logger.Warn("Ignoring frontend_dev.server_url, a content security policy is enforced", "url", raw)
+		return
+	}
+
+	// The scheme is restricted because this value is rendered into index.html as the origin
+	// every bundle is loaded from; only the two the browser can fetch bundles over belong here.
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		cfg.Logger.Warn("Ignoring invalid frontend_dev.server_url", "url", raw, "error", err)
+		return
+	}
+
+	// Only the origin is ever used. Host excludes any userinfo, so credentials in the
+	// configured URL are dropped rather than rendered into the page.
+	cfg.FrontendDevServerURL = parsed.Scheme + "://" + parsed.Host
+}
+
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
 func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
 	if cfg.CDNRootURL == nil {
@@ -2539,6 +2596,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			}
 
 			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	connectionTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "connection_types", ""))
+	if connectionTypes != "|" && connectionTypes != "" {
+		cfg.ProvisioningConnectionTypes = strings.Split(connectionTypes, "|")
+		for i, s := range cfg.ProvisioningConnectionTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning connection type is empty in '%s' (at index %d)", connectionTypes, i)
+			}
+
+			cfg.ProvisioningConnectionTypes[i] = s
 		}
 	}
 

@@ -20,6 +20,7 @@ theme.light.generated.json
 theme.dark.generated.json
 packages/grafana-data/src/themes/schema.generated.json
 packages/grafana-data/src/datetime/easytz.js
+packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js
 
 # Generated Swagger API specs
 public/api-merged.json

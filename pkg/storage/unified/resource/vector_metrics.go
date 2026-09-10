@@ -10,6 +10,7 @@ import (
 
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
+	HybridSearchDuration         *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
 	EmbedTokensTotal             *prometheus.CounterVec
 	RerankDuration               *prometheus.HistogramVec
@@ -40,6 +41,14 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 		SearchDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_search_duration_seconds",
 			Help:                            "Time (in seconds) spent serving the VectorSearch RPC, labeled by group, resource, and gRPC status code.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"group", "resource", "status_code"}),
+		HybridSearchDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "vector_storage_hybrid_search_duration_seconds",
+			Help:                            "Time (in seconds) spent serving the HybridSearch RPC, labeled by group, resource, and gRPC status code.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,

@@ -199,7 +199,16 @@ describe('useCommonTableProps', () => {
       maxRowHeight: 100,
       disableKeyboardEvents: true,
       disableSanitizeHtml: false,
+      contentAwareWidthsEnabled: false,
+      tableRefreshEnabled: false,
     });
+  });
+
+  it('passes the table-refresh flag through', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current.tableRefreshEnabled).toBe(true);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

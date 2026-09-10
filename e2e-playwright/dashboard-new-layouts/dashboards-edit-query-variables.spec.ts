@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { flows, type Variable } from './utils';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -23,15 +23,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new query variable', async ({
-      gotoDashboardPage,
-      selectors,
-      page,
-      components,
-      controls,
-      sidebar,
-      panels,
-    }) => {
+    test('can add a new query variable', async ({ gotoDashboardPage, selectors, page, controls, sidebar, panels }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
       const variable: Variable & { label: string } = {
@@ -41,7 +33,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.query.openEditor();
 
@@ -80,7 +72,7 @@ test.describe(
       await expect(previewValues.nth(1)).toHaveText('Custom value two');
 
       // Click the "Apply" button
-      await sidebar.variableOptions.query.clickApplyButton();
+      await sidebar.variableOptions.query.applyChanges();
 
       // Verify that the variable has the static options
       await controls.variables.openDropdown(variable.label);
@@ -108,7 +100,7 @@ test.describe(
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
       // create a data source and a constant variables
 
-      await flows.addNewGenericVariable(page, sidebar, controls, {
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, {
         type: 'datasource',
         name: 'ds',
         label: '',
@@ -116,7 +108,7 @@ test.describe(
       });
       await sidebar.variableOptions.datasource.selectType('TestData');
 
-      await flows.addNewGenericVariable(
+      await flows.variables.addNewGenericVariable(
         page,
         sidebar,
         controls,
@@ -139,7 +131,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable, true);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable, true);
 
       await sidebar.variableOptions.query.openEditor();
 
@@ -155,7 +147,7 @@ test.describe(
       await expect(previewValues.nth(0)).toHaveText('A');
       await expect(previewValues.nth(1)).toHaveText('B');
 
-      await sidebar.variableOptions.query.clickApplyButton();
+      await sidebar.variableOptions.query.applyChanges();
 
       // Verify that the variable has the static options
       await controls.variables.openDropdown(variable.label);

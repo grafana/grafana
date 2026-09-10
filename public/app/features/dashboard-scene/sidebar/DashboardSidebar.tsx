@@ -160,7 +160,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.clearSelection();
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObject(action.movedObject, { force: true });
     }
 
@@ -182,7 +182,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObject(action.movedObject, { force: true });
     }
 
@@ -416,8 +416,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(target: SceneObject | undefined) {
-    const panel = getDefaultVizPanel();
+  public async addNewPanel(target: SceneObject | undefined) {
+    const panel = await getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
     if (target) {

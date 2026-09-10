@@ -148,6 +148,15 @@ You can sort the dashboards by:
 - Views total
 - Views 30 days (most and least)
 
+Grafana counts the data behind these sort options once a day, up to the end of the previous day.
+Because today's activity isn't included yet, these numbers can be lower than the view count in [dashboard insights](#dashboard-insights), which updates as activity happens.
+
+**Views total** and **Errors total** are aggregates.
+Grafana starts counting from the first time it aggregates data for a dashboard. That first pass looks back 30 days, so any activity older than that isn't included.
+
+For activity closer to the present, use **Views 30 days** or **Errors 30 days**, or open [dashboard insights](#dashboard-insights) on a specific dashboard to see today's views.
+To get same-day detail across all dashboards, [export logs of usage insights](ref:export-logs-of-usage-insights) and [visualize the exported logs](#visualize-usage-insights-data).
+
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-sort-9.5.png" max-width="650px" class="docs-image--no-shadow" alt="Open list of dashboard sort options" >}}
 
 ## Visualize usage insights data

@@ -48,7 +48,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	l := log.New("alertmanager-test")
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,
@@ -475,7 +475,7 @@ receivers:
 
 			firstHash := am.(*alertmanager).appliedHash
 			firstApplied := base.AppliedConfig()
-			for i := 0; i < 20; i++ {
+			for i := range 20 {
 				changed, err = moa.ApplyConfig(ctx, 1, toDBConfig(t, tc.initialConfig()))
 				require.NoError(t, err)
 				diff := cmp.Diff(firstApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -244,13 +245,14 @@ inhibit_rules:
 	require.NotNil(t, convertedDB)
 
 	// The round-trip is lossless except that deprecated mute_time_intervals are folded into
-	// time_intervals (mute first) by design, so build the expectation from the same fold.
-	folderIntervals := make([]config.TimeInterval, 0, len(originalDB.AlertmanagerConfig.MuteTimeIntervals)+len(originalDB.AlertmanagerConfig.TimeIntervals))
+	// time_intervals (sorted by name) by design, so build the expectation from the same fold.
 	for _, mt := range originalDB.AlertmanagerConfig.MuteTimeIntervals {
-		folderIntervals = append(folderIntervals, config.TimeInterval(mt))
+		originalDB.AlertmanagerConfig.TimeIntervals = append(originalDB.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt))
 	}
-	originalDB.AlertmanagerConfig.TimeIntervals = append(folderIntervals, originalDB.AlertmanagerConfig.TimeIntervals...)
 	originalDB.AlertmanagerConfig.MuteTimeIntervals = nil
+	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b config.TimeInterval) int {
+		return strings.Compare(a.Name, b.Name)
+	})
 
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {

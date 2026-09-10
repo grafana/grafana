@@ -13,17 +13,22 @@ import (
 )
 
 type JobMetrics struct {
-	registry       prometheus.Registerer
-	processedTotal *prometheus.CounterVec
-	durationHist   *prometheus.HistogramVec
+	registry           prometheus.Registerer
+	processedTotal     *prometheus.CounterVec
+	durationHist       *prometheus.HistogramVec // duration bucketed by resources changed
+	dryRunDurationHist *prometheus.HistogramVec // duration bucketed by resources dry-run (viewed)
 
 	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
-	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
-	inFlight         *prometheus.GaugeVec   // jobs currently being processed, by driver + action
-	busySeconds      *prometheus.CounterVec // job duration credited at completion, by driver + action
+	throughputHist *prometheus.HistogramVec // resource ops per second achieved by a job, by action + variance
+
+	resourceOpsTotal   *prometheus.CounterVec   // per-resource outcome counter
+	resourceOpDuration *prometheus.HistogramVec // per-resource operation duration
+	resourceOpBytes    *prometheus.HistogramVec // per-resource content size in bytes
+	inFlight           *prometheus.GaugeVec     // jobs currently being processed, by driver + action
+	busySeconds        *prometheus.CounterVec   // job duration credited at completion, by driver + action
 }
 
 // claimTrigger records what enqueued the work-queue key that a worker is now
@@ -53,9 +58,9 @@ type QueueMetrics struct {
 	claimRoundsCont *prometheus.CounterVec // lost to another worker — job already claimed, or all CAS retries exhausted
 }
 
-// durationBucketUnknown is the resources_changed_bucket used when a job did not
-// succeed: the resource count is partial and not meaningful, so failed durations are
-// grouped here instead of a misleading count bucket.
+// durationBucketUnknown is the resources_changed_bucket/resources_dryrun_bucket used
+// when a job did not succeed: the resource count is partial and not meaningful, so
+// failed durations are grouped here instead of a misleading count bucket.
 const durationBucketUnknown = "unknown"
 
 var (
@@ -178,12 +183,22 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		durationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_jobs_duration_seconds",
-				Help:    "Duration of job",
+				Help:    "Duration of job, bucketed by the number of resources changed",
 				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
 			},
 			[]string{"action", "resources_changed_bucket", "outcome"},
 		)
 		registry.MustRegister(durationHist)
+
+		dryRunDurationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_dryrun_duration_seconds",
+				Help:    "Duration of job, bucketed by the number of resources dry-run (viewed)",
+				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+			},
+			[]string{"action", "resources_dryrun_bucket", "outcome"},
+		)
+		registry.MustRegister(dryRunDurationHist)
 
 		incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -215,6 +230,25 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(syncDurationHist)
 
+		// Per-execution throughput: resources processed divided by the execution's
+		// wall-clock duration, observed once when the job finishes. Unlike
+		// rate(resource_operations_total), which is a fleet-wide rate over a scrape
+		// window, this captures the throughput of an individual run — so p50/p99 of
+		// this histogram answers "how fast is a single job going". The variance label
+		// breaks an action down further (full vs incremental for a pull job); it is
+		// empty for actions with no sub-type. The bucket range (0.1 -> 1000 ops/s)
+		// covers a slow large-resource run at the bottom and a fast, highly parallel
+		// run at the top.
+		throughputHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_throughput_ops_per_second",
+				Help:    "Resource operations per second achieved by a completed job (resources processed / job duration), by action and variance",
+				Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 12),
+			},
+			[]string{"action", "variance"},
+		)
+		registry.MustRegister(throughputHist)
+
 		resourceOpsTotal := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_resource_operations_total",
@@ -223,6 +257,28 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			[]string{"action", "operation", "outcome", "reason", "group", "kind"},
 		)
 		registry.MustRegister(resourceOpsTotal)
+
+		resourceOpDuration := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_resource_operation_duration_seconds",
+				Help:    "Duration of individual resource operations performed during provisioning job runs",
+				Buckets: []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0},
+			},
+			[]string{"action", "operation", "outcome", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpDuration)
+
+		resourceOpBytes := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name: "grafana_provisioning_jobs_resource_operation_bytes",
+				Help: "Size in bytes of individual resources written during provisioning job runs",
+				// 512B -> 32MB. Resources can be several MB today (large dashboards);
+				// the top buckets leave headroom past the ~20MB range as sizes grow.
+				Buckets: []float64{512, 2048, 8192, 32768, 131072, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432},
+			},
+			[]string{"action", "operation", "outcome", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpBytes)
 
 		inFlight := prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -246,10 +302,14 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			registry:                         registry,
 			processedTotal:                   processedTotal,
 			durationHist:                     durationHist,
+			dryRunDurationHist:               dryRunDurationHist,
 			incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
+			throughputHist:                   throughputHist,
 			resourceOpsTotal:                 resourceOpsTotal,
+			resourceOpDuration:               resourceOpDuration,
+			resourceOpBytes:                  resourceOpBytes,
 			inFlight:                         inFlight,
 			busySeconds:                      busySeconds,
 		}
@@ -284,18 +344,40 @@ func (m *JobMetrics) RecordBusySeconds(driverID, action string, seconds float64)
 	m.busySeconds.WithLabelValues(driverID, action).Add(seconds)
 }
 
-func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, duration float64) {
+func (m *JobMetrics) RecordJob(jobAction string, variance string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
 	// Record duration for every outcome so slow-but-failing jobs are visible (a job
 	// that runs to the timeout then errors is exactly what we want to catch). Only a
 	// failed job's resource count is unreliable (partial work), so bucket errors under
 	// a sentinel; success and warning keep their size bucket.
-	bucket := utils.GetResourceCountBucket(resourceCountChanged)
+	changedBucket := utils.GetResourceCountBucket(resourceCountChanged)
+	dryRunBucket := utils.GetResourceCountBucket(resourceCountDryRun)
 	if outcome == utils.ErrorOutcome {
-		bucket = durationBucketUnknown
+		changedBucket = durationBucketUnknown
+		dryRunBucket = durationBucketUnknown
 	}
-	m.durationHist.WithLabelValues(jobAction, bucket, outcome).Observe(duration)
+
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		m.dryRunDurationHist.WithLabelValues(jobAction, dryRunBucket, outcome).Observe(duration)
+	} else {
+		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
+	}
+
+	// Per-execution throughput: ops/second. A failed job's resource count is partial
+	// (see the bucket note above), so its ops/s would be misleading — record only jobs
+	// that ran to a success/warning state. Pull-request jobs measure work by resources
+	// dry-run rather than changed, matching the duration histogram's numerator. Skip
+	// the degenerate cases too: a non-positive duration would divide to +Inf, and a run
+	// that did no work is not a throughput sample worth keeping (it would pile up in the
+	// lowest bucket and drag the percentiles down).
+	ops := resourceCountChanged
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		ops = resourceCountDryRun
+	}
+	if m.throughputHist != nil && outcome != utils.ErrorOutcome && ops > 0 && duration > 0 {
+		m.throughputHist.WithLabelValues(jobAction, variance).Observe(float64(ops) / duration)
+	}
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {
@@ -311,8 +393,10 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 }
 
 // RecordResourceOperation derives outcome, operation, and reason from the
-// result and increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
+// result and increments the resource operations counter. dur is the time the
+// operation took, measured by the progress recorder from result construction to
+// this call; it is observed in the duration histogram for real operations.
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult, dur time.Duration) {
 	var outcome ResourceOutcome
 	reason := result.Reason()
 
@@ -326,7 +410,26 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 		outcome = OutcomeSuccess
 	}
 
-	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+	operation := fileActionToOperation(result.Action())
+	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, result.Group(), result.Kind()).Inc()
+
+	// Ignored operations are no-ops (nothing was written), and an empty operation
+	// means the result carried no file action at all (e.g. a quota pre-check or a
+	// client-resolution failure), so neither did real work worth timing. Keep both
+	// out of the duration histogram.
+	realOp := operation != OperationIgnored && operation != ""
+	if m.resourceOpDuration != nil && dur > 0 && realOp {
+		m.resourceOpDuration.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(dur.Seconds())
+	}
+
+	// Resource size is only known for operations that read or write the file
+	// content (creates, updates, renames, and file-based deletes stamp it via
+	// WithBytes). Operations without a file body — folders, no-ops, and deletes
+	// that only had the cluster object to go on — report 0 and are excluded
+	// rather than recorded as a 0-byte resource.
+	if m.resourceOpBytes != nil && result.Bytes() > 0 && realOp {
+		m.resourceOpBytes.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(float64(result.Bytes()))
+	}
 }
 
 func fileActionToOperation(action repository.FileAction) ResourceOperation {

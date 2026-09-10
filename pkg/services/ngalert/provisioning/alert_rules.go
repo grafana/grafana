@@ -302,13 +302,10 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	if err != nil {
 		return nil, nil, "", err
 	}
+	managerPropsMap = make(map[string]utils.ManagerProperties)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
-		uids := make([]string, 0, len(rules))
-		for _, r := range rules {
-			uids = append(uids, r.UID)
-		}
-		managerPropsMap, err = service.provenanceStore.GetManagerPropertiesByUIDs(ctx, user.GetOrgID(), resourceType, uids)
+		managerPropsMap, err = service.provenanceStore.GetAllManagerProperties(ctx, user.GetOrgID(), resourceType)
 		if err != nil {
 			return nil, nil, "", err
 		}
@@ -328,11 +325,7 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 	managerPropsMap := make(map[string]utils.ManagerProperties)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
-		uids := make([]string, 0, len(rules))
-		for _, r := range rules {
-			uids = append(uids, r.UID)
-		}
-		managerPropsMap, err = service.provenanceStore.GetManagerPropertiesByUIDs(ctx, user.GetOrgID(), resourceType, uids)
+		managerPropsMap, err = service.provenanceStore.GetAllManagerProperties(ctx, user.GetOrgID(), resourceType)
 		if err != nil {
 			return nil, nil, err
 		}

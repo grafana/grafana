@@ -109,7 +109,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return s.authenticateAsService(*accessTokenClaims, jwtToken)
 }
 
-func (s *ExtendedJWT) IsEnabled() bool {
+func (s *ExtendedJWT) IsEnabled(context.Context) bool {
 	return s.cfg.ExtJWTAuth.Enabled
 }
 

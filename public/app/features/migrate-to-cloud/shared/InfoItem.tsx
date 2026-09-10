@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { Stack, Text, TextLink } from '@grafana/ui';
+import { Card, Text, TextLink } from '@grafana/ui';
 
 interface Props {
   children: NonNullable<ReactNode>;
@@ -11,16 +11,22 @@ interface Props {
 
 export const InfoItem = ({ children, title, linkHref, linkTitle }: Props) => {
   return (
-    <Stack gap={2} direction="column">
-      <Text element="h2" variant="h4">
-        {title}
-      </Text>
-      <Text color="secondary">{children}</Text>
+    <Card noMargin>
+      <Card.Heading>
+        <Text element="h2" variant="h4">
+          {title}
+        </Text>
+      </Card.Heading>
+      <Card.Description>
+        <Text color="secondary">{children}</Text>
+      </Card.Description>
       {linkHref && (
-        <TextLink href={linkHref} external>
-          {linkTitle ?? linkHref}
-        </TextLink>
+        <Card.Actions>
+          <TextLink href={linkHref} external>
+            {linkTitle ?? linkHref}
+          </TextLink>
+        </Card.Actions>
       )}
-    </Stack>
+    </Card>
   );
 };

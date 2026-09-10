@@ -119,16 +119,14 @@ func TestConnection(t *testing.T) {
 			mu    sync.Mutex
 			conns = map[*natsclient.Conn]struct{}{}
 		)
-		for i := 0; i < 50; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range 50 {
+			wg.Go(func() {
 				nc, err := c.get(context.Background())
 				require.NoError(t, err)
 				mu.Lock()
 				conns[nc] = struct{}{}
 				mu.Unlock()
-			}()
+			})
 		}
 		wg.Wait()
 
@@ -178,6 +176,31 @@ func TestConnection(t *testing.T) {
 			require.NotPanics(t, c.close)
 			require.ErrorIs(t, c.healthy(), ErrClosed)
 		})
+	})
+
+	t.Run("redactURL", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			raw  string
+			want string
+		}{
+			{"empty", "", ""},
+			{"no userinfo", "nats://us-nats.us-nats.svc.cluster.local:4222", "nats://us-nats.us-nats.svc.cluster.local:4222"},
+			{"user and password", "nats://user:s3cret@host:4222", "nats://host:4222"},
+			{"token only", "nats://s3cret@host:4222", "nats://host:4222"},
+			{"unparseable", "nats://host:4222/\x7f", "<invalid url>"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				got := redactURL(tc.raw)
+				require.Equal(t, tc.want, got)
+				require.NotContains(t, got, "s3cret")
+			})
+		}
+	})
+
+	t.Run("redactURLs joins every url with credentials stripped", func(t *testing.T) {
+		got := redactURLs([]string{"nats://user:s3cret@a:4222", "nats://b:4222"})
+		require.Equal(t, "nats://a:4222,nats://b:4222", got)
 	})
 
 	t.Run("connectOptions", func(t *testing.T) {

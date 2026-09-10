@@ -15,9 +15,10 @@ import {
 } from '@grafana/scenes';
 import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 
+import { addVariable } from '../../actions/variable/addVariable';
+import { changeVariableType } from '../../actions/variable/changeVariableType';
 import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { getDashboardSceneLike, type DashboardSceneLike } from '../../scene/types/dashboard';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { type DashboardSidebarPane } from '../../sidebar/types';
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -52,7 +53,7 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
 
 function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
   const onAddVariable = useCallback(
-    (type: EditableVariableType) => {
+    async (type: EditableVariableType) => {
       const dashboard = getDashboardSceneLike(model);
       const sectionOwner = model.state.sectionOwner.resolve();
       const existing = sectionOwner.state.$variables;
@@ -63,9 +64,11 @@ function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>
       }
 
       const sectionVars = variablesSet.state.variables ?? [];
-      const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), sectionVars) });
+      const newVar = await getVariableScene(type, {
+        name: getNextAvailableId(getVariableNamePrefix(type), sectionVars),
+      });
 
-      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+      addVariable({ source: variablesSet, addedObject: newVar });
 
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
@@ -112,7 +115,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
   const variable = model.state.variableRef.resolve();
 
   const onChangeVariableType = useCallback(
-    (type: EditableVariableType) => {
+    async (type: EditableVariableType) => {
       const variableSet = variable.parent;
       const dashboard = getDashboardSceneLike(variable);
 
@@ -125,13 +128,13 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
         return;
       }
 
-      const newVariable = getVariableScene(type, {
+      const newVariable = await getVariableScene(type, {
         name: variable.state.name,
         label: variable.state.label,
         key: variable.state.key,
       });
 
-      dashboardEditActions.changeVariableType({
+      changeVariableType({
         source: variableSet,
         oldVariable: variable,
         newVariable,
@@ -162,6 +165,7 @@ function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: Editab
         {options.map((option) => (
           <Card
             noMargin
+            className={styles.card}
             isCompact
             onClick={() => onSelectType(option.value!)}
             key={option.value}
@@ -179,6 +183,13 @@ function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: Editab
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    card: css({
+      background: theme.colors.background.secondary,
+
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
+    }),
     cardDescription: css({
       fontSize: theme.typography.bodySmall.fontSize,
       marginTop: theme.spacing(0),

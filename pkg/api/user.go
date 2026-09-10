@@ -88,15 +88,15 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsExternal = true
 		for _, authModule := range userProfile.AuthModules {
 			userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authModule))
-			userProfile.IsExternallySynced = userProfile.IsExternallySynced || hs.isExternallySynced(hs.Cfg, authModule)
-			userProfile.IsGrafanaAdminExternallySynced = userProfile.IsGrafanaAdminExternallySynced || hs.isGrafanaAdminExternallySynced(hs.Cfg, authModule)
+			userProfile.IsExternallySynced = userProfile.IsExternallySynced || hs.isExternallySynced(c.Req.Context(), hs.Cfg, authModule)
+			userProfile.IsGrafanaAdminExternallySynced = userProfile.IsGrafanaAdminExternallySynced || hs.isGrafanaAdminExternallySynced(c.Req.Context(), hs.Cfg, authModule)
 		}
 	} else if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil {
 		// Legacy fallback: extract auth info from the user_auth table.
 		userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authInfo.AuthModule))
 		userProfile.IsExternal = true
-		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule)
-		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule)
+		userProfile.IsExternallySynced = hs.isExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule)
+		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule)
 	}
 
 	userProfile.AccessControl = getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))

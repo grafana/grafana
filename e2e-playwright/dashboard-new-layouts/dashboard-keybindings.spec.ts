@@ -35,7 +35,7 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
   });
 
-  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, components, panels }) => {
+  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, panels }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
     const panel1 = panels.getPanel('Panel #1');
     await expect(panel1).toBeVisible();

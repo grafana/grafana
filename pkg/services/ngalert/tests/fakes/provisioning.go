@@ -9,16 +9,16 @@ import (
 )
 
 type FakeProvisioningStore struct {
-	Calls                          []Call
-	Records                        map[int64]map[string]models.Provenance
-	GetProvenanceFunc              func(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
-	GetProvenancesFunc             func(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error)
-	GetProvenancesByUIDsFunc       func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error)
-	SetProvenanceFunc              func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
-	DeleteProvenanceFunc           func(ctx context.Context, o models.Provisionable, org int64) error
-	GetManagerPropertiesFunc       func(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
-	GetManagerPropertiesByUIDsFunc func(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
-	SetManagerPropertiesFunc       func(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
+	Calls                       []Call
+	Records                     map[int64]map[string]models.Provenance
+	GetProvenanceFunc           func(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
+	GetProvenancesFunc          func(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error)
+	GetProvenancesByUIDsFunc    func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error)
+	SetProvenanceFunc           func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenanceFunc        func(ctx context.Context, o models.Provisionable, org int64) error
+	GetManagerPropertiesFunc    func(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
+	GetAllManagerPropertiesFunc func(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
+	SetManagerPropertiesFunc    func(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 func NewFakeProvisioningStore() *FakeProvisioningStore {
@@ -113,17 +113,16 @@ func (f *FakeProvisioningStore) GetManagerProperties(ctx context.Context, o mode
 	return utils.ManagerProperties{}, nil
 }
 
-func (f *FakeProvisioningStore) GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error) {
-	f.Calls = append(f.Calls, Call{MethodName: "GetManagerPropertiesByUIDs", Arguments: []any{ctx, org, resourceType, uids}})
-	if f.GetManagerPropertiesByUIDsFunc != nil {
-		return f.GetManagerPropertiesByUIDsFunc(ctx, org, resourceType, uids)
+func (f *FakeProvisioningStore) GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+	f.Calls = append(f.Calls, Call{MethodName: "GetAllManagerProperties", Arguments: []any{ctx, org, resourceType}})
+	if f.GetAllManagerPropertiesFunc != nil {
+		return f.GetAllManagerPropertiesFunc(ctx, org, resourceType)
 	}
 	result := make(map[string]utils.ManagerProperties)
-	if val, ok := f.Records[org]; ok {
-		for _, uid := range uids {
-			key := uid + resourceType
-			if prov, ok := val[key]; ok {
-				result[uid] = models.ProvenanceToManagerProperties(prov)
+	if provenances, ok := f.Records[org]; ok {
+		for key, prov := range provenances {
+			if strings.HasSuffix(key, resourceType) {
+				result[strings.TrimSuffix(key, resourceType)] = models.ProvenanceToManagerProperties(prov)
 			}
 		}
 	}

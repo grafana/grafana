@@ -1,4 +1,4 @@
-import { Observable, of, lastValueFrom, throwError } from 'rxjs';
+import { Observable, Subject, of, lastValueFrom, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
@@ -86,6 +86,18 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
     expectRequestCallChain,
   };
 };
+
+const createUnauthorizedResponse = () =>
+  ({
+    ok: false,
+    status: 401,
+    statusText: 'Unauthorized',
+    headers: new Map(),
+    text: jest.fn().mockResolvedValue(JSON.stringify({ message: 'Unauthorized' })),
+    redirected: false,
+    type: 'basic',
+    url: 'http://localhost:3000/api/some-mock',
+  }) as unknown as Response;
 
 jest.mock('app/core/utils/auth', () => ({
   ...jest.requireActual('app/core/utils/auth'),
@@ -307,6 +319,71 @@ describe('backendSrv', () => {
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['Forbidden', '']);
           });
+      });
+    });
+
+    describe('when concurrent requests require a login check', () => {
+      it('performs a single login ping', async () => {
+        const { backendSrv, fromFetchMock } = getTestContext({ authenticatedBy: 'jwt' });
+        const loginPingResponse = new Subject<Response>();
+        const unauthorizedError = {
+          status: 401,
+          statusText: 'Unauthorized',
+          data: { message: 'Unauthorized' },
+        };
+
+        fromFetchMock.mockImplementation((input) => {
+          if (String(input).includes('/api/login/ping')) {
+            return loginPingResponse;
+          }
+          return throwError(() => unauthorizedError);
+        });
+
+        const requests = Array.from({ length: 10 }, (_, index) =>
+          backendSrv.request({ url: `/api/dashboards/${index}`, method: 'GET', retry: 0 })
+        );
+
+        loginPingResponse.error(unauthorizedError);
+        await Promise.allSettled(requests);
+
+        const loginPingRequests = fromFetchMock.mock.calls.filter(([input]) =>
+          String(input).includes('/api/login/ping')
+        );
+        expect(loginPingRequests).toHaveLength(1);
+      });
+
+      it('does not check the session for a request that fails after logout', async () => {
+        const { backendSrv, contextSrvMock, fromFetchMock, logoutMock } = getTestContext({ authenticatedBy: 'jwt' });
+        const firstResponse = new Subject<Response>();
+        const secondResponse = new Subject<Response>();
+        const unauthorizedResponse = createUnauthorizedResponse();
+
+        logoutMock.mockImplementation(() => {
+          contextSrvMock.user.isSignedIn = false;
+        });
+        fromFetchMock.mockImplementation((input) => {
+          const url = String(input);
+          if (url.includes('/api/login/ping')) {
+            return of(unauthorizedResponse);
+          }
+          return url.includes('/api/dashboards/first') ? firstResponse : secondResponse;
+        });
+
+        const firstRequest = backendSrv.request({ url: '/api/dashboards/first', method: 'GET', retry: 0 });
+        const secondRequest = backendSrv.request({ url: '/api/dashboards/second', method: 'GET', retry: 0 });
+
+        firstResponse.next(unauthorizedResponse);
+        firstResponse.complete();
+        await Promise.allSettled([firstRequest]);
+
+        secondResponse.next(unauthorizedResponse);
+        secondResponse.complete();
+        await Promise.allSettled([secondRequest]);
+
+        const loginPingRequests = fromFetchMock.mock.calls.filter(([input]) =>
+          String(input).includes('/api/login/ping')
+        );
+        expect(loginPingRequests).toHaveLength(1);
       });
     });
 

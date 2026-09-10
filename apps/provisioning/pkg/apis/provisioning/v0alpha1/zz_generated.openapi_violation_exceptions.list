@@ -19,6 +19,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositorySpec,Workflows
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryView,Workflows
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AllowedTargets
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableConnectionTypes
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableRepositoryTypes
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableResources
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,Items
@@ -27,8 +28,10 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,WebhookStatus,SubscribedEvents
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHub
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHubEnterprise
+API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHubEnterpriseOAuth
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,OAuth
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseConnectionConfig,ServerURL
+API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseOAuthConnectionConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseRepositoryConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobSpec,PullRequest
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,JobStatus,URLs

@@ -54,7 +54,7 @@ export class Panels extends PageObject {
   }
 
   /** Returns all rendered panel bodies below the header */
-  getBodies() {
+  getBodies(): Locator {
     return this.getByGrafanaSelector(this.selectors.components.Panels.Panel.content);
   }
 

@@ -580,6 +580,9 @@ type ExtraConfiguration struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// ManagedBy is "manual" or "auto-sync", computed server-side so callers don't need configs:get
+	// to tell the two apart.
+	ManagedBy string `yaml:"managed_by" json:"managed_by"`
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {

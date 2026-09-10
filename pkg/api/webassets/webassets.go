@@ -7,18 +7,49 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
+
+// Not cfg.Logger: callers construct Cfg as a struct literal in tests, leaving it nil.
+var logger = log.New("webassets")
+
+const (
+	// BuildDir is served at the public/build URL prefix; both bundlers write inside it.
+	BuildDir       = "build"
+	RspackBuildDir = BuildDir + "/rspack"
+
+	AssetsManifestFile = "assets-manifest.json"
+)
+
+// PublicPathFor returns the URL prefix assets in buildDir are referenced by. It must
+// match the bundler's output.publicPath.
+func PublicPathFor(buildDir string) string {
+	return path.Join("public", buildDir) + "/"
+}
+
+// ResolveBuildDir returns the directory holding the manifest and boot script to read.
+// Call it per request; resolving at startup pins the rollout to process lifetime.
+func ResolveBuildDir(ctx context.Context) string {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
+		return RspackBuildDir
+	}
+	return BuildDir
+}
 
 type ManifestInfo struct {
 	FilePath  string `json:"src,omitempty"`
@@ -54,22 +85,25 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 	if cfg.Env != setting.Dev && ret != nil {
 		return ret, nil
 	}
+	// Deliberately fetched before taking the lock below: the dev server parks requests while it
+	// compiles, and that lock is global, so holding it across the call would serialize every
+	// concurrent render behind one rebuild.
+	result := readDevServerAssets(ctx, buildDir, cfg)
+
 	entryPointAssetsCacheMu.Lock()
 	defer entryPointAssetsCacheMu.Unlock()
 
 	var err error
-	var result *dtos.EntryPointAssets
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
-	if cdn != "" {
-		result, err = readWebAssetsFromCDN(ctx, buildDir, cdn)
+	if result == nil && cdn != "" {
+		result, err = ReadWebAssetsFromCDN(ctx, buildDir, cdn)
 	}
 
-	assetsFilename := "assets-manifest.json"
-
 	if result == nil {
-		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, assetsFilename))
+		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, AssetsManifestFile))
 		if err == nil {
+			result.PublicPath = PublicPathFor(buildDir)
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
 				result.SetContentDeliveryURL(cdn)
@@ -88,6 +122,37 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 	return entryPointAssetsCache[buildDir], err
 }
 
+// devServerManifestTimeout bounds the manifest fetch. The dev server holds a request open for
+// the whole of an in-flight rebuild, so this is generous enough to ride one out but still
+// returns rather than hanging the render on a listener that never answers.
+const devServerManifestTimeout = 10 * time.Second
+
+// readDevServerAssets reads the manifest from a running bundler dev server, which stands in for
+// the CDN: the browser then fetches bundles straight from it, which is what lets it hot-replace
+// modules, and the dev server never has to write a build to disk. Returns nil when there is no
+// dev server to read from, leaving the caller to use the build on disk. Only the rspack build
+// has a dev server; `yarn start` compiles to disk.
+func readDevServerAssets(ctx context.Context, buildDir string, cfg *setting.Cfg) *dtos.EntryPointAssets {
+	if cfg.Env != setting.Dev || cfg.FrontendDevServerURL == "" || buildDir != RspackBuildDir {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, devServerManifestTimeout)
+	defer cancel()
+
+	result, err := ReadWebAssetsFromCDN(ctx, buildDir, cfg.FrontendDevServerURL+"/")
+	if err != nil {
+		// Expected whenever the dev server is not running. Logged because a typo'd port, a 404
+		// or a half-written manifest are otherwise indistinguishable from that, and all of them
+		// surface only as a silently stale page.
+		logger.Debug("Could not read the frontend manifest from the dev server, using the build on disk",
+			"url", cfg.FrontendDevServerURL, "error", err)
+		return nil
+	}
+
+	return result
+}
+
 func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
 	//nolint:gosec
 	f, err := os.Open(manifestpath)
@@ -100,8 +165,8 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 	return readWebAssets(f)
 }
 
-func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/"+buildDir+"/assets-manifest.json", nil)
+func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+path.Join("public", buildDir, AssetsManifestFile), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +177,13 @@ func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	dto, err := readWebAssets(response.Body)
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d fetching assets-manifest.json from %s", response.StatusCode, baseURL)
+	}
+	const maxManifestSize = 10 * 1024 * 1024
+	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
+		dto.PublicPath = PublicPathFor(buildDir)
 		dto.SetContentDeliveryURL(baseURL)
 	}
 	return dto, err

@@ -50,6 +50,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		webhookURL    string
 		expectedHook  *provisioning.WebhookStatus
 		expectedError error
+		expectedErrIs error
 	}{
 		{
 			name: "successfully create webhook",
@@ -108,6 +109,24 @@ func TestWebhookOnCreate(t *testing.T) {
 			expectedError: fmt.Errorf("failed to create webhook"),
 		},
 		{
+			name: "repo not found remaps to permission denied",
+			setupMock: func(m *repository.MockWebhookClient) {
+				m.EXPECT().CreateWebhook(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, repository.ErrFileNotFound)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedErrIs: repository.ErrPermissionDenied,
+		},
+		{
 			name:      "no webhook when repository has no workflows",
 			setupMock: func(_ *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{
@@ -149,7 +168,10 @@ func TestWebhookOnCreate(t *testing.T) {
 
 			hookOps, err := webhookOnCreate(t.Context(), repo)
 
-			if tt.expectedError != nil {
+			if tt.expectedErrIs != nil {
+				require.ErrorIs(t, err, tt.expectedErrIs)
+				require.Nil(t, hookOps)
+			} else if tt.expectedError != nil {
 				require.Error(t, err)
 				require.Equal(t, tt.expectedError.Error(), err.Error())
 				require.Nil(t, hookOps)
@@ -174,6 +196,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		expectedHook    *provisioning.WebhookStatus
 		expectedCleanup bool
 		expectedError   error
+		expectedErrIs   error
 	}{
 		{
 			name: "successfully update webhook when webhook exists",
@@ -309,6 +332,37 @@ func TestWebhookOnUpdate(t *testing.T) {
 			webhookURL:    "https://example.com/webhook-updated",
 			expectedHook:  nil,
 			expectedError: fmt.Errorf("edit webhook: failed to edit webhook"),
+		},
+		{
+			name: "repo not found on edit remaps to permission denied",
+			setupMock: func(m *repository.MockWebhookClient) {
+				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
+					Return(&fakeWebhookConfig{
+						id:     "123",
+						url:    "https://example.com/webhook",
+						events: []string{"push"},
+					}, nil)
+
+				m.EXPECT().EditWebhook(mock.Anything, mock.Anything).
+					Return(repository.ErrFileNotFound)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook-updated",
+			expectedHook:  nil,
+			expectedErrIs: repository.ErrPermissionDenied,
 		},
 		{
 			name: "create webhook when webhook status is nil",
@@ -587,7 +641,10 @@ func TestWebhookOnUpdate(t *testing.T) {
 
 			hookOps, err := webhookOnUpdate(t.Context(), repo)
 
-			if tt.expectedError != nil {
+			if tt.expectedErrIs != nil {
+				require.ErrorIs(t, err, tt.expectedErrIs)
+				require.Nil(t, hookOps)
+			} else if tt.expectedError != nil {
 				require.Error(t, err)
 				require.Equal(t, tt.expectedError.Error(), err.Error())
 				require.Nil(t, hookOps)

@@ -159,11 +159,11 @@ func validateRole(obj *iamv0alpha1.User) error {
 func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, email string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
-			Key:      "fields.email",
+			Key:      fieldEmail,
 			Operator: string(selection.Equals),
 			Values:   []string{email},
 		},
-	}, []string{"fields.email", "fields.login"})
+	}, []string{fieldEmail, fieldLogin})
 
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
@@ -190,11 +190,11 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, login string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
-			Key:      "fields.login",
+			Key:      fieldLogin,
 			Operator: string(selection.Equals),
 			Values:   []string{login},
 		},
-	}, []string{"fields.email", "fields.login"})
+	}, []string{fieldEmail, fieldLogin})
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err

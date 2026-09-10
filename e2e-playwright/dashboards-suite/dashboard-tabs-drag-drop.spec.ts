@@ -1,6 +1,6 @@
 import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
 
-import { importTestDashboard } from '../dashboard-new-layouts/utils';
+import { flows } from '../dashboard-new-layouts/helpers';
 import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
 
 test.use({
@@ -24,10 +24,16 @@ async function getTabWithBoundingBox(page: DashboardPage, selectors: E2ESelector
 
 test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
   test('drag a tab within the same tabs manager', async ({ dashboardPage, selectors, page }) => {
-    await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
-      checkPanelsVisible: false,
-      requiresDataSourceSelection: false,
-    });
+    await flows.dashboards.importTestDashboard(
+      page,
+      selectors,
+      'Drag tab within manager',
+      JSON.stringify(v2DashboardWithTabs),
+      {
+        checkPanelsVisible: false,
+        requiresDataSourceSelection: false,
+      }
+    );
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
     const tabABefore = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
@@ -52,10 +58,16 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
   });
 
   test('drag a tab to a different tabs manager (in a different row)', async ({ dashboardPage, selectors, page }) => {
-    await importTestDashboard(page, selectors, 'Drag tab to a different manager', JSON.stringify(v2DashboardWithTabs), {
-      checkPanelsVisible: false,
-      requiresDataSourceSelection: false,
-    });
+    await flows.dashboards.importTestDashboard(
+      page,
+      selectors,
+      'Drag tab to a different manager',
+      JSON.stringify(v2DashboardWithTabs),
+      {
+        checkPanelsVisible: false,
+        requiresDataSourceSelection: false,
+      }
+    );
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
     const drag = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');

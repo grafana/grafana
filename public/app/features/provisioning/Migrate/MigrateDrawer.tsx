@@ -1,8 +1,22 @@
+import { css } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Card, Checkbox, ConfirmModal, Drawer, Field, Input, Select, Stack, Text } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  ConfirmModal,
+  Drawer,
+  Field,
+  Input,
+  Select,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
@@ -68,6 +82,7 @@ interface MigrateDrawerProps {
  * dashboards.
  */
 export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resources, selection }: MigrateDrawerProps) {
+  const styles = useStyles2(getStyles);
   const isSelective = selective;
   // In selective mode there must be at least one dashboard ref to send.
   // Otherwise `startJob(true, { resources: [] })` collapses to migrate-everything
@@ -315,7 +330,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           <Field noMargin label={t('provisioning.migrate.workflow-label', 'How should changes be applied?')}>
             <Stack direction="column" gap={1}>
               {supportsWrite && (
-                <Card noMargin isSelected={workflow === 'write'} onClick={selectWriteWorkflow}>
+                <Card className={styles.card} noMargin isSelected={workflow === 'write'} onClick={selectWriteWorkflow}>
                   <Card.Heading>
                     <Trans i18nKey="provisioning.migrate.workflow-write-title">Commit to the configured branch</Trans>
                   </Card.Heading>
@@ -327,7 +342,12 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                 </Card>
               )}
               {supportsBranch && (
-                <Card noMargin isSelected={workflow === 'branch'} onClick={selectBranchWorkflow}>
+                <Card
+                  className={styles.card}
+                  noMargin
+                  isSelected={workflow === 'branch'}
+                  onClick={selectBranchWorkflow}
+                >
                   <Card.Heading>
                     <Trans i18nKey="provisioning.migrate.workflow-branch-title">Open a pull request</Trans>
                   </Card.Heading>
@@ -516,3 +536,13 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     </Drawer>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    background: theme.colors.background.secondary,
+
+    '&:hover': {
+      background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+    },
+  }),
+});

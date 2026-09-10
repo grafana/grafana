@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -115,12 +116,13 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
-	resourceStats   []ResourceStats
-	lastImportTimes []ResourceLastImportTime
-	statsCalls      atomic.Int32
-	listStoredCalls atomic.Int32
-	listStoredErr   error
-	lastCountLimit  atomic.Int64
+	resourceStats       []ResourceStats
+	lastImportTimes     []ResourceLastImportTime
+	statsCalls          atomic.Int32
+	listStoredCalls     atomic.Int32
+	listStoredErr       error
+	lastCountLimit      atomic.Int64
+	lastImportTimeCalls atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -195,19 +197,23 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		for _, ti := range m.lastImportTimes {
-			if !yield(ti, nil) {
-				return
-			}
+func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	m.lastImportTimeCalls.Add(1)
+	for _, importTime := range m.lastImportTimes {
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
 		}
 	}
+	return time.Time{}, nil
 }
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
+
+	// Recorded on every index this backend builds, standing in for the decision the
+	// real backend makes from its options at creation.
+	keepsDeletedDocuments bool
 
 	mu                sync.Mutex
 	buildIndexCalls   []buildIndexCall
@@ -221,6 +227,8 @@ type mockSearchBackend struct {
 func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
 	return m.snapshotThreshold
 }
+
+func (m *mockSearchBackend) RemoveExpiredTrash(context.Context) {}
 
 type buildIndexCall struct {
 	key  NamespacedResource
@@ -273,7 +281,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
-	index := &MockResourceIndex{}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
 	m.mu.Unlock()
@@ -465,13 +473,11 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 
 	const concurrency = 100
 	wg := sync.WaitGroup{}
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range concurrency {
+		wg.Go(func() {
 			<-start
 			_, _ = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
-		}()
+		})
 	}
 
 	// Wait a bit for goroutines to start (hopefully)
@@ -484,6 +490,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
 	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
 	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
+	require.Equal(t, int32(1), storage.lastImportTimeCalls.Load())
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -672,6 +679,50 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 			require.Contains(t, CurrentIndexFeatures(), required)
 		}
 	}
+}
+
+// One index keeping deleted documents must not change what every other index
+// records.
+func TestIndexFeaturesForNewIndexLeavesCurrentAlone(t *testing.T) {
+	before := slices.Clone(currentIndexFeatures)
+
+	require.Contains(t, IndexFeaturesForNewIndex(true), IndexFeatureHoldsDeletedDocuments)
+	require.NotContains(t, IndexFeaturesForNewIndex(false), IndexFeatureHoldsDeletedDocuments)
+
+	require.Equal(t, before, currentIndexFeatures)
+	require.NotContains(t, CurrentIndexFeatures(), IndexFeatureHoldsDeletedDocuments)
+}
+
+// Anything this binary builds with, it must also know how to read, or it would
+// refuse its own indexes.
+func TestKnownIndexFeaturesCoverCurrent(t *testing.T) {
+	for _, current := range CurrentIndexFeatures() {
+		require.Contains(t, knownIndexFeatures, current)
+	}
+}
+
+// Declaring a requirement this binary cannot read would reject every index it
+// builds.
+func TestReaderRequiredFeaturesAreKnown(t *testing.T) {
+	for _, keeps := range []bool{true, false} {
+		require.Empty(t, UnknownIndexRequirements(IndexReaderRequirements(keeps)))
+	}
+}
+
+// The requirement follows what the index holds. An index keeping deleted documents
+// needs a reader that filters them; one that keeps none is safe for any reader.
+func TestIndexReaderRequirementsFollowContents(t *testing.T) {
+	require.Equal(t, []IndexFeature{IndexFeatureHoldsDeletedDocuments}, IndexReaderRequirements(true))
+	require.Empty(t, IndexReaderRequirements(false))
+}
+
+func TestUnknownIndexRequirements(t *testing.T) {
+	// An index built before requirements were recorded.
+	require.Empty(t, UnknownIndexRequirements(nil))
+
+	// Refused by name, so an older instance needs no knowledge of the feature.
+	require.Equal(t, []IndexFeature{"feature-from-the-future"},
+		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
 }
 
 // TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
@@ -1298,14 +1349,14 @@ func TestRebuildIndexesForResource(t *testing.T) {
 func TestMaybeInjectFailure(t *testing.T) {
 	t.Run("disabled when percent is 0", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 0}
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			require.NoError(t, s.maybeInjectFailure())
 		}
 	})
 
 	t.Run("always fails when percent is 100", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 100}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			err := s.maybeInjectFailure()
 			require.Error(t, err)
 			require.Equal(t, "injected search failure", err.Error())
@@ -1430,7 +1481,7 @@ func TestJitterForKey(t *testing.T) {
 	})
 
 	t.Run("bounded to maxAge/2", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "g", Resource: "r"}
 			j := jitterForKey(key, maxAge)
 			require.GreaterOrEqual(t, j, time.Duration(0))
@@ -1458,7 +1509,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	numIndexes := 20
 	openIndexes := make([]NamespacedResource, numIndexes)
 	cache := make(map[NamespacedResource]ResourceIndex, numIndexes)
-	for i := 0; i < numIndexes; i++ {
+	for i := range numIndexes {
 		key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "group", Resource: "folder"}
 		openIndexes[i] = key
 		cache[key] = &MockResourceIndex{
@@ -1737,6 +1788,30 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
 }
 
+// TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
+// test above: the Unimplemented path confirms the histogram wiring.
+func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-hybrid-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
+}
+
 func TestFolderFilterSet(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -1850,29 +1925,29 @@ func (i *trashIterator) Folder() string         { return "" }
 func (i *trashIterator) Value() []byte          { return i.entries[i.pos].value }
 
 func testObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title)
 }
 
 // testDeletedObjectJSON is what storage holds after a delete: the deletion marker
 // records who deleted the object as its last updater, and when (see server.go).
 func testDeletedObjectJSON(name, title, deletedBy string, deletedAt time.Time) []byte {
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"deletionTimestamp":%q,"annotations":{%q:%q}},"spec":{"title":%q}}`,
-		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title))
+		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title)
 }
 
 func testProvisionedObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
-		name, utils.AnnoKeyManagerKind, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
+		name, utils.AnnoKeyManagerKind, title)
 }
 
 // trashSearchOptions returns search options with deleted objects kept in the
 // index, which is off by default.
-func trashSearchOptions(backend SearchBackend) SearchOptions {
+func trashSearchOptions(backend *mockSearchBackend) SearchOptions {
+	backend.keepsDeletedDocuments = true
 	return SearchOptions{
-		Backend:               backend,
-		Resources:             &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
-		IndexDeletedDocuments: true,
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
 	}
 }
 
@@ -1889,7 +1964,8 @@ func TestIndexTrash(t *testing.T) {
 	server, err := newSearchServer(trashSearchOptions(&mockSearchBackend{}), storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
-	index := &MockResourceIndex{}
+	// The index records the decision, so a test driving indexTrash states it.
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
 	require.NoError(t, server.indexTrash(t.Context(), key, index, log.NewNopLogger()))
 
 	items := index.indexedItems()
@@ -1966,7 +2042,7 @@ func TestUpdaterMarksDeletedDocuments(t *testing.T) {
 	search.mu.Unlock()
 	require.NotNil(t, updater)
 
-	index := &MockResourceIndex{}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
 	_, docs, err := updater(t.Context(), index, 1)
 	require.NoError(t, err)
 	require.Equal(t, 2, docs)
@@ -2000,7 +2076,7 @@ func TestDeletedDocumentsAreRemovedWhenTheOptionIsOff(t *testing.T) {
 
 	search := &mockSearchBackend{}
 	options := trashSearchOptions(search)
-	options.IndexDeletedDocuments = false
+	search.keepsDeletedDocuments = false
 	server, err := newSearchServer(options, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
@@ -2039,7 +2115,6 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	// nothing.
 	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
 	require.NoError(t, err)
-	require.NotEmpty(t, live.Tags)
 	require.NotEmpty(t, live.Fields)
 
 	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
@@ -2053,12 +2128,52 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	require.True(t, *doc.IsDeleted)
 
 	require.Nil(t, doc.IsProvisioned, "the object was not provisioned")
-	require.Empty(t, doc.Tags)
 	require.Empty(t, doc.Fields)
 	require.Empty(t, doc.Labels)
 	require.Empty(t, doc.References)
 	require.Empty(t, doc.Description)
 	require.Nil(t, doc.Manager)
+}
+
+// Tags survive a delete, so trash can show them. They are read from the marker's
+// spec, the same place live search reads them, and the marker is the whole object
+// as it was, so this costs no extra read.
+func TestBuildDeletedDocumentKeepsTags(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+
+	// Trash and live search must report the same tags for the same object.
+	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.NotEmpty(t, live.Tags)
+
+	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.Equal(t, live.Tags, doc.Tags)
+
+	// An object with no usable tags is indexed without the field rather than with an
+	// empty list, so trash documents are shaped like live ones.
+	for name, body := range map[string]string{
+		"no tags":            `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
+		"empty list":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
+		"tags not a list":    `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
+		"no spec at all":     `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
+		"spec not an object": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":"just a string"}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			doc, err := buildDeletedDocument(key, 10, []byte(body))
+			require.NoError(t, err)
+			require.Nil(t, doc.Tags)
+		})
+	}
+
+	// A malformed entry is skipped rather than failing the document, so one bad tag
+	// cannot keep a deleted object out of trash.
+	t.Run("non-string entries are skipped", func(t *testing.T) {
+		body := []byte(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone","tags":["a",1,null,"b"]}}`)
+		doc, err := buildDeletedDocument(key, 10, body)
+		require.NoError(t, err)
+		require.Equal(t, []string{"a", "b"}, doc.Tags)
+	})
 }
 
 // The three fields /trash serves beyond title and folder. All of them come from
@@ -2156,5 +2271,116 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
 		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+	})
+}
+
+// Counts builder resolutions, the step that reads usage insights data for real
+// dashboards. Only namespaced builders go through it.
+type countingBuilderSupplier struct {
+	resolved atomic.Int32
+}
+
+func (s *countingBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
+	return []DocumentBuilderInfo{{
+		GroupResource: schema.GroupResource{Group: "group", Resource: "resource"},
+		Namespaced: func(_ context.Context, _ string, _ BlobSupport) (DocumentBuilder, error) {
+			s.resolved.Add(1)
+			return &testDocumentBuilder{}, nil
+		},
+	}}, nil
+}
+
+// Stands in for an index served from a remote snapshot: ready without either
+// callback running.
+type snapshotSearchBackend struct {
+	mockSearchBackend
+}
+
+func (m *snapshotSearchBackend) BuildIndex(_ context.Context, key NamespacedResource, size int64, _ string, _ BuildFn, updater UpdateFn, _ bool, _ time.Time, _ time.Duration) (ResourceIndex, error) {
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(m.keepsDeletedDocuments)}}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.lastUpdater = updater
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = index
+	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{key: key, size: size})
+
+	return index, nil
+}
+
+// Resolving a builder is expensive, so a build must not do it until something
+// actually needs to index documents.
+func TestBuildResolvesDocumentBuilderOnFirstUse(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
+	t.Run("an index served from a snapshot never resolves the builder", func(t *testing.T) {
+		supplier := &countingBuilderSupplier{}
+		search := &snapshotSearchBackend{}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+		}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		require.Len(t, search.buildIndexCalls, 1, "the index should still have been built")
+		require.Zero(t, supplier.resolved.Load(), "no callback ran, so the builder should never have been resolved")
+	})
+
+	t.Run("a build that indexes documents resolves the builder", func(t *testing.T) {
+		supplier := &countingBuilderSupplier{}
+		search := &mockSearchBackend{keepsDeletedDocuments: true}
+		storage := &trashStorageBackend{trash: []trashEntry{
+			{name: "gone", rv: 10, value: testObjectJSON("gone", "Gone")},
+		}}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		built, err := server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		require.Len(t, built.(*MockResourceIndex).indexedItems(), 1)
+		require.Equal(t, int32(1), supplier.resolved.Load(), "the build callback needs a builder")
+	})
+
+	// The cache entry expires while the updater keeps running, so resolving per
+	// call would re-read the insights data on most updates.
+	t.Run("the builder is resolved once for a build and every later update", func(t *testing.T) {
+		supplier := &countingBuilderSupplier{}
+		search := &mockSearchBackend{keepsDeletedDocuments: true}
+		storage := &trashStorageBackend{
+			trash:    []trashEntry{{name: "gone", rv: 10, value: testObjectJSON("gone", "Gone")}},
+			modified: []*ModifiedResource{{Action: resourcepb.WatchEvent_ADDED, Key: resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "added"}, ResourceVersion: 11, Value: testObjectJSON("added", "Added")}},
+		}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		search.mu.Lock()
+		updater := search.lastUpdater
+		search.mu.Unlock()
+		require.NotNil(t, updater)
+
+		for i := range 3 {
+			index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+			_, docs, err := updater(t.Context(), index, int64(11+i))
+			require.NoError(t, err)
+			require.Equal(t, 1, docs)
+		}
+
+		require.Equal(t, int32(1), supplier.resolved.Load(), "the builder resolved for the build should be reused by every update")
 	})
 }
