@@ -1217,9 +1217,22 @@ describe('TableNG utils', () => {
       expect(perCharWidths.test('Name', measureWidth('Name'))).toBe(false);
     });
 
+    it('measures each hard-broken line rather than nudging at a newline forever', () => {
+      // uwrap implements `pre-line`, where a newline breaks unconditionally: it reports *any* width as
+      // wrapped for a multi-line label, so nudging up would never terminate. Each of those segments is
+      // a line whatever the width, so the label needs the width of its widest one.
+      const hardBreaks = lineCounter((text, width) => text.includes('\n') || text.length * CHAR_W > width);
+      const measureWidth = createFitWidthMeasurer(ctx, hardBreaks);
+
+      expect(measureWidth('Name\nLonger')).toBe('Longer'.length * CHAR_W);
+    });
+
     it('keeps the kerned width where the line counter already agrees with it', () => {
       // e.g. a single-word label: uwrap breaks only at whitespace and hyphens, so it never wraps
-      const measureWidth = createFitWidthMeasurer(ctx, lineCounter(() => false));
+      const measureWidth = createFitWidthMeasurer(
+        ctx,
+        lineCounter(() => false)
+      );
       expect(measureWidth('Name')).toBe(4 * CHAR_W - 2);
     });
   });

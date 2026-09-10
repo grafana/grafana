@@ -278,11 +278,18 @@ export function createTypographyContext(
  */
 export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: uWrap): (text: string) => number {
   return (text: string) => {
-    let width = Math.ceil(ctx.measureText(text).width);
-    while (test(text, width)) {
-      width++;
+    let widest = 0;
+    // A `pre-line` newline is a hard break, so uwrap calls a string that contains one wrapped at
+    // *any* width and the nudging below would never terminate. Each hard-broken segment is a line
+    // regardless, so measure them separately: the widest is what the whole string needs.
+    for (const segment of text.split('\n')) {
+      let width = Math.ceil(ctx.measureText(segment).width);
+      while (test(segment, width)) {
+        width++;
+      }
+      widest = Math.max(widest, width);
     }
-    return width;
+    return widest;
   };
 }
 
