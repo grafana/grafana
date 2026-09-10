@@ -1083,5 +1083,131 @@ describe('LogsQueryEditor', () => {
         expect(revertedCall![0].azureLogAnalytics.query).toBe('');
       });
     });
+
+    it('dismisses the auto-switch notice when the tier is changed manually', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByText(/Query tier set to Basic/)).toBeInTheDocument();
+      await userEvent.click(await screen.findByLabelText('Analytics'));
+
+      expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+    });
+
+    it('dismisses the auto-switch notice when the selected tier is disabled', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByText(/Query tier set to Basic/)).toBeInTheDocument();
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={false}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+      });
+    });
   });
 });

@@ -144,6 +144,7 @@ const LogsQueryEditor = ({
         ? true
         : !!query.azureLogAnalytics?.basicLogsQuery && !tierStillEnabled;
     if (shouldClear) {
+      setTierAutoSwitchNotice(null);
       onChange(setLogTierAndClearQuery(query, undefined));
     }
   }, [searchLogsEnabled, basicLogsEnabled, auxiliaryLogsEnabled, onChange, query, selectedTier, showBasicLogsToggle]);
@@ -299,6 +300,7 @@ const LogsQueryEditor = ({
                 setError={setError}
                 basicLogsEnabled={basicLogsEnabled}
                 auxiliaryLogsEnabled={auxiliaryLogsEnabled}
+                onTierChange={() => setTierAutoSwitchNotice(null)}
               />
             )}
             <TimeManagement

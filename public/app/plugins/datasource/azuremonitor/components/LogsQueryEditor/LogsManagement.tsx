@@ -11,6 +11,7 @@ import { getSelectedLogTier, type SelectedLogTier, type LogTier } from './utils'
 interface LogsManagementProps extends AzureQueryEditorFieldProps {
   basicLogsEnabled?: boolean;
   auxiliaryLogsEnabled?: boolean;
+  onTierChange?: () => void;
 }
 
 type RadioValue = SelectedLogTier;
@@ -21,6 +22,7 @@ export function LogsManagement({
   onQueryChange: onChange,
   basicLogsEnabled,
   auxiliaryLogsEnabled,
+  onTierChange,
 }: LogsManagementProps) {
   const [pendingTier, setPendingTier] = useState<PendingTier>(null);
 
@@ -60,6 +62,7 @@ export function LogsManagement({
   const commitTier = (tier: LogTier) => {
     let updated = setLogTierAndClearQuery(query, tier);
     updated = setDashboardTime(updated, 'dashboard');
+    onTierChange?.();
     onChange(updated);
   };
 
@@ -92,6 +95,7 @@ export function LogsManagement({
               return;
             }
             if (val === 'Analytics') {
+              onTierChange?.();
               onChange(setLogTierAndClearQuery(query, undefined));
               return;
             }
