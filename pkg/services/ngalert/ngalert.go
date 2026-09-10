@@ -776,7 +776,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) && ng.folderLabelSyncer != nil {
 		children.Go(func() error {
-			return ng.folderLabelSyncer.Run(subCtx, ng.store.Cfg.DisabledOrgs)
+			return ng.folderLabelSyncer.Run(subCtx)
 		})
 	}
 

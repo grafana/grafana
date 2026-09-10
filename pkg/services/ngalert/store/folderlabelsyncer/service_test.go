@@ -214,6 +214,17 @@ func TestMarkDirty(t *testing.T) {
 		require.Len(t, s.take(), 1)
 		require.Empty(t, s.take())
 	})
+
+	t.Run("skips disabled orgs", func(t *testing.T) {
+		// Rule writes are not rejected for a disabled org, so a rule change there reaches the listener.
+		// Filtering here is what keeps label maintenance off orgs alerting is meant to ignore.
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
+		s.disabledOrgs = map[int64]struct{}{2: {}}
+
+		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 2, UID: "b"}})
+
+		require.Equal(t, []models.FolderKey{{OrgID: 1, UID: "a"}}, s.take())
+	})
 }
 
 func TestHandleRuleChange(t *testing.T) {
@@ -233,6 +244,16 @@ func TestHandleRuleChange(t *testing.T) {
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"}},
 		}))
 		require.Len(t, s.take(), 2)
+	})
+
+	t.Run("ignores a rule change in a disabled org", func(t *testing.T) {
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
+		s.disabledOrgs = map[int64]struct{}{1: {}}
+
+		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
+			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}},
+		}))
+		require.Empty(t, s.take())
 	})
 }
 
@@ -394,7 +415,7 @@ func TestRunStopsOnContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	require.NoError(t, s.Run(ctx, nil))
+	require.NoError(t, s.Run(ctx))
 }
 
 func TestIsRetriable(t *testing.T) {
@@ -584,7 +605,7 @@ func TestFailureMetrics(t *testing.T) {
 		t.Run("fetching orgs", func(t *testing.T) {
 			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
 
-			require.Error(t, s.FullSync(context.Background(), nil))
+			require.Error(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 
@@ -593,7 +614,7 @@ func TestFailureMetrics(t *testing.T) {
 			s, reg := newMetered(store, &fakeFolderClient{})
 
 			// Per-org failures are tolerated, so FullSync itself succeeds.
-			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.NoError(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 
@@ -601,7 +622,7 @@ func TestFailureMetrics(t *testing.T) {
 			store := &fakeSyncerStore{orgs: []int64{1}}
 			s, reg := newMetered(store, &fakeFolderClient{listErr: errors.New("boom")})
 
-			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.NoError(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 	})
@@ -624,7 +645,7 @@ func TestFailureMetrics(t *testing.T) {
 			store := &fakeSyncerStore{orgs: []int64{1, 2}}
 			s, reg := newMetered(store, &fakeFolderClient{})
 
-			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.NoError(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(2), fullSyncTotal(t, reg))
 			require.Zero(t, fullSyncFailures(t, reg))
 		})
@@ -635,7 +656,7 @@ func TestFailureMetrics(t *testing.T) {
 			folders := &fakeFolderClient{failNamespaces: map[string]struct{}{"org-1": {}}}
 			s, reg := newMetered(store, folders)
 
-			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.NoError(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(2), fullSyncTotal(t, reg), "both orgs were attempted")
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 			require.LessOrEqual(t, fullSyncFailures(t, reg), fullSyncTotal(t, reg))
@@ -644,8 +665,9 @@ func TestFailureMetrics(t *testing.T) {
 		t.Run("skipped orgs are counted as neither", func(t *testing.T) {
 			store := &fakeSyncerStore{orgs: []int64{1, 2}}
 			s, reg := newMetered(store, &fakeFolderClient{})
+			s.disabledOrgs = map[int64]struct{}{2: {}}
 
-			require.NoError(t, s.FullSync(context.Background(), map[int64]struct{}{2: {}}))
+			require.NoError(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 		})
 
@@ -653,7 +675,7 @@ func TestFailureMetrics(t *testing.T) {
 			// No org was reached, so there is no per-org outcome; the pass itself is the attempt.
 			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
 
-			require.Error(t, s.FullSync(context.Background(), nil))
+			require.Error(t, s.FullSync(context.Background()))
 			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})

@@ -21,7 +21,7 @@ import (
 // Rules moving to unified storage would bypass the rule store entirely, so neither the partial sync
 // nor the query below would see those writes — that is the point at which an informer becomes
 // available and becomes the right mechanism.
-func (s *Service) FullSync(ctx context.Context, disabledOrgs map[int64]struct{}) error {
+func (s *Service) FullSync(ctx context.Context) error {
 	orgIDs, err := s.store.FetchOrgIds(ctx)
 	if err != nil {
 		// Counted as one whole-pass attempt: it failed before any org could be attempted, so there is
@@ -36,7 +36,9 @@ func (s *Service) FullSync(ctx context.Context, disabledOrgs map[int64]struct{})
 			return ctx.Err()
 		}
 
-		if _, ok := disabledOrgs[orgID]; ok {
+		// Skipped before fullSyncOrg rather than relying on markDirty: this avoids the folder-wide
+		// walk entirely for an org alerting ignores, which is the expensive part of the pass.
+		if _, ok := s.disabledOrgs[orgID]; ok {
 			continue
 		}
 

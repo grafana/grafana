@@ -129,13 +129,13 @@ func TestFullSync(t *testing.T) {
 		}
 		s := newTestService(store, folders)
 
-		require.NoError(t, s.FullSync(context.Background(), map[int64]struct{}{}))
+		require.NoError(t, s.FullSync(context.Background()))
 		require.Equal(t, []models.FolderKey{{OrgID: 2, UID: "folder-a"}}, s.take())
 	})
 
 	t.Run("surfaces org enumeration failure", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
-		require.ErrorContains(t, s.FullSync(context.Background(), map[int64]struct{}{}), "fetch orgs")
+		require.ErrorContains(t, s.FullSync(context.Background()), "fetch orgs")
 	})
 
 	t.Run("stops when the context is cancelled", func(t *testing.T) {
@@ -145,17 +145,21 @@ func TestFullSync(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		require.ErrorIs(t, s.FullSync(ctx, map[int64]struct{}{}), context.Canceled)
+		require.ErrorIs(t, s.FullSync(ctx), context.Canceled)
 		require.Empty(t, s.take())
 	})
 
 	t.Run("skips disabled orgs", func(t *testing.T) {
 		store := &fakeSyncerStore{orgs: []int64{1, 2, 3}, folderUIDs: set("folder-a")}
-		s := newTestService(store, &fakeFolderClient{})
+		folders := &fakeFolderClient{}
+		s := newTestService(store, folders)
+		s.disabledOrgs = map[int64]struct{}{3: {}}
 
-		require.NoError(t, s.FullSync(context.Background(), map[int64]struct{}{
-			3: {},
-		}))
+		require.NoError(t, s.FullSync(context.Background()))
+
 		require.ElementsMatch(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())
+		// Skipped before the folder walk, not merely filtered when queueing: the walk is the expensive
+		// part of the pass, so a disabled org must not trigger one.
+		require.Equal(t, 2, folders.listCalls, "the disabled org's folders should never be listed")
 	})
 }

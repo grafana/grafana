@@ -68,6 +68,10 @@ type Service struct {
 	metrics          *metrics.FolderLabelSyncer
 	fullSyncInterval time.Duration
 	retryBackoff     wait.Backoff
+	// disabledOrgs are the orgs alerting ignores. Held on the Service rather than passed to Run so
+	// both the full sync and the event-driven partial sync see it: rule writes are not rejected for a
+	// disabled org, so without this a rule change there would still relabel its folder.
+	disabledOrgs map[int64]struct{}
 
 	mu    sync.Mutex
 	dirty map[models.FolderKey]struct{}
@@ -86,6 +90,7 @@ func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource
 		metrics:          m,
 		fullSyncInterval: cfg.UnifiedAlerting.FolderLabelFullSyncInterval,
 		retryBackoff:     retry.DefaultBackoff,
+		disabledOrgs:     cfg.UnifiedAlerting.DisabledOrgs,
 		dirty:            make(map[models.FolderKey]struct{}),
 		wake:             make(chan struct{}, 1),
 	}
@@ -93,11 +98,16 @@ func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource
 	return s
 }
 
-// marks folder keys as needing a partial sync and wakes the worker to process them
+// markDirty queues folder keys for a partial sync and wakes the worker. Disabled orgs are filtered
+// here because this is the one point both callers converge on, so neither a rule change nor the full
+// sync can queue work for an org alerting is meant to ignore.
 func (s *Service) markDirty(keys []models.FolderKey) {
 	s.mu.Lock()
 	for _, k := range keys {
 		if k.UID == "" || k.OrgID < 1 {
+			continue
+		}
+		if _, disabled := s.disabledOrgs[k.OrgID]; disabled {
 			continue
 		}
 		s.dirty[k] = struct{}{}
@@ -122,10 +132,9 @@ func (s *Service) signal() {
 }
 
 // Run performs a full sync once at startup, then processes partial syncs as rule changes wake it and
-// repeats the full sync every fullSyncInterval in the background. disabledOrgs is fixed for the
-// process lifetime, so it is read once here rather than on every pass.
-func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) error {
-	if err := s.FullSync(ctx, disabledOrgs); err != nil {
+// repeats the full sync every fullSyncInterval in the background.
+func (s *Service) Run(ctx context.Context) error {
+	if err := s.FullSync(ctx); err != nil {
 		s.log.Warn("Failed to run startup folder rules label full sync", "error", err)
 	}
 
@@ -147,7 +156,7 @@ func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) erro
 			// cadence start-to-start as the ticker did. Reset is safe here: the timer has fired and its
 			// channel has been drained.
 			fullSync.Reset(wait.Jitter(s.fullSyncInterval, fullSyncJitterFactor))
-			if err := s.FullSync(ctx, disabledOrgs); err != nil {
+			if err := s.FullSync(ctx); err != nil {
 				s.log.Warn("Failed to run periodic folder rules label full sync", "error", err)
 			}
 		}
