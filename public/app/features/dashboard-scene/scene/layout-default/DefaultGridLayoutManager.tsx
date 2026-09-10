@@ -191,6 +191,10 @@ export class DefaultGridLayoutManager
   }
 
   public pastePanel() {
+    if (!getDashboardSceneFor(this).isPlanningActionAllowed('paste-panel')) {
+      return;
+    }
+
     const emptySpace = findSpaceForNewPanel(this.state.grid);
     let newGridItem;
 

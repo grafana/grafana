@@ -180,6 +180,10 @@ export class AutoGridLayoutManager
   }
 
   public pastePanel() {
+    if (!getDashboardSceneFor(this).isPlanningActionAllowed('paste-panel')) {
+      return;
+    }
+
     let panel;
 
     try {

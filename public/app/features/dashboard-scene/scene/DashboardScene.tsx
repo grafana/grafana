@@ -928,6 +928,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (!this.isPlanningActionAllowed('paste-panel')) {
+      return;
+    }
+
     if (!store.exists(LS_PANEL_COPY_KEY)) {
       return;
     }
