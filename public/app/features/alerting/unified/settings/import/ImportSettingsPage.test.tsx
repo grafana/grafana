@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -88,6 +89,24 @@ describe('Import settings tab', () => {
     expect(await ui.emptyState.find()).toBeInTheDocument();
     expect(ui.importCta.get()).toBeInTheDocument();
     expect(ui.learnMoreLink.get()).toBeInTheDocument();
+  });
+
+  it('includes the app sub path in the import and add Alertmanager links', async () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/sub';
+
+    try {
+      render(<ImportSettingsPage />);
+
+      expect(await ui.emptyState.find()).toBeInTheDocument();
+      expect(ui.importCta.get()).toHaveAttribute('href', '/sub/alerting/import-to-gma');
+      expect(byRole('link', { name: /add new alertmanager/i }).get()).toHaveAttribute(
+        'href',
+        '/sub/connections/datasources/alertmanager'
+      );
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   it('shows a configuration staged after it was already rendered as empty', async () => {
