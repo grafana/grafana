@@ -163,6 +163,7 @@ export function useFoldersQueryAppPlatform({
             uid: name,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             managedBy: item.managedBy?.kind as ManagerKind | undefined,
+            managerId: item.managedBy?.id,
             parentUID: item.folder,
           },
         };

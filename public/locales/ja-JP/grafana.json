@@ -5981,7 +5981,6 @@
       "description": "パネル、テキスト、コードセルを縦に並べた構成",
       "name": "ノートブック",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "時刻",
       "title-edit": "",
@@ -7046,6 +7045,12 @@
       "type": "タイプ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "ダッシュボードの読み込み中にエラーが発生しました"
     },
     "dashboard-scene": {
@@ -7592,6 +7597,10 @@
       "required": "必須"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "変更",
         "label-details": "詳細",
@@ -9089,6 +9098,7 @@
       "share-export-json": "JSONとしてエクスポート",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "開始時間",
       "success-indicator": "",
       "target": "ターゲット",
@@ -12476,6 +12486,7 @@
       "title": "作成"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "新しいアラートルール"
     },
     "create-dashboard": {
@@ -12965,7 +12976,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +12995,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13045,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13062,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13110,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "設定をクリア"
+      "clear-tooltip": "設定をクリア",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "色分けの基準"
@@ -16497,8 +16510,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

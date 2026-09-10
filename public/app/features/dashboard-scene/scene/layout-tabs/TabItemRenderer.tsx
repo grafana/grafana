@@ -142,6 +142,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             }}
             label={titleInterpolated}
             data-tab-activation-key={key}
+            data-dashboard-element-key={key}
+            data-dashboard-element-type="tab"
             {...titleCollisionProps}
           />
         </div>
