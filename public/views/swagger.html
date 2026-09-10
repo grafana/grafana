@@ -29,7 +29,7 @@
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <div id="root"></div>
     [[range $asset := .Assets.JSFiles]]
-    <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript"></script>
+    <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="module"></script>
     [[end]]
     <script></script>
   </body>
