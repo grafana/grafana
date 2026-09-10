@@ -58,16 +58,8 @@ func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper 
 		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
 
-	exists, err := sess.IsTableExist(helper.Table("kv_store"))
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, nil
-	}
-
 	count, err := sess.Table(helper.Table("kv_store")).
-		Where("org_id = 0 AND namespace = ? AND `key` = ? AND value = ?", migratedKVNamespace, resource, migratedKVValue).
+		Where("org_id = 0 AND namespace = ? AND "+helper.DB.Quote("key")+" = ? AND value = ?", migratedKVNamespace, resource, migratedKVValue).
 		Count()
 	if err != nil {
 		return false, err
