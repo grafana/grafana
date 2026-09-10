@@ -45,9 +45,16 @@ func ProvideUnifiedStorageMigrationService(
 	registry *MigrationRegistry,
 	gcGate *resource.GCGate,
 ) contract.UnifiedStorageMigrationService {
+	lockingEnabled := cfg.Raw.Section("unified_storage").Key("migration_locking").MustBool(true)
+	if !lockingEnabled {
+		logger.Warn("unified_storage.migration_locking is disabled; source tables are NOT locked " +
+			"during migration and legacy tables are NOT renamed. Concurrent writes may be missed " +
+			"(data drift). Only safe when no other writers exist during migration (single instance, " +
+			"no HA, no rolling upgrades).")
+	}
 	return &UnifiedStorageMigrationServiceImpl{
 		migrator:     migrator,
-		tableLocker:  newTableLocker(sqlStore, sql),
+		tableLocker:  newTableLocker(sqlStore, sql, lockingEnabled),
 		tableRenamer: newTableRenamer(string(sqlStore.GetDBType()), logger, cfg.RenameWaitDeadline),
 		cfg:          cfg,
 		sqlStore:     sqlStore,

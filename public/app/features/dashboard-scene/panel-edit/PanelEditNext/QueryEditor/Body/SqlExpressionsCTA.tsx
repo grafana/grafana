@@ -7,7 +7,7 @@ export function SqlExpressionsCTA({ onAddSqlExpression }: { onAddSqlExpression: 
       <Stack direction="row" alignItems="center" gap={1} justifyContent="space-between">
         <Stack alignItems="center" gap={1}>
           <Icon name="database" />
-          <Text variant="bodySmall" color="maxContrast">
+          <Text variant="bodySmall" color="primary">
             <Trans i18nKey="dashboard.transformation-type-picker.sql-cta-description">
               Prefer SQL? Add a SQL expression to your queries instead.
             </Trans>

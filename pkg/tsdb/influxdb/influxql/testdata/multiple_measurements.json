@@ -1,1 +1,0 @@
-{"results":[{"series":[{"name":"cpu.upc","columns":["time","mean"],"tags":{"datacenter":"America"},"values":[[111,222]]},{"name":"logins.count","columns":["time","mean"],"tags":{"datacenter":"America"},"values":[[111,222]]}]}]}

@@ -488,51 +488,43 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "receiver1"},
-					TimeIntervals: []v1.TimeInterval{
-						{Name: "time-interval-1"},
-						{Name: "mute-interval-1"},
-					},
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definition.Receiver{
-							Name: "receiver1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:      "integration-uid-1",
-									Type:     "webhook",
-									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
-								},
+						Name: "receiver1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:      "integration-uid-1",
+								Type:     "webhook",
+								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 							},
 						},
 					},
 					{
-						Receiver: definition.Receiver{Name: "dupe-receiver"},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:      "integration-uid-2",
-									Type:     "webhook",
-									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
-								},
+						Name: "dupe-receiver",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:      "integration-uid-2",
+								Type:     "webhook",
+								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 							},
 						},
 					},
 					{
-						Receiver: definition.Receiver{Name: "dupe-receiver"},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:      "integration-uid-3",
-									Type:     "email",
-									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
-								},
+						Name: "dupe-receiver",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:      "integration-uid-3",
+								Type:     "email",
+								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
 							},
 						},
 					},
 				},
+			},
+			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+				v1.TimeIntervalUID("time-interval-1"): {Title: "time-interval-1"},
+				v1.TimeIntervalUID("mute-interval-1"): {Title: "mute-interval-1"},
 			},
 			ManagedRoutes: map[string]*v1.Route{
 				"named_route": {Receiver: "receiver1"},

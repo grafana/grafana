@@ -49,7 +49,7 @@ func TestAnnotationHistorian(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, frame)
 		require.Len(t, frame.Fields, 5)
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			require.Equal(t, frame.Fields[i].Len(), 1)
 		}
 	})

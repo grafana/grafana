@@ -1,0 +1,484 @@
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
+
+import {
+  applyFieldOverrides,
+  createTheme,
+  type DataFrame,
+  FALLBACK_COLOR,
+  type FieldConfig,
+  FieldType,
+  type InterpolateFunction,
+  MappingType,
+  standardFieldConfigEditorRegistry,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+
+import { RenderMode, TextMode } from '../panelcfg.gen';
+
+import {
+  catchTemplateError,
+  hasRenderableData,
+  interpolateTemplate,
+  MAX_RENDERED_CHARS,
+  MAX_RENDERED_ROWS,
+  renderContent,
+} from './renderContent';
+
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
+
+// applyFieldOverrides copies panel defaults through this registry, which app.ts seeds.
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+const hosts = toDataFrame({
+  name: 'frameA',
+  refId: 'A',
+  fields: [
+    { name: 'host', type: FieldType.string, values: ['web-1', 'web-2'] },
+    { name: 'cpu', type: FieldType.number, values: [84, 12] },
+  ],
+});
+
+const regions = toDataFrame({
+  name: 'frameB',
+  refId: 'B',
+  fields: [{ name: 'host', type: FieldType.string, values: ['db-1'] }],
+});
+
+const services = toDataFrame({
+  name: 'frameC',
+  refId: 'C',
+  fields: [
+    { name: 'service', type: FieldType.string, values: ['checkout', 'payments', 'search'] },
+    { name: 'state', type: FieldType.string, values: ['ok', 'degraded', 'unknown'] },
+  ],
+});
+
+/** Rows numbered 0..n, so a rendered block names its own row index. */
+function numberedFrame(rowCount: number) {
+  return toDataFrame({
+    fields: [{ name: 'n', type: FieldType.number, values: Array.from({ length: rowCount }, (_, i) => i) }],
+  });
+}
+
+/** The real macro registry, so ${__data.*} resolution is not faked. */
+function createReplaceVariables(): InterpolateFunction {
+  const templateSrv = initTemplateSrv('hello', []);
+  return (target, scopedVars, format) => templateSrv.replace(target, scopedVars, format);
+}
+
+function interpolate(
+  content: string,
+  series: DataFrame[] | undefined,
+  renderMode: RenderMode | undefined,
+  mode = TextMode.Markdown
+) {
+  return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
+}
+
+const theme = createTheme();
+const green = theme.visualization.getColorByName('green');
+const red = theme.visualization.getColorByName('red');
+const blue = theme.visualization.getColorByName('blue');
+
+/**
+ * Without this the frame has no `field.display`, the macro falls back to a processor
+ * that returns no color, and every `.color` assertion silently passes on ''.
+ */
+function withFieldConfig(series: DataFrame[], defaults: FieldConfig): DataFrame[] {
+  return applyFieldOverrides({
+    data: series,
+    fieldConfig: { defaults, overrides: [] },
+    replaceVariables: (value) => value,
+    theme,
+    timeZone: 'utc',
+  });
+}
+
+const absoluteThresholds = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 80, color: 'red' },
+  ],
+};
+
+function withThresholds(series: DataFrame[]): DataFrame[] {
+  return withFieldConfig(series, { thresholds: absoluteThresholds });
+}
+
+/** `unknown` matches nothing, so it exercises the unmapped fallback. */
+function withMappings(series: DataFrame[]): DataFrame[] {
+  return withFieldConfig(series, {
+    mappings: [
+      {
+        type: MappingType.ValueToText,
+        options: {
+          ok: { text: 'Healthy', color: 'green' },
+          degraded: { text: 'Degraded', color: 'red' },
+        },
+      },
+    ],
+  });
+}
+
+describe('hasRenderableData', () => {
+  it.each([
+    ['undefined', undefined],
+    ['no frames', []],
+    ['a frame with no fields', [{ fields: [], length: 0 }]],
+    ['a frame with fields but no rows', [toDataFrame({ fields: [{ name: 'host', values: [] }] })]],
+  ])('returns false for %s', (_name, series) => {
+    expect(hasRenderableData(series)).toBe(false);
+  });
+
+  it('returns true when any frame has rows', () => {
+    expect(hasRenderableData([{ fields: [], length: 0 }, hosts])).toBe(true);
+  });
+});
+
+describe('interpolateTemplate', () => {
+  describe('all rows', () => {
+    it.each([
+      ['Once', RenderMode.Once],
+      ['an undefined render mode', undefined],
+    ])('renders the content once for %s', (_name, renderMode) => {
+      expect(interpolate('CPU is ${__data.fields.cpu}%', [hosts], renderMode)).toBe('CPU is ${__data.fields.cpu}%');
+    });
+  });
+
+  describe('every row', () => {
+    it('repeats the content once per row, resolving fields for that row', () => {
+      expect(interpolate('- ${__data.fields.host}: ${__data.fields.cpu}%', [hosts], RenderMode.PerRow)).toBe(
+        '- web-1: 84%\n\n- web-2: 12%'
+      );
+    });
+
+    it('iterates every frame in series order', () => {
+      expect(interpolate('${__data.fields.host}', [hosts, regions], RenderMode.PerRow)).toBe('web-1\n\nweb-2\n\ndb-1');
+    });
+
+    it('resolves ${__series.name} so rows can name their frame', () => {
+      expect(interpolate('${__series.name} ${__data.fields.host}', [hosts, regions], RenderMode.PerRow)).toBe(
+        'frameA web-1\n\nframeA web-2\n\nframeB db-1'
+      );
+    });
+
+    it('leaves references to unknown fields empty', () => {
+      expect(interpolate('[${__data.fields.nope}]', [regions], RenderMode.PerRow)).toBe('[]');
+    });
+
+    it.each([
+      ['HTML', TextMode.HTML],
+      ['code', TextMode.Code],
+    ])('joins rows with a single newline in %s mode', (_name, mode) => {
+      expect(interpolate('${__data.fields.host}', [hosts], RenderMode.PerRow, mode)).toBe('web-1\nweb-2');
+    });
+
+    it.each([
+      ['there is no data', undefined],
+      ['every frame is empty', [{ fields: [], length: 0 }]],
+    ])('falls back to a single render when %s', (_name, series) => {
+      expect(interpolate('CPU is ${__data.fields.cpu}%', series, RenderMode.PerRow)).toBe(
+        'CPU is ${__data.fields.cpu}%'
+      );
+    });
+
+    it('colors each row from its own value', () => {
+      const colored = '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>';
+
+      expect(interpolate(colored, withThresholds([hosts]), RenderMode.PerRow)).toBe(
+        `<span style="color:${red}">84</span>\n\n<span style="color:${green}">12</span>`
+      );
+    });
+
+    it('renders the mapped text in place of the raw value', () => {
+      expect(
+        interpolate('${__data.fields.service}: ${__data.fields.state}', withMappings([services]), RenderMode.PerRow)
+      ).toBe('checkout: Healthy\n\npayments: Degraded\n\nsearch: unknown');
+    });
+
+    it('colors each row from its mapping', () => {
+      const colored = '<span style="color:${__data.fields.state.color}">${__data.fields.state}</span>';
+
+      expect(interpolate(colored, withMappings([services]), RenderMode.PerRow)).toBe(
+        [
+          `<span style="color:${green}">Healthy</span>`,
+          `<span style="color:${red}">Degraded</span>`,
+          // Nothing matched, so the color comes from the field's scale instead of the mapping.
+          `<span style="color:${FALLBACK_COLOR}">unknown</span>`,
+        ].join('\n\n')
+      );
+    });
+
+    it('prefers a mapping over the threshold for the rows it matches', () => {
+      const withBoth = withFieldConfig([hosts], {
+        thresholds: absoluteThresholds,
+        mappings: [{ type: MappingType.RangeToText, options: { from: 80, to: 100, result: { color: 'blue' } } }],
+      });
+      const colored = '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>';
+
+      // 84 is in the mapped range, so blue wins over the red threshold; 12 keeps the green one.
+      expect(interpolate(colored, withBoth, RenderMode.PerRow)).toBe(
+        `<span style="color:${blue}">84</span>\n\n<span style="color:${green}">12</span>`
+      );
+    });
+
+    it('renders every row of a frame smaller than the hard ceiling', () => {
+      expect(interpolate('${__data.fields.n}', [numberedFrame(3)], RenderMode.PerRow)).toBe('0\n\n1\n\n2');
+    });
+
+    it('renders every row up to the hard ceiling', () => {
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
+      const blocks = interpolate('${__data.fields.n}', series, RenderMode.PerRow).split('\n\n');
+
+      expect(blocks).toHaveLength(MAX_RENDERED_ROWS);
+      expect(blocks[MAX_RENDERED_ROWS - 1]).toBe(String(MAX_RENDERED_ROWS - 1));
+    });
+
+    it('stops at the size backstop before reaching the hard ceiling', () => {
+      const rendered = interpolate('x'.repeat(1000), [numberedFrame(MAX_RENDERED_ROWS)], RenderMode.PerRow);
+
+      expect(rendered.length).toBeLessThanOrEqual(MAX_RENDERED_CHARS);
+      expect(rendered.split('\n\n').length).toBeLessThan(MAX_RENDERED_ROWS);
+    });
+
+    it('truncates a single row that passes the size backstop on its own', () => {
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }],
+      });
+
+      expect(interpolate('${__data.fields.n}', [wide], RenderMode.PerRow).length).toBeLessThanOrEqual(
+        MAX_RENDERED_CHARS
+      );
+    });
+  });
+
+  describe('field, value and series macros', () => {
+    const cpu = toDataFrame({
+      name: 'cpu',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [84, 12], labels: { cluster: 'us' } },
+      ],
+    });
+
+    describe('rendering once', () => {
+      it.each([
+        ['${__field.name}', 'value'],
+        ['${__field.labels.cluster}', 'us'],
+        ['${__series.name}', 'cpu'],
+      ])('resolves %s against the value field', (content, expected) => {
+        expect(interpolate(content, [cpu], RenderMode.Once)).toBe(expected);
+      });
+
+      it.each([
+        ['${__value.text}', '12'],
+        ['${__value.numeric}', '12'],
+      ])('resolves %s from the reduced value, since there is no row', (content, expected) => {
+        expect(interpolate(content, [cpu], RenderMode.Once)).toBe(expected);
+      });
+
+      it('formats the reduced value with the display processor that field overrides attach', () => {
+        const formatted = toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [0.4213] }] });
+        formatted.fields[0].display = (value) => ({ text: `${Number(value).toFixed(1)}%`, numeric: Number(value) });
+
+        expect(interpolate('${__value.text}', [formatted], RenderMode.Once)).toBe('0.4%');
+      });
+
+      it('reduces an all-null field to an empty value rather than NaN', () => {
+        const missing = toDataFrame({
+          fields: [{ name: 'value', type: FieldType.number, values: [null, null] }],
+        });
+
+        expect(interpolate('[${__value.text}]', [missing], RenderMode.Once)).toBe('[]');
+      });
+
+      it('leaves the reference alone when the frame has no field to read', () => {
+        expect(interpolate('${__field.name}', [{ fields: [], length: 0 }], RenderMode.Once)).toBe('${__field.name}');
+      });
+
+      it('reads the frame handlebars binds to, so the two syntaxes agree', () => {
+        const empty = toDataFrame({ name: 'empty', fields: [{ name: 'value', type: FieldType.number, values: [] }] });
+
+        expect(interpolate('{{data.length}} ${__series.name}', [empty, cpu], RenderMode.Once)).toBe('2 cpu');
+      });
+    });
+
+    describe('rendering every row', () => {
+      it('resolves the value field rather than the time field it precedes', () => {
+        expect(interpolate('${__field.name}=${__value.text}', [cpu], RenderMode.PerRow)).toBe('value=84\n\nvalue=12');
+      });
+
+      it('resolves labels on every row', () => {
+        expect(interpolate('${__field.labels.cluster}', [cpu], RenderMode.PerRow)).toBe('us\n\nus');
+      });
+    });
+  });
+
+  describe('handlebars', () => {
+    it('leaves expressions alone when the text.newFeatures flag is off', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      expect(interpolate('{{#each data}}{{host}}{{/each}}', [hosts], RenderMode.Once)).toBe(
+        '{{#each data}}{{host}}{{/each}}'
+      );
+    });
+
+    it('renders the whole result set for Once', () => {
+      expect(interpolate('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe('- web-1\n- web-2\n');
+    });
+
+    it('caps the rows a Once template can iterate, so a huge frame cannot lock up the browser', () => {
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
+      const rendered = interpolate('{{#each data}}{{n}},{{/each}}', series, RenderMode.Once);
+
+      expect(rendered.split(',').filter(Boolean)).toHaveLength(MAX_RENDERED_ROWS);
+    });
+
+    it('truncates a Once template that passes the size backstop', () => {
+      const row = 'x'.repeat(1000);
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: Array.from({ length: 400 }, () => row) }],
+      });
+
+      const rendered = interpolate('{{#each data}}{{n}}\n{{/each}}', [wide], RenderMode.Once);
+
+      expect(rendered.length).toBeLessThanOrEqual(MAX_RENDERED_CHARS);
+      // Every line is whole, so the cut landed on a line break rather than mid-row.
+      expect(rendered.split('\n').every((line) => line === row)).toBe(true);
+    });
+
+    it('cuts at the limit when the nearest line break is far behind it', () => {
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }],
+      });
+
+      // The only line break sits at the top, so cutting on it would drop everything below.
+      const rendered = interpolate('# Heading\n{{#each data}}{{n}}{{/each}}', [wide], RenderMode.Once);
+
+      expect(rendered).toHaveLength(MAX_RENDERED_CHARS);
+    });
+
+    it('exposes every frame for Once', () => {
+      expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
+        'frameA:2 frameB:1 '
+      );
+    });
+
+    it('gives each row its own context for PerRow', () => {
+      expect(interpolate('{{#if (gt cpu 50)}}**{{host}}** hot{{/if}}', [hosts], RenderMode.PerRow)).toBe(
+        '**web-1** hot\n\n'
+      );
+    });
+
+    it('runs before variable interpolation, so its output is still interpolated', () => {
+      const nested = toDataFrame({
+        fields: [
+          { name: 'host', type: FieldType.string, values: ['${__data.fields.cpu}'] },
+          { name: 'cpu', type: FieldType.number, values: [84] },
+        ],
+      });
+
+      expect(interpolate('{{host}}', [nested], RenderMode.PerRow)).toBe('84');
+    });
+
+    it('is skipped in code mode, where escaping would mangle the source', () => {
+      expect(interpolate('{ "a": "{{b}}" }', [hosts], RenderMode.Once, TextMode.Code)).toBe('{ "a": "{{b}}" }');
+    });
+
+    it('throws on a broken template, so the panel can surface the error', () => {
+      expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
+    });
+  });
+});
+
+describe('renderContent', () => {
+  function render(content: string, renderMode: RenderMode, mode = TextMode.Markdown) {
+    return renderContent({ content, series: [hosts], renderMode, mode }, createReplaceVariables(), false);
+  }
+
+  it('renders repeated list items as a single list', () => {
+    const html = render('- ${__data.fields.host}', RenderMode.PerRow);
+
+    // The blank line between rows makes it a loose list, so items carry a <p>.
+    expect(html).toContain('<li><p>web-1</p>');
+    expect(html).toContain('<li><p>web-2</p>');
+    expect(html.match(/<ul>/g)).toHaveLength(1);
+  });
+
+  it('keeps each row a separate block rather than one run-on paragraph', () => {
+    const html = render('${__data.fields.host}', RenderMode.PerRow);
+
+    expect(html.match(/<p>/g)).toHaveLength(2);
+  });
+
+  it('leaves code mode content untransformed', () => {
+    expect(render('${__data.fields.host},', RenderMode.PerRow, TextMode.Code)).toBe('web-1,\nweb-2,');
+  });
+
+  function renderMarkdownPerRow(content: string, series: DataFrame[]) {
+    return renderContent(
+      {
+        content,
+        series,
+        renderMode: RenderMode.PerRow,
+        mode: TextMode.Markdown,
+        // What the panel passes for markdown, and it escapes what it interpolates.
+        format: 'html',
+      },
+      createReplaceVariables(),
+      false
+    );
+  }
+
+  it('keeps threshold colors through markdown rendering and sanitization', () => {
+    const html = renderMarkdownPerRow(
+      '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>',
+      withThresholds([hosts])
+    );
+
+    // The sanitizer rewrites the style attribute, adding a trailing semicolon.
+    expect(html).toContain(`<span style="color:${red};">84</span>`);
+    expect(html).toContain(`<span style="color:${green};">12</span>`);
+  });
+
+  it('keeps mapped text and colors through markdown rendering and sanitization', () => {
+    const html = renderMarkdownPerRow(
+      '<span style="color:${__data.fields.state.color}">${__data.fields.state}</span>',
+      withMappings([services])
+    );
+
+    expect(html).toContain(`<span style="color:${green};">Healthy</span>`);
+    expect(html).toContain(`<span style="color:${red};">Degraded</span>`);
+  });
+
+  it('sanitizes per-row HTML output', () => {
+    expect(render('<b>${__data.fields.host}</b><script>alert(1)</script>', RenderMode.PerRow, TextMode.HTML)).toBe(
+      '<b>web-1</b>&lt;script&gt;alert(1)&lt;/script&gt;\n<b>web-2</b>&lt;script&gt;alert(1)&lt;/script&gt;'
+    );
+  });
+});
+
+describe('catchTemplateError', () => {
+  it('passes the content through when nothing throws', () => {
+    expect(catchTemplateError(() => 'hello')).toEqual({ content: 'hello' });
+  });
+
+  it('describes the failure instead', () => {
+    expect(
+      catchTemplateError(() => {
+        throw new Error('boom');
+      })
+    ).toEqual({ content: '', error: 'Handlebars error: boom' });
+  });
+});

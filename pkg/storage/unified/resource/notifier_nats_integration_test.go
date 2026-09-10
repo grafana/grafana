@@ -2,11 +2,11 @@ package resource
 
 import (
 	"context"
-	"net"
 	"testing"
 	"time"
 
 	"github.com/grafana/dskit/services"
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -42,6 +42,9 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			ResourceVersion: 42,
 			Action:          DataActionUpdated,
 			Folder:          "folder-1",
+			PreviousRV:      41,
+			PreviousAction:  DataActionCreated,
+			PreviousFolder:  "old-folder",
 		}
 
 		// Interest propagates asynchronously; core NATS drops messages with no
@@ -57,15 +60,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			}
 		}, 5*time.Second, time.Millisecond)
 
-		assert.Equal(t, event.Group, got.Group)
-		assert.Equal(t, event.Resource, got.Resource)
-		assert.Equal(t, event.Namespace, got.Namespace)
-		assert.Equal(t, event.Name, got.Name)
-		assert.Equal(t, event.ResourceVersion, got.ResourceVersion)
-		assert.Equal(t, event.Folder, got.Folder)
-		assert.Equal(t, DataActionUpdated, got.Action)
-		// WatchNotification carries no previous RV.
-		assert.Equal(t, int64(0), got.PreviousRV)
+		assert.Equal(t, event, got)
 	})
 
 	t.Run("every action type survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
@@ -85,6 +80,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				Name:            "p-1",
 				ResourceVersion: 1,
 				Action:          action,
+				PreviousRV:      1,
+				PreviousAction:  action,
 			})
 			// Watch subscribes to the whole change stream, so a late warm-up
 			// duplicate (establishInterest publishes many and drains only on a
@@ -98,6 +95,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				}
 			}
 			assert.Equal(t, action, got.Action, "action %q must survive the round trip", action)
+			assert.Equal(t, action, got.PreviousAction)
+			assert.Empty(t, got.PreviousFolder)
 		}
 	})
 
@@ -132,7 +131,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			select {
 			case subj := <-got:
 				require.Equal(t, subject, subj)
-				require.Equal(t, "provisioning.grafana.app.default.repositories", subj)
+				require.Equal(t, "us.watch.v1.provisioning.grafana.app.default.repositories", subj)
 				return true
 			case <-time.After(20 * time.Millisecond):
 				return false
@@ -194,10 +193,8 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		Enabled:       true,
 		Mode:          setting.NATSModeEmbedded,
 		ListenAddress: "127.0.0.1",
-		// Free ports avoid collisions; a zero ClusterPort leaves ClusterAddr() nil,
-		// which the server dereferences.
-		ClientPort:  freePort(t),
-		ClusterPort: freePort(t),
+		ClientPort:    natsserver.RANDOM_PORT,
+		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
 	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
@@ -254,13 +251,4 @@ func startNatsService(t *testing.T, ctx context.Context, svc services.Service) {
 		svc.StopAsync()
 		_ = svc.AwaitTerminated(context.Background())
 	})
-}
-
-func freePort(t *testing.T) int {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	port := l.Addr().(*net.TCPAddr).Port
-	require.NoError(t, l.Close())
-	return port
 }

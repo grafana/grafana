@@ -411,6 +411,9 @@ describe('DashboardDatasourceBehaviour', () => {
 
   describe('Library panels', () => {
     it('should re-run queries when library panel re-runs query', async () => {
+      // The unloaded library panel triggers a real request that jsdom cannot serve, same as the
+      // test below.
+      jest.spyOn(console, 'error').mockImplementation();
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
         uid: 'fdcvggvfy2qdca',

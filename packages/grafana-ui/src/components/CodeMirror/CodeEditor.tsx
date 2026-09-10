@@ -1,8 +1,8 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
-import CodeMirror from '@uiw/react-codemirror';
-import { memo, useMemo } from 'react';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { memo, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -17,24 +17,28 @@ import {
   type CodeMirrorExtension,
 } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
+import { useShallowStable, useStableCallback } from './useStableProps';
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
-  mode: CodeMirrorCompletionMode
+  mode: CodeMirrorCompletionMode,
+  completeOnSpace: boolean
 ): CodeMirrorExtension[] => {
   if (!sources || sources.length === 0) {
     return [];
   }
 
+  const spaceKeymap = completeOnSpace ? [autocompleteSpaceKeymap] : [];
+
   if (mode === 'override') {
-    return [autocompletion({ override: [...sources] }), autocompleteSpaceKeymap];
+    return [autocompletion({ override: [...sources] }), ...spaceKeymap];
   }
 
   // Merge: enable autocompletion and contribute the sources via language data
   // so they're combined with whatever the active language registers.
   return [
     autocompletion(),
-    autocompleteSpaceKeymap,
+    ...spaceKeymap,
     ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }])),
   ];
 };
@@ -88,28 +92,55 @@ export const CodeEditor = memo(function CodeEditor({
   sqlDialect,
   height = '200px',
   onChange,
+  onBlur,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledby,
   completionSources,
   completionMode = 'merge',
-  extensions: additionalExtensions,
+  completeOnSpace = false,
+  extensions: additionalExtensionsProp,
   theme: themeOverride,
-  basicSetup,
+  basicSetup: basicSetupProp,
   indentWithTab = true,
+  readOnly = false,
+  lineWrapping = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
   const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
+
+  // A new identity on any of these reconfigures the whole editor — see useStableProps.
+  const additionalExtensions = useShallowStable(additionalExtensionsProp);
+  const sources = useShallowStable(completionSources);
+  const basicSetup = useShallowStable(basicSetupProp);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const handleChange = useStableCallback(onChange);
+  const handleBlur = useStableCallback(() => {
+    const editorView = editorRef.current?.view;
+    if (editorView) {
+      onBlur?.(editorView.state.doc.toString());
+    }
+  });
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
-      ...getCompletionExtensions(completionSources, completionMode),
+      ...getCompletionExtensions(sources, completionMode, completeOnSpace),
+      ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
+    [
+      ariaLabel,
+      ariaLabelledby,
+      languageExtension,
+      sources,
+      completionMode,
+      completeOnSpace,
+      lineWrapping,
+      additionalExtensions,
+    ]
   );
   return (
     <>
@@ -122,13 +153,16 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
+        ref={editorRef}
         theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
-        onChange={onChange}
+        onChange={handleChange}
+        onBlur={onBlur ? handleBlur : undefined}
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
+        readOnly={readOnly}
       />
     </>
   );

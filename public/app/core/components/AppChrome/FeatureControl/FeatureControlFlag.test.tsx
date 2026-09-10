@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 
-import * as runtimeInternal from '@grafana/runtime/internal';
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import type { CodeEditor } from '@grafana/ui';
@@ -10,6 +9,17 @@ import type { CodeEditor } from '@grafana/ui';
 import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
 
 type CodeEditorProps = ComponentProps<typeof CodeEditor>;
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  FlagKeys: {
+    FeatureControlFlagTestOnly: 'feature-gamma',
+  },
+  getOFREPWebProvider: jest.fn().mockReturnValue({
+    flagCache: { 'feature-alpha': true, 'feature-beta': false } as Record<string, unknown>,
+    events: { addHandler: jest.fn(), removeHandler: jest.fn() },
+  } as never),
+}));
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -130,17 +140,12 @@ describe('FeatureControlFlag', () => {
   });
 
   it('shows known flag names in the flag key combobox', async () => {
-    const mockOFREPProvider = {
-      flagCache: { 'feature-alpha': true, 'feature-beta': false } as Record<string, unknown>,
-      events: { addHandler: jest.fn(), removeHandler: jest.fn() },
-    };
-    jest.spyOn(runtimeInternal, 'getOFREPWebProvider').mockReturnValue(mockOFREPProvider as never);
-
     renderComponent();
     await expandFlag('new-flag-override');
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Flag key' }));
     expect(screen.getByRole('option', { name: 'feature-alpha' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'feature-beta' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'feature-gamma' })).toBeInTheDocument();
   });
 });

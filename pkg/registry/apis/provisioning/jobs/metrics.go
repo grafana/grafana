@@ -9,24 +9,59 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 type JobMetrics struct {
-	registry       prometheus.Registerer
-	processedTotal *prometheus.CounterVec
-	durationHist   *prometheus.HistogramVec
+	registry           prometheus.Registerer
+	processedTotal     *prometheus.CounterVec
+	durationHist       *prometheus.HistogramVec // duration bucketed by resources changed
+	dryRunDurationHist *prometheus.HistogramVec // duration bucketed by resources dry-run (viewed)
 
 	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
-	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
+	throughputHist *prometheus.HistogramVec // resource ops per second achieved by a job, by action + variance
+
+	resourceOpsTotal   *prometheus.CounterVec   // per-resource outcome counter
+	resourceOpDuration *prometheus.HistogramVec // per-resource operation duration
+	resourceOpBytes    *prometheus.HistogramVec // per-resource content size in bytes
+	inFlight           *prometheus.GaugeVec     // jobs currently being processed, by driver + action
+	busySeconds        *prometheus.CounterVec   // job duration credited at completion, by driver + action
 }
 
+// claimTrigger records what enqueued the work-queue key that a worker is now
+// processing. It aliases the shared unified-informer type so the driver's local
+// vocabulary matches the metric's source label.
+type claimTrigger = usinformer.ProcessTrigger
+
+const (
+	triggerLive    = usinformer.TriggerLive
+	triggerRelist  = usinformer.TriggerRelist
+	triggerInitial = usinformer.TriggerInitial
+)
+
+// resourceLabelJobs is the resource label value the driver emits on the
+// processing metrics.
+const resourceLabelJobs = "jobs"
+
 type QueueMetrics struct {
-	queueSize     *prometheus.GaugeVec
 	queueWaitTime *prometheus.HistogramVec
+
+	// Claim metrics, per driver_id. These count per CAS (compare-and-swap) attempt on a
+	// job, so contention is directly visible: a claim that loses several races before
+	// winning records each loss.
+	claimed         *prometheus.CounterVec // won a CAS race — this driver now owns the job
+	claimConflicts  *prometheus.CounterVec // lost a CAS race — another worker updated the job first
+	claimErrors     *prometheus.CounterVec // the claiming update failed with a non-conflict error (not identity/read)
+	claimRoundsCont *prometheus.CounterVec // lost to another worker — job already claimed, or all CAS retries exhausted
 }
+
+// durationBucketUnknown is the resources_changed_bucket/resources_dryrun_bucket used
+// when a job did not succeed: the resource count is partial and not meaningful, so
+// failed durations are grouped here instead of a misleading count bucket.
+const durationBucketUnknown = "unknown"
 
 var (
 	queueOnce    sync.Once
@@ -38,15 +73,6 @@ var (
 
 func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 	queueOnce.Do(func() {
-		queueSize := prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: "grafana_provisioning_jobs_queue_size",
-				Help: "Number of jobs currently in the queue",
-			},
-			[]string{"action"},
-		)
-		registry.MustRegister(queueSize)
-
 		queueWaitTime := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_jobs_queue_wait_seconds",
@@ -57,24 +83,90 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		)
 		registry.MustRegister(queueWaitTime)
 
+		claimed := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_claimed_total",
+				Help: "Jobs successfully claimed (won the compare-and-swap race), by driver",
+			},
+			[]string{"driver_id"},
+		)
+		registry.MustRegister(claimed)
+
+		claimConflicts := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_claim_conflicts_total",
+				Help: "Claim attempts that lost the compare-and-swap race to another worker, by driver",
+			},
+			[]string{"driver_id"},
+		)
+		registry.MustRegister(claimConflicts)
+
+		claimErrors := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_claim_errors_total",
+				Help: "Claim attempts whose claiming update failed with a non-conflict error, by driver (identity/read failures are not counted)",
+			},
+			[]string{"driver_id"},
+		)
+		registry.MustRegister(claimErrors)
+
+		claimRoundsCont := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_claim_rounds_contended_total",
+				Help: "Claim attempts lost to another worker — the job was already claimed, or all CAS retries were exhausted, by driver",
+			},
+			[]string{"driver_id"},
+		)
+		registry.MustRegister(claimRoundsCont)
+
 		queueMetrics = QueueMetrics{
-			queueSize:     queueSize,
-			queueWaitTime: queueWaitTime,
+			queueWaitTime:   queueWaitTime,
+			claimed:         claimed,
+			claimConflicts:  claimConflicts,
+			claimErrors:     claimErrors,
+			claimRoundsCont: claimRoundsCont,
 		}
 	})
 	return queueMetrics
 }
 
-func (m *QueueMetrics) IncreaseQueueSize(action string) {
-	m.queueSize.WithLabelValues(action).Inc()
-}
-
-func (m *QueueMetrics) DecreaseQueueSize(action string) {
-	m.queueSize.WithLabelValues(action).Dec()
-}
-
 func (m *QueueMetrics) RecordWaitTime(action string, waitSeconds float64) {
 	m.queueWaitTime.WithLabelValues(action).Observe(waitSeconds)
+}
+
+// The claim-metric recorders are all safe to call on a zero-value QueueMetrics (nil
+// collectors) so stores built in tests without registered metrics do not panic.
+
+// RecordClaimWon records a successful claim (won the CAS race) by driverID.
+func (m *QueueMetrics) RecordClaimWon(driverID string) {
+	if m.claimed == nil {
+		return
+	}
+	m.claimed.WithLabelValues(driverID).Inc()
+}
+
+// RecordClaimConflict records a claim that lost the CAS race to another worker.
+func (m *QueueMetrics) RecordClaimConflict(driverID string) {
+	if m.claimConflicts == nil {
+		return
+	}
+	m.claimConflicts.WithLabelValues(driverID).Inc()
+}
+
+// RecordClaimError records a claim that failed (list, identity, or non-conflict update).
+func (m *QueueMetrics) RecordClaimError(driverID string) {
+	if m.claimErrors == nil {
+		return
+	}
+	m.claimErrors.WithLabelValues(driverID).Inc()
+}
+
+// RecordClaimRoundContended records a claim round that listed candidates but won none.
+func (m *QueueMetrics) RecordClaimRoundContended(driverID string) {
+	if m.claimRoundsCont == nil {
+		return
+	}
+	m.claimRoundsCont.WithLabelValues(driverID).Inc()
 }
 
 func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
@@ -91,12 +183,22 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		durationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_jobs_duration_seconds",
-				Help:    "Duration of job",
+				Help:    "Duration of job, bucketed by the number of resources changed",
 				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
 			},
-			[]string{"action", "resources_changed_bucket"},
+			[]string{"action", "resources_changed_bucket", "outcome"},
 		)
 		registry.MustRegister(durationHist)
+
+		dryRunDurationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_dryrun_duration_seconds",
+				Help:    "Duration of job, bucketed by the number of resources dry-run (viewed)",
+				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+			},
+			[]string{"action", "resources_dryrun_bucket", "outcome"},
+		)
+		registry.MustRegister(dryRunDurationHist)
 
 		incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -128,6 +230,25 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(syncDurationHist)
 
+		// Per-execution throughput: resources processed divided by the execution's
+		// wall-clock duration, observed once when the job finishes. Unlike
+		// rate(resource_operations_total), which is a fleet-wide rate over a scrape
+		// window, this captures the throughput of an individual run — so p50/p99 of
+		// this histogram answers "how fast is a single job going". The variance label
+		// breaks an action down further (full vs incremental for a pull job); it is
+		// empty for actions with no sub-type. The bucket range (0.1 -> 1000 ops/s)
+		// covers a slow large-resource run at the bottom and a fast, highly parallel
+		// run at the top.
+		throughputHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_throughput_ops_per_second",
+				Help:    "Resource operations per second achieved by a completed job (resources processed / job duration), by action and variance",
+				Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 12),
+			},
+			[]string{"action", "variance"},
+		)
+		registry.MustRegister(throughputHist)
+
 		resourceOpsTotal := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_resource_operations_total",
@@ -137,25 +258,125 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(resourceOpsTotal)
 
+		resourceOpDuration := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_resource_operation_duration_seconds",
+				Help:    "Duration of individual resource operations performed during provisioning job runs",
+				Buckets: []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0},
+			},
+			[]string{"action", "operation", "outcome", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpDuration)
+
+		resourceOpBytes := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name: "grafana_provisioning_jobs_resource_operation_bytes",
+				Help: "Size in bytes of individual resources written during provisioning job runs",
+				// 512B -> 32MB. Resources can be several MB today (large dashboards);
+				// the top buckets leave headroom past the ~20MB range as sizes grow.
+				Buckets: []float64{512, 2048, 8192, 32768, 131072, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432},
+			},
+			[]string{"action", "operation", "outcome", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpBytes)
+
+		inFlight := prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "grafana_provisioning_jobs_in_flight",
+				Help: "Number of jobs currently being processed (a busy worker slot), by driver and action",
+			},
+			[]string{"driver_id", "action"},
+		)
+		registry.MustRegister(inFlight)
+
+		busySeconds := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_busy_seconds_total",
+				Help: "Total seconds workers spent processing jobs, credited at completion, by driver and action",
+			},
+			[]string{"driver_id", "action"},
+		)
+		registry.MustRegister(busySeconds)
+
 		jobMetrics = JobMetrics{
 			registry:                         registry,
 			processedTotal:                   processedTotal,
 			durationHist:                     durationHist,
+			dryRunDurationHist:               dryRunDurationHist,
 			incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
+			throughputHist:                   throughputHist,
 			resourceOpsTotal:                 resourceOpsTotal,
+			resourceOpDuration:               resourceOpDuration,
+			resourceOpBytes:                  resourceOpBytes,
+			inFlight:                         inFlight,
+			busySeconds:                      busySeconds,
 		}
 	})
 	return jobMetrics
 }
 
-func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, duration float64) {
+// IncInFlight marks a worker slot busy: driverID started processing a job of action.
+// Nil-safe so drivers built in tests without registered metrics do not panic.
+func (m *JobMetrics) IncInFlight(driverID, action string) {
+	if m == nil || m.inFlight == nil {
+		return
+	}
+	m.inFlight.WithLabelValues(driverID, action).Inc()
+}
+
+// DecInFlight marks a worker slot free again once the job is done (any outcome).
+func (m *JobMetrics) DecInFlight(driverID, action string) {
+	if m == nil || m.inFlight == nil {
+		return
+	}
+	m.inFlight.WithLabelValues(driverID, action).Dec()
+}
+
+// RecordBusySeconds credits the time a worker slot spent on a job, at completion.
+// Unlike the in_flight gauge (sampled at scrape time, so it aliases on bursts of
+// short jobs), this counter gives scrape-robust time-averaged utilization. Nil-safe.
+func (m *JobMetrics) RecordBusySeconds(driverID, action string, seconds float64) {
+	if m == nil || m.busySeconds == nil {
+		return
+	}
+	m.busySeconds.WithLabelValues(driverID, action).Add(seconds)
+}
+
+func (m *JobMetrics) RecordJob(jobAction string, variance string, outcome string, resourceCountChanged int, resourceCountDryRun int, duration float64) {
 	m.processedTotal.WithLabelValues(jobAction, outcome).Inc()
 
-	// only record duration when the job was successful. otherwise resource count will be incorrect
-	if outcome == utils.SuccessOutcome {
-		m.durationHist.WithLabelValues(jobAction, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
+	// Record duration for every outcome so slow-but-failing jobs are visible (a job
+	// that runs to the timeout then errors is exactly what we want to catch). Only a
+	// failed job's resource count is unreliable (partial work), so bucket errors under
+	// a sentinel; success and warning keep their size bucket.
+	changedBucket := utils.GetResourceCountBucket(resourceCountChanged)
+	dryRunBucket := utils.GetResourceCountBucket(resourceCountDryRun)
+	if outcome == utils.ErrorOutcome {
+		changedBucket = durationBucketUnknown
+		dryRunBucket = durationBucketUnknown
+	}
+
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		m.dryRunDurationHist.WithLabelValues(jobAction, dryRunBucket, outcome).Observe(duration)
+	} else {
+		m.durationHist.WithLabelValues(jobAction, changedBucket, outcome).Observe(duration)
+	}
+
+	// Per-execution throughput: ops/second. A failed job's resource count is partial
+	// (see the bucket note above), so its ops/s would be misleading — record only jobs
+	// that ran to a success/warning state. Pull-request jobs measure work by resources
+	// dry-run rather than changed, matching the duration histogram's numerator. Skip
+	// the degenerate cases too: a non-positive duration would divide to +Inf, and a run
+	// that did no work is not a throughput sample worth keeping (it would pile up in the
+	// lowest bucket and drag the percentiles down).
+	ops := resourceCountChanged
+	if jobAction == string(provisioning.JobActionPullRequest) {
+		ops = resourceCountDryRun
+	}
+	if m.throughputHist != nil && outcome != utils.ErrorOutcome && ops > 0 && duration > 0 {
+		m.throughputHist.WithLabelValues(jobAction, variance).Observe(float64(ops) / duration)
 	}
 }
 
@@ -172,8 +393,10 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 }
 
 // RecordResourceOperation derives outcome, operation, and reason from the
-// result and increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
+// result and increments the resource operations counter. dur is the time the
+// operation took, measured by the progress recorder from result construction to
+// this call; it is observed in the duration histogram for real operations.
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult, dur time.Duration) {
 	var outcome ResourceOutcome
 	reason := result.Reason()
 
@@ -187,7 +410,26 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 		outcome = OutcomeSuccess
 	}
 
-	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+	operation := fileActionToOperation(result.Action())
+	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, result.Group(), result.Kind()).Inc()
+
+	// Ignored operations are no-ops (nothing was written), and an empty operation
+	// means the result carried no file action at all (e.g. a quota pre-check or a
+	// client-resolution failure), so neither did real work worth timing. Keep both
+	// out of the duration histogram.
+	realOp := operation != OperationIgnored && operation != ""
+	if m.resourceOpDuration != nil && dur > 0 && realOp {
+		m.resourceOpDuration.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(dur.Seconds())
+	}
+
+	// Resource size is only known for operations that read or write the file
+	// content (creates, updates, renames, and file-based deletes stamp it via
+	// WithBytes). Operations without a file body — folders, no-ops, and deletes
+	// that only had the cluster object to go on — report 0 and are excluded
+	// rather than recorded as a 0-byte resource.
+	if m.resourceOpBytes != nil && result.Bytes() > 0 && realOp {
+		m.resourceOpBytes.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(float64(result.Bytes()))
+	}
 }
 
 func fileActionToOperation(action repository.FileAction) ResourceOperation {

@@ -101,8 +101,9 @@ func TestLoader_Load(t *testing.T) {
 							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
 						},
 						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
+							GrafanaDependency: ">=12.3.0",
+							GrafanaVersion:    "*",
+							Plugins:           []plugins.Dependency{},
 							Extensions: plugins.ExtensionsDependencies{
 								ExposedComponents: []string{},
 							},
@@ -116,6 +117,7 @@ func TestLoader_Load(t *testing.T) {
 						},
 						Category:     "cloud",
 						Annotations:  true,
+						Executable:   "gpx_cloudwatch",
 						Metrics:      true,
 						Alerting:     true,
 						Logs:         true,

@@ -342,6 +342,55 @@ func TestPullRequestWorker_Process(t *testing.T) {
 	}
 }
 
+// When Evaluate stops early (UnprocessedFiles > 0), it's because ctx is
+// already canceled/expired. Process must still post the comment -- reusing
+// the dead ctx for that GitHub API call would make it fail immediately,
+// silently dropping the very comment meant to explain the partial result.
+func TestPullRequestWorker_Process_PostsCommentOnCanceledContext(t *testing.T) {
+	evaluator := NewMockEvaluator(t)
+	commenter := NewMockCommenter(t)
+	repo := mockPullRequestRepo{
+		MockRepository:      repository.NewMockRepository(t),
+		MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
+	}
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
+	files := []repository.VersionedFileChange{{Path: "test.yaml"}}
+	repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("merge-base-sha", nil)
+	repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(files, nil)
+	evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(changeInfo{UnprocessedFiles: 2}, nil)
+	commenter.On("Comment", mock.MatchedBy(func(ctx context.Context) bool {
+		return ctx.Err() == nil // proves Comment did not reuse the canceled ctx
+	}), mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				PR:  123,
+				Ref: "test-ref",
+			},
+		},
+	}
+
+	ctx, cancel := context.WithCancel(logging.Context(t.Context(), logging.DefaultLogger))
+	cancel()
+
+	// Use cancelled ctx above
+	err := worker.Process(ctx, repo, job, progress)
+	require.Error(t, err)
+	require.True(t, jobs.IsWarning(err), "an incomplete-but-commented evaluation is a warning, not a failure")
+	require.Contains(t, err.Error(), "evaluation stopped early: 2 file(s) not processed")
+
+	evaluator.AssertExpectations(t)
+	commenter.AssertExpectations(t)
+	repo.AssertExpectations(t)
+	progress.AssertExpectations(t)
+}
+
 type mockPullRequestRepo struct {
 	*repository.MockRepository
 	*repository.MockPullRequestRepo

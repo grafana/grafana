@@ -37,7 +37,7 @@ const (
 func NewTestSqlKvBackend(t *testing.T, ctx context.Context, mode SQLKVBackendMode) (resource.KVBackend, sqldb.DB) {
 	t.Helper()
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(ctx)
@@ -1161,19 +1161,20 @@ func runTestLastImportTimeCrossBackend(t *testing.T, sqlBackend, kvBackend resou
 	sqlNS := nsPrefix + "-lit-sql"
 	sqlBulk, ok := sqlBackend.(resource.BulkProcessingBackend)
 	require.True(t, ok, "SQL backend must support BulkProcessingBackend")
+	sqlCollection := []*resourcepb.ResourceKey{{Namespace: sqlNS, Group: group, Resource: resourceType}}
 	sqlResp := sqlBulk.ProcessBulk(ctx, resource.BulkSettings{
-		Collection: []*resourcepb.ResourceKey{{Namespace: sqlNS, Group: group, Resource: resourceType}},
+		Collection: sqlCollection,
 	}, toBulkIterator(buildSingleBulkRequest(sqlNS)))
 	require.Nil(t, sqlResp.Error)
 
 	// SQL backend should be able to read its own last import time
-	sqlTimes := collectLastImportedTimes(t, sqlBackend, ctx)
+	sqlTimes := collectLastImportedTimes(t, sqlBackend, ctx, sqlCollection)
 	sqlNSR := resource.NamespacedResource{Namespace: sqlNS, Group: group, Resource: resourceType}
 	require.Contains(t, sqlTimes, sqlNSR, "SQL backend should return last import time for SQL-written namespace")
 	require.False(t, sqlTimes[sqlNSR].IsZero(), "SQL backend last import time should not be zero")
 
 	// KV backend should also be able to read the SQL-written last import time
-	kvTimes := collectLastImportedTimes(t, kvBackend, ctx)
+	kvTimes := collectLastImportedTimes(t, kvBackend, ctx, sqlCollection)
 	require.Contains(t, kvTimes, sqlNSR, "KV backend should return last import time written by SQL backend")
 	require.False(t, kvTimes[sqlNSR].IsZero(), "KV backend last import time for SQL-written namespace should not be zero")
 
@@ -1181,19 +1182,20 @@ func runTestLastImportTimeCrossBackend(t *testing.T, sqlBackend, kvBackend resou
 	kvNS := nsPrefix + "-lit-kv"
 	kvBulk, ok := kvBackend.(resource.BulkProcessingBackend)
 	require.True(t, ok, "KV backend must support BulkProcessingBackend")
+	kvCollection := []*resourcepb.ResourceKey{{Namespace: kvNS, Group: group, Resource: resourceType}}
 	kvResp := kvBulk.ProcessBulk(ctx, resource.BulkSettings{
-		Collection: []*resourcepb.ResourceKey{{Namespace: kvNS, Group: group, Resource: resourceType}},
+		Collection: kvCollection,
 	}, toBulkIterator(buildSingleBulkRequest(kvNS)))
 	require.Nil(t, kvResp.Error)
 
 	// KV backend should be able to read its own last import time
 	kvNSR := resource.NamespacedResource{Namespace: kvNS, Group: group, Resource: resourceType}
-	kvTimes2 := collectLastImportedTimes(t, kvBackend, ctx)
+	kvTimes2 := collectLastImportedTimes(t, kvBackend, ctx, kvCollection)
 	require.Contains(t, kvTimes2, kvNSR, "KV backend should return last import time for KV-written namespace")
 	require.False(t, kvTimes2[kvNSR].IsZero(), "KV backend last import time should not be zero")
 
 	// SQL backend should also be able to read the KV-written last import time
-	sqlTimes2 := collectLastImportedTimes(t, sqlBackend, ctx)
+	sqlTimes2 := collectLastImportedTimes(t, sqlBackend, ctx, kvCollection)
 	require.Contains(t, sqlTimes2, kvNSR, "SQL backend should return last import time written by KV backend")
 	require.False(t, sqlTimes2[kvNSR].IsZero(), "SQL backend last import time for KV-written namespace should not be zero")
 }
@@ -1808,11 +1810,8 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Key:   key,
 			Value: []byte(resourceJSON),
 		})
-		if err != nil {
-			return fmt.Errorf("failed to create resource %d: %w", i, err)
-		}
-		if created.Error != nil {
-			return fmt.Errorf("create error for resource %d: %s", i, created.Error.Message)
+		if err := resource.ErrorFromResponse(created.GetError(), err); err != nil {
+			return fmt.Errorf("create error for resource %d: %w", i, err)
 		}
 		resourceVersions[i-1] = created.ResourceVersion
 	}
@@ -1849,11 +1848,8 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Value:           []byte(updatedJSON),
 			ResourceVersion: resourceVersions[i-1],
 		})
-		if err != nil {
-			return fmt.Errorf("failed to update resource %d: %w", i, err)
-		}
-		if updated.Error != nil {
-			return fmt.Errorf("update error for resource %d: %s", i, updated.Error.Message)
+		if err := resource.ErrorFromResponse(updated.GetError(), err); err != nil {
+			return fmt.Errorf("update error for resource %d: %w", i, err)
 		}
 		resourceVersions[i-1] = updated.ResourceVersion
 	}
@@ -1875,11 +1871,8 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Key:             key,
 			ResourceVersion: resourceVersions[i-1], // Use the resource version from updates
 		})
-		if err != nil {
-			return fmt.Errorf("failed to delete resource %d: %w", i, err)
-		}
-		if deleted.Error != nil {
-			return fmt.Errorf("delete error for resource %d: %s", i, deleted.Error.Message)
+		if err := resource.ErrorFromResponse(deleted.GetError(), err); err != nil {
+			return fmt.Errorf("delete error for resource %d: %w", i, err)
 		}
 	}
 

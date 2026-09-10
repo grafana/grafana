@@ -1,6 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
+import { type ReactNode } from 'react';
 
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
@@ -18,7 +19,7 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
  */
 export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
-export type CodeMirrorEditorLanguage = 'json' | 'sql';
+export type CodeMirrorEditorLanguage = 'go' | 'html' | 'json' | 'markdown' | 'sql' | 'typescript' | 'xml' | 'yaml';
 
 /**
  * SQL dialect used for syntax highlighting and keyword completion when
@@ -118,6 +119,10 @@ export interface CodeMirrorEditorProps {
    */
   onChange: (value: string) => void;
   /**
+   * Called with the current editor contents when the editor loses focus.
+   */
+  onBlur?: (value: string) => void;
+  /**
    * Accessible label applied to the editor input.
    */
   'aria-label'?: string;
@@ -135,6 +140,17 @@ export interface CodeMirrorEditorProps {
    * - `'override'` — replace any language-default completions with just these sources.
    */
   completionMode?: CodeMirrorCompletionMode;
+  /**
+   * When `true`, a typed space opens the completion popup as an explicit
+   * request. Suits a language where a space starts a new clause and the
+   * suggestions are keywords or identifiers, as after `SELECT ` in SQL.
+   *
+   * Leave it off (the default) for prose. A source is free to answer an explicit
+   * request with its whole list — the variable source does, so that Ctrl+Space
+   * offers every variable — and binding that to the space bar would open the
+   * popup on every word.
+   */
+  completeOnSpace?: boolean;
   /**
    * Additional CodeMirror extensions to layer on top of the defaults.
    * Use this for linting, custom keymaps, themes, etc.
@@ -160,4 +176,18 @@ export interface CodeMirrorEditorProps {
    * element instead of being captured as indentation (avoids a keyboard trap).
    */
   indentWithTab?: boolean;
+  /**
+   * Rejects all edits while keeping the text selectable.
+   */
+  readOnly?: boolean;
+  /**
+   * Wraps long lines instead of scrolling horizontally.
+   */
+  lineWrapping?: boolean;
+  /**
+   * Rendered while the editor bundle is being lazily loaded. Defaults to a
+   * loading placeholder; pass a styled preview of the content to avoid a
+   * visual flash when the editor appears.
+   */
+  loadingFallback?: ReactNode;
 }

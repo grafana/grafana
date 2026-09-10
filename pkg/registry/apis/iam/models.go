@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -54,8 +56,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore            *team.LegacyStore
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	authInfoLegacyStore        *authinfo.LegacyStore
 	ssoLegacyStore             *sso.LegacyStore
-	ssoUseMTSettings           bool
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
 	teamLBACApiInstaller       TeamLBACApiInstaller
@@ -96,7 +98,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *display.DisplayHandler
+	display         *display.DisplayHandler
+	userPermissions *userpermissions.Handler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
@@ -113,6 +116,10 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
+	// ssoSettingsClient backs the SSOSetting kind's MTSettingsStore (reads +
+	// writes to setting.grafana.app). Built in RegisterAPIService when the
+	// kind's storage mode engages MT-Settings.
+	ssoSettingsClient settingsvc.Service
 
 	// ofClient evaluates the feature flags gating the IAM APIs. The default
 	// client resolves the globally-registered provider at evaluation time.

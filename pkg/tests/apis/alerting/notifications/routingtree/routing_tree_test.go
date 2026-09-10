@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -18,23 +19,21 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -892,7 +891,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	createTimeIntervalStubs(t, admin, cfg.SortedTimeIntervals())
 
 	// Sanity check there aren't any existing managed routes other than the default.
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -1306,11 +1305,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				for _, k := range allACMetadata {
 					key := v1beta1.AccessControlAnnotation(k)
 					var expected bool
-					for _, exp := range tc.expACMetadata {
-						if exp == k {
-							expected = true
-							break
-						}
+					if slices.Contains(tc.expACMetadata, k) {
+						expected = true
 					}
 					if expected {
 						assert.Equalf(t, "true", annotations[key], "expected annotation %s to be set", key)
@@ -1419,12 +1415,13 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	receivers := createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	timeIntervals := createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	sortedIntervals := cfg.SortedTimeIntervals()
+	timeIntervals := createTimeIntervalStubs(t, admin, sortedIntervals)
 
 	recv0 := cfg.AlertmanagerConfig.Receivers[0].Name
 	recv1 := cfg.AlertmanagerConfig.Receivers[1].Name
-	ti0 := cfg.AlertmanagerConfig.TimeIntervals[0].Name
-	ti1 := cfg.AlertmanagerConfig.TimeIntervals[1].Name
+	ti0 := sortedIntervals[0].Title
+	ti1 := sortedIntervals[1].Title
 
 	// Create routes that reference the receivers and time intervals.
 	routeDef := v1model.Route{
@@ -1550,10 +1547,10 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []v1mod
 	for _, ti := range timeIntervals {
 		created, err := timeIntervalClient.Create(context.Background(), &v1beta1.TimeInterval{
 			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Name},
+			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Title},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
-		res[ti.Name] = created
+		res[ti.Title] = created
 	}
 	return res
 }

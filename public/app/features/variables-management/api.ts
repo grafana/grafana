@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
@@ -114,6 +114,51 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
   }, [key]);
 
   return titles;
+}
+
+/**
+ * Resolves folder CanEdit for the given UIDs (via the folder access subresource).
+ * Missing entries mean the lookup has not completed yet — treat as not editable.
+ */
+export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> {
+  const [canEditByUid, setCanEditByUid] = useState<Record<string, boolean>>({});
+  // Read latest map inside the effect without listing it as a dep (avoids re-init
+  // loops while still skipping UIDs already resolved).
+  const canEditByUidRef = useRef(canEditByUid);
+  canEditByUidRef.current = canEditByUid;
+  // Sort so [a,b] and [b,a] share one effect key.
+  const key = [...folderUids].sort().join(',');
+
+  useEffect(() => {
+    let cancelled = false;
+    const uids = key ? key.split(',') : [];
+    const missing = uids.filter((uid) => !(uid in canEditByUidRef.current));
+    if (missing.length === 0) {
+      return;
+    }
+
+    Promise.all(
+      missing.map(async (uid) => {
+        const subscription = dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
+        try {
+          const result = await subscription;
+          return [uid, Boolean(result.data?.canEdit)] as const;
+        } finally {
+          subscription.unsubscribe();
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) {
+        setCanEditByUid((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+
+  return canEditByUid;
 }
 
 export interface BulkOperationResult {

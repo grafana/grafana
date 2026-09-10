@@ -71,7 +71,7 @@ export interface TableColumn extends Column<TableRow, TableSummaryRow> {
 }
 
 // Possible values for table cells based on field types
-export type TableCellValue =
+type TableCellValue =
   | string // FieldType.string, FieldType.enum
   | number // FieldType.number
   | boolean // FieldType.boolean
@@ -126,10 +126,17 @@ interface BaseTableProps {
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
+  /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
   cellHeight?: TableCellHeight;
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /**
+   * Set by callers whose surrounding panel renders without padding, so the table can indent the
+   * first column's content back into line with the panel title.
+   */
+  noPanelPadding?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
   /** used by SparklineCell when provided */
@@ -145,8 +152,10 @@ interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
-  // temporary feature toggle to manage rollout of the refactored nested-table implementation
-  nestedRefactorEnabled?: boolean;
+  // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
+  contentAwareWidthsEnabled?: boolean;
+  // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
+  tableRefreshEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

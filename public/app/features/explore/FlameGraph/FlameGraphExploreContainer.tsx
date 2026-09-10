@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type DataFrame, type GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 interface Props {
   dataFrames: DataFrame[];
@@ -19,16 +18,15 @@ function interaction(name: string, context: Record<string, string | number> = {}
 }
 
 export const FlameGraphExploreContainer = (props: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme));
-  const enableNewUI = useBooleanFlagValue('flameGraphWithCallTree', false);
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   return (
     <div className={styles.container}>
       <FlameGraph
         data={props.dataFrames[0]}
         stickyHeader={true}
-        getTheme={() => config.theme2}
-        enableNewUI={enableNewUI}
+        getTheme={() => theme}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
         onTextAlignSelected={(align: string) => interaction('text_align_selected', { align })}

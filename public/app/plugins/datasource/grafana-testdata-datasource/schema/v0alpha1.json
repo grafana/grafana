@@ -188,7 +188,7 @@
       {
         "metadata": {
           "name": "default",
-          "resourceVersion": "1782733680031",
+          "resourceVersion": "1785519242278",
           "creationTimestamp": "2026-04-22T17:13:30Z"
         },
         "spec": {
@@ -237,6 +237,27 @@
                 "type": "string",
                 "x-enum-description": {}
               },
+              "exemplarCount": {
+                "description": "Exemplars scenario: number of exemplars to generate (defaults to 100)",
+                "type": "integer"
+              },
+              "exemplarLabels": {
+                "description": "Exemplars scenario: label fields added to each exemplar",
+                "items": {
+                  "additionalProperties": false,
+                  "description": "ExemplarLabel defines model for ExemplarLabel.",
+                  "properties": {
+                    "length": {
+                      "description": "Number of characters in each generated value (defaults to 16)",
+                      "type": "integer"
+                    },
+                    "link": { "description": "Optional data link URL; supports ${__value.raw}", "type": "string" },
+                    "name": { "type": "string" }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
               "flamegraphDiff": { "type": "boolean" },
               "labels": { "type": "string" },
               "levelColumn": { "type": "boolean" },
@@ -277,7 +298,7 @@
               "queryDelayVariability": { "type": "number" },
               "rawFrameContent": { "type": "string" },
               "scenarioId": {
-                "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"errors_and_notices\"` \n - `\"flaky_query\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"query_meta\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"steps\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
+                "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"errors_and_notices\"` \n - `\"exemplars\"` \n - `\"flaky_query\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"query_meta\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"steps\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
                 "enum": [
                   "annotations",
                   "arrow",
@@ -287,6 +308,7 @@
                   "datapoints_outside_range",
                   "error_with_source",
                   "errors_and_notices",
+                  "exemplars",
                   "flaky_query",
                   "exponential_heatmap_bucket_data",
                   "flame_graph",

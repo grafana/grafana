@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
@@ -449,4 +450,95 @@ func asJSON(v any, pretty bool) string {
 	}
 	bytes, _ := json.Marshal(v)
 	return string(bytes)
+}
+
+func TestCleanupSecretsAfterFailedPreparation(t *testing.T) {
+	newV := func() objectForStorage { return objectForStorage{createdSecureValues: []string{"NameForA"}} }
+	rejectErr := apierrors.NewBadRequest("rejected")
+
+	t.Run("cleanupSafe error deletes the created secrets", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "NameForA").Return(nil).Once()
+		s := &Storage{opts: StorageOptions{SecureValues: secureStore}}
+		require.Equal(t, rejectErr, s.cleanupSecretsAfterFailedPreparation(context.Background(), newV(), true, rejectErr))
+		secureStore.AssertExpectations(t)
+	})
+
+	t.Run("ambiguous error keeps the secrets", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t) // no Delete expected
+		s := &Storage{opts: StorageOptions{SecureValues: secureStore}}
+		require.Equal(t, rejectErr, s.cleanupSecretsAfterFailedPreparation(context.Background(), newV(), false, rejectErr))
+		secureStore.AssertExpectations(t)
+	})
+
+	t.Run("success keeps the secrets", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t) // no Delete expected
+		s := &Storage{opts: StorageOptions{SecureValues: secureStore}}
+		require.NoError(t, s.cleanupSecretsAfterFailedPreparation(context.Background(), newV(), true, nil))
+		secureStore.AssertExpectations(t)
+	})
+}
+
+func TestHandleManagedResourceRoutingNotRouted(t *testing.T) {
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "example.grafana.app/v1", "kind": "Example",
+		"metadata": map[string]any{"namespace": "default", "name": "d1"},
+	}}
+
+	t.Run("non-managed error is not routed and is cleanup-safe", func(t *testing.T) {
+		reject := apierrors.NewBadRequest("nope")
+		cleanupSafe, err := (&Storage{}).handleManagedResourceRouting(
+			context.Background(), reject, resourcepb.WatchEvent_MODIFIED, "/default/examples/d1", obj, obj)
+		require.Equal(t, reject, err)
+		require.True(t, cleanupSafe)
+	})
+
+	t.Run("managed error without configProvider is not routed and is cleanup-safe", func(t *testing.T) {
+		cleanupSafe, err := (&Storage{}).handleManagedResourceRouting(
+			context.Background(), errResourceIsManagedInRepository, resourcepb.WatchEvent_MODIFIED, "/default/examples/d1", obj, obj)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+		require.True(t, cleanupSafe)
+	})
+}
+
+// TestCreateCleansUpSecretsWhenPermissionCreationFails covers the Create path where preparation
+// succeeds (creating an inline secret) but afterCreatePermissionCreator rejects an invalid
+// grafana.app/grant-permissions value before anything is written. The created secret must be deleted.
+func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
+	secureStore := secret.NewMockInlineSecureValueSupport(t)
+	secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
+		Return("NameForA", nil).Once()
+	secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "NameForA").
+		Return(nil).Once()
+
+	// store is left nil: the object must never be written, so any store access would panic.
+	s := &Storage{
+		getKey: func(string) (*resourcepb.ResourceKey, error) {
+			return &resourcepb.ResourceKey{Namespace: "default", Resource: "customkinds", Name: "test"}, nil
+		},
+		opts: StorageOptions{
+			Scheme:               runtime.NewScheme(),
+			SecureValues:         secureStore,
+			MaximumNameLength:    100,
+			DeprecatedInternalID: DeprecatedID_None,
+		},
+	}
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "something.grafana.app/v1beta1",
+		"kind":       "CustomKind",
+		"metadata": map[string]any{
+			"namespace":   "default",
+			"name":        "test",
+			"annotations": map[string]any{utils.AnnoKeyGrantPermissions: "bogus"},
+		},
+		"secure": common.InlineSecureValues{"a": common.InlineSecureValue{Create: "SecretAAA"}},
+	}}
+
+	ctx := claims.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: claims.TypeUser})
+
+	err := s.Create(ctx, "/default/customkinds/test", obj, &unstructured.Unstructured{}, 0)
+	require.ErrorContains(t, err, "invalid permissions value")
+	secureStore.AssertExpectations(t) // secret created during preparation, then deleted
 }

@@ -3,7 +3,6 @@ package vector
 import (
 	"database/sql"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"text/template"
@@ -30,7 +29,9 @@ func mustTemplate(filename string) *template.Template {
 
 var (
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
-	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
+	sqlVectorCollectionRefreshMeta       = mustTemplate("vector_collection_refresh_meta.sql")
+	sqlVectorCollectionDeleteUIDs        = mustTemplate("vector_collection_delete_uids.sql")
+	sqlVectorCollectionDeleteAll         = mustTemplate("vector_collection_delete_all.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
 	sqlVectorNamespaceDeleteEmbeddings   = mustTemplate("vector_namespace_delete_embeddings.sql")
 	sqlVectorNamespaceDeleteQueryCache   = mustTemplate("vector_namespace_delete_query_cache.sql")
@@ -38,9 +39,13 @@ var (
 	sqlVectorNamespaceDeletePromoted     = mustTemplate("vector_namespace_delete_promoted.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
+	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
+	sqlVectorCollectionUpdateVersion     = mustTemplate("vector_collection_update_version.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
+	sqlVectorCollectionLexicalSearch     = mustTemplate("vector_collection_lexical_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
+	sqlVectorBackfillJobsReopen          = mustTemplate("vector_backfill_jobs_reopen.sql")
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
 	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
@@ -51,6 +56,7 @@ var (
 	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
 	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
 	sqlVectorCatalogList                 = mustTemplate("vector_catalog_list.sql")
+	sqlVectorCatalogInsert               = mustTemplate("vector_catalog_insert.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -63,6 +69,12 @@ type sqlVectorCollectionUpsertRequest struct {
 	Embedding any // pgvector.HalfVector
 }
 
+// ComputeTS gates the stored tsvector to external rows; internal rows
+// keep NULL (bleve is their lexical index).
+func (r *sqlVectorCollectionUpsertRequest) ComputeTS() bool {
+	return isExternalPartitionKey(r.Resource)
+}
+
 func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")
@@ -73,17 +85,68 @@ func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	return nil
 }
 
-type sqlVectorCollectionDeleteRequest struct {
+type sqlVectorCollectionRefreshMetaRequest struct {
 	sqltemplate.SQLTemplate
 	Resource  string
 	Namespace string
 	Model     string
 	UID       string
+	Rows      []VectorMeta
 }
 
-func (r *sqlVectorCollectionDeleteRequest) Validate() error {
+func (r *sqlVectorCollectionRefreshMetaRequest) Validate() error {
 	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
+	}
+	if len(r.Rows) == 0 {
+		return fmt.Errorf("rows must not be empty")
+	}
+	for i := range r.Rows {
+		if r.Rows[i].Title == "" {
+			return fmt.Errorf("rows[%d]: missing title", i)
+		}
+	}
+	return nil
+}
+
+type sqlVectorCollectionDeleteUIDsRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	AllModels bool
+	UIDs      []string
+}
+
+func (r *sqlVectorCollectionDeleteUIDsRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || (r.Model == "" && !r.AllModels) {
+		return fmt.Errorf("missing required fields")
+	}
+	if len(r.UIDs) == 0 {
+		return fmt.Errorf("uids must not be empty")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionDeleteUIDsRequest) UIDsSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDs)
+}
+
+type sqlVectorCollectionDeleteAllRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	AllModels bool
+	Limit     int
+}
+
+func (r *sqlVectorCollectionDeleteAllRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || (r.Model == "" && !r.AllModels) {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
 	}
 	return nil
 }
@@ -151,6 +214,51 @@ func (r *sqlVectorCollectionExistsRequest) Results() (*sqlVectorCollectionExists
 	return &cp, nil
 }
 
+// MinVersion is NULL (Valid=false) when the uid has no rows: MIN() over zero rows still returns one row.
+type sqlVectorCollectionContentVersionResponse struct {
+	MinVersion sql.NullInt64
+}
+
+type sqlVectorCollectionContentVersionRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Response  *sqlVectorCollectionContentVersionResponse
+}
+
+func (r *sqlVectorCollectionContentVersionRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionContentVersionRequest) Results() (*sqlVectorCollectionContentVersionResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorCollectionUpdateVersionRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Version   int
+}
+
+func (r *sqlVectorCollectionUpdateVersionRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Version < 1 {
+		return fmt.Errorf("version must be at least 1")
+	}
+	return nil
+}
+
 type sqlVectorBackfillJobsListResponse struct {
 	ID          int64
 	Model       string
@@ -198,11 +306,27 @@ type sqlVectorCatalogListResponse struct {
 	IsExternal   bool
 }
 
+type sqlVectorCatalogInsertRequest struct {
+	sqltemplate.SQLTemplate
+	GroupName    string
+	Resource     string
+	PartitionKey string
+	IsExternal   bool
+}
+
+func (r *sqlVectorCatalogInsertRequest) Validate() error {
+	if r.GroupName == "" || r.Resource == "" || r.PartitionKey == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
 type sqlVectorBackfillJobsCreateRequest struct {
 	sqltemplate.SQLTemplate
-	Model      string
-	Resource   string
-	StoppingRV int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
 }
 
 func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
@@ -211,6 +335,34 @@ func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
 	}
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")
+	}
+	if r.StoppingRV <= 0 {
+		return fmt.Errorf("stopping_rv must be positive")
+	}
+	if r.ContentVersion < 1 {
+		return fmt.Errorf("content_version must be at least 1")
+	}
+	return nil
+}
+
+// Reopens jobs whose content_version trails Version; the IN clause also matches the ”-catch-all job.
+type sqlVectorBackfillJobsReopenRequest struct {
+	sqltemplate.SQLTemplate
+	Model      string
+	Resource   string
+	Version    int
+	StoppingRV int64
+}
+
+func (r *sqlVectorBackfillJobsReopenRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.Version < 1 {
+		return fmt.Errorf("version must be at least 1")
 	}
 	if r.StoppingRV <= 0 {
 		return fmt.Errorf("stopping_rv must be positive")
@@ -291,13 +443,39 @@ type sqlVectorCollectionSearchResponse struct {
 	Content     string
 	Score       float64
 	Folder      string
-	Metadata    json.RawMessage
+	// []byte, not json.RawMessage: only *[]byte scans a NULL without error,
+	// and metadata is optional on external rows.
+	Metadata []byte
 }
 
 // MetadataFilterGroup is one filter rendered as OR-ed JSONB containments:
 // ( metadata @> j1 OR metadata @> j2 ... ) — IN semantics across values.
 type MetadataFilterGroup struct {
 	JSONs []string // e.g. `{"datasource_uids":["ds1"]}`
+}
+
+// vectorSearchFilterArgs are the filter predicates shared by the semantic
+// and lexical templates so the legs can't diverge. nil/empty = no filter.
+type vectorSearchFilterArgs struct {
+	UIDValues            []string
+	FolderValues         []string
+	MetadataFilterGroups []MetadataFilterGroup
+}
+
+func (r *vectorSearchFilterArgs) UIDFilter() bool {
+	return len(r.UIDValues) > 0
+}
+
+func (r *vectorSearchFilterArgs) UIDFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDValues)
+}
+
+func (r *vectorSearchFilterArgs) FolderFilter() bool {
+	return len(r.FolderValues) > 0
+}
+
+func (r *vectorSearchFilterArgs) FolderFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.FolderValues)
 }
 
 type sqlVectorCollectionSearchRequest struct {
@@ -309,10 +487,7 @@ type sqlVectorCollectionSearchRequest struct {
 	Limit          int64
 	Response       *sqlVectorCollectionSearchResponse
 
-	// nil/empty means no filter on that field.
-	UIDValues            []string
-	FolderValues         []string
-	MetadataFilterGroups []MetadataFilterGroup
+	vectorSearchFilterArgs
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {
@@ -332,20 +507,47 @@ func (r *sqlVectorCollectionSearchRequest) Results() (*sqlVectorCollectionSearch
 	return &cp, nil
 }
 
-func (r *sqlVectorCollectionSearchRequest) UIDFilter() bool {
-	return len(r.UIDValues) > 0
+type sqlVectorCollectionLexicalSearchResponse struct {
+	UID         string
+	Title       string
+	Folder      string
+	Subresource string
+	Content     string
+	// See sqlVectorCollectionSearchResponse.Metadata.
+	Metadata []byte
+	Rank     float64
 }
 
-func (r *sqlVectorCollectionSearchRequest) UIDFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.UIDValues)
+type sqlVectorCollectionLexicalSearchRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	Query     string
+	Limit     int64
+	Response  *sqlVectorCollectionLexicalSearchResponse
+
+	vectorSearchFilterArgs
 }
 
-func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {
-	return len(r.FolderValues) > 0
+func (r *sqlVectorCollectionLexicalSearchRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Query == "" {
+		return fmt.Errorf("query must not be empty")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
+	}
+	return nil
 }
 
-func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.FolderValues)
+func (r *sqlVectorCollectionLexicalSearchRequest) Results() (*sqlVectorCollectionLexicalSearchResponse, error) {
+	// Response is reused across Scan calls; shallow copy is safe because Scan
+	// allocates a fresh []byte for Metadata.
+	cp := *r.Response
+	return &cp, nil
 }
 
 type sqlQueryCacheGetResponse struct {

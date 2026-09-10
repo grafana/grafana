@@ -73,7 +73,7 @@ describe('getVariablesCompatibility', () => {
     });
   });
 
-  describe('edit pane selection', () => {
+  describe('sidebar selection', () => {
     it('scopes to the selected object ancestry', () => {
       const dashVar = makeQueryVar('dashVar');
       const sectionVar = makeQueryVar('sectionVar');

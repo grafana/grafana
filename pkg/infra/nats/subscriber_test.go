@@ -26,6 +26,20 @@ func TestSubscriber(t *testing.T) {
 		require.ErrorIs(t, err, ErrDisabled)
 	})
 
+	t.Run("subscribe succeeds even when the connection was never established", func(t *testing.T) {
+		cfg := setting.NATSSettings{
+			Enabled:    true,
+			Mode:       setting.NATSModeExternal,
+			ClientURLs: []string{"nats://127.0.0.1:1"},
+		}
+		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil))
+		t.Cleanup(s.close)
+
+		sub, err := s.Subscribe(context.Background(), "grafana.test.a", func(string, []byte) {})
+		require.NoError(t, err)
+		require.NotNil(t, sub)
+	})
+
 	t.Run("delivers a published message to the handler", func(t *testing.T) {
 		srv := startTestServer(t)
 		pub := newTestPublisher(t, srv)
@@ -132,15 +146,10 @@ func TestSubscriber(t *testing.T) {
 
 	t.Run("counts slow-consumer async errors", func(t *testing.T) {
 		m := newSubscriberMetrics()
-		cfg := setting.NATSSettings{Enabled: true}
-		sub := newSubscriber(log.NewNopLogger(), m, newConfig(cfg, nil))
 
-		// Drive the connection's async error hook directly: slow-consumer errors are
-		// counted, unrelated async errors are ignored.
-		sub.onAsyncError(natsclient.ErrSlowConsumer)
-		sub.onAsyncError(context.Canceled)
+		m.recordAsyncError(&natsclient.Subscription{Subject: "us.watch.v1.provisioning.grafana.app.stacks-1.jobs"}, natsclient.ErrSlowConsumer)
 
-		require.Equal(t, float64(1), testutil.ToFloat64(m.slowConsumers))
+		require.Equal(t, float64(1), testutil.ToFloat64(m.asyncErrors.WithLabelValues("provisioning.grafana.app", "jobs", reasonSlowConsumer)))
 	})
 
 	t.Run("subscribe honours a cancelled context", func(t *testing.T) {

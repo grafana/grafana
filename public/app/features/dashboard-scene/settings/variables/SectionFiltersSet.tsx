@@ -1,5 +1,3 @@
-import { useId, useMemo } from 'react';
-
 import { t } from '@grafana/i18n';
 import {
   type SceneObject,
@@ -10,44 +8,16 @@ import {
   SceneVariableSet,
   sceneUtils,
 } from '@grafana/scenes';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-import { SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 export interface SectionFiltersSetState extends SceneObjectState {
   sectionRef: SceneObjectRef<SceneObject>;
-}
-
-function useEditPaneOptions(
-  this: SectionFiltersSet,
-  sectionRef: SceneObjectRef<SceneObject>
-): OptionsPaneCategoryDescriptor[] {
-  const filterListId = useId();
-  const sectionOwner = sectionRef.resolve();
-
-  const options = useMemo(() => {
-    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'section-filters' });
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: filterListId,
-        skipField: true,
-        render: () => <SectionFiltersList sectionOwner={sectionOwner} />,
-      })
-    );
-
-    return category;
-  }, [filterListId, sectionOwner]);
-
-  return [options];
 }
 
 export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> implements EditableDashboardElement {
@@ -83,6 +53,4 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
       sceneUtils.isAdHocVariable
     );
   }
-
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.sectionRef);
 }

@@ -9,6 +9,7 @@ import (
 	"hash/fnv"
 	"math"
 	"math/rand"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -84,6 +85,18 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      kinds.TestDataQueryTypeFlakyQuery,
 		Name:    "Flaky Query",
 		handler: s.handleFlakyQueryScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeExemplars,
+		Name:    "Exemplars",
+		handler: s.handleExemplarsScenario,
+		Description: `Returns only exemplars - the diamond markers a panel draws on top of a series - and no series of its own.
+Add a second query (Random Walk works well) to give them something to annotate.
+Values and timestamps are seeded from the dashboard time range, so the same range always returns the same exemplars.
+Leaving Min and Max empty derives the value range from a reference random walk over the same time range, padded by 10%.
+The exemplars ignore Start value, so pin Min and Max (or give the sibling query an explicit Start value and Spread) to keep both queries in the same band.
+Exemplar labels show in the tooltip. They are also what the legend filter matches on - it keeps the markers whose label field names and values match a visible series' labels - so with generated values, hiding any series in the legend hides every marker.`,
 	})
 
 	s.registerScenario(&Scenario{
@@ -257,11 +270,12 @@ func instrumentScenarioHandler(logger log.Logger, scenario kinds.TestDataQueryTy
 func GetJSONModel(j json.RawMessage) (kinds.TestDataQuery, error) {
 	model := kinds.TestDataQuery{
 		// Default values
-		ScenarioId:  kinds.TestDataQueryTypeRandomWalk,
-		SeriesCount: 1,
-		Lines:       10,
-		StartValue:  rand.Float64() * 100,
-		Spread:      1,
+		ScenarioId:    kinds.TestDataQueryTypeRandomWalk,
+		SeriesCount:   1,
+		Lines:         10,
+		StartValue:    rand.Float64() * 100,
+		Spread:        1,
+		ExemplarCount: defaultExemplarCount,
 	}
 	if len(j) > 0 {
 		// csvWave has saved values that are single values, not arrays
@@ -576,6 +590,27 @@ func flakyQueryDelay(base time.Duration, variability float64) time.Duration {
 	}
 
 	return delay
+}
+
+// handleExemplarsScenario returns exemplars and nothing else. There is no delay
+// or error rate here: every query for a panel goes to the data source in one
+// request, so a slow or failing exemplar query is indistinguishable from a slow
+// or failing series query - use the flaky query scenario for that.
+func (s *Service) handleExemplarsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, Exemplars(q, model))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
 }
 
 func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -1038,6 +1073,194 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 	frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 	return frame
+}
+
+const (
+	defaultExemplarCount = 100
+	// Matches the point ceiling RandomWalk applies, so exemplars never outrun
+	// the series they annotate.
+	maxExemplarCount = 10000
+
+	defaultExemplarLabelLength = 16
+	maxExemplarLabelLength     = 128
+
+	exemplarLabelAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+)
+
+// Exemplars returns a frame of synthetic exemplars - the diamond markers a
+// panel draws on top of a series - and no series of its own.
+//
+// The frame contract is exact and fails silently when broken: the panel only
+// picks the frame up when the data topic is annotations, only maps rows whose
+// fields are named Time and Value, and treats any frame name other than
+// "exemplar" as a regular annotation, drawing markers and a vertical line on
+// top of the diamonds.
+func Exemplars(query backend.DataQuery, model kinds.TestDataQuery) *data.Frame {
+	r := rand.New(rand.NewSource(query.TimeRange.From.UnixNano() + query.TimeRange.To.UnixNano()))
+
+	count := model.ExemplarCount
+	if count <= 0 {
+		count = defaultExemplarCount
+	}
+	if count > maxExemplarCount {
+		count = maxExemplarCount
+	}
+
+	fromMs := query.TimeRange.From.UnixMilli()
+	toMs := query.TimeRange.To.UnixMilli()
+
+	// The interval is zero on some paths (resource calls, tests) and would
+	// divide by zero below.
+	intervalMs := query.Interval.Milliseconds()
+	if intervalMs <= 0 {
+		intervalMs = 1000
+	}
+
+	gridPoints := int((toMs - fromMs) / intervalMs)
+	if gridPoints < 1 {
+		gridPoints = 1
+	}
+	if gridPoints > maxExemplarCount {
+		gridPoints = maxExemplarCount
+	}
+
+	minValue, maxValue := exemplarValueRange(query, model, r)
+
+	indices := make([]int, count)
+	for i := range indices {
+		indices[i] = r.Intn(gridPoints)
+	}
+	// Duplicates are realistic - a single data point can carry several
+	// exemplars - and sorting keeps the frame time ascending.
+	sort.Ints(indices)
+
+	timeVec := make([]time.Time, count)
+	valueVec := make([]float64, count)
+	for i, idx := range indices {
+		timeVec[i] = time.UnixMilli(fromMs + int64(idx)*intervalMs)
+		valueVec[i] = minValue + r.Float64()*(maxValue-minValue)
+	}
+
+	frame := data.NewFrame("exemplar",
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeVec),
+		data.NewField(data.TimeSeriesValueFieldName, nil, valueVec),
+	)
+	frame.Fields = append(frame.Fields, exemplarLabelFields(model.ExemplarLabels, count, r)...)
+
+	frame.SetMeta(&data.FrameMeta{
+		DataTopic: data.DataTopicAnnotations,
+		// Not needed to render the diamonds, but it is what gates the tooltip
+		// max height option and the heatmap exemplars color picker.
+		Custom: map[string]any{"resultType": "exemplar"},
+	})
+
+	return frame
+}
+
+// exemplarValueRange derives the band exemplar values fall in. An explicit Min
+// or Max wins; a bound left blank comes from a reference random walk over the
+// same time range padded by 10%, so exemplars land where a sibling random_walk
+// query would draw its series.
+func exemplarValueRange(query backend.DataQuery, model kinds.TestDataQuery, r *rand.Rand) (float64, float64) {
+	ref := model
+	// GetJSONModel draws the default start value from the global source, which
+	// would move the band on every refresh - redraw it from the seeded one.
+	ref.StartValue = r.Float64() * 100
+	if ref.Spread == 0 {
+		ref.Spread = 1
+	}
+	// Keep the reference walk from being clipped by the bounds we are deriving
+	// from it, or thinned by dropped points.
+	ref.DropPercent = 0
+	ref.Min = nil
+	ref.Max = nil
+
+	values := RandomWalk(query, ref, 0).Fields[1]
+	walkMin, walkMax := math.Inf(1), math.Inf(-1)
+	for i := 0; i < values.Len(); i++ {
+		v, ok := values.At(i).(*float64)
+		if !ok || v == nil {
+			continue
+		}
+		walkMin = math.Min(walkMin, *v)
+		walkMax = math.Max(walkMax, *v)
+	}
+	// An empty time range produces a walk with no points at all.
+	if math.IsInf(walkMin, 1) || math.IsInf(walkMax, -1) {
+		walkMin, walkMax = ref.StartValue, ref.StartValue
+	}
+
+	pad := 0.1 * (walkMax - walkMin)
+	if pad <= 0 {
+		pad = 1
+	}
+
+	minValue, maxValue := walkMin-pad, walkMax+pad
+	if model.Min != nil {
+		minValue = *model.Min
+	}
+	if model.Max != nil {
+		maxValue = *model.Max
+	}
+	if minValue > maxValue {
+		minValue, maxValue = maxValue, minValue
+	}
+
+	return minValue, maxValue
+}
+
+// exemplarLabelFields builds one string field per requested label, matching the
+// long format Prometheus returns: time, value, then a field per label. Entries
+// without a name, with a duplicate name, or reusing the reserved Time and Value
+// names are dropped - each leaves the frame ambiguous for both the tooltip and
+// legend-based marker filtering.
+func exemplarLabelFields(labels []kinds.ExemplarLabel, rows int, r *rand.Rand) data.Fields {
+	fields := make(data.Fields, 0, len(labels))
+	seen := map[string]bool{
+		data.TimeSeriesTimeFieldName:  true,
+		data.TimeSeriesValueFieldName: true,
+	}
+
+	for _, label := range labels {
+		if label.Name == "" || seen[label.Name] {
+			continue
+		}
+		seen[label.Name] = true
+
+		length := label.Length
+		if length <= 0 {
+			length = defaultExemplarLabelLength
+		}
+		if length > maxExemplarLabelLength {
+			length = maxExemplarLabelLength
+		}
+
+		values := make([]string, rows)
+		for i := range values {
+			values[i] = randomString(r, length)
+		}
+
+		field := data.NewField(label.Name, nil, values)
+		if label.Link != "" {
+			field.SetConfig(&data.FieldConfig{Links: []data.DataLink{{
+				Title:       "Go to " + label.Name,
+				URL:         label.Link,
+				TargetBlank: true,
+			}}})
+		}
+
+		fields = append(fields, field)
+	}
+
+	return fields
+}
+
+func randomString(r *rand.Rand, length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = exemplarLabelAlphabet[r.Intn(len(exemplarLabelAlphabet))]
+	}
+	return string(b)
 }
 
 func randomWalkTable(query backend.DataQuery, model kinds.TestDataQuery) *data.Frame {

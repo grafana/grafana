@@ -372,12 +372,12 @@ func newBulkImportRequest(namespace, name string, action resourcepb.BulkRequest_
 			Name:      name,
 		},
 		Action: action,
-		Value: []byte(fmt.Sprintf(
+		Value: fmt.Appendf(nil,
 			`{"apiVersion":"bulk.grafana.app/v1","kind":"Item","metadata":{"name":"%s","namespace":"%s"},"spec":{"name":"%s"}}`,
 			name,
 			namespace,
 			name,
-		)),
+		),
 	}
 }
 
@@ -390,13 +390,13 @@ func newBulkImportRequestWithGeneration(namespace, name string, action resourcep
 			Name:      name,
 		},
 		Action: action,
-		Value: []byte(fmt.Sprintf(
+		Value: fmt.Appendf(nil,
 			`{"apiVersion":"bulk.grafana.app/v1","kind":"Item","metadata":{"name":"%s","namespace":"%s","generation":%d},"spec":{"name":"%s"}}`,
 			name,
 			namespace,
 			generation,
 			name,
-		)),
+		),
 	}
 }
 
@@ -410,7 +410,7 @@ type legacyHistoryRow struct {
 func setupCompatSqlKVStorageBackend(t *testing.T) (*kvStorageBackend, sqldb.DB) {
 	t.Helper()
 
-	dbstore := infdb.InitTestDB(t)
+	dbstore := infdb.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())

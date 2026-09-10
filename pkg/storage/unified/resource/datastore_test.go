@@ -47,7 +47,7 @@ func setupBadgerKV(t *testing.T) KV {
 }
 
 func setupSqlKV(t *testing.T) kv.KV {
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())
@@ -1584,7 +1584,7 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 				Action:          DataActionCreated,
 			}
 
-			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "version-%d", version)))
 			require.NoError(t, err)
 		}
 
@@ -3069,7 +3069,7 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 			Folder:          "test-folder",
 		}
 
-		err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("content-%d", i))))
+		err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "content-%d", i)))
 		require.NoError(t, err)
 	}
 
@@ -3240,7 +3240,7 @@ func TestIntegrationDataStore_BatchDelete(t *testing.T) {
 func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	keys := make([]DataKey, 95)
-	for i := 0; i < 95; i++ {
+	for i := range 95 {
 		rv := node.Generate().Int64()
 		keys[i] = DataKey{
 			Namespace:       "test-namespace",
@@ -3260,7 +3260,7 @@ func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) 
 	require.NoError(t, err)
 
 	// Verify all events were deleted
-	for i := 0; i < 95; i++ {
+	for i := range 95 {
 		_, err := ds.Get(ctx, DataKey{
 			Namespace: "test-namespace",
 			Group:     "test-group",
@@ -3283,7 +3283,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 		keys := make([]DataKey, 5)
 		expectedContent := make(map[string]string)
 
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			rv := node.Generate().Int64()
 			keys[i] = DataKey{
 				Namespace:       "test-namespace",
@@ -3323,7 +3323,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
 		existingKeys := make([]DataKey, 3) //nolint:prealloc
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{
 				Namespace:       "test-namespace",
@@ -3334,13 +3334,13 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
 			}
-			err := ds.Save(ctx, existingKeys[i], bytes.NewReader([]byte(fmt.Sprintf("value-%d", i))))
+			err := ds.Save(ctx, existingKeys[i], bytes.NewReader(fmt.Appendf(nil, "value-%d", i)))
 			require.NoError(t, err)
 		}
 
 		// Create 2 non-existent keys (not saved to datastore)
 		nonExistentKeys := make([]DataKey, 2)
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			rv := node.Generate().Int64()
 			nonExistentKeys[i] = DataKey{
 				Namespace:       "test-namespace",
@@ -3381,7 +3381,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 		keys := make([]DataKey, numKeys)
 		expectedContent := make(map[string]string)
 
-		for i := 0; i < numKeys; i++ {
+		for i := range numKeys {
 			rv := node.Generate().Int64()
 			keys[i] = DataKey{
 				Namespace:       "batch-test",
@@ -3452,7 +3452,7 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 				Action:          DataActionCreated,
 			}
 
-			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "version-%d", version)))
 			require.NoError(t, err)
 		}
 

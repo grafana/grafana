@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -32,6 +33,81 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestQueryDashboardDiagnosticsRecordsAcceptedAndCompletedRun(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	previousJobs := dashboardDiagnosticsJobs
+	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	t.Cleanup(func() { dashboardDiagnosticsJobs = previousJobs })
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(backend.NewQueryDataResponse(), nil)
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newTestDiagnosticsMetrics(t, usage)
+	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
+
+	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder())},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDashboardDiagnostics(c)
+	require.Equal(t, http.StatusAccepted, resp.Status())
+	var accepted map[string]any
+	require.NoError(t, json.Unmarshal(resp.Body(), &accepted))
+	uid, _ := accepted["uid"].(string)
+	require.NotEmpty(t, uid)
+	require.Eventually(t, func() bool {
+		snapshot, ok := dashboardDiagnosticsJobs.snapshot(uid, c.SignedInUser)
+		return ok && snapshot.State == jobComplete
+	}, 2*time.Second, 10*time.Millisecond)
+
+	report, err := usage.GetUsageReport(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.dashboard_runs.count"])
+	require.Equal(t, int64(0), report.Metrics["stats.ds_diagnostics.dashboard_errors.count"])
+}
+
+func TestQueryDashboardDiagnosticsRecordsFailedRun(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	previousJobs := dashboardDiagnosticsJobs
+	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	t.Cleanup(func() { dashboardDiagnosticsJobs = previousJobs })
+
+	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(mock.Arguments) { panic("query panic") })
+	usage := &usagestats.UsageStatsMock{T: t}
+	metrics := newTestDiagnosticsMetrics(t, usage)
+	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
+
+	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
+	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	c := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: req, Resp: web.NewResponseWriter(req.Method, httptest.NewRecorder())},
+		SignedInUser: &user.SignedInUser{OrgID: 1, UserUID: "u1"},
+		Logger:       log.New("test"),
+	}
+
+	resp := hs.QueryDashboardDiagnostics(c)
+	require.Equal(t, http.StatusAccepted, resp.Status())
+	require.Eventually(t, func() bool {
+		report, reportErr := usage.GetUsageReport(context.Background())
+		return reportErr == nil && report.Metrics["stats.ds_diagnostics.dashboard_errors.count"] == int64(1)
+	}, 2*time.Second, 10*time.Millisecond)
+
+	report, err := usage.GetUsageReport(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, int64(1), report.Metrics["stats.ds_diagnostics.dashboard_runs.count"])
+}
 
 // TestQueryDashboardDiagnostics_survivesRequestContextCancellation guards against a regression
 // where the background generation goroutine was derived from the initiating HTTP request's own
@@ -125,13 +201,14 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	t.Cleanup(func() { dashboardDiagnosticsJobs = prev })
 	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 	creator := &user.SignedInUser{OrgID: 1, UserUID: "u1"}
-	for i := 0; i < diagnosticsMaxInFlightJobs; i++ {
+	for range diagnosticsMaxInFlightJobs {
 		_, ok := dashboardDiagnosticsJobs.create(1, creator)
 		require.True(t, ok, "setup: pre-filling the store to the cap must succeed")
 	}
 
 	// create() rejects before the handler touches queryDataService, so no fake is needed.
-	hs := &HTTPServer{}
+	usage := &usagestats.UsageStatsMock{T: t}
+	hs := &HTTPServer{diagnosticsMetrics: newTestDiagnosticsMetrics(t, usage)}
 
 	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
 	req, err := http.NewRequest(http.MethodPost, "/api/ds/dashboard-diagnostics", strings.NewReader(body))
@@ -153,6 +230,10 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	// The rejected request must not have created a job.
 	require.Len(t, dashboardDiagnosticsJobs.jobs, diagnosticsMaxInFlightJobs,
 		"a rejected request must not add a job to the store")
+	report, err := usage.GetUsageReport(req.Context())
+	require.NoError(t, err)
+	require.Equal(t, int64(0), report.Metrics["stats.ds_diagnostics.dashboard_runs.count"],
+		"a rejected request must not count as a diagnostics run")
 }
 
 // TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError guards against a regression where
@@ -352,7 +433,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		base := time.Now()
 		var oldest string
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := range diagnosticsJobMaxEntries {
 			j, _ := s.create(1, creator)
 			s.complete(j.UID, nil) // only terminal jobs count against the cap
 			// Age them deterministically so eviction order is well-defined.
@@ -391,7 +472,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 			}
 		}
 		// Fill exactly to the cap with baseline terminal jobs all finished at base.
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := range diagnosticsJobMaxEntries {
 			add(fmt.Sprintf("fill-%d", i), base, base)
 		}
 		add("slow-but-fresh", base.Add(-time.Hour), base.Add(time.Minute))  // oldest CreatedAt, newest finishedAt
@@ -412,7 +493,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	t.Run("enforces the cap on complete without a later create", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		base := time.Now()
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := range diagnosticsJobMaxEntries {
 			uid := fmt.Sprintf("term-%d", i)
 			s.jobs[uid] = &diagnosticsJob{UID: uid, State: jobComplete, finishedAt: base}
 		}
@@ -433,7 +514,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	t.Run("caps concurrent in-flight jobs", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		var last *diagnosticsJob
-		for i := 0; i < diagnosticsMaxInFlightJobs; i++ {
+		for range diagnosticsMaxInFlightJobs {
 			j, ok := s.create(1, creator)
 			require.True(t, ok, "creates within the in-flight cap must succeed")
 			last = j

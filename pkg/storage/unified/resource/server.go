@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -66,6 +67,12 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
+
+// maxKeysPageSize caps a keys_only page by count. The byte budget also applies,
+// but it measures the wire and a key costs far less there (~20 bytes) than the
+// wrapper holding it does in memory (~120), so bytes alone would admit a page
+// several times larger than intended.
+const maxKeysPageSize = 10000
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
@@ -200,8 +207,8 @@ type StorageBackend interface {
 	// returned identity may have no live objects by the time the caller queries it.
 	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
 
-	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
-	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
+	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
+	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
 }
 
 type ModifiedResource struct {
@@ -292,6 +299,11 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
+	// setting. It selects the index features this server requires, so an index
+	// that predates them is rebuilt before that path serves a query.
+	PostRankAuthzEnabled bool
 
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
@@ -942,6 +954,9 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	if errs := validation.IsValidGrafanaName(obj.GetName()); errs != nil {
 		return nil, NewBadRequestError(errs[0])
 	}
+	if errs := validation.IsReservedName(obj.GetName()); errs != nil {
+		return nil, NewBadRequestError(errs[0])
+	}
 
 	// For folder moves, we need to check permissions on both folders
 	if s.isFolderMove(event) {
@@ -1066,9 +1081,8 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	})
 
 	if err != nil {
-		var quotaErr QuotaExceededError
 		msg := err.Error()
-		if errors.As(err, &quotaErr) {
+		if quotaErr, ok := errors.AsType[QuotaExceededError](err); ok {
 			msg = quotaErr.Message()
 		}
 		return &resourcepb.CreateResponse{
@@ -1145,6 +1159,10 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 			return false
 		}
 	}
+
+	ctx, span := tracer.Start(ctx, "resource.server.sleepAfterSuccessfulWriteOperation")
+	span.SetAttributes(attribute.Float64("artificialSuccessfulWriteDelaySeconds", s.artificialSuccessfulWriteDelay.Seconds()))
+	defer span.End()
 
 	s.log.Debug("sleeping after successful write operation",
 		"operation", operation,
@@ -1551,6 +1569,20 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
+	// Trash authorizes by decoding the object (see listFromTrash), so neither it
+	// nor history can be served from keys alone.
+	if req.KeysOnly && req.Source != resourcepb.ListRequest_STORE {
+		return &resourcepb.ListResponse{
+			Error: NewBadRequestError("keys_only is only supported for the store source"),
+		}, nil
+	}
+
+	if req.KeysOnly && req.Options.Key.Namespace != "" {
+		return &resourcepb.ListResponse{
+			Error: NewBadRequestError("keys_only lists are cluster-wide, so the namespace must be empty"),
+		}, nil
+	}
+
 	if _, ok := claims.AuthInfoFrom(ctx); !ok {
 		return &resourcepb.ListResponse{
 			Error: &resourcepb.ErrorResult{
@@ -1566,24 +1598,48 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
-	// Fast path for getting single value in a list
-	if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
-		return rsp, nil
+	// Fast path for getting single value in a list. Skipped for keys_only: it
+	// resolves names through Read, which fetches whole objects.
+	if !req.KeysOnly {
+		if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+			return rsp, nil
+		}
 	}
 
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
+	if req.KeysOnly && req.Limit > maxKeysPageSize {
+		req.Limit = maxKeysPageSize
+	}
 
-	req = filterFieldSelectors(req)
-	if s.useFieldSelectorSearch(req) {
-		// If we get here, we're doing list with selectable fields. Let's do search instead, since
-		// we index all selectable fields, and fetch resulting documents one by one.
+	// Must run before filterSelectors drops non-indexable selectors: clients
+	// re-apply those against the decoded object, which a keys-only response
+	// lacks, so a dropped selector would look like it matched.
+	if req.KeysOnly && (len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0) {
+		return &resourcepb.ListResponse{
+			Error: NewBadRequestError("keys_only cannot be combined with field/label selectors"),
+		}, nil
+	}
+
+	req = filterSelectors(req)
+
+	if s.useSelectorSearch(req) {
+		// If we get here, we're doing list with selectable fields or labels. Let's do
+		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 		if s.storageMetrics != nil {
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 		}
-		return s.listWithFieldSelectors(ctx, req)
+		return s.listWithSelectors(ctx, req)
+	}
+
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, false) {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("continue token was issued for a search-backed list"),
+			}, nil
+		}
 	}
 
 	switch req.Source {
@@ -1642,6 +1698,7 @@ type listBackendFunc func(context.Context, *resourcepb.ListRequest, func(ListIte
 func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest, backendList listBackendFunc) (*resourcepb.ListResponse, error) {
 	// candidateItem holds metadata from the ListIterator for batch authorization.
 	type candidateItem struct {
+		namespace       string
 		name            string
 		folder          string
 		resourceVersion int64
@@ -1665,6 +1722,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 					return
 				}
 				if !yield(candidateItem{
+					namespace:       iter.Namespace(),
 					name:            iter.Name(),
 					folder:          iter.Folder(),
 					resourceVersion: iter.ResourceVersion(),
@@ -1677,13 +1735,20 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
+			// keys_only is cluster-wide and has an empty namespace in the key, so
+			// we use the actual item namespace. FilterAuthorized still checks each
+			// item using the authenticated identity from ctx.
+			namespace := key.Namespace
+			if req.KeysOnly {
+				namespace = c.namespace
+			}
 			return authz.BatchCheckItem{
 				Name:               c.name,
 				Folder:             c.folder,
 				Verb:               utils.VerbGet,
 				Group:              key.Group,
 				Resource:           key.Resource,
-				Namespace:          key.Namespace,
+				Namespace:          namespace,
 				FreshnessTimestamp: ResourceVersionTime(c.resourceVersion),
 			}
 		}
@@ -1701,11 +1766,23 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 				break
 			}
 
-			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-				ResourceVersion: item.resourceVersion,
-				Value:           item.value,
-			})
-			pageBytes += len(item.value)
+			if req.KeysOnly {
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					ResourceVersion: item.resourceVersion,
+					Namespace:       item.namespace,
+					Name:            item.name,
+					Folder:          item.folder,
+				})
+				// Measured rather than approximated from the string lengths, so the
+				// budget stays right if the wrapper gains a field.
+				pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
+			} else {
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					ResourceVersion: item.resourceVersion,
+					Value:           item.value,
+				})
+				pageBytes += len(item.value)
+			}
 			lastContinueToken = item.continueToken
 		}
 
@@ -1736,9 +1813,16 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 	)
 	maxPageBytes := s.maxPageSizeBytes
 
-	// Cache admin check results per folder to avoid redundant Check calls
-	// for items in the same folder.
-	folderAdminCache := make(map[string]bool)
+	// One authorizer per request: it caches folder-admin results, which must not
+	// outlive the request. The search path builds the same thing, so the two trash
+	// views cannot drift on who may see what.
+	authorizer := NewTrashAuthorizer(s.access, user, key, func(err error) {
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	})
 
 	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
@@ -1757,11 +1841,9 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 				continue
 			}
 
-			// Check if user is admin in this folder (cached) or the user who deleted the item.
-			if !s.checkFolderAdmin(ctx, user, iter.Folder(), key, folderAdminCache) {
-				if obj.GetUpdatedBy() != user.GetUID() {
-					continue
-				}
+			// The deletion marker records the deleting user as the last updater.
+			if !authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy()) {
+				continue
 			}
 
 			item := &resourcepb.ResourceWrapper{
@@ -1810,33 +1892,6 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	}
 	return rsp, nil
-}
-
-// checkFolderAdmin checks whether the user has admin permission (VerbSetPermissions) in the given
-// folder. Results are cached per folder to avoid redundant Check calls.
-func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, folder string, key *resourcepb.ResourceKey, cache map[string]bool) bool {
-	if isAdmin, ok := cache[folder]; ok {
-		return isAdmin
-	}
-	resp, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      utils.VerbSetPermissions,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}, folder)
-	if err != nil {
-		// The error is swallowed (user treated as non-admin), so without this
-		// the failure is invisible. Record it as a degraded operation, tagging
-		// whether authz was unavailable vs. a logical error.
-		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}, err)
-	}
-	isAdmin := err == nil && resp.Allowed
-	cache[folder] = isAdmin
-	return isAdmin
 }
 
 // parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
@@ -2116,7 +2171,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
 					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
 					}
 				}
 			}
@@ -2495,12 +2550,8 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Namespace: nsr.Namespace,
 		Kinds:     []string{nsr.GroupResource()},
 	})
-	if err != nil {
-		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
-		return nil
-	}
-	if statsRsp.Error != nil {
-		s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(statsRsp.Error.Message))
+	if err := ErrorFromResponse(statsRsp.GetError(), err); err != nil {
+		s.degraded(ctx, "check_quota", "stats_error", nsr, err)
 		return nil
 	}
 	stats := statsRsp.Stats

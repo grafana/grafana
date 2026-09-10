@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
+import { notificationsAPIv1beta1 } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -88,7 +89,7 @@ export function RuleNotificationSection() {
   const annotations = watch('annotations');
 
   // Fetch contact points from Alerting API v0alpha1
-  const { currentData, status, refetch } = notificationsAPIv0alpha1.endpoints.listReceiver.useQuery({});
+  const { currentData, status, refetch } = notificationsAPIv1beta1.endpoints.listReceiver.useQuery({});
   const options = useMemo<Array<ComboboxOption<string>>>(
     () =>
       (currentData?.items ?? []).map((item) => ({
@@ -242,6 +243,7 @@ export function RuleNotificationSection() {
                       'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
                       'View or create contact points'
                     )}
+                    data-testid={selectors.components.AlertRules.viewContactPointsLink}
                   >
                     <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
                       View or create contact points

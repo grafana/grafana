@@ -26,11 +26,12 @@ import {
 } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 
-function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
   const layoutElement = panel.parent!;
   const titleId = useId();
@@ -41,7 +42,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.title-option', 'Title'),
+          title: t('dashboard.sidebar.viz-panel.options.title-option', 'Title'),
           id: titleId,
           value: panel.state.title,
           popularRank: 1,
@@ -52,7 +53,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.description', 'Description'),
+          title: t('dashboard.sidebar.viz-panel.options.description', 'Description'),
           id: descriptionId,
           value: panel.state.description,
           render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
@@ -60,16 +61,22 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
+          title: t('dashboard.sidebar.viz-panel.options.transparent-background', 'Transparent background'),
           id: backgroundId,
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
       );
   }, [titleId, panel, descriptionId, backgroundId, isNewElement]);
 
+  // Some layout options depend on plugin capabilities (e.g. content-fit), and
+  // plugins load async — subscribe so the categories rebuild once loaded.
+  panel.useState();
+  const plugin = panel.getPlugin();
+
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
-    [layoutElement]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layoutElement, plugin]
   );
 
   return [panelOptions, ...layoutCategories];
@@ -106,10 +113,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     return <OpenPanelEditViz panel={this.panel} />;
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
-  public onDelete() {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
+  public onDelete(source: PanelActionSource = 'edit_pane') {
+    DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(this.panel), source);
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
   }
@@ -117,12 +124,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public onConfirmDelete() {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('dashboard.viz-panel.delete-panel-title', 'Delete panel?'),
+        title: t('dashboard.sidebar.viz-panel.delete-panel-title', 'Delete panel?'),
         text: t(
-          'dashboard.viz-panel.delete-panel-text',
+          'dashboard.sidebar.viz-panel.delete-panel-text',
           'Deleting this panel will also remove all queries. Are you sure you want to continue?'
         ),
-        yesText: t('dashboard.viz-panel.delete-panel-yes', 'Delete'),
+        yesText: t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete'),
         onConfirm: () => {
           this.onDelete();
         },
@@ -130,14 +137,14 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     );
   }
 
-  public onDuplicate() {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
+  public onDuplicate(source: PanelActionSource = 'edit_pane') {
+    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
   }
 
-  public onCopy() {
-    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), 'edit_pane');
+  public onCopy(source: PanelActionSource = 'edit_pane') {
+    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
@@ -157,6 +164,8 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 }
 
+type PanelActionSource = 'edit_pane' | 'edit_popover';
+
 type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
@@ -170,10 +179,13 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
       icon="graph-bar"
       variant="secondary"
       fullWidth
-      tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+      tooltip={t(
+        'dashboard.sidebar.viz-panel.options.configure-button-tooltip',
+        'Edit queries and visualization options'
+      )}
       data-testid={selectors.components.Sidebar.configurePanelButton}
     >
-      <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
+      <Trans i18nKey="dashboard.sidebar.viz-panel.configure-button">Edit visualization</Trans>
     </Button>
   );
 };
