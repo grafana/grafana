@@ -60,17 +60,13 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	var authnInfo *auth.SessionTokenAuthnInfo
-	if r.GetMeta(authn.MetaKeyOAuthPassthrough) != "" {
-		if optimized, ok := s.sessionService.(auth.SessionTokenAuthnService); ok {
-			authnInfo, err = optimized.LookupTokenForAuthn(ctx, rawSessionToken)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
 	var token *auth.UserToken
-	if authnInfo != nil {
+	// Only OAuth passthrough needs the linked provider and decrypted credentials.
+	if r.GetMeta(authn.MetaKeyOAuthPassthrough) != "" {
+		authnInfo, err = s.sessionService.LookupTokenForAuthn(ctx, rawSessionToken)
+		if err != nil {
+			return nil, err
+		}
 		token = authnInfo.Token
 	} else {
 		token, err = s.sessionService.LookupToken(ctx, rawSessionToken)

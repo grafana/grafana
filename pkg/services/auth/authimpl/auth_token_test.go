@@ -965,6 +965,20 @@ func TestIntegrationLookupTokenForAuthn(t *testing.T) {
 	assert.Equal(t, "refresh-token", actual.OAuthToken.RefreshToken)
 	assert.Equal(t, expiresAt, actual.OAuthToken.Expiry)
 	assert.Equal(t, "id-token", actual.OAuthToken.Extra("id_token"))
+
+	t.Run("external session can exist without linked auth info", func(t *testing.T) {
+		require.NoError(t, testCtx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Table("user_auth").ID(authInfo.Id).Delete(&login.UserAuth{})
+			return err
+		}))
+		actual, err := testCtx.tokenService.LookupTokenForAuthn(context.Background(), created.UnhashedToken)
+		require.NoError(t, err)
+		assert.False(t, actual.HasAuthInfo)
+		assert.Empty(t, actual.AuthID)
+		assert.Equal(t, login.AzureADAuthModule, actual.AuthModule)
+		require.NotNil(t, actual.OAuthToken)
+		assert.Equal(t, "access-token", actual.OAuthToken.AccessToken)
+	})
 }
 
 func createTestContext(t *testing.T) *testContext {

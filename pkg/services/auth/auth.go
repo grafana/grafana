@@ -80,18 +80,12 @@ type CreateTokenCommand struct {
 // path. Implementations can resolve it in one database query instead of loading
 // the token, auth info, and external OAuth session independently.
 type SessionTokenAuthnInfo struct {
-	Token       *UserToken
-	AuthID      string
-	AuthModule  string
-	OAuthToken  *oauth2.Token
+	Token      *UserToken
+	AuthID     string
+	AuthModule string
+	OAuthToken *oauth2.Token
+	// AuthModule comes from the external session, which may outlive its user_auth row.
 	HasAuthInfo bool
-}
-
-// SessionTokenAuthnService is an optional optimized read path used by session
-// authentication. UserTokenService implementations that do not provide it keep
-// using LookupToken and AuthInfoService as a fallback.
-type SessionTokenAuthnService interface {
-	LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*SessionTokenAuthnInfo, error)
 }
 
 // UserTokenService are used for generating and validating user tokens
@@ -100,6 +94,7 @@ type SessionTokenAuthnService interface {
 type UserTokenService interface {
 	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
+	LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*SessionTokenAuthnInfo, error)
 	GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*UserToken, error)
 	GetExternalSession(ctx context.Context, externalSessionID int64) (*ExternalSession, error)
 	FindExternalSessions(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)

@@ -43,7 +43,6 @@ var (
 const SkipRotationTime = 5 * time.Second
 
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
-var _ auth.SessionTokenAuthnService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
 	serverLockService *serverlock.ServerLockService,
@@ -225,7 +224,29 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 	var exists bool
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err = dbSession.Table(dbHelper.Table("user_auth_token")).Alias("uat").
-			Select(strings.Join(sessionTokenAuthnColumns, ", ")).
+			Select(strings.Join([]string{
+				"uat.id AS token_id",
+				"uat.user_id AS token_user_id",
+				"uat.auth_token AS token_auth_token",
+				"uat.prev_auth_token AS token_prev_auth_token",
+				"uat.user_agent AS token_user_agent",
+				"uat.client_ip AS token_client_ip",
+				"uat.auth_token_seen AS token_auth_token_seen",
+				"uat.seen_at AS token_seen_at",
+				"uat.rotated_at AS token_rotated_at",
+				"uat.created_at AS token_created_at",
+				"uat.updated_at AS token_updated_at",
+				"uat.revoked_at AS token_revoked_at",
+				"uat.external_session_id AS token_external_session_id",
+				"ues.id AS external_session_id",
+				"ues.auth_module AS auth_module",
+				"ues.access_token AS access_token",
+				"ues.refresh_token AS refresh_token",
+				"ues.id_token AS id_token",
+				"ues.expires_at AS expires_at",
+				"ua.id AS auth_info_id",
+				"ua.auth_id AS auth_id",
+			}, ", ")).
 			Join("LEFT", []string{dbHelper.Table("user_external_session"), "ues"}, "uat.external_session_id = ues.id").
 			Join("LEFT", []string{dbHelper.Table("user_auth"), "ua"}, "ues.user_auth_id = ua.id").
 			Where("(uat.auth_token = ? OR uat.prev_auth_token = ?)", hashedToken, hashedToken).
@@ -383,30 +404,6 @@ func (s *UserAuthTokenService) validateToken(ctx context.Context, cfg *setting.C
 	err = model.toUserToken(&userToken)
 
 	return &userToken, err
-}
-
-var sessionTokenAuthnColumns = []string{
-	"uat.id AS token_id",
-	"uat.user_id AS token_user_id",
-	"uat.auth_token AS token_auth_token",
-	"uat.prev_auth_token AS token_prev_auth_token",
-	"uat.user_agent AS token_user_agent",
-	"uat.client_ip AS token_client_ip",
-	"uat.auth_token_seen AS token_auth_token_seen",
-	"uat.seen_at AS token_seen_at",
-	"uat.rotated_at AS token_rotated_at",
-	"uat.created_at AS token_created_at",
-	"uat.updated_at AS token_updated_at",
-	"uat.revoked_at AS token_revoked_at",
-	"uat.external_session_id AS token_external_session_id",
-	"ues.id AS external_session_id",
-	"ues.auth_module AS auth_module",
-	"ues.access_token AS access_token",
-	"ues.refresh_token AS refresh_token",
-	"ues.id_token AS id_token",
-	"ues.expires_at AS expires_at",
-	"ua.id AS auth_info_id",
-	"ua.auth_id AS auth_id",
 }
 
 type sessionTokenAuthnRow struct {

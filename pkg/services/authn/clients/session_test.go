@@ -214,17 +214,6 @@ func TestSession_Authenticate(t *testing.T) {
 	}
 }
 
-type optimizedSessionTokenService struct {
-	auth.UserTokenService
-	result *auth.SessionTokenAuthnInfo
-	calls  int
-}
-
-func (s *optimizedSessionTokenService) LookupTokenForAuthn(context.Context, string) (*auth.SessionTokenAuthnInfo, error) {
-	s.calls++
-	return s.result, nil
-}
-
 func TestSession_AuthenticateUsesOAuthPassthroughLookup(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = "grafana_session"
@@ -239,31 +228,65 @@ func TestSession_AuthenticateUsesOAuthPassthroughLookup(t *testing.T) {
 		RotatedAt:     time.Now().Unix(),
 	}
 	oauthToken := &oauth2.Token{AccessToken: "access-token", Expiry: time.Now().Add(time.Hour)}
-	optimized := &optimizedSessionTokenService{
-		UserTokenService: &authtest.FakeUserAuthTokenService{},
-		result: &auth.SessionTokenAuthnInfo{
-			Token:       sessionToken,
-			AuthID:      "subject",
-			AuthModule:  login.AzureADAuthModule,
-			OAuthToken:  oauthToken,
-			HasAuthInfo: true,
-		},
+	for _, tt := range []struct {
+		name        string
+		passthrough bool
+		hasAuthInfo bool
+	}{
+		{name: "passthrough reuses linked auth info", passthrough: true, hasAuthInfo: true},
+		{name: "external session without auth info uses fallback", passthrough: true},
+		{name: "ordinary session uses token-only lookup"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			lookupCalls, authnLookupCalls := 0, 0
+			sessionService := &authtest.FakeUserAuthTokenService{
+				LookupTokenProvider: func(context.Context, string) (*auth.UserToken, error) {
+					lookupCalls++
+					return sessionToken, nil
+				},
+				LookupTokenForAuthnProvider: func(context.Context, string) (*auth.SessionTokenAuthnInfo, error) {
+					authnLookupCalls++
+					return &auth.SessionTokenAuthnInfo{
+						Token:       sessionToken,
+						AuthModule:  login.AzureADAuthModule,
+						OAuthToken:  oauthToken,
+						HasAuthInfo: tt.hasAuthInfo,
+					}, nil
+				},
+			}
+			authInfo := &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{
+				AuthId: "fallback-subject", AuthModule: login.AzureADAuthModule,
+			}}
+			client := ProvideSession(cfgProvider, sessionService, authInfo, tracing.InitializeTracerForTest())
+
+			httpReq := &http.Request{Header: make(http.Header)}
+			httpReq.AddCookie(&http.Cookie{Name: cfg.LoginCookieName, Value: "raw-token"})
+			req := &authn.Request{HTTPRequest: httpReq}
+			if tt.passthrough {
+				req.SetMeta(authn.MetaKeyOAuthPassthrough, "true")
+			}
+
+			ident, err := client.Authenticate(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, ident)
+			assert.Same(t, sessionToken, ident.SessionToken)
+			assert.Equal(t, login.AzureADAuthModule, ident.AuthenticatedBy)
+			if tt.passthrough {
+				assert.Zero(t, lookupCalls)
+				assert.Equal(t, 1, authnLookupCalls)
+				assert.Same(t, oauthToken, ident.OAuthToken)
+			} else {
+				assert.Equal(t, 1, lookupCalls)
+				assert.Zero(t, authnLookupCalls)
+				assert.Nil(t, ident.OAuthToken)
+			}
+			if tt.hasAuthInfo {
+				assert.Zero(t, authInfo.LatestUserID, "a present auth-info row may have an empty auth ID")
+				assert.Empty(t, ident.AuthID)
+			} else {
+				assert.Equal(t, sessionToken.UserId, authInfo.LatestUserID)
+				assert.Equal(t, "fallback-subject", ident.AuthID)
+			}
+		})
 	}
-	authInfo := &authinfotest.FakeService{}
-	client := ProvideSession(cfgProvider, optimized, authInfo, tracing.InitializeTracerForTest())
-
-	httpReq := &http.Request{Header: make(http.Header)}
-	httpReq.AddCookie(&http.Cookie{Name: cfg.LoginCookieName, Value: "raw-token"})
-	req := &authn.Request{HTTPRequest: httpReq}
-	req.SetMeta(authn.MetaKeyOAuthPassthrough, "true")
-
-	ident, err := client.Authenticate(context.Background(), req)
-	require.NoError(t, err)
-	require.NotNil(t, ident)
-	assert.Equal(t, 1, optimized.calls)
-	assert.Zero(t, authInfo.LatestUserID, "the optimized result should avoid the AuthInfo lookup")
-	assert.Same(t, sessionToken, ident.SessionToken)
-	assert.Same(t, oauthToken, ident.OAuthToken)
-	assert.Equal(t, "subject", ident.AuthID)
-	assert.Equal(t, login.AzureADAuthModule, ident.AuthenticatedBy)
 }
