@@ -169,7 +169,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.clearSelection();
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObjectFromCanvas(action.movedObject, { force: true });
     }
 
@@ -191,7 +191,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObjectFromCanvas(action.movedObject, { force: true });
     }
 
