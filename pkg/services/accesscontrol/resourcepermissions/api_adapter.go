@@ -176,27 +176,32 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 
 		switch kind {
 		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-			if userDetails, ok := subjects.users[name]; ok {
-				permDTO.UserID = userDetails.ID
-				permDTO.UserUID = userDetails.UID
-				permDTO.UserLogin = userDetails.Login
-				permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
-				permDTO.IsServiceAccount = userDetails.IsServiceAccount
-				permDTO.RoleName = userManagedRoleName(userDetails.ID)
-				permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
+			userDetails, ok := subjects.users[name]
+			if !ok {
+				// The subject was deleted, so the assignment is stale. The
+				// legacy read path omits these through its INNER JOIN on the
+				// user table, and an entry with no subject claims someone has
+				// access without saying who.
+				continue
 			}
+			permDTO.UserID = userDetails.ID
+			permDTO.UserUID = userDetails.UID
+			permDTO.UserLogin = userDetails.Login
+			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
+			permDTO.IsServiceAccount = userDetails.IsServiceAccount
+			permDTO.RoleName = userManagedRoleName(userDetails.ID)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			if teamDetails, ok := subjects.teams[name]; ok {
-				permDTO.Team = teamDetails.Name
-				permDTO.TeamID = teamDetails.ID
-				permDTO.TeamUID = teamDetails.UID
-				permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
-				permDTO.RoleName = teamManagedRoleName(teamDetails.ID)
-				permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
-			} else {
-				permDTO.TeamUID = name
-				permDTO.Team = name
+			teamDetails, ok := subjects.teams[name]
+			if !ok {
+				continue
 			}
+			permDTO.Team = teamDetails.Name
+			permDTO.TeamID = teamDetails.ID
+			permDTO.TeamUID = teamDetails.UID
+			permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
+			permDTO.RoleName = teamManagedRoleName(teamDetails.ID)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 			permDTO.BuiltInRole = name
 			permDTO.RoleName = basicRoleManagedRoleName(name)
@@ -223,8 +228,12 @@ func basicRoleManagedRoleName(role string) string {
 
 // resolvedSubjects holds everything convertK8sResourcePermissionToDTO needs to
 // name a subject and attach its managed-role permission ID. A missing key means
-// the subject no longer exists, which is rendered the same way a per-entry
-// lookup miss was before; a failed lookup is an error, not a missing key.
+// the subject no longer exists and its assignment is dropped; a lookup that
+// failed is an error, not a missing key, so the two cannot be confused.
+//
+// Note that with kubernetesUsersRedirect enabled the user service resolves UIDs
+// against the users collection only, which does not contain service accounts,
+// so service-account assignments will not resolve on that path.
 type resolvedSubjects struct {
 	users         map[string]*user.User
 	teams         map[string]*team.TeamDTO

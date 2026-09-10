@@ -645,6 +645,66 @@ func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
 	assert.Equal(t, "user-1", perms[4].UserLogin)
 }
 
+// TestConvertK8sResourcePermissionToDTODropsStaleAssignments checks that an
+// assignment whose subject no longer exists is omitted rather than returned
+// with a blank subject, matching the INNER JOINs on the legacy read path.
+func TestConvertK8sResourcePermissionToDTODropsStaleAssignments(t *testing.T) {
+	userSvc := &countingUserService{
+		FakeUserService: usertest.NewUserServiceFake(),
+		users: map[string]*user.User{
+			"user-uid-1": {ID: 1, UID: "user-uid-1", Login: "user-1"},
+		},
+	}
+	teamSvc := &countingTeamService{
+		FakeService: teamtest.NewFakeService(),
+		teams: map[string]*team.TeamDTO{
+			"team-uid-1": {ID: 1, UID: "team-uid-1", Name: "team-1"},
+		},
+	}
+
+	resourcePerm := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "deleted-user", Verb: "edit"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "deleted-sa", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "deleted-team", Verb: "edit"},
+				// Basic roles name a role rather than a stored subject, so they
+				// are always kept.
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+			},
+		},
+	}
+
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: userSvc,
+			teamService: teamSvc,
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}, "Edit": {"folders:read", "folders:write"}},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stack-123-org-1", false)
+	require.NoError(t, err)
+
+	require.Len(t, perms, 3, "the deleted user, service account and team should all be dropped")
+	assert.Equal(t, "user-1", perms[0].UserLogin)
+	assert.Equal(t, "team-1", perms[1].Team)
+	assert.Equal(t, "Editor", perms[2].BuiltInRole)
+
+	for _, perm := range perms {
+		assert.NotEmpty(t, perm.UserLogin+perm.Team+perm.BuiltInRole, "every returned entry must name its subject")
+	}
+}
+
 type failingUserService struct {
 	*usertest.FakeUserService
 	err error
