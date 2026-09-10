@@ -71,6 +71,11 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+// RequestRouter routes API groups before the embedded API server.
+type RequestRouter interface {
+	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+}
+
 type service struct {
 	services.NamedService
 
@@ -109,6 +114,7 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+	requestRouter           RequestRouter
 
 	// vpRegistry serves the resolved policy consulted by apistore.encode.
 	vpRegistry *versionpolicy.VersionPolicyRegistry
@@ -141,6 +147,7 @@ func ProvideService(
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
+	requestRouter RequestRouter,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -168,6 +175,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
+		requestRouter:                     requestRouter,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -205,7 +213,7 @@ func ProvideService(
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.handler.ServeHTTP(resp, req)
+			s.requestRouter.HandleFunc(resp, req, s.handler)
 		}
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.

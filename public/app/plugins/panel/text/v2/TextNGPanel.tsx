@@ -49,7 +49,8 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, height, width } = props;
+  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent, height, width } =
+    props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
@@ -166,6 +167,7 @@ export function TextNGPanel(props: Props) {
           series={series}
           replaceVariables={replaceVariables}
           rowWindow={rowWindow}
+          transparent={transparent}
         />
       }
     >
@@ -184,6 +186,7 @@ export function TextNGPanel(props: Props) {
         onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
         view={view}
         onViewChange={setView}
+        transparent={transparent}
       />
     </Suspense>
   ) : (
@@ -250,9 +253,10 @@ interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
   fitContent?: boolean;
   contentRef?: Ref<HTMLDivElement>;
+  transparent?: boolean;
 }
 
-function TextNGView({ mode, content, error, code, fitContent, contentRef }: TextNGViewProps) {
+function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (error) {
@@ -274,6 +278,7 @@ function TextNGView({ mode, content, error, code, fitContent, contentRef }: Text
           language={codeOptions.language}
           showLineNumbers={codeOptions.showLineNumbers ?? false}
           height={codeHeight}
+          transparent={transparent}
         />
       </div>
     );
@@ -310,11 +315,13 @@ function EditorLoadingFallback({
   series,
   replaceVariables,
   rowWindow,
+  transparent,
 }: {
   options: Options;
   series: DataFrame[];
   replaceVariables: InterpolateFunction;
   rowWindow?: RowWindow;
+  transparent?: boolean;
 }) {
   const theme = useTheme2();
   const layout = useStyles2(getEditorLayoutStyles);
@@ -328,8 +335,15 @@ function EditorLoadingFallback({
     <div className={layout.wrapper}>
       <Stack minHeight={theme.components.height.md} />
       <div className={layout.body}>
-        <div className={cx(layout.pane, layout.previewPane, !isCode && layout.htmlPreviewPane)}>
-          <TextNGView {...rendered} code={options.code} />
+        <div
+          className={cx(
+            layout.pane,
+            layout.previewPane,
+            !transparent && layout.previewPaneOpaque,
+            !isCode && layout.htmlPreviewPane
+          )}
+        >
+          <TextNGView {...rendered} code={options.code} transparent={transparent} />
         </div>
       </div>
       {isCode && <Stack minHeight={theme.components.height.md} />}
