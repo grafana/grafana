@@ -6,12 +6,9 @@ import { RenderMode, type TextMode } from '../panelcfg.gen';
 
 import { MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
 
-export const PAGINATION_ROW_THRESHOLD = 100;
-
+const PAGINATION_ROW_THRESHOLD = 100;
 const PAGINATION_HEIGHT = 38;
-
 const SMALL_PAGINATION_WIDTH = 750;
-
 const ESTIMATED_ROW_HEIGHT = 24;
 
 export function countRows(series: DataFrame[]): number {
