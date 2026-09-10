@@ -157,6 +157,13 @@ export const getGridStyles = memoize(
           ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
         },
 
+        // Row hover is painted on `.rdg-row`, but frozen cells carry a solid background to occlude
+        // scrolled content, so they'd otherwise miss the highlight. Give them the hover surface too
+        // (selected rows are handled below and win via higher specificity).
+        '[role="row"]:hover .rdg-cell.rdg-cell-frozen': {
+          backgroundColor: 'var(--rdg-row-hover-background-color)',
+        },
+
         // have to override styles for row selection to workaround safari styles workaround
         '[role="row"][aria-selected="true"]': {
           '&:hover': {

@@ -29352,13 +29352,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-data-grid@patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-065fecc930.patch::locator=grafana%40workspace%3A.":
+"react-data-grid@patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-070b0dfa29.patch::locator=grafana%40workspace%3A.":
   version: 7.0.0-beta.61
-  resolution: "react-data-grid@patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-065fecc930.patch::version=7.0.0-beta.61&hash=44ecf1&locator=grafana%40workspace%3A."
+  resolution: "react-data-grid@patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-070b0dfa29.patch::version=7.0.0-beta.61&hash=c7e38b&locator=grafana%40workspace%3A."
   peerDependencies:
     react: ^19.2
     react-dom: ^19.2
-  checksum: 10/14499d8af7ccc9fc13de46341978f5ae26dd363f0a82717395625f0df329f345aeb83f0e3e77e13d300dd0c921f46d35e858f985da332b42a412f9c590b4bfde
+  checksum: 10/933bbcbabed42af7edfde864829e4552ceadf3279a24dae53292fac51300a6d5f330b1ec6205a1e7315e9a98e18f0b9ddb4bce6ff6e369e3209aaaf0c58059e7
   languageName: node
   linkType: hard
 

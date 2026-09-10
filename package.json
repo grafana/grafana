@@ -438,7 +438,7 @@
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
-    "react-data-grid@npm:7.0.0-beta.61": "patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-065fecc930.patch",
+    "react-data-grid@npm:7.0.0-beta.61": "patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-070b0dfa29.patch",
     "underscore": "1.13.8",
     "@types/slate": "0.47.11",
     "semver@npm:~7.3.5": "^7.3.5",
