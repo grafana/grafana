@@ -7760,6 +7760,9 @@
         "title": "Unsaved changes"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": "Static dimensions CSV"
+    },
     "suggested-dashboard-banner": {
       "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <6>create one from scratch</6>.",
       "title": "You are viewing {{title}}"
