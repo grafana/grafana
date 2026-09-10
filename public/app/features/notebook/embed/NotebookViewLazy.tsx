@@ -18,20 +18,24 @@ const NotebookView = lazy(() =>
   }))
 );
 
+type SavedProps = Extract<NotebookViewProps, { uid: string }>;
+type DraftProps = Extract<NotebookViewProps, { spec: unknown }>;
+
 /**
- * Props are `Partial` because the registry types every exposed component as `ComponentType<{}>` --
+ * Props are widened because the registry types every exposed component as `ComponentType<{}>` --
  * the contract is only checked on the consuming side, through `usePluginComponent`'s generic. A
- * host that names no notebook has none to show, so this renders nothing rather than throwing out
- * of someone else's React tree.
+ * host that names neither an existing notebook nor a document has nothing to show, so this renders
+ * nothing rather than throwing out of someone else's React tree.
  */
-export function NotebookViewLazy({ uid, ...rest }: Partial<NotebookViewProps>) {
-  if (!uid) {
+export function NotebookViewLazy(props: Partial<SavedProps> & Partial<DraftProps>) {
+  if (props.uid === undefined && props.spec === undefined) {
     return null;
   }
 
   return (
     <Suspense fallback={<PageLoader />}>
-      <NotebookView uid={uid} {...rest} />
+      {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowed by the guard above; the union cannot be expressed through the registry's `{}` prop type */}
+      <NotebookView {...(props as NotebookViewProps)} />
     </Suspense>
   );
 }

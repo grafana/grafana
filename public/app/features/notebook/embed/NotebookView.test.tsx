@@ -4,9 +4,12 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/sc
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import * as notebookResource from '../api/notebookResource';
 import { NotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import * as transformModule from '../serialization/transformNotebookToScene';
+import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '../types';
 
 import { NotebookView } from './NotebookView';
 
@@ -166,5 +169,116 @@ describe('NotebookView', () => {
     });
 
     expect(instances[0].state.scene).toBeUndefined();
+  });
+
+  // A host holding a document nobody has chosen to save: the assistant's canvas, where a notebook is
+  // edited against the conversation and only becomes a resource when someone publishes it.
+  describe('a draft', () => {
+    /** A document with no cells, off the generated default so every field the transform reads is there. */
+    function aDraftSpec(title = 'Untitled investigation'): NotebookSpec {
+      return { ...defaultNotebookSpec(), title };
+    }
+
+    /** The scene a draft builds for itself — there is no other handle on it. */
+    function captureDraftScene() {
+      const scenes: NotebookScene[] = [];
+      const real = transformModule.transformNotebookToScene;
+      jest.spyOn(transformModule, 'transformNotebookToScene').mockImplementation((resource) => {
+        const scene = real(resource);
+        scenes.push(scene);
+        return scene;
+      });
+      return () => scenes[0];
+    }
+
+    it('creates no notebook resource, however long it is edited', async () => {
+      jest.useFakeTimers();
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const createNotebook = jest.spyOn(notebookResource, 'createNotebook');
+      const updateNotebook = jest.spyOn(notebookResource, 'updateNotebook');
+      const draftScene = captureDraftScene();
+
+      render(<NotebookView spec={aDraftSpec()} onChange={jest.fn()} />);
+
+      // Both halves are needed for autosave to treat this as a writer edit: it ignores changes made
+      // outside edit mode, and the mode switch alone is compared against the baseline recorded at
+      // start and writes nothing. Miss either and this passes whether or not the draft is suppressed.
+      await act(async () => {
+        draftScene().setState({ isEditing: true });
+      });
+      await act(async () => {
+        draftScene().setState({ title: 'Edited while still a draft' });
+        // Well past autosave's 2s debounce and its 15s maxWait.
+        jest.advanceTimersByTime(30_000);
+      });
+
+      expect(createNotebook).not.toHaveBeenCalled();
+      expect(updateNotebook).not.toHaveBeenCalled();
+      jest.useRealTimers();
+    });
+
+    it('renders the document without asking the API for one', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const { loadedUids } = captureStateManager();
+
+      render(<NotebookView spec={aDraftSpec()} />);
+
+      // Editable, and nothing was fetched: a draft has no uid to load.
+      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+      expect(loadedUids).toEqual([]);
+    });
+
+    it('reports its title to the host', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const onTitleChange = jest.fn();
+
+      render(<NotebookView spec={aDraftSpec('Checkout latency')} onTitleChange={onTitleChange} />);
+
+      expect(onTitleChange).toHaveBeenCalledWith('Checkout latency');
+    });
+
+    // Without a way back out, an edit to a draft dies with the component.
+    it('hands the edited document back to the host', async () => {
+      jest.useFakeTimers();
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const onChange = jest.fn();
+      const draftScene = captureDraftScene();
+
+      render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} />);
+
+      await act(async () => {
+        draftScene().setState({ title: 'After' });
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(onChange).toHaveBeenCalled();
+      expect(onChange.mock.calls.at(-1)?.[0]).toMatchObject({ title: 'After' });
+      jest.useRealTimers();
+    });
+
+    // The debounce must not swallow the last edit when the host closes the tab.
+    it('flushes a pending edit on unmount', async () => {
+      jest.useFakeTimers();
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const onChange = jest.fn();
+      const draftScene = captureDraftScene();
+
+      const { unmount } = render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} />);
+
+      await act(async () => {
+        draftScene().setState({ title: 'Typed then closed' });
+        // Deliberately inside the debounce window, so only the unmount flush can report it.
+        jest.advanceTimersByTime(100);
+      });
+      expect(onChange).not.toHaveBeenCalled();
+
+      await act(async () => {
+        unmount();
+      });
+
+      expect(onChange.mock.calls.at(-1)?.[0]).toMatchObject({ title: 'Typed then closed' });
+      jest.useRealTimers();
+    });
   });
 });

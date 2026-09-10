@@ -65,6 +65,20 @@ export interface NotebookSceneState extends SceneObjectState {
    * floats over the first cells as they scroll past.
    */
   embedded?: boolean;
+  /**
+   * A document with no Notebook resource behind it, and none to be created for it until its host
+   * says so.
+   *
+   * Autosave is not started for one. Its ordinary behaviour with no uid is to `createNotebook` on
+   * the first edit and adopt the uid, which is right for /notebooks/new — where the notebook is
+   * meant to come into existence as soon as it has content — and wrong for a host holding a draft
+   * nobody has chosen to save: the assistant's canvas, where a notebook is authored and edited
+   * against the conversation and only becomes a resource when someone publishes it.
+   *
+   * Editing, undo/redo, panels and queries are unaffected; none of them need the resource to exist.
+   * Only the writing is suppressed, so the host is the sole route to persistence.
+   */
+  isDraft?: boolean;
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -146,10 +160,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
-      const stopAutosave = this.autosave.start();
+      // Read once, at activation: a document does not become a draft, or stop being one, while it is
+      // mounted. Its host decides that before handing it over.
+      const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
 
       return () => {
-        stopAutosave();
+        stopAutosave?.();
         destroyMutationClient();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
