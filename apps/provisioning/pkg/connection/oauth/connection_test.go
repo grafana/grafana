@@ -260,6 +260,22 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			wantAuthErr:  true,
 		},
 		{
+			name:         "failure - GitHub incorrect_client_credentials (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "incorrect_client_credentials"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - invalid_client (HTTP 400) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_client"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
 			name:         "failure - token endpoint 401 is user-actionable",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,

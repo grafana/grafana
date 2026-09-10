@@ -162,14 +162,16 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 }
 
 // oauthReauthErrorCodes are token-endpoint `error` codes (RFC 6749 §5.2 and
-// provider-specific) that mean the stored authorization is no longer valid and
-// the user must re-authorize. GitHub reports a revoked/expired refresh token
-// with bad_refresh_token/refresh_token_expired — often with a 200 status rather
-// than 401/403 — while RFC 6749 and GitLab use invalid_grant.
+// provider-specific) that mean the stored authorization or the configured client
+// credentials are no longer valid and the user must act. GitHub reports these
+// with a 200 status rather than 401/403, and oauth2 exposes the code either way,
+// so they are matched independently of the HTTP status.
 var oauthReauthErrorCodes = map[string]bool{
-	"invalid_grant":         true, // RFC 6749 §5.2; GitLab
-	"bad_refresh_token":     true, // GitHub: refresh token incorrect or expired
-	"refresh_token_expired": true, // GitHub: refresh token expired
+	"invalid_grant":                true, // RFC 6749 §5.2; GitLab: refresh token revoked/expired
+	"invalid_client":               true, // RFC 6749 §5.2: client credentials rejected
+	"bad_refresh_token":            true, // GitHub: refresh token incorrect or expired
+	"refresh_token_expired":        true, // GitHub: refresh token expired
+	"incorrect_client_credentials": true, // GitHub: client secret rotated or revoked
 }
 
 // isOAuthReauthRequired reports whether an OAuth token-refresh error means the
