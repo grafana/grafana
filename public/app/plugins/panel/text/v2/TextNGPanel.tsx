@@ -183,10 +183,10 @@ export function TextNGPanel(props: Props) {
 
   const panelPagination = isEditing ? null : paginationBar;
 
-  const frameOptions = frames.map((frame, index) => ({
-    label: getFrameDisplayName(frame),
-    value: index,
-  }));
+  const frameOptions = useMemo(
+    () => frames.map((frame, index) => ({ label: getFrameDisplayName(frame), value: index })),
+    [frames]
+  );
 
   const framePicker =
     frames.length > 1 ? (
