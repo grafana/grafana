@@ -119,6 +119,10 @@ export interface CodeMirrorEditorProps {
    */
   onChange: (value: string) => void;
   /**
+   * Called with the current editor contents when the editor loses focus.
+   */
+  onBlur?: (value: string) => void;
+  /**
    * Accessible label applied to the editor input.
    */
   'aria-label'?: string;

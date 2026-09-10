@@ -6107,7 +6107,6 @@
       "description": "Vertikální sekvence panelů, textu a buněk kódu",
       "name": "Poznámkový blok",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Čas",
       "title-edit": "",
@@ -7181,6 +7180,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Chyba při načítání nástěnky"
     },
     "dashboard-scene": {
@@ -7730,6 +7735,10 @@
       "required": "Povinné"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Změny",
         "label-details": "Podrobnosti",
@@ -9248,6 +9257,7 @@
       "share-export-json": "Exportovat jako JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Čas zahájení",
       "success-indicator": "",
       "target": "Cíl",
@@ -12740,6 +12750,7 @@
       "title": "Vytvořit"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nové pravidlo výstrahy"
     },
     "create-dashboard": {
@@ -13238,7 +13249,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13258,7 +13268,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13309,6 +13318,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13325,6 +13335,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_few": "",
@@ -13378,7 +13389,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Vymazat nastavení"
+      "clear-tooltip": "Vymazat nastavení",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Vybarvit řady podle"
@@ -16866,8 +16879,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
