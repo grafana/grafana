@@ -1393,36 +1393,55 @@ function measureInlineRunWidth(
  * so clicking a header would resize the whole table (the sorted column gains the arrow's width, and
  * that shifts every other column's share of the leftover space).
  */
-function measureHeaderWidth(
+export interface HeaderAffordanceOptions {
+  showTypeIcons: boolean;
+  tableRefreshEnabled: boolean;
+  /** Whether a filter is currently active on this column — only the refreshed header marks that. */
+  isFiltered: boolean;
+}
+
+/**
+ * @internal Horizontal space the header's affordances take beside the label.
+ *
+ * The single description of what sits next to a header's text, so the two paths that care can't
+ * drift: `measureHeaderWidth` adds it when sizing an auto column, and `useHeaderHeight` subtracts it
+ * to find the room a wrapped label has. They were written separately and disagreed — the height path
+ * never knew about the `headerTooltip` button or the refreshed header's active-filter icon, so it
+ * gave a wrapped label up to 44px more room than it had and undercounted its lines.
+ */
+export function getHeaderAffordanceWidth(
   field: Field,
-  ctx: TypographyCtx,
-  showTypeIcons: boolean,
-  isSortable: boolean,
-  tableRefreshEnabled: boolean,
-  isFiltered: boolean
+  { showTypeIcons, tableRefreshEnabled, isFiltered }: HeaderAffordanceOptions
 ): number {
   const isFilterable = field.config.custom?.filterable ?? false;
-  let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
-  headerWidth += CELL_HORIZONTAL_CHROME;
-  headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
-  headerWidth += isSortable ? HEADER_ICON_SPACE : 0;
+  let width = 0;
+  width += showTypeIcons ? HEADER_ICON_SPACE : 0;
+  // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
+  // gain a line (shifting the whole grid down) the moment it's sorted.
+  width += isSortableField(field) ? HEADER_ICON_SPACE : 0;
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
-  headerWidth += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
     // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
-    headerWidth += isFilterable ? HEADER_MENU_SPACE : 0;
+    width += isFilterable ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
-    headerWidth += isFiltered ? HEADER_ICON_SPACE : 0;
+    width += isFiltered ? HEADER_ICON_SPACE : 0;
   } else {
     // the classic header renders its filter icon inline whenever the column is filterable, whether
     // or not a filter is currently active.
-    headerWidth += isFilterable ? HEADER_ICON_SPACE : 0;
+    width += isFilterable ? HEADER_ICON_SPACE : 0;
   }
-  return headerWidth;
+  return width;
+}
+
+function measureHeaderWidth(field: Field, ctx: TypographyCtx, opts: HeaderAffordanceOptions): number {
+  return (
+    ctx.ctx.measureText(getDisplayName(field)).width + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts)
+  );
 }
 
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
@@ -1653,14 +1672,11 @@ export function computeContentAwareColWidths(
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(
-      field,
-      headerTypographyCtx,
+    const headerWidth = measureHeaderWidth(field, headerTypographyCtx, {
       showTypeIcons,
-      isSortableField(field),
       tableRefreshEnabled,
-      filteredKeys.has(getDisplayName(field))
-    );
+      isFiltered: filteredKeys.has(getDisplayName(field)),
+    });
 
     // Size to content (unioned with header width below), even for wrapped columns — the cap bounds
     // it, wrapping adds height instead. Registered measurer picks pill/link/action/graphical; default is text.
