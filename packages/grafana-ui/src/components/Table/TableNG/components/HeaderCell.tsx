@@ -44,6 +44,11 @@ interface HeaderCellProps {
 // tabindex. The filter popup and column menu portal out of the cell, so their contents never match.
 const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+// The header label's line box. Every control beside the label sits in a box this tall so that its
+// optical centre lands on the centre of a line of the title: the controls are all shorter than the
+// line box, by different amounts, so aligning their edges instead staggers them against the text.
+const HEADER_LINE_BOX = `${TABLE.HEADER_LINE_HEIGHT}px`;
+
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   direction,
@@ -148,6 +153,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     };
   }
 
+  // Whether anything renders beside the label, so the box holding those controls is only there when
+  // it has something in it — an empty one would still take a gap beside the title.
+  const hasTrailingControls = Boolean(
+    (tableRefreshEnabled && direction) || headerTooltip || (tableRefreshEnabled && hasActiveFilter)
+  );
+
   const sortArrow = direction && (
     <Icon
       className={clsx(styles.headerCellIcon, tableRefreshEnabled && styles.headerCellSortIcon)}
@@ -159,52 +170,58 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const label = (
     <>
       {showTypeIcons && (
-        <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
+        <Stack alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
+          <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
+        </Stack>
       )}
       <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
         {displayName}
         {!tableRefreshEnabled && sortArrow}
       </button>
-      {/* The refreshed label can shrink to ellipsize a long title, and it clips its own overflow, so
-          the arrow has to sit outside it to survive — same reason the active-filter icon does. */}
-      {tableRefreshEnabled && sortArrow}
-      {headerTooltip && (
-        <IconButton
-          name="info-circle"
-          size="sm"
-          tooltip={headerTooltip}
-          className={styles.headerTooltipIcon}
-          onClick={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
-          onPointerDown={(event) => event.stopPropagation()}
-        />
-      )}
-      {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
+      {hasTrailingControls && (
+        <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
+          {/* The refreshed label can shrink to ellipsize a long title, and it clips its own overflow,
+              so the arrow has to sit outside it to survive — same for the active-filter icon. */}
+          {tableRefreshEnabled && sortArrow}
+          {headerTooltip && (
+            <IconButton
+              name="info-circle"
+              size="sm"
+              tooltip={headerTooltip}
+              className={styles.headerTooltipIcon}
+              onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            />
+          )}
+          {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
           its own; it sits with the sort arrow because both report the column's state. It doubles as a
           shortcut back into the filter popup, so the filter can be adjusted or cleared without going
           through the menu. Sized "sm" like the type icon rather than "lg" like the arrow: the funnel
           fills its box where the arrow is a thin glyph, so the arrow's nominal size reads far bigger. */}
-      {tableRefreshEnabled && hasActiveFilter && (
-        <button
-          ref={filterIconRef}
-          type="button"
-          className={styles.headerCellFilterButton}
-          aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
-          aria-haspopup="dialog"
-          // The popup is shared with the column menu's "Filter values" item, so `isPopoverVisible`
-          // alone would have this button claim a popup that the menu opened. `filterAnchor` is
-          // whichever control opened it, which is what makes the distinction.
-          aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
-          data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
-          onClick={(ev) => {
-            // the header cell itself sorts on click, so this must not bubble
-            ev.stopPropagation();
-            openFilter(filterIconRef.current);
-          }}
-          onMouseDown={(ev) => ev.stopPropagation()}
-        >
-          <Icon className={styles.headerCellIcon} size="sm" name="filter" />
-        </button>
+          {tableRefreshEnabled && hasActiveFilter && (
+            <button
+              ref={filterIconRef}
+              type="button"
+              className={styles.headerCellFilterButton}
+              aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+              aria-haspopup="dialog"
+              // The popup is shared with the column menu's "Filter values" item, so `isPopoverVisible`
+              // alone would have this button claim a popup that the menu opened. `filterAnchor` is
+              // whichever control opened it, which is what makes the distinction.
+              aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
+              data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
+              onClick={(ev) => {
+                // the header cell itself sorts on click, so this must not bubble
+                ev.stopPropagation();
+                openFilter(filterIconRef.current);
+              }}
+              onMouseDown={(ev) => ev.stopPropagation()}
+            >
+              <Icon className={styles.headerCellIcon} size="sm" name="filter" />
+            </button>
+          )}
+        </Stack>
       )}
     </>
   );
@@ -226,7 +243,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         </Stack>
 
         {filterable && (
-          <Stack direction="row" gap={0.5} alignItems={controlAlignment} shrink={0}>
+          <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
@@ -261,17 +278,19 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {label}
 
       {filterable && (
-        <Filter
-          name={column.key}
-          rows={rows}
-          filter={filter}
-          setFilter={setFilter}
-          field={field}
-          iconClassName={styles.headerCellIcon}
-          parentIndex={parentIndex}
-          crossFilterRows={crossFilterRows}
-          crossFilterTailRows={crossFilterTailRows}
-        />
+        <Stack alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
+          <Filter
+            name={column.key}
+            rows={rows}
+            filter={filter}
+            setFilter={setFilter}
+            field={field}
+            iconClassName={styles.headerCellIcon}
+            parentIndex={parentIndex}
+            crossFilterRows={crossFilterRows}
+            crossFilterTailRows={crossFilterTailRows}
+          />
+        </Stack>
       )}
     </Stack>
   );

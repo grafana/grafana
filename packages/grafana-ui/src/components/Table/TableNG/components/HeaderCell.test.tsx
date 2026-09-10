@@ -145,14 +145,22 @@ describe('HeaderCell', () => {
 
   it('sits the header controls with the last line of a wrapped title', () => {
     // A wrapped title grows downward while the controls beside it stay one line tall, so centring
-    // them leaves the arrow and the column menu floating against the middle of the block.
+    // them on the whole block leaves the arrow and the column menu floating against its middle.
     const wrapped = makeField({ config: { custom: { wrapHeaderText: true, filterable: true } } });
     const { container, unmount } = render(
       <HeaderCell {...baseProps} field={wrapped} direction="ASC" tableRefreshEnabled />
     );
-    const alignments = (root: Element) =>
-      [root, ...Array.from(root.children)].map((el) => window.getComputedStyle(el).alignItems);
-    expect(alignments(container.firstElementChild!)).toEqual(['flex-end', 'flex-end', 'flex-end']);
+    const root = container.firstElementChild!;
+    const [labelGroup, menu] = Array.from(root.children);
+    expect(window.getComputedStyle(root).alignItems).toBe('flex-end');
+    expect(window.getComputedStyle(labelGroup).alignItems).toBe('flex-end');
+
+    // ...and each control sits in a box one line tall, centred within it, so that it lines up with
+    // the text rather than with the bottom of the cell: they're all shorter than the line box, by
+    // different amounts, so aligning their edges would stagger them against the title.
+    for (const box of [labelGroup.lastElementChild!, menu]) {
+      expect(box).toHaveStyle({ height: `${TABLE.HEADER_LINE_HEIGHT}px`, alignItems: 'center' });
+    }
 
     unmount();
 
@@ -161,7 +169,9 @@ describe('HeaderCell', () => {
     const { container: unwrapped } = render(
       <HeaderCell {...baseProps} field={oneLine} direction="ASC" tableRefreshEnabled />
     );
-    expect(alignments(unwrapped.firstElementChild!)).toEqual(['center', 'center', 'center']);
+    const unwrappedRoot = unwrapped.firstElementChild!;
+    expect(window.getComputedStyle(unwrappedRoot).alignItems).toBe('center');
+    expect(window.getComputedStyle(unwrappedRoot.firstElementChild!).alignItems).toBe('center');
   });
 
   it('renders the label at the line box the header row is sized with', () => {
