@@ -31,28 +31,6 @@ function boxOfRows(rowHeight: number, available: number, rowsOnPage: () => numbe
   return measurableBox(() => rowHeight * rowsOnPage(), available);
 }
 
-/** A box whose blocks are replaced later, as the debounced content render does. */
-function rewritableBox(content: number, available: number) {
-  let contentHeight = content;
-  const element = measurableBox(() => contentHeight, available);
-  const blocks = element.firstElementChild;
-  const block = blocks?.firstElementChild;
-
-  return {
-    element,
-    async rewrite(next: number) {
-      contentHeight = next;
-      await act(async () => {
-        if (blocks && block) {
-          // Replacing the child is the mutation an innerHTML write makes.
-          blocks.removeChild(block);
-          blocks.appendChild(block);
-        }
-      });
-    },
-  };
-}
-
 function numberedFrame(rows: number) {
   return toDataFrame({ fields: [{ name: 'n', values: Array.from({ length: rows }, (_, i) => i) }] });
 }
@@ -204,22 +182,21 @@ describe('usePagination', () => {
     const { result } = setup({}, box(750, 300));
     expect(result.current.rowWindow?.count).toBe(6);
 
-    // The preview pane is half the height, and the six rows in it still render at 50px.
-    act(() => result.current.contentRef(box(300, 150)));
+    // A box of its own starts from the estimate again: 15 rows at 50px, in a pane half
+    // the height of the panel.
+    act(() => result.current.contentRef(box(750, 150)));
 
     expect(result.current.rowWindow?.count).toBe(3);
   });
 
-  // The first measurement can land on the content the write is about to replace.
-  it('measures the blocks a later write fills the box with', async () => {
-    const rendered = rewritableBox(750, 300);
-    const { result } = setup({}, rendered.element);
+  it('falls back to the height estimate when the mode leaves no box to measure', () => {
+    const { result } = setup({}, box(750, 300));
     expect(result.current.rowWindow?.count).toBe(6);
 
-    // The same six rows, rewritten at 100px each.
-    await rendered.rewrite(600);
+    // Code mode renders no blocks, so it attaches no box: 400 - 38 over the 24px estimate.
+    act(() => result.current.contentRef(null));
 
-    expect(result.current.rowWindow?.count).toBe(3);
+    expect(result.current.rowWindow?.count).toBe(15);
   });
 
   it('holds the refitted page size instead of measuring its own last measurement again', () => {
@@ -228,6 +205,28 @@ describe('usePagination', () => {
     rerender({ ...defaultOptions });
 
     expect(result.current.rowWindow).toEqual({ start: 0, count: 6 });
+  });
+
+  // A data change reaches the box a render debounce later, so the blocks in it are still
+  // the previous page's - dividing them by this page's rows collapsed the page size.
+  it('holds its page size when a refresh leaves the reader on a partly filled last page', () => {
+    // The blocks the box holds, which the panel writes a debounce behind the window.
+    let renderedRows = 15;
+    const view = setup(
+      {},
+      measurableBox(() => renderedRows * 50, 300)
+    );
+
+    renderedRows = view.result.current.rowWindow?.count ?? 0;
+    expect(renderedRows).toBe(6);
+
+    act(() => view.result.current.setPage(view.result.current.numPages - 1));
+    renderedRows = view.result.current.rowWindow?.count ?? 0;
+
+    // 145 rows leave one row on the last page, while the box still holds six blocks.
+    view.rerender({ ...defaultOptions, series: [numberedFrame(145)] });
+
+    expect(view.result.current.rowWindow?.count).toBe(6);
   });
 
   // Measuring the box rather than the blocks made every resize divide the same box by

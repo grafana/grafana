@@ -26,6 +26,9 @@ export function fitPageSize(available: number, rowHeight: number): number {
 interface Measured {
   rowHeight: number;
   available: number;
+  // The box it was taken in: code mode renders no blocks and attaches none, and a
+  // measurement from another box is no better than the estimate.
+  element: HTMLElement;
 }
 
 // Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
@@ -89,10 +92,11 @@ export function usePagination({
   const configured = pageSize != null && pageSize > 0 ? clampPageSize(pageSize) : undefined;
   // The panel height stands in until a render reveals the box, which in the editor is the
   // preview pane rather than the panel.
+  const fitted = measured?.element === element ? measured : undefined;
   const resolvedPageSize =
     configured ??
-    (measured
-      ? fitPageSize(measured.available, measured.rowHeight)
+    (fitted
+      ? fitPageSize(fitted.available, fitted.rowHeight)
       : fitPageSize(height - PAGINATION_HEIGHT, ESTIMATED_ROW_HEIGHT));
 
   const numPages = paged ? Math.ceil(rowCount / resolvedPageSize) : 0;
@@ -103,53 +107,31 @@ export function usePagination({
   const rowsOnPage = Math.min(resolvedPageSize, rowCount - currentPage * resolvedPageSize);
 
   const fitToHeight = paged && configured === undefined;
-  const measureKey = fitToHeight ? `${height}|${width}|${rowCount}|${mode}|${content}` : '';
-  // The box is an input too: a measurement in the editor's preview pane says nothing
-  // about the panel's scroll box.
+  // Not the row count: a data change reaches the box a render debounce later, so measuring
+  // on it would divide the blocks of the page before it by the rows of this one.
+  const measureKey = fitToHeight ? `${height}|${width}|${mode}|${content}` : '';
+  // The box is an input too: the editor's preview pane is not the panel's scroll box.
   const measuredFor = useRef<{ key: string; element: HTMLElement } | null>(null);
-  const takeNextWrite = useRef(false);
 
-  // Passive, not layout: the blocks are written to the box by a child effect, which runs
-  // before this one.
+  // Passive, not layout: a child effect writes the blocks to the box first.
   useEffect(() => {
-    if (!fitToHeight || !element) {
-      return;
-    }
-
-    const measure = () => {
-      const available = element.clientHeight;
-      const contentHeight = measureContentHeight(element);
-
-      if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
-        return;
-      }
-
-      measuredFor.current = { key: measureKey, element };
-      setMeasured({ rowHeight: contentHeight / rowsOnPage, available });
-    };
-
     const previous = measuredFor.current;
 
     // Once per set of inputs, not per page size: re-measuring a page the last measurement
     // resized would let the page size oscillate.
-    if (!previous || previous.key !== measureKey || previous.element !== element) {
-      measure();
-      // The render that writes new content is debounced, so the box can still hold the
-      // previous content: take the next write to it as well. A rewrite from this hook's
-      // own page size re-runs the effect, dropping the observer before that write.
-      takeNextWrite.current = true;
+    if (!fitToHeight || !element || (previous?.key === measureKey && previous.element === element)) {
+      return;
     }
 
-    const observer = new MutationObserver(() => {
-      if (!takeNextWrite.current) {
-        return;
-      }
-      takeNextWrite.current = false;
-      measure();
-    });
-    observer.observe(element, { childList: true, subtree: true });
+    const available = element.clientHeight;
+    const contentHeight = measureContentHeight(element);
 
-    return () => observer.disconnect();
+    if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
+      return;
+    }
+
+    measuredFor.current = { key: measureKey, element };
+    setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
   }, [fitToHeight, measureKey, rowsOnPage, element]);
 
   // Stable across renders: the editor memoises its preview on this.
