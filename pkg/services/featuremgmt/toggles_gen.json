@@ -1635,6 +1635,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.apiSearchFieldValueResults",
+        "resourceVersion": "1789021061952",
+        "creationTimestamp": "2026-09-10T06:17:41Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for requests from the /api/search endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.generation",
         "resourceVersion": "1785840164813",
         "creationTimestamp": "2026-08-04T10:42:44Z",
