@@ -171,7 +171,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
-                {hasCopiedTab && (
+                {hasCopiedTab && dashboard.isPlanningActionAllowed('paste-section') && (
                   <Button
                     icon="clipboard-alt"
                     variant="secondary"
@@ -237,6 +237,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     tabsScrollArea: css({
+      backgroundColor: theme.colors.background.canvas,
       position: 'relative',
       flex: '0 1 auto',
       minWidth: 0,

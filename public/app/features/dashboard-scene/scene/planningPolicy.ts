@@ -33,6 +33,8 @@ export type PlanningAction =
   | 'edit-panel'
   | 'copy-panel'
   | 'paste-panel'
+  | 'copy-section'
+  | 'paste-section'
   | 'share-panel'
   | 'add-library-panel'
   | 'create-alert-rule'
@@ -63,6 +65,8 @@ const DENIED_WHILE_PLANNING: ReadonlySet<PlanningAction> = new Set<PlanningActio
   // query. Duplicating within the plan is fine and stays allowed.
   'copy-panel',
   'paste-panel',
+  'copy-section',
+  'paste-section',
 
   // Sharing a panel — link, embed, or snapshot — hands someone a view of a panel that does not
   // exist yet. A snapshot is the sharpest case: it bakes the panel's current data into the shared

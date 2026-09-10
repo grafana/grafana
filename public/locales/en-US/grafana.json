@@ -6088,7 +6088,7 @@
     },
     "plan-placeholder-badge": {
       "text": "Sample data",
-      "tooltip": "This is a plan, not a dashboard. The numbers shown are made up to illustrate the layout — build the plan to run real queries."
+      "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
     },
     "planning-banner": {
       "build": "Build",

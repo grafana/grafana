@@ -9,6 +9,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
 import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardSidebar } from './DashboardSidebar';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
@@ -27,7 +28,10 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
   // Copying is withheld from a plan preview (see planningPolicy), so the button goes with it rather
   // than sitting there inert. Checked here because this header derives its buttons from which
   // methods an element happens to expose, and the element cannot un-expose one per dashboard state.
-  const canCopy = element instanceof VizPanelEditableElement ? element.isCopyAllowed() : true;
+  const canCopy =
+    element instanceof VizPanelEditableElement || element instanceof RowItem || element instanceof TabItem
+      ? element.isCopyAllowed()
+      : true;
   const onCopy = canCopy ? element.onCopy?.bind(element) : undefined;
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -73,7 +77,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           <Trans i18nKey="dashboard.sidebar.element-actions.copy">Copy</Trans>
         </Button>
       )}
-      {canPaste && hasCopiedPanel && (
+      {canPaste && hasCopiedPanel && getDashboardSceneFor(canPaste).isPlanningActionAllowed('paste-panel') && (
         <Button
           variant="secondary"
           size="sm"

@@ -74,7 +74,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       // No horizontal padding of its own: each host bar supplies it — the app chrome actions bar
       // in the legacy toolbar, PlanningControls under dashboardNewLayouts.
-      padding: theme.spacing(1, 0),
+      padding: theme.spacing(2, 0),
     }),
     summary: css({
       display: 'flex',

@@ -270,6 +270,9 @@ export class TabsLayoutManager
 
   public pasteTab() {
     const scene = getDashboardSceneFor(this);
+    if (!scene.isPlanningActionAllowed('paste-section')) {
+      return;
+    }
     const tab = getTabFromClipboard(scene);
     this.addNewTab(tab);
   }

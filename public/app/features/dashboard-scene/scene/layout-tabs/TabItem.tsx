@@ -195,7 +195,15 @@ export class TabItem
     return serializeTab(this);
   }
 
+  public isCopyAllowed(): boolean {
+    return getDashboardSceneFor(this).isPlanningActionAllowed('copy-section');
+  }
+
   public onCopy() {
+    if (!this.isCopyAllowed()) {
+      return;
+    }
+
     const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
     clearClipboard();
     store.set(LS_TAB_COPY_KEY, JSON.stringify({ elements, tab: this.serialize() }));

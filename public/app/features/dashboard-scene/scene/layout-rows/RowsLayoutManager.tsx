@@ -204,6 +204,9 @@ export class RowsLayoutManager
 
   public pasteRow() {
     const scene = getDashboardSceneFor(this);
+    if (!scene.isPlanningActionAllowed('paste-section')) {
+      return;
+    }
     const row = getRowFromClipboard(scene);
     this.addNewRow(row);
   }

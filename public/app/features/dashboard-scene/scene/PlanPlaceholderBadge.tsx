@@ -84,7 +84,7 @@ function PlanPlaceholderBadgeContent({ panel }: { panel: VizPanel }) {
       text={<Trans i18nKey="dashboard.plan-placeholder-badge.text">Sample data</Trans>}
       tooltip={t(
         'dashboard.plan-placeholder-badge.tooltip',
-        'This is a plan, not a dashboard. The numbers shown are made up to illustrate the layout — build the plan to run real queries.'
+        'The numbers shown are sample data for illustration and do not come from real queries.'
       )}
     />
   );
