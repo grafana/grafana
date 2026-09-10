@@ -215,7 +215,7 @@ describe('TracePageHeader test', () => {
     expect(screen.getByText('POST')).toBeInTheDocument();
     expect(screen.getByText('500')).toBeInTheDocument();
     expect(screen.queryByText('200')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Error span')).toBeInTheDocument();
+    expect(screen.getByLabelText('Trace error banner')).toBeInTheDocument();
   });
 
   it('shows an orange warning indicator when the root request has a 4xx status', () => {
@@ -241,15 +241,15 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('404')).toBeInTheDocument();
-    expect(screen.getByLabelText('Warning span')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Error span')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trace warning banner')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
   });
 
-  it('does not show an issue span banner when the trace has no errors or client errors', () => {
+  it('does not show a trace banner when the trace has no errors or client errors', () => {
     setup();
 
-    expect(screen.queryByLabelText('Error span')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Warning span')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace warning banner')).not.toBeInTheDocument();
   });
 
   it('highlights the deepest error span and does not list the other error spans', () => {
@@ -287,7 +287,7 @@ describe('TracePageHeader test', () => {
 
     setup({ links: [], isLoading: false }, false, undefined, errorTrace);
 
-    const banner = screen.getByLabelText('Error span');
+    const banner = screen.getByLabelText('Trace error banner');
     expect(within(banner).getByText('payment-service')).toBeInTheDocument();
     expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
     expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
@@ -683,7 +683,7 @@ describe('TracePageHeader test', () => {
       expect(screen.queryByText('Filters')).not.toBeInTheDocument();
     });
 
-    it('should hide the issue span banner when hideHeaderDetails is true', () => {
+    it('should hide the trace banner when hideHeaderDetails is true', () => {
       const errorTrace = {
         ...trace,
         spans: [
@@ -696,7 +696,7 @@ describe('TracePageHeader test', () => {
 
       setup({ links: [], isLoading: false }, true, undefined, errorTrace);
 
-      expect(screen.queryByLabelText('Error span')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
     });
 
     it('should hide plugin extension buttons when hideHeaderDetails is true', () => {
