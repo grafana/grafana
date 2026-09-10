@@ -782,6 +782,21 @@ const useCrossDashboardVariablesValueSchema = z.object({
   folder: scopeSelectionSchema.describe('Which folder-scoped variables this dashboard receives'),
 });
 
+const metadataAnnotationKeySchema = z
+  .enum([useCrossDashboardVariablesAnnoKey])
+  .describe('Allowlisted metadata.annotations key');
+
+const getMetadataAnnotationsPayloadSchema = z
+  .object({
+    annotations: z
+      .array(metadataAnnotationKeySchema)
+      .min(1)
+      .describe(
+        'Metadata annotation keys to read. Only grafana.app/useCrossDashboardVariables is allowed today; unknown keys are rejected. This is not a query annotation layer.'
+      ),
+  })
+  .strict();
+
 const updateMetadataAnnotationsPayloadSchema = z
   .object({
     annotations: z
@@ -842,8 +857,8 @@ export const payloads = {
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
-  getCrossDashboardVariables: emptyPayloadSchema.describe(
-    'Get which global and folder-scoped variables this dashboard receives, plus the names available in each scope'
+  getMetadataAnnotations: getMetadataAnnotationsPayloadSchema.describe(
+    'Read allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is readable. Not a query annotation layer (use LIST_ANNOTATIONS). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
   updateMetadataAnnotations: updateMetadataAnnotationsPayloadSchema.describe(
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'

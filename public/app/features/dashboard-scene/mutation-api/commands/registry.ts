@@ -12,9 +12,9 @@ import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
-import { getCrossDashboardVariablesCommand } from './getCrossDashboardVariables';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
 import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
@@ -64,7 +64,7 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   removePanelCommand,
   listPanelsCommand,
   getDashboardInfoCommand,
-  getCrossDashboardVariablesCommand,
+  getMetadataAnnotationsCommand,
   updateMetadataAnnotationsCommand,
   updateDashboardSettingsCommand,
   getSpecCommand,

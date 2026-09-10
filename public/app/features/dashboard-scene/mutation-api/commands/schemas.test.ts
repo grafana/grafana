@@ -114,6 +114,27 @@ describe('fieldConfigSchema matcher validation', () => {
   });
 });
 
+describe('GET_METADATA_ANNOTATIONS payload', () => {
+  const key = 'grafana.app/useCrossDashboardVariables';
+
+  it('accepts the allowlisted key', () => {
+    expect(payloads.getMetadataAnnotations.safeParse({ annotations: [key] }).success).toBe(true);
+  });
+
+  it('rejects an empty key list', () => {
+    expect(payloads.getMetadataAnnotations.safeParse({ annotations: [] }).success).toBe(false);
+    expect(payloads.getMetadataAnnotations.safeParse({}).success).toBe(false);
+  });
+
+  it('rejects an unknown annotation key', () => {
+    expect(
+      payloads.getMetadataAnnotations.safeParse({
+        annotations: ['grafana.app/createdBy'],
+      }).success
+    ).toBe(false);
+  });
+});
+
 describe('UPDATE_METADATA_ANNOTATIONS payload', () => {
   const key = 'grafana.app/useCrossDashboardVariables';
 

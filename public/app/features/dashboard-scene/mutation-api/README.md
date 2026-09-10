@@ -1021,16 +1021,21 @@ Get dashboard identity/folder metadata plus every dashboard-level setting that `
 }
 ```
 
-### `GET_CROSS_DASHBOARD_VARIABLES`
+### `GET_METADATA_ANNOTATIONS`
 
-Read which global and folder-scoped variables this dashboard receives (`grafana.app/useCrossDashboardVariables` on `metadata.annotations`), plus the names available in each scope. Requires the `grafana.dashboardGlobalVariables` feature toggle. Read-only.
+Read allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
 
-This is **not** the dashboard spec and is **not** a query annotation layer. `GET_SPEC` / `APPLY_SPEC` / `LIST_ANNOTATIONS` do not include this selection. Write the selection with `UPDATE_METADATA_ANNOTATIONS`.
+Today the only readable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Requires the `grafana.dashboardGlobalVariables` feature toggle. Write the same key with `UPDATE_METADATA_ANNOTATIONS`.
 
 **Request:**
 
 ```json
-{ "type": "GET_CROSS_DASHBOARD_VARIABLES", "payload": {} }
+{
+  "type": "GET_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": ["grafana.app/useCrossDashboardVariables"]
+  }
+}
 ```
 
 **Response:**
@@ -1039,20 +1044,21 @@ This is **not** the dashboard spec and is **not** a query annotation layer. `GET
 {
   "success": true,
   "data": {
-    "selection": { "global": "all", "folder": ["env"] },
-    "available": { "global": ["env", "ds"], "folder": ["cluster"] }
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["env"] }
+    }
   },
   "changes": []
 }
 ```
 
-`selection` is omitted/`undefined` when the annotation is missing or invalid (the dashboard is not opted in). A failed Variable-list fetch still returns the current `selection` with empty `available` and a warning.
+The value is `null` when the annotation is missing or invalid (the dashboard is not opted in). Each scope is `"all"`, `"none"`, or a name array.
 
 ### `UPDATE_METADATA_ANNOTATIONS`
 
 Write allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`ADD_ANNOTATION` / `UPDATE_ANNOTATION` / `LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
 
-Today the only writable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Use `GET_CROSS_DASHBOARD_VARIABLES` to read the current selection plus available names.
+Today the only writable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Use `GET_METADATA_ANNOTATIONS` to read the current value.
 
 Requires edit permissions, the `grafana.dashboardGlobalVariables` toggle, and a dashboard that is not a locked managed resource. Enters edit mode and re-injects predefined variables.
 
