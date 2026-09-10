@@ -17,6 +17,7 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
+import { TABLE } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName, isSortableField } from '../utils';
 
@@ -309,7 +310,7 @@ const getStyles = memoize(
       textOverflow: 'ellipsis',
       whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
       borderRadius: theme.spacing(0.25),
-      lineHeight: '20px',
+      lineHeight: `${TABLE.HEADER_LINE_HEIGHT}px`,
       // A flex item won't shrink below its own min-content width by default, which for a `nowrap`
       // label is the whole title — so `overflow: hidden` and the ellipsis above never engage and the
       // title runs under the column menu pinned to the trailing edge. Allow it to shrink instead.
