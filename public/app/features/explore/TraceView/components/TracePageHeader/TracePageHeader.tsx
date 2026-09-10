@@ -59,7 +59,6 @@ import {
   type TUpdateViewRangeTimeFunction,
   type ViewRange,
 } from '../TraceTimelineViewer/types';
-import { isErrorSpan } from '../TraceTimelineViewer/utils';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
@@ -67,14 +66,10 @@ import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
+import { TraceBanner } from './TraceBanner/TraceBanner';
+import { findTraceBanner, HttpStatusClass } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
-
-enum HttpStatusClass {
-  Success = '2',
-  ClientError = '4',
-  ServerError = '5',
-}
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -153,9 +148,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
+
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [setHeaderHeight, showSpanFilters, styles.header, extensionComponents, extensionLinks, logsLinkModel]);
+  }, [
+    setHeaderHeight,
+    showSpanFilters,
+    styles.header,
+    extensionComponents,
+    extensionLinks,
+    logsLinkModel,
+    traceBanner,
+  ]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -174,10 +179,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
   const statusValue = status?.length ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
-  const showWarningIcon = statusClass === HttpStatusClass.ClientError;
-  const showErrorIcon =
-    !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === HttpStatusClass.ServerError);
-  const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === HttpStatusClass.Success;
+  // Match the banner: severity comes from every span, not only the root / first HTTP span.
+  const showErrorIcon = traceBanner?.severity === 'error';
+  const showWarningIcon = traceBanner?.severity === 'warning';
+  const showSuccessIcon = !traceBanner && statusClass === HttpStatusClass.Success;
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
@@ -336,6 +341,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           </div>
         )}
       </div>
+
+      {!hideHeaderDetails && traceBanner && <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (

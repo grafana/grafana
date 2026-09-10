@@ -37,6 +37,26 @@ func reqContextOnRequest(t *testing.T, signedInUser *user.SignedInUser) *http.Re
 	return req.WithContext(ctx)
 }
 
+func TestSearch_UsesFieldValueResultsWhenEnabled(t *testing.T) {
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("SearchDashboards", mock.Anything, mock.MatchedBy(func(query *dashboards.FindPersistedDashboardsQuery) bool {
+		return query.UseFieldValueResults
+	})).Return(model.HitList{}, nil)
+
+	signedInUser := &user.SignedInUser{}
+	req := reqContextOnRequest(t, signedInUser)
+	starClient := starapi.NewMockK8sClients(t)
+	starClient.On("GetStars", mock.Anything).Return([]string{}, nil)
+	svc := &SearchService{
+		starClient:       starClient,
+		dashboardService: dashboardService,
+		features:         featuremgmt.WithFeatures(featuremgmt.FlagDashboardApiSearchFieldValueResults),
+	}
+
+	_, err := svc.SearchHandler(req.Context(), &Query{SignedInUser: signedInUser})
+	require.NoError(t, err)
+}
+
 func TestSearch_SortedResults(t *testing.T) {
 	db := dbtest.NewFakeDB()
 	us := usertest.NewUserServiceFake()

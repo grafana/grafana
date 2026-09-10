@@ -416,14 +416,14 @@ describe('InlineField', () => {
   });
 
   describe('FileDropzone', () => {
-    it('associates with the field label correctly when no id is set', () => {
+    it('associates with the field label correctly when no id is set', async () => {
       render(
         <InlineField label="My label">
           <FileDropzone />
         </InlineField>
       );
 
-      expect(screen.getByLabelText('My label')).toBeInTheDocument();
+      expect(await screen.findByLabelText('My label')).toBeInTheDocument();
     });
   });
 
