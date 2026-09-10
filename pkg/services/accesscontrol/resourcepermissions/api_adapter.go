@@ -141,6 +141,8 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
+	subjects := a.resolveSubjects(lookupCtx, orgID, permissions)
+
 	for _, perm := range permissions {
 		kind := perm.Kind
 		name := perm.Name
@@ -171,42 +173,136 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 
 		switch kind {
 		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-			userDetails, err := a.service.userService.GetByUID(lookupCtx, &user.GetUserByUIDQuery{UID: name})
-			if err == nil {
+			if userDetails, ok := subjects.users[name]; ok {
 				permDTO.UserID = userDetails.ID
 				permDTO.UserUID = userDetails.UID
 				permDTO.UserLogin = userDetails.Login
 				permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
 				permDTO.IsServiceAccount = userDetails.IsServiceAccount
-				permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
-				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+				permDTO.RoleName = userManagedRoleName(userDetails.ID)
+				permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			teamDetails, err := a.service.teamService.GetTeamByID(lookupCtx, &team.GetTeamByIDQuery{
-				UID:   name,
-				OrgID: orgID,
-			})
-			if err == nil {
+			if teamDetails, ok := subjects.teams[name]; ok {
 				permDTO.Team = teamDetails.Name
 				permDTO.TeamID = teamDetails.ID
 				permDTO.TeamUID = teamDetails.UID
 				permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
-				permDTO.RoleName = fmt.Sprintf("managed:teams:%d:permissions", teamDetails.ID)
-				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+				permDTO.RoleName = teamManagedRoleName(teamDetails.ID)
+				permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 			} else {
 				permDTO.TeamUID = name
 				permDTO.Team = name
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 			permDTO.BuiltInRole = name
-			permDTO.RoleName = fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(name))
-			permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+			permDTO.RoleName = basicRoleManagedRoleName(name)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		}
 
 		dto = append(dto, permDTO)
 	}
 
 	return dto, nil
+}
+
+func userManagedRoleName(userID int64) string {
+	return fmt.Sprintf("managed:users:%d:permissions", userID)
+}
+
+func teamManagedRoleName(teamID int64) string {
+	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
+}
+
+func basicRoleManagedRoleName(role string) string {
+	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(role))
+}
+
+// resolvedSubjects holds everything convertK8sResourcePermissionToDTO needs to
+// name a subject and attach its managed-role permission ID. A missing key means
+// the lookup failed, which callers render the same way a per-entry error was
+// rendered before.
+type resolvedSubjects struct {
+	users         map[string]*user.User
+	teams         map[string]*team.TeamDTO
+	permissionIDs map[string]int64
+}
+
+// resolveSubjects looks up the subjects of a whole ResourcePermission spec up
+// front. Resolving per entry cost two queries per assignment — an identity
+// lookup and a permission-ID lookup — so a folder with several hundred
+// assignments issued that many serial round trips, repeated for every ancestor
+// folder in the inheritance chain.
+//
+// Teams are still resolved one at a time. The batch alternative, SearchTeams
+// filtered by UID, applies an access-control filter on teams:read, which the
+// service identity used here does not hold, so it would return no teams at all.
+func (a *api) resolveSubjects(ctx context.Context, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) *resolvedSubjects {
+	subjects := &resolvedSubjects{
+		users:         make(map[string]*user.User),
+		teams:         make(map[string]*team.TeamDTO),
+		permissionIDs: make(map[string]int64),
+	}
+
+	userUIDs := make([]string, 0, len(permissions))
+	teamUIDs := make([]string, 0, len(permissions))
+	roleNames := make([]string, 0, len(permissions))
+	seenUser := make(map[string]struct{}, len(permissions))
+	seenTeam := make(map[string]struct{})
+
+	for _, perm := range permissions {
+		if perm.Name == "" || perm.Verb == "" {
+			continue
+		}
+
+		switch perm.Kind {
+		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+			if _, ok := seenUser[perm.Name]; ok {
+				continue
+			}
+			seenUser[perm.Name] = struct{}{}
+			userUIDs = append(userUIDs, perm.Name)
+		case iamv0.ResourcePermissionSpecPermissionKindTeam:
+			if _, ok := seenTeam[perm.Name]; ok {
+				continue
+			}
+			seenTeam[perm.Name] = struct{}{}
+			teamUIDs = append(teamUIDs, perm.Name)
+		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
+			roleNames = append(roleNames, basicRoleManagedRoleName(perm.Name))
+		}
+	}
+
+	if len(userUIDs) > 0 {
+		users, err := a.service.userService.ListByIdOrUID(ctx, userUIDs, nil)
+		if err != nil {
+			a.logger.Warn("Failed to resolve users for resource permissions", "error", err, "count", len(userUIDs), "orgID", orgID)
+		}
+		for _, u := range users {
+			subjects.users[u.UID] = u
+			roleNames = append(roleNames, userManagedRoleName(u.ID))
+		}
+	}
+
+	for _, uid := range teamUIDs {
+		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{UID: uid, OrgID: orgID})
+		if err != nil {
+			continue
+		}
+		subjects.teams[uid] = teamDetails
+		roleNames = append(roleNames, teamManagedRoleName(teamDetails.ID))
+	}
+
+	if len(roleNames) > 0 && a.service.store != nil {
+		permissionIDs, err := a.service.store.GetPermissionIDsByRoleNames(ctx, orgID, roleNames)
+		if err != nil {
+			a.logger.Debug("Failed to get permission IDs from legacy database", "error", err, "count", len(roleNames), "orgID", orgID)
+		} else {
+			subjects.permissionIDs = permissionIDs
+		}
+	}
+
+	return subjects
 }
 
 func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {

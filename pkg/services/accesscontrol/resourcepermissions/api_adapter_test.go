@@ -1201,6 +1201,18 @@ func (m *mockResourcePermissionStore) GetPermissionIDByRoleName(ctx context.Cont
 	}
 }
 
+func (m *mockResourcePermissionStore) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, roleNames []string) (map[string]int64, error) {
+	result := make(map[string]int64, len(roleNames))
+	for _, roleName := range roleNames {
+		id, err := m.GetPermissionIDByRoleName(ctx, orgID, roleName)
+		if err != nil {
+			continue
+		}
+		result[roleName] = id
+	}
+	return result, nil
+}
+
 func makeReqCtx() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
 		Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},

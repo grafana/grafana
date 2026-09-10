@@ -559,6 +559,66 @@ func seedResourcePermissions(
 	}
 }
 
+func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const orgID int64 = 1
+	ctx := context.Background()
+	store, _, _ := setupTestEnv(t)
+
+	cmd := func(resourceID string) SetResourcePermissionCommand {
+		return SetResourcePermissionCommand{
+			// A single action keeps one permission row per managed role, so the
+			// batched MIN(p.id) and the per-name LIMIT 1 must agree.
+			Actions:           []string{"folders:read"},
+			Resource:          "folders",
+			ResourceID:        resourceID,
+			ResourceAttribute: "uid",
+		}
+	}
+
+	_, err := store.SetUserResourcePermission(ctx, orgID, accesscontrol.User{ID: 1}, cmd("folder-1"), nil)
+	require.NoError(t, err)
+	_, err = store.SetTeamResourcePermission(ctx, orgID, 3, cmd("folder-2"), nil)
+	require.NoError(t, err)
+	_, err = store.SetBuiltInResourcePermission(ctx, orgID, string(org.RoleEditor), cmd("folder-3"), nil)
+	require.NoError(t, err)
+
+	seeded := []string{
+		userManagedRoleName(1),
+		teamManagedRoleName(3),
+		basicRoleManagedRoleName(string(org.RoleEditor)),
+	}
+	const unknownRole = "managed:users:999:permissions"
+
+	t.Run("resolves every seeded role and skips unknown and duplicate names", func(t *testing.T) {
+		query := append(append([]string{}, seeded...), unknownRole, seeded[0])
+
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, query)
+		require.NoError(t, err)
+		require.Len(t, ids, len(seeded))
+
+		for _, name := range seeded {
+			expected, err := store.GetPermissionIDByRoleName(ctx, orgID, name)
+			require.NoError(t, err)
+			assert.Equal(t, expected, ids[name], "batched ID must match the per-name query for %s", name)
+		}
+		assert.NotContains(t, ids, unknownRole)
+	})
+
+	t.Run("returns an empty result for no names", func(t *testing.T) {
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, nil)
+		require.NoError(t, err)
+		assert.Empty(t, ids)
+	})
+
+	t.Run("does not leak roles across orgs", func(t *testing.T) {
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID+1, seeded)
+		require.NoError(t, err)
+		assert.Empty(t, ids)
+	})
+}
+
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
