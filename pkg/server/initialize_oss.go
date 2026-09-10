@@ -40,7 +40,7 @@ type (
 	initializeForCLIFn           func(context.Context, *setting.Cfg) (Runner, error)
 	initializeAPIServerFactoryFn func() (standalone.APIServerFactory, error)
 	initializeRouterFactoryFn    func() (router.RouterFactory, error)
-	initializeRoutesLoaderFn     func(context.Context, *setting.Cfg, Options, api.ServerOptions) (router.RoutesLoader, error)
+	initializeRoutesLoaderFn     func(*setting.Cfg, router.RoutesLoaderClients) (router.RoutesLoader, error)
 )
 
 var (
@@ -94,6 +94,6 @@ func InitializeRouterFactory() (router.RouterFactory, error) {
 	return initializeRouterFactoryFunc()
 }
 
-func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (router.RoutesLoader, error) {
-	return initializeRoutesLoaderFunc(ctx, cfg, opts, apiOpts)
+func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
+	return initializeRoutesLoaderFunc(cfg, clients)
 }

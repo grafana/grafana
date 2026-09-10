@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 
@@ -52,15 +51,46 @@ func ProvideRoutesLoader(
 		"features", fmt.Sprintf("%T", features),
 		"cfg", fmt.Sprintf("%T", cfg),
 	)
-	return emptyRoutesLoader{}
+	return dummyRoutesLoader{group: []string{
+		"dummy-backend-1.ext.grafana.app",
+		"dummy-backend-2.ext.grafana.app",
+	}}
 }
 
-type emptyRoutesLoader struct{}
-
-func (emptyRoutesLoader) Load(context.Context) ([]Backend, error) {
-	return nil, nil
+// RoutesLoaderClients groups clients that are constructed by the router module
+// before the remaining routes loader dependencies are initialized.
+type RoutesLoaderClients struct {
+	Resource resource.ResourceClient
+	Access   types.AccessClient
 }
 
-func (emptyRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
-	return make(chan struct{}), nil
+func ProvideRoutesLoaderWithClients(
+	pluginClient plugins.Client,
+	contextProvider appplugin.PluginContextWrapper,
+	clientV3Loader v3.ClientV3Loader,
+	pluginSources sources.Registry,
+	pluginSettings pluginsettings.Service,
+	acService accesscontrol.Service,
+	accessControl accesscontrol.AccessControl,
+	decrypter decrypt.DecryptService,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	clients RoutesLoaderClients,
+) RoutesLoader {
+	return ProvideRoutesLoader(
+		pluginClient,
+		contextProvider,
+		clientV3Loader,
+		pluginSources,
+		pluginSettings,
+		acService,
+		accessControl,
+		clients.Resource,
+		clients.Access,
+		decrypter,
+		tracer,
+		features,
+		cfg,
+	)
 }

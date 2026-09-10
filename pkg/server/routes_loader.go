@@ -1,5 +1,3 @@
-//go:build enterprise || pro
-
 package server
 
 import (
@@ -26,7 +24,10 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating router unified storage client: %w", err)
 	}
-	return InitializeRoutesLoader(s.cfg, client, accessClient)
+	return InitializeRoutesLoader(s.cfg, router.RoutesLoaderClients{
+		Resource: client,
+		Access:   accessClient,
+	})
 }
 
 func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (resource.ResourceClient, error) {

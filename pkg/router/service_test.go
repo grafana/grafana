@@ -22,7 +22,7 @@ func (n *testReadyNotifier) SetNotReady() { n.ready.Store(false) }
 func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
-	svc, err := ProvideService(emptyRoutesLoader{}, httpRouter, ready)
+	svc, err := ProvideService(&dummyRoutesLoader{}, httpRouter, ready)
 	require.NoError(t, err)
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
@@ -49,6 +49,6 @@ func TestProvideServiceRequiresCollaborators(t *testing.T) {
 	_, err := ProvideService(nil, mux.NewRouter(), nil)
 	require.ErrorContains(t, err, "routes loader is required")
 
-	_, err = ProvideService(emptyRoutesLoader{}, nil, nil)
+	_, err = ProvideService(&dummyRoutesLoader{}, nil, nil)
 	require.ErrorContains(t, err, "HTTP router is required")
 }

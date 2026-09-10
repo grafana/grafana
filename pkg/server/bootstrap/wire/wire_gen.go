@@ -1946,8 +1946,9 @@ func InitializeRouterFactory() (router.RouterFactory, error) {
 
 // InitializeRoutesLoader uses the same configured OSS dependency graph as the
 // app-plugin API registration.
-func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (router.RoutesLoader, error) {
+func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
 	inMemory := registry.ProvideService()
+	contextContext := provideRoutesLoaderContext()
 	configProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
 		return nil, err
@@ -1995,7 +1996,7 @@ func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.O
 		return nil, err
 	}
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
-	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
+	quotaService := quotaimpl.ProvideService(contextContext, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(legacyDatabaseProvider, cfg, quotaService)
 	if err != nil {
 		return nil, err
@@ -2006,14 +2007,14 @@ func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.O
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
-	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
+	socialService := socialimpl.ProvideService(contextContext, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
+	loginStore, err := authinfoimpl.ProvideStore(contextContext, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
-	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(contextContext, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -2144,32 +2145,7 @@ func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.O
 		return nil, err
 	}
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
-	contextHandler := grpccontext.ProvideContextHandler(tracingService)
-	authenticator := interceptors.ProvideAuthenticator(apikeyService, userimplService, acimplService, contextHandler)
-	grpcserverProvider, err := grpcserver.ProvideService(cfg, authenticator, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	eventualClient := resource.ProvideEventualClient()
-	authZClients, err := authz.ProvideAuthZClients(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider, eventualClient)
-	if err != nil {
-		return nil, err
-	}
-	accessClient := authz.ProvideAuthZAccessClient(authZClients)
-	ossDashboardStats := builders.ProvideDashboardStats()
-	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
-	clockClock := clock.ProvideClock()
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	secureValueValidator := validator.ProvideSecureValueValidator()
-	secureValueMutator := mutator.ProvideSecureValueMutator()
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
 	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
 	if err != nil {
 		return nil, err
@@ -2208,66 +2184,12 @@ func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.O
 	if err != nil {
 		return nil, err
 	}
-	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
-	inlineSecureValueSupport, err := inline.ProvideInlineSecureValueService(cfg, tracer, secureValueService, accessClient)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	vectorBackend, err := vector.ProvideVectorBackend(cfg)
-	if err != nil {
-		return nil, err
-	}
-	vectorMetrics := resource.ProvideVectorMetrics(registerer)
-	embedder, err := provider2.ProvideEmbedder(cfg, vectorMetrics)
-	if err != nil {
-		return nil, err
-	}
-	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
-	if err != nil {
-		return nil, err
-	}
-	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
-	if err != nil {
-		return nil, err
-	}
-	kv, err := sql.ProvideKV(cfg, dbProvider)
-	if err != nil {
-		return nil, err
-	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
-	if err != nil {
-		return nil, err
-	}
-	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(config, registerer)
-	subscriberService := nats.ProvideSubscriber(config, registerer)
-	options := &unified.Options{
-		Cfg:            cfg,
-		Features:       featureToggles,
-		DB:             sqlStore,
-		Tracer:         tracingService,
-		Reg:            registerer,
-		Authzc:         accessClient,
-		Docs:           documentBuilderSupplier,
-		SecureValues:   inlineSecureValueSupport,
-		VectorBackend:  vectorBackend,
-		Embedder:       embedder,
-		Reranker:       reranker,
-		DashboardStats: ossDashboardStats,
-		KV:             kv,
-		EDB:            dbProvider,
-		ExperimentalKV: experimentalKVOptions,
-		Publisher:      publisherService,
-		Subscriber:     subscriberService,
-	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	gcGate := resource.NewGCGate()
-	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics, vectorMetrics, gcGate)
+	clockClock := clock.ProvideClock()
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -2281,6 +2203,12 @@ func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.O
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	routesLoader := router.ProvideRoutesLoaderWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, clients)
 	return routesLoader, nil
+}
+
+// inject.go:
+
+func provideRoutesLoaderContext() context.Context {
+	return context.Background()
 }
