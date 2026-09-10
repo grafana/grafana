@@ -12,6 +12,7 @@ import {
   IANAZone,
   Info,
   Settings,
+  type WeekdayNumbers,
   type Zone,
 } from './luxon';
 
@@ -78,6 +79,11 @@ type MomentDurationInput =
   | Pick<MomentDurationLike, 'asMilliseconds'>
   | undefined
   | null;
+
+interface MomentLocaleConfig {
+  parentLocale?: string;
+  week?: { dow?: number };
+}
 
 interface MomentOptions {
   locale?: string;
@@ -163,6 +169,7 @@ export interface MomentLike {
   unix(): number;
   toLocaleString(): string;
   utcOffset(): number;
+  utcOffset(value: number | string, keepLocalTime?: boolean): MomentLike;
   format(template?: FormatArg): string;
   fromNow(withoutSuffix?: boolean): string;
   toNow(withoutSuffix?: boolean): string;
@@ -328,10 +335,6 @@ function isInputObject(value: unknown): value is InputObject {
 const ARRAY_INPUT_UNITS = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'] as const;
 
 function normalizeArrayInput(input: InputArray, options?: MomentOptions): DateTime {
-  if (input.length === 0) {
-    return DateTime.now();
-  }
-
   const values = input.slice(0, ARRAY_INPUT_UNITS.length).map(Number);
 
   if (values.some((v) => Number.isNaN(v))) {
@@ -473,12 +476,23 @@ function parseFromCachedFormat(value: string, fmt: string, options?: MomentOptio
     formatParserCache.set(key, parser);
   }
 
-  return DateTime.fromFormatParser(value, parser, options);
+  return resolveParsedZone(DateTime.fromFormatParser(value, parser, { ...options, setZone: true }), options);
+}
+
+function preferEarlierOffset(dt: DateTime): DateTime {
+  return dt
+    .getPossibleOffsets()
+    .reduce((earlier, candidate) => (candidate.toMillis() < earlier.toMillis() ? candidate : earlier), dt);
+}
+
+function resolveParsedZone(dt: DateTime, options?: MomentOptions): DateTime {
+  // Parse with setZone first: explicit offsets stay fixed and must not be reinterpreted as ambiguous wall times.
+  return preferEarlierOffset(dt).setZone(options?.zone ?? Settings.defaultZone);
 }
 
 function parseWithFormat(value: string, format: MomentFormat, options?: MomentOptions): DateTime {
   if (format === ISO_8601) {
-    return DateTime.fromISO(value, options);
+    return resolveParsedZone(DateTime.fromISO(value, { ...options, setZone: true }), options);
   }
 
   // moment's unix timestamp tokens (X = seconds, x = millis) are output-only in luxon;
@@ -546,10 +560,10 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
 
 function parseWithFallbacks(value: string, options?: MomentOptions): DateTime {
   const parsers = [
-    () => DateTime.fromISO(value, options),
+    () => parseWithFormat(value, ISO_8601, options),
     () => DateTime.fromRFC2822(value, options),
     () => DateTime.fromHTTP(value, options),
-    () => DateTime.fromSQL(value, options),
+    () => resolveParsedZone(DateTime.fromSQL(value, { ...options, setZone: true }), options),
     // like moment, fall back to js Date() parsing as a last resort. it accepts looser inputs than
     // the luxon parsers above, e.g. RFC 2822 strings missing their mandatory timezone (seen in
     // RSS pubDates), which it interprets in the environment's local zone.
@@ -694,6 +708,28 @@ function getLocaleFirstDayOfWeek(locale = currentLocale): number {
   return localeOverrides.get(locale)?.dow ?? Info.getStartOfWeek({ locale: normalizeLocale(locale) }) % 7;
 }
 
+function isWeekdayNumber(value: number): value is WeekdayNumbers {
+  return Number.isInteger(value) && value >= 1 && value <= 7;
+}
+
+function getLocaleWeekNumber(dt: DateTime, locale: string): number {
+  const dow = localeOverrides.get(locale)?.dow;
+  if (dow == null) {
+    return dt.localWeekNumber;
+  }
+  const firstDay = dow || 7;
+  if (!isWeekdayNumber(firstDay)) {
+    return NaN;
+  }
+  return dt.reconfigure({
+    weekSettings: {
+      firstDay,
+      minimalDays: Info.getMinimumDaysInFirstWeek({ locale: dt.locale ?? undefined }),
+      weekend: [6, 7],
+    },
+  }).localWeekNumber;
+}
+
 function normalizeZoneName(name: string): string {
   return name.toLowerCase() === 'utc' ? 'UTC' : canonicalZoneName(name);
 }
@@ -769,14 +805,14 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
 function parseInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
   const locale = normalizeLocale(options?.locale);
 
-  if (typeof input === 'undefined') {
+  if (typeof input === 'undefined' || (Array.isArray(input) && input.length === 0)) {
     return DateTime.now()
       .reconfigure({ locale })
       .setZone(options?.zone ?? 'local');
   }
 
   if (Array.isArray(input)) {
-    return normalizeArrayInput(input, options);
+    return preferEarlierOffset(normalizeArrayInput(input, { ...options, locale }));
   }
 
   if (isMomentLike(input)) {
@@ -835,10 +871,7 @@ function parseInput(input: MomentInput, options?: MomentOptions, parseOptions?: 
     if (normalized.millisecond != null) {
       normalized.millisecond = Math.trunc(normalized.millisecond);
     }
-    return DateTime.fromObject(normalized, {
-      ...options,
-      locale,
-    });
+    return preferEarlierOffset(DateTime.fromObject(normalized, { ...options, locale }));
   }
 
   return DateTime.invalid('unsupported moment input');
@@ -910,7 +943,6 @@ class MomentCompat implements MomentLike {
   declare dates: UnitAccessor;
   declare days: UnitAccessor;
   declare weeks: UnitAccessor;
-  declare isoWeek: UnitAccessor;
   declare isoWeeks: UnitAccessor;
   declare hours: UnitAccessor;
   declare minutes: UnitAccessor;
@@ -1051,6 +1083,13 @@ class MomentCompat implements MomentLike {
   week(): number;
   week(value: number): MomentLike;
   week(value?: number): number | MomentLike {
+    const week = getLocaleWeekNumber(this._dt, this._locale);
+    return value == null ? week : this._setDt(this._dt.plus({ weeks: value - week }));
+  }
+
+  isoWeek(): number;
+  isoWeek(value: number): MomentLike;
+  isoWeek(value?: number): number | MomentLike {
     return value == null ? this._dt.weekNumber : this._setDt(this._dt.plus({ weeks: value - this._dt.weekNumber }));
   }
 
@@ -1150,8 +1189,27 @@ class MomentCompat implements MomentLike {
     return this._dt.toLocaleString(DateTime.DATETIME_MED);
   }
 
-  utcOffset(): number {
-    return this._dt.offset;
+  utcOffset(): number;
+  utcOffset(value: number | string, keepLocalTime?: boolean): MomentLike;
+  utcOffset(value?: number | string, keepLocalTime = false): number | MomentLike {
+    if (value == null) {
+      return this._dt.offset;
+    }
+
+    let zone: FixedOffsetZone | null;
+    if (typeof value === 'string') {
+      const offset = value.match(/Z|[+-]\d\d(?::?\d\d)?/gi)?.at(-1);
+      if (!offset) {
+        return this;
+      }
+      zone = FixedOffsetZone.parseSpecifier(
+        offset.toUpperCase() === 'Z' ? 'UTC' : `UTC${offset.replace(/([+-]\d{2})(\d{2})$/, '$1:$2')}`
+      );
+    } else {
+      zone = FixedOffsetZone.instance(Math.abs(value) < 16 ? value * 60 : value);
+    }
+
+    return zone ? this._setDt(this._dt.setZone(zone, { keepLocalTime })) : this;
   }
 
   format(template?: FormatArg): string {
@@ -1187,8 +1245,7 @@ proto.dates = proto.date;
 proto.days = proto.day;
 
 proto.weeks = proto.week;
-proto.isoWeek = proto.week;
-proto.isoWeeks = proto.week;
+proto.isoWeeks = proto.isoWeek;
 proto.hours = proto.hour;
 proto.minutes = proto.minute;
 proto.seconds = proto.second;
@@ -1256,7 +1313,7 @@ export interface MomentFactory {
   isMoment(input: unknown): input is MomentLike;
   locale(locale?: string): string;
   localeData(locale?: string): { firstDayOfWeek: () => number };
-  updateLocale(locale: string, config: { parentLocale?: string; week?: { dow?: number } }): string;
+  updateLocale(locale: string, config: MomentLocaleConfig): string;
   tz: MomentTzFactory;
   weekdays(locale?: string): string[];
 }
@@ -1314,7 +1371,7 @@ const moment: MomentFactory = Object.assign(
       firstDayOfWeek: () => getLocaleFirstDayOfWeek(locale),
     }),
 
-    updateLocale: (locale: string, config: { parentLocale?: string; week?: { dow?: number } }): string => {
+    updateLocale: (locale: string, config: MomentLocaleConfig): string => {
       const parentLocale = config.parentLocale ?? locale;
       localeOverrides.set(locale, {
         locale: normalizeLocale(parentLocale) ?? DEFAULT_LOCALE,

@@ -46,6 +46,6 @@ export function TextNGEditorFooter({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   lineNumbers: css({
-    fontSize: theme.typography.size.sm,
+    fontSize: theme.typography.code.fontSize,
   }),
 });

@@ -4,22 +4,34 @@ import { toDataFrame } from '@grafana/data';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
-import { clampPageSize, countRows, fitPageSize, usePagination, type PaginationOptions } from './pagination';
+import {
+  clampPageSize,
+  CONTENT_PADDING,
+  countRows,
+  fitPageSize,
+  usePagination,
+  type PaginationOptions,
+} from './pagination';
 import { MAX_RENDERED_ROWS } from './renderContent';
 
 /** jsdom lays nothing out, so the geometry the hook reads is defined here. */
-function measurableBox(contentHeight: () => number, available: number): HTMLElement {
+function boxWithClientHeight(contentHeight: () => number, clientHeight: number): HTMLElement {
   const container = document.createElement('div');
   const blocks = document.createElement('div');
   const block = document.createElement('div');
 
-  Object.defineProperty(container, 'clientHeight', { value: available });
+  Object.defineProperty(container, 'clientHeight', { value: clientHeight });
   Object.defineProperty(block, 'offsetTop', { value: 0 });
   Object.defineProperty(block, 'offsetHeight', { get: contentHeight });
 
   blocks.appendChild(block);
   container.appendChild(blocks);
   return container;
+}
+
+/** `available` is the room the blocks get; clientHeight also holds the padding. */
+function measurableBox(contentHeight: () => number, available: number): HTMLElement {
+  return boxWithClientHeight(contentHeight, available + CONTENT_PADDING);
 }
 
 function box(content: number, available: number): HTMLElement {
@@ -167,6 +179,17 @@ describe('usePagination', () => {
 
     expect(result.current.rowWindow).toEqual({ start: 0, count: 6 });
     expect(result.current.numPages).toBe(25);
+  });
+
+  it('leaves the padding clientHeight reports out of the room it fits rows into', () => {
+    // 750px over the 15 estimated rows is 50px each: six fill a 300px box, five fit
+    // once its padding is taken out.
+    const { result } = setup(
+      {},
+      boxWithClientHeight(() => 750, 300)
+    );
+
+    expect(result.current.rowWindow?.count).toBe(5);
   });
 
   it('measures a box that only attaches once the lazy editor has mounted', () => {
