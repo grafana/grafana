@@ -92,13 +92,13 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
-  isRepeated,
+  disabled,
 }: {
   title: string;
   text: string;
   yesText: string;
   onConfirm: () => void;
-  isRepeated?: boolean;
+  disabled?: boolean;
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
@@ -115,7 +115,7 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm]);
 
-  const tooltip = isRepeated
+  const tooltip = disabled
     ? t('dashboard-scene.control-edit-actions.delete-tooltip-disabled', "Repeated panels can't be deleted individually")
     : t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
 
@@ -128,18 +128,13 @@ export function DeleteActionButton({
       onClick={onClickInternal}
       tooltip={tooltip}
       tooltipPlacement="top"
-      disabled={isRepeated}
+      disabled={disabled}
     />
   );
 }
 
-export function GroupActionsButton({ count, onClick }: { count: number; onClick: () => void }) {
+export function BulkActionsButton({ onClick }: { onClick: () => void }) {
   const styles = useStyles2(getActionStyles);
-  const tooltip = t('dashboard-scene.control-edit-actions.group-actions-tooltip', '', {
-    count,
-    defaultValue_one: 'Edit selection ({{count}} element)',
-    defaultValue_other: 'Edit selection ({{count}} elements)',
-  });
 
   return (
     <IconButton
@@ -148,7 +143,7 @@ export function GroupActionsButton({ count, onClick }: { count: number; onClick:
       size="md"
       className={styles.action}
       onClick={onClick}
-      tooltip={tooltip}
+      tooltip={t('dashboard-scene.bulk-actions-button.tooltip-bulk-actions-on-selected-elements', 'Bulk actions')}
       tooltipPlacement="top"
     />
   );

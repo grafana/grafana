@@ -7025,6 +7025,9 @@
         }
       }
     },
+    "bulk-actions-button": {
+      "tooltip-bulk-actions-on-selected-elements": "Bulk actions"
+    },
     "constant-variable-form": {
       "constant-options": "Constant options",
       "label-value": "Value",
@@ -7037,8 +7040,6 @@
       "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
-      "group-actions-tooltip_one": "Edit selection ({{count}} element)",
-      "group-actions-tooltip_other": "Edit selection ({{count}} elements)",
       "settings": "Settings"
     },
     "conversion-warning-banner": {
@@ -7480,7 +7481,9 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualization"
+      "edit-visualization": "Edit visualization",
+      "elements-selected_one": "{{count}} element selected",
+      "elements-selected_other": "{{count}} elements selected"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
