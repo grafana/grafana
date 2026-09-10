@@ -13,8 +13,7 @@ import { OrganizationSwitcher } from './OrganizationSwitcher';
 const mockDispatch = jest.fn();
 const cancelAllInFlightRequests = jest.fn();
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+jest.mock('app/core/services/backend_srv', () => ({
   getBackendSrv: () => ({ cancelAllInFlightRequests }),
 }));
 

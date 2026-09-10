@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
 import type { SelectableValue } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Box } from '@grafana/ui';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
