@@ -120,8 +120,8 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
-			Name:            "grafana.addRouterMiddleware",
-			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.",
+			Name:            "grafana.useRouterMiddleware",
+			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
 			Stage:           FeatureStageExperimental,
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,

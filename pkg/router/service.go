@@ -68,7 +68,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 
 	// We need to run as middleware on-top of the existing HTTP router
 	// NOTE: this should be removed when we are no longer running "standard" k8s APIServer
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAddRouterMiddleware) {
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) { //nolint:staticcheck
 		// This will intercept the calls to /apis/* and /openapi/v3/*
 		// After we have fully migrated to the router, this should be a raw handler rather than middleware
 		httpRouter.Use(func(next http.Handler) http.Handler {

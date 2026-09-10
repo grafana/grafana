@@ -43,9 +43,9 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
-	// FlagGrafanaAddRouterMiddleware
+	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.
-	FlagGrafanaAddRouterMiddleware = "grafana.addRouterMiddleware"
+	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
 
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language

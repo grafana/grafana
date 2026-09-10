@@ -2940,7 +2940,8 @@
       "metadata": {
         "name": "grafana.addRouterMiddleware",
         "resourceVersion": "1789044117017",
-        "creationTimestamp": "2026-09-10T12:41:57Z"
+        "creationTimestamp": "2026-09-10T12:41:57Z",
+        "deletionTimestamp": "2026-09-10T13:32:56Z"
       },
       "spec": {
         "description": "intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.",
@@ -3581,6 +3582,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.useRouterMiddleware",
+        "resourceVersion": "1789047176048",
+        "creationTimestamp": "2026-09-10T13:32:56Z"
+      },
+      "spec": {
+        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
