@@ -271,9 +271,8 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.NATS, s.initNATSModule)
 
-	// Same decision as resource.NewKVBackendOptions makes for wirings that do not
-	// pass it in, so both agree on which process runs the background write jobs.
-	m.RegisterInvisibleModule(modules.UnifiedBackend, s.initUnifiedBackendModule(s.cfg.StorageServicesEnabled()))
+	storageServicesEnabled := s.cfg.StorageServicesEnabled() || routerNeedsWritableStorageBackend(s.cfg, m.IsModuleEnabled(modules.Router))
+	m.RegisterInvisibleModule(modules.UnifiedBackend, s.initUnifiedBackendModule(storageServicesEnabled))
 
 	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, s.initUnifiedVectorBackend(m.IsModuleEnabled(modules.StorageServer)))
 

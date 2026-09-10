@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -31,12 +32,12 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 }
 
 func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (resource.ResourceClient, error) {
-	apiserverCfg := s.cfg.SectionWithEnvOverrides("grafana-apiserver")
-	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
-	if storageType == options.StorageTypeUnifiedGrpc {
+	if !routerUsesLocalStorage(s.cfg) {
 		return unified.NewRemoteResourceClientFromConfig(s.cfg, s.features, s.tracer, s.registerer)
 	}
 
+	// A local ResourceServer exposes the write APIs and initializes a write-event
+	// watcher, so its backend must not have storage services disabled.
 	resourceServer, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:        s.storageBackend,
 		VectorBackend:  s.vectorBackend,
@@ -56,4 +57,14 @@ func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (res
 		return nil, err
 	}
 	return resource.NewLocalResourceClient(resourceServer), nil
+}
+
+func routerUsesLocalStorage(cfg *setting.Cfg) bool {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
+	return storageType != options.StorageTypeUnifiedGrpc
+}
+
+func routerNeedsWritableStorageBackend(cfg *setting.Cfg, routerEnabled bool) bool {
+	return routerEnabled && routerUsesLocalStorage(cfg)
 }
