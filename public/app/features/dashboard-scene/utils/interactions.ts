@@ -184,7 +184,16 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
+    item:
+      | 'configure'
+      | 'configure_dropdown'
+      | 'edit'
+      | 'settings'
+      | 'copy'
+      | 'duplicate'
+      | 'delete'
+      | 'view'
+      | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
@@ -207,11 +216,11 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'add_panel', source, target, action });
   },
-  trackGroupRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
+  trackGroupRowClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_row', source });
   },
-  trackGroupTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
+  trackGroupTabClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab', source });
   },
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
@@ -223,8 +232,8 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
-  trackDeleteDashboardElement(elementType: string) {
-    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
+  trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
