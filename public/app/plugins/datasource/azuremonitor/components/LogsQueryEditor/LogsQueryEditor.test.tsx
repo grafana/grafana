@@ -478,12 +478,6 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
           logTier: undefined,
           query: 'BasicTable | take 10',
-          builderQuery: {
-            from: {
-              type: BuilderQueryEditorExpressionType.Property,
-              property: { type: BuilderQueryEditorPropertyType.String, name: 'BasicTable' },
-            },
-          },
         },
       });
       const onChange = jest.fn();
@@ -519,6 +513,12 @@ describe('LogsQueryEditor', () => {
           basicLogsQuery: true,
           logTier: undefined,
           query: 'BasicTable | take 10',
+          builderQuery: {
+            from: {
+              type: BuilderQueryEditorExpressionType.Property,
+              property: { type: BuilderQueryEditorPropertyType.String, name: 'BasicTable' },
+            },
+          },
         },
       });
       const onChange = jest.fn();
@@ -975,7 +975,7 @@ describe('LogsQueryEditor', () => {
       await selectOptionInTest(tableSelect, 'BasicTable');
 
       const switchedQuery = await waitFor(() => {
-        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
         expect(switchedCall).toBeDefined();
         return switchedCall![0];
       });
@@ -1054,7 +1054,9 @@ describe('LogsQueryEditor', () => {
       await selectOptionInTest(tableSelect, 'AuxiliaryTable');
 
       const switchedQuery = await waitFor(() => {
-        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Auxiliary');
+        const switchedCall = onQueryChange.mock.calls.find(
+          (call) => call[0]?.azureLogAnalytics?.logTier === 'Auxiliary'
+        );
         expect(switchedCall).toBeDefined();
         return switchedCall![0];
       });
@@ -1119,7 +1121,7 @@ describe('LogsQueryEditor', () => {
       await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
 
       const switchedQuery = await waitFor(() => {
-        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
         expect(switchedCall).toBeDefined();
         return switchedCall![0];
       });
@@ -1176,7 +1178,7 @@ describe('LogsQueryEditor', () => {
       await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
 
       const switchedQuery = await waitFor(() => {
-        const switchedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
         expect(switchedCall).toBeDefined();
         return switchedCall![0];
       });

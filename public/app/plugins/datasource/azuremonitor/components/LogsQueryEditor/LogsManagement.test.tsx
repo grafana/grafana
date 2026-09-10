@@ -250,7 +250,17 @@ describe('LogsQueryEditor.LogsManagement', () => {
     it('clears basicLogsQuery and logTier when Analytics is clicked', async () => {
       const mockDatasource = createMockDatasource();
       const query = createMockQuery({
-        azureLogAnalytics: { basicLogsQuery: true, logTier: 'Basic' },
+        azureLogAnalytics: {
+          basicLogsQuery: true,
+          logTier: 'Basic',
+          query: 'BasicTable | take 10',
+          builderQuery: {
+            from: {
+              type: BuilderQueryEditorExpressionType.Property,
+              property: { type: BuilderQueryEditorPropertyType.String, name: 'BasicTable' },
+            },
+          },
+        },
       });
       const onChange = jest.fn();
 

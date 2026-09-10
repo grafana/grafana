@@ -23,7 +23,7 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { onLoad, setFormatAs, setKustoQuery, setLogTierAndClearQuery } from './setQueryValue';
+import { onLoad, setFormatAs, setLogTierAndClearQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
 import { getSelectedLogTier, shouldShowBasicLogsToggle } from './utils';
 
