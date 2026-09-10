@@ -205,6 +205,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 		response     map[string]any
 		responseCode int
 		expectedErr  string
+		wantAuthErr  bool // error must be classified as connection.ErrAuthentication (user-actionable)
 		validate     func(t *testing.T, token *oauth2.Token)
 	}{
 		{
@@ -240,12 +241,21 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			name:        "failure - no refresh token",
 			token:       marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			expectedErr: "no refresh token available; authorize the OAuth application again",
+			wantAuthErr: true,
 		},
 		{
-			name:         "failure - token endpoint rejects refresh",
+			name:         "failure - token endpoint rejects refresh (4xx is user-actionable)",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,
 			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 5xx stays system-caused",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusInternalServerError,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
 		},
 	}
 
@@ -257,6 +267,11 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			raw, err := conn.GenerateConnectionToken(t.Context())
 			if tt.expectedErr != "" {
 				require.ErrorContains(t, err, tt.expectedErr)
+				if tt.wantAuthErr {
+					assert.ErrorIs(t, err, connection.ErrAuthentication, "expected a user-actionable authentication error")
+				} else {
+					assert.NotErrorIs(t, err, connection.ErrAuthentication, "expected a system-caused error")
+				}
 				return
 			}
 			require.NoError(t, err)

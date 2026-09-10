@@ -126,7 +126,7 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 		return nil, err
 	}
 	if stored.RefreshToken == "" {
-		return nil, errors.New("no refresh token available; authorize the OAuth application again")
+		return nil, fmt.Errorf("no refresh token available; authorize the OAuth application again: %w", connection.ErrAuthentication)
 	}
 
 	cfg := oauth2.Config{
@@ -137,6 +137,16 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 
 	next, err := cfg.TokenSource(ctx, &oauth2.Token{RefreshToken: stored.RefreshToken}).Token()
 	if err != nil {
+		// A 4xx from the token endpoint (e.g. invalid_grant after the user revoked
+		// the authorization or the refresh token expired) is user-actionable: they
+		// must re-authorize. Transport and 5xx failures stay unwrapped so they
+		// classify as system-caused.
+		var retrieveErr *oauth2.RetrieveError
+		if errors.As(err, &retrieveErr) && retrieveErr.Response != nil &&
+			retrieveErr.Response.StatusCode >= http.StatusBadRequest &&
+			retrieveErr.Response.StatusCode < http.StatusInternalServerError {
+			return nil, fmt.Errorf("refresh access token: %w: %w", connection.ErrAuthentication, err)
+		}
 		return nil, fmt.Errorf("refresh access token: %w", err)
 	}
 
