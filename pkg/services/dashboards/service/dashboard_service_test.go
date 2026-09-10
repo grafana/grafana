@@ -1598,6 +1598,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 					resource.SEARCH_FIELD_FOLDER,
 					resource.SEARCH_FIELD_DESCRIPTION,
 					resource.SEARCH_FIELD_LEGACY_ID,
+					resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 				}) &&
 				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName

@@ -33,6 +33,7 @@ var (
 		resource.SEARCH_FIELD_FOLDER,
 		resource.SEARCH_FIELD_DESCRIPTION,
 		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
 
 	IncludeFields = []string{

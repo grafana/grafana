@@ -100,11 +100,15 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 			}
 			if assert.Contains(collect, byUID, savedFolder.UID) {
 				assert.Equal(collect, model.DashHitFolder, byUID[savedFolder.UID].Type)
+				assert.NotZero(collect, byUID[savedFolder.UID].ID)
 			}
 			if assert.Contains(collect, byUID, savedDashInFolder.UID) {
 				assert.Equal(collect, savedFolder.UID, byUID[savedDashInFolder.UID].FolderUID)
+				assert.NotZero(collect, byUID[savedDashInFolder.UID].ID)
 			}
-			assert.Contains(collect, byUID, savedDashInGeneralFolder.UID)
+			if assert.Contains(collect, byUID, savedDashInGeneralFolder.UID) {
+				assert.NotZero(collect, byUID[savedDashInGeneralFolder.UID].ID)
+			}
 		}, 10*time.Second, 25*time.Millisecond)
 	})
 
