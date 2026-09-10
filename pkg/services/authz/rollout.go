@@ -80,8 +80,9 @@ func (c *rolloutAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo
 	if len(req.Checks) == 0 {
 		return c.rbac.BatchCheck(ctx, id, req)
 	}
+
 	check := req.Checks[0]
-	group, resource, subresource := req.Checks[0].Group, req.Checks[0].Resource, req.Checks[0].Subresource
+	group, resource, subresource := check.Group, check.Resource, check.Subresource
 	for _, check := range req.Checks[1:] {
 		if check.Group != group || check.Resource != resource || check.Subresource != subresource {
 			rolloutLog.Warn("batch contains mixed group/resource combinations, falling back to RBAC",
