@@ -774,11 +774,9 @@ export function useTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
 }
 
 /**
- * Builds the typography context header labels are measured with. They render at
- * `fontWeightMedium`, which is wider than the body text `useTypographyCtx` measures, so both the
- * width path (how wide an auto column must be) and the height path (how many lines a wrapped label
- * takes) have to use this one — measuring with the body context makes a label look narrower than it
- * paints, and the two paths then disagree about where it wraps.
+ * Builds the typography context header labels are measured with. They render at `fontWeightMedium`,
+ * wider than the body text `useTypographyCtx` measures, so both the width path (how wide an auto
+ * column must be) and the height path (how many lines a wrapped label takes) measure with this one.
  */
 export function useHeaderTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
   return useMemo(

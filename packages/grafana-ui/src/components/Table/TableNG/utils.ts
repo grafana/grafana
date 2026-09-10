@@ -263,18 +263,11 @@ export function createTypographyContext(
 /**
  * @internal The narrowest width at which the line counter agrees the text fits on one line.
  *
- * `measureText` on the whole string is not that width: it is kerned end to end, while uwrap — the
- * same code that counts the lines — accumulates its own per-character widths and only models kerning
- * after capitals, so it reads most strings a fraction (0.1–1px, in practice) *wider*. Size a column
- * to exactly its header text using the kerned number and uwrap then puts that text on two lines: the
- * header row grows for a label the browser draws on one.
- *
- * uwrap doesn't export its width LUT, and reimplementing that arithmetic here is precisely the thing
- * that would drift out of step again, so let uwrap arbitrate instead: start from the kerned width,
- * which never over-shoots, and nudge up until `test` agrees the text stays on one line. That is a
- * pixel or two of nudging, and `test` bails at the second line rather than wrapping the whole
- * string — but it is work per call, so this is meant for the handful of header labels a table has,
- * not for every cell.
+ * Not `measureText(text).width`: that is kerned end to end, while uwrap sums its own per-character
+ * widths and so reads most strings ~1px wider. Size a column to the kerned number and uwrap wraps
+ * the label anyway. uwrap doesn't export its width table, so it arbitrates instead: start from the
+ * kerned width, which never over-shoots, and nudge up until `test` agrees. Cheap enough for the
+ * handful of labels a header has, but it is work per call — not for every cell.
  */
 export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: uWrap): (text: string) => number {
   return (text: string) => {
@@ -1441,9 +1434,7 @@ export interface HeaderAffordanceOptions {
  *
  * The single description of what sits next to a header's text, so the two paths that care can't
  * drift: `measureHeaderWidth` adds it when sizing an auto column, and `useHeaderHeight` subtracts it
- * to find the room a wrapped label has. They were written separately and disagreed — the height path
- * never knew about the `headerTooltip` button or the refreshed header's active-filter icon, so it
- * gave a wrapped label up to 44px more room than it had and undercounted its lines.
+ * to find the room a wrapped label has.
  */
 export function getHeaderAffordanceWidth(
   field: Field,
