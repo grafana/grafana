@@ -8,7 +8,7 @@ import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer, type LevelItem } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
@@ -79,6 +79,20 @@ export type Props = {
   keepFocusOnDataChange?: boolean;
 
   /**
+   * Called when the user focuses a node or resets the focus, with the call path of the focused node from the root
+   * (undefined when the focus is reset). Lets a host react to what the user is looking at, for example to load more
+   * detail for that part of the profile.
+   */
+  onFocusChange?: (path: string[] | undefined) => void;
+
+  /**
+   * Call paths of the nodes whose data is currently being loaded, as returned by onFocusChange. Those nodes are marked
+   * as loading in the flame graph. Useful when the profile is refined progressively and parts of it are still coming
+   * in.
+   */
+  loadingPaths?: string[][];
+
+  /**
    * If true, the assistant button will be shown in the header if available.
    * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
    * option to use AI.
@@ -107,6 +121,8 @@ const FlameGraphContainer = ({
   showFlameGraphOnly,
   disableCollapsing,
   keepFocusOnDataChange,
+  onFocusChange,
+  loadingPaths,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
 }: Props) => {
@@ -128,11 +144,13 @@ const FlameGraphContainer = ({
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
   const onTextAlignSelectedRef = useRef(onTextAlignSelected);
   const onTableSortRef = useRef(onTableSort);
+  const onFocusChangeRef = useRef(onFocusChange);
 
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
     onTextAlignSelectedRef.current = onTextAlignSelected;
     onTableSortRef.current = onTableSort;
+    onFocusChangeRef.current = onFocusChange;
   });
 
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
@@ -155,6 +173,24 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
 
+  const loadingItems = useMemo(() => {
+    if (!dataContainer || !loadingPaths?.length) {
+      return undefined;
+    }
+
+    const items = new Set<LevelItem>();
+
+    for (const path of loadingPaths) {
+      const item = dataContainer.getItemByPath(path);
+
+      if (item) {
+        items.add(item);
+      }
+    }
+
+    return items.size ? items : undefined;
+  }, [dataContainer, loadingPaths]);
+
   const previousDataContainerRef = useRef(dataContainer);
   const focusedItemPathRef = useRef<string[] | undefined>(undefined);
 
@@ -176,7 +212,17 @@ const FlameGraphContainer = ({
       setFocusedItemIndexes(item ? item.itemIndexes : undefined);
     }
 
-    focusedItemPathRef.current = item && dataContainer.getItemPath(item);
+    const path = item && dataContainer.getItemPath(item);
+    const previous = focusedItemPathRef.current;
+    const unchanged =
+      path === previous ||
+      (path && previous && path.length === previous.length && path.every((l, i) => l === previous[i]));
+
+    focusedItemPathRef.current = path;
+
+    if (!unchanged) {
+      onFocusChangeRef.current?.(path);
+    }
   }, [focusedItemIndexes, dataContainer, keepFocusOnDataChange]);
 
   const styles = getStyles(theme);
@@ -215,6 +261,7 @@ const FlameGraphContainer = ({
     keepFocusOnDataChange,
     focusedItemIndexes,
     setFocusedItemIndexes,
+    loadingItems,
   };
 
   let body;

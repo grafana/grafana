@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
@@ -8,6 +8,8 @@ import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_FOR_SPLIT_VIEW } from './constants';
+
+import 'jest-canvas-mock';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -130,7 +132,13 @@ describe('FlameGraphContainer', () => {
     })),
   });
 
-  const FlameGraphContainerWithProps = () => {
+  const FlameGraphContainerWithProps = ({
+    onFocusChange,
+    loadingPaths,
+  }: {
+    onFocusChange?: (path: string[] | undefined) => void;
+    loadingPaths?: string[][];
+  } = {}) => {
     const flameGraphData = createDataFrame(data);
     flameGraphData.meta = {
       custom: {
@@ -139,11 +147,50 @@ describe('FlameGraphContainer', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} />;
+    return (
+      <FlameGraphContainer
+        data={flameGraphData}
+        getTheme={getTheme}
+        onFocusChange={onFocusChange}
+        loadingPaths={loadingPaths}
+      />
+    );
   };
 
   it('should render without error', async () => {
     expect(() => render(<FlameGraphContainerWithProps />)).not.toThrow();
+  });
+
+  it('reports the call path of the focused node', async () => {
+    const onFocusChange = jest.fn();
+    render(<FlameGraphContainerWithProps onFocusChange={onFocusChange} />);
+
+    const clickEvent = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(clickEvent, 'offsetX', { get: () => 10 });
+    Object.defineProperty(clickEvent, 'offsetY', { get: () => 10 });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
+
+    const canvas = await screen.findByTestId('flameGraph');
+    fireEvent(canvas, clickEvent);
+    await userEvent.click(screen.getByText('Focus block'));
+
+    await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(['total']));
+
+    onFocusChange.mockClear();
+    await userEvent.click(screen.getByLabelText('Remove focus'));
+
+    await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(undefined));
+  });
+
+  it('marks the nodes given in loadingPaths as loading', async () => {
+    const { rerender } = render(<FlameGraphContainerWithProps />);
+    expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0);
+
+    rerender(<FlameGraphContainerWithProps loadingPaths={[['total']]} />);
+    await waitFor(() => expect(screen.getAllByTestId('flameGraphLoadingMarker')).toHaveLength(1));
+
+    rerender(<FlameGraphContainerWithProps loadingPaths={[['total', 'not.a.real.function']]} />);
+    await waitFor(() => expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0));
   });
 
   it('should update search when row selected in top table', async () => {
