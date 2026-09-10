@@ -66,6 +66,19 @@ docker_build () {
   fi
 
   grafana_tgz=${GRAFANA_TGZ:-"grafana-latest.linux-${arch}${libc}.tar.gz"}
+
+  # Enterprise images are distributed under the Grafana Labs License rather than AGPL.
+  # The Enterprise build supplies the license file separately; replace the OSS license
+  # in the release tarball before Docker copies it into /usr/share/grafana/LICENSE.
+  if [ -n "${GRAFANA_LICENSE_FILE:-}" ]; then
+    license_tgz=$(mktemp)
+    license_dir=$(mktemp -d)
+    tar xzf "${grafana_tgz}" -C "${license_dir}" --strip-components=1
+    cp "${GRAFANA_LICENSE_FILE}" "${license_dir}/LICENSE"
+    tar czf "${license_tgz}" -C "${license_dir}" .
+    grafana_tgz="${license_tgz}"
+  fi
+
   tag="${_docker_repo}${repo_arch}:${_grafana_version}${TAG_SUFFIX}"
 
   DOCKER_BUILDKIT=1 \
@@ -108,6 +121,7 @@ if echo "$_grafana_tag" | grep -q "^v"; then
   # Create the expected tag for running the end to end tests successfully
   docker tag "${_docker_repo}:${_grafana_version}${TAG_SUFFIX}" "grafana/grafana-dev:${_grafana_tag}${TAG_SUFFIX}"
 else
+  docker_tag_all "main"
   docker_tag_all "main"
   docker tag "${_docker_repo}:${_grafana_version}${TAG_SUFFIX}" "grafana/grafana-dev:${_grafana_version}${TAG_SUFFIX}"
 fi
