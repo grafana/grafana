@@ -15,13 +15,22 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
 import DOMPurify from 'dompurify';
-import { type PropsWithChildren, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent,
+  type PropsWithChildren,
+  type ReactNode,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import { type GrafanaTheme2, type PluginExtensionLink, textUtil, type TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
+import { getTraceViewLinkAttrs, openTraceViewHref } from '../../../utils/openTraceViewHref';
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 
@@ -173,22 +182,64 @@ function reportResourceLinkClick(
 interface LinkValueProps {
   link: KeyValuesTableLink;
   datasourceType?: string;
+  /** Same-tab in Explore and drilldown. Dashboard panels keep a new tab so the dashboard stays put. */
+  openLinksInSameTab?: boolean;
 }
 
-export const LinkValue = ({ link, datasourceType, children }: PropsWithChildren<LinkValueProps>) => {
-  const { path, title, onClick, icon = 'external-link-alt' } = link;
+function attributeLinkAttrs(path: string | undefined, openLinksInSameTab: boolean) {
+  const attrs = path ? getTraceViewLinkAttrs(path) : undefined;
+  if (!attrs) {
+    return undefined;
+  }
+  if (!openLinksInSameTab) {
+    return { href: attrs.href, target: '_blank' as const, rel: 'noopener noreferrer' as const };
+  }
+  return attrs;
+}
+
+function onAttributeLinkClick(
+  event: MouseEvent,
+  link: KeyValuesTableLink,
+  {
+    location,
+    datasourceType,
+    openLinksInSameTab,
+  }: { location: ResourceLinkClickLocation; datasourceType?: string; openLinksInSameTab: boolean }
+) {
+  reportResourceLinkClick(link, { location, datasourceType });
+  // Modifier-clicks use the anchor href (new tab). Do not also run in-app navigation.
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    return;
+  }
+  if (link.onClick) {
+    link.onClick(event);
+    // Plugin handles the click; stop the browser from also following href.
+    event.preventDefault();
+    return;
+  }
+  if (openLinksInSameTab && link.path) {
+    event.preventDefault();
+    openTraceViewHref(link.path);
+  }
+}
+
+export const LinkValue = ({
+  link,
+  datasourceType,
+  openLinksInSameTab = false,
+  children,
+}: PropsWithChildren<LinkValueProps>) => {
+  const { path, title, icon = 'external-link-alt' } = link;
   const styles = useStyles2(getStyles);
+  const attrs = attributeLinkAttrs(path, openLinksInSameTab);
 
   return (
     <a
-      href={path ? textUtil.sanitizeUrl(path) : path}
+      href={attrs?.href}
       title={title}
-      onClick={(event) => {
-        reportResourceLinkClick(link, { location: 'value', datasourceType });
-        onClick?.(event);
-      }}
-      target="_blank"
-      rel="noopener noreferrer"
+      onClick={(event) => onAttributeLinkClick(event, link, { location: 'value', datasourceType, openLinksInSameTab })}
+      target={attrs?.target}
+      rel={attrs?.rel}
       className={styles.linkValue}
     >
       <Icon name={icon} className={styles.linkIcon} />
@@ -200,10 +251,11 @@ export const LinkValue = ({ link, datasourceType, children }: PropsWithChildren<
 interface LinkValuesMenuProps {
   links: KeyValuesTableLink[];
   datasourceType?: string;
+  openLinksInSameTab?: boolean;
   children: ReactNode;
 }
 
-const LinkValuesMenu = ({ links, datasourceType, children }: LinkValuesMenuProps) => {
+const LinkValuesMenu = ({ links, datasourceType, openLinksInSameTab = false, children }: LinkValuesMenuProps) => {
   const styles = useStyles2(getStyles);
   const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
   const triggerId = useId();
@@ -231,20 +283,24 @@ const LinkValuesMenu = ({ links, datasourceType, children }: LinkValuesMenuProps
         overlay={
           <Menu>
             <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
-              {links.map((link, index) => (
-                <div key={index} title={link.title}>
-                  <Menu.Item
-                    label={link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')}
-                    icon={link.icon}
-                    url={link.path ? textUtil.sanitizeUrl(link.path) : undefined}
-                    target="_blank"
-                    onClick={(event) => {
-                      reportResourceLinkClick(link, { location: 'menu', datasourceType });
-                      link.onClick?.(event);
-                    }}
-                  />
-                </div>
-              ))}
+              {links.map((link, index) => {
+                const attrs = attributeLinkAttrs(link.path, openLinksInSameTab);
+                return (
+                  <div key={index} title={link.title}>
+                    <Menu.Item
+                      label={
+                        link.description || link.title || t('explore.key-values-table.link-fallback-label', 'Link')
+                      }
+                      icon={link.icon}
+                      url={attrs?.href}
+                      target={attrs?.target}
+                      onClick={(event) =>
+                        onAttributeLinkClick(event, link, { location: 'menu', datasourceType, openLinksInSameTab })
+                      }
+                    />
+                  </div>
+                );
+              })}
             </Menu.Group>
           </Menu>
         }
@@ -269,10 +325,11 @@ export type KeyValuesTableProps = {
   onlyValues?: boolean;
   promoGetter?: AttributePluginPromoGetter;
   datasourceType?: string;
+  openLinksInSameTab?: boolean;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
-  const { data, linksGetter, onlyValues, promoGetter, datasourceType } = props;
+  const { data, linksGetter, onlyValues, promoGetter, datasourceType, openLinksInSameTab = false } = props;
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
@@ -294,11 +351,11 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             const links = linksGetter?.(data, i) ?? [];
             let valueMarkup =
               links.length > 1 ? (
-                <LinkValuesMenu links={links} datasourceType={datasourceType}>
+                <LinkValuesMenu links={links} datasourceType={datasourceType} openLinksInSameTab={openLinksInSameTab}>
                   {jsonTable}
                 </LinkValuesMenu>
               ) : links.length === 1 ? (
-                <LinkValue link={links[0]} datasourceType={datasourceType}>
+                <LinkValue link={links[0]} datasourceType={datasourceType} openLinksInSameTab={openLinksInSameTab}>
                   {jsonTable}
                 </LinkValue>
               ) : (

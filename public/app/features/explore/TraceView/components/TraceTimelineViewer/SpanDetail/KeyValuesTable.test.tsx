@@ -15,7 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
 
@@ -102,6 +102,52 @@ describe('LinkValue', () => {
       location: 'value',
     });
     expect(onClick).toHaveBeenCalled();
+    expect(onClick.mock.calls[0][0].defaultPrevented).toBe(true);
+  });
+
+  it('does not also push when the plugin supplies onClick', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc', onClick }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'Related traces' }));
+
+    expect(onClick).toHaveBeenCalled();
+    expect(pushSpy).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
+
+  it('navigates in the same tab when openLinksInSameTab is set', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc' }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'Related traces' }));
+
+    expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    pushSpy.mockRestore();
+  });
+
+  it('does not push when openLinksInSameTab is unset', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(<LinkValue link={{ title: 'Related traces', path: '/explore?left=abc' }}>value</LinkValue>);
+
+    const linkEl = screen.getByRole('link', { name: 'Related traces' });
+    expect(linkEl).toHaveAttribute('target', '_blank');
+    await user.click(linkEl);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
   });
 });
 
