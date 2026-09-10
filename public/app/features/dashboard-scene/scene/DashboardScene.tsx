@@ -54,12 +54,12 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
-import { isManagedResourceReadOnly } from 'app/features/provisioning/utils/managedResource';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import {
+  AnnoKeyManagerAllowsEdits,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
@@ -1527,11 +1527,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   managedResourceCannotBeEdited() {
-    // A repository-managed dashboard has no edit flow once provisioning is turned off, so it is locked too.
-    if (this.getManagerKind() === ManagerKind.Repo && !config.provisioningEnabled) {
-      return true;
-    }
-    return isManagedResourceReadOnly({ metadata: this.state.meta.k8s });
+    return (
+      this.isManaged() && !this.isManagedRepository() && !this.state.meta.k8s?.annotations?.[AnnoKeyManagerAllowsEdits]
+    );
   }
 
   getPath() {
