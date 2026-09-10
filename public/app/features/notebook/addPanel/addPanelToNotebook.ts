@@ -27,8 +27,16 @@ interface CreateNotebookFields {
  * The writes themselves belong to api/notebookResource, which owns every write to the resource and is
  * the one file that changes when the spec moves off v2beta1. Nothing here touches the API client.
  */
-export async function addPanelToExistingNotebook(uid: string, panel: PanelElement): Promise<AddedToNotebook> {
+export async function addPanelToExistingNotebook(
+  uid: string,
+  panel: PanelElement,
+  entryPoint: NotebookEntryPoint
+): Promise<AddedToNotebook> {
   const spec = await updateNotebookSpec(uid, (current) => appendPanelToNotebook(current, panel));
+
+  // Reported here rather than in the layout manager: this notebook is not open, so there is no scene
+  // to add the cell to. `appendPanelToNotebook` puts it last, which is where the index comes from.
+  NotebookAnalytics.cellAdded(uid, entryPoint, spec.layout.spec.cells.length - 1);
 
   return { uid, title: spec.title };
 }

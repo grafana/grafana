@@ -6,6 +6,9 @@ import { isNotebookEditUrl } from '../urls';
 
 import { readNotebookShape } from './shape';
 import {
+  type NotebookAutosaveFailedProperties,
+  type NotebookAutosaveFailedReason,
+  type NotebookCellAddedProperties,
   type NotebookCreatedProperties,
   type NotebookDeletedProperties,
   type NotebookDeleteSource,
@@ -42,6 +45,15 @@ const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('creat
 
 /** Fired once a delete has actually landed, from either the list row menu or the notebook's own toolbar. */
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
+
+/**
+ * Fired when a panel is added to a notebook that is not open, from Explore or a dashboard. For a cell
+ * added inside an editing session, the session keeps a count on `edit_session_ended` instead.
+ */
+const createCellAddedEvent = createNotebookEvent<NotebookCellAddedProperties>('cell_added');
+
+/** Fired on each autosave error, never on success. A save still in flight has no outcome to report. */
+const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
 
 /**
  * Every notebook event, so a call site reads as analytics rather than as a stray helper. The wrappers
@@ -86,5 +98,13 @@ export const NotebookAnalytics = {
 
   deleted(notebookUid: string, source: NotebookDeleteSource): void {
     createDeletedEvent({ notebookUid, source });
+  },
+
+  autosaveFailed(notebookUid: string, reason: NotebookAutosaveFailedReason, attempt: number): void {
+    createAutosaveFailedEvent({ notebookUid, reason, attempt });
+  },
+
+  cellAdded(notebookUid: string, source: NotebookEntryPoint, position: number): void {
+    createCellAddedEvent({ notebookUid, source, position });
   },
 };

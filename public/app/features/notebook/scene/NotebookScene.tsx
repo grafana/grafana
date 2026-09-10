@@ -12,6 +12,7 @@ import {
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
+  SceneObjectStateChangedEvent,
   type SceneRefreshPicker,
   type SceneTimePicker,
   type SceneTimeRange,
@@ -36,7 +37,7 @@ import {
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
-import { NotebookAutosave } from './NotebookAutosave';
+import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
@@ -144,6 +145,16 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         }
       });
 
+      // Only while editing. A reader moving the time range is theirs to move, and the notebook
+      // deliberately does not keep it, so it is not something this session did. `start()` clears the
+      // flag on the way into a session as well, but without this the flag would mean "moved since the
+      // last start" rather than "moved during this session".
+      const timeRangeSub = this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+        if (this.state.isEditing && changesTimeSettings(payload, this)) {
+          this.editSession.onTimeRangeChanged();
+        }
+      });
+
       const destroyMutationClient = createMutationClient(this, 'notebook');
       const stopAutosave = this.autosave.start();
 
@@ -160,6 +171,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         }
         stopAutosave();
         destroyMutationClient();
+        timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
         window.__grafanaSceneContext = prevSceneContext;

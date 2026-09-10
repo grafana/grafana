@@ -8,12 +8,13 @@ import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { NotebookConflictError } from '../api/notebookResource';
 import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { addPanelErrorMessage, addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
 
-jest.mock('../analytics/main', () => ({ NotebookAnalytics: { created: jest.fn() } }));
+jest.mock('../analytics/main', () => ({ NotebookAnalytics: { created: jest.fn(), cellAdded: jest.fn() } }));
 
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
 const NOTEBOOK_URL = `${NOTEBOOKS_URL}/:name`;
@@ -46,6 +47,7 @@ jest.mock('app/store/store', () => {
 beforeEach(() => {
   testStore = createTestStore();
   jest.mocked(NotebookAnalytics.created).mockClear();
+  jest.mocked(NotebookAnalytics.cellAdded).mockClear();
 });
 
 function panel(title: string): PanelKind {
@@ -112,7 +114,7 @@ describe('addPanelToExistingNotebook', () => {
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
 
-    const added = await addPanelToExistingNotebook('nb1', panel('p95 latency'));
+    const added = await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE);
 
     expect(added).toEqual({ uid: 'nb1', title: 'Checkout error spike' });
     expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
@@ -126,7 +128,7 @@ describe('addPanelToExistingNotebook', () => {
   it('sends the resourceVersion it read back with the write', async () => {
     const captured = captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'));
+    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE);
 
     expect(captured.body!.metadata?.resourceVersion).toBe('42');
   });
@@ -138,7 +140,9 @@ describe('addPanelToExistingNotebook', () => {
       http.put(NOTEBOOK_URL, () => HttpResponse.json({ message: 'the object has been modified' }, { status: 409 }))
     );
 
-    await expect(addPanelToExistingNotebook('nb1', panel('p95 latency'))).rejects.toBeInstanceOf(NotebookConflictError);
+    await expect(
+      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE)
+    ).rejects.toBeInstanceOf(NotebookConflictError);
   });
 
   it('surfaces the apiserver message when the write fails for another reason', async () => {
@@ -147,7 +151,33 @@ describe('addPanelToExistingNotebook', () => {
       http.put(NOTEBOOK_URL, () => HttpResponse.json({ message: 'notebook is too large' }, { status: 400 }))
     );
 
-    await expect(addPanelToExistingNotebook('nb1', panel('p95 latency'))).rejects.toThrow('notebook is too large');
+    await expect(addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE)).rejects.toThrow(
+      'notebook is too large'
+    );
+  });
+
+  // The notebook is not open here, so no layout manager sees this cell. The position is the last
+  // index, because appendPanelToNotebook puts the panel at the end.
+  it('reports the added cell with the caller entry point and the index it landed on', async () => {
+    captureWrite();
+
+    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL);
+
+    expect(NotebookAnalytics.cellAdded).toHaveBeenCalledTimes(1);
+    expect(NotebookAnalytics.cellAdded).toHaveBeenCalledWith('nb1', NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL, 0);
+  });
+
+  it('does not report an added cell when the write fails', async () => {
+    server.use(
+      http.get(NOTEBOOK_URL, () => HttpResponse.json(existingNotebook())),
+      http.put(NOTEBOOK_URL, () => HttpResponse.json({ message: 'notebook is too large' }, { status: 400 }))
+    );
+
+    await expect(
+      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE)
+    ).rejects.toThrow();
+
+    expect(NotebookAnalytics.cellAdded).not.toHaveBeenCalled();
   });
 });
 
@@ -206,6 +236,8 @@ describe('createNotebookWithPanel', () => {
 
     expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
     expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1);
+    // The cell arrived as part of the creation, and `created` already carries the cell count.
+    expect(NotebookAnalytics.cellAdded).not.toHaveBeenCalled();
   });
 
   it('does not report a create when the write fails', async () => {

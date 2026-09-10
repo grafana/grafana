@@ -2,7 +2,7 @@ import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
 import { act, render, screen } from 'test/test-utils';
 
-import { CoreApp, type Scope } from '@grafana/data';
+import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import {
   config,
@@ -317,6 +317,60 @@ describe('NotebookScene', () => {
           nonEmptyCellCount: 1,
         });
         expect(typeof ended[0].durationMs).toBe('number');
+      });
+
+      it('reports what the session did to the cells', () => {
+        const scene = buildScene(false, 'nb1');
+        const body = scene.state.body;
+        scene.onEnterEditMode();
+
+        body.addCell('code', 1);
+        body.addCell('paragraph', 2);
+        body.removeCell(body.state.cells[0]);
+        body.moveCell(0, 1);
+
+        scene.onExitEditMode();
+
+        expect(ended[0]).toMatchObject({ cellsAdded: 2, cellsRemoved: 1, cellsMoved: 1 });
+      });
+
+      it('reports a time range moved during the session', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+
+        scene.state.$timeRange.onTimeRangeChange({
+          from: dateTime('2026-09-01T00:00:00Z'),
+          to: dateTime('2026-09-02T00:00:00Z'),
+          raw: { from: 'now-24h', to: 'now' },
+        });
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended[0]).toMatchObject({ timeRangeChanged: true });
+      });
+
+      // The time picker belongs to whoever is reading, and the notebook does not keep what they set.
+      // Between two sessions is where this matters: `start()` clears the flag on the way in, so only
+      // the isEditing guard stops a reader's change landing on the session that comes after it.
+      it('does not report a time range a reader moved between two sessions', () => {
+        const scene = buildScene(false, 'nb1');
+        const deactivate = scene.activate();
+        scene.onEnterEditMode();
+        scene.onExitEditMode();
+
+        scene.state.$timeRange.onTimeRangeChange({
+          from: dateTime('2026-09-01T00:00:00Z'),
+          to: dateTime('2026-09-02T00:00:00Z'),
+          raw: { from: 'now-24h', to: 'now' },
+        });
+
+        scene.onEnterEditMode();
+        scene.onExitEditMode();
+        deactivate();
+
+        expect(ended).toHaveLength(2);
+        expect(ended[1]).toMatchObject({ timeRangeChanged: false });
       });
 
       it('does not fire when the notebook was already in view mode', () => {

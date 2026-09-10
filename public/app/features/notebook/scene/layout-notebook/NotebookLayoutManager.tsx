@@ -33,7 +33,7 @@ import {
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
-import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
 import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
@@ -303,6 +303,7 @@ export class NotebookLayoutManager
       after,
       action: {
         label: t('notebooks.history.edit-block', 'Edit block'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           this.finishContentEdit(edit);
           this.applyCellContent(edit.elementName, edit.after);
@@ -399,6 +400,7 @@ export class NotebookLayoutManager
       after: queries,
       action: {
         label: t('notebooks.history.edit-query', 'Edit query'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           this.finishQueriesEdit(edit);
           setQueryRunnerQueries(edit.runner, edit.after);
@@ -444,6 +446,7 @@ export class NotebookLayoutManager
     const before = runner.state.queries;
     this.executeEdit({
       label,
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => setQueryRunnerQueries(runner, queries),
       undo: () => setQueryRunnerQueries(runner, before),
     });
@@ -501,6 +504,9 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
+      // Not ADD_CELL: this turns a cell that is already there into a panel, it inserts nothing. The
+      // label describes what undo does, which is to put the markdown back.
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => cell.setElementBody(panel, elementName),
       undo: () => cell.setState({ body: undefined, content: previousContent, elementName: previousElementName }),
     });
@@ -524,6 +530,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.move-block', 'Move block'),
+      kind: NOTEBOOK_EDIT_KIND.MOVE_CELL,
       perform: () => this.moveCellTo(cell, toIndex),
       undo: () => this.moveCellTo(cell, fromIndex),
     });
@@ -595,6 +602,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(built.cell, built.index),
       undo: () => this.removeCellInstance(built.cell),
     });
@@ -643,6 +651,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.duplicate-block', 'Duplicate block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(copy, index + 1),
       undo: () => this.removeCellInstance(copy),
     });
@@ -672,6 +681,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.split-block', 'Split block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(cell, index + 1),
       undo: () => this.removeCellInstance(cell),
     });
@@ -687,6 +697,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.delete-block', 'Delete block'),
+      kind: NOTEBOOK_EDIT_KIND.REMOVE_CELL,
       perform: () => this.removeCellInstance(cell),
       undo: () => this.insertCell(cell, index),
     });

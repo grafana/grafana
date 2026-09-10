@@ -1253,6 +1253,77 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  // The session counts by the kind each action carries, so these tests pin that mapping.
+  // End to end on purpose: a real layout action, through the real history, into the real tracker.
+  describe('what an edit session counts', () => {
+    function withSession(cells: NotebookCellItem[]) {
+      const manager = buildManager(cells);
+      const scene = attachScene(manager);
+      scene.editSession.start();
+      return { manager, session: scene.editSession };
+    }
+
+    it('counts an inserted cell as an add', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a']));
+
+      manager.addCell('code', 1);
+
+      expect(session.end()).toMatchObject({ cellsAdded: 1, cellsRemoved: 0, cellsMoved: 0 });
+    });
+
+    it('counts a split and a duplicate as adds too, since each one leaves a new cell behind', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a', 'b']));
+
+      manager.insertCellAfter(manager.state.cells[0]);
+      manager.duplicateCell(manager.state.cells[0]);
+
+      expect(session.end()).toMatchObject({ cellsAdded: 2, cellsRemoved: 0, cellsMoved: 0 });
+    });
+
+    it('counts a deleted cell as a removal', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a', 'b']));
+
+      manager.removeCell(manager.state.cells[0]);
+
+      expect(session.end()).toMatchObject({ cellsAdded: 0, cellsRemoved: 1, cellsMoved: 0 });
+    });
+
+    it('counts a reordered cell as a move', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a', 'b', 'c']));
+
+      manager.moveCell(0, 2);
+
+      expect(session.end()).toMatchObject({ cellsAdded: 0, cellsRemoved: 0, cellsMoved: 1 });
+    });
+
+    // The "/" menu's Visualization pick. It records an "Add block" action so undo puts the markdown
+    // back, but the cell was already there and nothing new went in.
+    it('does not count converting an existing cell to a panel as an add', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a']));
+
+      manager.convertCell(manager.state.cells[0], 'visualization');
+
+      expect(session.end()).toMatchObject({ cellsAdded: 0, editCount: 1 });
+    });
+
+    it('counts a content edit as neither', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a']));
+
+      manager.setCellContent(manager.state.cells[0], { kind: 'Markdown', spec: { text: 'rewritten' } });
+
+      expect(session.end()).toMatchObject({ cellsAdded: 0, cellsRemoved: 0, cellsMoved: 0, editCount: 1 });
+    });
+
+    // The trailing empty block is bookkeeping, and bypasses the history altogether.
+    it('counts nothing when the trailing empty block is appended', () => {
+      const { manager, session } = withSession(buildNarrativeCells(['a']));
+
+      manager.appendSystemCell(manager.state.cells.length);
+
+      expect(session.end()).toMatchObject({ cellsAdded: 0, editCount: 0 });
+    });
+  });
+
   describe('edit history', () => {
     function withHistory(cells: NotebookCellItem[]) {
       const manager = buildManager(cells);

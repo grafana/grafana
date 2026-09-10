@@ -91,6 +91,14 @@ export interface NotebookEditSessionEndedProperties extends EventProperty {
   durationMs: number;
   /** Edits recorded during the session. An edit rolled back before it stood is not counted. */
   editCount: number;
+  /** Cells inserted during the session, by any gesture. Counts an insert that was later undone. */
+  cellsAdded: number;
+  /** Cells deleted during the session. Counts a delete that was later undone. */
+  cellsRemoved: number;
+  /** Cells reordered during the session. */
+  cellsMoved: number;
+  /** Whether the time range moved during the session, by any control. */
+  timeRangeChanged: boolean;
   /** How the session ended. */
   endReason: NotebookEditSessionEndReason;
   /** Cells in the notebook when the session ended, excluding the trailing empty editor block. */
@@ -149,4 +157,42 @@ export interface NotebookDeletedProperties extends EventProperty {
   notebookUid: string;
   /** Which surface the delete was confirmed on. */
   source: NotebookDeleteSource;
+}
+
+/**
+ * Why an autosave attempt failed. `build_failed` means autosave could not assemble the spec, so it
+ * sent no request. `write_failed` means the request failed, either the create or the update. That
+ * covers every write failure today, because nothing yet tells a conflict apart from the rest.
+ */
+export const NOTEBOOK_AUTOSAVE_FAILED_REASON = {
+  BUILD_FAILED: 'build_failed',
+  WRITE_FAILED: 'write_failed',
+} as const;
+
+export type NotebookAutosaveFailedReason =
+  (typeof NOTEBOOK_AUTOSAVE_FAILED_REASON)[keyof typeof NOTEBOOK_AUTOSAVE_FAILED_REASON];
+
+/**
+ * A cell added to a notebook that was not open at the time. For a cell added inside an editing
+ * session, the session counts it on `edit_session_ended` instead, so this only covers the add-panel
+ * modal.
+ *
+ * No cell type: that modal only ever appends a panel, so the value would be the same every time.
+ */
+export interface NotebookCellAddedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which surface the panel was sent from. */
+  source: NotebookEntryPoint;
+  /** Where the panel landed, counting from 0. Doubles as the notebook's size before the add. */
+  position: number;
+}
+
+export interface NotebookAutosaveFailedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. Empty for a notebook that has no uid yet. */
+  notebookUid: string;
+  /** Why the attempt failed. */
+  reason: NotebookAutosaveFailedReason;
+  /** Failures in a row for this notebook since the last save that landed. */
+  attempt: number;
 }
