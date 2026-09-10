@@ -160,7 +160,7 @@ function parseIfComplexJson(value: unknown) {
 }
 
 export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'> &
-  Partial<Pick<PluginExtensionLink, 'description' | 'pluginId' | 'category' | 'group'>>;
+  Partial<Pick<PluginExtensionLink, 'description' | 'pluginId' | 'category' | 'group' | 'openInNewTab'>>;
 
 type ResourceLinkClickLocation = 'value' | 'menu';
 
@@ -186,12 +186,16 @@ interface LinkValueProps {
   openLinksInSameTab?: boolean;
 }
 
-function attributeLinkAttrs(path: string | undefined, openLinksInSameTab: boolean) {
-  const attrs = path ? getTraceViewLinkAttrs(path) : undefined;
+function shouldOpenAttributeLinkInSameTab(openLinksInSameTab: boolean, link: KeyValuesTableLink) {
+  return openLinksInSameTab && Boolean(link.path) && !link.openInNewTab;
+}
+
+function attributeLinkAttrs(link: KeyValuesTableLink, openLinksInSameTab: boolean) {
+  const attrs = link.path ? getTraceViewLinkAttrs(link.path) : undefined;
   if (!attrs) {
     return undefined;
   }
-  if (!openLinksInSameTab) {
+  if (!shouldOpenAttributeLinkInSameTab(openLinksInSameTab, link)) {
     return { href: attrs.href, target: '_blank' as const, rel: 'noopener noreferrer' as const };
   }
   return attrs;
@@ -217,16 +221,16 @@ function onAttributeLinkClick(
   if (event.ctrlKey || event.metaKey || event.shiftKey) {
     return;
   }
-  if (link.onClick) {
-    link.onClick(event);
-    // Plugin handles the click; stop the browser from also following href.
-    event.preventDefault();
-    return;
-  }
-  if (openLinksInSameTab && link.path) {
+  // Prefer path navigation so plugins that also set onClick (e.g. Kubernetes) do not window.open.
+  if (shouldOpenAttributeLinkInSameTab(openLinksInSameTab, link) && link.path) {
     event.preventDefault();
     setReturnToPrevious(t('explore.key-values-table.return-to-previous-title', 'Trace'));
     openTraceViewHref(link.path);
+    return;
+  }
+  if (link.onClick) {
+    link.onClick(event);
+    event.preventDefault();
   }
 }
 
@@ -236,10 +240,10 @@ export const LinkValue = ({
   openLinksInSameTab = false,
   children,
 }: PropsWithChildren<LinkValueProps>) => {
-  const { path, title, icon = 'external-link-alt' } = link;
+  const { title, icon = 'external-link-alt' } = link;
   const styles = useStyles2(getStyles);
   const setReturnToPrevious = useReturnToPrevious();
-  const attrs = attributeLinkAttrs(path, openLinksInSameTab);
+  const attrs = attributeLinkAttrs(link, openLinksInSameTab);
 
   return (
     <a
@@ -300,7 +304,7 @@ const LinkValuesMenu = ({ links, datasourceType, openLinksInSameTab = false, chi
           <Menu>
             <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
               {links.map((link, index) => {
-                const attrs = attributeLinkAttrs(link.path, openLinksInSameTab);
+                const attrs = attributeLinkAttrs(link, openLinksInSameTab);
                 return (
                   <div key={index} title={link.title}>
                     <Menu.Item

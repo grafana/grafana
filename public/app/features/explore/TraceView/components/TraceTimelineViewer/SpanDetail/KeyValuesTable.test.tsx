@@ -109,7 +109,7 @@ describe('LinkValue', () => {
     expect(onClick.mock.calls[0][0].defaultPrevented).toBe(true);
   });
 
-  it('does not also push when the plugin supplies onClick', async () => {
+  it('navigates in the same tab even when the plugin also supplies onClick', async () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
     const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
@@ -121,9 +121,26 @@ describe('LinkValue', () => {
 
     await user.click(screen.getByRole('link', { name: 'Related traces' }));
 
-    expect(onClick).toHaveBeenCalled();
+    expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    expect(mockSetReturnToPrevious).toHaveBeenCalledWith('Trace');
+    expect(onClick).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
+
+  it('keeps a new tab when the plugin sets openInNewTab', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc', openInNewTab: true }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    const linkEl = screen.getByRole('link', { name: 'Related traces' });
+    expect(linkEl).toHaveAttribute('target', '_blank');
+    await user.click(linkEl);
+
     expect(pushSpy).not.toHaveBeenCalled();
-    expect(mockSetReturnToPrevious).not.toHaveBeenCalled();
     pushSpy.mockRestore();
   });
 
