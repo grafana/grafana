@@ -10,6 +10,8 @@ const PAGINATION_ROW_THRESHOLD = 100;
 const PAGINATION_HEIGHT = 38;
 const SMALL_PAGINATION_WIDTH = 750;
 const ESTIMATED_ROW_HEIGHT = 24;
+// clientHeight counts the preview pane's padding as room for blocks.
+export const CONTENT_PADDING = 16;
 
 export function countRows(series: DataFrame[]): number {
   return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
@@ -123,7 +125,7 @@ export function usePagination({
       return;
     }
 
-    const available = element.clientHeight;
+    const available = element.clientHeight - CONTENT_PADDING;
     const contentHeight = measureContentHeight(element);
 
     if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
