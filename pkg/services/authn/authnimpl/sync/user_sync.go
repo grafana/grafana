@@ -483,10 +483,6 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 			AuthId:     identity.AuthID,
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			setAuthInfoCmd.OAuthToken = identity.OAuthToken
-		}
 		return s.authInfoService.SetAuthInfo(ctx, setAuthInfoCmd)
 	}
 
@@ -494,11 +490,6 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 		UserId:     usr.ID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
 
 	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)

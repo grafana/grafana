@@ -21,9 +21,7 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // Stubbed because the notebook header reads its tag options from a facet on this module, which calls
 // injectEndpoints on the real client as it loads - and the mock above does not provide one. The list
 // page and the row menu stub it for the same reason.
-jest.mock('../list/notebookSearchApi', () => ({
-  useNotebookFieldFacetQuery: jest.fn(),
-}));
+jest.mock('../list/notebookSearchApi', () => ({}));
 
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
 
@@ -280,6 +278,42 @@ describe('NotebookToolbar', () => {
       expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
       // Export is unaffected, so this is the delete permission being read and not a blanket denial.
       expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * A notebook created by typing gets its uid part way through the first sentence. The bar has to be
+   * there before that, or it appears under the writer and pushes the document down.
+   */
+  describe('before the notebook exists', () => {
+    function setupUnsaved() {
+      const scene = buildScene();
+      scene.setState({ uid: undefined });
+      return render(<NotebookToolbar uid={undefined} scene={scene} />);
+    }
+
+    it('still renders both actions, so nothing moves when the notebook is created', () => {
+      setupUnsaved();
+
+      expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+    });
+
+    // aria-disabled rather than the disabled attribute: Grafana's Button switches to it when there is
+    // a tooltip, so that the reason is reachable on an element a pointer can still reach.
+    it('disables them and says why', () => {
+      setupUnsaved();
+
+      expect(screen.getByRole('button', { name: 'Copy link' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByRole('button', { name: /Export/ })).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('opens no export menu, since there is nothing to export', async () => {
+      const { user } = setupUnsaved();
+
+      await user.click(screen.getByRole('button', { name: /Export/ }));
+
+      expect(screen.queryByRole('menuitem', { name: 'Copy as Markdown' })).not.toBeInTheDocument();
     });
   });
 });

@@ -256,7 +256,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Return a large number of commits that would exceed the maxCommits limit
 						commits := make([]*github.RepositoryCommit, maxCommits+1)
-						for i := 0; i < maxCommits+1; i++ {
+						for i := range maxCommits + 1 {
 							commits[i] = &github.RepositoryCommit{
 								SHA: new(fmt.Sprintf("commit%d", i)),
 								Commit: &github.Commit{
@@ -1189,7 +1189,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Create more files than the maxPRFiles limit
 						files := make([]*github.CommitFile, maxPRFiles+1)
-						for i := 0; i < maxPRFiles+1; i++ {
+						for i := range maxPRFiles + 1 {
 							files[i] = &github.CommitFile{
 								Filename:  new(fmt.Sprintf("file%d.txt", i+1)),
 								Additions: new(i + 1),
@@ -1696,6 +1696,49 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 							"id":                      1,
 							"name":                    "test-ruleset",
 							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "always",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "org-level pull request rule with bypass mode always returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Organization",
+								"ruleset_source":      "test-org",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify includes_parents=true is set (required to fetch org-level rulesets)
+						require.Equal(t, "true", r.URL.Query().Get("includes_parents"),
+							"GetRuleset must set includes_parents=true to resolve org-level rulesets")
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "org-branch-protection",
+							"source_type":             "Organization",
+							"source":                  "test-org",
 							"enforcement":             "active",
 							"current_user_can_bypass": "always",
 						}))

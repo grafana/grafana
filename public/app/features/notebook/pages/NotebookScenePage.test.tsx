@@ -1,5 +1,6 @@
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -15,9 +16,12 @@ const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 describe('NotebookScenePage', () => {
   afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted.
+    // Wrap in act() because both of these publish state while a component is still mounted:
+    // setTestFlags fires OpenFeature events, and clearing the state manager drops its scene. The
+    // manager is a module-level singleton, so a scene seeded by one test would otherwise still be
+    // there for the next one.
     await act(async () => {
+      getNotebookPageStateManager().clearState();
       setTestFlags({});
     });
   });
@@ -64,6 +68,83 @@ describe('NotebookScenePage', () => {
     });
 
     expect(await screen.findByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+  });
+
+  // Nothing is mocked here: building a blank notebook needs no request, which is the point of it.
+  describe('the blank new-notebook route', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('renders an empty notebook that has no resource behind it', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+
+      // The scene rendered, so this is the document rather than the loading or not-found branch.
+      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+      expect(getNotebookPageStateManager().state.scene?.state.uid).toBeUndefined();
+      // Copying a link to a notebook and exporting one both need a notebook that exists, so the
+      // actions are refused until the first save creates it. The bar itself is rendered anyway: it
+      // used to be hidden, and then it appeared under whoever was typing and shifted the document.
+      expect(screen.getByRole('button', { name: 'Copy link' })).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    // Its first save creates the notebook, and from then on the url has to point at the real thing.
+    it('points the url at the notebook once its first save created it', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, {
+        historyOptions: { initialEntries: ['/notebooks/new?edit=true&from=now-3h&to=now'] },
+      });
+      await screen.findByRole('radio', { name: 'Edit' });
+
+      // What autosave does when the create comes back.
+      await act(async () => {
+        getNotebookPageStateManager().state.scene!.setState({ uid: 'nb-new' });
+      });
+
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new'));
+      // The params carry over: dropping from/to would have the time range resync from nothing and lose
+      // the range on screen. The scene adds timezone of its own, so this checks the ones at risk.
+      const search = new URLSearchParams(locationService.getLocation().search);
+      expect(search.get('edit')).toBe('true');
+      expect(search.get('from')).toBe('now-3h');
+      expect(search.get('to')).toBe('now');
+    });
+
+    // Replace, not push: Back has to leave the notebook, not land on the blank route that made it.
+    it('replaces the blank route in history rather than pushing past it', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, {
+        historyOptions: { initialEntries: ['/notebooks', '/notebooks/new?edit=true'], initialIndex: 1 },
+      });
+      await screen.findByRole('radio', { name: 'Edit' });
+
+      await act(async () => {
+        getNotebookPageStateManager().state.scene!.setState({ uid: 'nb-new' });
+      });
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new'));
+
+      await act(async () => {
+        locationService.getHistory().goBack();
+      });
+
+      expect(locationService.getLocation().pathname).toBe('/notebooks');
+    });
+
+    it('opens in edit mode, since a blank notebook exists only to be written into', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new?edit=true'] } });
+
+      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeChecked();
+    });
   });
 
   describe('edit mode from the url', () => {

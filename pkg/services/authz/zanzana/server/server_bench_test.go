@@ -113,7 +113,7 @@ func generateFolderHierarchy(childrenPerFolder, depth int) ([]*openfgav1.TupleKe
 
 		// Each parent gets exactly childrenPerFolder children
 		for _, parentUID := range parentFolders {
-			for j := 0; j < childrenPerFolder; j++ {
+			for range childrenPerFolder {
 				folderUID := fmt.Sprintf("folder-%d", folderIdx)
 
 				data.folders = append(data.folders, folderUID)
@@ -357,7 +357,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Generate test data
@@ -457,7 +457,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.
@@ -1108,7 +1108,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
 
 		// Mix of accessible and inaccessible resources
-		for i := 0; i < batchCheckSize; i++ {
+		for i := range batchCheckSize {
 			folder := data.folders[i%len(data.folders)]
 			items = append(items, &authzv1.BatchCheckItem{
 				Verb:          utils.VerbGet,

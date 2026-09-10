@@ -206,6 +206,35 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var authInfoKind = AuthInfoKind()
+var AuthInfoResourceInfo = utils.NewResourceInfo(
+	authInfoKind.Group(), authInfoKind.Version(),
+	authInfoKind.GroupVersionResource().Resource,
+	strings.ToLower(authInfoKind.Kind()), authInfoKind.Kind(),
+	func() runtime.Object { return authInfoKind.ZeroValue() },
+	func() runtime.Object { return authInfoKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "User", Type: "string"},
+			{Name: "Auth Module", Type: "string"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*AuthInfo)
+			if !ok {
+				return nil, fmt.Errorf("expected auth info")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.UserRef.Name,
+				m.Spec.AuthModule,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
 var teamLBACRuleKind = TeamLBACRuleKind()
 var TeamLBACRuleInfo = utils.NewResourceInfo(
 	teamLBACRuleKind.Group(), teamLBACRuleKind.Version(),
@@ -371,6 +400,8 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&TeamBindingList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
+		&AuthInfo{},
+		&AuthInfoList{},
 		&GetTeamGroupsResponse{},
 		&GetTeamMembersResponse{},
 		&CreateTeamMemberResponse{},
@@ -404,6 +435,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 
 	// Enable field selectors for User
 	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, UserKind())
+	if err != nil {
+		return err
+	}
+
+	// Enable field selectors for AuthInfo
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, AuthInfoKind())
 	if err != nil {
 		return err
 	}

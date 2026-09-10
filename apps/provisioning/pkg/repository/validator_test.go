@@ -530,6 +530,25 @@ func TestValidator_Validate(t *testing.T) {
 				require.Contains(t, errors.ToAggregate().Error(), "cannot have no finalizers set on resources not marked for deletion")
 			},
 		},
+		{
+			// A resource marked for deletion legitimately has its finalizers
+			// removed, so the missing-finalizer check must be skipped for it.
+			name: "no finalizers allowed on resource marked for deletion",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
+						Finalizers:        []string{},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
 	}
 
 	mockFactory := NewMockFactory(t)

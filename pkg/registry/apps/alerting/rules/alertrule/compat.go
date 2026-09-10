@@ -462,7 +462,13 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 	}
 	domainRule.IntervalSeconds = int64(time.Duration(interval).Seconds())
 
-	for refID, expression := range k8sRule.Spec.Expressions {
+	refIDs := make([]string, 0, len(k8sRule.Spec.Expressions))
+	for refID := range k8sRule.Spec.Expressions {
+		refIDs = append(refIDs, refID)
+	}
+	slices.Sort(refIDs)
+	for _, refID := range refIDs {
+		expression := k8sRule.Spec.Expressions[refID]
 		domainQuery, err := convertToDomainQuery(expression, refID)
 		if err != nil {
 			return nil, err
