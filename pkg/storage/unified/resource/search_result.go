@@ -55,6 +55,9 @@ func decodeSearchValue(field *resourcepb.ResourceSearchField, value *resourcepb.
 
 func searchScalarOrArray[T any](values []T, isArray bool) (any, error) {
 	if isArray {
+		if values == nil {
+			return []T{}, nil
+		}
 		return values, nil
 	}
 	if len(values) != 1 {

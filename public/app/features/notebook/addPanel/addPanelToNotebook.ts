@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { type NotebookEntryPoint } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
 import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
 
@@ -33,7 +35,8 @@ export async function addPanelToExistingNotebook(uid: string, panel: PanelElemen
 
 export async function createNotebookWithPanel(
   fields: CreateNotebookFields,
-  panel: PanelElement
+  panel: PanelElement,
+  entryPoint: NotebookEntryPoint
 ): Promise<AddedToNotebook> {
   const spec = appendPanelToNotebook(
     {
@@ -48,6 +51,7 @@ export async function createNotebookWithPanel(
   );
 
   const created = await createNotebook(spec);
+  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
 
   return { uid: created.uid, title: spec.title };
 }
