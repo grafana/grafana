@@ -399,6 +399,27 @@ describe('useProvisionedDashboardData', () => {
 
       // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
       expect(result.current.defaultValues?.workflow).toBe('branch');
+      // The ref follows the workflow: a branch default must never point at the configured branch.
+      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
+    });
+
+    it('keeps the same defaultValues object across rerenders when the override applies', () => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+
+      const dashboard = createDashboard();
+      const folderData = folder('dashboards');
+      const { result, rerender } = renderHook(
+        () => useProvisionedDashboardData(dashboard, readyView(enforcedRepo, folderData)),
+        { wrapper }
+      );
+
+      const initial = result.current.defaultValues;
+      expect(initial?.workflow).toBe('branch');
+
+      // The form resets to defaultValues whenever its identity changes, so a fresh object per render
+      // would reset the form on every unrelated rerender.
+      rerender();
+      expect(result.current.defaultValues).toBe(initial);
     });
 
     it('keeps the default write workflow when the gitConventions flag is off', () => {
@@ -424,6 +445,68 @@ describe('useProvisionedDashboardData', () => {
       );
 
       expect(result.current.defaultValues?.workflow).toBe('write');
+    });
+  });
+
+  describe('generated branch name', () => {
+    // A rerender (e.g. from toggling a save option) must not regenerate the branch name: the form
+    // resets to the defaults with keepDirtyValues, so a new name would replace the pristine field.
+    it.each([
+      { desc: 'the default branch workflow', recoverToNewBranch: undefined },
+      { desc: 'the deleted-branch recovery', recoverToNewBranch: { fileExistsOnConfiguredBranch: true } },
+    ])('stays stable across rerenders for $desc', ({ recoverToNewBranch }) => {
+      const dashboard = createDashboard();
+      const folderData = folder('dashboards');
+      const { result, rerender } = renderHook(
+        () => useProvisionedDashboardData(dashboard, readyView(folderRepo, folderData), { recoverToNewBranch }),
+        { wrapper }
+      );
+
+      const initialRef = result.current.defaultValues?.ref;
+      expect(result.current.defaultValues?.workflow).toBe('branch');
+      expect(initialRef).toMatch(/^dashboard\//);
+
+      rerender();
+      expect(result.current.defaultValues?.ref).toBe(initialRef);
+    });
+  });
+
+  describe('recoverToNewBranch', () => {
+    it('defaults to a fresh branch even when the preview was loaded from a non-default ref', () => {
+      // Loaded from an explicit ref the defaults would otherwise pick the write workflow at that ref.
+      const dashboard = createDashboard();
+      const { result } = renderHook(
+        () =>
+          useProvisionedDashboardData(dashboard, readyView(folderRepo, folder('dashboards')), {
+            recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+          }),
+        {
+          wrapper: getWrapper({ renderWithRouter: true, historyOptions: { initialEntries: ['/?ref=feature-branch'] } }),
+        }
+      );
+
+      expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready);
+      expect(result.current.defaultValues?.workflow).toBe('branch');
+      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
+      expect(result.current.defaultValues?.ref).not.toBe('feature-branch');
+    });
+
+    it('does not force the branch workflow when the repository does not allow it', () => {
+      // A write-only repo can only take the draft on its configured branch.
+      const writeOnlyRepo: RepositoryView = { ...folderRepo, workflows: ['write'] };
+      const dashboard = createDashboard();
+      const { result } = renderHook(
+        () =>
+          useProvisionedDashboardData(dashboard, readyView(writeOnlyRepo, folder('dashboards')), {
+            recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+          }),
+        {
+          wrapper: getWrapper({ renderWithRouter: true, historyOptions: { initialEntries: ['/?ref=feature-branch'] } }),
+        }
+      );
+
+      expect(result.current.defaultValues?.workflow).toBe('write');
+      expect(result.current.defaultValues?.ref).toBe('main');
     });
   });
 });

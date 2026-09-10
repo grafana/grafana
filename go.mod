@@ -100,7 +100,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 // @grafana/grafana-backend-group
-	github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f // @grafana-app-platform-squad
+	github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f // @grafana/grafana-app-platform-squad
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
@@ -143,7 +143,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/migueleliasweb/go-github-mock v1.5.0 // @grafana/grafana-git-ui-sync-team
-	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
+	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // @grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
@@ -151,8 +151,8 @@ require (
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
+	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-services-squad
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-services-squad
 	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // @grafana/identity-access-team
@@ -175,11 +175,11 @@ require (
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
 	github.com/sony/gobreaker/v2 v2.4.0 // @grafana/grafana-app-platform-squad
 	github.com/spf13/cobra v1.10.2 // @grafana/grafana-app-platform-squad
-	github.com/spf13/pflag v1.0.10 // @grafana-app-platform-squad
+	github.com/spf13/pflag v1.0.10 // @grafana/grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.12.1 // @grafana/grafana-backend-group
-	github.com/testcontainers/testcontainers-go v0.43.0 //@grafana/grafana-app-platform-squad
-	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-group
+	github.com/testcontainers/testcontainers-go v0.43.0 // @grafana/grafana-app-platform-squad
+	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-services-squad
 	github.com/tjhop/slog-gokit v0.2.0 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20251207011819-db9adb27a0b8 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group
