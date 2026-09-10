@@ -324,7 +324,50 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	return grafanarouter.ProvideService(s.cfg, s.features, loader, s.httpServerRouter, s.healthNotifier)
+	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.httpServerRouter, s.healthNotifier, s.registerer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Some editions' loaders own a background lifecycle of their own (e.g.
+	// informers watching a remote apiserver to feed Notify's wake signal).
+	// Run it alongside the router service under one module so it starts and
+	// stops with the router rather than leaking independently of it.
+	lifecycle, ok := loader.(grafanarouter.LifecycleRoutesLoader)
+	if !ok {
+		return routerSvc, nil
+	}
+	return newCompositeService(routerSvc, lifecycle)
+}
+
+// newCompositeService runs several dskit services under one, so a module
+// that needs more than one background lifecycle can still register as a
+// single services.Service. A failure in any of them fails the composite;
+// starting awaits all healthy, stopping awaits all stopped.
+func newCompositeService(svcs ...services.Service) (services.Service, error) {
+	manager, err := services.NewManager(svcs...)
+	if err != nil {
+		return nil, fmt.Errorf("composing services: %w", err)
+	}
+	failureWatcher := services.NewFailureWatcher()
+	failureWatcher.WatchManager(manager)
+
+	return services.NewBasicService(
+		func(ctx context.Context) error {
+			return services.StartManagerAndAwaitHealthy(ctx, manager)
+		},
+		func(ctx context.Context) error {
+			select {
+			case <-ctx.Done():
+				return nil
+			case err := <-failureWatcher.Chan():
+				return err
+			}
+		},
+		func(_ error) error {
+			return services.StopManagerAndAwaitStopped(context.Background(), manager)
+		},
+	), nil
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {

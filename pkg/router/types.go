@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/dskit/services"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,6 +28,16 @@ type RoutesLoader interface {
 	// Something changed with routing... reload the configs. The channel is a pure
 	// coalescing wake signal (no payload): consumers re-read full state via Load.
 	Notify(context.Context) (<-chan struct{}, error)
+}
+
+// LifecycleRoutesLoader is a RoutesLoader that owns its own background
+// lifecycle -- e.g. informers watching a remote apiserver for changes that
+// feed Notify's wake signal. The router module runs it as a dskit service
+// alongside the router Service (see pkg/server's initRouterModule) instead of
+// assuming Load/Notify are all a loader ever needs driven for it.
+type LifecycleRoutesLoader interface {
+	RoutesLoader
+	services.Service
 }
 
 // Router is the contract for the reconcile+serve engine. The standalone

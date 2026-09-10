@@ -55,8 +55,15 @@ next)` is the single serving handler. **There is no `http.Server` in this packag
 
 The dskit `router` target runs through `Service` (`service.go`). It mounts `gr.HandleFunc` on the
 module server's instrumentation listener, alongside `/metrics`, `/livez`, and `/readyz`; readiness
-is reflected through the shared health notifier. The legacy enterprise `router` command still owns
-its separate listener and TLS configuration.
+is reflected through the shared health notifier. There is no separate listener/TLS configuration
+anywhere else — see Lifecycle / ownership below.
+
+`Service.HandleFunc` instruments every request through `routerMetrics` (`metrics.go`: an in-flight
+gauge plus a duration histogram labeled by group/status, registered on the caller's own
+`prometheus.Registerer` — the module server's shared one in production, a fresh `prometheus.NewRegistry()`
+in tests) and logs the outcome (`logging.go`). Both `ProvideService` and `ProvideMiddlewareService`
+take a `reg` param for this; there is no private registry the way the old standalone `grafana router`
+process had one.
 
 `HandleFunc` is the one serving entry point: it covers `/apis` (by group) **and** `/openapi/v3`
 (there is no exported OpenAPI handler — `serveOpenAPIV3` is private, reached only through
@@ -287,40 +294,39 @@ writeup:
 
 ## Lifecycle / ownership
 
-`GrafanaRouter` can run as the dskit `router` target or through the legacy enterprise `grafana
-router` command. It also runs as a background service in the full Grafana server when the router
-middleware feature is enabled; the embedded API server invokes it after Grafana authentication and
-identity setup, with the regular Kubernetes API server handler as its fallback. The dskit target
-gets its edition-specific `RoutesLoader` from a Wire sub-injector. OSS uses the same full dependency
-graph as app-plugin API registration; enterprise receives the configured module storage/search and
-authlib clients explicitly.
+`GrafanaRouter` runs as the dskit `router` target (`Service` in `service.go`), or as a background
+service in the full Grafana server when the router middleware feature is enabled — the embedded API
+server invokes it after Grafana authentication and identity setup, with the regular Kubernetes API
+server handler as its fallback. There is no standalone `grafana router` process anymore (the old
+`RouterFactory`/CLI-command seam was removed once the dskit target could own the loader's lifecycle
+directly); the module server's HTTP listener, `/metrics`, `/livez`, `/readyz` are what front it now.
 
-Wiring keeps the standalone command factory separate from the dskit loader provider:
+The dskit target gets its edition-specific `RoutesLoader` from a Wire sub-injector
+(`server.InitializeRoutesLoader`). OSS uses the same full dependency graph as app-plugin API
+registration; enterprise only needs `*setting.Cfg` (it talks to its own remote control-plane
+apiserver, not Grafana's unified storage).
 
 - **OSS (`pkg/router`)** — `ProvideRoutesLoader` currently returns two dummy API groups so the
   dskit router target can be exercised end to end. Its dependencies intentionally mirror
   `appplugin.RegisterAPIService` except for `builder.APIRegistrar`, plus the authlib access client.
-  A later iteration will replace the dummy backends with manifests from installed plugins. The older
-  `RouterFactory` remains a no-op, so the legacy top-level command is still hidden in OSS builds.
-- **enterprise (`pkg/extensions/router`)** — the real factory (`cli.go`): a urfave `router` command
-  whose flags drive runtime config. Its `run` builds one `rest.Config` for the whole apps group,
-  a `k8s.ClientRegistry`, the enterprise `Loader`, two informers (RouteBackend + AppManifest,
-  v1alpha2) wired to `loader.Watcher()` as change-detectors, the `GrafanaRouter` engine, **and the
-  `http.Server` that serves `gr.HandleFunc`** — then runs informers, the reconcile loop, the
-  listener, and graceful shutdown as `g.Go`s under a single errgroup. The listener config
-  (addr/TLS/timeouts) is a factory concern, not part of `pkg/router`.
-- **dskit target binding** — OSS constructs the dummy loader from the bootstrap CLI/server
-  graph; enterprise wires its provider from the module's configured unified-storage and authlib
-  clients. Both use the generic `Service`.
-- **binding** — `server.InitializeRouterFactory()` (wire) returns the no-op in OSS
-  (`wire_gen.go`) and the enterprise factory in enterprise/pro (`enterprise_wire_gen.go`);
-  `cmd/grafana/main.go` appends the command when non-nil. Keep the wire source
-  (`wire.go` + `wireexts_{oss,enterprise}.go`, set `wireExtsRouterFactorySet`) in sync with the
-  generated files so `make gen-go` reproduces them.
+  A later iteration will replace the dummy backends with manifests from installed plugins.
+- **enterprise (`pkg/extensions/router`)** — `ProvideRoutesLoader(cfg)` builds one `rest.Config` for
+  the whole apps group (CAP token exchanged for a signed access token per request) and a
+  `k8s.ClientRegistry` from grafana.ini (`[cloud_apismux]`), then constructs the `Loader`. The
+  `Loader` itself implements `LifecycleRoutesLoader` (`RoutesLoader` + `services.Service`): its
+  `starting`/`running` build and drive the RouteBackend + AppManifest informers (v1alpha2) wired to
+  `Watcher()` as change-detectors — see that package's AGENTS.md.
+- **dskit target binding** — `pkg/server`'s `initRouterModule` builds the loader, then the router
+  `Service` around it; if the loader also implements `LifecycleRoutesLoader`, it's run alongside the
+  router `Service` under one composite `services.Service` (`newCompositeService`), so both start and
+  stop together as the one `router` module instead of the loader needing its own process to drive its
+  informers.
+- **binding** — kept via Wire: `wire.go`'s `InitializeRoutesLoader` plus each edition's
+  `wireExts{OSS,Enterprise}.go` `wireExtsRoutesLoaderSet`. Keep those in sync with the generated
+  `wire_gen.go`/`enterprise_wire_gen.go` so `make gen-go` reproduces them.
 
 `GrafanaRouter.Run` drives only the reconcile loop (its own goroutine; status via `Ready`/`Alive`).
-The listener runs alongside it as separate `g.Go`s in the factory's errgroup. If any leg errors, the
-errgroup cancels the rest and the process exits.
+The listener is the module server's, not this package's or the loader's.
 
 ## Security
 

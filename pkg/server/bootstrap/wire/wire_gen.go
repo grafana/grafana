@@ -888,7 +888,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
-	routerService, err := router.ProvideMiddlewareService(featureToggles, routesLoader)
+	routerService, err := router.ProvideMiddlewareService(featureToggles, routesLoader, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1660,7 +1660,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
-	routerService, err := router.ProvideMiddlewareService(featureToggles, routesLoader)
+	routerService, err := router.ProvideMiddlewareService(featureToggles, routesLoader, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1946,12 +1946,6 @@ func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (server.Modul
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	apiServerFactory := standalone.ProvideAPIServerFactory()
 	return apiServerFactory, nil
-}
-
-// Initialize the standalone router factory
-func InitializeRouterFactory() (router.RouterFactory, error) {
-	routerFactory := router.ProvideRouterFactory()
-	return routerFactory, nil
 }
 
 // InitializeRoutesLoader uses the same configured OSS dependency graph as the

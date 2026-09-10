@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,22 +32,23 @@ type Service struct {
 	router  *GrafanaRouter
 	ready   ReadyNotifier
 	enabled bool
+	metrics *routerMetrics
 }
 
 // ProvideMiddlewareService creates the router service for the full Grafana
 // server. The embedded API server invokes HandleFunc before its existing handler.
-func ProvideMiddlewareService(features featuremgmt.FeatureToggles, loader RoutesLoader) (*Service, error) {
+func ProvideMiddlewareService(features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
 
-	s := newService(loader, nil)
+	s := newService(loader, nil, reg)
 	s.enabled = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	return s, nil
 }
 
 // ProvideService creates the router target service.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier, reg prometheus.Registerer) (*Service, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("configuration is required")
@@ -56,7 +58,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		return nil, fmt.Errorf("HTTP router is required")
 	}
 
-	s := newService(loader, ready)
+	s := newService(loader, ready, reg)
 
 	// Explicitly configured
 	// NOTE: eventually should be the only path
@@ -101,10 +103,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	return s, nil
 }
 
-func newService(loader RoutesLoader, ready ReadyNotifier) *Service {
+func newService(loader RoutesLoader, ready ReadyNotifier, reg prometheus.Registerer) *Service {
 	s := &Service{
-		router: NewGrafanaRouter(loader),
-		ready:  ready,
+		router:  NewGrafanaRouter(loader),
+		ready:   ready,
+		metrics: newRouterMetrics(reg),
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
@@ -124,7 +127,7 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		next.ServeHTTP(w, req)
 		return
 	}
-	s.router.HandleFunc(w, req, next)
+	s.metrics.instrument(s.router, w, req, next)
 }
 
 // Run adapts Service to the full server's background-service lifecycle.
