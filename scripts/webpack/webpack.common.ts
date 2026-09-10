@@ -16,16 +16,12 @@ const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const envConfig = getEnvConfig(grafanaRoot);
 
-// SPIKE: resolve the enterprise frontend from the sibling grafana-enterprise checkout
-// instead of the copy the overlay makes at public/app/extensions. Enterprise sources
-// keep their bare `app/...` imports either way, because those resolve against the
-// `public` module root below rather than against the importing file's location.
-//
-// Falls back to a no-op stub, so an OSS-only checkout builds unchanged. This replaces
-// the require.context glob in app.ts, which could only ever find a copy inside public/.
-const enterpriseFrontend = path.resolve(grafanaRoot, '../grafana-enterprise/src/public');
-const extensionsEntry = fs.existsSync(path.join(enterpriseFrontend, 'index.ts'))
-  ? enterpriseFrontend
+// app.ts imports `app/extensions` unconditionally. When the enterprise frontend is present it
+// resolves through the `public` module root below, like any other `app/...` import; when it is
+// not, there is nothing to resolve, so alias it to a no-op stub. Replaces a require.context
+// glob, which could only ever match a copy inside public/.
+const extensionsEntry = fs.existsSync(path.resolve(grafanaRoot, 'public/app/extensions/index.ts'))
+  ? undefined
   : path.resolve(grafanaRoot, 'public/app/core/extensionsStub.ts');
 
 export type Env = Record<string, string | true | undefined>;
@@ -65,9 +61,8 @@ export default (env: Env = {}): Configuration => ({
     conditionNames: ['@grafana-app/source', '...'],
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
-      // SPIKE: redirects `app/extensions` and every `app/extensions/...` subpath at the
-      // enterprise checkout, so the whole enterprise frontend tree relocates with one line.
-      'app/extensions': extensionsEntry,
+      // Only set when the enterprise frontend is absent; see extensionsEntry above.
+      ...(extensionsEntry ? { 'app/extensions': extensionsEntry } : {}),
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),

@@ -142,9 +142,9 @@ import { createTextBoxVariableAdapter } from './features/variables/textbox/adapt
 import { configureStore } from './store/configureStore';
 import { dispatch } from './store/store';
 
-// Enterprise frontend entry point. Webpack aliases `app/extensions` at the
-// grafana-enterprise checkout when one is present, and at a no-op stub otherwise,
-// so this import resolves in both editions. See scripts/webpack/webpack.common.ts.
+// Enterprise frontend entry point. Resolves to public/app/extensions when the enterprise
+// frontend is present, and to a no-op stub otherwise, so this import works in both
+// editions. See scripts/webpack/webpack.common.ts.
 import * as extensions from 'app/extensions';
 
 export interface AppInitOptions {
