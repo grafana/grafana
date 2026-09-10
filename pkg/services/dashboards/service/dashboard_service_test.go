@@ -1570,29 +1570,39 @@ func TestCountInFolders(t *testing.T) {
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("can search dashboards", func(t *testing.T) {
-		ctx := context.Background()
+	t.Run("uses unspecified result format by default", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		require.NoError(t, err)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+	})
+
+	t.Run("requests field-value results and accepts a legacy response", func(t *testing.T) {
+		ctx := t.Context()
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
-			OrgId: 1,
-			Sort:  sort.SortAlphaAsc,
+			OrgId:                1,
+			Sort:                 sort.SortAlphaAsc,
+			UseFieldValueResults: true,
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// should include sort field only once
-			titleFieldCount := 0
-			for _, field := range req.Fields {
-				if field == "title" {
-					titleFieldCount++
-				}
-			}
-
-			return len(req.SortBy) == 1 &&
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+				slices.Equal(req.Fields, []string{
+					resource.SEARCH_FIELD_TITLE,
+					resource.SEARCH_FIELD_TAGS,
+					resource.SEARCH_FIELD_FOLDER,
+					resource.SEARCH_FIELD_DESCRIPTION,
+					resource.SEARCH_FIELD_LEGACY_ID,
+				}) &&
+				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&
-				!req.SortBy[0].Desc &&
-				titleFieldCount == 1
+				!req.SortBy[0].Desc
 		})).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{

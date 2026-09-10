@@ -27,6 +27,14 @@ var (
 		resource.SEARCH_FIELD_OWNER_REFERENCES: "",
 	}
 
+	APISearchIncludeFields = []string{
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_TAGS,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_DESCRIPTION,
+		resource.SEARCH_FIELD_LEGACY_ID,
+	}
+
 	IncludeFields = []string{
 		resource.SEARCH_FIELD_TITLE,
 		resource.SEARCH_FIELD_TAGS,
