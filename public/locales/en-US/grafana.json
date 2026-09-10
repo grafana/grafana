@@ -7025,9 +7025,6 @@
         }
       }
     },
-    "bulk-actions-button": {
-      "tooltip-bulk-actions-on-selected-elements": "Bulk actions"
-    },
     "constant-variable-form": {
       "constant-options": "Constant options",
       "label-value": "Value",

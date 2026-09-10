@@ -1,6 +1,9 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
+import { type SceneObject } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
+
+import { getDashboardSceneLike } from '../types/dashboard';
 
 /**
  * Whether more than one element is currently selected on the dashboard canvas.
@@ -24,4 +27,21 @@ export function useSelectionCountFor(id: string | undefined): number {
   }
 
   return selected.length;
+}
+
+/**
+ * The currently selected elements resolved to their scene objects, in selection order.
+ */
+export function useSelectedObjectsFor(sceneObject: SceneObject): SceneObject[] {
+  const context = useContext(ElementSelectionContext);
+  const selected = context?.selected;
+  const sidebar = getDashboardSceneLike(sceneObject).state.sidebar;
+
+  return useMemo(
+    () =>
+      (selected ?? [])
+        .map((item) => sidebar.getSelectedObject(item.id))
+        .filter((obj): obj is SceneObject => obj !== undefined),
+    [selected, sidebar]
+  );
 }

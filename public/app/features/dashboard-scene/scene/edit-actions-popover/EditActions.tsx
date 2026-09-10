@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -103,7 +103,7 @@ export function DeleteActionButton({
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
 
-  const onClickInternal = useCallback(() => {
+  const onClickInternal = () => {
     closePopover();
     appEvents.publish(
       new ShowConfirmModalEvent({
@@ -113,7 +113,7 @@ export function DeleteActionButton({
         onConfirm,
       })
     );
-  }, [closePopover, title, text, yesText, onConfirm]);
+  };
 
   const tooltip = disabled
     ? t('dashboard-scene.control-edit-actions.delete-tooltip-disabled', "Repeated panels can't be deleted individually")
@@ -133,18 +133,32 @@ export function DeleteActionButton({
   );
 }
 
-export function BulkActionsButton({ onClick }: { onClick: () => void }) {
+export function GroupActionButton({
+  icon,
+  label,
+  tooltip,
+  disabled,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  tooltip?: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
   const styles = useStyles2(getActionStyles);
 
   return (
     <IconButton
-      name="layer-group"
+      name={icon}
       variant="secondary"
       size="md"
       className={styles.action}
-      onClick={onClick}
-      tooltip={t('dashboard-scene.bulk-actions-button.tooltip-bulk-actions-on-selected-elements', 'Bulk actions')}
+      aria-label={label}
+      tooltip={tooltip ?? label}
       tooltipPlacement="top"
+      disabled={disabled}
+      onClick={onClick}
     />
   );
 }

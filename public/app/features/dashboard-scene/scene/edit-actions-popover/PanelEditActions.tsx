@@ -1,16 +1,19 @@
 import { cx } from '@emotion/css';
-import { useCallback, useMemo, type JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, Text, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { getEditableElementFor } from '../../actions/utils/getEditableElementFor';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
-import { useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
+import { useGroupSelection } from '../layouts-shared/GroupSelectedActions';
+import { useSelectedObjectsFor, useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
+import { isBulkActionElement } from '../types/BulkActionElement';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {
@@ -18,7 +21,7 @@ import {
   DeleteActionButton,
   DuplicateActionButton,
   getActionStyles,
-  BulkActionsButton,
+  GroupActionButton,
   SettingsActionButton,
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
@@ -28,33 +31,33 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(panel);
 
-  const onClickEdit = useCallback(() => {
+  const onClickEdit = () => {
     getDashboardSceneLike(panel).state.sidebar.editElement(panel.state.key!);
-  }, [panel]);
+  };
 
-  const onClickEditVisualization = useCallback(() => {
+  const onClickEditVisualization = () => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover');
     locationService.partial({ editPanel: panelId });
-  }, [panel]);
+  };
 
-  const onClickCopy = useCallback(() => {
+  const onClickCopy = () => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover');
     getDashboardSceneLike(panel).copyPanel(panel);
-  }, [panel]);
+  };
 
-  const onClickDuplicate = useCallback(() => {
+  const onClickDuplicate = () => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
     getLayoutManagerFor(panel).duplicatePanel?.(panel);
-  }, [panel]);
+  };
 
-  const onClickDelete = useCallback(() => {
+  const onClickDelete = () => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('delete', panelId, 'edit_popover');
     getLayoutManagerFor(panel).removePanel?.(panel);
-  }, [panel]);
+  };
 
   return (
     <>
@@ -88,10 +91,18 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
 
 export function PanelEditActionsBulk({ panel, selectionCount }: { panel: VizPanel; selectionCount: number }) {
   const styles = useStyles2(getActionStyles);
+  const items = useSelectedObjectsFor(panel);
+  const { rowGrouping, tabGrouping, group } = useGroupSelection(items);
 
-  const onClickBulkActions = useCallback(() => {
-    getDashboardSceneLike(panel).state.sidebar.editSelection();
-  }, [panel]);
+  const onClickDelete = () => {
+    items.forEach((item) => {
+      const element = getEditableElementFor(item);
+
+      if (element && isBulkActionElement(element)) {
+        element.onDelete();
+      }
+    });
+  };
 
   return (
     <>
@@ -108,14 +119,38 @@ export function PanelEditActionsBulk({ panel, selectionCount }: { panel: VizPane
         </Trans>
       </Text>
       <div className={styles.actionsDivider} />
-      <BulkActionsButton onClick={onClickBulkActions} />
+      <GroupActionButton
+        icon="list-ul"
+        label={t('dashboard.sidebar.group.into-row', 'Group into row')}
+        disabled={!rowGrouping.enabled}
+        tooltip={!rowGrouping.enabled ? rowGrouping.reason : undefined}
+        onClick={() => group('row')}
+      />
+      <GroupActionButton
+        icon="layers"
+        label={t('dashboard.sidebar.group.into-tab', 'Group into tab')}
+        disabled={!tabGrouping.enabled}
+        tooltip={!tabGrouping.enabled ? tabGrouping.reason : undefined}
+        onClick={() => group('tab')}
+      />
+      <div className={styles.actionsDivider} />
+      <DeleteActionButton
+        title={t('dashboard.sidebar.elements.multiple-panels', 'Multiple panels')}
+        text={t(
+          'dashboard.sidebar.elements.multiple-panels-delete-text',
+          'Are you sure you want to delete these panels? All queries will be removed.'
+        )}
+        yesText={t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete')}
+        onConfirm={onClickDelete}
+      />
     </>
   );
 }
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
-  const selectionCount = useSelectionCountFor(panel.state.key);
+  // Repeat clones are selected through their source panel, so the selection never holds a clone key.
+  const selectionCount = useSelectionCountFor(panel.state.repeatSourceKey ?? panel.state.key);
   const isPopoverSupported = useHoverPopoverSupported();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
