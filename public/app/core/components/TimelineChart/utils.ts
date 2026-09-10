@@ -479,13 +479,17 @@ export function prepareTimelineFields(
 
   const invalidFrame = findFrameWithNullTimeValue(frames);
   if (invalidFrame) {
-    const refId = invalidFrame.refId ? `query ${invalidFrame.refId}` : 'a query';
     return {
-      warn: t(
-        'timeline.timeline-panel.null-time-value',
-        '{{refId}} returned a time field with null values; filter out rows with empty timestamps',
-        { refId }
-      ),
+      warn: invalidFrame.refId
+        ? t(
+            'timeseries.time-series-panel.null-time-value-query',
+            'Query {{refId}} returned a time field with null values; filter out rows with empty timestamps',
+            { refId: invalidFrame.refId }
+          )
+        : t(
+            'timeseries.time-series-panel.null-time-value',
+            'A query returned a time field with null values; filter out rows with empty timestamps'
+          ),
     };
   }
 

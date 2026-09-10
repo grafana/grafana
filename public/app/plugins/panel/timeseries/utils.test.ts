@@ -21,7 +21,7 @@ describe('prepare timeseries graph', () => {
     ];
     const { frames, warn } = prepareGraphableFields(input, createTheme());
     expect(frames).toEqual([]);
-    expect(warn).toBe('No graphable fields');
+    expect(warn).toBeUndefined();
   });
 
   it('does not needlessly copy clean arrays', () => {
@@ -50,7 +50,7 @@ describe('prepare timeseries graph', () => {
     ];
     const { frames, warn } = prepareGraphableFields(input, createTheme());
     expect(frames).toEqual([]);
-    expect(warn).toBe('No graphable fields');
+    expect(warn).toBeUndefined();
   });
 
   it('sets classic palette index on graphable fields', () => {
@@ -1048,7 +1048,19 @@ describe('prepareGraphableFields null-time validation (#130379)', () => {
     });
     const { frames, warn } = prepareGraphableFields([frame], createTheme());
     expect(frames).toEqual([]);
-    expect(warn).toMatch(/query A returned a time field with null values/);
+    expect(warn).toMatch(/Query A returned a time field with null values/);
+  });
+
+  it('uses a generic message when the invalid frame has no refId', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+      ],
+    });
+    const { frames, warn } = prepareGraphableFields([frame], createTheme());
+    expect(frames).toEqual([]);
+    expect(warn).toMatch(/A query returned a time field with null values/);
   });
 
   it('skips the null-time check in numeric-X mode (trend panel path)', () => {

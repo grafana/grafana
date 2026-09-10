@@ -112,7 +112,7 @@ export function prepareGraphableFields(
   xNumFieldIdx?: number
 ): { frames: DataFrame[]; warn?: string } {
   if (!series?.length) {
-    return { frames: undefined };
+    return { frames: [] };
   }
 
   cacheFieldDisplayNames(series);
@@ -279,14 +279,18 @@ export function prepareGraphableFields(
     if (!useNumericX) {
       const invalidFrame = findFrameWithNullTimeValue(frames);
       if (invalidFrame) {
-        const refId = invalidFrame.refId ? `query ${invalidFrame.refId}` : 'a query';
         return {
           frames: [],
-          warn: t(
-            'timeseries.time-series-panel.null-time-value',
-            '{{refId}} returned a time field with null values; filter out rows with empty timestamps',
-            { refId }
-          ),
+          warn: invalidFrame.refId
+            ? t(
+                'timeseries.time-series-panel.null-time-value-query',
+                'Query {{refId}} returned a time field with null values; filter out rows with empty timestamps',
+                { refId: invalidFrame.refId }
+              )
+            : t(
+                'timeseries.time-series-panel.null-time-value',
+                'A query returned a time field with null values; filter out rows with empty timestamps'
+              ),
         };
       }
     }
@@ -294,7 +298,7 @@ export function prepareGraphableFields(
     return { frames };
   }
 
-  return { frames: [], warn: t('timeseries.time-series-panel.no-graphable-fields', 'No graphable fields') };
+  return { frames: [] };
 }
 
 const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) => {

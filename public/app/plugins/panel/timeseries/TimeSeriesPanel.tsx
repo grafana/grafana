@@ -73,13 +73,11 @@ export const TimeSeriesPanel = ({
     warning: prepWarning,
   } = useMemo(() => {
     const { frames: graphable, warn } = prepareGraphableFields(data.series, theme, timeRange);
-    if (warn || !graphable) {
+    if (warn) {
       return { frames: graphable, warning: warn };
     }
 
-    let compareDiffMs: number[] = [0];
-    // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
-    // inside the .map callback once `frames` itself gets reassigned in this scope.
+    const compareDiffMs: number[] = [0];
     const originalFrames = graphable;
 
     const frames = originalFrames.map((frame: DataFrame) => {
@@ -145,7 +143,7 @@ export const TimeSeriesPanel = ({
         message={suggestions?.message ?? prepWarning}
         fieldConfig={fieldConfig}
         data={data}
-        needsTimeField={!prepWarning}
+        needsTimeField={true}
         needsNumberField={true}
         suggestions={suggestions?.suggestions}
       />

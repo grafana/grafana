@@ -16723,9 +16723,6 @@
     "missing-field": {
       "all": "No graphable fields",
       "time": "Data does not have a time field"
-    },
-    "timeline-panel": {
-      "null-time-value": "{{refId}} returned a time field with null values; filter out rows with empty timestamps"
     }
   },
   "timeseries": {
@@ -16848,8 +16845,8 @@
       "line": "Line chart"
     },
     "time-series-panel": {
-      "no-graphable-fields": "No graphable fields",
-      "null-time-value": "{{refId}} returned a time field with null values; filter out rows with empty timestamps"
+      "null-time-value": "A query returned a time field with null values; filter out rows with empty timestamps",
+      "null-time-value-query": "Query {{refId}} returned a time field with null values; filter out rows with empty timestamps"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
