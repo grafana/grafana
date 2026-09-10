@@ -2958,6 +2958,14 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:        "dashboard.apiSearchFieldValueResults",
+			Description: "Uses field-value results for requests from the /api/search endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
