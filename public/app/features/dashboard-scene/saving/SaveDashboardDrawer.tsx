@@ -8,6 +8,7 @@ import { SaveProvisionedDashboard } from 'app/features/provisioning/components/D
 import { type SaveTarget, SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -33,6 +34,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
 }
@@ -85,6 +87,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
+    recoverToNewBranch,
     saveTarget,
   } = model.useState();
 
@@ -166,6 +169,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           changeInfo={changeInfo}
           drawer={model}
           saveAsCopy={saveAsCopy}
+          recoverToNewBranch={recoverToNewBranch}
           view={view}
         />
       );

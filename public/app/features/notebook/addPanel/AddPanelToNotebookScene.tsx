@@ -11,6 +11,8 @@ import {
 import { Modal, Spinner, useStyles2 } from '@grafana/ui';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from './addPanelModal';
 import { buildPanelElementFromDashboard } from './buildPanelElementFromDashboard';
 
@@ -44,7 +46,11 @@ function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanel
   return (
     <Modal isOpen={true} className={styles.modal} title={addPanelToNotebookTitle()} onDismiss={model.onDismiss}>
       <Suspense fallback={<Spinner />}>
-        <AddPanelToNotebookModalBody buildPanel={model.buildPanel} onDismiss={model.onDismiss} />
+        <AddPanelToNotebookModalBody
+          buildPanel={model.buildPanel}
+          onDismiss={model.onDismiss}
+          entryPoint={NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL}
+        />
       </Suspense>
     </Modal>
   );
