@@ -24,9 +24,25 @@ interface Props {
   timeZone: TimeZone;
   replaceVariables?: InterpolateFunction;
   loadingState: LoadingState;
+  /**
+   * Set to false when the host already ran the transformation this hook duplicates — the one
+   * registered in `module.tsx` — so `rawTableFrame` arrives with the label columns and with field
+   * overrides already applied to them. Extraction has to happen in exactly one place:
+   * `extractFields` renames colliding columns rather than skipping them, so a second pass produces
+   * `service 1`, `level 1`, and a second `applyFieldOverrides` re-pushes panel default data links
+   * onto every field.
+   */
+  enabled?: boolean;
 }
 
-export function useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables, loadingState }: Props) {
+export function useExtractFields({
+  rawTableFrame,
+  fieldConfig,
+  timeZone,
+  replaceVariables,
+  loadingState,
+  enabled = true,
+}: Props) {
   const dataLinksContext = useDataLinksContext();
   const isMounted = useMountedState();
   const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
@@ -34,7 +50,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone, replace
   const theme = useTheme2();
 
   useEffect(() => {
-    if (!fieldConfig || loadingState === LoadingState.Loading) {
+    if (!enabled || !fieldConfig || loadingState === LoadingState.Loading) {
       return;
     }
 
@@ -63,7 +79,17 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone, replace
       .catch((err) => {
         console.error('LogsTable: Extract fields transform error', err);
       });
-  }, [dataLinkPostProcessor, fieldConfig, isMounted, loadingState, rawTableFrame, replaceVariables, theme, timeZone]);
+  }, [
+    dataLinkPostProcessor,
+    enabled,
+    fieldConfig,
+    isMounted,
+    loadingState,
+    rawTableFrame,
+    replaceVariables,
+    theme,
+    timeZone,
+  ]);
 
-  return { extractedFrame };
+  return { extractedFrame: enabled ? extractedFrame : rawTableFrame };
 }
