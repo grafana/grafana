@@ -119,6 +119,41 @@ describe('PanelStatus', () => {
       expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
     });
+
+    it('does not render an assistant button when no onInvestigateErrors is provided', async () => {
+      render(<PanelStatus items={items} />);
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
+    });
+
+    it('renders a single Fix with Assistant button and calls onInvestigateErrors when clicked', async () => {
+      const onInvestigateErrors = jest.fn();
+      render(
+        <PanelStatus
+          items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
+          onInvestigateErrors={onInvestigateErrors}
+        />
+      );
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      const button = await screen.findByRole('button', { name: 'Fix with Assistant' });
+
+      await userEvent.click(button);
+      expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers to explain rather than fix when there are no errors to fix', async () => {
+      // `items` here is warning + info only, which is the case where the dashboard side asks the
+      // assistant to explain the notices instead of fixing anything.
+      render(<PanelStatus items={items} onInvestigateErrors={jest.fn()} />);
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+
+      expect(await screen.findByRole('button', { name: 'Explain with Assistant' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
+    });
   });
 
   it('renders nothing meaningful when neither message nor items are provided', () => {

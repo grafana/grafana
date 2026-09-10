@@ -60,6 +60,11 @@ interface BaseProps {
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
+   * Triggers an AI-assisted investigation of the panel's errors/notices, shown as an action in
+   * the status popover. Omit to hide the action.
+   */
+  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
+  /**
    * @deprecated use `actions' instead
    **/
   leftItems?: ReactNode[];
@@ -157,6 +162,7 @@ export function PanelChrome({
   statusMessage,
   statusItems,
   statusMessageOnClick,
+  onInvestigateErrors,
   leftItems,
   actions,
   selectionId,
@@ -428,6 +434,7 @@ export function PanelChrome({
                   items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                  onInvestigateErrors={onInvestigateErrors}
                 />
               </div>
             )}
@@ -452,6 +459,7 @@ export function PanelChrome({
                     items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                    onInvestigateErrors={onInvestigateErrors}
                   />
                 </div>
               )}

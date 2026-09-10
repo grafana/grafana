@@ -1,3 +1,6 @@
+import { distinctUntilChanged, takeUntil, takeWhile, timer } from 'rxjs';
+
+import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
@@ -6,9 +9,11 @@ import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { getAssistantChatIdToContinue } from 'app/core/components/AssistantTooltip/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { buildEntries } from '../inspect/StandardErrorsAndNoticesInspector';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
@@ -17,6 +22,12 @@ import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/u
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+
+// How long to wait for the assistant app plugin to report availability before giving up. Preloaded
+// app plugins finish importing before the rest of Grafana boots, so this window is normally
+// sub-second; this only needs to cover a slower-than-usual load, not the typical case. See the
+// comment at the isAssistantAvailable() subscription below for why this exists.
+const ASSISTANT_AVAILABILITY_TIMEOUT_MS = 5000;
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -216,7 +227,85 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+
+    // A live subscription, not a one-shot check: the assistant app plugin can still be loading
+    // when this runs (its extension registration lands whenever its bundle finishes fetching),
+    // so availability can flip from false to true shortly after. forceRender() is needed because
+    // mutating `context` doesn't itself trigger a re-render.
+    //
+    // extendPanelContext has no deactivation hook, so nothing calls unsubscribe when the panel is
+    // removed. `takeWhile` completes the stream once availability turns true, but if the assistant
+    // app is never installed it stays false forever, and the stream itself never completes either
+    // (it re-emits on every plugin extension registration, not just real changes) — so without a
+    // hard cutoff this subscription, and the `vizPanel` it closes over, would live for the app's
+    // whole lifetime. ASSISTANT_AVAILABILITY_TIMEOUT_MS bounds that: plugin registration resolves
+    // during app boot, so giving up after a fixed window only gives up on installations that were
+    // never going to become available.
+    isAssistantAvailable()
+      .pipe(
+        distinctUntilChanged(),
+        takeWhile((available) => !available, true),
+        takeUntil(timer(ASSISTANT_AVAILABILITY_TIMEOUT_MS))
+      )
+      .subscribe((available) => {
+        context.onInvestigateErrors = available ? () => investigatePanelErrorsWithAssistant(vizPanel) : undefined;
+        vizPanel.forceRender();
+      });
   }
+}
+
+/**
+ * Checks the panel's current errors/notices (mirroring the "Errors and notices" inspector tab)
+ * to decide whether there's anything to investigate, then opens the assistant with a reference
+ * to the panel itself rather than a text snapshot of its errors.
+ *
+ * Attaching the panel this way (name/panelId/panelKey) mirrors the assistant's own "select a
+ * panel as context" picker (PanelSelectButton in grafana-assistant-app), so the assistant
+ * resolves it through the same path and can inspect the panel's live queries/data with its own
+ * tools instead of trusting a frozen description we send in the prompt.
+ */
+function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
+  const panelData = sceneGraph.getData(vizPanel).state.data;
+  const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
+  const entries = buildEntries(panelData?.series, errors);
+
+  if (entries.length === 0) {
+    return;
+  }
+
+  // Everything below is model-facing (it's serialized into the `<ref />` the assistant sends the
+  // LLM), so the fallback stays in English like the prompt does.
+  const panelTitle = vizPanel.interpolate(vizPanel.state.title, undefined, 'text') || 'Untitled';
+  const panelKey = vizPanel.state.key;
+  const hasError = entries.some((entry) => entry.severity === 'error');
+  // Prompt text sent to the assistant is intentionally not translated (matching
+  // QueryErrorAlert.tsx/AnalyzeRuleButton.tsx): it's an instruction to the LLM, not rendered
+  // UI copy, so it stays in English regardless of UI locale.
+  const prompt = hasError
+    ? 'Investigate and fix the query errors causing this panel to fail.'
+    : 'Investigate the query notices for this panel and explain what they mean and what I should do about them.';
+
+  openAssistant({
+    origin: 'grafana/panel-status-popover',
+    mode: 'assistant',
+    prompt,
+    autoSend: true,
+    appendContext: true,
+    // When the assistant is already on screen, target its active chat instead of just
+    // republishing the same "open" props — otherwise it being open already swallows this.
+    chatId: getAssistantChatIdToContinue(),
+    context: [
+      createAssistantContextItem('structured', {
+        data: {
+          name: `Panel: ${panelTitle}`,
+          // A string, matching PanelSelectButton in grafana-assistant-app — nothing reads this
+          // field back, it's only serialized into the `<ref />` for the model.
+          panelId: String(getPanelIdForVizPanel(vizPanel)),
+          panelKey,
+        },
+      }),
+    ],
+  });
 }
 
 /**
