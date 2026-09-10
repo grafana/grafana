@@ -514,6 +514,137 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 	assert.NotContains(t, viewerPerm.Actions, "dashboards:write", "Viewer permission should not include write")
 }
 
+// countingUserService fails any per-entry lookup so a regression away from the
+// batched path is visible rather than merely slower.
+type countingUserService struct {
+	*usertest.FakeUserService
+	users     map[string]*user.User
+	listCalls int
+	getCalls  int
+	lastUIDs  []string
+}
+
+func (s *countingUserService) GetByUID(context.Context, *user.GetUserByUIDQuery) (*user.User, error) {
+	s.getCalls++
+	return nil, user.ErrUserNotFound
+}
+
+func (s *countingUserService) ListByIdOrUID(_ context.Context, uids []string, _ []int64) ([]*user.User, error) {
+	s.listCalls++
+	s.lastUIDs = uids
+	out := make([]*user.User, 0, len(uids))
+	for _, uid := range uids {
+		if u, ok := s.users[uid]; ok {
+			out = append(out, u)
+		}
+	}
+	return out, nil
+}
+
+type countingTeamService struct {
+	*teamtest.FakeService
+	teams       map[string]*team.TeamDTO
+	searchCalls int
+	getCalls    int
+	lastQuery   *team.SearchTeamsQuery
+}
+
+func (s *countingTeamService) GetTeamByID(context.Context, *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	s.getCalls++
+	return nil, team.ErrTeamNotFound
+}
+
+func (s *countingTeamService) SearchTeams(_ context.Context, q *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	s.searchCalls++
+	s.lastQuery = q
+	res := team.SearchTeamQueryResult{}
+	for _, uid := range q.UIDs {
+		if t, ok := s.teams[uid]; ok {
+			res.Teams = append(res.Teams, t)
+		}
+	}
+	res.TotalCount = int64(len(res.Teams))
+	return res, nil
+}
+
+// TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups pins the number of
+// identity lookups to one per subject kind regardless of how many assignments
+// reference them.
+func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
+	userSvc := &countingUserService{
+		FakeUserService: usertest.NewUserServiceFake(),
+		users: map[string]*user.User{
+			"user-uid-1": {ID: 1, UID: "user-uid-1", Login: "user-1"},
+			"user-uid-2": {ID: 2, UID: "user-uid-2", Login: "user-2"},
+		},
+	}
+	teamSvc := &countingTeamService{
+		FakeService: teamtest.NewFakeService(),
+		teams: map[string]*team.TeamDTO{
+			"team-uid-1": {ID: 1, UID: "team-uid-1", Name: "team-1"},
+			"team-uid-2": {ID: 2, UID: "team-uid-2", Name: "team-2"},
+		},
+	}
+
+	resourcePerm := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-1", Verb: "edit"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-2", Verb: "edit"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-2", Verb: "view"},
+				// A repeat of an earlier subject must not add a lookup.
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "edit"},
+			},
+		},
+	}
+
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: userSvc,
+			teamService: teamSvc,
+			options: Options{
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				PermissionsToActions: map[string][]string{
+					"View": {"folders:read"},
+					"Edit": {"folders:read", "folders:write"},
+				},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stack-123-org-1", false)
+	require.NoError(t, err)
+	require.Len(t, perms, 5)
+
+	assert.Equal(t, 1, userSvc.listCalls, "all users must resolve in a single batch")
+	assert.Zero(t, userSvc.getCalls, "no per-entry user lookups")
+	assert.Equal(t, []string{"user-uid-1", "user-uid-2"}, userSvc.lastUIDs, "duplicate subjects must be deduplicated")
+
+	assert.Equal(t, 1, teamSvc.searchCalls, "all teams must resolve in a single batch")
+	assert.Zero(t, teamSvc.getCalls, "no per-entry team lookups")
+	require.NotNil(t, teamSvc.lastQuery)
+	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, teamSvc.lastQuery.UIDs)
+
+	// SearchTeams filters on teams:read, so the batch silently returns nothing
+	// unless the identity passed in holds it.
+	require.NotNil(t, teamSvc.lastQuery.SignedInUser, "SearchTeams applies an access-control filter and rejects a nil identity")
+	assert.Contains(t, teamSvc.lastQuery.SignedInUser.GetPermissions()[accesscontrol.ActionTeamsRead], "*",
+		"the service identity must hold wildcard teams:read for the batch to return anything")
+
+	assert.Equal(t, "user-1", perms[0].UserLogin)
+	assert.Equal(t, int64(100), perms[0].ID, "managed role ID should be attached")
+	assert.Equal(t, "team-1", perms[1].Team)
+	assert.Equal(t, int64(200), perms[1].ID, "managed role ID should be attached")
+	assert.Equal(t, "user-2", perms[2].UserLogin)
+	assert.Equal(t, "team-2", perms[3].Team)
+	assert.Equal(t, "user-1", perms[4].UserLogin)
+}
+
 // TestGetFolderHierarchyPermissions tests the folder hierarchy permissions logic
 func TestGetFolderHierarchyPermissions(t *testing.T) {
 	tests := []struct {

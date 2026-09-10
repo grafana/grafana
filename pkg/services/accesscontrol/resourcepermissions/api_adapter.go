@@ -136,12 +136,12 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 	// Resolve subject names with a service identity: the caller is already authorized
 	// to read this resource's permissions but may lack users:read (e.g. an editor),
 	// which would otherwise leave the subject unnamed. Mirrors the legacy SQL join.
-	lookupCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+	lookupCtx, serviceIdentity := identity.WithServiceIdentity(ctx, orgID)
 
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
-	subjects := a.resolveSubjects(lookupCtx, orgID, permissions)
+	subjects := a.resolveSubjects(lookupCtx, serviceIdentity, orgID, permissions)
 
 	for _, perm := range permissions {
 		kind := perm.Kind
@@ -228,16 +228,21 @@ type resolvedSubjects struct {
 	permissionIDs map[string]int64
 }
 
+// teamBatchSize bounds a single SearchTeams call. With the Kubernetes-backed
+// team service the query is served by the paginated searchTeams endpoint, which
+// rejects a limit above common.MaxListLimit, so the UID list has to be chunked
+// rather than sent whole.
+const teamBatchSize = 500
+
 // resolveSubjects looks up the subjects of a whole ResourcePermission spec up
 // front. Resolving per entry cost two queries per assignment — an identity
 // lookup and a permission-ID lookup — so a folder with several hundred
 // assignments issued that many serial round trips, repeated for every ancestor
 // folder in the inheritance chain.
 //
-// Teams are still resolved one at a time. The batch alternative, SearchTeams
-// filtered by UID, applies an access-control filter on teams:read, which the
-// service identity used here does not hold, so it would return no teams at all.
-func (a *api) resolveSubjects(ctx context.Context, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) *resolvedSubjects {
+// requester must be the service identity the caller built, because SearchTeams
+// filters on teams:read, which that identity holds with a wildcard scope.
+func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) *resolvedSubjects {
 	subjects := &resolvedSubjects{
 		users:         make(map[string]*user.User),
 		teams:         make(map[string]*team.TeamDTO),
@@ -284,13 +289,24 @@ func (a *api) resolveSubjects(ctx context.Context, orgID int64, permissions []ia
 		}
 	}
 
-	for _, uid := range teamUIDs {
-		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{UID: uid, OrgID: orgID})
+	for chunk := range slices.Chunk(teamUIDs, teamBatchSize) {
+		res, err := a.service.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{
+			OrgID:        orgID,
+			UIDs:         chunk,
+			SignedInUser: requester,
+			Limit:        len(chunk),
+			// Page 1, not 0: the legacy store derives its offset from
+			// Limit*(Page-1), so page 0 would seek backwards past the start.
+			Page: 1,
+		})
 		if err != nil {
+			a.logger.Warn("Failed to resolve teams for resource permissions", "error", err, "count", len(chunk), "orgID", orgID)
 			continue
 		}
-		subjects.teams[uid] = teamDetails
-		roleNames = append(roleNames, teamManagedRoleName(teamDetails.ID))
+		for _, teamDetails := range res.Teams {
+			subjects.teams[teamDetails.UID] = teamDetails
+			roleNames = append(roleNames, teamManagedRoleName(teamDetails.ID))
+		}
 	}
 
 	if len(roleNames) > 0 && a.service.store != nil {
