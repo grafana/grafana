@@ -29,6 +29,7 @@ import { FlameGraph } from '@grafana/flamegraph';
 | Name                  | Type                     | Description                                                                                                                 |
 | --------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | data                  | DataFrame                | DataFrame with the profile data. Optional, if missing or empty the flamegraph is not rendered                               |
+| functionTable         | FunctionTable            | Optional independently aggregated function rows and full profile totals for the top table.                                  |
 | stickyHeader          | boolean                  | Whether the header should be sticky and be always visible on the top when scrolling.                                        |
 | getTheme              | () => GrafanaTheme2      | Provides a theme for the visualization on which colors and some sizes are based.                                            |
 | onTableSymbolClick    | (symbol: string) => void | Interaction hook that can be used to report on the interaction. Fires when user click on a name in the table.               |
@@ -38,6 +39,25 @@ import { FlameGraph } from '@grafana/flamegraph';
 | extraHeaderElements   | React.ReactNode          | Elements that will be shown in the header on the right side of the header buttons. Useful for additional functionality.     |
 | vertical              | boolean                  | If true the flamegraph will be rendered on top of the table.                                                                |
 | keepFocusOnDataChange | boolean                  | If true any focused block will stay focused when the profile data changes. Same for the sandwich view.                      |
+
+##### Function tables
+
+Supply `functionTable` when the table should use backend function totals independently of flamegraph truncation:
+
+```tsx
+<FlameGraph
+  data={dataFrame}
+  getTheme={getTheme}
+  functionTable={{
+    total: 100,
+    rows: [{ name: 'example.function', self: 7, total: 20 }],
+  }}
+/>
+```
+
+For a diff, `total` is the full baseline profile total, `totalRight` is the full comparison profile total, and each row additionally has `selfRight` and `totalRight`. Diff percentages retain the existing rounding and relative-change calculations. Totals must cover the full selected profiles before limiting or filtering rows. Values use the units of the corresponding DataFrame fields.
+
+Supplied rows bypass tree aggregation. An empty `rows` array represents an empty table; omitting `functionTable` retains the existing tree-derived behavior. Search includes supplied function names even when absent from the flamegraph. Sorting and search operate on the supplied rows; changing the global row selection or limit is the caller's responsibility.
 
 ##### DataFrame schema
 
