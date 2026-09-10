@@ -19,9 +19,16 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
-import { type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
+import {
+  type FilterType,
+  type FromFieldsResult,
+  type GetActionsFunctionLocal,
+  type MeasureCellHeightEntry,
+  type TableColumn,
+  type TableRow,
+} from './types';
 import {
   applyFilter,
   applySort,
@@ -43,6 +50,7 @@ import {
   getCellLinks,
   getCellOptions,
   getColumnTypes,
+  markEdgeColumns,
   getComparator,
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
@@ -2209,6 +2217,132 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves the first column’s extra padding when the panel has none of its own', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
+        { name: 'Other', type: FieldType.string, values: ['a'], config: {} },
+      ];
+      // "Name" sizes to its header (4*8 + sort arrow 22 + chrome 13 = 67), "Other" to its own
+      // (5*8 + 22 + 13 = 75). Only the first column carries the 6px of extra inline-start padding
+      // that lines it up with the panel title.
+      expect(
+        computeContentAwareColWidths(fields, 148, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          noPanelPadding: true,
+        })
+      ).toEqual([73, 75]);
+      expect(compute(fields, 142)).toEqual([67, 75]);
+    });
+
+    // availWidth is pinned *below* what the header needs in these two, so there is no leftover for
+    // the single auto column to grow into: the returned width is the reservation itself rather than
+    // whatever room the panel happened to have.
+    it('reserves header space for the info button on a column with a headerTooltip', () => {
+      const withTooltip: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { headerTooltip: 'why' } } },
+      ];
+      // header "Name" (4) => 4*8 = 32, + sort arrow 22 + tooltip button 22 + chrome 13 = 89.
+      expect(compute(withTooltip, 80)).toEqual([89]);
+
+      // the same column without the tooltip needs only 67, so it grows into the full 80 on offer.
+      const plain: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(compute(plain, 80)).toEqual([80]);
+    });
+
+    it('reserves the tooltip button in the refreshed header too, alongside the column menu', () => {
+      const fields: Field[] = [
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['a'],
+          config: { custom: { filterable: true, headerTooltip: 'why' } },
+        },
+      ];
+      // header "Name" (4) => 32, + sort arrow 22 + tooltip 22 + menu 22 + chrome 13 = 111. Without
+      // the tooltip reservation this column would need only 89 and grow into the 100 on offer.
+      expect(
+        computeContentAwareColWidths(fields, 100, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([111]);
+    });
+
+    it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // header "Name" (4) => 32, + sort arrow 22 + chrome 13 = 67, plus the reserved affordance:
+      // filter icon (22) => 89 with the flag off, column menu (22) => 89 with it on. The two happen
+      // to tie today, so assert the flag doesn't double-reserve rather than that it widens.
+      expect(compute(fields, 80)).toEqual([89]);
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([89]);
+    });
+
+    it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
+      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
+      // non-filterable column must not pay for it: header 32 + sort arrow 22 + chrome 13 = 67, not
+      // the 89 it would need if the menu were reserved as well.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(
+        computeContentAwareColWidths(fields, 60, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([67]);
+    });
+
+    it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      const filter = { Name: { filtered: [{ value: 'a' }], displayName: 'Name' } } as unknown as FilterType;
+      // header "Name" (4) => 32, + sort arrow 22 + menu 22 + chrome 13 = 89 unfiltered; the filter
+      // icon adds 22 => 111.
+      expect(
+        computeContentAwareColWidths(fields, 100, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          filter,
+        })
+      ).toEqual([111]);
+      // without the active filter the same column stops at 89 (availWidth pinned below that, so the
+      // result is the header's own demand rather than the room on offer).
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([89]);
+    });
+
+    it('ignores a filter whose values were cleared', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // an entry with no `filtered` values is not an active filter, so it reserves no icon space
+      const cleared = { Name: { displayName: 'Name' } } as unknown as FilterType;
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          filter: cleared,
+        })
+      ).toEqual([89]);
+    });
+
     it('measures header labels with the medium-weight header context when provided', () => {
       // Header labels render bolder than the body, so a wider (medium-weight) context is passed for
       // them. This mock context measures every glyph 2px wider than the body's CHAR_W.
@@ -2401,6 +2535,62 @@ describe('TableNG utils', () => {
 
     it('returns an empty map for empty inputs', () => {
       expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
+    });
+  });
+
+  describe('markEdgeColumns', () => {
+    const col = (key: string, overrides: Partial<TableColumn> = {}): TableColumn =>
+      ({
+        key,
+        name: key,
+        field: { name: key, type: FieldType.string, values: [], config: {} },
+        ...overrides,
+      }) as TableColumn;
+
+    // markEdgeColumns mutates the passed-in FromFieldsResult's columns in place rather than
+    // returning a new list, so tests build one of these and read back `.columns` after the call.
+    const withColumns = (columns: TableColumn[]): FromFieldsResult => ({ columns, cellRootRenderers: {} });
+
+    it('tags the first and last columns on every cell variant', () => {
+      const result = withColumns([col('a'), col('b'), col('c')]);
+      markEdgeColumns(result);
+      const [first, middle, last] = result.columns;
+
+      expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(first.summaryCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(middle.headerCellClass).toBeUndefined();
+      expect(last.headerCellClass).toContain(LAST_COLUMN_CLASS);
+      expect(last.cellClass).toContain(LAST_COLUMN_CLASS);
+      expect(last.summaryCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('tags a single column as both edges', () => {
+      const result = withColumns([col('a')]);
+      markEdgeColumns(result);
+      const [only] = result.columns;
+
+      expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('keeps existing classes, including ones computed per row', () => {
+      const result = withColumns([
+        col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
+      ]);
+      markEdgeColumns(result);
+      const [first] = result.columns;
+
+      expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
+      expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
+        `row-3 ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`
+      );
+    });
+
+    it('leaves the list unchanged when there are no columns', () => {
+      const result = withColumns([]);
+      markEdgeColumns(result);
+      expect(result.columns).toEqual([]);
     });
   });
 
