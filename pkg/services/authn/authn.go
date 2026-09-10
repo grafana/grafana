@@ -37,7 +37,6 @@ const (
 	MetaKeyUsername            = "username"
 	MetaKeyAuthModule          = "authModule"
 	MetaKeyIsLogin             = "isLogin"
-	MetaKeyOAuthPassthrough    = "oauthPassthrough"
 	defaultRedirectToCookieKey = "redirect_to"
 )
 
@@ -225,6 +224,8 @@ type Request struct {
 	OrgID int64
 	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
+	// IncludeOAuthToken asks session authentication to populate Identity.OAuthToken.
+	IncludeOAuthToken bool
 	// metadata is additional information about the auth request
 	metadata map[string]string
 }

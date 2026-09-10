@@ -261,10 +261,7 @@ func TestSession_AuthenticateUsesOAuthPassthroughLookup(t *testing.T) {
 
 			httpReq := &http.Request{Header: make(http.Header)}
 			httpReq.AddCookie(&http.Cookie{Name: cfg.LoginCookieName, Value: "raw-token"})
-			req := &authn.Request{HTTPRequest: httpReq}
-			if tt.passthrough {
-				req.SetMeta(authn.MetaKeyOAuthPassthrough, "true")
-			}
+			req := &authn.Request{HTTPRequest: httpReq, IncludeOAuthToken: tt.passthrough}
 
 			ident, err := client.Authenticate(context.Background(), req)
 			require.NoError(t, err)

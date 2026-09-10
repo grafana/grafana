@@ -61,8 +61,8 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 
 	var authnInfo *auth.SessionTokenAuthnInfo
 	var token *auth.UserToken
-	// Only OAuth passthrough needs the linked provider and decrypted credentials.
-	if r.GetMeta(authn.MetaKeyOAuthPassthrough) != "" {
+	// Only load the linked provider and decrypted credentials when requested.
+	if r.IncludeOAuthToken {
 		authnInfo, err = s.sessionService.LookupTokenForAuthn(ctx, rawSessionToken)
 		if err != nil {
 			return nil, err
