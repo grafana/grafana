@@ -1847,7 +1847,7 @@ func TestReconciler_EmbeddingBackoff(t *testing.T) {
 		t.Run(hint.String(), func(t *testing.T) {
 			s, st, vec, text := setupEmbeddingRetry(t, snowflakeRV(50))
 			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
-			for attempt := range maxEventAttempts + 3 {
+			for attempt := range maxEventAttempts - 1 {
 				s.embedRetryAt = time.Time{}
 				text.failNext = &embedder.RetryableError{Err: errBoom, RetryAfter: hint}
 				before := time.Now()
@@ -1968,4 +1968,57 @@ func TestReconciler_EmbeddingLiveRecovery(t *testing.T) {
 			assert.Zero(t, s.pendingLen())
 		})
 	}
+}
+
+func TestReconciler_EmbeddingRetryCap(t *testing.T) {
+	for _, source := range []string{"watch", "sweep", "lookback"} {
+		t.Run(source, func(t *testing.T) {
+			cursor := snowflakeRV(50)
+			if source == "lookback" {
+				cursor = snowflakeRV(105)
+			}
+			s, st, vec, text := setupEmbeddingRetry(t, cursor)
+			if source == "watch" {
+				s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			}
+			st.lookback, st.latestRvOverride = 10, snowflakeRV(110)
+			s.metrics = resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+			for attempt := range maxEventAttempts {
+				s.embedRetryAt = time.Time{}
+				text.failNext = &embedder.RetryableError{Err: errBoom}
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls)
+				require.Equal(t, cursor, vec.latestRV, "a provider failure still aborts the sweep")
+				if attempt+1 < maxEventAttempts {
+					require.Equal(t, 1, s.pendingLen())
+					require.Equal(t, attempt+1, s.pending[pendingKey(dashGroup, dashRes, "ns", "dash")].attempts)
+				}
+			}
+			require.Zero(t, s.pendingLen(), "the exhausted event must not be requeued as unfinished")
+			require.True(t, s.isExhausted(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), nil)))
+			assert.Equal(t, 1.0, testutil.ToFloat64(s.metrics.ReconcilerEventsDroppedTotal.WithLabelValues(dashGroup, dashRes, "retries_exhausted")))
+			s.reconcileCycle(t.Context())
+			require.Equal(t, maxEventAttempts, text.calls, "cooldown still applies after the final failure")
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, maxEventAttempts, text.calls, "re-listing must not reset the exhausted allowance")
+			assert.Equal(t, snowflakeRV(110), vec.latestRV, "cursor can pass the broken dashboard")
+		})
+	}
+}
+
+func TestReconciler_EmbeddingRetryCap_PreservesUnfinishedEvents(t *testing.T) {
+	s, _, vec, text := setupEmbeddingRetry(t, snowflakeRV(50))
+	broken := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "broken", snowflakeRV(100), minimalDashboard("broken", "Broken"))
+	broken.attempts = maxEventAttempts - 1
+	next := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "next", snowflakeRV(110), minimalDashboard("next", "Next"))
+	text.failNext = &embedder.RetryableError{Err: errBoom}
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{broken, next})
+	require.True(t, abort)
+	require.Empty(t, successes)
+	require.Equal(t, []*pendingEvent{next}, failed)
+	require.Zero(t, next.attempts, "unattempted events do not consume their allowance")
+	s.processBatch(t.Context(), failed)
+	require.Len(t, vec.upserts, 1)
+	assert.Equal(t, "next", vec.upserts[0][0].UID)
 }

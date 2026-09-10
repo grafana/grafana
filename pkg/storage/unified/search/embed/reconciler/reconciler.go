@@ -44,8 +44,8 @@ type Backfiller interface {
 const DefaultInterval = time.Minute
 
 // maxEventAttempts caps retries so a permanently broken dashboard
-// can't wedge cursor advancement forever. ~5 minutes at the default
-// poll interval — long enough to ride out transient Vertex hiccups.
+// can't wedge cursor advancement forever. This includes provider errors:
+// providers can misclassify an invalid request as temporarily unavailable.
 const maxEventAttempts = 5
 
 // defaultLockRetryInterval is how long Run waits between attempts to
@@ -770,9 +770,9 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 			}
 			var retryErr *embedder.RetryableError
 			if errors.As(err, &retryErr) {
-				ev.attempts--
 				s.backoffEmbedding(ctx, ev, retryErr)
-				return lowestFailedRv, unfinished(i), successes, true
+				lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
+				return lowestFailedRv, unfinished(i + 1), successes, true
 			}
 			logger.Warn("reconciler: process event",
 				"namespace", ev.namespace, "name", ev.name,
