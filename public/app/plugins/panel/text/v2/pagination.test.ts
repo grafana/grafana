@@ -31,6 +31,28 @@ function boxOfRows(rowHeight: number, available: number, rowsOnPage: () => numbe
   return measurableBox(() => rowHeight * rowsOnPage(), available);
 }
 
+/** A box whose blocks are replaced later, as the debounced content render does. */
+function rewritableBox(content: number, available: number) {
+  let contentHeight = content;
+  const element = measurableBox(() => contentHeight, available);
+  const blocks = element.firstElementChild;
+  const block = blocks?.firstElementChild;
+
+  return {
+    element,
+    async rewrite(next: number) {
+      contentHeight = next;
+      await act(async () => {
+        if (blocks && block) {
+          // Replacing the child is the mutation an innerHTML write makes.
+          blocks.removeChild(block);
+          blocks.appendChild(block);
+        }
+      });
+    },
+  };
+}
+
 function numberedFrame(rows: number) {
   return toDataFrame({ fields: [{ name: 'n', values: Array.from({ length: rows }, (_, i) => i) }] });
 }
@@ -176,6 +198,28 @@ describe('usePagination', () => {
     act(() => result.current.contentRef(box(750, 300)));
 
     expect(result.current.rowWindow?.count).toBe(6);
+  });
+
+  it("measures again in the box the editor mounts, rather than holding the panel's", () => {
+    const { result } = setup({}, box(750, 300));
+    expect(result.current.rowWindow?.count).toBe(6);
+
+    // The preview pane is half the height, and the six rows in it still render at 50px.
+    act(() => result.current.contentRef(box(300, 150)));
+
+    expect(result.current.rowWindow?.count).toBe(3);
+  });
+
+  // The first measurement can land on the content the write is about to replace.
+  it('measures the blocks a later write fills the box with', async () => {
+    const rendered = rewritableBox(750, 300);
+    const { result } = setup({}, rendered.element);
+    expect(result.current.rowWindow?.count).toBe(6);
+
+    // The same six rows, rewritten at 100px each.
+    await rendered.rewrite(600);
+
+    expect(result.current.rowWindow?.count).toBe(3);
   });
 
   it('holds the refitted page size instead of measuring its own last measurement again', () => {

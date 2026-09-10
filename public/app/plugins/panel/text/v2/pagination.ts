@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataFrame } from '@grafana/data';
 
@@ -104,24 +104,52 @@ export function usePagination({
 
   const fitToHeight = paged && configured === undefined;
   const measureKey = fitToHeight ? `${height}|${width}|${rowCount}|${mode}|${content}` : '';
-  const measuredKey = useRef('');
+  // The box is an input too: a measurement in the editor's preview pane says nothing
+  // about the panel's scroll box.
+  const measuredFor = useRef<{ key: string; element: HTMLElement } | null>(null);
+  const takeNextWrite = useRef(false);
 
-  // Once per set of inputs, not per page size: re-measuring a page the last measurement
-  // resized would let the page size oscillate.
-  useLayoutEffect(() => {
-    if (!fitToHeight || measuredKey.current === measureKey || !element) {
+  // Passive, not layout: the blocks are written to the box by a child effect, which runs
+  // before this one.
+  useEffect(() => {
+    if (!fitToHeight || !element) {
       return;
     }
 
-    const available = element.clientHeight;
-    const contentHeight = measureContentHeight(element);
+    const measure = () => {
+      const available = element.clientHeight;
+      const contentHeight = measureContentHeight(element);
 
-    if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
-      return;
+      if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
+        return;
+      }
+
+      measuredFor.current = { key: measureKey, element };
+      setMeasured({ rowHeight: contentHeight / rowsOnPage, available });
+    };
+
+    const previous = measuredFor.current;
+
+    // Once per set of inputs, not per page size: re-measuring a page the last measurement
+    // resized would let the page size oscillate.
+    if (!previous || previous.key !== measureKey || previous.element !== element) {
+      measure();
+      // The render that writes new content is debounced, so the box can still hold the
+      // previous content: take the next write to it as well. A rewrite from this hook's
+      // own page size re-runs the effect, dropping the observer before that write.
+      takeNextWrite.current = true;
     }
 
-    measuredKey.current = measureKey;
-    setMeasured({ rowHeight: contentHeight / rowsOnPage, available });
+    const observer = new MutationObserver(() => {
+      if (!takeNextWrite.current) {
+        return;
+      }
+      takeNextWrite.current = false;
+      measure();
+    });
+    observer.observe(element, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
   }, [fitToHeight, measureKey, rowsOnPage, element]);
 
   // Stable across renders: the editor memoises its preview on this.
