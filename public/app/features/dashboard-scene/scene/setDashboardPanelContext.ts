@@ -1,4 +1,4 @@
-import { distinctUntilChanged, takeWhile } from 'rxjs';
+import { distinctUntilChanged, takeUntil, takeWhile, timer } from 'rxjs';
 
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
@@ -22,6 +22,12 @@ import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/u
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+
+// How long to wait for the assistant app plugin to report availability before giving up. Preloaded
+// app plugins finish importing before the rest of Grafana boots, so this window is normally
+// sub-second; this only needs to cover a slower-than-usual load, not the typical case. See the
+// comment at the isAssistantAvailable() subscription below for why this exists.
+const ASSISTANT_AVAILABILITY_TIMEOUT_MS = 5000;
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -227,14 +233,19 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // so availability can flip from false to true shortly after. forceRender() is needed because
     // mutating `context` doesn't itself trigger a re-render.
     //
-    // The two operators keep that to at most one emission per answer: the stream re-emits on
-    // every plugin extension registration rather than only on real changes, and it never
-    // completes — so without `takeWhile` it would outlive the panel it closes over, and nothing
-    // in a panel context can unsubscribe it.
+    // extendPanelContext has no deactivation hook, so nothing calls unsubscribe when the panel is
+    // removed. `takeWhile` completes the stream once availability turns true, but if the assistant
+    // app is never installed it stays false forever, and the stream itself never completes either
+    // (it re-emits on every plugin extension registration, not just real changes) — so without a
+    // hard cutoff this subscription, and the `vizPanel` it closes over, would live for the app's
+    // whole lifetime. ASSISTANT_AVAILABILITY_TIMEOUT_MS bounds that: plugin registration resolves
+    // during app boot, so giving up after a fixed window only gives up on installations that were
+    // never going to become available.
     isAssistantAvailable()
       .pipe(
         distinctUntilChanged(),
-        takeWhile((available) => !available, true)
+        takeWhile((available) => !available, true),
+        takeUntil(timer(ASSISTANT_AVAILABILITY_TIMEOUT_MS))
       )
       .subscribe((available) => {
         context.onInvestigateErrors = available ? () => investigatePanelErrorsWithAssistant(vizPanel) : undefined;

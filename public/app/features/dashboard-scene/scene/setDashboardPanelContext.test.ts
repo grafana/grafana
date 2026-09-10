@@ -669,6 +669,30 @@ describe('setDashboardPanelContext', () => {
       expect(availability.observed).toBe(false);
     });
 
+    it('stops watching once the availability wait times out, so the panel is not held onto forever', () => {
+      // If the assistant app is never installed, `isAssistantAvailable()` never emits `true` and
+      // never completes on its own. Without a hard cutoff the subscription — and the `vizPanel` it
+      // closes over — would live for the app's whole lifetime, since extendPanelContext has no
+      // deactivation hook to unsubscribe through.
+      jest.useFakeTimers();
+      try {
+        const availability = new Subject<boolean>();
+        mockIsAssistantAvailable.mockReturnValue(availability);
+
+        const { context } = buildTestScene({});
+        availability.next(false);
+        expect(context.onInvestigateErrors).toBeUndefined();
+        expect(availability.observed).toBe(true);
+
+        jest.runAllTimers();
+
+        expect(availability.observed).toBe(false);
+        expect(context.onInvestigateErrors).toBeUndefined();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('re-renders when availability arrives asynchronously, as it always does in practice', async () => {
       // `isAssistantAvailable()` resolves through the plugin extension registries, which are
       // promise-backed, so its first value always lands after the render that built this panel
