@@ -6023,7 +6023,6 @@
       "description": "Une séquence verticale de panneaux, de texte et de cellules de code",
       "name": "Notebook",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Heure",
       "title-edit": "",
@@ -7091,6 +7090,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Erreur lors du chargement du tableau de bord"
     },
     "dashboard-scene": {
@@ -7638,6 +7643,10 @@
       "required": "Champ requis"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Modifications",
         "label-details": "Détails",
@@ -9142,6 +9151,7 @@
       "share-export-json": "Exporter au format JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Heure de début",
       "success-indicator": "",
       "target": "Cible",
@@ -12564,6 +12574,7 @@
       "title": "Créer"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nouvelle règle d'alerte"
     },
     "create-dashboard": {
@@ -13056,7 +13067,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13086,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13127,6 +13136,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13153,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13203,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Effacer les paramètres"
+      "clear-tooltip": "Effacer les paramètres",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Série de couleurs par"
@@ -16620,8 +16633,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

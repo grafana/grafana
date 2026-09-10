@@ -143,7 +143,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/migueleliasweb/go-github-mock v1.5.0 // @grafana/grafana-git-ui-sync-team
-	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
+	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // @grafana/identity-access-team
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
@@ -171,6 +171,7 @@ require (
 	github.com/redis/go-redis/v9 v9.22.0 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
+	github.com/russellhaering/gosaml2 v0.12.1-0.20260805181527-c47eb2cf608a // @grafana/identity-access-team
 	github.com/russellhaering/goxmldsig v1.6.1 // @grafana/grafana-backend-group
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
 	github.com/sony/gobreaker/v2 v2.4.0 // @grafana/grafana-app-platform-squad
@@ -178,7 +179,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // @grafana/grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.12.1 // @grafana/grafana-backend-group
-	github.com/testcontainers/testcontainers-go v0.43.0 //@grafana/grafana-app-platform-squad
+	github.com/testcontainers/testcontainers-go v0.43.0 // @grafana/grafana-app-platform-squad
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-services-squad
 	github.com/tjhop/slog-gokit v0.2.0 // @grafana/grafana-app-platform-squad
 	github.com/ua-parser/uap-go v0.0.0-20251207011819-db9adb27a0b8 // @grafana/grafana-backend-group
@@ -513,7 +514,7 @@ require (
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/jonboulle/clockwork v0.5.0 // indirect
+	github.com/jonboulle/clockwork v0.5.0 // @grafana/identity-access-team
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
@@ -530,7 +531,7 @@ require (
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/matryer/is v1.4.1 // indirect
-	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
+	github.com/mattermost/xml-roundtrip-validator v0.1.0 // @grafana/identity-access-team
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
