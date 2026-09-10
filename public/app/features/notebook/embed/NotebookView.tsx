@@ -57,6 +57,8 @@ export interface DraftNotebookViewProps extends CommonProps {
    * thing typed into it. Without this the draft is editable but nothing survives the component.
    */
   onChange?: (spec: NotebookSpec) => void;
+  /** Reports pending edits immediately, before the debounced document callback. False means reported, not saved. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export type NotebookViewProps = SavedNotebookViewProps | DraftNotebookViewProps;
@@ -90,7 +92,12 @@ export function NotebookView(props: NotebookViewProps) {
   return props.uid !== undefined ? (
     <SavedNotebookView uid={props.uid} onTitleChange={props.onTitleChange} />
   ) : (
-    <DraftNotebookView spec={props.spec} onChange={props.onChange} onTitleChange={props.onTitleChange} />
+    <DraftNotebookView
+      spec={props.spec}
+      onChange={props.onChange}
+      onDirtyChange={props.onDirtyChange}
+      onTitleChange={props.onTitleChange}
+    />
   );
 }
 
@@ -116,7 +123,7 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
   return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
-function DraftNotebookView({ spec, onChange, onTitleChange }: DraftNotebookViewProps) {
+function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo
@@ -131,7 +138,7 @@ function DraftNotebookView({ spec, onChange, onTitleChange }: DraftNotebookViewP
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately built from the first spec only; see above
   }, []);
 
-  useNotebookDraftChanges(scene, onChange);
+  useNotebookDraftChanges(scene, onChange, onDirtyChange);
 
   return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
@@ -144,11 +151,17 @@ function DraftNotebookView({ spec, onChange, onTitleChange }: DraftNotebookViewP
  * further here: the host knows when an editing session ended and can coalesce, and it cannot
  * recover an edit this never reported.
  */
-function useNotebookDraftChanges(scene: NotebookScene, onChange?: (spec: NotebookSpec) => void) {
+function useNotebookDraftChanges(
+  scene: NotebookScene,
+  onChange?: (spec: NotebookSpec) => void,
+  onDirtyChange?: (dirty: boolean) => void
+) {
   // Held in a ref so a host passing a new callback each render does not restart the subscription and
   // drop a pending edit with it.
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onDirtyChangeRef = useRef(onDirtyChange);
+  onDirtyChangeRef.current = onDirtyChange;
 
   useEffect(() => {
     if (!onChange) {
@@ -161,11 +174,13 @@ function useNotebookDraftChanges(scene: NotebookScene, onChange?: (spec: Noteboo
     const report = () => {
       timer = undefined;
       pending = false;
+      onDirtyChangeRef.current?.(false);
       onChangeRef.current?.(transformNotebookSceneToSaveModel(scene));
     };
 
     const subscription = scene.subscribeToState(() => {
       pending = true;
+      onDirtyChangeRef.current?.(true);
       clearTimeout(timer);
       timer = setTimeout(report, DRAFT_REPORT_DEBOUNCE_MS);
     });

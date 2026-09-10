@@ -243,15 +243,19 @@ describe('NotebookView', () => {
       jest.useFakeTimers();
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       const onChange = jest.fn();
+      const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} />);
+      render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         draftScene().setState({ title: 'After' });
+        expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+        expect(onChange).not.toHaveBeenCalled();
         jest.advanceTimersByTime(3000);
       });
 
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
       expect(onChange).toHaveBeenCalled();
       expect(onChange.mock.calls.at(-1)?.[0]).toMatchObject({ title: 'After' });
       jest.useRealTimers();
