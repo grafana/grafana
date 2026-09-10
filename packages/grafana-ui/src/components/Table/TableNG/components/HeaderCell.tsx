@@ -63,6 +63,9 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
+  // A wrapped title grows downward, so the controls beside it belong with its last line rather than
+  // floating against the middle of the block.
+  const controlAlignment = headerCellWrap ? 'flex-end' : 'center';
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
@@ -216,17 +219,21 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
       // unique per column, regardless of how deep it sits in a nested table.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
-        <div className={styles.headerCellLabelGroup}>{label}</div>
+        {/* grows so the column menu keeps to the trailing edge, without a `justify-content` on the
+            root that the (portalling, zero-width) popover wrapper below would also be spread by */}
+        <Stack direction="row" gap={0.5} alignItems={controlAlignment} grow={1} minWidth={0}>
+          {label}
+        </Stack>
 
         {filterable && (
-          <div className={styles.headerCellActions}>
+          <Stack direction="row" gap={0.5} alignItems={controlAlignment} shrink={0}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
             />
-          </div>
+          </Stack>
         )}
 
         {isPopoverVisible && filterAnchor && (
@@ -249,7 +256,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   }
 
   return (
-    <Stack ref={ref} direction="row" gap={0.5} alignItems="center" onKeyDown={onKeyDown}>
+    <Stack ref={ref} direction="row" gap={0.5} alignItems={controlAlignment} onKeyDown={onKeyDown}>
       {/* eslint-enable jsx-a11y/no-static-element-interactions */}
       {label}
 
@@ -275,25 +282,11 @@ const getStyles = memoize(
     headerCellRoot: css({
       label: 'headerCellRoot',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: headerTextWrap ? 'flex-end' : 'center',
       gap: theme.spacing(0.5),
-      // fill the header cell so the actions can sit against its trailing edge
+      // fill the header cell so the column menu can sit against its trailing edge
       flex: 1,
       minWidth: 0,
-    }),
-    headerCellLabelGroup: css({
-      label: 'headerCellLabelGroup',
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      minWidth: 0,
-    }),
-    headerCellActions: css({
-      label: 'headerCellActions',
-      display: 'flex',
-      alignItems: 'center',
-      flexShrink: 0,
-      marginLeft: 'auto',
     }),
     // The `table.refresh` differences live in this one rule rather than in a second class composed
     // over it: two rules of equal specificity are resolved by their order in the stylesheet, and this
