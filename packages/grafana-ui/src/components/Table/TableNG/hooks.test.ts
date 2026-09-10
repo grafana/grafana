@@ -7,6 +7,7 @@ import { TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
   useSortedRows,
   useHeaderHeight,
@@ -153,6 +154,74 @@ describe('TableNG hooks', () => {
       );
 
       expect(setSortColumns).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('useNotifyDisplayedRowIndices', () => {
+    it('reports parent row __index values in display order and skips nested rows', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 2 },
+        { __depth: 1, __index: 2 },
+        { __depth: 0, __index: 0 },
+        { __depth: 1, __index: 0 },
+      ];
+
+      renderHook(() => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange));
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+    });
+
+    it('does not notify again when the index order is unchanged', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(
+        ({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
+        {
+          initialProps: {
+            rows: [
+              { __depth: 0, __index: 0 },
+              { __depth: 0, __index: 1 },
+            ] as TableRow[],
+          },
+        }
+      );
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when sort order changes', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(
+        ({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
+        {
+          initialProps: {
+            rows: [
+              { __depth: 0, __index: 0 },
+              { __depth: 0, __index: 1 },
+            ] as TableRow[],
+          },
+        }
+      );
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1, 0]);
     });
   });
 

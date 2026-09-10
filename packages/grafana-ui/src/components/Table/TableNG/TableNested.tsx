@@ -29,6 +29,7 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNotifyDisplayedRowIndices,
   useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
@@ -86,6 +87,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     noValue,
     onCellFilterAdded,
     onColumnResize,
+    onDisplayedRowIndicesChange,
     onSortByChange,
     showTypeIcons,
     structureRev,
@@ -173,6 +175,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   } = useSortedRows(filteredRows, data.fields, nestedFields, { hasNestedFrames: true, initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+  useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, filter, sortColumns);
 

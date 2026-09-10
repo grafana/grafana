@@ -144,6 +144,43 @@ export function useSortedRows(
   };
 }
 
+function rowIndicesEqual(a: number[], b: number[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+/**
+ * Notify when the table's filtered + sorted parent-row order changes.
+ */
+export function useNotifyDisplayedRowIndices(
+  sortedRows: TableRow[],
+  onDisplayedRowIndicesChange?: (rowIndices: number[]) => void
+) {
+  const callbackRef = useRef(onDisplayedRowIndicesChange);
+  callbackRef.current = onDisplayedRowIndicesChange;
+  const prevIndicesRef = useRef<number[] | undefined>(undefined);
+
+  useEffect(() => {
+    const callback = callbackRef.current;
+    if (!callback) {
+      return;
+    }
+
+    const indices: number[] = [];
+    for (const row of sortedRows) {
+      if (row.__depth === 0) {
+        indices.push(row.__index);
+      }
+    }
+
+    if (prevIndicesRef.current && rowIndicesEqual(prevIndicesRef.current, indices)) {
+      return;
+    }
+
+    prevIndicesRef.current = indices;
+    callback(indices);
+  }, [sortedRows]);
+}
+
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
