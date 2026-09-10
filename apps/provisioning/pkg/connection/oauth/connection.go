@@ -137,14 +137,11 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 
 	next, err := cfg.TokenSource(ctx, &oauth2.Token{RefreshToken: stored.RefreshToken}).Token()
 	if err != nil {
-		// A 4xx from the token endpoint (e.g. invalid_grant after the user revoked
-		// the authorization or the refresh token expired) is user-actionable: they
-		// must re-authorize. Transport and 5xx failures stay unwrapped so they
-		// classify as system-caused.
-		var retrieveErr *oauth2.RetrieveError
-		if errors.As(err, &retrieveErr) && retrieveErr.Response != nil &&
-			retrieveErr.Response.StatusCode >= http.StatusBadRequest &&
-			retrieveErr.Response.StatusCode < http.StatusInternalServerError {
+		// A revoked or expired authorization is user-actionable: the user must
+		// re-authorize the OAuth application. Transient failures (timeouts, rate
+		// limiting, 5xx, transport errors) stay unwrapped so they classify as
+		// system-caused and are retried rather than surfaced as a credential fault.
+		if isOAuthReauthRequired(err) {
 			return nil, fmt.Errorf("refresh access token: %w: %w", connection.ErrAuthentication, err)
 		}
 		return nil, fmt.Errorf("refresh access token: %w", err)
@@ -162,6 +159,29 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 	// next.Expiry is zero when the provider does not return an expiry, which maps
 	// to a non-expiring token on the status.
 	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: next.Expiry}, nil
+}
+
+// isOAuthReauthRequired reports whether an OAuth token-refresh error means the
+// stored authorization is invalid and the user must re-authorize, as opposed to
+// a transient failure worth retrying. It matches RFC 6749's invalid_grant (the
+// refresh token was revoked or expired) and 401/403 responses (rejected client
+// credentials), while deliberately excluding retryable statuses such as 408 and
+// 429 and all 5xx/transport errors.
+func isOAuthReauthRequired(err error) bool {
+	var retrieveErr *oauth2.RetrieveError
+	if !errors.As(err, &retrieveErr) {
+		return false
+	}
+	if retrieveErr.ErrorCode == "invalid_grant" {
+		return true
+	}
+	if retrieveErr.Response != nil {
+		switch retrieveErr.Response.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return true
+		}
+	}
+	return false
 }
 
 // ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.

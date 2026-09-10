@@ -244,11 +244,26 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			wantAuthErr: true,
 		},
 		{
-			name:         "failure - token endpoint rejects refresh (4xx is user-actionable)",
+			name:         "failure - invalid_grant (revoked/expired) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_grant"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 401 is user-actionable",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,
 			expectedErr:  "refresh access token",
 			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 429 stays system-caused (retryable)",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusTooManyRequests,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
 		},
 		{
 			name:         "failure - token endpoint 5xx stays system-caused",
@@ -406,6 +421,15 @@ func newTokenServer(t *testing.T, code int, response map[string]any) *httptest.S
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if code != 0 {
+			// A non-nil response with an error status returns a JSON OAuth error
+			// body (e.g. {"error":"invalid_grant"}) so oauth2 populates
+			// RetrieveError.ErrorCode; otherwise a plain status is returned.
+			if response != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(code)
+				require.NoError(t, json.NewEncoder(w).Encode(response))
+				return
+			}
 			http.Error(w, "denied", code)
 			return
 		}
