@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -77,6 +78,7 @@ type pendingEvent struct {
 	value     []byte
 	rv        int64
 	attempts  int
+	retry     bool
 }
 
 func pendingKey(group, resource, namespace, name string) string {
@@ -136,6 +138,11 @@ type Reconciler struct {
 	// Only ever touched from the sweep, which runs on Run's goroutine.
 	lastSweepSinceRv int64
 	lastSweepAt      time.Time
+
+	// Shared provider failures pause both watch processing and sweeps so
+	// a backlog cannot turn a quota rejection into a burst of retries.
+	embedRetryAt time.Time
+	embedBackoff *backoff.Backoff
 
 	// exhausted records the highest RV per resource whose retry budget
 	// ran out, so a sweep re-listing it from storage doesn't hand it a
@@ -440,6 +447,9 @@ func (s *Reconciler) checkpointRV(ctx context.Context) (int64, error) {
 // writer of the checkpoint: a completed walk from the cursor is the only
 // thing that shows nothing below the new value was missed.
 func (s *Reconciler) sweep(ctx context.Context) {
+	if time.Now().Before(s.embedRetryAt) {
+		return
+	}
 	sinceRv, err := s.checkpointRV(ctx)
 	if err != nil {
 		s.log.Error("reconciler: sweep read checkpoint", "err", err)
@@ -489,6 +499,7 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		s.forgetExhaustedBelow(target)
 	}
 	s.log.Debug("reconciler: sweep complete", "from", sinceRv, "to", target)
+	s.embedBackoff = nil
 }
 
 // reconcileSince walks ListModifiedSince in batches and returns the RV
@@ -522,16 +533,23 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 		succeeded      int
 		lowestFailedRv = int64(math.MaxInt64)
 	)
+	// An interrupted iterator must retain earlier failures too, including
+	// lookback writes that a later listing may no longer return.
+	defer func() {
+		for _, ev := range failed {
+			s.enqueue(ev)
+		}
+	}()
 
 	flush := func(batch []*pendingEvent) bool {
 		batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, batch)
+		failed = append(failed, batchFailed...)
 		if abort {
 			return false
 		}
 		if batchLowestFailed < lowestFailedRv {
 			lowestFailedRv = batchLowestFailed
 		}
-		failed = append(failed, batchFailed...)
 		succeeded += len(batchSuccess)
 		return true
 	}
@@ -582,9 +600,6 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}
 
 	target := pickLatestRV(sinceRv, resource.ToSnowflakeRV(latestRv), lowestFailedRv)
-	for _, ev := range failed {
-		s.enqueue(ev)
-	}
 	logger.Info("reconciler: reconcileSince builder complete",
 		"group", builder.Group(), "resource", builder.Resource(),
 		"events", succeeded, "failed", len(failed),
@@ -626,6 +641,9 @@ func (s *Reconciler) dropPendingUpTo(ev *pendingEvent) {
 // processPending drains the in-memory pending map (watch-sourced events,
 // plus failed retries) and runs the batch through processBatch.
 func (s *Reconciler) processPending(ctx context.Context) {
+	if time.Now().Before(s.embedRetryAt) {
+		return
+	}
 	s.processBatch(ctx, s.drainPending())
 }
 
@@ -653,27 +671,25 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 	// back writes the cursor has already passed.
 	live := make([]*pendingEvent, 0, len(batch))
 	for _, ev := range batch {
-		if ev.rv > sinceRv || ev.attempts > 0 {
+		if ev.rv > sinceRv || ev.attempts > 0 || ev.retry {
 			live = append(live, ev)
 		}
 	}
 	batch = live
 
-	_, failed, successes, abort := s.processEvents(ctx, batch)
-	if abort {
-		s.requeue(batch)
-		return
-	}
-
-	// A cursor of 0 keeps the sweep switched off entirely, so hold the
-	// batch until the seed lands instead of waiting for another write.
+	// Persist a sweep starting point before calling the provider, so an
+	// outage on the first event remains recoverable after a restart.
 	if sinceRv == 0 && !s.seedCheckpoint(ctx, batch) {
 		s.requeue(batch)
 		return
 	}
 
+	_, failed, successes, abort := s.processEvents(ctx, batch)
 	for _, ev := range failed {
 		s.enqueue(ev)
+	}
+	if abort {
+		return
 	}
 
 	switch {
@@ -711,15 +727,24 @@ func (s *Reconciler) seedCheckpoint(ctx context.Context, batch []*pendingEvent) 
 
 // processEvents runs the embed/upsert loop without advancing the
 // cursor — the caller decides when to commit progress. abort is true if
-// ctx was cancelled mid-loop; the caller should treat all events as
-// un-processed.
+// ctx was cancelled or the embedding provider needs a cooldown; the
+// failed then includes the unprocessed remainder, and the caller must
+// enqueue it and leave the checkpoint unchanged.
 // For new resources, it ensures a partition and backfill job is created
 func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
 	logger := s.log.FromContext(ctx)
 	lowestFailedRv = math.MaxInt64
-	for _, ev := range batch {
+	unfinished := func(start int) []*pendingEvent {
+		for _, ev := range batch[start:] {
+			// Unattempted lookback events also need to survive the live
+			// path's cursor filter when this batch is interrupted.
+			ev.retry = true
+		}
+		return append(failed, batch[start:]...)
+	}
+	for i, ev := range batch {
 		if ctx.Err() != nil {
-			return lowestFailedRv, nil, nil, true
+			return lowestFailedRv, unfinished(i), successes, true
 		}
 		builder, ok := s.builders[builderKey(ev.group, ev.resource)]
 		if !ok {
@@ -739,6 +764,16 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 		}
 
 		if err := s.processEvent(ctx, builder, ev); err != nil {
+			if ctx.Err() != nil {
+				ev.attempts--
+				return lowestFailedRv, unfinished(i), successes, true
+			}
+			var retryErr *embedder.RetryableError
+			if errors.As(err, &retryErr) {
+				ev.attempts--
+				s.backoffEmbedding(ctx, ev, retryErr)
+				return lowestFailedRv, unfinished(i), successes, true
+			}
 			logger.Warn("reconciler: process event",
 				"namespace", ev.namespace, "name", ev.name,
 				"rv", ev.rv, "attempts", ev.attempts,
@@ -1016,4 +1051,29 @@ func pickLatestRV(sinceRv, latestRv, lowestFailedRv int64) int64 {
 		return sinceRv
 	}
 	return candidate
+}
+
+const (
+	minEmbedRetryDelay = time.Minute
+	maxEmbedRetryDelay = 5 * time.Minute
+)
+
+func (s *Reconciler) backoffEmbedding(ctx context.Context, ev *pendingEvent, err *embedder.RetryableError) {
+	if ctx.Err() != nil {
+		return
+	}
+	if s.embedBackoff == nil {
+		s.embedBackoff = backoff.New(ctx, backoff.Config{
+			MinBackoff: minEmbedRetryDelay,
+			MaxBackoff: maxEmbedRetryDelay,
+			MaxRetries: 0,
+		})
+	}
+	now := time.Now()
+	providerDelay := err.RetryAfter
+	delay := min(maxEmbedRetryDelay, max(s.embedBackoff.NextDelay(), providerDelay))
+	s.embedRetryAt = now.Add(delay)
+	s.log.FromContext(ctx).Warn("reconciler: embedding provider backoff; checkpoint retained",
+		"namespace", ev.namespace, "name", ev.name, "rv", ev.rv,
+		"retryAt", s.embedRetryAt, "delay", delay, "providerDelay", providerDelay, "err", err)
 }
