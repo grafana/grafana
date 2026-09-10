@@ -261,7 +261,9 @@
         integrity="[[$asset.Integrity]]"
         [[- end]]
         crossorigin="anonymous"
+        [[- if not $.ESModuleAssetsEnabled]]
         defer
+        [[- end]]
       ></script>
     [[end]]
 
