@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -90,6 +91,8 @@ type RepositoryController struct {
 	quotaGetter                   quotas.QuotaGetter
 	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
+	webhookMetrics                *webhookSecretMetrics
+	deletionMetrics               *repositoryDeletionMetrics
 	reconcileMetrics              *reconcileErrorMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
@@ -123,7 +126,9 @@ func NewRepositoryController(
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
+	webhookMetrics := registerWebhookSecretMetrics(registry)
 	quotaMetrics := registerRepositoryQuotaMetrics(registry)
+	deletionMetrics := registerRepositoryDeletionMetrics(registry)
 	reconcileMetrics := registerReconcileErrorMetrics(registry)
 
 	rc := &RepositoryController{
@@ -160,6 +165,8 @@ func NewRepositoryController(
 		quotaGetter:                   quotaGetter,
 		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
+		webhookMetrics:                webhookMetrics,
+		deletionMetrics:               deletionMetrics,
 		reconcileMetrics:              reconcileMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
@@ -232,7 +239,7 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	defer logger.Info("Shutting down RepositoryController")
 
 	logger.Info("Starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
+	for i := range workerCount {
 		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
 		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
 	}
@@ -383,17 +390,43 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
-	logger.Info("handle repository delete")
+
+	// A repository should leave Terminating within seconds; a stuck one keeps
+	// re-entering handleDelete at resync cadence. Re-observe its age each time so
+	// an alert can count reconciles that still see it terminating past a
+	// threshold (e.g. > 1h). The deletion metrics are aggregate and carry no
+	// repository identity, so the same fields are logged here to identify a
+	// specific stuck repository and which finalizers still hold it.
+	var pendingSeconds int64
+	if ts := obj.GetDeletionTimestamp(); ts != nil {
+		age := time.Since(ts.Time)
+		rc.deletionMetrics.observePending(age)
+		if age > 0 {
+			pendingSeconds = int64(age.Seconds())
+		}
+	}
+	logger.Info("handle repository delete",
+		"pendingSeconds", pendingSeconds,
+		"finalizerCount", len(obj.Finalizers),
+		"finalizers", strings.Join(obj.Finalizers, ","),
+		"hasDeleteError", obj.Status.DeleteError != "",
+		"deleteError", obj.Status.DeleteError,
+	)
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
 		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
+			rc.deletionMetrics.recordError(deletionStageBuild)
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after repository build error", "error", statusErr)
+			}
 			return fmt.Errorf("create repository from configuration: %w", err)
 		}
 
 		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
 		if err != nil {
+			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
 				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
@@ -414,8 +447,23 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			return err
 		})
 		if err != nil {
+			// This failure (typically RetryOnConflict exhaustion) leaves the
+			// repository in Terminating with its finalizers still attached. It is
+			// outside the finalizer SLO, so meter it here and record it on the
+			// status or it goes entirely unseen.
+			rc.deletionMetrics.recordError(deletionStageRemoveFinalizers)
+			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
+				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
+			}
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
+		// Count the deletion only here, at the moment we strip the finalizers.
+		// The empty-finalizers branch below must not count: removing the
+		// finalizers updates the object, so the informer can re-enqueue it before
+		// GC removes it, and that re-enqueued pass (plus every resync while it
+		// lingers) sees empty finalizers -- counting there would double-count the
+		// same deletion and skew the completed-vs-errored rate.
+		rc.deletionMetrics.recordDeletion()
 		return nil
 	} else {
 		logger.Info("no finalizers to process")
@@ -425,10 +473,21 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	// Skip the patch when the recorded error is unchanged: it bumps the
+	// resourceVersion, which the informer's UpdateFunc turns straight back into a
+	// re-enqueue, so rewriting the same deleteError on every failed pass would
+	// hot-loop the repository against the API server instead of retrying at the
+	// resync cadence.
+	if obj.Status.DeleteError == err.Error() {
+		return nil
+	}
 	logger := logging.FromContext(ctx)
 	logger.Info("updating repository status with deletion error", "error", err.Error())
+	// "add" rather than "replace": deleteError is omitempty and therefore absent
+	// before the first failure, where a "replace" on the missing path would fail.
+	// "add" creates it, and replaces it when already present.
 	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
-		"op":    "replace",
+		"op":    "add",
 		"path":  "/status/deleteError",
 		"value": err.Error(),
 	})
@@ -1453,11 +1512,18 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if repository.GetID(obj.Status.Webhook).IsEmpty() {
 		return false
 	}
+	// A never-rotated secret (legacy webhooks predating rotation tracking; new
+	// webhooks stamp LastRotated on create) is due for its first rotation.
 	if obj.Status.Webhook.LastRotated == 0 {
+		rc.webhookMetrics.recordRotationOverdue()
 		return true
 	}
 	age := time.Since(time.UnixMilli(obj.Status.Webhook.LastRotated))
-	return age >= rc.webhookSecretRotationInterval
+	if age >= rc.webhookSecretRotationInterval {
+		rc.webhookMetrics.recordRotationOverdue()
+		return true
+	}
+	return false
 }
 
 // HACK: we need a proper way of doing this check by adding Conditions
@@ -1487,7 +1553,17 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	}
 
 	expiration := time.UnixMilli(obj.Status.Token.Expiration)
-	rc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
+	now := time.Now()
+	rc.tokenMetrics.recordTimeToExpiry(expiration.Sub(now).Seconds())
+
+	// Record the expired state independently of the refresh decision below. It
+	// re-emits every resync while the token stays expired (its refresh failing),
+	// so increase()/rate() alerts fire for as long as the condition holds. We do
+	// not track a "near expiring" state: the refresh window and the near-expiry
+	// window are the same predicate, so it would fire on every healthy refresh.
+	if !expiration.After(now) {
+		rc.tokenMetrics.recordExpired()
+	}
 
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
 	if !recentlyCreated && shouldRefreshBeforeExpiration(expiration, rc.resyncInterval) {

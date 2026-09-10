@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Gerentes de alerta",
+        "alert-managers": "",
         "import": "Importar"
       }
     },
@@ -6023,7 +6023,6 @@
       "description": "Uma sequência vertical de painéis, texto e células de código",
       "name": "Notebook",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Tempo",
       "title-edit": "",
@@ -6313,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anotações",
         "description": "Descrição",
@@ -6416,17 +6428,6 @@
           "empty": "(vazio)",
           "no-title": "<sem título>"
         }
-      },
-      "predefined-variables": {
-        "all": "Todos",
-        "description": "",
-        "folder": "Pasta",
-        "global": "Global",
-        "label": "Variáveis predefinidas",
-        "none": "Nenhum",
-        "pane-header": "Variáveis predefinidas",
-        "title": "Variáveis predefinidas",
-        "tooltip": "Escolha quais variáveis globais e da pasta este painel de controle receberá"
       },
       "redo": "Refazer",
       "row": {
@@ -7043,6 +7044,10 @@
       "recommendation": "Assim que o recurso for ativado novamente, seus painéis serão renderizados normalmente no formato de Painel Dinâmico. Devido a isso, recomendamos fortemente que você não faça alterações nesses painéis até que o recurso seja ativado novamente, pois as edições feitas no modo clássico podem trazer resultados inesperados. Você também tem a opção de salvar uma cópia do painel usando a opção \"Salvar como cópia\", no menu para salvar o painel.",
       "save-warning": "Qualquer painel criado ou convertido em um Painel Dinâmico será aberto como um painel clássico. Salvar o painel pode levar à perda de recursos já configurados do Painel Dinâmico."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opções personalizadas",
       "json-values-tooltip": "Forneça um JSON que represente uma matriz de objetos, em que cada objeto possa conter qualquer quantidade de propriedades.<br/>Consulte <4>nossas documentações</4> para obter mais informações.",
@@ -7085,6 +7090,12 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Erro ao carregar o painel de controle"
     },
     "dashboard-scene": {
@@ -7514,13 +7525,6 @@
       },
       "title-close": "Fechar"
     },
-    "predefined-variables": {
-      "label-all": "Todos",
-      "label-custom": "Personalizado",
-      "label-folder": "Pasta",
-      "label-global": "Global",
-      "label-none": "Nenhum"
-    },
     "provisioned-controls-section": {
       "label": "Provisionado por fonte de dados",
       "tooltip": "Adicionado pelo plug-in {{pluginName}}",
@@ -7639,6 +7643,10 @@
       "required": "Obrigatório"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Alterações",
         "label-details": "Detalhes",
@@ -9125,6 +9133,7 @@
       "critical-path": "Caminho crítico",
       "critical-path-tooltip": "Seleciona intervalos no caminho crítico: a sequência mais longa de tarefas dependentes que determina a duração mínima do rastro.",
       "duration": "Duração",
+      "error-indicator": "",
       "errors": "Erros",
       "errors-tooltip": "Seleciona intervalos em que o status é igual a \"erro\".",
       "export-started": "Exportação iniciada",
@@ -9142,11 +9151,14 @@
       "share-export-json": "Exportar como JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Horário de início",
+      "success-indicator": "",
       "target": "Destino",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
       "trace-id": "ID do traço",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -12562,6 +12574,7 @@
       "title": "Criar"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nova regra de alerta"
     },
     "create-dashboard": {
@@ -13054,7 +13067,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13074,7 +13086,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13125,6 +13136,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13141,6 +13153,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13190,7 +13203,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Limpar configurações"
+      "clear-tooltip": "Limpar configurações",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Série de cores por"
@@ -16621,8 +16636,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

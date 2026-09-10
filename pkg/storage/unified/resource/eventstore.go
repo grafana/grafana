@@ -89,6 +89,8 @@ type Event struct {
 	Action          kv.DataAction `json:"action"`
 	Folder          string        `json:"folder"`
 	PreviousRV      int64         `json:"previous_rv"`
+	PreviousAction  kv.DataAction `json:"previous_action,omitempty"`
+	PreviousFolder  string        `json:"previous_folder"`
 }
 
 func newEventStore(kv KV) *eventStore {
