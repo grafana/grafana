@@ -201,7 +201,7 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	t.Cleanup(func() { dashboardDiagnosticsJobs = prev })
 	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 	creator := &user.SignedInUser{OrgID: 1, UserUID: "u1"}
-	for i := 0; i < diagnosticsMaxInFlightJobs; i++ {
+	for range diagnosticsMaxInFlightJobs {
 		_, ok := dashboardDiagnosticsJobs.create(1, creator)
 		require.True(t, ok, "setup: pre-filling the store to the cap must succeed")
 	}
@@ -433,7 +433,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		base := time.Now()
 		var oldest string
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := range diagnosticsJobMaxEntries {
 			j, _ := s.create(1, creator)
 			s.complete(j.UID, nil) // only terminal jobs count against the cap
 			// Age them deterministically so eviction order is well-defined.
@@ -472,7 +472,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 			}
 		}
 		// Fill exactly to the cap with baseline terminal jobs all finished at base.
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := range diagnosticsJobMaxEntries {
 			add(fmt.Sprintf("fill-%d", i), base, base)
 		}
 		add("slow-but-fresh", base.Add(-time.Hour), base.Add(time.Minute))  // oldest CreatedAt, newest finishedAt
@@ -493,7 +493,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	t.Run("enforces the cap on complete without a later create", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		base := time.Now()
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := range diagnosticsJobMaxEntries {
 			uid := fmt.Sprintf("term-%d", i)
 			s.jobs[uid] = &diagnosticsJob{UID: uid, State: jobComplete, finishedAt: base}
 		}
@@ -514,7 +514,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	t.Run("caps concurrent in-flight jobs", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		var last *diagnosticsJob
-		for i := 0; i < diagnosticsMaxInFlightJobs; i++ {
+		for range diagnosticsMaxInFlightJobs {
 			j, ok := s.create(1, creator)
 			require.True(t, ok, "creates within the in-flight cap must succeed")
 			last = j

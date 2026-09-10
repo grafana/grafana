@@ -22,12 +22,6 @@ import (
 
 const emptyLabelKeyPrefix = "__empty_label_key__"
 
-// DefaultMaxLabelValueSize is the default byte cap applied to any single
-// expanded label/annotation value written into alert state, complementing
-// the sender-side clamp (pkg/services/ngalert/sender). Chosen generously as
-// a safety net, not a routine content limit.
-const DefaultMaxLabelValueSize = 1 << 22 // 4 MiB
-
 type ruleStates struct {
 	states map[data.Fingerprint]*State
 }
@@ -239,7 +233,7 @@ func clampExpandedValues(log log.Logger, vals map[string]string, kind string, ma
 		log.Warn("Truncating expanded label/annotation value exceeding size cap",
 			"kind", kind, "name", k, "size", len(v), "cap", maxSize, "rule", ruleTitle, "rule_uid", ruleUID)
 		if stateMetrics != nil {
-			stateMetrics.ClampedLabelStrings.WithLabelValues(kind).Inc()
+			stateMetrics.TruncatedStrings.WithLabelValues(kind).Inc()
 		}
 	}
 	if clamped != nil {

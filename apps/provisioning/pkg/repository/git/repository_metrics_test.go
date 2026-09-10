@@ -105,6 +105,36 @@ func TestGitRepository_OperationMetrics(t *testing.T) {
 		assert.Equal(t, 1.0, after.count(repository.OperationList, "success")-before.count(repository.OperationList, "success"))
 	})
 
+	t.Run("compare", func(t *testing.T) {
+		client := &mocks.FakeClient{}
+		client.GetRefReturns(nanogit.Ref{Name: "refs/heads/main", Hash: hash.Hash{}}, nil)
+		client.CompareCommitsReturns([]nanogit.CommitFile{{
+			Path: "configs/test.yaml", Status: protocol.FileStatusAdded,
+		}}, nil)
+		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+
+		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		_, err := repo.CompareFiles(ctx, "main", "feature")
+		require.NoError(t, err)
+		after := gitSnapshot(t, provisioning.GitRepositoryType)
+
+		assert.Equal(t, 1.0, after.count(repository.OperationCompare, "success")-before.count(repository.OperationCompare, "success"))
+	})
+
+	t.Run("failed compare", func(t *testing.T) {
+		client := &mocks.FakeClient{}
+		client.GetRefReturns(nanogit.Ref{Name: "refs/heads/main", Hash: hash.Hash{}}, nil)
+		client.CompareCommitsReturns(nil, errors.New("compare failed"))
+		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+
+		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		_, err := repo.CompareFiles(ctx, "main", "feature")
+		require.Error(t, err)
+		after := gitSnapshot(t, provisioning.GitRepositoryType)
+
+		assert.Equal(t, 1.0, after.count(repository.OperationCompare, "error")-before.count(repository.OperationCompare, "error"))
+	})
+
 	t.Run("create, update, delete and move", func(t *testing.T) {
 		repo := newMetricsRepo(t, provisioning.GitRepositoryType, writableClient())
 
