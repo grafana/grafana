@@ -1678,6 +1678,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.searchFieldValueResults",
+        "resourceVersion": "1788883151754",
+        "creationTimestamp": "2026-09-08T15:59:11Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for dashboard search requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -2808,7 +2821,8 @@
       "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-11T17:51:24Z"
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",

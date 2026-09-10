@@ -6,7 +6,6 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/compon
 import { type Options, RenderMode } from '../panelcfg.gen';
 
 import { textNGPanelOptions } from './module';
-import { MAX_RENDERED_ROWS } from './renderContent';
 
 beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -34,24 +33,11 @@ function getItem(path: string) {
 }
 
 /** The options pane shows only these; everything else is edited in the panel itself. */
-const paneOptions = ['renderMode', 'maxRows'];
+const paneOptions = ['renderMode'];
 
 describe('textNGPanelOptions', () => {
   it('registers renderMode with a default that preserves a single render', () => {
     expect(getItem('renderMode').defaultValue).toBe(RenderMode.Once);
-  });
-
-  it('leaves maxRows unset, so an empty field renders every row', () => {
-    expect(getItem('maxRows').defaultValue).toBeUndefined();
-    expect(getItem('maxRows').settings).toMatchObject({ placeholder: String(MAX_RENDERED_ROWS) });
-  });
-
-  it('bounds the maxRows input by the hard ceiling', () => {
-    expect(getItem('maxRows').settings).toMatchObject({ min: 1, max: MAX_RENDERED_ROWS, integer: true });
-  });
-
-  it('warns in the maxRows description that raising it costs performance', () => {
-    expect(getItem('maxRows').description).toMatch(/slow the panel/i);
   });
 
   it('are the only options visible in the pane', () => {
