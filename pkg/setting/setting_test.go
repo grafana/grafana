@@ -831,3 +831,119 @@ func TestDynamicSection(t *testing.T) {
 		assert.Equal(t, value, ds.section.Key(key).String())
 	})
 }
+
+func TestReadFrontendDevSettings(t *testing.T) {
+	skipStaticRootValidation = true
+
+	devServerINI := func(url string) []byte {
+		return []byte("app_mode = development\n[frontend_dev]\nserver_url = " + url)
+	}
+
+	// The default matters as much as the parsing: `yarn start:rspack` is meant to work without
+	// anyone editing an ini file. `make run` passes cfg:app_mode=development, same as here.
+	t.Run("conf/defaults.ini ships a dev server url", func(t *testing.T) {
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Config:   "../../conf/defaults.ini",
+			Args:     []string{"cfg:app_mode=development"},
+		}))
+		require.Equal(t, "http://localhost:3333", cfg.FrontendDevServerURL)
+	})
+
+	// defaults.ini is app_mode = production, so loading it untouched must not name a dev server.
+	t.Run("the shipped default is ignored outside a development app_mode", func(t *testing.T) {
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+		require.Equal(t, Prod, cfg.Env)
+		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+
+	t.Run("no url means no dev server", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(devServerINI(""))
+		require.NoError(t, err)
+		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+
+	// Blanking the key in a config file looks like it should turn the dev server off. It does
+	// not: loadSpecifiedConfigFile skips empty values, so the defaults.ini value survives.
+	// Only a `cfg:` argument gets through. Pinned because the obvious reading is the wrong one.
+	t.Run("a config file cannot blank the shipped default, but a cfg: argument can", func(t *testing.T) {
+		blanked := filepath.Join(t.TempDir(), "custom.ini")
+		require.NoError(t, os.WriteFile(blanked, devServerINI(""), 0600))
+
+		load := func(args ...string) *Cfg {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   blanked,
+				Args:     append([]string{"cfg:app_mode=development"}, args...),
+			}))
+			return cfg
+		}
+
+		require.Equal(t, "http://localhost:3333", load().FrontendDevServerURL)
+		require.Empty(t, load("cfg:frontend_dev.server_url=").FrontendDevServerURL)
+	})
+
+	t.Run("only the origin is kept", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(devServerINI("http://127.0.0.1:9999/build/"))
+		require.NoError(t, err)
+		require.Equal(t, "http://127.0.0.1:9999", cfg.FrontendDevServerURL)
+	})
+
+	// Credentials must not reach index.html, where every browser would send them on.
+	t.Run("credentials in the url are dropped", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(devServerINI("http://user:pass@localhost:3333"))
+		require.NoError(t, err)
+		require.Equal(t, "http://localhost:3333", cfg.FrontendDevServerURL)
+	})
+
+	// A second parse of the same Cfg must not keep an origin the new config rejects.
+	t.Run("a re-parse clears a previously accepted origin", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(devServerINI("http://localhost:3333"))
+		require.NoError(t, err)
+		require.Equal(t, "http://localhost:3333", cfg.FrontendDevServerURL)
+
+		disabled, err := ini.Load([]byte("app_mode = production\n"))
+		require.NoError(t, err)
+		require.NoError(t, cfg.parseINIFile(disabled))
+		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+
+	// The scheme allowlist matters: this value becomes the origin every bundle loads from.
+	for _, invalid := range []string{"localhost:3001", "http://", "://nope", "ftp://evil.example", "javascript://x"} {
+		t.Run("an unusable url is ignored: "+invalid, func(t *testing.T) {
+			cfg, err := NewCfgFromBytes(devServerINI(invalid))
+			require.NoError(t, err)
+			require.Empty(t, cfg.FrontendDevServerURL)
+		})
+	}
+
+	t.Run("an enforced content security policy disables the dev server", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(
+			"app_mode = development\n[security]\ncontent_security_policy = true\n" +
+				"content_security_policy_template = \"\"\"script-src 'self';\"\"\"\n" +
+				"[frontend_dev]\nserver_url = http://localhost:3333",
+		))
+		require.NoError(t, err)
+		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+
+	// The harness runs in development mode, so it picks up the shipped default, and its ini
+	// cannot blank it. Its enforced CSP is what keeps it on the built assets instead of a dev
+	// server a contributor happens to have running. Guard that, because the CSP is the whole
+	// mechanism: turning it off here would silently hand the suite a contributor's bundles.
+	// (The harness also never enables grafana.rspackBuild, so the dev server branch is
+	// unreachable either way - but that is a second line of defence, not this one.)
+	t.Run("the e2e harness never uses the dev server", func(t *testing.T) {
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Config:   "../../scripts/grafana-server/custom.ini",
+			Args:     []string{"cfg:app_mode=development"},
+		}))
+		require.True(t, cfg.CSPEnabled)
+		require.Empty(t, cfg.FrontendDevServerURL)
+	})
+}
