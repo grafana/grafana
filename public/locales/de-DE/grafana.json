@@ -6023,7 +6023,6 @@
       "description": "Eine vertikale Abfolge von Panels, Text und Codezellen",
       "name": "Notizbuch",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Zeit",
       "title-edit": "",
@@ -7091,6 +7090,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Fehler beim Laden des Dashboards"
     },
     "dashboard-scene": {
@@ -7638,6 +7643,10 @@
       "required": "Erforderlich"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Änderungen",
         "label-details": "Details",
@@ -9142,6 +9151,7 @@
       "share-export-json": "Als JSON exportieren",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Startzeitpunkt",
       "success-indicator": "",
       "target": "Ziel",
@@ -12564,6 +12574,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Neue Warnregel"
     },
     "create-dashboard": {
@@ -13056,7 +13067,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13086,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13127,6 +13136,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13153,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13203,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Einstellungen löschen"
+      "clear-tooltip": "Einstellungen löschen",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Farbreihe nach"
@@ -16620,8 +16633,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
