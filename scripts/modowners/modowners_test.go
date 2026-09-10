@@ -110,6 +110,7 @@ func TestTeamSlug(t *testing.T) {
 	}{
 		{"@grafana/grafana-backend-services-squad", "grafana-backend-services-squad", true},
 		{"@grafana/alerting-backend", "alerting-backend", true},
+		{"//@grafana/grafana-app-platform-squad", "grafana-app-platform-squad", true},
 		{"@grafana-app-platform-squad", "", false},
 		{"@delivery", "", false},
 		{"grafana/grafana-backend-group", "grafana-backend-group", true},

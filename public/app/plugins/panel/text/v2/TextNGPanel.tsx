@@ -92,7 +92,6 @@ export function TextNGPanel(props: Props) {
       options.content,
       options.mode,
       options.renderMode,
-      options.maxRows,
       options.code?.language,
       series,
       replaceVariables,
@@ -112,7 +111,6 @@ export function TextNGPanel(props: Props) {
         showLineNumbers={options.code?.showLineNumbers ?? false}
         codeLanguage={options.code?.language}
         renderMode={options.renderMode}
-        maxRows={options.maxRows}
         series={series}
         replaceVariables={replaceVariables}
         suggestions={suggestions}
@@ -288,7 +286,6 @@ function renderPanelContent(
           mode: options.mode,
           series,
           renderMode: options.renderMode,
-          maxRows: options.maxRows,
           format: getInterpolateFormat(options.mode, options.code?.language),
         },
         replaceVariables,
