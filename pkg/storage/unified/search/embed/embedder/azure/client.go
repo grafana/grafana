@@ -95,7 +95,7 @@ func retryableError(err error, now time.Time) error {
 	var apiErr *openai.Error
 	var delay time.Duration
 	if errors.As(err, &apiErr) {
-		retryable = apiErr.StatusCode == http.StatusTooManyRequests || apiErr.StatusCode >= http.StatusInternalServerError
+		retryable = apiErr.StatusCode == http.StatusRequestTimeout || apiErr.StatusCode == http.StatusConflict || apiErr.StatusCode == http.StatusTooManyRequests || apiErr.StatusCode >= http.StatusInternalServerError
 		if retryable && apiErr.Response != nil {
 			delay = retryAfter(apiErr.Response.Header, now)
 		}

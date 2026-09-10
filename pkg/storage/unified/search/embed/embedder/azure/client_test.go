@@ -91,12 +91,12 @@ func TestNewClient_Validation(t *testing.T) {
 
 func TestRetryableError(t *testing.T) {
 	now := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
-	for _, code := range []int{http.StatusTooManyRequests, http.StatusServiceUnavailable, http.StatusBadRequest, http.StatusUnauthorized} {
+	for _, code := range []int{http.StatusRequestTimeout, http.StatusConflict, http.StatusTooManyRequests, http.StatusServiceUnavailable, http.StatusBadRequest, http.StatusUnauthorized} {
 		t.Run(fmt.Sprint(code), func(t *testing.T) {
 			original := &openai.Error{StatusCode: code, Response: &http.Response{Header: http.Header{retryAfterMsHeader: []string{"90000"}}}}
 			err := retryableError(original, now)
 			var retryErr *embedder.RetryableError
-			require.Equal(t, code == http.StatusTooManyRequests || code == http.StatusServiceUnavailable, errors.As(err, &retryErr))
+			require.Equal(t, code == http.StatusRequestTimeout || code == http.StatusConflict || code == http.StatusTooManyRequests || code == http.StatusServiceUnavailable, errors.As(err, &retryErr))
 			assert.ErrorIs(t, err, original)
 			if retryErr != nil {
 				assert.Equal(t, 90*time.Second, retryErr.RetryAfter)
