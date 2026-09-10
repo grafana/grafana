@@ -44,7 +44,6 @@ function renderCell(
       value={row.original.label}
       depth={row.original.depth}
       hasChildren={props.hasChildren ?? (row.original.children?.length ?? 0) > 0}
-      rows={[]}
       onSymbolClick={jest.fn()}
       toggleRowExpanded={jest.fn()}
       {...props}
@@ -73,6 +72,27 @@ describe('FunctionCellWithExpander', () => {
     expect(screen.queryByTestId('call-tree-row-expander')).toBeNull();
   });
 
+  it('does not render tree connector lines and indents by depth', () => {
+    const row = makeRow({ depth: 2, children: [{ id: 'c1' } as CallTreeNode] });
+    const { container } = renderCell(row);
+
+    expect(container.textContent).not.toMatch(/[│├└─]/);
+    // Depth indentation keeps same-level rows left-aligned without grid lines.
+    const cell = screen.getByRole('button', { name: /someFunction/ }).closest('div');
+    expect(cell).toHaveStyle({ paddingLeft: '32px' });
+  });
+
+  it('renders a placeholder for leaf rows so names align with expandable siblings', () => {
+    const row = makeRow({ children: [] });
+    const { container } = renderCell(row, { hasChildren: false });
+
+    expect(screen.queryByTestId('call-tree-row-expander')).toBeNull();
+    const button = screen.getByRole('button', { name: /someFunction/ });
+    // Placeholder reserves the same slot as the chevron.
+    expect(button.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/[│├└─]/);
+  });
+
   it('shows angle-right when the row is collapsed and angle-down when expanded', () => {
     const collapsed = makeRow({ isExpanded: false, children: [{ id: 'c1' } as CallTreeNode] });
     const { rerender } = renderCell(collapsed);
@@ -90,7 +110,6 @@ describe('FunctionCellWithExpander', () => {
         value={expanded.original.label}
         depth={expanded.original.depth}
         hasChildren
-        rows={[]}
         onSymbolClick={jest.fn()}
         toggleRowExpanded={jest.fn()}
       />
@@ -136,7 +155,6 @@ describe('FunctionCellWithExpander', () => {
         value={row.original.label}
         depth={row.original.depth}
         hasChildren
-        rows={[]}
         onSymbolClick={onSymbolClick}
         toggleRowExpanded={jest.fn()}
       />
