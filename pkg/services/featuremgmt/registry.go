@@ -299,7 +299,7 @@ var (
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
@@ -307,7 +307,7 @@ var (
 			Name:        "reportingFooterSettings",
 			Description: "Enables the configurable footer settings for PDF reports",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
@@ -2636,14 +2636,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "flameGraphWithCallTree",
-			Description: "Enables the new Flame Graph UI containing the Call Tree view",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
-		},
-		{
 			Name:        "flameGraph.tableNg",
 			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
 			Stage:       FeatureStageExperimental,
@@ -2958,6 +2950,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "dashboard.searchFieldValueResults",
+			Description: "Uses field-value results for dashboard search requests",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
@@ -3120,6 +3120,15 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "reporting.redirectReportSettingsToK8SApi",
+			Description:     "Redirect legacy report settings API endpoints to the Kubernetes reporting API",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "grafana.onDemandDiagnostics",
 			Description: "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
 			Stage:       FeatureStageExperimental,
@@ -3228,7 +3237,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.rspackBuild",
@@ -3272,6 +3281,15 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:         "datasources.querier.newName",
+			Description:  "Data source query service, use the new name",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.panelPluginTransformations",
 			Description: "Let panel plugins register system transformations",
 			Stage:       FeatureStageExperimental,
@@ -3295,6 +3313,15 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:         "grafana.multiTenantUserPermissions",
+			Description:  "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

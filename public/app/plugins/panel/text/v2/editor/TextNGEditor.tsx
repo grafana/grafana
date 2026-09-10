@@ -36,7 +36,6 @@ export interface TextNGEditorProps {
   mode: TextMode;
   showLineNumbers: boolean;
   codeLanguage?: CodeLanguage;
-  /** Owned by the options pane, read here only so the preview matches the panel. */
   renderMode?: RenderMode;
   series?: DataFrame[];
   replaceVariables: InterpolateFunction;

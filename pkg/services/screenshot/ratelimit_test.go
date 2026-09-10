@@ -41,14 +41,12 @@ func TestTokenRateLimiter(t *testing.T) {
 		return &Screenshot{}, nil
 	}
 
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			screenshot, err := r.Do(ctx, ScreenshotOptions{}, testScreenshotFunc)
 			require.NoError(t, err)
 			assert.NotNil(t, screenshot)
-		}()
+		})
 	}
 	wg.Wait()
 }
