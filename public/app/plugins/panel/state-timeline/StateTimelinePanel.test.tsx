@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { STATE_TIMELINE_AUTO_HEIGHT_EVENT } from 'app/core/constants';
 
 import { getPanelProps } from '../test-utils';
 
@@ -55,12 +56,16 @@ const validFrame = processFrames([
   }),
 ])[0];
 
-function renderStateTimelinePanel(options?: Partial<Options>, series: DataFrame[] = [validFrame]) {
+function renderStateTimelinePanel(
+  options?: Partial<Options>,
+  series: DataFrame[] = [validFrame],
+  container?: HTMLElement
+) {
   const props = getPanelProps<Options>(
     { ...baseOptions, ...options },
     { data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() } }
   );
-  return render(<StateTimelinePanel {...props} />);
+  return render(<StateTimelinePanel {...props} />, { container });
 }
 
 describe('StateTimelinePanel', () => {
@@ -72,6 +77,10 @@ describe('StateTimelinePanel', () => {
 
   afterEach(() => {
     consoleSpy.mockRestore();
+  });
+
+  it('defaults row display to scroll', () => {
+    expect(defaultOptions.rowDisplayMode).toBe('scroll');
   });
 
   it('renders the chart when data is valid', () => {
@@ -95,6 +104,69 @@ describe('StateTimelinePanel', () => {
     renderStateTimelinePanel({ mergeValues: false });
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
+  });
+
+  it('dispatches fixed-height updates when row layout is auto height', () => {
+    const host = document.createElement('section');
+    host.className = 'panel-container';
+    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+
+    renderStateTimelinePanel({ rowDisplayMode: 'auto', fixedRowHeight: 22 }, [validFrame], host);
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: STATE_TIMELINE_AUTO_HEIGHT_EVENT,
+        detail: expect.objectContaining({ height: 56 }),
+      })
+    );
+    expect(host.style.height).toBe('');
+
+    dispatchSpy.mockRestore();
+  });
+
+  it('does not dispatch fixed-height updates when row layout is scroll', () => {
+    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+
+    renderStateTimelinePanel({ rowDisplayMode: 'scroll', fixedRowHeight: 22 }, [validFrame]);
+
+    expect(dispatchSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: STATE_TIMELINE_AUTO_HEIGHT_EVENT,
+      })
+    );
+
+    dispatchSpy.mockRestore();
+  });
+
+  it('does not dispatch fixed-height updates when row layout is page', () => {
+    const dispatchSpy = jest.spyOn(window, 'dispatchEvent');
+
+    renderStateTimelinePanel({ rowDisplayMode: 'pagination', fixedRowHeight: 22 }, [validFrame]);
+
+    expect(dispatchSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: STATE_TIMELINE_AUTO_HEIGHT_EVENT,
+      })
+    );
+
+    dispatchSpy.mockRestore();
+  });
+
+  it('renders pagination when row layout is page with fixed row height', () => {
+    const series = processFrames([
+      createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+          { name: 'state1', type: FieldType.string, values: ['ok', 'warn', 'ok'], config: {} },
+          { name: 'state2', type: FieldType.string, values: ['ok', 'warn', 'ok'], config: {} },
+        ],
+      }),
+    ]);
+
+    renderStateTimelinePanel({ rowDisplayMode: 'pagination', fixedRowHeight: 80, perPage: 1 }, series);
+
+    expect(screen.getByRole('navigation')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 
   it('renders TooltipPlugin2 when tooltip mode is not None', () => {

@@ -1,6 +1,7 @@
 export const GRID_CELL_HEIGHT = 30;
 export const GRID_CELL_VMARGIN = 8;
 export const GRID_COLUMN_COUNT = 24;
+export const STATE_TIMELINE_AUTO_HEIGHT_EVENT = 'grafana-state-timeline-height';
 export const REPEAT_DIR_VERTICAL = 'v';
 export const REPEAT_DIR_HORIZONTAL = 'h';
 

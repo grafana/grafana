@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import cx from 'clsx';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DashboardCursorSync, type DataFrame, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -18,6 +19,7 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
+import { STATE_TIMELINE_AUTO_HEIGHT_EVENT } from 'app/core/constants';
 import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
@@ -27,10 +29,14 @@ import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
-import { type Options } from './panelcfg.gen';
-import { containerStyles } from './styles';
+import { defaultOptions, type Options } from './panelcfg.gen';
+import { containerStyles, getFixedHeightContainerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
+
+// Fixed-row modes size the uPlot canvas plus the x-axis area.
+const TIMELINE_CHART_FIXED_HEIGHT_PADDING = 34;
+const PAGINATION_FOOTER_HEIGHT_FALLBACK = 40;
 
 export const StateTimelinePanel = ({
   data,
@@ -74,10 +80,59 @@ export const StateTimelinePanel = ({
     [data.series, options.mergeValues, timeRange, theme]
   );
 
+  const rowDisplayMode = options.rowDisplayMode ?? defaultOptions.rowDisplayMode ?? 'scroll';
+  const isPaginationEnabled = rowDisplayMode === 'pagination';
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
     frames,
-    options.perPage
+    isPaginationEnabled ? options.perPage : undefined
   );
+  const fixedTimelineHeight = useMemo(() => {
+    if (!options.fixedRowHeight) {
+      return undefined;
+    }
+
+    const rowCount = Math.max(
+      1,
+      paginatedFrames?.reduce((count, frame) => count + Math.max(0, frame.fields.length - 1), 0) ?? 0
+    );
+
+    return rowCount * options.fixedRowHeight + TIMELINE_CHART_FIXED_HEIGHT_PADDING;
+  }, [options.fixedRowHeight, paginatedFrames]);
+  const chartHeight = useMemo(() => {
+    if (!fixedTimelineHeight) {
+      return height - paginationHeight;
+    }
+
+    if (rowDisplayMode !== 'pagination') {
+      return fixedTimelineHeight;
+    }
+
+    return Math.min(fixedTimelineHeight, height - (paginationHeight || PAGINATION_FOOTER_HEIGHT_FALLBACK));
+  }, [fixedTimelineHeight, height, paginationHeight, rowDisplayMode]);
+
+  useEffect(() => {
+    if (!fixedTimelineHeight || rowDisplayMode !== 'auto') {
+      return;
+    }
+
+    const updateHeight = () => {
+      window.dispatchEvent(
+        new CustomEvent(STATE_TIMELINE_AUTO_HEIGHT_EVENT, {
+          detail: { id: panelId, height: fixedTimelineHeight + paginationHeight, panelHeight: height },
+        })
+      );
+    };
+
+    updateHeight();
+    const animationFrame = requestAnimationFrame(updateHeight);
+    const timeout = setTimeout(updateHeight, 250);
+
+    return () => {
+      window.dispatchEvent(new CustomEvent(STATE_TIMELINE_AUTO_HEIGHT_EVENT, { detail: { id: panelId, reset: true } }));
+      cancelAnimationFrame(animationFrame);
+      clearTimeout(timeout);
+    };
+  }, [fixedTimelineHeight, height, paginationHeight, panelId, rowDisplayMode]);
 
   const legendItems = useMemo(
     () => prepareTimelineLegendItems(paginatedFrames, options.legend, theme),
@@ -85,6 +140,21 @@ export const StateTimelinePanel = ({
   );
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
+  const fixedHeightContainerStyles = useMemo(() => {
+    if (!fixedTimelineHeight) {
+      return undefined;
+    }
+
+    if (rowDisplayMode === 'scroll') {
+      return getFixedHeightContainerStyles(height, 'auto');
+    }
+
+    if (rowDisplayMode === 'auto') {
+      return getFixedHeightContainerStyles(fixedTimelineHeight, 'hidden');
+    }
+
+    return undefined;
+  }, [fixedTimelineHeight, height, rowDisplayMode]);
 
   if (!paginatedFrames || typeof warn === 'string') {
     return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
@@ -93,7 +163,7 @@ export const StateTimelinePanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   return (
-    <div className={containerStyles}>
+    <div className={cx(containerStyles, fixedHeightContainerStyles)}>
       <TimelineChart
         theme={theme}
         frames={paginatedFrames}
@@ -102,7 +172,7 @@ export const StateTimelinePanel = ({
         timeRange={timeRange}
         timeZone={timezones}
         width={width}
-        height={height - paginationHeight}
+        height={chartHeight}
         legendItems={legendItems}
         annotations={options.annotations}
         {...options}

@@ -32,8 +32,12 @@ composableKinds: PanelCfg: {
 
 					//Show timeline values on chart
 					showValue: ui.VisibilityMode & (*"auto" | _)
-					//Controls the row height
+					//Controls the fraction of each row filled by the state bar
 					rowHeight: float & <=1 | *0.9
+					//Controls how timeline rows are shown when they do not fit
+					rowDisplayMode?: "pagination" | *"scroll" | "auto" @cuetsy(kind="enum", memberNames="pagination|scroll|auto")
+					//Sets a fixed timeline row height in pixels
+					fixedRowHeight?: number & >=1
 					//Merge equal consecutive values
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines

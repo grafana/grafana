@@ -14,7 +14,12 @@ import {
   type VariableValueSingle,
   SceneGridRow,
 } from '@grafana/scenes';
-import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import {
+  GRID_CELL_HEIGHT,
+  GRID_CELL_VMARGIN,
+  GRID_COLUMN_COUNT,
+  STATE_TIMELINE_AUTO_HEIGHT_EVENT,
+} from 'app/core/constants';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { RepeatsUpdatedEvent, DashboardStateChangedEvent } from '../../sidebar/events';
@@ -39,6 +44,15 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
+const MIN_PANEL_CHROME_HEIGHT = 45;
+const MAX_PANEL_CHROME_HEIGHT = 70;
+
+interface StateTimelineAutoHeightBase {
+  chrome: number;
+  initialHeight: number;
+  lastHeight: number;
+}
+
 export class DashboardGridItem
   extends SceneObjectBase<DashboardGridItemState>
   implements SceneGridItemLike, DashboardLayoutItem
@@ -52,6 +66,7 @@ export class DashboardGridItem
 
   private _prevRepeatValues?: VariableValueSingle[];
   private _gridSizeSub: Unsubscribable | undefined;
+  private _stateTimelineAutoHeightBase?: StateTimelineAutoHeightBase;
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -60,13 +75,103 @@ export class DashboardGridItem
   }
 
   private _activationHandler() {
+    const handleStateTimelineAutoHeight = (event: Event) => {
+      if (!(event instanceof CustomEvent)) {
+        return;
+      }
+
+      const { id, height, panelHeight, reset } = event.detail ?? {};
+      const eventPanelId = String(id ?? '');
+      const panelKey = String(this.state.body?.state?.key ?? '');
+
+      if (!eventPanelId) {
+        return;
+      }
+
+      if (
+        panelKey !== eventPanelId &&
+        panelKey !== `panel-${eventPanelId}` &&
+        panelKey.replace('panel-', '') !== eventPanelId
+      ) {
+        return;
+      }
+
+      if (reset) {
+        this.resetStateTimelineAutoHeight();
+        return;
+      }
+
+      if (!Number.isFinite(Number(height))) {
+        return;
+      }
+
+      if (!this._stateTimelineAutoHeightBase) {
+        const currentHeight = this.state.height ?? 0;
+        const fallbackPanelHeight = currentHeight * GRID_CELL_HEIGHT;
+        const currentPanelHeight = Number(panelHeight) || fallbackPanelHeight;
+
+        this._stateTimelineAutoHeightBase = {
+          chrome: Math.max(
+            MIN_PANEL_CHROME_HEIGHT,
+            Math.min(MAX_PANEL_CHROME_HEIGHT, fallbackPanelHeight - currentPanelHeight)
+          ),
+          initialHeight: currentHeight,
+          lastHeight: currentHeight,
+        };
+      }
+
+      const previousHeight = this.state.height ?? this._stateTimelineAutoHeightBase.lastHeight;
+      const nextHeight = Math.max(
+        2,
+        Math.ceil(
+          (Number(height) + this._stateTimelineAutoHeightBase.chrome + GRID_CELL_VMARGIN) /
+            (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN)
+        )
+      );
+
+      if (nextHeight === previousHeight) {
+        return;
+      }
+
+      this.setStateTimelineGridHeight(nextHeight, previousHeight);
+
+      this._stateTimelineAutoHeightBase.lastHeight = nextHeight;
+    };
+
+    window.addEventListener(STATE_TIMELINE_AUTO_HEIGHT_EVENT, handleStateTimelineAutoHeight);
     this.handleVariableName();
 
     this._subs.add(this.subscribeToEvent(DashboardStateChangedEvent, () => this.handleEditChange()));
 
     return () => {
+      window.removeEventListener(STATE_TIMELINE_AUTO_HEIGHT_EVENT, handleStateTimelineAutoHeight);
       this._handleGridSizeUnsubscribe();
     };
+  }
+
+  private resetStateTimelineAutoHeight() {
+    if (!this._stateTimelineAutoHeightBase) {
+      return;
+    }
+
+    const previousHeight = this.state.height ?? this._stateTimelineAutoHeightBase.lastHeight;
+    const nextHeight = this._stateTimelineAutoHeightBase.initialHeight;
+
+    this._stateTimelineAutoHeightBase = undefined;
+
+    if (nextHeight !== previousHeight) {
+      this.setStateTimelineGridHeight(nextHeight, previousHeight);
+    }
+  }
+
+  private setStateTimelineGridHeight(nextHeight: number, previousHeight: number) {
+    this.setState({ height: nextHeight, itemHeight: nextHeight });
+
+    const layout = sceneGraph.getLayout(this);
+    if (layout instanceof SceneGridLayout) {
+      layout.adjustYPositions(this.state.y!, nextHeight - previousHeight);
+      layout.forceRender();
+    }
   }
 
   private _handleGridSizeSubscribe() {

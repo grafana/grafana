@@ -20,6 +20,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   alignValue?: ui.TimelineValueAlignment;
   /**
+   * Sets a fixed timeline row height in pixels
+   */
+  fixedRowHeight?: number;
+  /**
    * Merge equal consecutive values
    */
   mergeValues?: boolean;
@@ -28,7 +32,11 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   perPage?: number;
   /**
-   * Controls the row height
+   * Controls how timeline rows are shown when they do not fit
+   */
+  rowDisplayMode?: ('pagination' | 'scroll' | 'auto');
+  /**
+   * Controls the fraction of each row filled by the state bar
    */
   rowHeight: number;
   /**
@@ -41,6 +49,7 @@ export const defaultOptions: Partial<Options> = {
   alignValue: 'left',
   mergeValues: true,
   perPage: 20,
+  rowDisplayMode: 'scroll',
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };

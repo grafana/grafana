@@ -3,6 +3,7 @@ import { waitFor } from '@testing-library/react';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
+import { STATE_TIMELINE_AUTO_HEIGHT_EVENT } from 'app/core/constants';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { DashboardEditActionEvent } from '../../sidebar/events';
@@ -263,6 +264,45 @@ describe('PanelRepeaterGridItem', () => {
     const { repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
 
     expect(repeater.getClassName()).toBe('panel-repeater-grid-item');
+  });
+
+  it('Should resize a state timeline grid item from fixed-height events', () => {
+    const gridItem = new DashboardGridItem({
+      x: 0,
+      y: 1,
+      width: 12,
+      height: 10,
+      body: new VizPanel({ key: 'panel-7', pluginId: 'state-timeline' }),
+    });
+    const grid = new SceneGridLayout({ children: [gridItem] });
+    const scene = new DashboardScene({
+      body: new DefaultGridLayoutManager({ grid }),
+    });
+    const layoutForceRender = jest.fn();
+    grid.forceRender = layoutForceRender;
+
+    const deactivate = activateFullSceneTree(scene);
+
+    window.dispatchEvent(
+      new CustomEvent(STATE_TIMELINE_AUTO_HEIGHT_EVENT, {
+        detail: { id: 7, height: 180, panelHeight: 250 },
+      })
+    );
+
+    expect(gridItem.state.height).toBe(7);
+    expect(gridItem.state.itemHeight).toBe(7);
+    expect(layoutForceRender).toHaveBeenCalled();
+
+    window.dispatchEvent(
+      new CustomEvent(STATE_TIMELINE_AUTO_HEIGHT_EVENT, {
+        detail: { id: 7, reset: true },
+      })
+    );
+
+    expect(gridItem.state.height).toBe(10);
+    expect(gridItem.state.itemHeight).toBe(10);
+
+    deactivate();
   });
 
   it('Should not className variable is not set', () => {

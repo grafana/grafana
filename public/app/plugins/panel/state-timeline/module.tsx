@@ -133,9 +133,34 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         },
         defaultValue: defaultOptions.alignValue,
       })
+      .addRadio({
+        path: 'rowDisplayMode',
+        name: t('state-timeline.name-row-display-mode', 'Row display'),
+        category,
+        settings: {
+          options: [
+            { value: 'scroll', label: t('state-timeline.row-display-mode-options.label-scroll', 'Scroll') },
+            { value: 'pagination', label: t('state-timeline.row-display-mode-options.label-pagination', 'Page') },
+            { value: 'auto', label: t('state-timeline.row-display-mode-options.label-auto', 'Auto height') },
+          ],
+        },
+        defaultValue: defaultOptions.rowDisplayMode,
+      })
+      .addSliderInput({
+        path: 'fixedRowHeight',
+        name: t('state-timeline.name-fixed-row-height', 'Row height'),
+        category,
+        settings: {
+          min: 8,
+          max: 80,
+          step: 1,
+          integer: true,
+        },
+        defaultValue: defaultOptions.fixedRowHeight,
+      })
       .addSliderInput({
         path: 'rowHeight',
-        name: t('state-timeline.name-row-height', 'Row height'),
+        name: t('state-timeline.name-row-fill', 'Row fill'),
         category,
         settings: {
           min: 0,
@@ -148,6 +173,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         path: 'perPage',
         name: t('state-timeline.name-page-size', 'Page size (enable pagination)'),
         category,
+        showIf: (options) => (options.rowDisplayMode ?? defaultOptions.rowDisplayMode) === 'pagination',
         settings: {
           min: 1,
           step: 1,
