@@ -76,8 +76,8 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { registerPanelInteractionsReporter } from '../scene/registerPanelInteractionsReporter';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
+import { registerPanelInteractionsReporter } from '../scene/registerPanelInteractionsReporter';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 

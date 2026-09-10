@@ -31,7 +31,8 @@ import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-time
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
-import { activateSceneObjectAndParentTree, findVizPanelByKey } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { activateSceneObjectAndParentTree } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,

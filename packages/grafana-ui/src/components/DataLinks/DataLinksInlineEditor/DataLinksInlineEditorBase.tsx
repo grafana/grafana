@@ -8,10 +8,10 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';
-import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 
 export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
   type: 'link' | 'action';

@@ -19,20 +19,8 @@ import {
   LinkTextInput,
   LinkTypeSelect,
 } from './LinkBasicOptions';
-import { duplicateLink, LinkEdit } from './LinkEdit';
+import { duplicateLink, type LinkEdit } from './LinkEdit';
 import { linkEditActions } from './actions';
-
-// Re-exported for convenience; the implementations live in the lightweight
-// LinkEdit module so view-path code does not need to import this file.
-export {
-  createDefaultLink,
-  duplicateLink,
-  LinkEdit,
-  type LinkEditState,
-  linkSelectionId,
-  openAddLinkPane,
-  openEditLinkPane,
-} from './LinkEdit';
 
 function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   const dashboard = linkEdit.state.dashboardRef.resolve();

@@ -25,8 +25,8 @@ import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
-import { DashboardOutline } from './outline/DashboardOutline';
 import { openDashboardCodePane } from './openDashboardCodePane';
+import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
 
 export interface Props {

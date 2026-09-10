@@ -45,9 +45,10 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { toControlSourceRef } from '../utils/predefinedVariables';
-import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';

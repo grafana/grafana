@@ -43,8 +43,6 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 
 import { findVizPanelByKey } from './findVizPanel';
 
-export { findVizPanelByKey } from './findVizPanel';
-
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 

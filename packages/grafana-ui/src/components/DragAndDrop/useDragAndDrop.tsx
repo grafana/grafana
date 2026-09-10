@@ -1,3 +1,4 @@
+import type * as DragAndDrop from '@hello-pangea/dnd';
 import {
   type DraggableProps,
   type DraggableProvided,
@@ -10,7 +11,7 @@ import {
 } from '@hello-pangea/dnd';
 import { useEffect, useState } from 'react';
 
-export type DragAndDropModule = typeof import('@hello-pangea/dnd');
+export type DragAndDropModule = typeof DragAndDrop;
 
 /** The subset of `@hello-pangea/dnd` components consumers use through `useDragAndDrop`. */
 export interface DragAndDropComponents {

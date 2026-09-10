@@ -21,6 +21,8 @@ async function setup(items?: DataLink[]) {
   );
   await waitFor(() => {
     expect(container.querySelector('[data-rfd-droppable-id="sortable-links"]')).toBeInTheDocument();
+  });
+  await waitFor(() => {
     expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(items?.length ?? 0);
   });
 

@@ -5,10 +5,9 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Badge } from '../../Badge/Badge';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
-
-import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 
 export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   index: number;

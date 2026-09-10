@@ -1,13 +1,9 @@
 import { type ComponentProps, lazy, Suspense } from 'react';
 
-type GenAIDashDescriptionButtonProps = ComponentProps<
-  typeof import('./GenAIDashDescriptionButton').GenAIDashDescriptionButton
->;
-type GenAIDashTitleButtonProps = ComponentProps<typeof import('./GenAIDashTitleButton').GenAIDashTitleButton>;
-type GenAIPanelDescriptionButtonProps = ComponentProps<
-  typeof import('./GenAIPanelDescriptionButton').GenAIPanelDescriptionButton
->;
-type GenAIPanelTitleButtonProps = ComponentProps<typeof import('./GenAIPanelTitleButton').GenAIPanelTitleButton>;
+type GenAIDashDescriptionButtonProps = ComponentProps<typeof GenAIDashDescriptionButton>;
+type GenAIDashTitleButtonProps = ComponentProps<typeof GenAIDashTitleButton>;
+type GenAIPanelDescriptionButtonProps = ComponentProps<typeof GenAIPanelDescriptionButton>;
+type GenAIPanelTitleButtonProps = ComponentProps<typeof GenAIPanelTitleButton>;
 
 const GenAIDashDescriptionButton = lazy(() =>
   import(/* webpackChunkName: "dashboard-genai" */ './GenAIDashDescriptionButton').then((module) => ({

@@ -8,13 +8,8 @@ import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { edit } from '../../actions/utils/edit';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import {
-  LinkEdit,
-  LinkEditEditableElement,
-  linkSelectionId,
-  openAddLinkPane,
-  openEditLinkPane,
-} from '../../settings/links/LinkAddEditableElement';
+import { LinkEditEditableElement } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit, linkSelectionId, openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkEdit';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';

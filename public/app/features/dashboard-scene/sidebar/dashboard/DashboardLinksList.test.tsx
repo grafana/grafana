@@ -7,13 +7,13 @@ import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { createDefaultLink, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
+import { createDefaultLink, openEditLinkPane } from '../../settings/links/LinkEdit';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksList';
 
-jest.mock('../../settings/links/LinkAddEditableElement', () => ({
-  ...jest.requireActual('../../settings/links/LinkAddEditableElement'),
+jest.mock('../../settings/links/LinkEdit', () => ({
+  ...jest.requireActual('../../settings/links/LinkEdit'),
   openAddLinkPane: jest.fn(),
   openEditLinkPane: jest.fn(),
 }));

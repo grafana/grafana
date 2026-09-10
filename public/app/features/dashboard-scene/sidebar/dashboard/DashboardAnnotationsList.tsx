@@ -9,7 +9,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { edit } from '../../actions/utils/edit';
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
 import { partitionAnnotationsByDisplay } from '../../settings/annotations/partitionAnnotations';

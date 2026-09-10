@@ -6,8 +6,8 @@
  */
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import type { MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 import { DASHBOARD_COMMAND_SCHEMAS } from 'app/features/dashboard-scene/mutation-api/commands/schemaRegistry';
+import type { MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
 
 /**
