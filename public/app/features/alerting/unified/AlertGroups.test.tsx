@@ -276,7 +276,7 @@ describe('AlertGroups', () => {
   });
 
   it('should render pagination when groups exceed 1000', async () => {
-    const groups = Array.from({ length: 1500 }, (_, i) =>
+    const groups = Array.from({ length: 1050 }, (_, i) =>
       mockAlertGroup({
         labels: { index: String(i) },
         alerts: [mockAlertmanagerAlert({ labels: { index: String(i) } })],
@@ -293,7 +293,7 @@ describe('AlertGroups', () => {
   });
 
   it('should navigate between pages using pagination controls', async () => {
-    const groups = Array.from({ length: 1500 }, (_, i) =>
+    const groups = Array.from({ length: 1050 }, (_, i) =>
       mockAlertGroup({
         labels: { index: String(i) },
         alerts: [mockAlertmanagerAlert({ labels: { index: String(i) } })],
@@ -311,7 +311,7 @@ describe('AlertGroups', () => {
     await user.click(ui.nextPageButton.get());
 
     alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(500);
+    expect(alertGroups).toHaveLength(50);
     expect(alertGroups[0]).toHaveTextContent('index1000');
 
     await user.click(ui.previousPageButton.get());
@@ -322,7 +322,7 @@ describe('AlertGroups', () => {
   });
 
   it('should reset to page 1 when filters change', async () => {
-    const groups = Array.from({ length: 1500 }, (_, i) =>
+    const groups = Array.from({ length: 1050 }, (_, i) =>
       mockAlertGroup({
         labels: { index: String(i), region: 'US' },
         alerts: [mockAlertmanagerAlert({ labels: { index: String(i), region: 'US' } })],
