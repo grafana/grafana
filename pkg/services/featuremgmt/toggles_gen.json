@@ -3609,11 +3609,14 @@
     {
       "metadata": {
         "name": "grafana.useRouterMiddleware",
-        "resourceVersion": "1789047176048",
-        "creationTimestamp": "2026-09-10T13:32:56Z"
+        "resourceVersion": "1789055902588",
+        "creationTimestamp": "2026-09-10T13:32:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-10 15:58:22.588096 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.",
+        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,

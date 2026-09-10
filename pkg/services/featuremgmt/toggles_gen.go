@@ -44,7 +44,7 @@ const (
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
 	// FlagGrafanaUseRouterMiddleware
-	// intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.
+	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
 
 	// FlagInfluxqlStreamingParser
