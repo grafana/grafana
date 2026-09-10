@@ -7484,8 +7484,8 @@
     },
     "panel-edit-actions": {
       "edit-visualization": "Edit visualization",
-      "elements-selected_one": "{{count}} element selected",
-      "elements-selected_other": "{{count}} elements selected"
+      "panels-selected_one": "{{count}} panel selected",
+      "panels-selected_other": "{{count}} panels selected"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",

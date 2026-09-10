@@ -1,6 +1,6 @@
 import { useContext, useMemo } from 'react';
 
-import { type SceneObject } from '@grafana/scenes';
+import { type SceneObject, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
 
 import { getDashboardSceneLike } from '../types/dashboard';
@@ -44,4 +44,9 @@ export function useSelectedObjectsFor(sceneObject: SceneObject): SceneObject[] {
         .filter((obj): obj is SceneObject => obj !== undefined),
     [selected, sidebar]
   );
+}
+
+export function useSelectedPanelsFor(sceneObject: SceneObject): VizPanel[] {
+  const selected = useSelectedObjectsFor(sceneObject);
+  return useMemo(() => selected.filter((obj) => obj instanceof VizPanel), [selected]);
 }

@@ -12,7 +12,7 @@ import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { useGroupSelection } from '../layouts-shared/GroupSelectedActions';
-import { useSelectedObjectsFor, useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
+import { useSelectedPanelsFor, useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { isBulkActionElement } from '../types/BulkActionElement';
 import { getDashboardSceneLike } from '../types/dashboard';
 
@@ -92,7 +92,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
 export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
 
-  const panels = useSelectedObjectsFor(panel);
+  const panels = useSelectedPanelsFor(panel);
   const panelCount = panels.reduce((total, panel) => total + getRenderedInstanceCount(panel), 0);
   const { rowGrouping, tabGrouping, group } = useGroupSelection(panels);
 
@@ -109,14 +109,14 @@ export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {
     <>
       <Text element="p" variant="bodySmall" color="secondary">
         <Trans
-          i18nKey="dashboard-scene.panel-edit-actions.elements-selected"
+          i18nKey="dashboard-scene.panel-edit-actions.panels-selected"
           count={panelCount}
           tOptions={{
-            defaultValue_one: '{{count}} element selected',
-            defaultValue_other: '{{count}} elements selected',
+            defaultValue_one: '{{count}} panel selected',
+            defaultValue_other: '{{count}} panels selected',
           }}
         >
-          {'{{count}}'} elements selected
+          {'{{count}}'} panels selected
         </Trans>
       </Text>
       <div className={styles.actionsDivider} />
