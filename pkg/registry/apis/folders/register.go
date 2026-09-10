@@ -54,12 +54,14 @@ var (
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	storage              grafanarest.Storage
-	permissionStore      PermissionStore
-	accessClient         authlib.AccessClient
-	parents              parentsGetter
-	searcher             resourcepb.ResourceIndexClient
-	maxNestedFolderDepth int
+	storage               grafanarest.Storage
+	permissionStore       PermissionStore
+	accessClient          authlib.AccessClient
+	userPermissionsClient authlib.UserPermissionsClient
+	useExternalGroups     bool
+	parents               parentsGetter
+	searcher              resourcepb.ResourceIndexClient
+	maxNestedFolderDepth  int
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -145,6 +147,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessClient authlib.AccessClient,
+	userPermissionsClient authlib.UserPermissionsClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 	zanzanaClient zanzana.Client,
@@ -152,13 +155,15 @@ func RegisterAPIService(cfg *setting.Cfg,
 	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		accessClient:         accessClient,
-		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
-		searcher:             unified,
-		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
-		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
-		contentsDeleter:      contentsDeleter,
+		accessClient:          accessClient,
+		userPermissionsClient: userPermissionsClient,
+		useExternalGroups:     cfg.IDUseExternalGroupsForGroupsClaim,
+		permissionsOnCreate:   cfg.RBAC.PermissionsOnCreation("folder"),
+		useZanzana:            features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		searcher:              unified,
+		permissionStore:       NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth:  cfg.MaxNestedFolderDepth,
+		contentsDeleter:       contentsDeleter,
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -176,9 +181,10 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, userPermissionsClient authlib.UserPermissionsClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		accessClient:           ac,
+		userPermissionsClient:  userPermissionsClient,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
 		resourcePermissionsSvc: resourcePermissionsSvc,
@@ -296,8 +302,10 @@ func (b *FolderAPIBuilder) storageForVersion(
 		searcher: b.searcher,
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
-		getter:       b.storage,
-		accessClient: b.accessClient,
+		getter:                b.storage,
+		accessClient:          b.accessClient,
+		userPermissionsClient: b.userPermissionsClient,
+		useExternalGroups:     b.useExternalGroups,
 	}
 
 	// Adds a path to return children of a given folder

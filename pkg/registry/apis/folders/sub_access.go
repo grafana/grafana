@@ -12,13 +12,16 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type subAccessREST struct {
-	getter       rest.Getter
-	accessClient authlib.AccessClient
+	getter                rest.Getter
+	accessClient          authlib.AccessClient
+	userPermissionsClient authlib.UserPermissionsClient
+	useExternalGroups     bool
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -58,102 +61,14 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
-// folderTier mirrors the legacy folder permission levels (View / Edit / Admin)
-// that folder.go uses to bundle dashboard, alerting, library-panel, and
-// annotation actions onto a folder scope.
-type folderTier int
-
-const (
-	tierNone folderTier = iota
-	tierViewer
-	tierEditor
-	tierAdmin
-)
-
-// folderTierCheck is one of the five folder-resource probes we send. The
-// CorrelationID must match the [\w-]{1,36} regex enforced downstream, so we
-// use a short stable slug instead of the legacy "domain:verb" action key.
-type folderTierCheck struct {
+var folderAccessChecks = []struct {
 	correlationID string
 	verb          string
-}
-
-// folderTierChecks are the only items we send to BatchCheck. Sub-resource
-// permissions (dashboards, alerts, library panels, annotations) are inferred
-// from the resulting tier — they are NOT checked individually, matching the
-// legacy folder View/Edit/Admin bundling in
-// pkg/services/accesscontrol/ossaccesscontrol/folder.go.
-var folderTierChecks = []folderTierCheck{
-	{correlationID: "get", verb: utils.VerbGet},
-	{correlationID: "create", verb: utils.VerbCreate},
+}{
 	{correlationID: "update", verb: utils.VerbUpdate},
 	{correlationID: "delete", verb: utils.VerbDelete},
 	{correlationID: "setperms", verb: utils.VerbSetPermissions},
 }
-
-// Action bundles below mirror FolderViewActions / FolderEditActions /
-// FolderAdminActions, DashboardViewActions / DashboardEditActions /
-// DashboardAdminActions, and NotebookViewActions / NotebookEditActions /
-// NotebookAdminActions in pkg/services/accesscontrol/ossaccesscontrol/. They
-// are inlined to avoid pulling that package's heavy DI graph into the apiserver
-// edge. Keep in sync if either bundle changes.
-var (
-	folderViewActions = []string{
-		"folders:read",
-		"alert.rules:read",
-		"library.panels:read",
-		"alert.silences:read",
-		"variables:read",
-	}
-	folderEditActions = append(append([]string{}, folderViewActions...), []string{
-		"folders:write",
-		"folders:delete",
-		"folders:create",
-		"dashboards:create",
-		"notebooks:create",
-		"alert.rules:create",
-		"alert.rules:write",
-		"alert.rules:delete",
-		"alert.silences:create",
-		"alert.silences:write",
-		"library.panels:create",
-		"library.panels:write",
-		"library.panels:delete",
-		"variables:create",
-		"variables:write",
-		"variables:delete",
-	}...)
-	folderAdminActions = append(append([]string{}, folderEditActions...), []string{
-		"folders.permissions:read",
-		"folders.permissions:write",
-	}...)
-
-	dashboardViewActions = []string{
-		"dashboards:read",
-		"annotations:read",
-	}
-	dashboardEditActions = append(append([]string{}, dashboardViewActions...), []string{
-		"dashboards:write",
-		"dashboards:delete",
-		"annotations:write",
-		"annotations:delete",
-		"annotations:create",
-	}...)
-	dashboardAdminActions = append(append([]string{}, dashboardEditActions...), []string{
-		"dashboards.permissions:read",
-		"dashboards.permissions:write",
-	}...)
-
-	notebookViewActions = []string{
-		"notebooks:read",
-	}
-	notebookEditActions = append(append([]string{}, notebookViewActions...), []string{
-		"notebooks:write",
-		"notebooks:delete",
-	}...)
-	// No notebook-specific admin actions (no per-notebook permissions management); Admin equals Edit.
-	notebookAdminActions = append([]string{}, notebookEditActions...)
-)
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -171,9 +86,6 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return &foldersV1.FolderAccessInfo{}, nil
 	}
 
-	// The root folder has no stored object to Get and no parent. Normalise the
-	// legacy empty UID to "general" so authz resolves the folders:uid:general
-	// scope, matching legacy /api/folders/general?accesscontrol=true.
 	if folder.IsRootFolderUID(name) {
 		return r.checkAccess(ctx, ns.Value, user, folder.GeneralFolderUID, "")
 	}
@@ -186,17 +98,13 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	if err != nil {
 		return nil, err
 	}
-	parent := obj.GetFolder()
 
-	return r.checkAccess(ctx, ns.Value, user, name, parent)
+	return r.checkAccess(ctx, ns.Value, user, name, obj.GetFolder())
 }
 
-// checkAccess runs the folder-tier probes for folder `name` (with `parent` as
-// the folder hint) and assembles the FolderAccessInfo, mirroring legacy
-// newToFolderDto in pkg/api/folder.go.
 func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user identity.Requester, name, parent string) (*foldersV1.FolderAccessInfo, error) {
-	checks := make([]authlib.BatchCheckItem, len(folderTierChecks))
-	for i, c := range folderTierChecks {
+	checks := make([]authlib.BatchCheckItem, len(folderAccessChecks))
+	for i, c := range folderAccessChecks {
 		checks[i] = authlib.BatchCheckItem{
 			CorrelationID: c.correlationID,
 			Verb:          c.verb,
@@ -215,8 +123,8 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 		return nil, err
 	}
 
-	allowed := make(map[string]bool, len(folderTierChecks))
-	for _, c := range folderTierChecks {
+	allowed := make(map[string]bool, len(folderAccessChecks))
+	for _, c := range folderAccessChecks {
 		result := batchResp.Results[c.correlationID]
 		if result.Error != nil {
 			return nil, result.Error
@@ -224,68 +132,82 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 		allowed[c.correlationID] = result.Allowed
 	}
 
-	// Can* mirrors the legacy pkg/api/folder.go newToFolderDto computation:
-	// canEdit / canSave both gate on folders:write, canDelete on folders:delete,
-	// canAdmin on the permissions verbs. CanAdmin implies the other three
-	// because the seeded Admin role bundles those actions.
+	metadata, err := r.getAccessControlMetadata(ctx, namespace, user, name, parent)
+	if err != nil {
+		return nil, err
+	}
+
 	canAdmin := allowed["setperms"]
-	rsp := &foldersV1.FolderAccessInfo{
-		CanAdmin:  canAdmin,
-		CanEdit:   canAdmin || allowed["update"],
-		CanSave:   canAdmin || allowed["update"],
-		CanDelete: canAdmin || allowed["delete"],
-	}
-
-	if ac := actionsForTier(resolveTier(allowed)); len(ac) > 0 {
-		rsp.AccessControl = ac
-	}
-
-	return rsp, nil
+	return &foldersV1.FolderAccessInfo{
+		CanAdmin:      canAdmin,
+		CanEdit:       canAdmin || allowed["update"],
+		CanSave:       canAdmin || allowed["update"],
+		CanDelete:     canAdmin || allowed["delete"],
+		AccessControl: metadata,
+	}, nil
 }
 
-// resolveTier picks the highest tier the user qualifies for. Highest match
-// wins: setPermissions → Admin; create/update/delete → Editor; get → Viewer.
-func resolveTier(allowed map[string]bool) folderTier {
-	switch {
-	case allowed["setperms"]:
-		return tierAdmin
-	case allowed["create"] || allowed["update"] || allowed["delete"]:
-		return tierEditor
-	case allowed["get"]:
-		return tierViewer
-	default:
-		return tierNone
+func (r *subAccessREST) getAccessControlMetadata(ctx context.Context, namespace string, user identity.Requester, name, parent string) (map[string]bool, error) {
+	groups := user.GetGroups()
+	if r.useExternalGroups {
+		groups = user.GetExternalGroups()
 	}
+	permissions, err := r.userPermissionsClient.GetUserPermissions(ctx, folderPermissionsAuthInfo{
+		AuthInfo: user, namespace: namespace, groups: groups,
+	}, authlib.GetUserPermissionsRequest{Namespace: namespace})
+	if err != nil {
+		return nil, err
+	}
+
+	// Match parent scopes as well as direct grants, without requiring a user to
+	// hold the entire Viewer/Editor/Admin role for an individual action to count.
+	folderIDs := map[string]bool{name: true}
+	for !folder.IsRootFolderUID(parent) {
+		if folderIDs[parent] {
+			return nil, folder.ErrCyclicReference.Errorf("cyclic folder references found: %s", parent)
+		}
+		folderIDs[parent] = true
+		f, err := r.getter.Get(ctx, parent, &v1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		meta, err := utils.MetaAccessor(f)
+		if err != nil {
+			return nil, err
+		}
+		parent = meta.GetFolder()
+	}
+
+	byAction := make(map[string][]string)
+	for _, permission := range permissions.Permissions {
+		byAction[permission.Action] = append(byAction[permission.Action], permission.Scope)
+	}
+	var metadata map[string]bool
+	for _, actions := range accesscontrol.GetResourcesMetadata(ctx, byAction, folder.ScopeFoldersPrefix, folderIDs) {
+		if metadata == nil {
+			metadata = make(map[string]bool)
+		}
+		for action := range actions {
+			metadata[action] = true
+		}
+	}
+	return metadata, nil
 }
 
-// actionsForTier extrapolates the full RBAC action map for the tier. The
-// returned set matches what the legacy /api/folders/:uid?accesscontrol=true
-// endpoint produces for a folder at View / Edit / Admin level.
-func actionsForTier(tier folderTier) map[string]bool {
-	var actions []string
-	switch tier {
-	case tierAdmin:
-		actions = make([]string, 0, len(folderAdminActions)+len(dashboardAdminActions)+len(notebookAdminActions))
-		actions = append(actions, folderAdminActions...)
-		actions = append(actions, dashboardAdminActions...)
-		actions = append(actions, notebookAdminActions...)
-	case tierEditor:
-		actions = make([]string, 0, len(folderEditActions)+len(dashboardEditActions)+len(notebookEditActions))
-		actions = append(actions, folderEditActions...)
-		actions = append(actions, dashboardEditActions...)
-		actions = append(actions, notebookEditActions...)
-	case tierViewer:
-		actions = make([]string, 0, len(folderViewActions)+len(dashboardViewActions)+len(notebookViewActions))
-		actions = append(actions, folderViewActions...)
-		actions = append(actions, dashboardViewActions...)
-		actions = append(actions, notebookViewActions...)
-	default:
-		return nil
-	}
+type folderPermissionsAuthInfo struct {
+	authlib.AuthInfo
+	namespace string
+	groups    []string
+}
 
-	out := make(map[string]bool, len(actions))
-	for _, a := range actions {
-		out[a] = true
-	}
-	return out
+func (i folderPermissionsAuthInfo) GetNamespace() string {
+	return i.namespace
+}
+
+func (i folderPermissionsAuthInfo) GetGroups() []string {
+	return i.groups
+}
+
+func (folderPermissionsAuthInfo) GetTokenDelegatedPermissions() []string {
+	return []string{"authz.grafana.app/userpermissions:get"}
 }
