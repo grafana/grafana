@@ -23,13 +23,26 @@ type ReadyNotifier interface {
 	SetNotReady()
 }
 
-// Service runs GrafanaRouter as a dskit service and mounts its HTTP handlers
-// on the module target's instrumentation server.
+// Service runs GrafanaRouter in either the full Grafana server or a dskit
+// module target.
 type Service struct {
 	*services.BasicService
 
-	router *GrafanaRouter
-	ready  ReadyNotifier
+	router  *GrafanaRouter
+	ready   ReadyNotifier
+	enabled bool
+}
+
+// ProvideMiddlewareService creates the router service for the full Grafana
+// server. The embedded API server invokes HandleFunc before its existing handler.
+func ProvideMiddlewareService(features featuremgmt.FeatureToggles, loader RoutesLoader) (*Service, error) {
+	if loader == nil {
+		return nil, fmt.Errorf("routes loader is required")
+	}
+
+	s := newService(loader, nil)
+	s.enabled = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	return s, nil
 }
 
 // ProvideService creates the router target service.
@@ -43,15 +56,12 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		return nil, fmt.Errorf("HTTP router is required")
 	}
 
-	s := &Service{
-		router: NewGrafanaRouter(loader),
-		ready:  ready,
-	}
-	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
+	s := newService(loader, ready)
 
 	// Explicitly configured
 	// NOTE: eventually should be the only path
 	if slices.Contains(cfg.Target, "router") {
+		s.enabled = true
 		next := httpRouter.NotFoundHandler
 		if next == nil {
 			next = http.NotFoundHandler()
@@ -69,13 +79,19 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	// We need to run as middleware on-top of the existing HTTP router
 	// NOTE: this should be removed when we are no longer running "standard" k8s APIServer
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) { //nolint:staticcheck
+		s.enabled = true
 		// This will intercept the calls to /apis/* and /openapi/v3/*
 		// After we have fully migrated to the router, this should be a raw handler rather than middleware
-		httpRouter.Use(func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				s.router.HandleFunc(w, req, next)
-			})
-		})
+		httpRouter.Use(s.Middleware)
+
+		// Gorilla middleware only runs after a registered route matches. New router-only
+		// groups have no matching route in the existing API server, so they must also get
+		// a chance to handle the request before the mux returns its not-found response.
+		notFound := httpRouter.NotFoundHandler
+		if notFound == nil {
+			notFound = http.NotFoundHandler()
+		}
+		httpRouter.NotFoundHandler = s.Middleware(notFound)
 		return s, nil
 	}
 
@@ -83,6 +99,45 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	// This should be removed when we are no longer running "standard" k8s APIServer
 	s.router = NewGrafanaRouter(dummyRoutesLoader{}) // EMPTY loader
 	return s, nil
+}
+
+func newService(loader RoutesLoader, ready ReadyNotifier) *Service {
+	s := &Service{
+		router: NewGrafanaRouter(loader),
+		ready:  ready,
+	}
+	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
+	return s
+}
+
+// Middleware gives the configured router first chance to serve a request and
+// delegates requests for groups it does not own to the existing HTTP stack.
+func (s *Service) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		s.HandleFunc(w, req, next)
+	})
+}
+
+// HandleFunc serves through the router when enabled and otherwise delegates.
+func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
+	if !s.enabled {
+		next.ServeHTTP(w, req)
+		return
+	}
+	s.router.HandleFunc(w, req, next)
+}
+
+// Run adapts Service to the full server's background-service lifecycle.
+func (s *Service) Run(ctx context.Context) error {
+	if err := s.StartAsync(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(context.Background())
+}
+
+// IsDisabled avoids starting the reconcile loop when middleware routing is off.
+func (s *Service) IsDisabled() bool {
+	return !s.enabled
 }
 
 func (s *Service) starting(ctx context.Context) error {

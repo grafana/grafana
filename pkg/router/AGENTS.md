@@ -288,9 +288,12 @@ writeup:
 ## Lifecycle / ownership
 
 `GrafanaRouter` can run as the dskit `router` target or through the legacy enterprise `grafana
-router` command. The dskit target gets its edition-specific `RoutesLoader` from a
-Wire sub-injector. OSS uses the same full dependency graph as app-plugin API registration;
-enterprise receives the configured module storage/search and authlib clients explicitly.
+router` command. It also runs as a background service in the full Grafana server when the router
+middleware feature is enabled; the embedded API server invokes it after Grafana authentication and
+identity setup, with the regular Kubernetes API server handler as its fallback. The dskit target
+gets its edition-specific `RoutesLoader` from a Wire sub-injector. OSS uses the same full dependency
+graph as app-plugin API registration; enterprise receives the configured module storage/search and
+authlib clients explicitly.
 
 Wiring keeps the standalone command factory separate from the dskit loader provider:
 
