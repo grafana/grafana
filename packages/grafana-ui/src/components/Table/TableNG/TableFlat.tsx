@@ -1,8 +1,8 @@
 import memoize from 'micro-memoize';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { type DataGridHandle, type DataGridProps } from 'react-data-grid';
 
 import { type Field } from '@grafana/data';
-import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
@@ -371,9 +371,9 @@ export function TableFlat(props: TableNGProps) {
       onCellClick={onCellClick}
       className={noPanelPadding ? styles.firstColumnInset : undefined}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (column?.key === columns[0].key && row?.__index === 0 && event.shiftKey && event.key === 'Tab') {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents) {

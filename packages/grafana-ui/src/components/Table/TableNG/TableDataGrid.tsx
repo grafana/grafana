@@ -1,10 +1,10 @@
-import '@grafana/react-data-grid/lib/styles.css';
+import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from 'react';
+import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
 
 import { Trans } from '@grafana/i18n';
-import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } from '@grafana/react-data-grid';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Pagination } from '../../Pagination/Pagination';
