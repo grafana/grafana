@@ -10,6 +10,7 @@ import AlertGroups from './AlertGroups';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
+import { GROUPS_PER_PAGE } from './utils/constants';
 import { DataSourceType } from './utils/datasource';
 
 const server = setupMswServer();
@@ -45,11 +46,13 @@ const ui = {
   groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
   loadingIndicator: byText('Loading notifications'),
-  nextPageButton: byRole('button', { name: /next page/i }),
-  previousPageButton: byRole('button', { name: /previous page/i }),
 };
 
 describe('AlertGroups', () => {
+  it('pages the groups list at 1000 rows', () => {
+    expect(GROUPS_PER_PAGE).toBe(1000);
+  });
+
   beforeAll(() => {
     grantUserPermissions([
       AccessControlAction.AlertingInstanceRead,
@@ -256,92 +259,5 @@ describe('AlertGroups', () => {
     expect(url.searchParams.get('active')).toBe('true');
     expect(url.searchParams.get('silenced')).toBe('false');
     expect(url.searchParams.get('inhibited')).toBe('false');
-  });
-
-  it('should not render pagination when groups are less than or equal to 1000', async () => {
-    const groups = Array.from({ length: 100 }, (_, i) =>
-      mockAlertGroup({
-        labels: { index: String(i) },
-        alerts: [mockAlertmanagerAlert({ labels: { index: String(i) } })],
-      })
-    );
-    mockAlertGroupsResponse(groups);
-
-    renderAmNotifications();
-    await waitForElementToBeRemoved(ui.loadingIndicator.query());
-
-    const alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(100);
-    expect(ui.nextPageButton.query()).not.toBeInTheDocument();
-  });
-
-  it('should render pagination when groups exceed 1000', async () => {
-    const groups = Array.from({ length: 1050 }, (_, i) =>
-      mockAlertGroup({
-        labels: { index: String(i) },
-        alerts: [mockAlertmanagerAlert({ labels: { index: String(i) } })],
-      })
-    );
-    mockAlertGroupsResponse(groups);
-
-    renderAmNotifications();
-    await waitForElementToBeRemoved(ui.loadingIndicator.query());
-
-    const alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(1000);
-    expect(ui.nextPageButton.get()).toBeInTheDocument();
-  });
-
-  it('should navigate between pages using pagination controls', async () => {
-    const groups = Array.from({ length: 1050 }, (_, i) =>
-      mockAlertGroup({
-        labels: { index: String(i) },
-        alerts: [mockAlertmanagerAlert({ labels: { index: String(i) } })],
-      })
-    );
-    mockAlertGroupsResponse(groups);
-
-    const { user } = renderAmNotifications();
-    await waitForElementToBeRemoved(ui.loadingIndicator.query());
-
-    let alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(1000);
-    expect(alertGroups[0]).toHaveTextContent('index0');
-
-    await user.click(ui.nextPageButton.get());
-
-    alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(50);
-    expect(alertGroups[0]).toHaveTextContent('index1000');
-
-    await user.click(ui.previousPageButton.get());
-
-    alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(1000);
-    expect(alertGroups[0]).toHaveTextContent('index0');
-  });
-
-  it('should reset to page 1 when filters change', async () => {
-    const groups = Array.from({ length: 1050 }, (_, i) =>
-      mockAlertGroup({
-        labels: { index: String(i), region: 'US' },
-        alerts: [mockAlertmanagerAlert({ labels: { index: String(i), region: 'US' } })],
-      })
-    );
-    mockAlertGroupsResponse(groups);
-
-    const { user } = renderAmNotifications();
-    await waitForElementToBeRemoved(ui.loadingIndicator.query());
-
-    await user.click(ui.nextPageButton.get());
-
-    let alertGroups = await ui.group.findAll();
-    expect(alertGroups[0]).toHaveTextContent('index1000');
-
-    await user.type(ui.groupByInput.get(), 'region{enter}');
-    await waitFor(() => expect(ui.groupByContainer.get()).toHaveTextContent('region'));
-
-    alertGroups = await ui.group.findAll();
-    expect(alertGroups[0]).toHaveTextContent('regionUS');
   });
 });

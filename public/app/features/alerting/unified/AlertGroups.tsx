@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, Pagination, Text } from '@grafana/ui';
@@ -12,9 +12,10 @@ import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
+import { usePagination } from './hooks/usePagination';
 import { useAlertGroupsNav } from './navigation/useAlertActivityNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
+import { GROUPS_PER_PAGE, NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { getFiltersFromUrlParams, stringifyErrorLike } from './utils/misc';
@@ -39,13 +40,10 @@ function alertStateToFilterFlags(
   }
 }
 
-const GROUPS_PER_PAGE = 1000;
-
 const AlertGroups = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useQueryParams();
   const { groupBy = [], queryString, alertState, receivers } = getFiltersFromUrlParams(queryParams);
-  const [currentPage, setCurrentPage] = useState(1);
 
   const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
@@ -81,20 +79,7 @@ const AlertGroups = () => {
       ? groupedAlerts.filter((g) => receivers.includes(g.receiver.name))
       : groupedAlerts;
 
-  // Pagination
-  const totalGroups = filteredAlertGroups.length;
-  const totalPages = Math.ceil(totalGroups / GROUPS_PER_PAGE);
-  const startIndex = (currentPage - 1) * GROUPS_PER_PAGE;
-  const endIndex = startIndex + GROUPS_PER_PAGE;
-  const paginatedGroups = filteredAlertGroups.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  const filterKey = JSON.stringify({ groupBy, queryString, alertState, receivers });
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
-  if (filterKey !== prevFilterKey) {
-    setCurrentPage(1);
-    setPrevFilterKey(filterKey);
-  }
+  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredAlertGroups, 1, GROUPS_PER_PAGE);
 
   const grafanaAmDeliveryDisabled =
     selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME &&
@@ -132,11 +117,12 @@ const AlertGroups = () => {
       {selectedAlertmanager && <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />}
 
       {results &&
-        paginatedGroups.map((group, index) => {
+        pageItems.map((group, index) => {
+          const absoluteIndex = (page - 1) * GROUPS_PER_PAGE + index;
           return (
-            <Fragment key={`${JSON.stringify(group.labels)}-group-${index}`}>
-              {((index === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
-                (index === 0 && Object.keys(group.labels).length > 0)) && (
+            <Fragment key={`${JSON.stringify(group.labels)}-group-${absoluteIndex}`}>
+              {((absoluteIndex === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
+                (absoluteIndex === 0 && Object.keys(group.labels).length > 0)) && (
                 <Box paddingY={2}>
                   <Text element="h2" variant="body">
                     <Trans
@@ -157,14 +143,9 @@ const AlertGroups = () => {
           <Trans i18nKey="alerting.alert-groups.no-results">No results.</Trans>
         </p>
       )}
-      {results && totalPages > 1 && (
+      {results && numberOfPages > 1 && (
         <Box paddingTop={2}>
-          <Pagination
-            currentPage={currentPage}
-            numberOfPages={totalPages}
-            onNavigate={setCurrentPage}
-            hideWhenSinglePage
-          />
+          <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
         </Box>
       )}
     </>
