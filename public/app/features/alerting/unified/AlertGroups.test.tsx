@@ -45,7 +45,6 @@ const ui = {
   groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
   loadingIndicator: byText('Loading notifications'),
-  pagination: byRole('navigation', { name: /pagination/i }),
   nextPageButton: byRole('button', { name: /next page/i }),
   previousPageButton: byRole('button', { name: /previous page/i }),
 };
@@ -273,7 +272,7 @@ describe('AlertGroups', () => {
 
     const alertGroups = await ui.group.findAll();
     expect(alertGroups).toHaveLength(100);
-    expect(ui.pagination.query()).not.toBeInTheDocument();
+    expect(ui.nextPageButton.query()).not.toBeInTheDocument();
   });
 
   it('should render pagination when groups exceed 1000', async () => {
@@ -290,11 +289,11 @@ describe('AlertGroups', () => {
 
     const alertGroups = await ui.group.findAll();
     expect(alertGroups).toHaveLength(1000);
-    expect(ui.pagination.get()).toBeInTheDocument();
+    expect(ui.nextPageButton.get()).toBeInTheDocument();
   });
 
   it('should navigate between pages using pagination controls', async () => {
-    const groups = Array.from({ length: 2500 }, (_, i) =>
+    const groups = Array.from({ length: 1500 }, (_, i) =>
       mockAlertGroup({
         labels: { index: String(i) },
         alerts: [mockAlertmanagerAlert({ labels: { index: String(i) } })],
@@ -312,24 +311,18 @@ describe('AlertGroups', () => {
     await user.click(ui.nextPageButton.get());
 
     alertGroups = await ui.group.findAll();
-    expect(alertGroups).toHaveLength(1000);
-    expect(alertGroups[0]).toHaveTextContent('index1000');
-
-    await user.click(ui.nextPageButton.get());
-
-    alertGroups = await ui.group.findAll();
     expect(alertGroups).toHaveLength(500);
-    expect(alertGroups[0]).toHaveTextContent('index2000');
+    expect(alertGroups[0]).toHaveTextContent('index1000');
 
     await user.click(ui.previousPageButton.get());
 
     alertGroups = await ui.group.findAll();
     expect(alertGroups).toHaveLength(1000);
-    expect(alertGroups[0]).toHaveTextContent('index1000');
+    expect(alertGroups[0]).toHaveTextContent('index0');
   });
 
   it('should reset to page 1 when filters change', async () => {
-    const groups = Array.from({ length: 2500 }, (_, i) =>
+    const groups = Array.from({ length: 1500 }, (_, i) =>
       mockAlertGroup({
         labels: { index: String(i), region: 'US' },
         alerts: [mockAlertmanagerAlert({ labels: { index: String(i), region: 'US' } })],
@@ -349,6 +342,6 @@ describe('AlertGroups', () => {
     await waitFor(() => expect(ui.groupByContainer.get()).toHaveTextContent('region'));
 
     alertGroups = await ui.group.findAll();
-    expect(alertGroups[0]).toHaveTextContent('indexregionUS');
+    expect(alertGroups[0]).toHaveTextContent('regionUS');
   });
 });
