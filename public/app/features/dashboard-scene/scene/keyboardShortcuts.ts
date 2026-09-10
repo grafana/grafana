@@ -155,7 +155,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Copy panel (available outside edit mode so it can be pasted into another dashboard)
   keybindings.addBinding({
     key: 'p c',
-    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanelWhenAllowed(scene, 'copy-panel', (vizPanel: VizPanel) => {
       DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
       scene.copyPanel(vizPanel);
       const panelName = vizPanel.state.title || '';

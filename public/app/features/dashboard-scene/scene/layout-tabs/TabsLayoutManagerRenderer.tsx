@@ -237,7 +237,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     tabsScrollArea: css({
-      backgroundColor: theme.colors.background.canvas,
       position: 'relative',
       flex: '0 1 auto',
       minWidth: 0,
