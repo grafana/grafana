@@ -6,7 +6,6 @@ describe('moment compatibility parity', () => {
   let originalDefaultLocale: typeof Settings.defaultLocale;
   let originalNow: typeof Settings.now;
 
-
   beforeEach(() => {
     originalLocale = moment.locale();
     originalDefaultLocale = Settings.defaultLocale;
@@ -19,7 +18,6 @@ describe('moment compatibility parity', () => {
     moment.locale(originalLocale);
     Settings.defaultLocale = originalDefaultLocale;
     Settings.now = originalNow;
-
   });
 
   describe('shared scalar duration inputs', () => {
@@ -32,7 +30,9 @@ describe('moment compatibility parity', () => {
     it.each([2, '2'])('applies an explicit unit to the numeric input %s', (input) => {
       expect(moment.duration(input, 'hours').asMilliseconds()).toBe(7200000);
       expect(moment.utc('2024-05-06T12:00:00Z').add(input, 'hours').toISOString()).toBe('2024-05-06T14:00:00.000Z');
-      expect(moment.utc('2024-05-06T12:00:00Z').subtract(input, 'hours').toISOString()).toBe('2024-05-06T10:00:00.000Z');
+      expect(moment.utc('2024-05-06T12:00:00Z').subtract(input, 'hours').toISOString()).toBe(
+        '2024-05-06T10:00:00.000Z'
+      );
     });
 
     it('parses a common compound ISO duration without dropping its date or time components', () => {
@@ -288,9 +288,7 @@ describe('moment compatibility parity', () => {
 
   describe('parsing and invalid values', () => {
     it('makes explicit ISO parsing authoritative instead of accepting an RFC fallback', () => {
-      expect(moment.utc('2024-05-06T12:00:00+02:00', moment.ISO_8601).toISOString()).toBe(
-        '2024-05-06T10:00:00.000Z'
-      );
+      expect(moment.utc('2024-05-06T12:00:00+02:00', moment.ISO_8601).toISOString()).toBe('2024-05-06T10:00:00.000Z');
       expect(moment.utc('Mon, 06 May 2024 12:00:00 GMT', moment.ISO_8601).isValid()).toBe(false);
     });
 

@@ -680,7 +680,7 @@ const FIELD_BY_UNIT: Partial<
 };
 
 function getLocaleFirstDayOfWeek(locale = currentLocale): number {
-  return localeOverrides.get(locale)?.dow ?? (Info.getStartOfWeek({ locale: normalizeLocale(locale) }) % 7);
+  return localeOverrides.get(locale)?.dow ?? Info.getStartOfWeek({ locale: normalizeLocale(locale) }) % 7;
 }
 
 function normalizeZoneName(name: string): string {
@@ -970,7 +970,7 @@ class MomentCompat implements MomentLike {
     if (value == null) {
       return this._locale;
     }
-    this._locale = localeOverrides.has(value) ? value : normalizeLocale(value) ?? DEFAULT_LOCALE;
+    this._locale = localeOverrides.has(value) ? value : (normalizeLocale(value) ?? DEFAULT_LOCALE);
     return this._setDt(this._dt.setLocale(normalizeLocale(value) ?? DEFAULT_LOCALE));
   }
 
@@ -1192,10 +1192,10 @@ function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?:
   const normalizedOptions = options?.zone ? { ...options, zone: normalizeZone(options.zone) } : options;
   const dt = normalizeInput(input, normalizedOptions, parseOptions);
   const locale = DateTime.isDateTime(input)
-    ? input.locale ?? DEFAULT_LOCALE
+    ? (input.locale ?? DEFAULT_LOCALE)
     : options?.locale && localeOverrides.has(options.locale)
       ? options.locale
-      : dt.locale ?? DEFAULT_LOCALE;
+      : (dt.locale ?? DEFAULT_LOCALE);
   return new MomentCompat(dt, locale);
 }
 

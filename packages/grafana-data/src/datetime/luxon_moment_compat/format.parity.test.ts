@@ -22,9 +22,9 @@ describe('localized padded L', () => {
 
     expect(date.toFormat(convertMomentToLuxonWithOrdinal('L'))).toBe('03/05/2024');
     expect(date.toFormat(convertMomentToLuxonWithOrdinal('L', 'de'))).toBe('05.03.2024');
-    expect(
-      DateTime.fromFormat('03/05/2024', convertMomentToLuxonForParsing('L'), { zone: 'UTC' }).toISODate()
-    ).toBe('2024-03-05');
+    expect(DateTime.fromFormat('03/05/2024', convertMomentToLuxonForParsing('L'), { zone: 'UTC' }).toISODate()).toBe(
+      '2024-03-05'
+    );
   });
 
   it('keeps cached conversions separate when alternating locales', () => {
