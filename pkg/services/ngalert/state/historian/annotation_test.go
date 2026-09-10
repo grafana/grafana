@@ -523,6 +523,18 @@ func TestConvertLabelsToTags(t *testing.T) {
 		require.Equal(t, []string{"z-valid:v"}, tags)
 	})
 
+	t.Run("accounts for JSON escaping after skipping a tag", func(t *testing.T) {
+		labels := data.Labels{
+			"a": "v",
+			"m": strings.Repeat("v", 20),
+			"z": `"""`,
+		}
+
+		tags := convertLabelsToTags(labels, 15)
+
+		require.Equal(t, []string{"a:v"}, tags)
+	})
+
 	t.Run("omits tags that exceed maxLength", func(t *testing.T) {
 		labels := data.Labels{
 			"label1": "value1",

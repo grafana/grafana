@@ -334,7 +334,15 @@ func convertLabelsToTagsWithLogger(labels data.Labels, maxLength int64, logger l
 
 		tag := fmt.Sprintf("%s:%s", safeKey, safeValue)
 		if maxLength > 0 {
-			tagLength := int64(len(tag) + 2)
+			encodedTag, err := json.Marshal(tag)
+			if err != nil {
+				logger.Warn("Skipping alert label as annotation tag because it cannot be JSON encoded",
+					"labelKey", k,
+					"error", err,
+				)
+				continue
+			}
+			tagLength := int64(len(encodedTag))
 			if len(tags) > 0 {
 				tagLength++
 			}
