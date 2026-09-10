@@ -188,9 +188,7 @@ export class TabsLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel) {
-    // A tabs layout with no tabs has nowhere to put a panel. The old `if (tab)` guard silently
-    // discarded it, telling the caller — the mutation API's ADD_PANEL included — that the panel had
-    // been added when it simply never appeared. Make a tab for it instead.
+    // Create a tab when the layout is empty so the panel has a destination.
     const tab = this.getCurrentTab() ?? this.state.tabs[0] ?? this.addNewTab();
     tab.getLayout().addPanel(vizPanel);
   }

@@ -73,9 +73,8 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
 
-        // Nest the existing layout inside the requested row as-is, preserving its structure
-        // (tabs, grid, etc.) — unless it is a section container with no sections, which has nothing
-        // to preserve and nowhere to put a panel. The mirror of the same case in ADD_TAB.
+        // Preserve the existing layout unless it is a section container with no sections.
+        // An empty grid can accept panels directly and should still be nested.
         targetLayout.clearParent();
         const preservesContent = !isEmptySectionContainer(targetLayout);
 

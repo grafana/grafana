@@ -1216,10 +1216,6 @@ describe('Layout mutation commands', () => {
     });
 
     it('gives the tab a usable grid when the rows it would nest are empty', async () => {
-      // Regression: a dashboard whose rows were just removed still has a RowsLayoutManager as its
-      // body. Nesting that empty layout preserved nothing and left the new tab holding a rows
-      // layout with no rows, which cannot accept a panel — so the panels of the first section of a
-      // plan converted to tabs were added, reported as added, and never appeared.
       const rowsBody = new RowsLayoutManager({ rows: [] });
       const scene = buildSceneWithLayoutParent(rowsBody);
       const executor = new DashboardMutationClient(scene);

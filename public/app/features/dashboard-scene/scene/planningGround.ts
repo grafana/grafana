@@ -4,13 +4,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 const DOT_GRID_SIZE = '11px 11px';
 
 /**
- * The ground a dashboard plan sits on: one step off the dashboard background, with a faint dot
- * grid — so the largest surface on the page says "plan" even where the per-panel signals cannot.
- * A panel the user added by hand carries no badge, and a plan below the fold or an empty one shows
- * no panels at all.
- *
- * Both surfaces anchor the grid to the viewport so the dots stay aligned across their seam,
- * regardless of the controls' height or the canvas's overlap beneath them.
+ * Shared preview background for the controls and canvas, including empty plans.
+ * Anchor the dot grid to the viewport to keep it aligned across both surfaces.
  */
 export function getPlanningGround(theme: GrafanaTheme2) {
   return {

@@ -288,9 +288,7 @@ export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<Viz
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
-  // Only resolved when the panel is going to carry a query: a plan preview has no business
-  // touching the datasource registry just to throw the result away — and, since main made this
-  // lookup async, no business awaiting it either.
+  // Resolve a datasource only for panels that will execute queries.
   const datasourceSettings = withQuery ? await getDataSourceInstanceSettings(null) : undefined;
 
   return new VizPanel({

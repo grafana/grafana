@@ -206,10 +206,6 @@ describe('RowsLayoutManager', () => {
     });
 
     it('makes a row for the panel when there are none, rather than dropping it', () => {
-      // Regression: this was `this.state.rows[0]?.getLayout().addPanel(vizPanel)`, so a rows layout
-      // with no rows silently swallowed the panel — the mutation API's ADD_PANEL reported success
-      // for panels that never appeared, which is how a dashboard plan converted to tabs lost its
-      // first section.
       const manager = buildRowsLayoutManager([]);
       const panel = new VizPanel({ key: 'panel-1', title: 'Request rate', pluginId: 'timeseries' });
 

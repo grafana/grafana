@@ -208,11 +208,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       return;
     }
 
-    // `openPanelEditor` refuses this too; releasing the hold here is what stops the refusal being
-    // sticky. `?editPanel=<id>` does linger in the address bar for as long as the plan is previewed
-    // — this sync is declarative, and forcing a rewrite from inside `updateFromUrl` would fight it —
-    // but with the hold released the next state change writes the param out, so the stale value is
-    // gone the moment planning ends rather than re-opening the pane on a now-real panel.
+    // Release the URL hold so the next state change clears editPanel. URL sync is
+    // declarative; rewriting it inside updateFromUrl would conflict with that lifecycle.
     if (!this._scene.isPlanningActionAllowed('edit-panel')) {
       this._releaseEditPanel();
       return;

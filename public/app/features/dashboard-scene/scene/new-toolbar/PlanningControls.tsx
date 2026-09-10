@@ -11,21 +11,9 @@ import { type DashboardPlanningState } from '../types/dashboard';
 import { PlanningBanner } from './PlanningBanner';
 
 /**
- * Everything the controls slot holds while a dashboard plan is on screen: the plan's action bar,
- * and the plan's variables.
- *
- * The variables are here because they are part of what the user is being asked to approve — a plan
- * can propose them, the scaffolder creates them, and Build reads them back. Previously this slot
- * rendered the banner *instead of* `DashboardControls`, which took the variable bar down with the
- * time picker and left the user approving a structure they could not see.
- *
- * `DashboardControls` itself is still not rendered, and that is deliberate rather than incidental:
- * it also hosts `DashboardControlActions` (save, settings, share), which speak about a dashboard
- * that does not exist yet. Composing the two pieces the plan needs is what keeps those out.
- *
- * The time picker stays gone. Placeholder panels carry seeded data with no query runner, so a time
- * range would control nothing while implying the numbers respond to it — the same misread the
- * `Sample data` badge exists to prevent.
+ * Compose plan actions and variables so users can review the proposed variables
+ * without exposing DashboardControls' save/settings/share actions. Omit the time
+ * picker because sample data has no query runner to respond to a time range.
  */
 export function PlanningControls({
   dashboard,
@@ -66,12 +54,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottom: `1px solid ${theme.colors.primary.borderTransparent}`,
     }),
     /**
-     * On the plan's ground rather than the bar's background, because the variables belong to the
-     * dashboard being planned — they are part of what the user is approving, not part of the
-     * approve/discard chrome above them. Grouping them with the banner read as the opposite.
-     *
-     * The whole ground is shared with the canvas — colour and dot grid — so the strip reads as the
-     * top of the plan surface rather than a plain band above it, and so the two cannot drift.
+     * Share the canvas background so variables appear as part of the editable plan.
      */
     variables: css({
       display: 'flex',

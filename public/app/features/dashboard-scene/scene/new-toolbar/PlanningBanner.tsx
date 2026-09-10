@@ -8,12 +8,8 @@ import { Button, Icon, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { type DashboardPlanningState } from '../types/dashboard';
 
 /**
- * The action bar for a dashboard plan that has not been built yet: what the plan is, how big it is,
- * and the only two things the user can do with it.
- *
- * It stands in for the dashboard's normal actions rather than sitting beside them. Save, settings
- * and sharing all speak about a dashboard that does not exist yet — the plan on screen is a
- * proposal, and the user's next move is to accept it or throw it away.
+ * Plan actions replace normal dashboard actions until the user builds or dismisses
+ * the proposal.
  */
 export function PlanningBanner({ planning }: { planning: DashboardPlanningState }) {
   const { planTitle, panelCount, onBuild, onDismiss } = planning;
@@ -83,9 +79,7 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     /**
-     * The banner names the mode in words, and until this it never used the word. The title, the
-     * panel count and the stake all describe the thing without ever saying what it is. A label
-     * rather than a prefix on the title, so a long title truncating cannot take it with it.
+     * Keep the mode label separate so it stays visible when a long title truncates.
      */
     planLabel: css({
       flexShrink: 0,
@@ -106,11 +100,6 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
     }),
-    /**
-     * "Dismiss / Build" names the two actions but never the consequence, and the consequence is the
-     * part the user cannot infer: nothing has been saved and no dashboard exists yet. Stated the way
-     * Google Docs' Suggesting pill and GitHub's branch-state bars do it — the stake, not the mode.
-     */
     stake: css({
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',

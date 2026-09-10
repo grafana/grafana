@@ -1,20 +1,7 @@
 /**
- * What a user may do to a dashboard plan that has not been built yet.
- *
- * A plan preview runs in the dashboard's normal edit mode, which is a superset of what makes sense
- * for it: the panels are placeholders standing in for queries nobody has written, and much of edit
- * mode assumes a real dashboard behind them. Rather than patch each affordance where it is drawn,
- * planning declares its policy once, here, and every surface asks the same question.
- *
- * Two things this file is deliberately shaped around:
- *
- * - **Membership is expected to change.** Which actions belong on a plan is a product question that
- *   will keep moving as the preview gets used. Settling it should be an edit to the set below, not
- *   an audit of every call site.
- * - **Asking is not enforcing.** Hiding a button does not disable the action: URLs and keyboard
- *   shortcuts route around the UI. Every denied action needs its check where the action is
- *   *applied*, and the surface that draws its control should ask the same question so the control
- *   does not appear in the first place.
+ * Shared action policy for query-less dashboard previews, which run in edit mode.
+ * Check the policy both when rendering controls and when applying actions, since
+ * URLs, keyboard shortcuts, and drag-and-drop can bypass visible controls.
  */
 
 /** An action a user can take on a dashboard, named so planning can allow or deny it. */
@@ -68,10 +55,7 @@ const DENIED_WHILE_PLANNING: ReadonlySet<PlanningAction> = new Set<PlanningActio
   'copy-section',
   'paste-section',
 
-  // Sharing a panel — link, embed, or snapshot — hands someone a view of a panel that does not
-  // exist yet. A snapshot is the sharpest case: it bakes the panel's current data into the shared
-  // artifact, which for a placeholder means shipping the preview's synthetic sample as though it
-  // were measured. It is the only route by which that sample could leave the preview.
+  // Sharing and snapshots can expose synthetic placeholder data as dashboard results.
   'share-panel',
 
   // A library panel brings its own queries, so it cannot be added in placeholder form.

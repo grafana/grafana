@@ -74,20 +74,15 @@ export interface DashboardSceneState extends SceneObjectState {
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
   /**
-   * Set while an unbuilt dashboard plan is being previewed on this scene. The plan's panels are
-   * scaffolded as real but query-less panels so the user can judge the layout before committing to
-   * a build. Presence of this state is what puts the scene into planning mode: the toolbar shows the
-   * plan's banner instead of save/settings/sharing, dashboard controls are hidden, and panels added
-   * by hand stay query-less.
+   * Enables plan mode on this scene: panels stay query-less and plan actions replace
+   * save/settings/share. Variables remain editable for review before the build.
    */
   planning?: DashboardPlanningState;
 }
 
 export interface DashboardPlanningState {
   /**
-   * Identifies the plan on screen, so whoever put the dashboard into planning mode can take it
-   * back out again without having to prove it still holds any other bookkeeping about the plan.
-   * Opaque to the dashboard: it only ever compares it for equality.
+   * Opaque identity used to match a plan decision to the preview currently on screen.
    */
   planId: string;
   /** Title of the plan being previewed, shown in the banner. */

@@ -15,12 +15,9 @@ export interface DashboardMutationResult {
 }
 
 /**
- * Optional, version-gated behaviours of the Grafana build serving this API.
- *
- * Declared statically rather than discovered through `getAvailableCommands()`, because a plugin
- * ships independently of core and needs to answer "does this build support X" before any document
- * is mounted — the command list is empty until a dashboard scene activates, which says nothing
- * about the build. A capability absent from this object means a core too old to know about it.
+ * Capabilities of the Grafana build, available before any dashboard scene activates.
+ * Plugins deploy independently of core, so missing capabilities mean unsupported.
+ * The scene-dependent command list cannot be used for this check.
  */
 export interface DashboardMutationCapabilities {
   /**

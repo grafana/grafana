@@ -754,9 +754,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // An unbuilt plan is a preview, not the user's work. Every save entry point funnels through
-    // here (toolbar, the mod+s keybinding, the exit-edit-mode confirm), so guarding this one method
-    // is what keeps the planning banner's promise that saving isn't on offer yet.
+    // All save entry points, including keyboard shortcuts and exit-edit confirmation,
+    // share this guard to keep unbuilt plans from being saved.
     if (!this.isPlanningActionAllowed('save-dashboard')) {
       return;
     }

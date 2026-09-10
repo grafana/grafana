@@ -40,9 +40,8 @@ describe('PlanningControls', () => {
   it('renders no variable content for a plan that declares none', () => {
     setup();
 
-    // The row itself is collapsed by a CSS `:empty` rule, which jsdom does not apply — that half is
-    // verified live. What is checked here is that nothing from VariableControls reaches the DOM, so
-    // the rule has an empty element to act on.
+    // jsdom does not apply the CSS :empty rule; assert that VariableControls leaves
+    // the row empty so the browser can collapse it.
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.queryByText('handler')).not.toBeInTheDocument();
   });

@@ -289,21 +289,12 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0, 2, 2, 2),
     }),
     /**
-     * A plan preview is not a dashboard, and it must not be mistaken for one by a reader whose
-     * attention is on the canvas rather than the banner above it. Dashed panel borders read as
-     * "draft" at a glance without obscuring the layout, which is the one thing the preview exists
-     * to let the user judge.
-     *
-     * Selector note: the bordered element is PanelChrome's <section>, whose emotion class is not a
-     * stable hook (labels are stripped in production builds). `data-viz-panel-key` is set by the
-     * scenes VizPanel renderer on the wrapper around it and is stable.
+     * Dashed borders distinguish placeholder panels while preserving the layout.
+     * Target PanelChrome through the stable data-viz-panel-key wrapper; Emotion class
+     * labels are stripped in production.
      */
     planningCanvas: css({
-      // The canvas is the largest surface on the page and said nothing. A tint one step off the
-      // dashboard ground plus a faint dot grid reads in peripheral vision, and — unlike the panel
-      // treatments below — it still says "plan" in the three cases they miss: a panel the user adds
-      // by hand (no seeded data, so no badge), a plan whose panels are all below the fold, and a
-      // plan with nothing in it at all.
+      // The shared background identifies the preview even when no panels or badges are visible.
       ...getPlanningGround(theme),
       boxShadow: `inset 0 0 0 1px ${theme.colors.primary.borderTransparent}`,
       '[data-viz-panel-key] section': {

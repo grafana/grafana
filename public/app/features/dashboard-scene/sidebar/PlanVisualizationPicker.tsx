@@ -10,15 +10,9 @@ import { PanelVizTypePicker } from '../panel-edit/PanelVizTypePicker';
 import { getDashboardSceneFor } from '../utils/utils';
 
 /**
- * Change a planned panel's visualization without entering panel edit.
- *
- * The picker itself is the one the panel editor uses; only its host is new. A plan preview refuses
- * panel edit — it would give the placeholder a live query — so without this the one thing a plan is
- * most likely to need changing would have nowhere to be changed from.
- *
- * Unlike the editor's version this does not cache options across plugin switches: a placeholder's
- * options belong to the sample being drawn, not to anything the user authored, so there is nothing
- * worth restoring if they switch back.
+ * Use the visualization picker without opening the panel editor, which adds queries.
+ * Do not cache options across switches: placeholder options describe the sample data
+ * for the current visualization.
  */
 export function PlanVisualizationPicker({ panel }: { panel: VizPanel }) {
   const [isPickerOpen, setPickerOpen] = useState(false);

@@ -91,14 +91,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   /**
-   * A previewed plan replaces the dashboard's normal controls with its own: `PlanningControls`
-   * carries the plan's action bar and the plan's variables, and deliberately does not render
-   * `DashboardControls`, which also hosts save/settings/share. The time picker stays out — a plan's
-   * panels have no queries, so a time range would control nothing.
-   *
-   * Only the new toolbar routes through here. It keeps Save and friends in this very bar, so the
-   * plan's bar takes their place; the legacy toolbar keeps them in the app chrome, where
-   * NavToolbarActions swaps them instead and this bar stays empty.
+   * PlanningControls exposes the plan actions and variables without save/settings/share
+   * or a time picker, since placeholders have no queries. The legacy toolbar supplies
+   * plan actions through NavToolbarActions in app chrome.
    */
   function renderControls() {
     if (planning) {

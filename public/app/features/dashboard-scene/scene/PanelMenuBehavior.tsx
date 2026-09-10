@@ -52,11 +52,8 @@ import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
 /**
- * The panel menu for a placeholder on an unbuilt plan.
- *
- * Deliberately short: the actions that make sense are the ones that change the *plan* — how the
- * panel is drawn, whether there are more or fewer of them — not the ones that interrogate data the
- * panel does not have yet.
+ * Placeholder menus expose layout and visualization edits. Data actions require
+ * queries that are only added during the build.
  */
 function buildPlanningMenuItems(panel: VizPanel, dashboard: DashboardScene): PanelMenuItem[] {
   const items: PanelMenuItem[] = [];
@@ -102,12 +99,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const { isEmbedded } = dashboard.state.meta;
     const isReadOnlyRepeat = isRepeatCloneOrChildOf(panel);
 
-    // A plan preview gets its own menu rather than the dashboard's minus exclusions. Most of what
-    // follows speaks about a panel with a query behind it — inspect, alerting, explore, sharing —
-    // and a placeholder has none, so listing them and disabling them one by one would be both more
-    // code and a worse menu. The policy in planningPolicy.ts decides what belongs. Checked before
-    // resolving the explore link below: a placeholder panel has no query to explore, so that lookup
-    // would only be thrown away.
+    // Return the planning menu before resolving data actions such as the Explore link;
+    // placeholders have no queries to inspect or explore.
     if (dashboard.isPlanning()) {
       menu.setState({ items: buildPlanningMenuItems(panel, dashboard) });
       return;

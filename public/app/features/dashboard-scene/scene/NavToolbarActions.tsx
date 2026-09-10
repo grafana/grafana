@@ -43,10 +43,8 @@ export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const { planning } = dashboard.useState();
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
 
-  // Branching here rather than inside either toolbar is what makes the promise structural: both
-  // the new and legacy toolbars pass through this component, so there is no arrangement of feature
-  // toggles in which an unbuilt plan still offers Save. Breadcrumb actions (star, badges) go with
-  // them — they all speak about a dashboard that does not exist yet.
+  // Apply the planning policy before choosing a toolbar so both variants and their
+  // breadcrumb actions respect the same restrictions.
   if (planning) {
     return <AppChromeUpdate actions={<PlanningBanner planning={planning} />} />;
   }

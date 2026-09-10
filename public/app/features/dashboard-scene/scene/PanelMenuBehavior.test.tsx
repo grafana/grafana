@@ -642,9 +642,6 @@ describe('panelMenuBehavior', () => {
     });
 
     it('does not resolve an explore link for a placeholder panel while planning', async () => {
-      // Regression: the explore link was resolved before the isPlanning() check discarded it, so
-      // every menu open on a plan preview paid for a lookup its own placeholder panel has no query
-      // to answer.
       const { scene, menu, panel } = await buildTestScene({});
 
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });

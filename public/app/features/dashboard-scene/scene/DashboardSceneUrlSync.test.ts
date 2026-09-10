@@ -283,8 +283,6 @@ describe('DashboardSceneUrlSync', () => {
     };
 
     it('does not open the share drawer from a shareView url param', () => {
-      // Regression: the toolbar and Share button both respect isPlanningActionAllowed, but a
-      // bookmarked or hand-edited ?shareView= url reached the drawer straight from url sync.
       const scene = buildTestScene();
       scene.setState({ planning });
 
@@ -295,9 +293,6 @@ describe('DashboardSceneUrlSync', () => {
     });
 
     it('does not open dashboard settings from an editview url param', () => {
-      // Regression: onOpenSettings and the `d s` keybinding both respect isPlanningActionAllowed,
-      // but a bookmarked or hand-edited ?editview= url reached the settings view straight from url
-      // sync.
       const scene = buildTestScene();
       scene.setState({ planning });
 

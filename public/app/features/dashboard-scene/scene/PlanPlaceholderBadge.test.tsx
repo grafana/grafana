@@ -15,9 +15,7 @@ import { PlanPlaceholderBadge } from './PlanPlaceholderBadge';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 describe('PlanPlaceholderBadge', () => {
-  // Pressing Build clears planning state at once, but the seeded data stays on the panels until the
-  // build's first APPLY_SPEC lands. The badge has to cover that window: it is the only interval in
-  // which the invented numbers are on screen with no sign saying so.
+  // Sample data remains visible after Build clears planning state, until APPLY_SPEC replaces it.
   it('keeps the sample data label after planning ends, while the sample is still on the panel', () => {
     const { dashboard } = setup(new SceneDataNode({}));
 

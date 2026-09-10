@@ -254,9 +254,6 @@ describe('TabsLayoutManager', () => {
 
   describe('addPanel', () => {
     it('makes a tab for the panel when there are none, rather than dropping it', () => {
-      // Regression: the old `if (tab)` guard silently swallowed the panel when the layout had no
-      // tabs, so the caller was told it had been added and it never appeared. The mirror of the
-      // same defect in RowsLayoutManager.
       const manager = buildTabsLayoutManager([]);
       const panel = new VizPanel({ key: 'panel-1', title: 'Request rate', pluginId: 'timeseries' });
 

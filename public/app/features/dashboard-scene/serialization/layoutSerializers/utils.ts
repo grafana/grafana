@@ -58,12 +58,8 @@ import { normalizeTransformation } from '../transformationCompat';
  */
 export interface BuildVizPanelOptions {
   /**
-   * Build the panel with no query runner at all.
-   *
-   * Without this a panel whose spec carries no queries still gets one: the data provider substitutes
-   * a default query so a newly added panel arrives ready to edit. That is the right default almost
-   * everywhere, and exactly wrong for a dashboard plan preview, where the panels are placeholders
-   * standing in for queries that have not been written yet and must not hit a datasource.
+   * Omit the query runner for plan placeholders. An empty query list alone still
+   * receives the default datasource query during normal panel creation.
    */
   withoutQueries?: boolean;
 }

@@ -217,9 +217,7 @@ describe('NavToolbarActions', () => {
 });
 
 describe('when previewing an unbuilt dashboard plan', () => {
-  // Rendered through NavToolbarActions rather than ToolbarActions: the wrapper is what chooses
-  // between the new and legacy toolbars, and testing the legacy one directly missed that the new
-  // toolbar — the default under dashboardNewLayouts — never saw the planning state at all.
+  // Render through the shared wrapper to cover planning behavior in both toolbar variants.
   function setupPlanning(planningOverrides: Partial<DashboardPlanningState> = {}) {
     const onBuild = jest.fn();
     const onDismiss = jest.fn();

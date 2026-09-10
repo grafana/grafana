@@ -11,10 +11,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
  * by the time this returns.
  */
 export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel, isNewPanel = false) {
-  // Enforced here rather than only on the menu item that opens it: panel edit is reachable by URL
-  // (`?editPanel=<id>`) and by keyboard, and on a plan preview it is not merely useless but
-  // destructive — the editor supplies a default query for a panel that has none, turning a
-  // placeholder into a live-querying panel. Every route in passes through this function.
+  // Guard all editor entry points, including URLs and keyboard shortcuts. The editor
+  // adds a default query to empty panels, which is incompatible with plan placeholders.
   if (!dashboard.isPlanningActionAllowed('edit-panel')) {
     return;
   }
