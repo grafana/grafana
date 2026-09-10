@@ -9,6 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
+import { TruncatedText } from '../Text/TruncatedText';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent } from '../Tooltip/types';
 
@@ -23,6 +24,16 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
 
 const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
   const styles = useStyles2(getStyles, color);
+
+  const textElement = (ref?: React.ForwardedRef<HTMLElement>) => (
+    <span className={styles.text} ref={ref}>
+      {text}
+    </span>
+  );
+
+  const textNode =
+    !tooltip && text != null ? <TruncatedText childElement={textElement}>{text}</TruncatedText> : textElement();
+
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && (
@@ -30,7 +41,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
           <Icon name={icon} size="sm" />
         </span>
       )}
-      {text}
+      {textNode}
     </div>
   );
 
@@ -88,12 +99,25 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       theme.flags.visualDesignRefresh && {
         padding: '1px 6px',
         borderRadius: theme.shape.radius.pill,
+        // lets the badge shrink below its content size when a flex/grid parent constrains it
+        minWidth: 0,
       }
     ),
     iconWrap: css({
       display: 'inline-flex',
       alignItems: 'center',
       height: '1lh',
+      // keep the icon from being squeezed once the text starts truncating
+      flexShrink: 0,
     }),
+    text: css(
+      theme.flags.visualDesignRefresh && {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        // flex items default to min-width: auto (their own content size); override so nowrap text can shrink
+        minWidth: 0,
+      }
+    ),
   };
 };
