@@ -1,25 +1,18 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, usePrevious } from 'react-use';
 
-import { type DataFrame, type GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
-import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { CollapsedMap, FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
-import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import {
-  MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH,
-  MIN_WIDTH_FOR_SPLIT_VIEW,
-  FLAMEGRAPH_CONTAINER_HEIGHT,
-} from './constants';
-import { useColorScheme } from './hooks';
-import { type ClickedItemData, PaneView, SelectedView, type TextAlign, ViewMode } from './types';
+import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
+import { PaneView, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
@@ -94,7 +87,9 @@ export type Props = {
   showAnalyzeWithAssistant?: boolean;
 
   /**
-   * Enable the new pane-based UI with call tree support.
+   * No longer has any effect. The pane-based UI with call tree support is always used now. Kept so that existing
+   * consumers passing this prop don't get a compile error.
+   * @deprecated
    */
   enableNewUI?: boolean;
 };
@@ -114,337 +109,9 @@ const FlameGraphContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
-  enableNewUI,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
 
-  if (enableNewUI) {
-    return (
-      <NewUIContainer
-        data={data}
-        onTableSymbolClick={onTableSymbolClick}
-        onViewSelected={onViewSelected}
-        onTextAlignSelected={onTextAlignSelected}
-        onTableSort={onTableSort}
-        theme={theme}
-        stickyHeader={stickyHeader}
-        extraHeaderElements={extraHeaderElements}
-        vertical={vertical}
-        showFlameGraphOnly={showFlameGraphOnly}
-        disableCollapsing={disableCollapsing}
-        keepFocusOnDataChange={keepFocusOnDataChange}
-        getExtraContextMenuButtons={getExtraContextMenuButtons}
-        showAnalyzeWithAssistant={showAnalyzeWithAssistant}
-      />
-    );
-  }
-
-  return (
-    <LegacyContainer
-      data={data}
-      onTableSymbolClick={onTableSymbolClick}
-      onViewSelected={onViewSelected}
-      onTextAlignSelected={onTextAlignSelected}
-      onTableSort={onTableSort}
-      theme={theme}
-      stickyHeader={stickyHeader}
-      extraHeaderElements={extraHeaderElements}
-      vertical={vertical}
-      showFlameGraphOnly={showFlameGraphOnly}
-      disableCollapsing={disableCollapsing}
-      keepFocusOnDataChange={keepFocusOnDataChange}
-      getExtraContextMenuButtons={getExtraContextMenuButtons}
-      showAnalyzeWithAssistant={showAnalyzeWithAssistant}
-    />
-  );
-};
-
-type InternalProps = {
-  data?: DataFrame;
-  onTableSymbolClick?: (symbol: string) => void;
-  onViewSelected?: (view: string) => void;
-  onTextAlignSelected?: (align: string) => void;
-  onTableSort?: (sort: string) => void;
-  theme: GrafanaTheme2;
-  stickyHeader?: boolean;
-  extraHeaderElements?: React.ReactNode;
-  vertical?: boolean;
-  showFlameGraphOnly?: boolean;
-  disableCollapsing?: boolean;
-  keepFocusOnDataChange?: boolean;
-  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
-  showAnalyzeWithAssistant: boolean;
-};
-
-const LegacyContainer = ({
-  data,
-  onTableSymbolClick,
-  onViewSelected,
-  onTextAlignSelected,
-  onTableSort,
-  theme,
-  stickyHeader,
-  extraHeaderElements,
-  vertical,
-  showFlameGraphOnly,
-  disableCollapsing,
-  keepFocusOnDataChange,
-  getExtraContextMenuButtons,
-  showAnalyzeWithAssistant,
-}: InternalProps) => {
-  const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
-
-  const [rangeMin, setRangeMin] = useState(0);
-  const [rangeMax, setRangeMax] = useState(1);
-  const [search, setSearch] = useState('');
-  const [selectedView, setSelectedView] = useState(SelectedView.Both);
-  const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  const [textAlign, setTextAlign] = useState<TextAlign>('left');
-  // This is a label of the item because in sandwich view we group all items by label and present a merged graph
-  const [sandwichItem, setSandwichItem] = useState<string>();
-  const [collapsedMap, setCollapsedMap] = useState(new CollapsedMap());
-
-  // Use refs to hold the latest callback values to prevent unnecessary re-renders
-  const onTableSymbolClickRef = useRef(onTableSymbolClick);
-  const onTableSortRef = useRef(onTableSort);
-
-  // Update refs when props change
-  onTableSymbolClickRef.current = onTableSymbolClick;
-  onTableSortRef.current = onTableSort;
-
-  const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
-    if (!data) {
-      return;
-    }
-
-    const container = new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
-    setCollapsedMap(container.getCollapsedMap());
-    return container;
-  }, [data, theme, disableCollapsing]);
-  const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
-  const styles = getStyles(theme);
-  const matchedLabels = useLabelSearch(search, dataContainer);
-
-  // If user resizes window with both as the selected view
-  useEffect(() => {
-    if (
-      containerWidth > 0 &&
-      containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH &&
-      selectedView === SelectedView.Both &&
-      !vertical
-    ) {
-      setSelectedView(SelectedView.FlameGraph);
-    }
-  }, [selectedView, setSelectedView, containerWidth, vertical]);
-
-  const resetFocus = useCallback(() => {
-    setFocusedItemData(undefined);
-    setRangeMin(0);
-    setRangeMax(1);
-  }, [setFocusedItemData, setRangeMax, setRangeMin]);
-
-  const resetSandwich = useCallback(() => {
-    setSandwichItem(undefined);
-  }, [setSandwichItem]);
-
-  useEffect(() => {
-    if (!keepFocusOnDataChange) {
-      resetFocus();
-      resetSandwich();
-      return;
-    }
-
-    if (dataContainer && focusedItemData) {
-      const item = dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
-
-      if (item) {
-        setFocusedItemData({ ...focusedItemData, item });
-
-        const levels = dataContainer.getLevels();
-        const totalViewTicks = levels.length ? levels[0][0].value : 0;
-        setRangeMin(item.start / totalViewTicks);
-        setRangeMax((item.start + item.value) / totalViewTicks);
-      } else {
-        setFocusedItemData({
-          ...focusedItemData,
-          item: {
-            start: 0,
-            value: 0,
-            itemIndexes: [],
-            children: [],
-            level: 0,
-          },
-        });
-
-        setRangeMin(0);
-        setRangeMax(1);
-      }
-    }
-  }, [dataContainer, keepFocusOnDataChange]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const onSymbolClick = useCallback(
-    (symbol: string) => {
-      const anchored = `^${escapeStringForRegex(symbol)}$`;
-
-      if (search === anchored) {
-        setSearch('');
-      } else {
-        onTableSymbolClickRef.current?.(symbol);
-        setSearch(anchored);
-        resetFocus();
-      }
-    },
-    [setSearch, resetFocus, search]
-  );
-
-  // Memoize methods to prevent unnecessary re-renders of FlameGraphTopTableContainer
-  const onSearch = useCallback(
-    (str: string) => {
-      if (!str) {
-        setSearch('');
-        return;
-      }
-      setSearch(`^${escapeStringForRegex(str)}$`);
-    },
-    [setSearch]
-  );
-  const onSandwich = useCallback(
-    (label: string) => {
-      resetFocus();
-      setSandwichItem(label);
-    },
-    [resetFocus, setSandwichItem]
-  );
-  const onTableSortStable = useCallback((sort: string) => {
-    onTableSortRef.current?.(sort);
-  }, []);
-
-  if (!dataContainer) {
-    return null;
-  }
-
-  const flameGraph = (
-    <FlameGraph
-      data={dataContainer}
-      rangeMin={rangeMin}
-      rangeMax={rangeMax}
-      matchedLabels={matchedLabels}
-      setRangeMin={setRangeMin}
-      setRangeMax={setRangeMax}
-      onItemFocused={(data) => setFocusedItemData(data)}
-      focusedItemData={focusedItemData}
-      textAlign={textAlign}
-      sandwichItem={sandwichItem}
-      onSandwich={onSandwich}
-      onFocusPillClick={resetFocus}
-      onSandwichPillClick={resetSandwich}
-      colorScheme={colorScheme}
-      showFlameGraphOnly={showFlameGraphOnly}
-      collapsing={!disableCollapsing}
-      getExtraContextMenuButtons={getExtraContextMenuButtons}
-      selectedView={selectedView}
-      search={search}
-      collapsedMap={collapsedMap}
-      setCollapsedMap={setCollapsedMap}
-    />
-  );
-
-  const table = (
-    <FlameGraphTopTableContainer
-      data={dataContainer}
-      onSymbolClick={onSymbolClick}
-      search={search}
-      matchedLabels={matchedLabels}
-      sandwichItem={sandwichItem}
-      onSandwich={setSandwichItem}
-      onSearch={onSearch}
-      onTableSort={onTableSortStable}
-      colorScheme={colorScheme}
-    />
-  );
-
-  let body;
-  if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
-    body = flameGraph;
-  } else if (selectedView === SelectedView.TopTable) {
-    body = <div className={styles.tableContainer}>{table}</div>;
-  } else if (selectedView === SelectedView.Both) {
-    if (vertical) {
-      body = (
-        <div>
-          <div className={styles.verticalGraphContainer}>{flameGraph}</div>
-          <div className={styles.verticalTableContainer}>{table}</div>
-        </div>
-      );
-    } else {
-      body = (
-        <div className={styles.horizontalContainer}>
-          <div className={styles.horizontalTableContainer}>{table}</div>
-          <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
-        </div>
-      );
-    }
-  }
-
-  return (
-    // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
-    // isn't already provided.
-    <ThemeContext.Provider value={theme}>
-      <div ref={sizeRef} className={styles.container}>
-        {!showFlameGraphOnly && (
-          <FlameGraphHeader
-            search={search}
-            setSearch={setSearch}
-            selectedView={selectedView}
-            setSelectedView={(view) => {
-              setSelectedView(view);
-              onViewSelected?.(view);
-            }}
-            containerWidth={containerWidth}
-            onReset={() => {
-              resetFocus();
-              resetSandwich();
-            }}
-            textAlign={textAlign}
-            onTextAlignChange={(align) => {
-              setTextAlign(align);
-              onTextAlignSelected?.(align);
-            }}
-            showResetButton={Boolean(focusedItemData || sandwichItem)}
-            colorScheme={colorScheme}
-            onColorSchemeChange={setColorScheme}
-            stickyHeader={Boolean(stickyHeader)}
-            extraHeaderElements={extraHeaderElements}
-            vertical={vertical}
-            isDiffMode={dataContainer.isDiffFlamegraph()}
-            setCollapsedMap={setCollapsedMap}
-            collapsedMap={collapsedMap}
-            assistantContext={data && showAnalyzeWithAssistant ? getAssistantContextFromDataFrame(data) : undefined}
-          />
-        )}
-
-        <div className={styles.body}>{body}</div>
-      </div>
-    </ThemeContext.Provider>
-  );
-};
-
-const NewUIContainer = ({
-  data,
-  onTableSymbolClick,
-  onViewSelected,
-  onTextAlignSelected,
-  onTableSort,
-  theme,
-  stickyHeader,
-  extraHeaderElements,
-  vertical,
-  showFlameGraphOnly,
-  disableCollapsing,
-  keepFocusOnDataChange,
-  getExtraContextMenuButtons,
-  showAnalyzeWithAssistant,
-}: InternalProps) => {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [leftPaneView, setLeftPaneView] = useState<PaneView>(PaneView.TopTable);
@@ -602,11 +269,12 @@ const NewUIContainer = ({
   }
 
   return (
+    // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
+    // isn't already provided.
     <ThemeContext.Provider value={theme}>
       <div ref={sizeRef} className={styles.container}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
-            enableNewUI={true}
             search={search}
             setSearch={setSearch}
             viewMode={viewMode}
@@ -734,12 +402,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
     }),
 
-    tableContainer: css({
-      // This is not ideal for dashboard panel where it creates a double scroll. In a panel it should be 100% but then
-      // in explore we need a specific height.
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
-    }),
-
     horizontalContainer: css({
       label: 'horizontalContainer',
       display: 'flex',
@@ -747,26 +409,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'row',
       columnGap: theme.spacing(1),
       width: '100%',
-    }),
-
-    horizontalGraphContainer: css({
-      flexBasis: '50%',
-      minWidth: 0,
-    }),
-
-    horizontalTableContainer: css({
-      flexBasis: '50%',
-      minWidth: 0,
-      maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT,
-      overflow: 'auto',
-    }),
-
-    verticalGraphContainer: css({
-      marginBottom: theme.spacing(1),
-    }),
-
-    verticalTableContainer: css({
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
     }),
 
     verticalContainer: css({
