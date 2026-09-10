@@ -607,7 +607,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/AccesscontrolStatus"
+              "$ref": "#/components/schemas/AccessControlStatus"
             }
           }
         },
@@ -2050,7 +2050,7 @@
       }
     },
     "schemas": {
-      "AccesscontrolStatus": {
+      "AccessControlStatus": {
         "properties": {
           "enabled": {
             "type": "boolean"
@@ -3257,10 +3257,6 @@
         },
         "title": "Authorization contains HTTP authorization credentials.",
         "type": "object"
-      },
-      "BackendStatus": {
-        "format": "int64",
-        "type": "integer"
       },
       "BacktestConfig": {
         "properties": {
@@ -5018,7 +5014,6 @@
       },
       "DsPermissionType": {
         "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
-        "enum": [0, 1, 2],
         "format": "int64",
         "type": "integer"
       },

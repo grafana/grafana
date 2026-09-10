@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Унаследованные от папки",
-      "locked-aria-label": "Индикатор заблокированных разрешений",
       "remove-aria-label": "Удалить разрешение для {{identifier}}",
       "tooltip-inherited-permission": "Унаследованное разрешение",
       "tooltip-provisioned-permission": "Предоставленное разрешение"
@@ -2707,7 +2706,9 @@
       "view-in-explore": "Посмотреть в Explore"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Параметры",
+      "invalid-interval-error": "",
       "label-time-range": "Временной диапазон",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Мин. интервал = {{minInterval}}"
@@ -3296,6 +3297,7 @@
         "disable-confirm-title": "Отключить автосинхронизацию с Mimir Alertmanager?",
         "disable-success": "Автосинхронизация с Mimir Alertmanager отключена",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Значение задается ключом <1>[unified_alerting] external_alertmanager_uid</1> в файле grafana.ini. Его не нельзя изменить через пользовательский интерфейс. Чтобы настроить синхронизацию здесь, измените файл конфигурации и перезапустите Grafana или удалите ключ.",
         "operator-managed-title": "Управляется оператором",
         "orphan-warning": "Недоступен UID настроенного источника данных {{uid}}. Чтобы продолжить, отключите синхронизацию или восстановите источник данных.",
@@ -3304,6 +3306,7 @@
         "picker-label": "Источник данных",
         "picker-placeholder": "Выберите источник данных Mimir или Cortex Alertmanager…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Для сохранения выберите источник данных Mimir или Cortex Alertmanager.",
         "save-disabled-staged-config": "",
         "save-error": "Не удалось сохранить автосинхронизацию с Mimir Alertmanager",
@@ -3402,7 +3405,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Обработчики оповещений",
+        "alert-managers": "",
         "import": "Импорт"
       }
     },
@@ -6103,11 +6106,13 @@
     "notebook-layout": {
       "description": "Вертикальная последовательность панелей, текста и ячеек кода",
       "name": "Заметки",
-      "pill": "Опубликованные заметки",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Время"
+      "time": "Время",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6134,6 +6139,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "На день раньше",
         "compare-month-before": "Предыдущий месяц",
         "compare-week-before": "Предыдущая неделя",
@@ -6388,6 +6398,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Аннотации",
         "description": "Описание",
@@ -6491,17 +6514,6 @@
           "empty": "(пусто)",
           "no-title": "<нет заголовка>"
         }
-      },
-      "predefined-variables": {
-        "all": "Все",
-        "description": "",
-        "folder": "Папка",
-        "global": "Глобальные",
-        "label": "Предустановленные переменные",
-        "none": "Нет",
-        "pane-header": "Предустановленные переменные",
-        "title": "Предустановленные переменные",
-        "tooltip": "Выберите, какие глобальные переменные и переменные папки получает этот дашборд"
       },
       "redo": "Повторить",
       "row": {
@@ -7122,6 +7134,10 @@
       "recommendation": "После включения функции дашборды будут отображаться в динамическом формате. Настоятельно рекомендуем не корректировать дашборды до тех пор, пока функция не станет активной, поскольку правки, внесенные в классическом режиме, могут привести к неожиданным результатам. Вы также можете сохранить копию дашборда с помощью соответствующей опции в меню сохранения.",
       "save-warning": "Дашборд, созданный как динамический или преобразованный в него, будет открываться как классический. При сохранении дашборда настройки для динамического режима могут не сохраниться."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Пользовательские параметры",
       "json-values-tooltip": "Укажите JSON-массив, где каждый объект может иметь любое количество свойств.<br/>Подробнее — в <4>документации</4>.",
@@ -7164,6 +7180,12 @@
       "type": "Тип"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
@@ -7595,13 +7617,6 @@
       },
       "title-close": "Закрыть"
     },
-    "predefined-variables": {
-      "label-all": "Все",
-      "label-custom": "Задано пользователем",
-      "label-folder": "Папка",
-      "label-global": "Глобальные",
-      "label-none": "Нет"
-    },
     "provisioned-controls-section": {
       "label": "Подготовлено источником данных",
       "tooltip": "Добавлено плагином {{pluginName}}",
@@ -7720,6 +7735,10 @@
       "required": "Обязательно"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Изменения",
         "label-details": "Подробности",
@@ -8486,7 +8505,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Фиксированное значение"
       },
-      "label": "Скаляр",
+      "label-field": "",
       "label-limit": "Предельное значение",
       "label-value": "Значение",
       "noOptionsMessage-no-fields-found": "Поля не найдены",
@@ -8880,7 +8899,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "Свернуть {{name}}",
@@ -9218,6 +9239,7 @@
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
+      "error-indicator": "",
       "errors": "Ошибки",
       "errors-tooltip": "Выбирает диапазоны, в которых статус соответствует ошибке.",
       "export-started": "Экспорт запущен",
@@ -9235,11 +9257,14 @@
       "share-export-json": "Экспорт в формате JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Время начала",
+      "success-indicator": "",
       "target": "Цель",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
       "trace-id": "Идентификатор трассировки",
-      "url": "URL-адрес"
+      "url": "URL-адрес",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9828,6 +9853,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Позавчера",
           "previousFiscalQuarter": "Предыдущий финансовый квартал",
@@ -12651,6 +12678,9 @@
       "subtitle": "Правила, определяющие, будет ли создано оповещение",
       "title": "Правила оповещения"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Выбор способов уведомления точек контакта при возникновении оповещения",
       "title": "Точки контакта"
@@ -12720,6 +12750,7 @@
       "title": "Создание"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Новое правило оповещения"
     },
     "create-dashboard": {
@@ -12754,6 +12785,10 @@
     },
     "explore": {
       "title": "Explore"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Получение аналитики из мониторинга реальных пользователей",
@@ -12835,6 +12870,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12865,6 +12904,10 @@
     },
     "profiles": {
       "title": "Профили"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -13142,8 +13185,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -13158,6 +13200,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13171,15 +13217,64 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13199,13 +13294,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13213,15 +13314,14 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13235,6 +13335,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_few": "",
@@ -13245,6 +13346,9 @@
       "count-truncated_many": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13253,6 +13357,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13284,10 +13389,19 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Очистить параметры"
+      "clear-tooltip": "Очистить параметры",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Цветовые ряды по"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13422,6 +13536,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Копировать",
       "copy-styles": "Копировать стили",
       "download-diagnostics": "Загрузка диагностики",
@@ -15296,6 +15411,75 @@
       "title-data-source-help": "Справка по источнику данных"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Добавить фильтр",
@@ -16098,7 +16282,6 @@
       "home-dashboard-placeholder": "Дашборд по умолчанию",
       "language-preference-label": "Язык",
       "language-preference-placeholder": "Выбрать язык",
-      "theme-description": "Нравится экспериментировать? Выразите свои пожелания по поводу темы <2>здесь.</2>",
       "theme-label": "Тема интерфейса",
       "week-start-label": "Начало недели"
     },
@@ -16699,8 +16882,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16866,6 +17048,8 @@
       "name-faceted-filter": "Видимость рядов"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Доступно",
         "label-dash": "Тире",
@@ -18024,7 +18208,7 @@
       "delete-modal-body": "Точно удалить «{{name}}»?",
       "delete-modal-confirm": "Удалить",
       "delete-modal-title": "Удаление переменной",
-      "folder-description": "Ограничьте область действия переменной одной папкой или сделайте ее глобальной (доступной для всей организации). Для этого выберите корневую папку в дашбордах",
+      "folder-description": "",
       "folder-description-folder-only": "Определите область действия переменной папкой, которую вы можете редактировать",
       "folder-label": "Папка",
       "moved": "Переменная перемещена",
@@ -18044,10 +18228,10 @@
       "move": "Переместить",
       "moving": "Перемещение...",
       "title": "Переместить переменные",
-      "body_one": "Переместить {{count}} выбранную переменную. Если выбрать корневую папку в дашбордах, переменная станет глобальной (доступной для всей организации).",
-      "body_few": "Переместить {{count}} выбранные переменные. Если выбрать корневую папку в дашбордах, переменные станут глобальными (доступными для всей организации).",
-      "body_many": "Переместить {{count}} выбранных переменных. Если выбрать корневую папку в дашбордах, переменные станут глобальными (доступными для всей организации).",
-      "body_other": "Переместить {{count}} выбранных переменных. Если выбрать корневую папку в дашбордах, переменные станут глобальными (доступными для всей организации).",
+      "body_one": "",
+      "body_few": "",
+      "body_many": "",
+      "body_other": "",
       "body-folder-only_one": "Переместите {{count}} выбранную переменную в папку, которую вы можете редактировать.",
       "body-folder-only_few": "Переместите {{count}} выбранные переменные в папку, которую вы можете редактировать.",
       "body-folder-only_many": "Переместите {{count}} выбранных переменных в папку, которую вы можете редактировать.",
@@ -18075,6 +18259,14 @@
       "select-all": "Выбрать все переменные",
       "select-folder": "Выбрать все переменные в папке {{title}}",
       "select-variable": "Выбрать переменную {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

@@ -65,6 +65,8 @@ beforeEach(() => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
+  jest.replaceProperty(contextSrv, 'isSignedIn', true);
+
   mockTeams([]);
   mockAlerts([]);
 });
@@ -212,7 +214,6 @@ describe('FiringAlertsCard', () => {
     render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('No firing alerts for your teams.')).toBeInTheDocument();
-
     expect(screen.queryByText('Show all firing alerts')).not.toBeInTheDocument();
   });
 
