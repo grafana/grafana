@@ -18,6 +18,7 @@ labels:
 menuTitle: Query tracing data
 title: Query tracing data
 weight: 300
+review_date: 2026-09-10
 ---
 
 # Query tracing data
@@ -37,7 +38,7 @@ You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** a
 
 {{< admonition type="note" >}}
 Before running queries, verify that your Tempo data source is configured and connected.
-If queries return no results or errors, refer to [Configure the Tempo data source](../configure-tempo-data-source/) to check your connection and authentication settings.
+If queries return no results or errors, refer to [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/) to check your connection and authentication settings.
 {{< /admonition >}}
 
 You don't have to know TraceQL to create a query.
@@ -63,7 +64,7 @@ Start here if you're exploring data or learning TraceQL.
 The **Search** query builder provides drop-down lists and text fields to build a query visually without needing to know TraceQL syntax.
 Your selections automatically generate a TraceQL query that you can copy to the editor for further refinement.
 
-Refer to [Search traces using the query builder](traceql-search/) for more information.
+Refer to [Search traces using the query builder](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/) for more information.
 
 ![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-search-v11.png)
 
@@ -73,8 +74,8 @@ Use the **TraceQL** editor when you need complex filters, structural queries acr
 The editor provides autocomplete for attribute names, scopes, and operators.
 You can also search for a trace ID by entering it directly into the query field.
 
-For copy-paste query examples, refer to [TraceQL query examples](traceql-query-examples/).
-Refer to [Write TraceQL queries with the editor](traceql-editor/) for more information.
+For copy-paste query examples, refer to [TraceQL query examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-query-examples/).
+Refer to [Write TraceQL queries with the editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-editor/) for more information.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
@@ -221,8 +222,8 @@ For information about Tempo configuration requirements, refer to the [Cross-tena
 
 ## Next steps
 
-- [TraceQL query examples](traceql-query-examples/) - Copy-paste query examples for common use cases
+- [TraceQL query examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-query-examples/) - Copy-paste query examples for common use cases
 - [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) - Full TraceQL syntax, scopes, and operators
-- [Service Graph and Service Graph view](../service-graph/) - Visualize service dependencies and RED metrics
-- [Span filters](../span-filters/) - Refine trace results after querying
-- [Configure the Tempo data source](../configure-tempo-data-source/) - Connection, authentication, and feature settings
+- [Service Graph and Service Graph view](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/) - Visualize service dependencies and RED metrics
+- [Span filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) - Refine trace results after querying
+- [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/) - Connection, authentication, and feature settings

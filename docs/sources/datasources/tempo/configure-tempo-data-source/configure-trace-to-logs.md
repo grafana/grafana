@@ -15,6 +15,7 @@ labels:
 menuTitle: Trace to logs
 title: Configure trace to logs correlation
 weight: 300
+review_date: 2026-09-10
 ---
 
 # Configure trace to logs correlation

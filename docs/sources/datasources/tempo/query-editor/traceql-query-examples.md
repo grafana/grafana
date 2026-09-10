@@ -14,6 +14,7 @@ labels:
 menuTitle: TraceQL query examples
 title: TraceQL query examples
 weight: 500
+review_date: 2026-09-10
 ---
 
 # TraceQL query examples
@@ -167,5 +168,5 @@ For example, using a `$service` variable:
 
 - [TraceQL cookbook for Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/traces-query-editor/traceql-cookbook/) - Extended recipe collection with additional examples
 - [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) - Full TraceQL syntax, scopes, and operators
-- [Query tracing data](_index.md) - Query editor modes and options
-- [Service Graph and Service Graph view](../service-graph/) - Visualize service dependencies
+- [Query tracing data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/) - Query editor modes and options
+- [Service Graph and Service Graph view](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/) - Visualize service dependencies

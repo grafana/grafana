@@ -15,6 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Tempo data source issues
 weight: 600
+review_date: 2026-09-10
 ---
 
 # Troubleshoot Tempo data source issues
@@ -25,9 +26,9 @@ This document provides solutions to common issues you may encounter when configu
 
 This guide covers issues related to connecting Grafana to Tempo and using the data source features. It applies to the following setups:
 
-- **Self-managed Grafana + self-managed Tempo**—you manage both Grafana (OSS or Enterprise) and Tempo.
-- **Grafana Cloud + Cloud Traces**—you use Grafana Cloud with the managed Tempo backend (Grafana Cloud Traces). Some configuration (streaming, metrics generator) is handled automatically.
-- **Grafana Cloud + self-managed Tempo via PDC**—you use Grafana Cloud but connect to your own Tempo instance through [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
+- **Self-managed Grafana + self-managed Tempo:** you manage both Grafana (OSS or Enterprise) and Tempo.
+- **Grafana Cloud + Cloud Traces:** you use Grafana Cloud with the managed Tempo backend (Grafana Cloud Traces). Some configuration (streaming, metrics generator) is handled automatically.
+- **Grafana Cloud + self-managed Tempo via PDC:** you use Grafana Cloud but connect to your own Tempo instance through [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
 Where troubleshooting steps differ between these setups, the guide calls it out. Sections labeled _Grafana Cloud only_ or _self-managed Tempo_ apply only to those environments.
 
@@ -40,7 +41,7 @@ For issues with Tempo itself (not the data source), refer to the Tempo product d
 - [Too many requests error](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/too-many-requests-error/) - Query capacity limits and 429 errors.
 - [Query issues](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/) - Server-side query failures, bad blocks, and performance tuning.
 
-### Resources for troubleshooting tracings in Grafana Cloud
+### Resources for troubleshooting traces in Grafana Cloud
 
 Additional resources for Grafana Cloud:
 
@@ -202,7 +203,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 1. Use the **Search** query builder to explore available attributes and values.
 1. Start with a broader query and progressively add filters to narrow results.
 1. Try [Grafana Traces Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/), a queryless app that lets you explore tracing data using RED metrics without writing TraceQL.
-1. Note that Tempo search is non-deterministic—identical queries can return different results because Tempo scans in parallel and returns the first matching traces. Refer to [Understand search behavior](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/) for details.
+1. Note that Tempo search is non-deterministic. Identical queries can return different results because Tempo scans in parallel and returns the first matching traces. Refer to [Understand search behavior](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/) for details.
 1. Verify traces are being ingested into Tempo by querying for a known trace ID.
 
 ### Traces not appearing after successful connection
@@ -261,7 +262,7 @@ For more information, refer to [Streaming](https://grafana.com/docs/grafana/<GRA
 **Solution:**
 
 1. For self-managed Tempo, verify that you're using the required Tempo version (v2.2 or later for search streaming, v2.7 or later for metrics streaming) and that streaming is enabled in your configuration (`stream_over_http_enabled: true`). Refer to [Tempo gRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api) in the Tempo documentation. Streaming is available for Grafana Cloud users by default.
-1. Verify that **Streaming** is enabled in your [Tempo data source settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming). The **Search queries** and **Metrics queries** toggles are independent—check that the toggle for the query type you're using is enabled.
+1. Verify that **Streaming** is enabled in your [Tempo data source settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming). The **Search queries** and **Metrics queries** toggles are independent. Check that the toggle for the query type you're using is enabled.
 1. If your Tempo instance is behind a load balancer or proxy that doesn't support gRPC or HTTP2, streaming may not work. Disable streaming and use standard HTTP queries instead.
 1. If you're using [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to reach Tempo, verify that the PDC tunnel is running and the Tempo instance is reachable from the PDC agent. PDC connectivity issues can present as streaming timeouts.
 
@@ -363,7 +364,7 @@ These issues relate to the correlation features that link traces to other teleme
 
 ### Loki log lines don't show a trace link
 
-**Cause:** The reverse direction—navigating from a Loki log line to a trace—isn't working. No trace link appears on log lines.
+**Cause:** The reverse direction, navigating from a Loki log line to a trace, isn't working. No trace link appears on log lines.
 
 **Solution:**
 
@@ -461,7 +462,7 @@ The following issues don't produce specific error messages but are commonly enco
 
 ### Data source settings disappear after restart
 
-**Cause:** You configured settings in the Grafana UI (such as trace-to-logs links, service graph, or span time shifts), but they disappear after Grafana restarts. This happens when the data source is provisioned via a YAML configuration file, Helm chart, or Terraform. Provisioned data sources are read-only in the UI—any changes you make through the UI aren't persisted and silently revert on the next restart.
+**Cause:** You configured settings in the Grafana UI (such as trace-to-logs links, service graph, or span time shifts), but they disappear after Grafana restarts. This happens when the data source is provisioned via a YAML configuration file, Helm chart, or Terraform. Provisioned data sources are read-only in the UI. Any changes you make through the UI aren't persisted and silently revert on the next restart.
 
 You can tell a data source is provisioned if the settings form is read-only and the button reads **Test** instead of **Save & test**.
 
