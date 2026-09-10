@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,7 +27,8 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
-	svc, err := ProvideService(cfg, dummyRoutesLoader{}, httpRouter, ready)
+	features := featuremgmt.WithFeatures()
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, httpRouter, ready)
 	require.NoError(t, err)
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
@@ -60,14 +62,15 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
 	cfg := setting.NewCfg()
+	features := featuremgmt.WithFeatures()
 
-	_, err := ProvideService(nil, dummyRoutesLoader{}, mux.NewRouter(), nil)
+	_, err := ProvideService(nil, features, dummyRoutesLoader{}, mux.NewRouter(), nil)
 	require.ErrorContains(t, err, "configuration is required")
 
-	_, err = ProvideService(cfg, nil, mux.NewRouter(), nil)
+	_, err = ProvideService(cfg, features, nil, mux.NewRouter(), nil)
 	require.ErrorContains(t, err, "routes loader is required")
 
-	_, err = ProvideService(cfg, dummyRoutesLoader{}, nil, nil)
+	_, err = ProvideService(cfg, features, dummyRoutesLoader{}, nil, nil)
 	require.ErrorContains(t, err, "HTTP router is required")
 }
 
@@ -75,8 +78,9 @@ func TestProvideServiceRegistersStandalonePathPrefixes(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
+	features := featuremgmt.WithFeatures()
 
-	_, err := ProvideService(cfg, dummyRoutesLoader{}, httpRouter, nil)
+	_, err := ProvideService(cfg, features, dummyRoutesLoader{}, httpRouter, nil)
 	require.NoError(t, err)
 
 	for _, path := range []string{

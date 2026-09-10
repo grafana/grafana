@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,14 +33,13 @@ type Service struct {
 }
 
 // ProvideService creates the router target service.
-func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier) (*Service, error) {
-	if cfg == nil {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier) (*Service, error) {
+	switch {
+	case cfg == nil:
 		return nil, fmt.Errorf("configuration is required")
-	}
-	if loader == nil {
+	case loader == nil:
 		return nil, fmt.Errorf("routes loader is required")
-	}
-	if httpRouter == nil {
+	case httpRouter == nil:
 		return nil, fmt.Errorf("HTTP router is required")
 	}
 
@@ -49,12 +49,26 @@ func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Route
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 
-	// Explicitly configured to run the router.
-	standalone := slices.Contains(cfg.Target, "router")
+	// Explicitly configured
+	// NOTE: eventually should be the only path
+	if slices.Contains(cfg.Target, "router") {
+		next := httpRouter.NotFoundHandler
+		if next == nil {
+			next = http.NotFoundHandler()
+		}
+		handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			s.router.HandleFunc(w, req, next)
+		})
+		for _, v := range []string{"/apis", "/openapi/v3"} {
+			httpRouter.Handle(v, handler)
+			httpRouter.PathPrefix(v + "/").Handler(handler)
+		}
+		return s, nil
+	}
 
 	// We need to run as middleware on-top of the existing HTTP router
 	// NOTE: this should be removed when we are no longer running "standard" k8s APIServer
-	if !standalone {
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAddRouterMiddleware) {
 		// This will intercept the calls to /apis/* and /openapi/v3/*
 		// After we have fully migrated to the router, this should be a raw handler rather than middleware
 		httpRouter.Use(func(next http.Handler) http.Handler {
@@ -65,18 +79,9 @@ func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Route
 		return s, nil
 	}
 
-	next := httpRouter.NotFoundHandler
-	if next == nil {
-		next = http.NotFoundHandler()
-	}
-	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.router.HandleFunc(w, req, next)
-	})
-	for _, v := range []string{"/apis", "/openapi/v3"} {
-		httpRouter.Handle(v, handler)
-		httpRouter.PathPrefix(v + "/").Handler(handler)
-	}
-
+	// Do not register the handler unless router is explicitly configured (externally)
+	// This should be removed when we are no longer running "standard" k8s APIServer
+	s.router = NewGrafanaRouter(dummyRoutesLoader{}) // EMPTY loader
 	return s, nil
 }
 
