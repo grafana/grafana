@@ -349,9 +349,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      {!hideHeaderDetails && traceBanner && (
-        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />
-      )}
+      {!hideHeaderDetails && traceBanner && <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (
