@@ -115,6 +115,10 @@ export function TableNGWrap({
 
       <TableNG
         {...commonTableProps}
+        // `useCommonTableProps` reports the `table.refresh` flag, but the refreshed header hasn't
+        // been designed against the Logs Table's own header controls yet, so this panel opts out
+        // until that work happens.
+        tableRefreshEnabled={false}
         sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
         data={data.series[getCurrentFrameIndex(data.series, options)]}

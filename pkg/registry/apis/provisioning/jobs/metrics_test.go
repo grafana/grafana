@@ -8,6 +8,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -197,7 +198,65 @@ func TestRecordResourceOperationBytes(t *testing.T) {
 	assert.Equal(t, uint64(1), deletedCount, "a delete with a byte count is still a real op and observed")
 }
 
+func TestRecordJobThroughput(t *testing.T) {
+	reg := testRegistry
+	m := testMetrics
+
+	// Unique action values so these series don't collide with other tests sharing
+	// the singleton registry.
+	const action = "throughputprobe"
+	prAction := string(provisioning.JobActionPullRequest)
+
+	// full: 10 changes over 2s -> 5 ops/s. incremental: 3 changes over 1s -> 3 ops/s.
+	m.RecordJob(action, "full", utils.SuccessOutcome, 10, 0, 2.0)
+	m.RecordJob(action, "incremental", utils.SuccessOutcome, 3, 0, 1.0)
+	// Errors are unreliable and must not be recorded.
+	m.RecordJob(action, "full", utils.ErrorOutcome, 100, 0, 1.0)
+	// A job that changed nothing is not a throughput sample.
+	m.RecordJob(action, "full", utils.SuccessOutcome, 0, 0, 5.0)
+	// Pull-request jobs are measured by the dry-run count: 4 dry-run over 2s -> 2 ops/s.
+	m.RecordJob(prAction, "", utils.SuccessOutcome, 0, 4, 2.0)
+
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+
+	hist := findMetric(metrics, "grafana_provisioning_jobs_throughput_ops_per_second")
+	require.NotNil(t, hist, "throughput_ops_per_second histogram should be registered")
+
+	full := map[string]string{"action": action, "variance": "full"}
+	assert.Equal(t, uint64(1), histogramSampleCount(hist, full), "only the successful, non-empty full run is recorded")
+	assert.InDelta(t, 5.0, histogramSampleSum(hist, full), 0.001, "10 changes / 2s = 5 ops/s")
+
+	incremental := map[string]string{"action": action, "variance": "incremental"}
+	assert.Equal(t, uint64(1), histogramSampleCount(hist, incremental))
+	assert.InDelta(t, 3.0, histogramSampleSum(hist, incremental), 0.001, "3 changes / 1s = 3 ops/s")
+
+	pr := map[string]string{"action": prAction, "variance": ""}
+	assert.Equal(t, uint64(1), histogramSampleCount(hist, pr), "pull-request throughput uses the dry-run count")
+	assert.InDelta(t, 2.0, histogramSampleSum(hist, pr), 0.001, "4 dry-run / 2s = 2 ops/s")
+}
+
 // --- helpers ---
+
+func histogramSampleSum(mf *dto.MetricFamily, labels map[string]string) float64 {
+	for _, m := range mf.GetMetric() {
+		got := make(map[string]string)
+		for _, lp := range m.GetLabel() {
+			got[lp.GetName()] = lp.GetValue()
+		}
+		match := len(got) == len(labels)
+		for k, v := range labels {
+			if got[k] != v {
+				match = false
+				break
+			}
+		}
+		if match {
+			return m.GetHistogram().GetSampleSum()
+		}
+	}
+	return 0
+}
 
 func histogramSampleCount(mf *dto.MetricFamily, labels map[string]string) uint64 {
 	for _, m := range mf.GetMetric() {

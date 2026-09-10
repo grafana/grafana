@@ -1999,14 +1999,36 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 	logger := s.log.New("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
-	builder, err := s.builders.get(ctx, nsr)
-	if err != nil {
-		return nil, err
+	// For dashboards this reads the namespace's usage insights data, and an index
+	// served from a snapshot never calls the callbacks that need it. Kept once
+	// resolved: the cache entry expires while updaterFn keeps running, so asking
+	// again would re-read the insights data.
+	var (
+		builderMu sync.Mutex
+		builder   DocumentBuilder
+	)
+	getBuilder := func(ctx context.Context) (DocumentBuilder, error) {
+		builderMu.Lock()
+		defer builderMu.Unlock()
+		if builder != nil {
+			return builder, nil
+		}
+		b, err := s.builders.get(ctx, nsr)
+		if err != nil {
+			return nil, err
+		}
+		builder = b
+		return builder, nil
 	}
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
+
+		builder, err := getBuilder(ctx)
+		if err != nil {
+			return 0, err
+		}
 
 		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathBuild, nsr)
 		// Report whatever was accumulated even when the build gives up early, and
@@ -2115,6 +2137,11 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
+
+		builder, err := getBuilder(ctx)
+		if err != nil {
+			return 0, 0, err
+		}
 
 		// If we're calling with the same sinceRV as last time, pass the timestamp
 		// of our last call so the backend can skip the lookback window when safe.
