@@ -152,6 +152,20 @@ describe('TableSection', () => {
 
       expect(buildAndUpdateQuery).not.toHaveBeenCalled();
     });
+
+    it('does not call buildAndUpdateQuery when a disabled Auxiliary table is somehow selected', async () => {
+      const { buildAndUpdateQuery } = renderTableSection({
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: false,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'AuxiliaryTable').catch(() => {
+        // expected when the option is disabled
+      });
+
+      expect(buildAndUpdateQuery).not.toHaveBeenCalled();
+    });
   });
 
   describe('onTierAutoSwitch callback', () => {

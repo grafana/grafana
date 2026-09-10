@@ -42,6 +42,8 @@ interface LogsQueryEditorProps {
   data?: PanelData;
 }
 
+const SCHEMA_ERROR_SOURCE = 'logs-schema';
+
 const LogsQueryEditor = ({
   query,
   datasource,
@@ -94,38 +96,70 @@ const LogsQueryEditor = ({
 
   useEffect(() => {
     const resources = query.azureLogAnalytics?.resources;
-    if (resources) {
-      setIsLoadingSchema(true);
-      const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
-        const promises = [];
-        for (const table of tables) {
-          promises.push({
+    if (!resources?.length) {
+      setSchema(undefined);
+      setIsLoadingSchema(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingSchema(true);
+
+    const loadSchema = async () => {
+      const schema = await datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]);
+      if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
+        const tables = await Promise.all(
+          schema.database.tables.map(async (table: AzureLogAnalyticsMetadataTable) => ({
             ...table,
             plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name),
-          });
-        }
+          }))
+        );
 
-        const tablesWithPlan = await Promise.all(promises);
-        return tablesWithPlan;
-      };
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]).then((schema) => {
-        if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
-          fetchAllPlans(schema?.database?.tables).then(async (t) => {
-            if (schema.database?.tables) {
-              schema.database.tables = t;
-            }
-          });
+        return {
+          ...schema,
+          database: {
+            ...schema.database,
+            tables,
+          },
+        };
+      }
+
+      return schema;
+    };
+
+    void loadSchema()
+      .then((schema) => {
+        if (!cancelled) {
+          setSchema(schema);
+          setError(SCHEMA_ERROR_SOURCE, undefined);
         }
-        setSchema(schema);
-        setIsLoadingSchema(false);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setSchema(undefined);
+          setError(SCHEMA_ERROR_SOURCE, error);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingSchema(false);
+        }
       });
-    }
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     query.azureLogAnalytics?.resources,
     datasource.azureLogAnalyticsDatasource,
     datasource.azureMonitorDatasource,
     query.azureLogAnalytics?.mode,
+    setError,
   ]);
+
+  useEffect(() => {
+    setTierAutoSwitchNotice(null);
+  }, [query.azureLogAnalytics?.mode, query.azureLogAnalytics?.resources]);
 
   useEffect(() => {
     if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], searchLogsEnabled)) {

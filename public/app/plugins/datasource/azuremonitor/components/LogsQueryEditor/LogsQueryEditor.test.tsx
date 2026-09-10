@@ -844,7 +844,7 @@ describe('LogsQueryEditor', () => {
       const mockDatasource = createMockDatasource();
       mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(mockSchema);
       // @ts-ignore: forcibly attach for test
-      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockResolvedValue('plan');
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockResolvedValue(TablePlan.Basic);
       const query = createMockQuery({
         azureLogAnalytics: {
           resources: [
@@ -879,6 +879,16 @@ describe('LogsQueryEditor', () => {
       expect(mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan).toHaveBeenCalledWith(
         query.azureLogAnalytics?.resources,
         'AppDependencies'
+      );
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'AppDependencies');
+      expect(onQueryChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            basicLogsQuery: true,
+            logTier: 'Basic',
+          }),
+        })
       );
     });
   });
@@ -1141,6 +1151,82 @@ describe('LogsQueryEditor', () => {
       await userEvent.click(await screen.findByLabelText('Analytics'));
 
       expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+    });
+
+    it('dismisses the auto-switch notice when the workspace changes', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByText(/Query tier set to Basic/)).toBeInTheDocument();
+
+      rerender(
+        <LogsQueryEditor
+          query={{
+            ...switchedQuery,
+            azureLogAnalytics: {
+              ...switchedQuery.azureLogAnalytics,
+              resources: [`${workspaceUri}-other`],
+            },
+          }}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+      });
     });
 
     it('dismisses the auto-switch notice when the selected tier is disabled', async () => {

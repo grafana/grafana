@@ -334,10 +334,9 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		auxiliaryLogsEnabled = value
 	}
 
-	searchLogsEnabled := basicLogsEnabled || auxiliaryLogsEnabled
-
 	if basicLogsQueryFlag {
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, searchLogsEnabled); meetsBasicLogsCriteriaErr != nil {
+		logTierEnabled := isLogTierEnabled(azureLogAnalyticsTarget.LogTier, basicLogsEnabled, auxiliaryLogsEnabled)
+		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, logTierEnabled); meetsBasicLogsCriteriaErr != nil {
 			return nil, meetsBasicLogsCriteriaErr
 		} else {
 			basicLogsQuery = meetsBasicLogsCriteria
@@ -381,6 +380,14 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		TimeColumn:       timeColumn,
 		BasicLogs:        basicLogsQuery,
 	}, nil
+}
+
+func isLogTierEnabled(logTier *dataquery.AzureLogsQueryLogTier, basicLogsEnabled, auxiliaryLogsEnabled bool) bool {
+	if logTier == nil || *logTier == dataquery.AzureLogsQueryLogTierBasic {
+		return basicLogsEnabled
+	}
+
+	return *logTier == dataquery.AzureLogsQueryLogTierAuxiliary && auxiliaryLogsEnabled
 }
 
 func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) (*AzureLogAnalyticsQuery, error) {

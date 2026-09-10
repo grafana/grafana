@@ -564,6 +564,95 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 	}
 }
 
+func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
+	tests := []struct {
+		name                 string
+		logTierJSON          string
+		basicLogsEnabled     bool
+		auxiliaryLogsEnabled bool
+		expectedEnabled      bool
+	}{
+		{
+			name:             "legacy query uses Basic Logs setting",
+			basicLogsEnabled: true,
+			expectedEnabled:  true,
+		},
+		{
+			name:                 "legacy query is not enabled by Auxiliary Logs setting",
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      false,
+		},
+		{
+			name:             "Basic query uses Basic Logs setting",
+			logTierJSON:      `, "logTier": "Basic"`,
+			basicLogsEnabled: true,
+			expectedEnabled:  true,
+		},
+		{
+			name:                 "Basic query is not enabled by Auxiliary Logs setting",
+			logTierJSON:          `, "logTier": "Basic"`,
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      false,
+		},
+		{
+			name:                 "Auxiliary query uses Auxiliary Logs setting",
+			logTierJSON:          `, "logTier": "Auxiliary"`,
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      true,
+		},
+		{
+			name:             "Auxiliary query is not enabled by Basic Logs setting",
+			logTierJSON:      `, "logTier": "Auxiliary"`,
+			basicLogsEnabled: true,
+			expectedEnabled:  false,
+		},
+		{
+			name:                 "unknown tier is disabled",
+			logTierJSON:          `, "logTier": "Unknown"`,
+			basicLogsEnabled:     true,
+			auxiliaryLogsEnabled: true,
+			expectedEnabled:      false,
+		},
+	}
+
+	appInsightsRegExp := regexp.MustCompile("(?i)providers/microsoft.insights/components")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query := backend.DataQuery{
+				JSON: fmt.Appendf(nil, `{
+					"queryType": "Azure Log Analytics",
+					"azureLogAnalytics": {
+						"resources": ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/TestDataWorkspace"],
+						"query": "Perf",
+						"resultFormat": "table",
+						"basicLogsQuery": true%s
+					}
+				}`, tt.logTierJSON),
+				RefID:     "A",
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
+			}
+			dsInfo := types.DatasourceInfo{
+				JSONData: map[string]any{
+					"basicLogsEnabled":     tt.basicLogsEnabled,
+					"auxiliaryLogsEnabled": tt.auxiliaryLogsEnabled,
+				},
+			}
+
+			result, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, false)
+			if !tt.expectedEnabled {
+				require.Error(t, err)
+				require.Nil(t, result)
+				return
+			}
+
+			require.NoError(t, err)
+			require.True(t, result.BasicLogs)
+			require.Contains(t, result.URL, "/search")
+		})
+	}
+}
+
 func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds/"

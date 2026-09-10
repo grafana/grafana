@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 
@@ -22,5 +23,14 @@ describe('AuxiliaryLogsToggle', () => {
     render(<AuxiliaryLogsToggle {...defaultProps} />);
 
     expect(screen.getByText(/no response time SLAs/)).toBeInTheDocument();
+  });
+
+  it('should enable Auxiliary Logs when the switch is clicked', async () => {
+    const onAuxiliaryLogsEnabledChange = jest.fn();
+    render(<AuxiliaryLogsToggle {...defaultProps} onAuxiliaryLogsEnabledChange={onAuxiliaryLogsEnabledChange} />);
+
+    await userEvent.click(screen.getByLabelText('Auxiliary Logs'));
+
+    expect(onAuxiliaryLogsEnabledChange).toHaveBeenCalledWith(true);
   });
 });
