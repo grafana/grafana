@@ -41,4 +41,17 @@ Specify a tooltip to show additional information on hover. Avoid putting lengthy
   <Badge icon="rocket" color="blue" text="New!" tooltip="Check out this new feature!" />
 </ExampleFrame>
 
+### Truncation
+
+Under the visual design refresh theme, a badge placed in a flex or grid container that constrains its size
+truncates long text with an ellipsis instead of wrapping onto a second line. If no `tooltip` is set, the full
+text is shown automatically on hover once it's actually truncated. Switch the theme to Visual Refresh in the
+toolbar above to see it.
+
+<ExampleFrame>
+  <div style={{ display: 'flex', maxWidth: 180 }}>
+    <Badge icon="clock-nine" color="blue" text="Badge label that is long enough to be truncated" />
+  </div>
+</ExampleFrame>
+
 <ArgTypes of={Badge} />
