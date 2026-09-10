@@ -83,6 +83,8 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   isDashboardScene: boolean;
 
   copyPanel(vizPanel: VizPanel): void;
+
+  getDefaultLayout(): DashboardLayoutManager | undefined;
 }
 
 function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {

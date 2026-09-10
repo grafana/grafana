@@ -1,9 +1,12 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type InspectorStream } from 'app/core/services/backend_srv';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
@@ -72,10 +75,26 @@ const setup = (propOverrides = {}) => {
     ...propOverrides,
   };
 
-  return render(<ExploreQueryInspector {...props} />);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <ExploreQueryInspector {...props} />
+    </OpenFeatureProvider>
+  );
 };
 
 describe('ExploreQueryInspector', () => {
+  beforeEach(async () => {
+    await act(async () => {
+      setTestFlags({ [FlagKeys.TableInspectDataTableNG]: false });
+    });
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   it('should render closable drawer component', () => {
     setup();
     expect(screen.getByLabelText(/close query inspector/i)).toBeInTheDocument();

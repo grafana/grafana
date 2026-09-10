@@ -16,7 +16,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, components, controls, sidebar }) => {
+    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, controls, sidebar }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');

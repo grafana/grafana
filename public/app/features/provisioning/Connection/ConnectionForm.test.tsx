@@ -60,10 +60,10 @@ function setup(options: SetupOptions = {}) {
 
 describe('ConnectionForm', () => {
   describe('Rendering - Create Mode', () => {
-    it('should render all form fields', () => {
+    it('should render all form fields', async () => {
       setup();
 
-      expect(screen.getByLabelText(/^Provider/)).toBeInTheDocument();
+      expect(await screen.findByLabelText(/^Provider/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Title/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Description/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub App ID/)).toBeInTheDocument();
@@ -75,13 +75,13 @@ describe('ConnectionForm', () => {
       mockComboboxRect();
       server.use(
         http.get(`${BASE}/settings`, () =>
-          HttpResponse.json({ availableRepositoryTypes: ['github', 'githubEnterprise'] })
+          HttpResponse.json({ availableConnectionTypes: ['github', 'githubEnterprise'] })
         )
       );
 
       const { user } = setup();
 
-      const providerField = screen.getByLabelText(/^Provider/);
+      const providerField = await screen.findByLabelText(/^Provider/);
       await waitFor(() => {
         expect(providerField).toBeEnabled();
       });
@@ -94,9 +94,10 @@ describe('ConnectionForm', () => {
       expect(await screen.findByLabelText(/^Custom server URL/)).toBeInTheDocument();
     });
 
-    it('should render Save button', () => {
+    it('should render Save button', async () => {
       setup();
 
+      await screen.findByLabelText(/^Provider/);
       expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
     });
 
@@ -106,10 +107,11 @@ describe('ConnectionForm', () => {
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
 
-    it('should have Provider field disabled', () => {
+    it('should have Provider field disabled', async () => {
+      server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ availableConnectionTypes: ['github'] })));
       setup();
 
-      expect(screen.getByLabelText(/^Provider/)).toBeDisabled();
+      await waitFor(() => expect(screen.getByLabelText(/^Provider/)).toBeDisabled());
     });
   });
 
@@ -167,6 +169,7 @@ describe('ConnectionForm', () => {
     it('should show required error and not submit when fields are empty', async () => {
       const { user } = setup();
 
+      await screen.findByLabelText(/^Provider/);
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
 
@@ -179,7 +182,7 @@ describe('ConnectionForm', () => {
     it('should show validation error for private key containing hidden characters', async () => {
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.click(screen.getByLabelText(/^Private Key \(PEM\)/));
@@ -208,7 +211,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -280,7 +283,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -305,7 +308,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -329,7 +332,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -353,7 +356,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'invalid-key');
@@ -372,7 +375,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'some-valid-key');
@@ -384,6 +387,114 @@ describe('ConnectionForm', () => {
       });
 
       btoaSpy.mockRestore();
+    });
+  });
+
+  describe('OAuth app edit', () => {
+    const createOAuthConnection = (): Connection =>
+      createMockConnection({
+        spec: { title: 'GitLab OAuth', type: 'gitlabOAuth', oauth: { clientID: 'old-client' } },
+        secure: { clientSecret: { name: 'configured' } },
+      });
+
+    beforeEach(() => {
+      server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ availableConnectionTypes: ['gitlabOAuth'] })));
+    });
+
+    it('blocks saving a changed client ID until the new app secret is entered', async () => {
+      let putCount = 0;
+      server.use(
+        http.put(`${BASE}/connections/:name`, () => {
+          putCount++;
+          return HttpResponse.json({});
+        })
+      );
+
+      const { user } = setup({ data: createOAuthConnection() });
+
+      const clientIDInput = await screen.findByLabelText(/^Application ID/);
+      await user.clear(clientIDInput);
+      await user.type(clientIDInput, 'new-client');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      expect(await screen.findByText('Enter the client secret for the new OAuth app.')).toBeInTheDocument();
+      expect(putCount).toBe(0);
+    });
+
+    it('saves the new secret with the new client ID and lets the user cancel authorization', async () => {
+      const tab = { closed: false, close: jest.fn(), location: { href: '' }, opener: {} };
+      // Window mock is intentionally partial; the hook only touches these fields.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(tab as unknown as Window);
+
+      try {
+        const capturedBodies: unknown[] = [];
+        server.use(
+          http.put(`${BASE}/connections/:name`, async ({ request }) => {
+            capturedBodies.push(await request.json());
+            return HttpResponse.json({
+              metadata: { name: 'test-connection' },
+              spec: { type: 'gitlabOAuth', title: 'GitLab OAuth' },
+            });
+          })
+        );
+
+        const { user } = setup({ data: createOAuthConnection() });
+
+        const clientIDInput = await screen.findByLabelText(/^Application ID/);
+        await user.clear(clientIDInput);
+        await user.type(clientIDInput, 'new-client');
+
+        await user.click(screen.getByRole('button', { name: /reset/i }));
+        await user.type(screen.getByLabelText(/^Client secret/), 'new-secret');
+
+        await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+        expect(await screen.findByText('Connecting')).toBeInTheDocument();
+        // dryRun PUT arrives first, then the real one
+        expect(capturedBodies).toHaveLength(2);
+        expect(capturedBodies[1]).toMatchObject({
+          spec: { oauth: { clientID: 'new-client' } },
+          secure: { clientSecret: { create: 'new-secret' } },
+        });
+        expect(tab.location.href).toContain('client_id=new-client');
+
+        await user.click(screen.getByRole('button', { name: /Cancel authorization/i }));
+
+        expect(tab.close).toHaveBeenCalled();
+        expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
+      } finally {
+        openSpy.mockRestore();
+      }
+    });
+
+    it('saves without authorization when the app identity is unchanged', async () => {
+      let capturedBody: unknown = null;
+      server.use(
+        http.put(`${BASE}/connections/:name`, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            metadata: { name: 'test-connection' },
+            spec: { type: 'gitlabOAuth', title: 'Renamed OAuth' },
+          });
+        })
+      );
+
+      const { user } = setup({ data: createOAuthConnection() });
+
+      const titleInput = await screen.findByLabelText(/^Title/);
+      await user.clear(titleInput);
+      await user.type(titleInput, 'Renamed OAuth');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(capturedBody).toMatchObject({ spec: { title: 'Renamed OAuth', oauth: { clientID: 'old-client' } } });
+      });
+      expect(screen.queryByText('Enter the client secret for the new OAuth app.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
     });
   });
 });

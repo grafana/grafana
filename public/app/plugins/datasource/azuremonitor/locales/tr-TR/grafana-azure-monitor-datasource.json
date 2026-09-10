@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Batch API",
+      "description-batch-api": "Tek bir istekte birden çok kaynağı sorgulayarak büyük panolarda performansı artırır. <6>metrics.monitor.azure.com</6> üzerinde abonelik kapsamında <2>Monitoring Reader</2> rolü gerekir. Ücretsiz katmanın üzerinde ek <9>ücretler uygulanabilir</9>.",
+      "label-enable-batch-api": "Batch API'yi etkinleştir"
     },
     "config-editor": {
       "description-additional-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla denetim sağlamak için yapılandırabileceğiniz isteğe bağlı seçeneklerdir. Buna Secure SOCKS Proxy, istek zaman aşımı ve iletilen çerezler dâhildir.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Abonelikleri Yükle"
     },
     "dimension-fields": {
-      "aria-label-remove": "Kaldır",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Boyutlar",
       "placeholder-field": "Alan",
       "placeholder-operation": "Çalıştırma",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Metrik ad alanı"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Abonelikler ve bölgeler genelinde aynı kaynak türündeki ögeleri seçebilirsiniz. Farklı aboneliklerdeki veya bölgelerdeki kaynaklar ayrı isteklerle sorgulanır ve bir isteğin başarısız olması diğerlerini etkilemez. Farklı bir kaynak türündeki kaynakları seçmek için önce mevcut seçiminizdeki işareti kaldırın.",
+      "selection-notice-standard": "Aynı kaynak türündeki ve konumdaki ögeleri seçebilirsiniz. Farklı bir kaynak türündeki veya konumdaki kaynakları seçmek için önce mevcut seçiminizdeki işareti kaldırın."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Özellikler"
     },
     "nested-row": {
       "text-loading": "Yükleniyor..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Sonuçları bir veya daha fazla sütuna göre artan veya azalan düzende sıralayın."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "{{maxPages}} sayfadan sonra yükleme durduruldu; bazı sonuçlar gösterilmeyebilir.",
+      "results-truncated-title": "Azure İzleyici"
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitor'dan meta veriler istenirken bir hata oluştu"

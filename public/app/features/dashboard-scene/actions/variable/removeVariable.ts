@@ -1,6 +1,7 @@
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
 import { restoreUnshadowedPredefinedVariables } from '../../settings/variables/utils';
+import { DashboardInteractions } from '../../utils/interactions';
 import { removeElement } from '../element/removeElement';
 
 interface RemoveVariableActionHelperProps {
@@ -23,4 +24,6 @@ export function removeVariable({ source, removedObject }: RemoveVariableActionHe
       source.setState({ variables: [...varsBeforeRemoval] });
     },
   });
+
+  DashboardInteractions.variableActionButtonClicked('delete', { type: removedObject.state.type });
 }

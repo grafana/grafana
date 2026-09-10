@@ -558,9 +558,15 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
+// maxBatchDeleteKeys bounds a DELETE's IN list.
+const maxBatchDeleteKeys = 200
+
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
+	}
+	if len(keys) >= maxBatchDeleteKeys {
+		return fmt.Errorf("batch delete of %d keys exceeds max %d; caller must chunk", len(keys), maxBatchDeleteKeys-1)
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -676,18 +682,15 @@ func isDuplicateKeyError(err error) bool {
 		return true
 	}
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == "23505"
 	}
 
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqErr.Code == "23505"
 	}
 
-	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) {
+	if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return mysqlErr.Number == 1062
 	}
 

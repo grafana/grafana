@@ -6,6 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, grantUserRole } from '../../mocks';
+import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { ImportWizardGate } from './ImportToGMA';
@@ -14,12 +15,18 @@ const server = setupMswServer();
 
 const MIMIR_DS_UID = 'mimir-uid';
 
+// useAutoSyncConfiguration (mounted by the wizard once the gate lets it through) fires this
+// unconditionally.
+beforeEach(() => {
+  setupDatasourcesEndpoint(server, []);
+});
+
 const ui = {
   blockTitle: byText(/auto-sync is enabled/i),
   goToSettings: byRole('link', { name: /go to alerting settings/i }),
   importRules: byRole('link', { name: /import alert rules/i }),
   disableSyncHint: byText(/disable auto-sync in Alerting settings/i),
-  stageRadio: byRole('radio', { name: /stage/i }),
+  notificationsStep: byRole('group', { name: /import notification resources/i }),
 };
 
 // Read access to the sync Config plus the permissions the wizard itself needs. Note: no admin role —
@@ -39,7 +46,7 @@ describe('Import wizard auto-sync gate', () => {
     render(<ImportWizardGate />);
 
     // Flag off -> the sync query is skipped and the wizard renders.
-    expect(await ui.stageRadio.find()).toBeInTheDocument();
+    expect(await ui.notificationsStep.find()).toBeInTheDocument();
     expect(ui.blockTitle.query()).not.toBeInTheDocument();
   });
 
@@ -57,8 +64,8 @@ describe('Import wizard auto-sync gate', () => {
       expect(await ui.blockTitle.find()).toBeInTheDocument();
       expect(ui.goToSettings.get()).toBeInTheDocument();
       expect(ui.disableSyncHint.get()).toBeInTheDocument();
-      // The method selector is not rendered at all.
-      expect(ui.stageRadio.query()).not.toBeInTheDocument();
+      // The wizard itself is not rendered at all.
+      expect(ui.notificationsStep.query()).not.toBeInTheDocument();
     });
 
     it('blocks non-admins with read access too (the gap this fixes)', async () => {
@@ -68,7 +75,7 @@ describe('Import wizard auto-sync gate', () => {
       render(<ImportWizardGate />);
 
       expect(await ui.blockTitle.find()).toBeInTheDocument();
-      expect(ui.stageRadio.query()).not.toBeInTheDocument();
+      expect(ui.notificationsStep.query()).not.toBeInTheDocument();
     });
 
     it('offers rules-only import instead of the admin-only Settings link to non-admins', async () => {
@@ -90,7 +97,7 @@ describe('Import wizard auto-sync gate', () => {
 
       render(<ImportWizardGate />);
 
-      expect(await ui.stageRadio.find()).toBeInTheDocument();
+      expect(await ui.notificationsStep.find()).toBeInTheDocument();
       await waitFor(() => expect(ui.blockTitle.query()).not.toBeInTheDocument());
     });
   });

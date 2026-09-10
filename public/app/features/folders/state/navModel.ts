@@ -75,7 +75,7 @@ export function buildNavModel(
   if (!isProvisioned && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
     model.children!.push({
       active: false,
-      icon: 'brackets-curly',
+      icon: 'gf-variable',
       id: getVariablesTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.variables', 'Variables'),
       url: `${folder.url}/variables`,

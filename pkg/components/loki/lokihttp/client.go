@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -310,7 +311,7 @@ func (c *client) sendBatch(tenantID string, batch *batch) {
 			break
 		}
 
-		c.logger.Warn("error sending batch, will retry", "status", status, "error", err)
+		c.logger.Warn("error sending batch, will retry", "status", status, "error", sendErrorCause(err))
 		c.metrics.batchRetries.WithLabelValues(c.cfg.URL.Host).Inc()
 		backoff.Wait()
 
@@ -325,6 +326,16 @@ func (c *client) sendBatch(tenantID string, batch *batch) {
 		c.metrics.droppedBytes.WithLabelValues(c.cfg.URL.Host).Add(bufBytes)
 		c.metrics.droppedEntries.WithLabelValues(c.cfg.URL.Host).Add(float64(entriesCount))
 	}
+}
+
+// sendErrorCause unwraps *url.Error so log lines carry the failure cause
+// without repeating the full request URL; the target host is already part of
+// the logger context.
+func sendErrorCause(err error) error {
+	if urlErr, ok := errors.AsType[*url.Error](err); ok {
+		return urlErr.Err
+	}
+	return err
 }
 
 func (c *client) send(ctx context.Context, tenantID string, buf []byte) (int, error) {

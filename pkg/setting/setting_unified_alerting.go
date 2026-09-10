@@ -63,6 +63,8 @@ const (
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval          = SchedulerBaseInterval * 6 // == 60 seconds
 	stateHistoryDefaultEnabled             = true
+	stateHistoryBackendLoki                = "loki"
+	stateHistoryBackendMultiple            = "multiple"
 	notificationHistoryDefaultEnabled      = false
 	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
 	defaultRecordingRequestTimeout         = 10 * time.Second
@@ -170,6 +172,14 @@ type UnifiedAlertingSettings struct {
 	// Configured via the [unified_alerting] ini key "external_alertmanager_uid" or the
 	// GF_UNIFIED_ALERTING_EXTERNAL_ALERTMANAGER_UID environment variable.
 	ExternalAlertmanagerUID string
+
+	// ExternalRulerUID is the operator-level override for the Mimir Prometheus
+	// (ruler) datasource UID to sync alert rules from into Grafana. When non-empty, it
+	// applies to all orgs and overrides any per-org value stored on the AlertingConfig
+	// resource.
+	// Configured via the [unified_alerting] ini key "external_ruler_uid" or the
+	// GF_UNIFIED_ALERTING_EXTERNAL_RULER_UID environment variable.
+	ExternalRulerUID string
 }
 
 type RecordingRuleSettings struct {
@@ -243,6 +253,25 @@ type UnifiedAlertingNotificationHistorySettings struct {
 // It hides the implementation details of the Enabled and simplifies its usage.
 func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
+}
+
+// QueriesServedByLoki returns true if state history read queries are served by Loki, either as the
+// only backend or as the primary of the "multiple" backend. Loki is the only backend that can answer
+// queries which are not scoped to a single alert rule.
+func (u *UnifiedAlertingStateHistorySettings) QueriesServedByLoki() bool {
+	if !u.Enabled {
+		return false
+	}
+	if isStateHistoryBackend(u.Backend, stateHistoryBackendMultiple) {
+		return isStateHistoryBackend(u.MultiPrimary, stateHistoryBackendLoki)
+	}
+	return isStateHistoryBackend(u.Backend, stateHistoryBackendLoki)
+}
+
+// isStateHistoryBackend normalizes the configured value the same way historian.ParseBackendType does.
+// That function cannot be reused here because the historian package imports this one.
+func isStateHistoryBackend(value, backend string) bool {
+	return strings.EqualFold(strings.TrimSpace(value), backend)
 }
 
 // IsReservedLabelDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the given reserved label.
@@ -629,6 +658,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 	uaCfg.ExternalAlertmanagerUID = ua.Key("external_alertmanager_uid").MustString("")
+	uaCfg.ExternalRulerUID = ua.Key("external_ruler_uid").MustString("")
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

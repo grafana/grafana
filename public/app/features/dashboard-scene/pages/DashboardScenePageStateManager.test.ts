@@ -29,6 +29,7 @@ import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, Dashbo
 
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
+import { DashboardInteractions } from '../utils/interactions';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
@@ -862,6 +863,16 @@ describe('DashboardScenePageStateManager v2', () => {
         },
       };
 
+      const folderPredefinedVariable = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'injectedFolderVar',
+          current: { text: 'b', value: 'b' },
+          query: 'b,c',
+          origin: { type: 'folder', folderUid: 'folder-uid' },
+        },
+      };
+
       const updatedPredefinedVariable = {
         kind: 'CustomVariable' as const,
         spec: {
@@ -886,9 +897,9 @@ describe('DashboardScenePageStateManager v2', () => {
         spec: { ...defaultDashboardV2Spec() },
       });
 
-      // Explicit opt-in denylist (`[]` = deny nothing). Absent annotation means opt-out.
+      // Explicit opt-in (`all`/`all`). Absent annotation means not opted in.
       const optedInAnnotations = (extra?: Record<string, string>): Record<string, string> => ({
-        'grafana.app/ignorePredefinedVariables': '[]',
+        'grafana.app/useCrossDashboardVariables': '{"global":"all","folder":"all"}',
         ...extra,
       });
 
@@ -961,6 +972,86 @@ describe('DashboardScenePageStateManager v2', () => {
 
         expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
         expect(options.defaultVariables).toBeUndefined();
+      });
+
+      describe('global variables load tracking', () => {
+        let loadedSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+          loadedSpy = jest.spyOn(DashboardInteractions, 'globalVariablesLoaded').mockImplementation(() => undefined);
+        });
+
+        afterEach(() => {
+          loadedSpy.mockRestore();
+        });
+
+        it('reports loaded counts for global and folder variables', async () => {
+          mockFetchPredefinedVariables.mockResolvedValueOnce([predefinedVariable, folderPredefinedVariable]);
+          const loader = new DashboardScenePageStateManagerV2({});
+
+          await loader.enrichLoadOptions(v2Response(optedInAnnotations({ 'grafana.app/folder': 'folder-uid' })), {
+            uid: 'fake-dash',
+            route: DashboardRoutes.Normal,
+          });
+
+          expect(loadedSpy).toHaveBeenCalledWith({
+            global_count: 1,
+            folder_count: 1,
+            total_count: 2,
+            mode: 'all',
+          });
+        });
+
+        it('reports zero counts and mode none when the dashboard denies all', async () => {
+          const loader = new DashboardScenePageStateManagerV2({});
+
+          await loader.enrichLoadOptions(
+            v2Response({
+              'grafana.app/useCrossDashboardVariables': '{"global":"none","folder":"none"}',
+            }),
+            {
+              uid: 'fake-dash',
+              route: DashboardRoutes.Normal,
+            }
+          );
+
+          expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
+          expect(loadedSpy).toHaveBeenCalledWith({
+            global_count: 0,
+            folder_count: 0,
+            total_count: 0,
+            mode: 'none',
+          });
+        });
+
+        it('reports zero counts and mode none when the denylist annotation is absent', async () => {
+          const loader = new DashboardScenePageStateManagerV2({});
+
+          await loader.enrichLoadOptions(v2Response(), {
+            uid: 'fake-dash',
+            route: DashboardRoutes.Normal,
+          });
+
+          expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
+          expect(loadedSpy).toHaveBeenCalledWith({
+            global_count: 0,
+            folder_count: 0,
+            total_count: 0,
+            mode: 'none',
+          });
+        });
+
+        it('does not report when the feature flag is off', async () => {
+          setTestFlags({ 'grafana.dashboardGlobalVariables': false });
+          const loader = new DashboardScenePageStateManagerV2({});
+
+          await loader.enrichLoadOptions(v2Response(optedInAnnotations()), {
+            uid: 'fake-dash',
+            route: DashboardRoutes.Normal,
+          });
+
+          expect(loadedSpy).not.toHaveBeenCalled();
+        });
       });
 
       it('should sync predefined variables onto a cached scene on revisit', async () => {
@@ -2645,6 +2736,22 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(loader.state.dashboard!.getPath()).toBe('v2dashboards/new-dashboard-2025-04-09-nTqgq.json');
     });
+
+    // skipSceneCache is implemented separately in the v1 and v2 managers, so cover both.
+    // The fixtures are declared below this block, so resolve them inside the test body.
+    it.each(['v1', 'v2'] as const)(
+      'should not cache the previewed %s scene, so navigating back to the real dashboard is never served stale preview content',
+      async (version) => {
+        const resource = version === 'v1' ? v1ProvisionedDashboardResource : v2ProvisionedDashboardResource;
+        fetchMock.mockImplementation(() => of(createFetchResponse(resource)));
+
+        const loader = new UnifiedDashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'blah-blah', route: DashboardRoutes.Provisioning });
+
+        expect(loader.state.dashboard).toBeDefined();
+        expect(loader.getSceneFromCache('blah-blah')).toBeFalsy();
+      }
+    );
   });
 
   describe('New dashboards', () => {

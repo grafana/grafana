@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
+import { flows, getPanelBox } from './helpers';
 import { type Panels } from './page-objects';
 import { type GridLayoutOptions } from './page-objects/sidebar/shared/GridLayoutOptions';
-import { getPanelBox, importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -22,8 +22,8 @@ test.describe(
   },
   () => {
     test.describe('Layout switching', () => {
-      test('can switch to auto grid layout', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-        await importTestDashboard(page, selectors, 'Switch to auto grid');
+      test('can switch to auto grid layout', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Switch to auto grid');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -38,8 +38,7 @@ test.describe(
 
         await checkAutoGridLayoutInputs(gridLayoutOptions);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
@@ -51,8 +50,8 @@ test.describe(
     });
 
     test.describe('Auto grid column options', () => {
-      test('can change min column width', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-        await importTestDashboard(page, selectors, 'Set min column width');
+      test('can change min column width', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set min column width');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -88,8 +87,7 @@ test.describe(
           expect(lastPanelBox!.y, 'Last panel should be on the same row as the first').toBe(firstPanelBox.y);
         }).toPass();
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
@@ -114,7 +112,7 @@ test.describe(
         sidebar,
         panels,
       }) => {
-        await importTestDashboard(page, selectors, 'Set custom min column width');
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set custom min column width');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -130,8 +128,7 @@ test.describe(
         // Changing to 1100 custom width should have each panel span the whole row (stacked vertically)
         await verifyPanelsStackedVertically(panels);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await verifyPanelsStackedVertically(panels);
 
@@ -142,12 +139,12 @@ test.describe(
 
         await verifyPanelsStackedVertically(panels);
 
-        await gridLayoutOptions.clickClearCustomMinColumnWidth();
+        await gridLayoutOptions.clearCustomMinColumnWidth();
         await expect(gridLayoutOptions.getMinColumnWidthSelect()).toHaveValue('Standard');
       });
 
-      test('can change max columns', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-        await importTestDashboard(page, selectors, 'Set max columns');
+      test('can change max columns', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set max columns');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -163,8 +160,7 @@ test.describe(
         // Changing to 1 max column should have each panel span the whole row (stacked vertically)
         await verifyPanelsStackedVertically(panels);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await verifyPanelsStackedVertically(panels);
 
@@ -178,8 +174,8 @@ test.describe(
     });
 
     test.describe('Auto grid row options', () => {
-      test('can change row height', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-        await importTestDashboard(page, selectors, 'Set row height');
+      test('can change row height', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set row height');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -209,8 +205,7 @@ test.describe(
           })
           .toBeGreaterThan(regularRowHeight);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
           .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
@@ -231,8 +226,8 @@ test.describe(
           .toBeGreaterThan(regularRowHeight);
       });
 
-      test('can change to custom row height', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-        await importTestDashboard(page, selectors, 'Set custom row height');
+      test('can change to custom row height', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set custom row height');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -254,8 +249,7 @@ test.describe(
           expect(customHeight).toBeGreaterThan(regularRowHeight);
         }).toPass();
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
           .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
@@ -268,12 +262,12 @@ test.describe(
 
         await expect(gridLayoutOptions.getCustomRowHeightInput()).toHaveValue('800');
 
-        await gridLayoutOptions.clickClearCustomRowHeight();
+        await gridLayoutOptions.clearCustomRowHeight();
         await expect(gridLayoutOptions.getRowHeightSelect()).toHaveValue('Standard');
       });
 
-      test('can change fill screen', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-        await importTestDashboard(page, selectors, 'Set fill screen');
+      test('can change fill screen', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set fill screen');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -298,8 +292,7 @@ test.describe(
           })
           .toBeGreaterThan(initialHeight);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
           .poll(async () => (await getPanelBox(panels, 'New panel')).height, {

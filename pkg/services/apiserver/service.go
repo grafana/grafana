@@ -71,6 +71,11 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+// RequestRouter routes API groups before the embedded API server.
+type RequestRouter interface {
+	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+}
+
 type service struct {
 	services.NamedService
 
@@ -109,6 +114,7 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+	requestRouter           RequestRouter
 
 	// vpRegistry serves the resolved policy consulted by apistore.encode.
 	vpRegistry *versionpolicy.VersionPolicyRegistry
@@ -141,6 +147,7 @@ func ProvideService(
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
+	requestRouter RequestRouter,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -168,6 +175,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
+		requestRouter:                     requestRouter,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -205,9 +213,8 @@ func ProvideService(
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.handler.ServeHTTP(resp, req)
+			s.requestRouter.HandleFunc(resp, req, s.handler)
 		}
-		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.
 		// Authorization is enforced by the snapshot authorizer.
@@ -258,13 +265,19 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
-	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
-		registrar.RegisterHTTPRoutes(s.rr)
-	}
 }
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
 	s.appInstallers = append(s.appInstallers, i)
+}
+
+// applyOpenAPIV2Setting drops the v2 OpenAPI config when a deployment has turned
+// /openapi/v2 off. OpenAPIV3Config is left alone.
+func applyOpenAPIV2Setting(serverConfig *genericapiserver.RecommendedConfig, apiserverSection *setting.DynamicSection) {
+	if apiserverSection.Key("openapi_v2_enabled").MustBool(true) {
+		return
+	}
+	serverConfig.OpenAPIConfig = nil
 }
 
 // nolint:gocyclo
@@ -349,7 +362,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Snapshot natural priority before applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order and preferred can't weaken it.
-	naturalOrder := naturalOrderSnapshot(s.scheme, groupVersions)
+	naturalOrder := NaturalOrderSnapshot(s.scheme, groupVersions)
 
 	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
@@ -377,8 +390,6 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
-
 		if s.cfg.EnableVersionPolicy {
 			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
 			if err != nil {
@@ -388,11 +399,12 @@ func (s *service) start(ctx context.Context) error {
 				versionpolicy.NewResolver(naturalOrder),
 				versionPolicyIni,
 			)
-			if err := s.vpRegistry.Validate(); err != nil {
+			if err := s.vpRegistry.Validate(apiResourceConfig); err != nil {
 				return err
 			}
-			getter.SetVersionPolicy(s.vpRegistry)
 		}
+
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider, s.vpRegistry)
 
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
@@ -408,8 +420,15 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	searchAPIEnabled := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false)
-	searchRoutes := searchroutes.Build(searchAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
+	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	searchRoutes := searchroutes.BuildWithOptions(
+		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
+			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
+		}},
+	)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -427,6 +446,8 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	applyOpenAPIV2Setting(serverConfig, apiserverSection)
 
 	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
 		serverConfig.AdmissionControl,
@@ -456,7 +477,7 @@ func (s *service) start(ctx context.Context) error {
 			StorageClient:         s.unified,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
-			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
 			SecureValues:          s.secrets,
 			ConfigProvider:        s.restConfigProvider,
 			Metrics:               s.metrics,

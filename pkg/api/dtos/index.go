@@ -40,16 +40,20 @@ type IndexViewData struct {
 	// Empty means no auto-login redirect should occur.
 	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
 	AssetSriChecksEnabled bool   `json:"-"`
-	NewPreferencesPage    bool   `json:"-"`
 	OFREPRootUrlEnabled   bool   `json:"-"`
 }
 
 type EntryPointAssets struct {
-	ContentDeliveryURL string            `json:"cdn,omitempty"`
-	JSFiles            []EntryPointAsset `json:"jsFiles"`
-	CSSFiles           []EntryPointAsset `json:"cssFiles"`
-	Dark               string            `json:"dark"`
-	Light              string            `json:"light"`
+	ContentDeliveryURL string `json:"cdn,omitempty"`
+
+	// PublicPath is the URL prefix the bundler compiled its asset references against.
+	// The page rebuilds that prefix for a CDN, and it varies by bundler.
+	PublicPath string `json:"-"`
+
+	JSFiles  []EntryPointAsset `json:"jsFiles"`
+	CSSFiles []EntryPointAsset `json:"cssFiles"`
+	Dark     string            `json:"dark"`
+	Light    string            `json:"light"`
 }
 
 type EntryPointAsset struct {
