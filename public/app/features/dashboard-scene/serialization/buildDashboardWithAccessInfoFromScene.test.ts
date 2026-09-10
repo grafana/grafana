@@ -10,12 +10,13 @@ function buildFakeScene(overrides?: {
   k8sMetadata?: Record<string, unknown>;
   uid?: string;
   annotationsPermissions?: AnnotationsPermissions;
+  meta?: Record<string, unknown>;
 }): DashboardScene {
   const fakeScene = {
     serializer: { getK8SMetadata: () => overrides?.k8sMetadata },
     state: {
       uid: overrides?.uid,
-      meta: {
+      meta: overrides?.meta ?? {
         canEdit: true,
         canSave: true,
         canShare: false,
@@ -63,6 +64,51 @@ describe('buildDashboardWithAccessInfoFromScene', () => {
     const result = buildDashboardWithAccessInfoFromScene(buildFakeScene({ annotationsPermissions }), spec);
 
     expect(result.access.annotationsPermissions).toBe(annotationsPermissions);
+  });
+
+  it('maps every access flag straight through from the scene meta, including publicDashboardEnabled as isPublic', () => {
+    const result = buildDashboardWithAccessInfoFromScene(
+      buildFakeScene({
+        meta: {
+          canEdit: true,
+          canSave: true,
+          canShare: false,
+          canStar: true,
+          canDelete: false,
+          canAdmin: true,
+          publicDashboardEnabled: true,
+          slug: 'my-dashboard',
+          url: '/d/dash-1/my-dashboard',
+        },
+      }),
+      spec
+    );
+
+    expect(result.access).toMatchObject({
+      canEdit: true,
+      canSave: true,
+      canShare: false,
+      canStar: true,
+      canDelete: false,
+      canAdmin: true,
+      isPublic: true,
+      slug: 'my-dashboard',
+      url: '/d/dash-1/my-dashboard',
+    });
+  });
+
+  it('leaves access flags undefined when the scene meta omits them, rather than coercing to false/true', () => {
+    const result = buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: {} }), spec);
+
+    expect(result.access).toMatchObject({
+      canEdit: undefined,
+      canSave: undefined,
+      canShare: undefined,
+      canStar: undefined,
+      canDelete: undefined,
+      canAdmin: undefined,
+      isPublic: undefined,
+    });
   });
 
   it('applies metadata defaults when no k8s metadata exists on the scene yet', () => {
