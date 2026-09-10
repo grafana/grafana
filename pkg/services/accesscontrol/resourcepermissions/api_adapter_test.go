@@ -645,6 +645,103 @@ func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
 	assert.Equal(t, "user-1", perms[4].UserLogin)
 }
 
+type failingUserService struct {
+	*usertest.FakeUserService
+	err error
+}
+
+func (s *failingUserService) ListByIdOrUID(context.Context, []string, []int64) ([]*user.User, error) {
+	return nil, s.err
+}
+
+type failingTeamService struct {
+	*teamtest.FakeService
+	err error
+}
+
+func (s *failingTeamService) SearchTeams(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	return team.SearchTeamQueryResult{}, s.err
+}
+
+type failingPermissionIDStore struct {
+	*mockResourcePermissionStore
+	err error
+}
+
+func (s *failingPermissionIDStore) GetPermissionIDsByRoleNames(context.Context, int64, []string) (map[string]int64, error) {
+	return nil, s.err
+}
+
+// TestConvertK8sResourcePermissionToDTOBatchLookupFailure checks that a failed
+// batch fails the request. Batching means one failure costs every subject of
+// that kind its details, so answering with a response full of unnamed
+// assignments would silently misrepresent who has access.
+func TestConvertK8sResourcePermissionToDTOBatchLookupFailure(t *testing.T) {
+	lookupErr := errors.New("database unavailable")
+
+	resourcePerm := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "user-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindTeam, Name: "team-uid-1", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+			},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		mutate      func(*Service)
+		expectedMsg string
+	}{
+		{
+			name: "user lookup fails",
+			mutate: func(s *Service) {
+				s.userService = &failingUserService{FakeUserService: usertest.NewUserServiceFake(), err: lookupErr}
+			},
+			expectedMsg: "failed to resolve 1 users",
+		},
+		{
+			name: "team lookup fails",
+			mutate: func(s *Service) {
+				s.teamService = &failingTeamService{FakeService: teamtest.NewFakeService(), err: lookupErr}
+			},
+			expectedMsg: "failed to resolve 1 teams",
+		},
+		{
+			name: "permission ID lookup fails",
+			mutate: func(s *Service) {
+				s.store = &failingPermissionIDStore{mockResourcePermissionStore: &mockResourcePermissionStore{}, err: lookupErr}
+			},
+			expectedMsg: "failed to resolve permission IDs",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := &Service{
+				store:       &mockResourcePermissionStore{},
+				userService: usertest.NewUserServiceFake(),
+				teamService: teamtest.NewFakeService(),
+				options: Options{
+					Resource:             "folders",
+					ResourceAttribute:    "uid",
+					PermissionsToActions: map[string][]string{"View": {"folders:read"}, "Edit": {"folders:read", "folders:write"}},
+				},
+			}
+			tt.mutate(svc)
+
+			testApi := &api{cfg: &setting.Cfg{}, logger: log.New("test"), service: svc}
+
+			_, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stack-123-org-1", false)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.expectedMsg)
+			assert.ErrorIs(t, err, lookupErr, "the underlying cause should be preserved")
+		})
+	}
+}
+
 // TestGetFolderHierarchyPermissions tests the folder hierarchy permissions logic
 func TestGetFolderHierarchyPermissions(t *testing.T) {
 	tests := []struct {

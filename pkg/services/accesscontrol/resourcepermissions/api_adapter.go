@@ -141,7 +141,10 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
-	subjects := a.resolveSubjects(lookupCtx, serviceIdentity, orgID, permissions)
+	subjects, err := a.resolveSubjects(lookupCtx, serviceIdentity, orgID, permissions)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, perm := range permissions {
 		kind := perm.Kind
@@ -220,8 +223,8 @@ func basicRoleManagedRoleName(role string) string {
 
 // resolvedSubjects holds everything convertK8sResourcePermissionToDTO needs to
 // name a subject and attach its managed-role permission ID. A missing key means
-// the lookup failed, which callers render the same way a per-entry error was
-// rendered before.
+// the subject no longer exists, which is rendered the same way a per-entry
+// lookup miss was before; a failed lookup is an error, not a missing key.
 type resolvedSubjects struct {
 	users         map[string]*user.User
 	teams         map[string]*team.TeamDTO
@@ -242,7 +245,12 @@ const teamBatchSize = 500
 //
 // requester must be the service identity the caller built, because SearchTeams
 // filters on teams:read, which that identity holds with a wildcard scope.
-func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) *resolvedSubjects {
+//
+// A failed batch is returned as an error rather than logged. Batching widened
+// the blast radius: where a per-entry failure cost one subject its details, a
+// failed batch costs every subject of that kind, and silently answering with a
+// response full of unnamed assignments is worse than failing the request.
+func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) (*resolvedSubjects, error) {
 	subjects := &resolvedSubjects{
 		users:         make(map[string]*user.User),
 		teams:         make(map[string]*team.TeamDTO),
@@ -281,7 +289,7 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 	if len(userUIDs) > 0 {
 		users, err := a.service.userService.ListByIdOrUID(ctx, userUIDs, nil)
 		if err != nil {
-			a.logger.Warn("Failed to resolve users for resource permissions", "error", err, "count", len(userUIDs), "orgID", orgID)
+			return nil, fmt.Errorf("failed to resolve %d users for resource permissions: %w", len(userUIDs), err)
 		}
 		for _, u := range users {
 			subjects.users[u.UID] = u
@@ -300,8 +308,7 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 			Page: 1,
 		})
 		if err != nil {
-			a.logger.Warn("Failed to resolve teams for resource permissions", "error", err, "count", len(chunk), "orgID", orgID)
-			continue
+			return nil, fmt.Errorf("failed to resolve %d teams for resource permissions: %w", len(chunk), err)
 		}
 		for _, teamDetails := range res.Teams {
 			subjects.teams[teamDetails.UID] = teamDetails
@@ -312,13 +319,12 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 	if len(roleNames) > 0 && a.service.store != nil {
 		permissionIDs, err := a.service.store.GetPermissionIDsByRoleNames(ctx, orgID, roleNames)
 		if err != nil {
-			a.logger.Debug("Failed to get permission IDs from legacy database", "error", err, "count", len(roleNames), "orgID", orgID)
-		} else {
-			subjects.permissionIDs = permissionIDs
+			return nil, fmt.Errorf("failed to resolve permission IDs for %d managed roles: %w", len(roleNames), err)
 		}
+		subjects.permissionIDs = permissionIDs
 	}
 
-	return subjects
+	return subjects, nil
 }
 
 func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {
