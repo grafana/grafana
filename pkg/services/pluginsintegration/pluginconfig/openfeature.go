@@ -7,11 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// OpenFeature provider discovery config keys, shared between the startup
-// environment variables and the per-request config map so plugins can resolve
-// them uniformly on both channels. They mirror the constants exposed by the
-// grafana-plugin-sdk-go config package and are redeclared here until the SDK
-// version pinned by go.mod includes them.
+// OpenFeature provider discovery keys for the per-request config map. They
+// mirror the constants exposed by the grafana-plugin-sdk-go config package
+// and are redeclared here until the SDK version pinned by go.mod includes
+// them.
 const (
 	openFeatureProviderURLKey  = "GF_INSTANCE_OPENFEATURE_PROVIDER_URL"
 	openFeatureProviderTypeKey = "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE"
