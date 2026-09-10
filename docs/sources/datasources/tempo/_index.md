@@ -39,18 +39,18 @@ Refer to [Understand your data](https://grafana.com/docs/grafana-cloud/telemetry
 
 The Tempo data source supports the following features:
 
-| Feature            | Supported | Notes                                                                  |
-| ------------------ | --------- | ---------------------------------------------------------------------- |
-| TraceQL queries    | Yes       | Query traces using TraceQL, the query language designed for traces     |
-| Search             | Yes       | Find traces by service name, span name, duration, and attributes       |
-| Service Graph      | Yes       | Visualize service dependencies and RED metrics                         |
-| Trace to logs      | Yes       | Navigate from spans to related logs in Loki and other log data sources |
-| Trace to metrics   | Yes       | Link spans to metrics queries in Prometheus                            |
-| Trace to profiles  | Yes       | Link spans to profiling data in Grafana Pyroscope                      |
-| Trace correlations | Yes       | Embed custom correlation links in trace views                          |
-| Streaming          | Yes       | Display TraceQL results as they become available                       |
-| JSON trace upload  | Yes       | Upload and visualize trace files without a Tempo instance              |
-| Explore            | Yes       | Ad-hoc trace investigation without dashboards                          |
+| Feature            | Supported    | Notes                                                                                                                               |
+| ------------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| TraceQL queries    | Yes          | Query traces using TraceQL, the query language designed for traces                                                                  |
+| Search             | Yes          | Find traces by service name, span name, duration, and attributes                                                                    |
+| Service Graph      | Yes          | Visualize service dependencies and RED metrics                                                                                      |
+| Trace to logs      | Yes          | Navigate from spans to related logs in Loki and other log data sources                                                              |
+| Trace to metrics   | Yes          | Link spans to metrics queries in Prometheus                                                                                         |
+| Trace to profiles  | Yes          | Link spans to profiling data in Grafana Pyroscope                                                                                   |
+| Trace correlations | Yes          | Embed custom correlation links in trace views                                                                                       |
+| Streaming          | Yes          | Display TraceQL results as they become available                                                                                    |
+| JSON trace upload  | Yes          | Upload and visualize trace files without a Tempo instance                                                                           |
+| Explore            | Yes          | Ad-hoc trace investigation without dashboards                                                                                       |
 | Alerting           | Experimental | Enable the `tempoAlerting` feature toggle to alert on TraceQL metrics queries, or use Prometheus metrics from the metrics generator |
 
 {{< admonition type="tip" >}}
