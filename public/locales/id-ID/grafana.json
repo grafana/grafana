@@ -5981,7 +5981,6 @@
       "description": "Urutan vertikal panel, teks, dan sel kode",
       "name": "Buku catatan",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Waktu",
       "title-edit": "",
@@ -7046,6 +7045,12 @@
       "type": "Jenis"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
     },
     "dashboard-scene": {
@@ -7592,6 +7597,10 @@
       "required": "Wajib diisi"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Perubahan",
         "label-details": "Detail",
@@ -9089,6 +9098,7 @@
       "share-export-json": "Ekspor sebagai JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Waktu mulai",
       "success-indicator": "",
       "target": "Target",
@@ -12476,6 +12486,7 @@
       "title": "Buat"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Aturan peringatan baru"
     },
     "create-dashboard": {
@@ -12965,7 +12976,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +12995,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13045,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13062,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13110,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Hapus pengaturan"
+      "clear-tooltip": "Hapus pengaturan",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Seri warna berdasarkan"
@@ -16497,8 +16510,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

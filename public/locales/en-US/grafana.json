@@ -9156,6 +9156,9 @@
       "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
+      "trace-banner-error": "Trace error banner",
+      "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
+      "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
       "url": "URL",
       "warning-indicator": "Trace has client errors"
@@ -10667,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
       "errors-and-notices": "Errors and notices",
-      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -10749,9 +10751,13 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "column-menu-filter": "Filter values",
+      "column-menu-label": "Column options for {{name}}",
+      "column-menu-update-filter": "Update filter",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
+      "edit-column-filter": "Edit filter on {{name}}",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
@@ -16633,8 +16639,6 @@
       "label": "Query"
     },
     "options": {
-      "max-rows": "Row limit",
-      "max-rows-description": "Rows of query data to render. High values can slow the panel, especially with complex HTML.",
       "render-mode": "Render mode"
     },
     "render": {
