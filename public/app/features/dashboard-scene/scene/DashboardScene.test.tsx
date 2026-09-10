@@ -28,7 +28,12 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerAllowsEdits,
+  AnnoKeyManagerKind,
+  AnnoKeyUseCrossDashboardVariables,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -2086,6 +2091,26 @@ describe('DashboardScene', () => {
     it('dashboard should be editable if not managed', () => {
       const scene = buildTestScene();
       expect(scene.managedResourceCannotBeEdited()).toBe(false);
+    });
+
+    it.each([
+      { value: 'true', expected: false },
+      { value: 'false', expected: true },
+    ])('treats only a literal "true" managerAllowsEdits as editable (value: $value)', ({ value, expected }) => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerAllowsEdits]: value } },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(expected);
+    });
+
+    it('locks a repo-managed dashboard when provisioning is disabled', () => {
+      config.provisioningEnabled = false;
+      const scene = buildTestScene({
+        meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } } },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
     });
   });
 

@@ -120,6 +120,16 @@ describe('FolderRepo', () => {
     expect(await screen.findByText('Read only')).toBeInTheDocument();
   });
 
+  it('keeps the managed badge but drops the read-only badge when the user cannot edit the folder', async () => {
+    mockRepositories([{ ...REPOSITORY, workflows: [] }]);
+
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} canEdit={false} />);
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
+    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+  });
+
   it('renders the orphaned badge when the manager id names a deleted repository', async () => {
     mockRepositories([{ ...REPOSITORY, name: 'other-repo' }]);
 
