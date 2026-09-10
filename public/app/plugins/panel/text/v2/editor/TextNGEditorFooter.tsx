@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, InlineSwitch, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { InlineSwitch, useStyles2 } from '@grafana/ui';
 
 export const FOOTER_TEST_ID = 'TextNGEditor-footer';
 
@@ -20,33 +20,38 @@ export function TextNGEditorFooter({
   onShowLineNumbersChange,
   pagination,
 }: TextNGEditorFooterProps) {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack alignItems="center" minHeight={theme.components.height.md} data-testid={FOOTER_TEST_ID}>
-      {/* Side tracks of equal width, so the pagination centres on the footer rather than on
-          the space the line numbers switch leaves. */}
-      <Box flex="1 1 0" />
-      {pagination}
-      <Stack flex="1 1 0" justifyContent="flex-end" alignItems="center">
-        {showLineNumbersSwitch && (
-          <InlineSwitch
-            className={styles.lineNumbers}
-            showLabel
-            transparent
-            label={t('textng.editor.footer-line-numbers', 'Line numbers')}
-            value={showLineNumbers}
-            onChange={() => onShowLineNumbersChange(!showLineNumbers)}
-          />
-        )}
-      </Stack>
-    </Stack>
+    <div className={styles.footer} data-testid={FOOTER_TEST_ID}>
+      {pagination && <div className={styles.pagination}>{pagination}</div>}
+      {showLineNumbersSwitch && (
+        <InlineSwitch
+          className={styles.lineNumbers}
+          showLabel
+          transparent
+          label={t('textng.editor.footer-line-numbers', 'Line numbers')}
+          value={showLineNumbers}
+          onChange={() => onShowLineNumbersChange(!showLineNumbers)}
+        />
+      )}
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  footer: css({
+    display: 'grid',
+    gridTemplateColumns: '1fr auto 1fr',
+    alignItems: 'center',
+    minHeight: theme.spacing(theme.components.height.md),
+  }),
+  pagination: css({
+    gridColumn: 2,
+  }),
   lineNumbers: css({
-    fontSize: theme.typography.size.sm,
+    gridColumn: 3,
+    justifySelf: 'end',
+    fontSize: theme.typography.code.fontSize,
   }),
 });
