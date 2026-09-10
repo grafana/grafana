@@ -14,10 +14,9 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	grafanarouter "github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
@@ -35,8 +35,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
@@ -44,7 +46,6 @@ import (
 	rerankprovider "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"go.opentelemetry.io/otel"
 )
 
 // SearchSupport bundles the document builder supplier with the dashboard
@@ -297,15 +298,6 @@ func (s *ModuleServer) Run() error {
 		return NewService(s.cfg, s.opts, s.apiOpts)
 	})
 
-	// TODO: uncomment this once the apiserver is ready to be run as a standalone target
-	//if s.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
-	//	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
-	//		return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
-	//	})
-	//} else {
-	//	s.log.Debug("apiserver feature is disabled")
-	//}
-
 	m.RegisterModule(modules.StorageServer, s.initStorageServerModule)
 
 	m.RegisterModule(modules.SearchServer, s.initSearchServerModule)
@@ -316,6 +308,8 @@ func (s *ModuleServer) Run() error {
 		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.hooksService)
 	})
 
+	m.RegisterModule(modules.Router, s.initRouterModule)
+
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
 
 	m.RegisterModule(modules.All, nil)
@@ -324,6 +318,14 @@ func (s *ModuleServer) Run() error {
 	s.moduleRegisterer.RegisterModules(m)
 
 	return m.Run(s.context)
+}
+
+func (s *ModuleServer) initRouterModule() (services.Service, error) {
+	loader, err := s.provideRoutesLoader()
+	if err != nil {
+		return nil, fmt.Errorf("creating routes loader: %w", err)
+	}
+	return grafanarouter.ProvideService(loader, s.httpServerRouter, s.healthNotifier)
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {

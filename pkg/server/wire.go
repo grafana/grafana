@@ -10,6 +10,7 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/grafana/authlib/types"
 	promclient "github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
@@ -68,6 +70,13 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 func InitializeRouterFactory() (router.RouterFactory, error) {
 	wire.Build(wireExtsRouterFactorySet)
 	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
+}
+
+// InitializeRoutesLoader selects the edition-specific routes loader using the
+// clients configured by the router module.
+func InitializeRoutesLoader(cfg *setting.Cfg, client resource.ResourceClient, accessClient types.AccessClient) (router.RoutesLoader, error) {
+	wire.Build(wireExtsRoutesLoaderSet)
+	return nil, nil
 }
 
 // InitializeZanzanaReconcilerState builds the MT reconciler's state store for

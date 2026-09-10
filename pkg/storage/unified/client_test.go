@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -122,7 +123,43 @@ func TestUnifiedStorageClient(t *testing.T) {
 	})
 }
 
+func TestNewRemoteResourceClientFromConfigUsesSeparateSearchServer(t *testing.T) {
+	resourceServer := createTestGrpcServer(t, ":0")
+	defer resourceServer.s.Stop()
+	indexServer := createTestGrpcServer(t, ":0")
+	defer indexServer.s.Stop()
+
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("grafana-apiserver").Key("address").SetValue(resourceServer.addr)
+	cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue(indexServer.addr)
+
+	client, err := NewRemoteResourceClientFromConfig(
+		cfg,
+		featuremgmt.WithFeatures(),
+		nil,
+		prometheus.NewRegistry(),
+	)
+	require.NoError(t, err)
+
+	testCallAllMethods(client)
+	for method, count := range resourceServer.getCalls() {
+		require.Equal(t, 1, count, "method was called more than once: "+method)
+		require.Contains(t, method, "resource.ResourceStore")
+	}
+	for method, count := range indexServer.getCalls() {
+		require.Equal(t, 1, count, "method was called more than once: "+method)
+		require.True(t, strings.Contains(method, "resource.ResourceIndex") || strings.Contains(method, "resource.ManagedObjectIndex"))
+	}
+}
+
 func TestNewSearchClient(t *testing.T) {
+	t.Run("new remote resource client fails when address is empty", func(t *testing.T) {
+		cfg := setting.NewCfg()
+
+		_, err := NewRemoteResourceClientFromConfig(cfg, featuremgmt.WithFeatures(), nil, nil)
+		require.ErrorContains(t, err, "address")
+	})
+
 	t.Run("new search client fails when address is empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
 

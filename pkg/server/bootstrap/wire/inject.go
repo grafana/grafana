@@ -56,3 +56,10 @@ func InitializeRouterFactory() (router.RouterFactory, error) {
 	wire.Build(RouterFactorySet)
 	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
 }
+
+// InitializeRoutesLoader uses the same configured OSS dependency graph as the
+// app-plugin API registration.
+func InitializeRoutesLoader(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (router.RoutesLoader, error) {
+	wire.Build(CLI, wireext.BasicSet, router.ProvideRoutesLoader)
+	return nil, nil
+}
