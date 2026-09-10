@@ -58,6 +58,7 @@ import {
   getPillCellHeightMeasurer,
   getRowHeight,
   inferPills,
+  isShiftTabToHeader,
   createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
@@ -1845,7 +1846,7 @@ describe('TableNG utils', () => {
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
     });
 
-    it('sizes numeric/date columns by numericCharWidth, so tabular-nums digits are not under-measured', () => {
+    it('sizes numeric/date columns by numericCharWidth under table.refresh, so tabular-nums digits are not under-measured', () => {
       const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
       const widthWith = (numericCharWidth: number) => {
         const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
@@ -1855,10 +1856,27 @@ describe('TableNG utils', () => {
           typographyCtx,
           headerTypographyCtx: makeTypographyCtx(),
           showTypeIcons: false,
+          tableRefreshEnabled: true,
         })[0];
       };
       // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
       expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
+    });
+
+    it('ignores numericCharWidth without table.refresh, sizing numeric columns by the prose average', () => {
+      const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+      const widthWith = (numericCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+        typographyCtx.numericCharWidth = numericCharWidth;
+        // tableRefreshEnabled defaults to false: tabular-nums is off, so numeric falls back to avgCharWidth.
+        return computeContentAwareColWidths([numberField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      // Widening the (unused) tabular advance must not change the width when the toggle is off.
+      expect(widthWith(2 * CHAR_W)).toBe(widthWith(CHAR_W));
     });
 
     it('sizes a JSON column by monoCharWidth (its monospace font), not avgCharWidth', () => {
@@ -2637,6 +2655,32 @@ describe('TableNG utils', () => {
       const result = withColumns([]);
       markEdgeColumns(result);
       expect(result.columns).toEqual([]);
+    });
+  });
+
+  describe('isShiftTabToHeader', () => {
+    const shiftTab = { shiftKey: true, key: 'Tab' };
+
+    it('is true for Shift+Tab on the first cell of the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, shiftTab, 'c0')).toBe(true);
+    });
+
+    it('is false when the column is not the first column', () => {
+      expect(isShiftTabToHeader({ key: 'c1' }, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when the row is not the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 3 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when Shift is not held or the key is not Tab', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: false, key: 'Tab' }, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: true, key: 'Enter' }, 'c0')).toBe(false);
+    });
+
+    it('is false when column or row is undefined (keydown outside a data cell)', () => {
+      expect(isShiftTabToHeader(undefined, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, undefined, shiftTab, 'c0')).toBe(false);
     });
   });
 
