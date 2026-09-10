@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type LiveChannelAddress, isValidLiveChannelAddress } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { CodeEditor, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { MessagePublishMode } from './types';
 
@@ -22,6 +23,9 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
     }
     return body == null ? '' : `${body}`;
   }, [mode, body]);
+  const [draft, setDraft] = useState(txt);
+
+  useEffect(() => setDraft(txt), [txt]);
 
   const doSave = (v: string) => {
     if (mode === MessagePublishMode.JSON) {
@@ -51,14 +55,13 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
 
   return (
     <>
-      <CodeEditor
-        height={height - 32}
-        language={mode === MessagePublishMode.JSON ? 'json' : 'text'}
-        value={txt}
+      <CodeMirrorEditor
+        height={`${height - 32}px`}
+        language={mode === MessagePublishMode.JSON ? 'json' : undefined}
+        value={draft}
+        onChange={setDraft}
         onBlur={doSave}
         onSave={doSave}
-        showMiniMap={false}
-        showLineNumbers={true}
       />
       <div style={{ height: 32 }}>
         <Button onClick={onPublishClicked}>
