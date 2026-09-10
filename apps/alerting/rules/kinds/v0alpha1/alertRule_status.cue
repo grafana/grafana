@@ -11,6 +11,7 @@ import "time"
 	state?:              #AlertRuleState
 	stateReason?:        #AlertRuleStateReason
 	lastEvaluationTime?: string & time.Time
+	// duration of the last evaluation in seconds
 	evaluationDuration?: float
 	lastError?:          string
 }

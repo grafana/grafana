@@ -3538,6 +3538,7 @@
             "additionalProperties": true
           },
           "evaluationDuration": {
+            "description": "duration of the last evaluation in seconds",
             "type": "number"
           },
           "health": {
@@ -4840,6 +4841,7 @@
             "additionalProperties": true
           },
           "evaluationDuration": {
+            "description": "duration of the last evaluation in seconds",
             "type": "number"
           },
           "health": {

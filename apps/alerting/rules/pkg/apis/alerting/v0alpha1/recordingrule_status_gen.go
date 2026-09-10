@@ -50,7 +50,8 @@ func (RecordingRulestatusOperatorState) OpenAPIModelName() string {
 type RecordingRuleStatus struct {
 	Health             *RecordingRuleRecordingRuleHealth `json:"health,omitempty"`
 	LastEvaluationTime *time.Time                        `json:"lastEvaluationTime,omitempty"`
-	EvaluationDuration *float64                          `json:"evaluationDuration,omitempty"`
+	// duration of the last evaluation in seconds
+	EvaluationDuration *float64 `json:"evaluationDuration,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]RecordingRulestatusOperatorState `json:"operatorStates,omitempty"`

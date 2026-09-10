@@ -50,6 +50,7 @@ export interface Status {
 	state?: AlertRuleState;
 	stateReason?: AlertRuleStateReason;
 	lastEvaluationTime?: string;
+	// duration of the last evaluation in seconds
 	evaluationDuration?: number;
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.

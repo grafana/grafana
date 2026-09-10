@@ -7,6 +7,7 @@ import "time"
 #RecordingRuleStatus: {
 	health?:             #RecordingRuleHealth
 	lastEvaluationTime?: string & time.Time
+	// duration of the last evaluation in seconds
 	evaluationDuration?: float
 	lastError?:          string
 }

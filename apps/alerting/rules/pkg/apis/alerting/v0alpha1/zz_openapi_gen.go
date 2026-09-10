@@ -557,8 +557,9 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 					},
 					"evaluationDuration": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Description: "duration of the last evaluation in seconds",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"operatorStates": {
@@ -1875,8 +1876,9 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref common.ReferenceC
 					},
 					"evaluationDuration": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
+							Description: "duration of the last evaluation in seconds",
+							Type:        []string{"number"},
+							Format:      "double",
 						},
 					},
 					"operatorStates": {

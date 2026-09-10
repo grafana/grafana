@@ -168,6 +168,7 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               evaluationDuration:
+                description: duration of the last evaluation in seconds
                 type: number
               health:
                 enum:
