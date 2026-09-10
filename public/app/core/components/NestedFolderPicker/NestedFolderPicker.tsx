@@ -404,7 +404,6 @@ export function NestedFolderPicker({
           requestLoadMore={handleLoadMore}
           emptyFolders={emptyFolders}
           teamFolderOwnersByUid={teamFolderOwnersByUid}
-          permission={permission}
         />
       </fieldset>
     </>

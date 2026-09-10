@@ -19,7 +19,7 @@ export interface Props {
   enableRepositoryLink?: boolean;
   /** The folder's path within its repository (`grafana.app/sourcePath`); with `enableRepositoryLink`, the badge links to it. */
   sourcePath?: string;
-  /** Whether the current user could edit this folder. Only users who could otherwise edit get the read-only badge; the managed badge is shown to everyone. Default to false */
+  /** Whether the current user could edit this folder. Only users who could otherwise edit get the read-only badge; the managed badge is shown to everyone. */
   canEdit?: boolean;
 }
 
