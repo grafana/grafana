@@ -329,19 +329,29 @@ func NewRemoteResourceClientFromConfig(
 	metrics := newClientMetrics(reg)
 	storageConn, err := grpcConn(address, metrics, keepaliveTime)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create unified storage connection: %w", err)
 	}
 
 	indexConn := grpc.ClientConnInterface(storageConn)
+	var searchConn *grpc.ClientConn
 	if searchAddress := apiserverCfg.Key("search_server_address").MustString(""); searchAddress != "" {
-		indexConn, err = grpcConn(searchAddress, metrics, keepaliveTime)
+		searchConn, err = grpcConn(searchAddress, metrics, keepaliveTime)
 		if err != nil {
 			_ = storageConn.Close()
-			return nil, err
+			return nil, fmt.Errorf("create search server connection: %w", err)
 		}
+		indexConn = searchConn
 	}
 
-	return resource.NewResourceClient(storageConn, indexConn, cfg, features, tracer)
+	client, err := resource.NewResourceClient(storageConn, indexConn, cfg, features, tracer)
+	if err != nil {
+		_ = storageConn.Close()
+		if searchConn != nil {
+			_ = searchConn.Close()
+		}
+		return nil, fmt.Errorf("create remote resource client: %w", err)
+	}
+	return client, nil
 }
 
 func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {

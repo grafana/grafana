@@ -1,9 +1,6 @@
 package router
 
 import (
-	"fmt"
-	"log/slog"
-
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -19,8 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader provides the first OSS loader implementation.
-// Plugin manifests will be loaded here in a later iteration.
+// ProvideRoutesLoader returns two dummy API groups for exercising the OSS
+// router target end to end. Plugin manifests will replace these dummy backends
+// in a later iteration.
 func ProvideRoutesLoader(
 	pluginClient plugins.Client,
 	contextProvider appplugin.PluginContextWrapper,
@@ -36,22 +34,7 @@ func ProvideRoutesLoader(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 ) RoutesLoader {
-	slog.Debug("Providing empty routes loader",
-		"pluginClient", fmt.Sprintf("%T", pluginClient),
-		"contextProvider", fmt.Sprintf("%T", contextProvider),
-		"clientV3Loader", fmt.Sprintf("%T", clientV3Loader),
-		"pluginSources", fmt.Sprintf("%T", pluginSources),
-		"pluginSettings", fmt.Sprintf("%T", pluginSettings),
-		"accessControlService", fmt.Sprintf("%T", acService),
-		"accessControl", fmt.Sprintf("%T", accessControl),
-		"unified", fmt.Sprintf("%T", unified),
-		"accessClient", fmt.Sprintf("%T", accessClient),
-		"decrypter", fmt.Sprintf("%T", decrypter),
-		"tracer", fmt.Sprintf("%T", tracer),
-		"features", fmt.Sprintf("%T", features),
-		"cfg", fmt.Sprintf("%T", cfg),
-	)
-	return dummyRoutesLoader{group: []string{
+	return dummyRoutesLoader{groups: []string{
 		"dummy-backend-1.ext.grafana.app",
 		"dummy-backend-2.ext.grafana.app",
 	}}

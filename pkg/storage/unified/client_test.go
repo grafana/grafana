@@ -152,14 +152,14 @@ func TestNewRemoteResourceClientFromConfigUsesSeparateSearchServer(t *testing.T)
 	}
 }
 
+func TestNewRemoteResourceClientFromConfigRequiresAddress(t *testing.T) {
+	cfg := setting.NewCfg()
+
+	_, err := NewRemoteResourceClientFromConfig(cfg, featuremgmt.WithFeatures(), nil, nil)
+	require.ErrorContains(t, err, "address")
+}
+
 func TestNewSearchClient(t *testing.T) {
-	t.Run("new remote resource client fails when address is empty", func(t *testing.T) {
-		cfg := setting.NewCfg()
-
-		_, err := NewRemoteResourceClientFromConfig(cfg, featuremgmt.WithFeatures(), nil, nil)
-		require.ErrorContains(t, err, "address")
-	})
-
 	t.Run("new search client fails when address is empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
 

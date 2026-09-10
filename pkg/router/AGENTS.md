@@ -294,11 +294,11 @@ enterprise receives the configured module storage/search and authlib clients exp
 
 Wiring keeps the standalone command factory separate from the dskit loader provider:
 
-- **OSS (`pkg/router`)** — `ProvideRoutesLoader` currently returns an empty loader, but its
-  dependencies intentionally mirror `appplugin.RegisterAPIService` except for
-  `builder.APIRegistrar`, plus the authlib access client. A later iteration will load manifests
-  from installed plugins. The older `RouterFactory` remains a no-op, so the legacy top-level
-  command is still hidden in OSS builds.
+- **OSS (`pkg/router`)** — `ProvideRoutesLoader` currently returns two dummy API groups so the
+  dskit router target can be exercised end to end. Its dependencies intentionally mirror
+  `appplugin.RegisterAPIService` except for `builder.APIRegistrar`, plus the authlib access client.
+  A later iteration will replace the dummy backends with manifests from installed plugins. The older
+  `RouterFactory` remains a no-op, so the legacy top-level command is still hidden in OSS builds.
 - **enterprise (`pkg/extensions/router`)** — the real factory (`cli.go`): a urfave `router` command
   whose flags drive runtime config. Its `run` builds one `rest.Config` for the whole apps group,
   a `k8s.ClientRegistry`, the enterprise `Loader`, two informers (RouteBackend + AppManifest,
@@ -306,9 +306,9 @@ Wiring keeps the standalone command factory separate from the dskit loader provi
   `http.Server` that serves `gr.HandleFunc`** — then runs informers, the reconcile loop, the
   listener, and graceful shutdown as `g.Go`s under a single errgroup. The listener config
   (addr/TLS/timeouts) is a factory concern, not part of `pkg/router`.
-- **dskit target binding** — OSS constructs the empty loader from the bootstrap CLI/server graph;
-  enterprise wires its provider from the module's configured unified-storage and authlib clients.
-  Both use the generic `Service`.
+- **dskit target binding** — OSS constructs the dummy loader from the bootstrap CLI/server
+  graph; enterprise wires its provider from the module's configured unified-storage and authlib
+  clients. Both use the generic `Service`.
 - **binding** — `server.InitializeRouterFactory()` (wire) returns the no-op in OSS
   (`wire_gen.go`) and the enterprise factory in enterprise/pro (`enterprise_wire_gen.go`);
   `cmd/grafana/main.go` appends the command when non-nil. Keep the wire source

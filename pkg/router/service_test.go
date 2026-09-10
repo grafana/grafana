@@ -26,7 +26,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
-	svc, err := ProvideService(cfg, &dummyRoutesLoader{}, httpRouter, ready)
+	svc, err := ProvideService(cfg, dummyRoutesLoader{}, httpRouter, ready)
 	require.NoError(t, err)
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
@@ -47,14 +47,46 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	recorder = httptest.NewRecorder()
 	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/not-owned", nil))
 	require.Equal(t, http.StatusNotFound, recorder.Code)
+
+	for _, path := range []string{
+		"/apis/unknown.grafana.app/v1/widgets",
+		"/openapi/v3/apis/unknown.grafana.app/v1",
+	} {
+		recorder = httptest.NewRecorder()
+		httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		require.Equal(t, http.StatusNotFound, recorder.Code, path)
+	}
 }
 
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
 	cfg := setting.NewCfg()
 
-	_, err := ProvideService(cfg, nil, mux.NewRouter(), nil)
+	_, err := ProvideService(nil, dummyRoutesLoader{}, mux.NewRouter(), nil)
+	require.ErrorContains(t, err, "configuration is required")
+
+	_, err = ProvideService(cfg, nil, mux.NewRouter(), nil)
 	require.ErrorContains(t, err, "routes loader is required")
 
-	_, err = ProvideService(cfg, &dummyRoutesLoader{}, nil, nil)
+	_, err = ProvideService(cfg, dummyRoutesLoader{}, nil, nil)
 	require.ErrorContains(t, err, "HTTP router is required")
+}
+
+func TestProvideServiceRegistersStandalonePathPrefixes(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
+	httpRouter := mux.NewRouter()
+
+	_, err := ProvideService(cfg, dummyRoutesLoader{}, httpRouter, nil)
+	require.NoError(t, err)
+
+	for _, path := range []string{
+		"/apis/example.grafana.app/v1/widgets",
+		"/openapi/v3/apis/example.grafana.app/v1",
+	} {
+		t.Run(path, func(t *testing.T) {
+			var match mux.RouteMatch
+			require.True(t, httpRouter.Match(httptest.NewRequest(http.MethodGet, path, nil), &match))
+			require.NoError(t, match.MatchErr)
+		})
+	}
 }

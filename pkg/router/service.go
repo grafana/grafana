@@ -33,6 +33,9 @@ type Service struct {
 
 // ProvideService creates the router target service.
 func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier) (*Service, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("configuration is required")
+	}
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
@@ -46,7 +49,7 @@ func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Route
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 
-	// Explicitly configured to run the the router
+	// Explicitly configured to run the router.
 	standalone := slices.Contains(cfg.Target, "router")
 
 	// We need to run as middleware on-top of the existing HTTP router
@@ -62,13 +65,16 @@ func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Route
 		return s, nil
 	}
 
+	next := httpRouter.NotFoundHandler
+	if next == nil {
+		next = http.NotFoundHandler()
+	}
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.router.HandleFunc(w, req, httpRouter.NotFoundHandler)
+		s.router.HandleFunc(w, req, next)
 	})
 	for _, v := range []string{"/apis", "/openapi/v3"} {
 		httpRouter.Handle(v, handler)
-		httpRouter.Handle(v+"/", handler)
-		httpRouter.Handle(v+"/*", handler)
+		httpRouter.PathPrefix(v + "/").Handler(handler)
 	}
 
 	return s, nil
