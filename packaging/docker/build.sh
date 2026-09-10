@@ -122,6 +122,5 @@ if echo "$_grafana_tag" | grep -q "^v"; then
   docker tag "${_docker_repo}:${_grafana_version}${TAG_SUFFIX}" "grafana/grafana-dev:${_grafana_tag}${TAG_SUFFIX}"
 else
   docker_tag_all "main"
-  docker_tag_all "main"
   docker tag "${_docker_repo}:${_grafana_version}${TAG_SUFFIX}" "grafana/grafana-dev:${_grafana_version}${TAG_SUFFIX}"
 fi
