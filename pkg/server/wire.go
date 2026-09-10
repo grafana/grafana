@@ -70,6 +70,17 @@ func InitializeRouterFactory() (router.RouterFactory, error) {
 	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
 }
 
+// InitializeRoutesLoader selects the edition-specific routes loader using the
+// clients configured by the router module.
+func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
+	wire.Build(wireExtsRoutesLoaderSet)
+	return nil, nil
+}
+
+func provideRoutesLoaderContext() context.Context {
+	return context.Background()
+}
+
 // InitializeZanzanaReconcilerState builds the MT reconciler's state store for
 // the zanzana-server target, which runs without the SQL store the full server
 // graph provides.
