@@ -10,6 +10,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type testReadyNotifier struct {
@@ -20,9 +22,11 @@ func (n *testReadyNotifier) SetReady()    { n.ready.Store(true) }
 func (n *testReadyNotifier) SetNotReady() { n.ready.Store(false) }
 
 func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
-	svc, err := ProvideService(&dummyRoutesLoader{}, httpRouter, ready)
+	svc, err := ProvideService(cfg, &dummyRoutesLoader{}, httpRouter, ready)
 	require.NoError(t, err)
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
@@ -46,9 +50,11 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 }
 
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
-	_, err := ProvideService(nil, mux.NewRouter(), nil)
+	cfg := setting.NewCfg()
+
+	_, err := ProvideService(cfg, nil, mux.NewRouter(), nil)
 	require.ErrorContains(t, err, "routes loader is required")
 
-	_, err = ProvideService(&dummyRoutesLoader{}, nil, nil)
+	_, err = ProvideService(cfg, &dummyRoutesLoader{}, nil, nil)
 	require.ErrorContains(t, err, "HTTP router is required")
 }

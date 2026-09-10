@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const readinessPollInterval = time.Second
@@ -29,7 +32,7 @@ type Service struct {
 }
 
 // ProvideService creates the router target service.
-func ProvideService(loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
@@ -41,16 +44,33 @@ func ProvideService(loader RoutesLoader, httpRouter *mux.Router, ready ReadyNoti
 		router: NewGrafanaRouter(loader),
 		ready:  ready,
 	}
-
-	// This will intercept the calls to /apis/* and /openapi/v3/*
-	// After we have fully migrated to the router, this should be a raw handler rather than middleware
-	httpRouter.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			s.router.HandleFunc(w, req, next)
-		})
-	})
-
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
+
+	// Explicitly configured to run the the router
+	standalone := slices.Contains(cfg.Target, "router")
+
+	// We need to run as middleware on-top of the existing HTTP router
+	// NOTE: this should be removed when we are no longer running "standard" k8s APIServer
+	if !standalone {
+		// This will intercept the calls to /apis/* and /openapi/v3/*
+		// After we have fully migrated to the router, this should be a raw handler rather than middleware
+		httpRouter.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				s.router.HandleFunc(w, req, next)
+			})
+		})
+		return s, nil
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		s.router.HandleFunc(w, req, httpRouter.NotFoundHandler)
+	})
+	for _, v := range []string{"/apis", "/openapi/v3"} {
+		httpRouter.Handle(v, handler)
+		httpRouter.Handle(v+"/", handler)
+		httpRouter.Handle(v+"/*", handler)
+	}
+
 	return s, nil
 }
 

@@ -324,7 +324,7 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	return grafanarouter.ProvideService(loader, s.httpServerRouter, s.healthNotifier)
+	return grafanarouter.ProvideService(s.cfg, loader, s.httpServerRouter, s.healthNotifier)
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {

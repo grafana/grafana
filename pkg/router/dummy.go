@@ -43,9 +43,19 @@ func (d *dummyBackend) Manifest() app.ManifestData {
 	return app.ManifestData{
 		Group: d.group,
 		Versions: []app.ManifestVersion{{
-			Name: "v0alpha1",
+			Name:   "v0alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind:   "x",
+				Plural: "xs",
+				Scope:  "namespaced",
+			}},
 		}, {
-			Name: "v0alpha2",
+			Name:   "v0alpha2",
+			Served: true,
+		}, {
+			Name:   "v0alpha3",
+			Served: false, // <<<< NOT exposed, but should still understand conversions etc
 		}},
 	}
 }
