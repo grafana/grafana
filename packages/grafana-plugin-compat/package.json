@@ -24,6 +24,11 @@
       "@grafana-app/source": "./src/datasources.ts",
       "types": "./dist/types/datasources.d.ts",
       "import": "./dist/esm/datasources.mjs"
+    },
+    "./apps": {
+      "@grafana-app/source": "./src/apps.ts",
+      "types": "./dist/types/apps.d.ts",
+      "import": "./dist/esm/apps.mjs"
     }
   },
   "publishConfig": {
@@ -42,6 +47,10 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
+  },
+  "dependencies": {
+    "@grafana/data": "workspace:*",
+    "@grafana/runtime": "workspace:*"
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@^7.0.2",
