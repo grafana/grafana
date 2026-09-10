@@ -6257,6 +6257,19 @@
     },
     {
       "metadata": {
+        "name": "search.apiFieldValueResults",
+        "resourceVersion": "1789039361718",
+        "creationTimestamp": "2026-09-10T11:22:41Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for generic resource search API requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsKeeperUI",
         "resourceVersion": "1787262357315",
         "creationTimestamp": "2026-05-22T09:03:04Z",
