@@ -5,8 +5,8 @@ import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableV
 import { config } from '@grafana/runtime';
 import { useFlagRawPrometheusTableNg } from '@grafana/runtime/internal';
 import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
-import { TableNG } from '@grafana/ui/unstable';
 import { PANEL_BORDER } from 'app/core/constants';
+import { CommonTableNG } from 'app/features/table/CommonTableNG';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
@@ -113,7 +113,7 @@ export const RawPrometheusContainerPure = memo(
               // TableNG sizes its root grid via CSS (blockSize: 100%) rather than the height prop, so it
               // needs a definite-size ancestor to resolve against.
               <div style={{ width: tableWidth, height }}>
-                <TableNG
+                <CommonTableNG
                   ariaLabel={ariaLabel}
                   data={frames[0]}
                   width={tableWidth}
