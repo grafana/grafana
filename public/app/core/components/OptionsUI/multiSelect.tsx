@@ -1,4 +1,4 @@
-import { useAsync } from 'react-use';
+import { useEffect, useState } from 'react';
 
 import { type StandardEditorProps, type SelectFieldConfigSettings, type SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
@@ -11,12 +11,27 @@ type Props<T> = StandardEditorProps<T[], SelectFieldConfigSettings<T>>;
 export function MultiSelectValueEditor<T>({ value, onChange, item, id, context }: Props<T>) {
   const { settings } = item;
 
-  const { value: options } = useAsync(async (): Promise<Array<SelectableValue<T>>> => {
-    if (settings?.getOptions) {
-      return settings.getOptions(context);
+  const [dynamicOptions, setDynamicOptions] = useState<Array<SelectableValue<T>>>();
+
+  useEffect(() => {
+    // bail early for static options
+    if (!settings?.getOptions) {
+      return;
     }
-    return settings?.options ?? [];
+
+    let cancelled = false;
+    settings.getOptions(context).then((next) => {
+      if (!cancelled) {
+        setDynamicOptions(next);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [settings, context]);
+
+  const options = settings?.getOptions ? dynamicOptions : (settings?.options ?? []);
 
   return (
     <MultiSelect<T>
