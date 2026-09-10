@@ -124,11 +124,12 @@ type roleNamePermissionID struct {
 }
 
 // GetPermissionIDsByRoleNames resolves many managed role names to permission IDs
-// in one query per batch. Role names are unique per org, so grouping by name
-// yields at most one row each; MIN(p.id) makes the pick deterministic where
-// GetPermissionIDByRoleName's unordered LIMIT 1 was not. Missing names are
-// absent from the result rather than an error, mirroring how callers already
-// treat an unresolvable role as ID 0.
+// in one query per batch. The correlated LIMIT 1 takes one row per role with an
+// index seek on permission.role_id, instead of reading every permission row of
+// every named role in order to aggregate over them, and it picks the row the
+// same way GetPermissionIDByRoleName does. A role with no permissions produces
+// no row, so missing names are absent from the result rather than an error,
+// mirroring how callers treat an unresolvable role as ID 0.
 func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, roleNames []string) (map[string]int64, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDsByRoleNames")
 	defer span.End()
@@ -164,11 +165,15 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, ro
 
 			var rows []roleNamePermissionID
 			if err := sess.SQL(`
-				SELECT r.name AS role_name, MIN(p.id) AS permission_id
-				FROM permission p
-				INNER JOIN role r ON p.role_id = r.id
+				SELECT r.name AS role_name, p.id AS permission_id
+				FROM role r
+				INNER JOIN permission p ON p.id = (
+					SELECT p2.id
+					FROM permission p2
+					WHERE p2.role_id = r.id
+					LIMIT 1
+				)
 				WHERE r.org_id = ? AND r.name IN (?`+strings.Repeat(",?", len(chunk)-1)+`)
-				GROUP BY r.name
 			`, args...).Find(&rows); err != nil {
 				return err
 			}

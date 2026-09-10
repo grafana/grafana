@@ -568,8 +568,8 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 	cmd := func(resourceID string) SetResourcePermissionCommand {
 		return SetResourcePermissionCommand{
-			// A single action keeps one permission row per managed role, so the
-			// batched MIN(p.id) and the per-name LIMIT 1 must agree.
+			// A single action keeps one permission row per managed role. Both
+			// queries take an unordered LIMIT 1, so only then must they agree.
 			Actions:           []string{"folders:read"},
 			Resource:          "folders",
 			ResourceID:        resourceID,
