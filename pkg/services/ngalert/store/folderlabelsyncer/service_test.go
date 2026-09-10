@@ -432,6 +432,7 @@ func TestIsRetriable(t *testing.T) {
 		{"server timeout", apierrors.NewServerTimeout(gr, "patch", 1), true},
 		{"timeout", apierrors.NewTimeoutError("timed out", 1), true},
 		{"internal error", apierrors.NewInternalError(errors.New("boom")), true},
+		{"service unavailable", apierrors.NewServiceUnavailable("unavailable"), true},
 
 		// Never clear, so retrying only multiplies load.
 		{"forbidden", apierrors.NewForbidden(gr, "f", errors.New("nope")), false},

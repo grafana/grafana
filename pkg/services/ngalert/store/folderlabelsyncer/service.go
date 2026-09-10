@@ -171,7 +171,8 @@ func isRetriable(err error) bool {
 		apierrors.IsTooManyRequests(err) ||
 		apierrors.IsServerTimeout(err) ||
 		apierrors.IsTimeout(err) ||
-		apierrors.IsInternalError(err)
+		apierrors.IsInternalError(err) ||
+		apierrors.IsServiceUnavailable(err)
 }
 
 func (s *Service) drain(ctx context.Context) {
