@@ -252,6 +252,14 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			wantAuthErr:  true,
 		},
 		{
+			name:         "failure - GitHub bad_refresh_token (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "bad_refresh_token"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
 			name:         "failure - token endpoint 401 is user-actionable",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,

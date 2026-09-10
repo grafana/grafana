@@ -161,18 +161,31 @@ func (c *oauthConnection) GenerateConnectionToken(ctx context.Context) (*connect
 	return &connection.ExpirableSecureValue{Token: raw, ExpiresAt: next.Expiry}, nil
 }
 
+// oauthReauthErrorCodes are token-endpoint `error` codes (RFC 6749 §5.2 and
+// provider-specific) that mean the stored authorization is no longer valid and
+// the user must re-authorize. GitHub reports a revoked/expired refresh token
+// with bad_refresh_token/refresh_token_expired — often with a 200 status rather
+// than 401/403 — while RFC 6749 and GitLab use invalid_grant.
+var oauthReauthErrorCodes = map[string]bool{
+	"invalid_grant":         true, // RFC 6749 §5.2; GitLab
+	"bad_refresh_token":     true, // GitHub: refresh token incorrect or expired
+	"refresh_token_expired": true, // GitHub: refresh token expired
+}
+
 // isOAuthReauthRequired reports whether an OAuth token-refresh error means the
 // stored authorization is invalid and the user must re-authorize, as opposed to
-// a transient failure worth retrying. It matches RFC 6749's invalid_grant (the
-// refresh token was revoked or expired) and 401/403 responses (rejected client
-// credentials), while deliberately excluding retryable statuses such as 408 and
-// 429 and all 5xx/transport errors.
+// a transient failure worth retrying. It matches the credential-rejection error
+// codes above and 401/403 responses (rejected client credentials), while
+// deliberately excluding retryable statuses such as 408 and 429 and all
+// 5xx/transport errors. oauth2 surfaces the error code even on a 200 response
+// (some providers, including GitHub, return errors that way), so the code is
+// checked independently of the HTTP status.
 func isOAuthReauthRequired(err error) bool {
 	var retrieveErr *oauth2.RetrieveError
 	if !errors.As(err, &retrieveErr) {
 		return false
 	}
-	if retrieveErr.ErrorCode == "invalid_grant" {
+	if oauthReauthErrorCodes[retrieveErr.ErrorCode] {
 		return true
 	}
 	if retrieveErr.Response != nil {
