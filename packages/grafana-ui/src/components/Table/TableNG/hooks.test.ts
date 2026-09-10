@@ -175,17 +175,14 @@ describe('TableNG hooks', () => {
 
     it('does not notify again when the index order is unchanged', () => {
       const onDisplayedRowIndicesChange = jest.fn();
-      const { rerender } = renderHook(
-        ({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
-        {
-          initialProps: {
-            rows: [
-              { __depth: 0, __index: 0 },
-              { __depth: 0, __index: 1 },
-            ] as TableRow[],
-          },
-        }
-      );
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
 
       expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
 
@@ -201,17 +198,14 @@ describe('TableNG hooks', () => {
 
     it('notifies when sort order changes', () => {
       const onDisplayedRowIndicesChange = jest.fn();
-      const { rerender } = renderHook(
-        ({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
-        {
-          initialProps: {
-            rows: [
-              { __depth: 0, __index: 0 },
-              { __depth: 0, __index: 1 },
-            ] as TableRow[],
-          },
-        }
-      );
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
 
       rerender({
         rows: [
@@ -222,6 +216,179 @@ describe('TableNG hooks', () => {
 
       expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
       expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1, 0]);
+    });
+
+    it('does not notify again when parent order is unchanged even if nested rows are present', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 2 },
+            { __depth: 1, __index: 2 },
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 2 },
+          { __depth: 1, __index: 2 },
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not notify when only nested rows are added, removed, or moved', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([0, 1]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when a parent row is filtered out', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 2]);
+    });
+
+    it('notifies when a parent row is added', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 1, 2]);
+    });
+
+    it('notifies when displayed parent rows become empty', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({ rows: [] });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it('notifies when a single parent index changes and the list length stays the same', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 3 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 3, 2]);
+    });
+
+    it('does not notify when only the callback reference changes', () => {
+      const firstCallback = jest.fn();
+      const secondCallback = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 0 },
+        { __depth: 0, __index: 1 },
+      ];
+      const { rerender } = renderHook(
+        ({ rows, onDisplayedRowIndicesChange }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
+        {
+          initialProps: { rows, onDisplayedRowIndicesChange: firstCallback },
+        }
+      );
+
+      rerender({ rows, onDisplayedRowIndicesChange: secondCallback });
+
+      expect(firstCallback).toHaveBeenCalledTimes(1);
+      expect(firstCallback).toHaveBeenCalledWith([0, 1]);
+      expect(secondCallback).not.toHaveBeenCalled();
     });
   });
 

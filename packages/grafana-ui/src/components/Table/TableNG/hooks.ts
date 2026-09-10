@@ -144,10 +144,6 @@ export function useSortedRows(
   };
 }
 
-function rowIndicesEqual(a: number[], b: number[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
-}
-
 /**
  * Notify when the table's filtered + sorted parent-row order changes.
  */
@@ -166,13 +162,20 @@ export function useNotifyDisplayedRowIndices(
     }
 
     const indices: number[] = [];
-    for (const row of sortedRows) {
+    let hasDifferences = !prevIndicesRef.current;
+    for (let i = 0; i < sortedRows.length; i++) {
+      const row = sortedRows[i];
       if (row.__depth === 0) {
+        if (!hasDifferences && prevIndicesRef.current?.[indices.length] !== row.__index) {
+          hasDifferences = true;
+        }
         indices.push(row.__index);
       }
     }
-
-    if (prevIndicesRef.current && rowIndicesEqual(prevIndicesRef.current, indices)) {
+    if (!hasDifferences && prevIndicesRef.current?.length !== indices.length) {
+      hasDifferences = true;
+    }
+    if (!hasDifferences) {
       return;
     }
 
