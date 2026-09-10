@@ -20,6 +20,7 @@ const buildContext = (overrides: Partial<FeatureControlContextType> = {}): Featu
   setIsAccessible,
   isOpen: false,
   setIsOpen,
+  overrides: [],
   ...overrides,
 });
 
