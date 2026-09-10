@@ -63,6 +63,11 @@ export interface Options {
    * Used to control row sorting
    */
   sortBy?: Array<ui.TableSortByFieldState>;
+  /**
+   * Enables alternating row background colors. Only applies when the `table.refresh` feature
+   * toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -71,6 +76,7 @@ export const defaultOptions: Partial<Options> = {
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 export interface FieldConfig extends ui.TableFieldOptions {}

@@ -137,6 +137,9 @@ TableOptions: {
 	// Controls whether the column management sidebar starts open. Only applies when the
 	// `table.refresh` feature toggle is enabled, which is what introduces the sidebar.
 	showColumnsSidebar?: bool
+	// Enables alternating row background colors. Only applies when the `table.refresh` feature
+	// toggle is enabled.
+	zebraStriping?: bool | *false
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

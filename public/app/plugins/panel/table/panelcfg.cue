@@ -51,6 +51,9 @@ composableKinds: PanelCfg: {
 					// Controls whether the column management sidebar starts open. Only applies when the
 					// `table.refresh` feature toggle is enabled, which is what introduces the sidebar.
 					showColumnsSidebar?: bool
+					// Enables alternating row background colors. Only applies when the `table.refresh` feature
+					// toggle is enabled.
+					zebraStriping?: bool | *false
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}

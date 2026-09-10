@@ -3,6 +3,7 @@ import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { palette } from '@grafana/data/unstable';
 
 import {
   COLUMN,
@@ -51,15 +52,6 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
-// How far the `table.refresh` header background steps away from the background the rows sit on.
-// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
-// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
-// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
-
 // `table.refresh` drag states: react-data-grid paints the dragged column and its drop target with
 // solid colors, and both step off the header's own background so they still read as part of it.
 const HEADER_DRAGGING_EMPHASIS = 0.1;
@@ -79,8 +71,10 @@ const getHeaderBackgroundColor = (
   transparent?: boolean,
   tableRefreshEnabled?: boolean
 ): string => {
-  const bgColor = getGridBackgroundColor(theme, transparent);
-  return tableRefreshEnabled ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS) : bgColor;
+  if (tableRefreshEnabled) {
+    return theme.isDark ? palette.ink700 : palette.neutral150;
+  }
+  return getGridBackgroundColor(theme, transparent);
 };
 
 export const getGridStyles = memoize(
@@ -89,7 +83,8 @@ export const getGridStyles = memoize(
     enablePagination?: boolean,
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
-    noPanelPadding?: boolean
+    noPanelPadding?: boolean,
+    zebraStriping?: boolean
   ) => {
     const bgColor = getGridBackgroundColor(theme, transparent);
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
@@ -100,6 +95,11 @@ export const getGridStyles = memoize(
       : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
+
+    // The odd/even naming follows react-data-grid's own `rdg-row-odd`/`rdg-row-even` classes, which
+    // are 0-indexed — so the first (1st) row is `rdg-row-even` and keeps the plain row background,
+    // while the 2nd, 4th, etc. are `rdg-row-odd` and get this one.
+    const zebraStripeBackgroundColor = theme.isDark ? palette.ink750 : palette.neutral100;
 
     const headerBackgroundColor = getHeaderBackgroundColor(theme, transparent, tableRefreshEnabled);
     const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
@@ -214,6 +214,19 @@ export const getGridStyles = memoize(
           },
         },
 
+        // `.rdg-cell` inherits its background from the row (see react-data-grid's own `Row` rule),
+        // but frozen cells paint an explicit, opaque background of their own so they can occlude
+        // scrolling cells behind them — that has to be repeated here or a striped frozen column
+        // would fall back to the plain row background instead.
+        ...(zebraStriping && {
+          '.rdg-row-odd:not(.rdg-summary-row)': {
+            backgroundColor: zebraStripeBackgroundColor,
+            '.rdg-cell.rdg-cell-frozen': {
+              backgroundColor: zebraStripeBackgroundColor,
+            },
+          },
+        }),
+
         // `table.refresh` rounds the table's top corners, matching the header's own surface.
         ...(tableRefreshEnabled && {
           // The header cells' own rounded corners (below) leave the area outside the radius
@@ -324,6 +337,11 @@ export const getGridStyles = memoize(
             backgroundColor: headerCellDragTargetBackgroundColor,
             boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
           },
+          // `ink700` is dark enough that the default `border.weak` (derived from the row background)
+          // reads too faint against it — bump to `border.medium` for contrast, dark mode only.
+          ...(theme.isDark && {
+            '--rdg-border-color': theme.colors.border.medium,
+          }),
         }),
       }),
       displayNone: css({ display: 'none' }),

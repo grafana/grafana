@@ -49,6 +49,16 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       // offered there.
       showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false),
     })
+    .addBooleanSwitch({
+      path: 'zebraStriping',
+      name: t('table.name-zebra-striping', 'Zebra striping'),
+      description: t('table.description-zebra-striping', 'Enables/disables two distinct row colors'),
+      category,
+      defaultValue: defaultTableOptions.zebraStriping,
+      // The alternating row color only exists under `table.refresh`, so the option that controls it
+      // is only offered there.
+      showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false),
+    })
     .addNumberInput({
       path: 'maxRowHeight',
       name: t('table.name-max-height', 'Max row height'),

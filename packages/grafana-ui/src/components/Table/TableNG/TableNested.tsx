@@ -98,6 +98,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    zebraStriping = false,
   } = props;
 
   const uniqueId = useId();
@@ -326,7 +327,14 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   });
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
+  const styles = useStyles2(
+    getGridStyles,
+    showPagination,
+    transparent,
+    tableRefreshEnabled,
+    noPanelPadding,
+    zebraStriping
+  );
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -655,6 +663,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       headerHeight={headerHeight}
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
+      zebraStriping={zebraStriping}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}

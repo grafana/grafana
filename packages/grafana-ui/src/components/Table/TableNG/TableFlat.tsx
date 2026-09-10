@@ -100,6 +100,7 @@ export function TableFlat(props: TableNGProps) {
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
     showColumnsSidebar = false,
+    zebraStriping = false,
   } = props;
 
   const theme = useTheme2();
@@ -562,6 +563,7 @@ export function TableFlat(props: TableNGProps) {
       headerHeight={headerHeight}
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
+      zebraStriping={zebraStriping}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
