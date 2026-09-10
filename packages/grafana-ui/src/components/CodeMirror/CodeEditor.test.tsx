@@ -2,7 +2,7 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
-import { EditorView } from '@uiw/react-codemirror';
+import { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
 import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
@@ -13,7 +13,7 @@ import { CodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
-let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;
+let capturedProps: ReactCodeMirrorProps | undefined;
 
 jest.mock('@uiw/react-codemirror', () => {
   const actual = jest.requireActual('@uiw/react-codemirror');
@@ -184,6 +184,12 @@ describe('CodeMirror CodeEditor', () => {
     expect(getContentAttributes()).toEqual(
       expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
     );
+  });
+
+  it('does not attach a blur handler when onBlur is not provided', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} />);
+
+    expect(capturedProps?.onBlur).toBeUndefined();
   });
 
   it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {

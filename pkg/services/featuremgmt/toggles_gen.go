@@ -942,6 +942,10 @@ const (
 	// Uses field-value results for dashboard search requests
 	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
 
+	// FlagDashboardApiSearchFieldValueResults
+	// Uses field-value results for requests from the /api/search endpoint
+	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1017,4 +1021,8 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagDatasourcesGatewayGuardrails
+	// Data source query gateway guardrails
+	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 )
