@@ -2,22 +2,7 @@
   "apiVersion": "dashboard.grafana.app/v2",
   "kind": "Dashboard",
   "metadata": {
-    "name": "tFU1mQyWz",
-    "namespace": "stacks-81061",
-    "uid": "a15774e3-d9f8-4331-bb1e-75d65efea2e3",
-    "resourceVersion": "2095466927691751424",
-    "generation": 1,
-    "creationTimestamp": "2026-09-03T11:00:22Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "1293100798730240"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "access-policy:cd3a01aa-99d3-4e0f-b7a4-7545c1aa9458",
-      "grafana.app/managedBy": "repo",
-      "grafana.app/managerId": "gitsync-github-repository",
-      "grafana.app/sourceChecksum": "e4f1add04dc10a09f5f498b3f9fecf22616abb24",
-      "grafana.app/sourcePath": "dev-dashboards/datasource-opentsdb--opentsdb.json"
-    }
+    "name": "tFU1mQyWz"
   },
   "spec": {
     "annotations": [
