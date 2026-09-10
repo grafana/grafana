@@ -1,6 +1,9 @@
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
+
+import { type DataFrame, type Field, FieldType } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import {
   Cell,
   DataGrid,
@@ -8,10 +11,7 @@ import {
   type DataGridProps,
   type Renderers,
   type SortColumn,
-} from 'react-data-grid';
-
-import { type DataFrame, type Field, FieldType } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+} from '@grafana/react-data-grid';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';

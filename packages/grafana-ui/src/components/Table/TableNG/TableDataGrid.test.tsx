@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
-import { type DataGridHandle, Row, Cell } from 'react-data-grid';
 
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
+import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
