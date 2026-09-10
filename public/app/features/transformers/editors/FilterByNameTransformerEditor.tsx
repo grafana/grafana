@@ -71,13 +71,13 @@ function getSelectedNames(fieldNames: FieldNameInfo[], options: FilterFieldsByNa
 }
 
 export function FilterByNameTransformerEditor({ input, options, onChange }: FilterByNameTransformerEditorProps) {
-  const [selected, setSelected] = useState<string[]>([]);
+  const fieldNames = useMemo(() => getFieldNameInfos(input), [input]);
+  const [selected, setSelected] = useState<string[]>(() => getSelectedNames(fieldNames, options));
   const [regex, setRegex] = useState(options.include?.pattern);
   const [variable, setVariable] = useState(options.include?.variable);
   const [byVariable, setByVariable] = useState(options.byVariable || false);
   const [isRegexValid, setIsRegexValid] = useState(true);
 
-  const fieldNames = useMemo(() => getFieldNameInfos(input), [input]);
   const variables: SelectableValue[] = useMemo(
     () =>
       getTemplateSrv()
