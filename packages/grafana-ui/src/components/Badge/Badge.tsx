@@ -32,7 +32,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
   );
 
   const textNode =
-    !tooltip && text != null ? <TruncatedText childElement={textElement}>{text}</TruncatedText> : textElement();
+    text == null ? null : !tooltip ? <TruncatedText childElement={textElement}>{text}</TruncatedText> : textElement();
 
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
