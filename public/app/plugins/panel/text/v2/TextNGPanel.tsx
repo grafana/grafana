@@ -92,12 +92,21 @@ export function TextNGPanel(props: Props) {
   );
 
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes,
-  // and when the page moves, which should land as directly as a scroll would.
+  // when the page moves, which should land as directly as a scroll would, and on a
+  // template change, which auto-fit measures.
   const [wasEditing, setWasEditing] = useState(isEditing);
   const [prevWindow, setPrevWindow] = useState(rowWindow);
-  if (wasEditing !== isEditing || prevWindow?.start !== rowWindow?.start || prevWindow?.count !== rowWindow?.count) {
+  const [prevTemplate, setPrevTemplate] = useState(() => templateOf(options));
+  const template = templateOf(options);
+  if (
+    wasEditing !== isEditing ||
+    prevWindow?.start !== rowWindow?.start ||
+    prevWindow?.count !== rowWindow?.count ||
+    prevTemplate !== template
+  ) {
     setWasEditing(isEditing);
     setPrevWindow(rowWindow);
+    setPrevTemplate(template);
     if (!isEditing) {
       setProcessed(renderPanelContent(options, series, replaceVariables, rowWindow));
     }
@@ -232,6 +241,11 @@ export function TextNGPanel(props: Props) {
       {panelFooter}
     </Stack>
   );
+}
+
+// What a render pass turns into blocks, leaving data and variables to the debounce.
+function templateOf(options: Options): string {
+  return `${options.content}|${options.mode}|${options.renderMode}|${options.code?.language}`;
 }
 
 interface ProcessedContent extends RenderedContent {

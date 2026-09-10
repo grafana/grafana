@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataFrame } from '@grafana/data';
 
@@ -26,6 +26,9 @@ export function fitPageSize(available: number, rowHeight: number): number {
 interface Measured {
   rowHeight: number;
   available: number;
+  // The box it was taken in: code mode renders no blocks and attaches none, and a
+  // measurement from another box is no better than the estimate.
+  element: HTMLElement;
 }
 
 // Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
@@ -89,10 +92,11 @@ export function usePagination({
   const configured = pageSize != null && pageSize > 0 ? clampPageSize(pageSize) : undefined;
   // The panel height stands in until a render reveals the box, which in the editor is the
   // preview pane rather than the panel.
+  const fitted = measured?.element === element ? measured : undefined;
   const resolvedPageSize =
     configured ??
-    (measured
-      ? fitPageSize(measured.available, measured.rowHeight)
+    (fitted
+      ? fitPageSize(fitted.available, fitted.rowHeight)
       : fitPageSize(height - PAGINATION_HEIGHT, ESTIMATED_ROW_HEIGHT));
 
   const numPages = paged ? Math.ceil(rowCount / resolvedPageSize) : 0;
@@ -103,13 +107,19 @@ export function usePagination({
   const rowsOnPage = Math.min(resolvedPageSize, rowCount - currentPage * resolvedPageSize);
 
   const fitToHeight = paged && configured === undefined;
-  const measureKey = fitToHeight ? `${height}|${width}|${rowCount}|${mode}|${content}` : '';
-  const measuredKey = useRef('');
+  // Not the row count: a data change reaches the box a render debounce later, so measuring
+  // on it would divide the blocks of the page before it by the rows of this one.
+  const measureKey = fitToHeight ? `${height}|${width}|${mode}|${content}` : '';
+  // The box is an input too: the editor's preview pane is not the panel's scroll box.
+  const measuredFor = useRef<{ key: string; element: HTMLElement } | null>(null);
 
-  // Once per set of inputs, not per page size: re-measuring a page the last measurement
-  // resized would let the page size oscillate.
-  useLayoutEffect(() => {
-    if (!fitToHeight || measuredKey.current === measureKey || !element) {
+  // Passive, not layout: a child effect writes the blocks to the box first.
+  useEffect(() => {
+    const previous = measuredFor.current;
+
+    // Once per set of inputs, not per page size: re-measuring a page the last measurement
+    // resized would let the page size oscillate.
+    if (!fitToHeight || !element || (previous?.key === measureKey && previous.element === element)) {
       return;
     }
 
@@ -120,8 +130,8 @@ export function usePagination({
       return;
     }
 
-    measuredKey.current = measureKey;
-    setMeasured({ rowHeight: contentHeight / rowsOnPage, available });
+    measuredFor.current = { key: measureKey, element };
+    setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
   }, [fitToHeight, measureKey, rowsOnPage, element]);
 
   // Stable across renders: the editor memoises its preview on this.

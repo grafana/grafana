@@ -717,6 +717,21 @@ describe('TextNGPanel', () => {
       expect(html()).not.toContain('web-1');
     });
 
+    // Auto-fit measures the blocks, so the box cannot be a debounce behind the template.
+    it('re-renders the content in the same pass when the template changes', () => {
+      const props = createProps((target) => target, {
+        options: { content: 'first', mode: TextMode.Markdown },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      expect(html()).toContain('first');
+
+      rerender(viewing(Object.assign({}, props, { options: { ...props.options, content: 'second' } })));
+
+      expect(html()).toContain('second');
+    });
+
     it('re-renders the content when a referenced variable changes', () => {
       let value = 'first';
       const props = createProps((target) => target.replace('${host}', value), {

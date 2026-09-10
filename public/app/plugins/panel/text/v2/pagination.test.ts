@@ -178,12 +178,55 @@ describe('usePagination', () => {
     expect(result.current.rowWindow?.count).toBe(6);
   });
 
+  it("measures again in the box the editor mounts, rather than holding the panel's", () => {
+    const { result } = setup({}, box(750, 300));
+    expect(result.current.rowWindow?.count).toBe(6);
+
+    // A box of its own starts from the estimate again: 15 rows at 50px, in a pane half
+    // the height of the panel.
+    act(() => result.current.contentRef(box(750, 150)));
+
+    expect(result.current.rowWindow?.count).toBe(3);
+  });
+
+  it('falls back to the height estimate when the mode leaves no box to measure', () => {
+    const { result } = setup({}, box(750, 300));
+    expect(result.current.rowWindow?.count).toBe(6);
+
+    // Code mode renders no blocks, so it attaches no box: 400 - 38 over the 24px estimate.
+    act(() => result.current.contentRef(null));
+
+    expect(result.current.rowWindow?.count).toBe(15);
+  });
+
   it('holds the refitted page size instead of measuring its own last measurement again', () => {
     const { result, rerender } = setup({}, box(750, 300));
 
     rerender({ ...defaultOptions });
 
     expect(result.current.rowWindow).toEqual({ start: 0, count: 6 });
+  });
+
+  // A data change reaches the box a render debounce later, so the blocks in it are still
+  // the previous page's - dividing them by this page's rows collapsed the page size.
+  it('holds its page size when a refresh leaves the reader on a partly filled last page', () => {
+    // The blocks the box holds, which the panel writes a debounce behind the window.
+    let renderedRows = 15;
+    const view = setup(
+      {},
+      measurableBox(() => renderedRows * 50, 300)
+    );
+
+    renderedRows = view.result.current.rowWindow?.count ?? 0;
+    expect(renderedRows).toBe(6);
+
+    act(() => view.result.current.setPage(view.result.current.numPages - 1));
+    renderedRows = view.result.current.rowWindow?.count ?? 0;
+
+    // 145 rows leave one row on the last page, while the box still holds six blocks.
+    view.rerender({ ...defaultOptions, series: [numberedFrame(145)] });
+
+    expect(view.result.current.rowWindow?.count).toBe(6);
   });
 
   // Measuring the box rather than the blocks made every resize divide the same box by
