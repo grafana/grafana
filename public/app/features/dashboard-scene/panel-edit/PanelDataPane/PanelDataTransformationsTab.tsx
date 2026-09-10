@@ -24,7 +24,7 @@ import { TransformationOperationRows } from 'app/features/dashboard/components/T
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getResolvedSystemTransformations } from '../../scene/systemTransformations';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import {
   type TransformationConfigs,
   useTransformedFrames,

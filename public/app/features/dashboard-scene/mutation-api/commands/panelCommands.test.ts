@@ -22,6 +22,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import {
   extractLabels,
   frameWithLabels,
@@ -30,7 +31,6 @@ import {
   systemTransformationPluginImportUtils,
 } from '../../utils/systemTransformationTestUtils';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
 
