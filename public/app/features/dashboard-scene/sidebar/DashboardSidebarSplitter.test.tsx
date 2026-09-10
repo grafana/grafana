@@ -42,7 +42,7 @@ describe('DashboardSidebarSplitter', () => {
 
     await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
 
-    // switch to auto and confirm change (edit pane content is lazy-loaded)
+    // switch to auto and confirm change
     await user.click(await screen.findByLabelText('layout-selection-option-Auto'));
     let confirmButton = screen.getByTestId(selectors.pages.ConfirmModal.delete);
     await user.click(confirmButton);

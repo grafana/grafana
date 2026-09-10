@@ -261,7 +261,7 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
-    it('holds the latest edit view in the URL while settings load', async () => {
+    it('keeps the URL and selected edit view in sync after successive updates', async () => {
       const scene = buildTestScene();
       scene.setState({
         editable: true,

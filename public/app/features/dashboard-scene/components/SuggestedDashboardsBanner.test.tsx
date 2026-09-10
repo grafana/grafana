@@ -35,7 +35,6 @@ describe('SuggestedDashboardsBanner', () => {
       '/dashboard/templates/my-dash-uid?suggestedDashboardBanner=true&datasource=ds1'
     );
 
-    // the banner content renders after the lazy SuggestedDashboardsLoader resolves
     expect(await screen.findByText(/You are viewing/)).toBeInTheDocument();
     expect(screen.getByText(/other suggested dashboards/)).toBeInTheDocument();
     expect(screen.getByText(/create one from scratch/)).toBeInTheDocument();

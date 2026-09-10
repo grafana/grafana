@@ -55,7 +55,9 @@ describe('DraggableList', () => {
   it('disables dragging when isDragDisabled is true', async () => {
     const { container } = renderList(true);
 
-    await waitFor(() => expect(container.querySelector('[data-rfd-droppable-id]')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(container.querySelector('[data-rfd-droppable-id="test-droppable"]')).toBeInTheDocument()
+    );
     expect(getDragHandle('Item A')).not.toBeInTheDocument();
   });
 });

@@ -171,7 +171,7 @@ describe('SaveDashboardDrawer', () => {
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-      openAndRender();
+      await openAndRender();
 
       await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange));
       const message = await screen.findByLabelText('message');
@@ -447,7 +447,7 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
 
       // Mounting a form here would swap it out once the repository resolves, dropping typed input
       expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -471,7 +471,7 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(
         await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)
       ).toBeInTheDocument();
@@ -489,7 +489,7 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByTestId('provisioned-form')).toHaveAttribute('data-held', 'false');
 
       repoState = view({
@@ -513,7 +513,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
@@ -543,7 +543,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /instead$/ })).not.toBeInTheDocument();
@@ -555,7 +555,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
 
       // The picked folder is annotated with a repository that no longer exists
@@ -594,7 +594,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
@@ -645,7 +645,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(
         await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)
@@ -660,7 +660,7 @@ describe('SaveDashboardDrawer', () => {
         .mockReturnValue(view({ isNewSave: false, isProvisioned: true, repository: folderlessRepo }));
 
       const stored = setup();
-      stored.openAndRender();
+      await stored.openAndRender();
       expect(await screen.findByRole('heading', { name: 'Provisioned dashboard' })).toBeInTheDocument();
       cleanup();
 
@@ -670,7 +670,7 @@ describe('SaveDashboardDrawer', () => {
 
       const fresh = setup();
       fresh.dashboard.setState({ uid: '', version: 0 });
-      fresh.openAndRender();
+      await fresh.openAndRender();
       expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
@@ -686,7 +686,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ uid: '', version: 0, tags: ['my-tag'] });
       });
 
-      openAndRender();
+      await openAndRender();
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.queryByLabelText('Copy tags')).not.toBeInTheDocument();
 
@@ -704,7 +704,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ tags: ['my-tag'] });
       });
 
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       mockSaveDashboard();
@@ -721,7 +721,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ tags: ['my-tag'] });
       });
 
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Copy tags'));
