@@ -1412,6 +1412,8 @@ describe('TableNG utils', () => {
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
       measureWidth: (text: string) => text.length * 8,
@@ -1458,6 +1460,8 @@ describe('TableNG utils', () => {
       estimateHeight: jest.fn(() => 2),
       measureWidth: (text: string) => text.length * 8,
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
     };
 
     it('sets up text height measurers for each text column if wrapping is on', () => {
