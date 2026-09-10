@@ -30,6 +30,10 @@ const config: KnipConfig = {
     'scripts/grafana-server/tmp/**',
     'devenv/**',
 
+    // Referenced only through a webpack alias, and only when the enterprise frontend is
+    // absent, so knip cannot see the reference.
+    'public/app/core/extensionsStub.ts',
+
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
