@@ -217,6 +217,21 @@ func TestMutate(t *testing.T) {
 	}
 }
 
+func TestMutate_UsesConfiguredEnterpriseServerURL(t *testing.T) {
+	conn := &provisioning.Connection{
+		Spec: provisioning.ConnectionSpec{
+			Type: provisioning.GithubConnectionType,
+			GitHub: &provisioning.GitHubConnectionConfig{
+				InstallationID: "789012",
+				ServerURL:      "https://ghes.example.com/",
+			},
+		},
+	}
+
+	require.NoError(t, github.Mutate(t.Context(), conn))
+	assert.Equal(t, "https://ghes.example.com/settings/installations/789012", conn.Spec.URL)
+}
+
 func TestMutate_MultipleCallsIdempotent(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 	ctx := t.Context()

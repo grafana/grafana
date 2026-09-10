@@ -25,6 +25,9 @@ connection: {
 					// Installation-level information
 					// GitHub App installation ID
 					installationID: int
+
+					// The GitHub Enterprise Server URL. Empty uses github.com.
+					serverUrl?: string
 				}
 				#GitHubEnterpriseOAuthConnectionConfig: {
 					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
