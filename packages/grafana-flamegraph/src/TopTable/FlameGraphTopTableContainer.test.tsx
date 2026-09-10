@@ -87,7 +87,7 @@ describe('FlameGraphTopTableContainer', () => {
 });
 
 describe('FlameGraphTopTableContainer with useTableNG', () => {
-  const setup = () => {
+  const setup = (props?: { tableRefreshEnabled?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -101,6 +101,7 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
+        tableRefreshEnabled={props?.tableRefreshEnabled}
         enableVirtualization={false}
       />
     );
@@ -131,6 +132,28 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     expect(screen.getAllByText('5.58 Bil').length).toBeGreaterThan(0);
     expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
   });
+
+  // The refreshed header lifts the sort arrow out of the label button so a long title can ellipsize
+  // without clipping it. Asserting the arrow's placement is the observable proof that
+  // tableRefreshEnabled actually reaches TableNG, since this package can't read the toggle itself.
+  it.each([
+    { tableRefreshEnabled: undefined, placement: 'inside' },
+    { tableRefreshEnabled: true, placement: 'outside' },
+  ])(
+    'with tableRefreshEnabled=$tableRefreshEnabled renders the sort arrow $placement the header label',
+    async ({ tableRefreshEnabled }) => {
+      mockBoundingClientRect({ width: 500, height: 500 });
+
+      setup({ tableRefreshEnabled });
+
+      // The top table sorts by Self descending by default, so that header owns the arrow.
+      const selfHeader = screen.getAllByRole('columnheader')[2];
+      const label = selfHeader.querySelector('button');
+
+      expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
+      expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+    }
+  );
 
   it('should render search and sandwich buttons', async () => {
     // Needed for AutoSizer to work in test

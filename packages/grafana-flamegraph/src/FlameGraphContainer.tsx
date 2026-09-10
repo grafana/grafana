@@ -107,6 +107,14 @@ export type Props = {
   useTableNG?: boolean;
 
   /**
+   * Forwarded to the top table's TableNG. This package can't read feature toggles itself, so the flags
+   * TableNG expects (`table.refresh`, `table.autoColumnWidths`) have to come in from the host, otherwise
+   * the top table renders without them while every other TableNG in Grafana has them.
+   */
+  tableRefreshEnabled?: boolean;
+  contentAwareWidthsEnabled?: boolean;
+
+  /**
    * Escape hatch to disable virtualization of the top table when useTableNG is set. Only intended for tests,
    * where jsdom cannot measure the grid and virtualization would otherwise render no rows.
    */
@@ -130,6 +138,8 @@ const FlameGraphContainer = ({
   showAnalyzeWithAssistant = true,
   fillHeight,
   useTableNG,
+  tableRefreshEnabled,
+  contentAwareWidthsEnabled,
   enableVirtualization,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);

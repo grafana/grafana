@@ -43,6 +43,9 @@ type Props = {
   colorScheme: ColorScheme | ColorSchemeDiff;
   // Render the top table with TableNG instead of the legacy Table.
   useTableNG?: boolean;
+  // Feature-toggle values for TableNG, passed in by the host. See FlameGraphContainer's props.
+  tableRefreshEnabled?: boolean;
+  contentAwareWidthsEnabled?: boolean;
   // Escape hatch to disable table virtualization when useTableNG is set. Only intended for tests, where jsdom
   // cannot measure the grid and virtualization would otherwise render no rows.
   enableVirtualization?: boolean;
@@ -60,6 +63,8 @@ const FlameGraphTopTableContainer = memo(
     onTableSort,
     colorScheme,
     useTableNG,
+    tableRefreshEnabled,
+    contentAwareWidthsEnabled,
     enableVirtualization,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
@@ -110,6 +115,8 @@ const FlameGraphTopTableContainer = memo(
                     data={frame}
                     width={width}
                     height={height}
+                    tableRefreshEnabled={tableRefreshEnabled}
+                    contentAwareWidthsEnabled={contentAwareWidthsEnabled}
                     enableVirtualization={enableVirtualization}
                   />
                 </div>

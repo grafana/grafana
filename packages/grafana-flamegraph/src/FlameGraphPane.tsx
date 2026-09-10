@@ -33,6 +33,9 @@ type FlameGraphPaneProps = {
   sharedSandwichItem?: string;
   setSharedSandwichItem?: (item: string | undefined) => void;
   useTableNG?: boolean;
+  // Feature-toggle values for the top table's TableNG, passed in by the host. See FlameGraphContainer's props.
+  tableRefreshEnabled?: boolean;
+  contentAwareWidthsEnabled?: boolean;
   // Test-only escape hatch to disable top-table virtualization in jsdom.
   enableVirtualization?: boolean;
   // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
@@ -60,6 +63,8 @@ const FlameGraphPane = ({
   sharedSandwichItem,
   setSharedSandwichItem,
   useTableNG,
+  tableRefreshEnabled,
+  contentAwareWidthsEnabled,
   enableVirtualization,
   fillHeight,
 }: FlameGraphPaneProps) => {
@@ -249,6 +254,8 @@ const FlameGraphPane = ({
             onTableSort={onTableSort}
             colorScheme={colorScheme}
             useTableNG={useTableNG}
+            tableRefreshEnabled={tableRefreshEnabled}
+            contentAwareWidthsEnabled={contentAwareWidthsEnabled}
             enableVirtualization={enableVirtualization}
           />
         </div>
