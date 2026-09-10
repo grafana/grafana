@@ -312,6 +312,48 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 	return searchClient, nil
 }
 
+// NewRemoteResourceClientFromConfig creates a unified-storage client using the
+// storage and optional search-server addresses from [grafana-apiserver].
+func NewRemoteResourceClientFromConfig(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	tracer tracing.Tracer,
+	reg prometheus.Registerer,
+) (resource.ResourceClient, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	address := apiserverCfg.Key("address").MustString("")
+	if address == "" {
+		return nil, fmt.Errorf("expecting address to be set for remote unified storage client under grafana-apiserver section")
+	}
+	keepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime)
+	metrics := newClientMetrics(reg)
+	storageConn, err := grpcConn(address, metrics, keepaliveTime)
+	if err != nil {
+		return nil, fmt.Errorf("create unified storage connection: %w", err)
+	}
+
+	indexConn := grpc.ClientConnInterface(storageConn)
+	var searchConn *grpc.ClientConn
+	if searchAddress := apiserverCfg.Key("search_server_address").MustString(""); searchAddress != "" {
+		searchConn, err = grpcConn(searchAddress, metrics, keepaliveTime)
+		if err != nil {
+			_ = storageConn.Close()
+			return nil, fmt.Errorf("create search server connection: %w", err)
+		}
+		indexConn = searchConn
+	}
+
+	client, err := resource.NewResourceClient(storageConn, indexConn, cfg, features, tracer)
+	if err != nil {
+		_ = storageConn.Close()
+		if searchConn != nil {
+			_ = searchConn.Close()
+		}
+		return nil, fmt.Errorf("create remote resource client: %w", err)
+	}
+	return client, nil
+}
+
 func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")

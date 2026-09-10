@@ -1,5 +1,6 @@
 import { AddPanelToNotebookModalBody } from 'app/features/notebook/addPanel/AddPanelToNotebookModalBody';
 import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
+import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { useSelector } from 'app/types/store';
 
 import { getExploreItemSelector } from '../../state/selectors';
@@ -28,5 +29,11 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
       panelState: exploreItem.panelsState,
     });
 
-  return <AddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onClose} />;
+  return (
+    <AddPanelToNotebookModalBody
+      buildPanel={buildPanel}
+      onDismiss={onClose}
+      entryPoint={NOTEBOOK_ENTRY_POINT.EXPLORE}
+    />
+  );
 }

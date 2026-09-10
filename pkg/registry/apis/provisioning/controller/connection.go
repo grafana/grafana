@@ -529,10 +529,13 @@ func (cc *ConnectionController) generateConnectionToken(
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
-	var failed bool
+	// genErr holds the generation failure so the deferred recorder can classify
+	// its cause. The failure is swallowed below (non-blocking), so it cannot be
+	// recovered from the named err return.
+	var genErr error
 	defer func() {
-		if failed {
-			cc.tokenMetrics.recordGenerationError()
+		if genErr != nil {
+			cc.tokenMetrics.recordGenerationError(classifyTokenErrorCause(genErr))
 		} else {
 			cc.tokenMetrics.recordGeneration(time.Since(start).Seconds())
 		}
@@ -540,7 +543,7 @@ func (cc *ConnectionController) generateConnectionToken(
 
 	generated, err := conn.GenerateConnectionToken(ctx)
 	if err != nil {
-		failed = true
+		genErr = err
 		logger.Error("failed to generate connection token", "error", err)
 		return "", time.Time{}, nil, nil // Non-blocking: return empty patches
 	}
