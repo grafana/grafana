@@ -26,7 +26,7 @@ func TestIntegrationAnnotationDashboardUIDIndexExists(t *testing.T) {
 	case db.IsTestDbSQLite():
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			has, err := sess.SQL(
-				`SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = ?`, indexName,
+				`SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND tbl_name = 'annotation' AND name = ?`, indexName,
 			).Get(&count)
 			if err != nil {
 				return err
@@ -40,7 +40,7 @@ func TestIntegrationAnnotationDashboardUIDIndexExists(t *testing.T) {
 	case db.IsTestDbMySQL():
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			has, err := sess.SQL(
-				`SELECT COUNT(*) FROM information_schema.statistics WHERE table_name = 'annotation' AND index_name = ?`, indexName,
+				`SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'annotation' AND index_name = ?`, indexName,
 			).Get(&count)
 			if err != nil {
 				return err
@@ -54,7 +54,7 @@ func TestIntegrationAnnotationDashboardUIDIndexExists(t *testing.T) {
 	case db.IsTestDbPostgres():
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			has, err := sess.SQL(
-				`SELECT COUNT(*) FROM pg_indexes WHERE indexname = $1`, indexName,
+				`SELECT COUNT(*) FROM pg_indexes WHERE schemaname = current_schema() AND tablename = 'annotation' AND indexname = $1`, indexName,
 			).Get(&count)
 			if err != nil {
 				return err
