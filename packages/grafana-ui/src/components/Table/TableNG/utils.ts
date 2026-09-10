@@ -236,7 +236,8 @@ export function createTypographyContext(
   letterSpacing = 0.15,
   fontWeight?: number
 ): TypographyCtx {
-  const font = `${fontWeight != null ? `${fontWeight} ` : ''}${fontSize}px ${fontFamily}`;
+  const weightPrefix = fontWeight != null ? `${fontWeight} ` : '';
+  const font = `${weightPrefix}${fontSize}px ${fontFamily}`;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
 
@@ -261,7 +262,7 @@ export function createTypographyContext(
   const numericCharWidth = maxDigitWidth + letterSpacing;
 
   // JSON/Geo cells render in a monospace font; measure one character there (all are equal-width).
-  ctx.font = `${fontWeight != null ? `${fontWeight} ` : ''}${fontSize}px monospace`;
+  ctx.font = `${weightPrefix}${fontSize}px monospace`;
   const monoCharWidth = ctx.measureText('0').width + letterSpacing;
   ctx.font = font; // restore the primary font on the shared context
 
@@ -1535,6 +1536,12 @@ interface ColWidthMeasureCtx {
   /** Bound `(field, rowIdx) => actions`, used to size Actions columns; absent when not wired. */
   getActions?: GetActionsFunctionLocal;
   theme?: GrafanaTheme2;
+  /**
+   * `table.refresh`: the beta.61 grid renders tabular data with `font-variant-numeric: tabular-nums`,
+   * which widens digits. Gated on the toggle so numeric/date columns are only sized for the wider
+   * tabular advance while the refreshed experience is enabled (see the grid style that mirrors this).
+   */
+  tableRefreshEnabled: boolean;
 }
 
 /**
@@ -1599,9 +1606,17 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
 // columns stay tight on purpose.
 const TEXT_WIDTH_WIGGLE = TABLE.CELL_PADDING;
 
-const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
-  // Numeric and date/time columns are digit-dominated and render with tabular-nums, so estimate them
-  // with the (wider, uniform) tabular digit width rather than the prose average.
+const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, tableRefreshEnabled }) => {
+  // Numeric and date/time columns are digit-dominated and render with tabular-nums under
+  // `table.refresh`, so estimate them with the (wider, uniform) tabular digit width rather than the
+  // prose average. Without the toggle the grid keeps proportional digits, so fall back to the prose
+  // average and the original wiggle rule (string and time both get slack).
+  if (!tableRefreshEnabled) {
+    const width = measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+    const isText = field.type === FieldType.string || field.type === FieldType.time;
+    return isText ? width + TEXT_WIDTH_WIGGLE : width;
+  }
+
   const isNumericLike = field.type === FieldType.number || field.type === FieldType.time;
   const charWidth = isNumericLike ? typographyCtx.numericCharWidth : typographyCtx.avgCharWidth;
   const width = measureLongestContentWidth(field, sampleSize, charWidth) + CELL_HORIZONTAL_CHROME;
@@ -1794,7 +1809,7 @@ export function computeContentAwareColWidths(
   // can't give width back, or that are already sitting at their bound.
   const shrinkFloors = new Map<number, number>();
 
-  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme, tableRefreshEnabled };
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(
@@ -1931,6 +1946,20 @@ export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
   }
   addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
   addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
+}
+
+/**
+ * True when a cell keydown is Shift+Tab on the first cell of the first row — the point where focus
+ * should jump back up into the header. `column`/`row` can be undefined for keydowns that aren't on a
+ * data cell (e.g. header/summary rows), so both are guarded.
+ */
+export function isShiftTabToHeader(
+  column: { key: string } | undefined,
+  row: { __index: number } | undefined,
+  event: Pick<KeyboardEvent, 'shiftKey' | 'key'>,
+  firstColumnKey: string
+): boolean {
+  return column?.key === firstColumnKey && row?.__index === 0 && event.shiftKey && event.key === 'Tab';
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
