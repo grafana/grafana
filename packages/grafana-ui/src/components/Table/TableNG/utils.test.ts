@@ -1,5 +1,6 @@
 import WKT from 'ol/format/WKT';
 import { type Geometry, Point } from 'ol/geom';
+import { type uWrap } from 'uwrap';
 
 import {
   createDataFrame,
@@ -40,6 +41,7 @@ import {
   compileFrameToRecords,
   computeColWidths,
   computeContentAwareColWidths,
+  createFitWidthMeasurer,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -1193,6 +1195,35 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('createFitWidthMeasurer', () => {
+    // Widths that behave like a real canvas: a whole string measures narrower than its characters do
+    // in isolation, because it is kerned end to end.
+    const CHAR_W = 8;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const ctx = {
+      measureText: (text: string) => ({ width: text.length * CHAR_W - (text.length > 1 ? 2 : 0) }),
+    } as CanvasRenderingContext2D;
+    // Stands in for uwrap, which wraps off those per-character widths rather than the kerned string.
+    // (The real uwrap is ESM-only and Jest substitutes an inert stub for it — see `__mocks__/uwrap.ts`.)
+    const lineCounter = (test: uWrap['test']): uWrap => ({ test, count: () => 1, each: () => {}, split: () => [] });
+    const perCharWidths = lineCounter((text, width) => text.length * CHAR_W > width);
+
+    it('returns a width the line counter agrees keeps the text on one line', () => {
+      const measureWidth = createFitWidthMeasurer(ctx, perCharWidths);
+
+      // kerned "Name" is 30px, but the counter wants all four characters' own widths: 32px
+      expect(ctx.measureText('Name').width).toBe(4 * CHAR_W - 2);
+      expect(measureWidth('Name')).toBe(4 * CHAR_W);
+      expect(perCharWidths.test('Name', measureWidth('Name'))).toBe(false);
+    });
+
+    it('keeps the kerned width where the line counter already agrees with it', () => {
+      // e.g. a single-word label: uwrap breaks only at whitespace and hyphens, so it never wraps
+      const measureWidth = createFitWidthMeasurer(ctx, lineCounter(() => false));
+      expect(measureWidth('Name')).toBe(4 * CHAR_W - 2);
+    });
+  });
+
   describe('getTextHeightMeasurerFromUwrapCount', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
 
@@ -1325,6 +1356,7 @@ describe('TableNG utils', () => {
       avgCharWidth: 7,
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
+      measureWidth: (text: string) => text.length * 8,
     };
 
     it('returns an array of measurers for each column', () => {
@@ -1365,6 +1397,7 @@ describe('TableNG utils', () => {
       ctx: {} as CanvasRenderingContext2D,
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
+      measureWidth: (text: string) => text.length * 8,
       avgCharWidth: 7,
     };
 
@@ -1822,6 +1855,25 @@ describe('TableNG utils', () => {
       });
 
     afterEach(() => jest.restoreAllMocks());
+
+    it('sizes a header through measureWidth, not through the kerned whole-string width', () => {
+      // The regression this guards: a column sized with `measureText` on the whole string, which is
+      // kerned end to end, while the line counter accumulates its own per-character widths and reads
+      // the same string wider. The column then sits a fraction inside the wrap boundary and the header
+      // reserves a phantom second line for text the browser draws on one. `measureWidth` is the width
+      // the counter will demand (see `createFitWidthMeasurer`), so the header has to be sized with it.
+      const typographyCtx = makeTypographyCtx();
+      typographyCtx.measureWidth = () => 100;
+      const field: Field = { name: 'Name', type: FieldType.string, values: ['x'], config: {} };
+
+      expect(
+        computeContentAwareColWidths([field], 0, {
+          typographyCtx,
+          headerTypographyCtx: typographyCtx,
+        })
+        // 100 + chrome + the sort arrow reserved on every sortable column; the kerned 4 * 8 is unused
+      ).toEqual([100 + CELL_CHROME + 22]);
+    });
 
     it('sizes a numeric column to its content, well under the 150px even-split default (#634)', () => {
       // header "Value" (5) => 5*8 + sort arrow 22 + 13 = 75; content "999" (3) => 3*8+13 = 37; so 75 wins.

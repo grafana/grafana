@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
 
+import { TABLE } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 
 import { HeaderCell } from './HeaderCell';
@@ -140,6 +141,16 @@ describe('HeaderCell', () => {
 
     render(<HeaderCell {...baseProps} field={makeField()} />);
     expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).not.toBe('0');
+  });
+
+  it('renders the label at the line box the header row is sized with', () => {
+    // `useHeaderHeight` multiplies TABLE.HEADER_LINE_HEIGHT by the wrapped line count to size the
+    // header row, so the label's own line box has to be that same number. A divergence is invisible
+    // until a title wraps, and then shows up as a clipped or over-tall header.
+    render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).lineHeight).toBe(
+      `${TABLE.HEADER_LINE_HEIGHT}px`
+    );
   });
 
   it('renders nothing when hideHeader is set', () => {
