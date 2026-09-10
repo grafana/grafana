@@ -59,6 +59,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -485,6 +486,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
