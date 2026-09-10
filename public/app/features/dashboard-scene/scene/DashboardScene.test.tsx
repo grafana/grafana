@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   CoreApp,
   type GrafanaConfig,
@@ -339,7 +341,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
+      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
@@ -348,29 +350,31 @@ describe('DashboardScene', () => {
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
-        scene.setState({ title: 'Updated title' });
-        expect(scene.state.isDirty).toBe(true);
-        scene.exitEditMode({ skipConfirm: false });
+        try {
+          scene.setState({ title: 'Updated title' });
+          expect(scene.state.isDirty).toBe(true);
+          scene.exitEditMode({ skipConfirm: false });
 
-        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
-        expect(modalCall).toBeDefined();
+          const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+          expect(modalCall).toBeDefined();
 
-        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
-        expect(modalEvent.payload.altActionText).toBeDefined();
+          const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+          expect(modalEvent.payload.altActionText).toBeDefined();
 
-        modalEvent.payload.onAltAction?.();
+          modalEvent.payload.onAltAction?.();
 
-        expect(scene.state.overlay).toBeDefined();
+          await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
 
-        const overlay = scene.state.overlay as SaveDashboardDrawer;
-        expect(overlay.state.onSaveSuccess).toBeDefined();
+          const overlay = scene.state.overlay as SaveDashboardDrawer;
+          expect(overlay.state.onSaveSuccess).toBeDefined();
 
-        overlay.state.onSaveSuccess!();
-        expect(scene.state.isEditing).toBe(false);
-
-        publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          overlay.state.onSaveSuccess!();
+          expect(scene.state.isEditing).toBe(false);
+        } finally {
+          publishSpy.mockRestore();
+          hasActualSaveChangesSpy.mockRestore();
+          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
