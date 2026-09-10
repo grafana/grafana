@@ -5981,7 +5981,6 @@
       "description": "面板、文字和程式碼儲存格的縱向序列",
       "name": "筆記本",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "時間",
       "title-edit": "",
@@ -7046,6 +7045,12 @@
       "type": "類型"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "載入控制面板發生錯誤"
     },
     "dashboard-scene": {
@@ -7592,6 +7597,10 @@
       "required": "必填"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "變更",
         "label-details": "詳細資訊",
@@ -9089,6 +9098,7 @@
       "share-export-json": "匯出為 JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "開始時間",
       "success-indicator": "",
       "target": "目標",
@@ -12476,6 +12486,7 @@
       "title": "建立"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "新的警報規則"
     },
     "create-dashboard": {
@@ -12965,7 +12976,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +12995,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13045,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13062,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13110,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "清除所有設定"
+      "clear-tooltip": "清除所有設定",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "系列顏色依據"
@@ -16497,8 +16510,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

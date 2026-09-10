@@ -132,6 +132,11 @@ interface BaseTableProps {
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /**
+   * Set by callers whose surrounding panel renders without padding, so the table can indent the
+   * first column's content back into line with the panel title.
+   */
+  noPanelPadding?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
   /** used by SparklineCell when provided */
@@ -149,6 +154,8 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
+  tableRefreshEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
