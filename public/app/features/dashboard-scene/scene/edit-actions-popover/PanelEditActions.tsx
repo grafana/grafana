@@ -7,7 +7,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { Button, Text, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getEditableElementFor } from '../../actions/utils/getEditableElementFor';
-import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRenderedInstanceCount, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
@@ -89,15 +89,16 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   );
 }
 
-export function PanelEditActionsBulk({ panel, selectionCount }: { panel: VizPanel; selectionCount: number }) {
+export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
-  const items = useSelectedObjectsFor(panel);
-  const { rowGrouping, tabGrouping, group } = useGroupSelection(items);
+
+  const panels = useSelectedObjectsFor(panel);
+  const panelCount = panels.reduce((total, panel) => total + getRenderedInstanceCount(panel), 0);
+  const { rowGrouping, tabGrouping, group } = useGroupSelection(panels);
 
   const onClickDelete = () => {
-    items.forEach((item) => {
-      const element = getEditableElementFor(item);
-
+    panels.forEach((panel) => {
+      const element = getEditableElementFor(panel);
       if (element && isBulkActionElement(element)) {
         element.onDelete();
       }
@@ -109,7 +110,7 @@ export function PanelEditActionsBulk({ panel, selectionCount }: { panel: VizPane
       <Text element="p" variant="bodySmall" color="secondary">
         <Trans
           i18nKey="dashboard-scene.panel-edit-actions.elements-selected"
-          count={selectionCount}
+          count={panelCount}
           tOptions={{
             defaultValue_one: '{{count}} element selected',
             defaultValue_other: '{{count}} elements selected',
@@ -154,13 +155,9 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const isPopoverSupported = useHoverPopoverSupported();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
+  // Branching stays on the selected element count so a lone repeat keeps the single panel actions.
   const editActions = useMemo(
-    () =>
-      selectionCount > 1 ? (
-        <PanelEditActionsBulk panel={panel} selectionCount={selectionCount} />
-      ) : (
-        <PanelEditActionsSingle panel={panel} />
-      ),
+    () => (selectionCount > 1 ? <PanelEditActionsBulk panel={panel} /> : <PanelEditActionsSingle panel={panel} />),
     [panel, selectionCount]
   );
 
