@@ -1,7 +1,7 @@
 import { isErrorSpan } from '../../TraceTimelineViewer/utils';
 import { type TraceSpan } from '../../types/trace';
 
-export type TraceBannerSeverity = 'error' | 'warning';
+type TraceBannerSeverity = 'error' | 'warning';
 
 export type TraceBannerHighlight = {
   span: TraceSpan;
