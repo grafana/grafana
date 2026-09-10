@@ -28,8 +28,11 @@ import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
+import { type FunctionTable } from './FunctionTable';
+
 type Props = {
   data: FlameGraphDataContainer;
+  functionTable?: FunctionTable;
   onSymbolClick: (symbol: string) => void;
   // This is used for highlighting the search button in case there is exact match.
   search?: string;
@@ -45,6 +48,7 @@ type Props = {
 const FlameGraphTopTableContainer = memo(
   ({
     data,
+    functionTable,
     onSymbolClick,
     search,
     matchedLabels,
@@ -54,7 +58,10 @@ const FlameGraphTopTableContainer = memo(
     onTableSort,
     colorScheme,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const table = useMemo(
+      () => buildFilteredTable(data, matchedLabels, functionTable),
+      [data, matchedLabels, functionTable]
+    );
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -79,7 +86,8 @@ const FlameGraphTopTableContainer = memo(
               theme,
               colorScheme,
               search,
-              sandwichItem
+              sandwichItem,
+              functionTable
             );
             return (
               <Table
@@ -104,7 +112,14 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
-function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
+function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>, functionTable?: FunctionTable) {
+  if (functionTable) {
+    return Object.fromEntries(
+      functionTable.rows
+        .filter((row) => !matchedLabels || matchedLabels.has(row.name))
+        .map((row) => [row.name, { self: row.self, total: row.total, totalRight: row.totalRight ?? 0 }])
+    );
+  }
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
   let filteredTable: { [key: string]: TableData } = Object.create(null);
@@ -148,7 +163,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
   return filteredTable;
 }
 
-function buildTableDataFrame(
+export function buildTableDataFrame(
   data: FlameGraphDataContainer,
   table: { [key: string]: TableData },
   width: number,
@@ -158,7 +173,8 @@ function buildTableDataFrame(
   theme: GrafanaTheme2,
   colorScheme: ColorScheme | ColorSchemeDiff,
   search?: string,
-  sandwichItem?: string
+  sandwichItem?: string,
+  functionTable?: FunctionTable
 ): DataFrame {
   const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
 
@@ -184,7 +200,7 @@ function buildTableDataFrame(
 
   let frame;
 
-  if (data.isDiffFlamegraph()) {
+  if (functionTable ? functionTable.totalRight !== undefined : data.isDiffFlamegraph()) {
     symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 3;
 
     const baselineField = createNumberField('Baseline', 'percent');
@@ -207,7 +223,7 @@ function buildTableDataFrame(
     // For this we don't really consider sandwich view even though you can switch it on.
     const levels = data.getLevels();
     const totalTicks = levels.length ? levels[0][0].value : 0;
-    const totalTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+    const totalTicksRight = functionTable?.totalRight ?? (levels.length ? levels[0][0].valueRight : undefined);
 
     for (let key in table) {
       actionField.values.push(null);
@@ -217,7 +233,7 @@ function buildTableDataFrame(
       const ticksRight = table[key].totalRight;
 
       // We are iterating over table of the data so totalTicksRight needs to be defined
-      const totalTicksLeft = totalTicks - totalTicksRight!;
+      const totalTicksLeft = functionTable?.total ?? totalTicks - totalTicksRight!;
 
       const percentageLeft = Math.round((10000 * ticksLeft) / totalTicksLeft) / 100;
       const percentageRight = Math.round((10000 * ticksRight) / totalTicksRight!) / 100;

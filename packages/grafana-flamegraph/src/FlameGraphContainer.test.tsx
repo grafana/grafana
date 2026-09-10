@@ -7,6 +7,7 @@ import { createDataFrame, createTheme } from '@grafana/data';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
+import { type FunctionTable } from './TopTable/FunctionTable';
 import { MIN_WIDTH_FOR_SPLIT_VIEW } from './constants';
 
 jest.mock('@grafana/assistant', () => ({
@@ -130,7 +131,7 @@ describe('FlameGraphContainer', () => {
     })),
   });
 
-  const FlameGraphContainerWithProps = () => {
+  const FlameGraphContainerWithProps = ({ functionTable }: { functionTable?: FunctionTable } = {}) => {
     const flameGraphData = createDataFrame(data);
     flameGraphData.meta = {
       custom: {
@@ -139,8 +140,45 @@ describe('FlameGraphContainer', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} />;
+    return <FlameGraphContainer data={flameGraphData} functionTable={functionTable} getTheme={getTheme} />;
   };
+
+  it('renders and searches functions absent from the displayed tree', async () => {
+    render(
+      <FlameGraphContainerWithProps
+        functionTable={{
+          total: 100,
+          rows: [
+            { name: 'backend.only', self: 7, total: 18 },
+            { name: 'second.backend.function', self: 3, total: 4 },
+          ],
+        }}
+      />
+    );
+    expect(await screen.findByText('backend.only')).toBeInTheDocument();
+    expect(screen.queryByText('net/http.HandlerFunc.ServeHTTP')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByText('backend.only'));
+    expect(screen.getByDisplayValue('^backend\\.only$')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('second.backend.function')).not.toBeInTheDocument());
+    expect(screen.getByText('backend.only')).toBeInTheDocument();
+  });
+
+  it('keeps a supplied empty table empty and restores tree rows when the prop is omitted', async () => {
+    const { rerender } = render(
+      <FlameGraphContainerWithProps
+        functionTable={{ total: 100, rows: [{ name: 'backend.only', self: 7, total: 18 }] }}
+      />
+    );
+    expect(await screen.findByText('backend.only')).toBeInTheDocument();
+
+    rerender(<FlameGraphContainerWithProps functionTable={{ total: 0, rows: [] }} />);
+    expect(await screen.findByTestId('topTable')).toBeInTheDocument();
+    expect(screen.queryByText('backend.only')).not.toBeInTheDocument();
+    expect(screen.queryByText('net/http.HandlerFunc.ServeHTTP')).not.toBeInTheDocument();
+
+    rerender(<FlameGraphContainerWithProps />);
+    expect(await screen.findByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+  });
 
   it('should render without error', async () => {
     expect(() => render(<FlameGraphContainerWithProps />)).not.toThrow();
