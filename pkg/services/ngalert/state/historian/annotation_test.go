@@ -131,7 +131,7 @@ func TestAnnotationHistorian(t *testing.T) {
 				State: &state.State{
 					State: eval.Normal,
 					Labels: data.Labels{
-						"grafana_folder": strings.Repeat("f", 513),
+						"grafana_folder": strings.Repeat("f", 101),
 						"severity":       "critical",
 					},
 				},
@@ -351,7 +351,7 @@ func TestBuildAnnotations(t *testing.T) {
 		logger := &logtest.Fake{}
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
-		oversizedValue := strings.Repeat("v", 513)
+		oversizedValue := strings.Repeat("v", 101)
 		states[0].Labels = data.Labels{"grafana_folder": oversizedValue}
 
 		items := backend.buildAnnotations(rule, states, logger)
@@ -361,7 +361,7 @@ func TestBuildAnnotations(t *testing.T) {
 		require.Equal(t, 1, logger.WarnLogs.Calls)
 		require.Equal(t, "Skipping alert label as annotation tag because it exceeds the tag storage limit", logger.WarnLogs.Message)
 		require.Equal(t, "grafana_folder", logContextValue(t, logger.WarnLogs.Ctx, "labelKey"))
-		require.Equal(t, 513, logContextValue(t, logger.WarnLogs.Ctx, "labelValueLength"))
+		require.Equal(t, 101, logContextValue(t, logger.WarnLogs.Ctx, "labelValueLength"))
 		require.NotContains(t, logger.WarnLogs.Ctx, oversizedValue)
 	})
 }
@@ -472,7 +472,7 @@ func TestConvertLabelsToTags(t *testing.T) {
 
 	t.Run("keeps tags at the column limits", func(t *testing.T) {
 		labelKey := strings.Repeat("k", 100)
-		labelValue := strings.Repeat("v", 512)
+		labelValue := strings.Repeat("v", 100)
 
 		tags := convertLabelsToTags(data.Labels{labelKey: labelValue}, 4096)
 
@@ -492,7 +492,7 @@ func TestConvertLabelsToTags(t *testing.T) {
 
 	t.Run("skips a label with a value beyond the column limit", func(t *testing.T) {
 		labels := data.Labels{
-			"a-oversized": strings.Repeat("v", 513),
+			"a-oversized": strings.Repeat("v", 101),
 			"z-valid":     "value",
 		}
 
@@ -502,8 +502,8 @@ func TestConvertLabelsToTags(t *testing.T) {
 	})
 
 	t.Run("measures the value column limit in characters", func(t *testing.T) {
-		acceptedValue := strings.Repeat("🔥", 512)
-		rejectedValue := strings.Repeat("🔥", 513)
+		acceptedValue := strings.Repeat("🔥", 100)
+		rejectedValue := strings.Repeat("🔥", 101)
 
 		acceptedTags := convertLabelsToTags(data.Labels{"label": acceptedValue}, 4096)
 		rejectedTags := convertLabelsToTags(data.Labels{"label": rejectedValue}, 4096)
@@ -601,7 +601,7 @@ func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey,
 	if i.enforceTagColumnLimits {
 		for _, item := range items {
 			for _, parsedTag := range tag.ParseTagPairs(item.Tags) {
-				if len([]rune(parsedTag.Key)) > 100 || len([]rune(parsedTag.Value)) > 512 {
+				if len([]rune(parsedTag.Key)) > 100 || len([]rune(parsedTag.Value)) > 100 {
 					return errors.New("tag exceeds column limit")
 				}
 			}

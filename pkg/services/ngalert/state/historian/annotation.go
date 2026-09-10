@@ -28,7 +28,7 @@ import (
 
 const (
 	annotationTagKeyColumnMaxLength   = 100
-	annotationTagValueColumnMaxLength = 512
+	annotationTagValueColumnMaxLength = 100
 )
 
 type AccessControl interface {
