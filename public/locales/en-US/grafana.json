@@ -10670,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
       "errors-and-notices": "Errors and notices",
-      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
