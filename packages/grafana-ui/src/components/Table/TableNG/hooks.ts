@@ -9,13 +9,6 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
-import {
-  type Column,
-  type ColumnWidths,
-  type DataGridHandle,
-  type DataGridProps,
-  type SortColumn,
-} from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -27,6 +20,13 @@ import {
   reduceField,
   ReducerID,
 } from '@grafana/data';
+import {
+  type Column,
+  type ColumnWidths,
+  type DataGridHandle,
+  type DataGridProps,
+  type SortColumn,
+} from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';

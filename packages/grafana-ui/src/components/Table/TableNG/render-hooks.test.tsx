@@ -3,7 +3,6 @@ import { render, renderHook, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import memoize from 'micro-memoize';
 import { Children, type ComponentProps, createRef, isValidElement, type Key, type ReactNode } from 'react';
-import { type CalculatedColumn, type RenderCellProps, type RenderRowProps } from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -15,6 +14,7 @@ import {
   FieldColorModeId,
   FieldType,
 } from '@grafana/data';
+import { type CalculatedColumn, type RenderCellProps, type RenderRowProps } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../utils/colors';
@@ -44,8 +44,8 @@ import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } 
 // useDataGridRows
 // -----------------------------------------------------------------------------
 
-jest.mock('react-data-grid', () => ({
-  ...jest.requireActual('react-data-grid'),
+jest.mock('@grafana/react-data-grid', () => ({
+  ...jest.requireActual('@grafana/react-data-grid'),
   Row: ({ onMouseEnter, onMouseLeave, ...rest }: React.HTMLAttributes<HTMLDivElement>) => (
     <div data-testid="rdg-row" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} {...rest} />
   ),
