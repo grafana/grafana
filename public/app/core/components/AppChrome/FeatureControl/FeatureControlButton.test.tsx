@@ -63,6 +63,8 @@ describe('FeatureControlButton', () => {
     jest.clearAllMocks();
 
     useFeatureControlContextMock.mockReturnValue(buildContext());
+
+    delete window.__grafanaPreviewAssets;
   });
 
   it('renders a collapsed button when feature control is closed', () => {
@@ -81,6 +83,14 @@ describe('FeatureControlButton', () => {
 
   it('renders an bubbling icon button when there are overrides', () => {
     useFeatureControlContextMock.mockReturnValue(buildContext({ overrides: [{ key: 'test', value: 'test' }] }));
+
+    render(<FeatureControlButton />);
+
+    expectButton({ expanded: 'false', tooltip: 'Open feature control', variant: 'default', bubbling: true });
+  });
+
+  it('renders an bubbling icon button when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
 
     render(<FeatureControlButton />);
 

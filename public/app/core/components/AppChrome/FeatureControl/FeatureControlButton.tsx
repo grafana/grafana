@@ -4,6 +4,7 @@ import { memo } from 'react';
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { useFeatureControlContext } from './FeatureControlProvider';
 
@@ -11,7 +12,9 @@ import { useFeatureControlContext } from './FeatureControlProvider';
 export const FeatureControlButton = memo(function FeatureControlButton() {
   const styles = useStyles2(getStyles);
   const { isOpen, setIsOpen, overrides } = useFeatureControlContext();
-  const isActive = overrides.length > 0;
+  const previewAssetsActive = Boolean(getPreviewAssetsFolder());
+  const overridesActive = overrides.length > 0;
+  const isActive = overridesActive || previewAssetsActive;
 
   return (
     <ToolbarButton
