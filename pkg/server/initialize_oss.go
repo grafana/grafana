@@ -40,6 +40,7 @@ type (
 	initializeForCLIFn           func(context.Context, *setting.Cfg) (Runner, error)
 	initializeAPIServerFactoryFn func() (standalone.APIServerFactory, error)
 	initializeRouterFactoryFn    func() (router.RouterFactory, error)
+	initializeRoutesLoaderFn     func(*setting.Cfg, router.RoutesLoaderClients) (router.RoutesLoader, error)
 )
 
 var (
@@ -48,6 +49,7 @@ var (
 	initializeForCLIServer         initializeForCLIFn
 	initializeAPIServerFactoryFunc initializeAPIServerFactoryFn
 	initializeRouterFactoryFunc    initializeRouterFactoryFn
+	initializeRoutesLoaderFunc     initializeRoutesLoaderFn
 )
 
 // RegisterInitializers wires OSS dependency-injection entrypoints implemented in
@@ -58,12 +60,14 @@ func RegisterInitializers(
 	initializeForCLI initializeForCLIFn,
 	initializeAPIServerFactory initializeAPIServerFactoryFn,
 	initializeRouterFactory initializeRouterFactoryFn,
+	initializeRoutesLoader initializeRoutesLoaderFn,
 ) {
 	initializeServer = initialize
 	initializeForTestServer = initializeForTest
 	initializeForCLIServer = initializeForCLI
 	initializeAPIServerFactoryFunc = initializeAPIServerFactory
 	initializeRouterFactoryFunc = initializeRouterFactory
+	initializeRoutesLoaderFunc = initializeRoutesLoader
 }
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
@@ -88,4 +92,8 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 
 func InitializeRouterFactory() (router.RouterFactory, error) {
 	return initializeRouterFactoryFunc()
+}
+
+func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
+	return initializeRoutesLoaderFunc(cfg, clients)
 }
