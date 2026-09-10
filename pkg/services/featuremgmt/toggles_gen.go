@@ -938,6 +938,10 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagDashboardSearchFieldValueResults
+	// Uses field-value results for dashboard search requests
+	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -961,6 +965,10 @@ const (
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
+
+	// FlagReportingRedirectReportSettingsToK8SApi
+	// Redirect legacy report settings API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportSettingsToK8SApi = "reporting.redirectReportSettingsToK8SApi"
 
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more

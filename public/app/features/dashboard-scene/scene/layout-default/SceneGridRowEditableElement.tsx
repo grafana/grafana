@@ -11,7 +11,8 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
 import { type BulkActionElement } from '../types/BulkActionElement';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
