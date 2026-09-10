@@ -721,11 +721,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-  * @default true
-  */
-  improvedExternalSessionHandlingSAML?: boolean;
-  /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   * @default false
   */
@@ -1301,11 +1296,6 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
-  /**
-  * Enables the new Flame Graph UI containing the Call Tree view
-  * @default false
-  */
-  flameGraphWithCallTree?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false

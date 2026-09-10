@@ -13,7 +13,6 @@ import {
   Field,
   FilterInput,
   Modal,
-  MultiCombobox,
   RadioButtonGroup,
   Stack,
   TextLink,
@@ -23,9 +22,9 @@ import { createSuccessNotification, createErrorNotification } from 'app/core/cop
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
+import { NotebookTagsField } from '../NotebookTagsField';
 import { type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
-import { useNotebookTagOptions } from '../scene/layout-notebook/useNotebookTagOptions';
 import { type PanelElement } from '../types';
 import { notebookViewHref } from '../urls';
 
@@ -36,7 +35,6 @@ import { addPanelErrorMessage, addPanelToExistingNotebook, createNotebookWithPan
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
-const TAG_FILTER_LABEL_ID = 'add-panel-tag-filter-label';
 
 interface Props {
   /**
@@ -78,10 +76,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint 
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0]?.value;
 
   const picker = useNotebookPicker();
-  // Every tag in the library, not only the ones the current results carry: this is what narrows the
-  // results, so offering only co-occurring tags would let the filter talk itself into a corner. The
-  // selected ones are unioned in so a tag cannot vanish from the list while it is doing the filtering.
-  const tagOptions = useNotebookTagOptions(picker.tagFilter);
   const [selectedUid, setSelectedUid] = useState<string>();
 
   // A selection the filters have since hidden is derived away rather than cleared in an effect: the
@@ -205,20 +199,12 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint 
                   </Stack>
 
                   <Stack gap={1} alignItems="center">
-                    {/* MultiCombobox forwards aria-labelledby but not aria-label, so it is labelled
-                        by a hidden element - the same workaround the provisioning resource tree
-                        uses. The sort control above is a single Combobox, which does forward
-                        aria-label. */}
-                    <span id={TAG_FILTER_LABEL_ID} className="sr-only">
-                      {t('notebooks.add-panel.tag-label', 'Filter by tag')}
-                    </span>
-                    <MultiCombobox
-                      aria-labelledby={TAG_FILTER_LABEL_ID}
-                      options={tagOptions}
+                    <NotebookTagsField
                       value={picker.tagFilter}
-                      onChange={(selected) => picker.setTagFilter(selected.map((option) => option.value))}
+                      onChange={picker.setTagFilter}
+                      fallbackTags={picker.loadedTags}
+                      disabled={picker.isLoading}
                       placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
-                      width={30}
                     />
                     {/* Not a picker of authors: filtering by one is supported server-side, but
                         listing them is not - createdBy is filterable and not facetable - and

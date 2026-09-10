@@ -1,5 +1,5 @@
 import { type VizPanel } from '@grafana/scenes';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { type NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';

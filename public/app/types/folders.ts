@@ -22,6 +22,8 @@ export interface FolderDTO extends WithAccessControlMetadata {
   id: number;
   parentUid?: string;
   managedBy?: ManagerKind;
+  /** Identity of the managing system (`grafana.app/managerId`), e.g. the repository name. Only set by the app platform API. */
+  managerId?: string;
 
   // The API does actually return a full FolderDTO here, but we want to restrict it to just a few properties
   parents?: FolderParent[];

@@ -109,7 +109,7 @@ func TestKVPeerStore(t *testing.T) {
 		s.now = func() time.Time { return now }
 
 		const staleCount = 2*maxPeerDeleteBatch + 1
-		for i := 0; i < staleCount; i++ {
+		for i := range staleCount {
 			require.NoError(t, s.upsert(ctx, peer{ServerName: fmt.Sprintf("stale-%d", i), RouteURL: "nats://10.0.0.1:6222"}))
 		}
 		now = now.Add(ttl + time.Second)
