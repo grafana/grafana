@@ -109,7 +109,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint 
       try {
         const panel = await buildPanel();
         const added = existingUid
-          ? await addPanelToExistingNotebook(existingUid, panel)
+          ? await addPanelToExistingNotebook(existingUid, panel, entryPoint)
           : await createNotebookWithPanel(
               { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
               panel,

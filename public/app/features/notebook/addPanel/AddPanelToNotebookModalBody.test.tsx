@@ -208,7 +208,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel()));
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel'));
       // Built on submit, so a panel edited while the modal was open is the one that lands.
       expect(buildPanel).toHaveBeenCalledTimes(1);
       expect(onDismiss).toHaveBeenCalled();

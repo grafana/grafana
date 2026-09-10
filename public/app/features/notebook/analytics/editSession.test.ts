@@ -1,9 +1,12 @@
-import { NotebookEditHistory } from '../scene/NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditKind } from '../scene/NotebookEditHistory';
 
 import { NotebookEditSession } from './editSession';
 
-function edit(label: string): Parameters<NotebookEditHistory['execute']>[0] {
-  return { label, perform: jest.fn(), undo: jest.fn() };
+function edit(
+  label: string,
+  kind: NotebookEditKind = NOTEBOOK_EDIT_KIND.EDIT
+): Parameters<NotebookEditHistory['execute']>[0] {
+  return { label, kind, perform: jest.fn(), undo: jest.fn() };
 }
 
 describe('NotebookEditSession', () => {
@@ -56,10 +59,78 @@ describe('NotebookEditSession', () => {
     const session = new NotebookEditSession();
     session.start();
 
-    session.onRecord();
+    session.onRecord(NOTEBOOK_EDIT_KIND.EDIT);
     session.end();
 
     expect(session.end().editCount).toBe(0);
+  });
+
+  it('counts what the session did to the cells, by kind', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    history.execute(edit('Add block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    history.execute(edit('Split block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    history.execute(edit('Delete block', NOTEBOOK_EDIT_KIND.REMOVE_CELL));
+    history.execute(edit('Move block', NOTEBOOK_EDIT_KIND.MOVE_CELL));
+    history.execute(edit('Edit block'));
+
+    expect(session.end()).toMatchObject({ cellsAdded: 2, cellsRemoved: 1, cellsMoved: 1, editCount: 5 });
+  });
+
+  // Undo does not tell the observer anything, so the action stays counted. Same rule as editCount:
+  // the person did it, and `history_used` is what reports the undo.
+  it('keeps counting a cell that was added and then undone', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    history.execute(edit('Add block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    history.undo();
+
+    expect(session.end().cellsAdded).toBe(1);
+  });
+
+  // Redo replays `perform` but never records again, so nothing has to guard against it.
+  it('counts a redone cell once', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    history.execute(edit('Add block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    history.undo();
+    history.redo();
+
+    expect(session.end().cellsAdded).toBe(1);
+  });
+
+  it('starts the next session from nothing on the cell counts too', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    history.execute(edit('Add block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    session.end();
+
+    expect(session.end()).toMatchObject({ cellsAdded: 0, cellsRemoved: 0, cellsMoved: 0 });
+  });
+
+  it('reports whether the time range moved, once however many times it moved', () => {
+    const session = new NotebookEditSession();
+    session.start();
+
+    session.onTimeRangeChanged();
+    session.onTimeRangeChanged();
+
+    expect(session.end().timeRangeChanged).toBe(true);
+  });
+
+  it('reports no time range change for a session that did not touch it', () => {
+    const session = new NotebookEditSession();
+    session.start();
+
+    expect(session.end().timeRangeChanged).toBe(false);
   });
 
   it('reports how long the session lasted', () => {
