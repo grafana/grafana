@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, getByText, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -215,6 +215,7 @@ describe('TracePageHeader test', () => {
     expect(screen.getByText('POST')).toBeInTheDocument();
     expect(screen.getByText('500')).toBeInTheDocument();
     expect(screen.queryByText('200')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Error span')).toBeInTheDocument();
   });
 
   it('shows an orange warning indicator when the root request has a 4xx status', () => {
@@ -240,6 +241,57 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('404')).toBeInTheDocument();
+    expect(screen.getByLabelText('Warning span')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Error span')).not.toBeInTheDocument();
+  });
+
+  it('does not show an issue span banner when the trace has no errors or client errors', () => {
+    setup();
+
+    expect(screen.queryByLabelText('Error span')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Warning span')).not.toBeInTheDocument();
+  });
+
+  it('highlights the deepest error span and does not list the other error spans', () => {
+    const errorTraceId = 'multi-error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          process: { ...trace.spans[0].process, serviceName: 'checkout-service' },
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const banner = screen.getByLabelText('Error span');
+    expect(within(banner).getByText('payment-service')).toBeInTheDocument();
+    expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
+    expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
   });
 
   it('should render the trace-level logs link when provided', () => {
@@ -629,6 +681,22 @@ describe('TracePageHeader test', () => {
       setup({ links: [], isLoading: false }, true);
 
       expect(screen.queryByText('Filters')).not.toBeInTheDocument();
+    });
+
+    it('should hide the issue span banner when hideHeaderDetails is true', () => {
+      const errorTrace = {
+        ...trace,
+        spans: [
+          {
+            ...trace.spans[0],
+            tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+          },
+        ],
+      };
+
+      setup({ links: [], isLoading: false }, true, undefined, errorTrace);
+
+      expect(screen.queryByLabelText('Error span')).not.toBeInTheDocument();
     });
 
     it('should hide plugin extension buttons when hideHeaderDetails is true', () => {

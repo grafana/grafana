@@ -67,7 +67,9 @@ import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
+import { TraceBanner } from './TraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
+import { findTraceBanner } from './findTraceBanner';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 enum HttpStatusClass {
@@ -153,9 +155,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
+
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [setHeaderHeight, showSpanFilters, styles.header, extensionComponents, extensionLinks, logsLinkModel]);
+  }, [
+    setHeaderHeight,
+    showSpanFilters,
+    styles.header,
+    extensionComponents,
+    extensionLinks,
+    logsLinkModel,
+    traceBanner,
+  ]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -336,6 +348,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           </div>
         )}
       </div>
+
+      {!hideHeaderDetails && traceBanner && (
+        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />
+      )}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (
