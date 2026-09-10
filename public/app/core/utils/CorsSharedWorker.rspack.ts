@@ -1,3 +1,5 @@
+// TODO: Move the contents of this file over to CorsSharedWorker.ts once Rspack replaces Webpack.
+
 export function sharedWorkersSupported() {
   return typeof window.SharedWorker !== 'undefined';
 }

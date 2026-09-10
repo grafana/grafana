@@ -1,3 +1,4 @@
+// TODO: Move the contents of this file over to CorsWorker.ts once Rspack replaces Webpack.
 // Wrapped Worker constructor that allows cross-origin worker modules to be loaded in browsers.
 // JSON.stringify escapes quotes/backslashes so scriptUrl can't break out of or inject into
 // the generated import statement.
