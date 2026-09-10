@@ -19,9 +19,12 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
 
+const mockSetReturnToPrevious = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  useReturnToPrevious: jest.fn(() => mockSetReturnToPrevious),
   config: {
     buildInfo: {
       version: '11.0.0',
@@ -47,6 +50,7 @@ const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
 describe('LinkValue', () => {
   beforeEach(() => {
     (reportInteraction as jest.Mock).mockClear();
+    mockSetReturnToPrevious.mockClear();
   });
 
   it('renders as expected', () => {
@@ -119,6 +123,7 @@ describe('LinkValue', () => {
 
     expect(onClick).toHaveBeenCalled();
     expect(pushSpy).not.toHaveBeenCalled();
+    expect(mockSetReturnToPrevious).not.toHaveBeenCalled();
     pushSpy.mockRestore();
   });
 
@@ -134,6 +139,7 @@ describe('LinkValue', () => {
     await user.click(screen.getByRole('link', { name: 'Related traces' }));
 
     expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    expect(mockSetReturnToPrevious).toHaveBeenCalledWith('Trace');
     pushSpy.mockRestore();
   });
 
@@ -147,6 +153,7 @@ describe('LinkValue', () => {
     await user.click(linkEl);
 
     expect(pushSpy).not.toHaveBeenCalled();
+    expect(mockSetReturnToPrevious).not.toHaveBeenCalled();
     pushSpy.mockRestore();
   });
 });
@@ -154,6 +161,7 @@ describe('LinkValue', () => {
 describe('KeyValuesTable tests', () => {
   beforeEach(() => {
     (reportInteraction as jest.Mock).mockClear();
+    mockSetReturnToPrevious.mockClear();
   });
 
   it('renders without exploding', () => {

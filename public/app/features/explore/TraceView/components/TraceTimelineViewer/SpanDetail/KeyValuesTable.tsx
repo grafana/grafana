@@ -27,7 +27,7 @@ import {
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, useReturnToPrevious } from '@grafana/runtime';
 import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
 import { getTraceViewLinkAttrs, openTraceViewHref } from '../../../utils/openTraceViewHref';
@@ -204,7 +204,13 @@ function onAttributeLinkClick(
     location,
     datasourceType,
     openLinksInSameTab,
-  }: { location: ResourceLinkClickLocation; datasourceType?: string; openLinksInSameTab: boolean }
+    setReturnToPrevious,
+  }: {
+    location: ResourceLinkClickLocation;
+    datasourceType?: string;
+    openLinksInSameTab: boolean;
+    setReturnToPrevious: (title: string) => void;
+  }
 ) {
   reportResourceLinkClick(link, { location, datasourceType });
   // Modifier-clicks use the anchor href (new tab). Do not also run in-app navigation.
@@ -219,6 +225,7 @@ function onAttributeLinkClick(
   }
   if (openLinksInSameTab && link.path) {
     event.preventDefault();
+    setReturnToPrevious(t('explore.key-values-table.return-to-previous-title', 'Trace'));
     openTraceViewHref(link.path);
   }
 }
@@ -231,13 +238,21 @@ export const LinkValue = ({
 }: PropsWithChildren<LinkValueProps>) => {
   const { path, title, icon = 'external-link-alt' } = link;
   const styles = useStyles2(getStyles);
+  const setReturnToPrevious = useReturnToPrevious();
   const attrs = attributeLinkAttrs(path, openLinksInSameTab);
 
   return (
     <a
       href={attrs?.href}
       title={title}
-      onClick={(event) => onAttributeLinkClick(event, link, { location: 'value', datasourceType, openLinksInSameTab })}
+      onClick={(event) =>
+        onAttributeLinkClick(event, link, {
+          location: 'value',
+          datasourceType,
+          openLinksInSameTab,
+          setReturnToPrevious,
+        })
+      }
       target={attrs?.target}
       rel={attrs?.rel}
       className={styles.linkValue}
@@ -257,6 +272,7 @@ interface LinkValuesMenuProps {
 
 const LinkValuesMenu = ({ links, datasourceType, openLinksInSameTab = false, children }: LinkValuesMenuProps) => {
   const styles = useStyles2(getStyles);
+  const setReturnToPrevious = useReturnToPrevious();
   const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
   const triggerId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -295,7 +311,12 @@ const LinkValuesMenu = ({ links, datasourceType, openLinksInSameTab = false, chi
                       url={attrs?.href}
                       target={attrs?.target}
                       onClick={(event) =>
-                        onAttributeLinkClick(event, link, { location: 'menu', datasourceType, openLinksInSameTab })
+                        onAttributeLinkClick(event, link, {
+                          location: 'menu',
+                          datasourceType,
+                          openLinksInSameTab,
+                          setReturnToPrevious,
+                        })
                       }
                     />
                   </div>

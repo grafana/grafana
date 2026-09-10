@@ -8691,7 +8691,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Open value in"
+      "open-value-in": "Open value in",
+      "return-to-previous-title": "Trace"
     },
     "legacy-create-span-link-factory": {
       "text": {
