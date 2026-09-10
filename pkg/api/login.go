@@ -95,8 +95,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	var tokenRotationErr authn.TokenNeedsRotationError
-	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
+	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
 		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
@@ -403,8 +402,7 @@ func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled(ctx context.Context) bo
 }
 
 func getLoginExternalError(err error) string {
-	var createTokenErr *auth.CreateTokenErr
-	if errors.As(err, &createTokenErr) {
+	if createTokenErr, ok := errors.AsType[*auth.CreateTokenErr](err); ok {
 		return createTokenErr.ExternalErr
 	}
 

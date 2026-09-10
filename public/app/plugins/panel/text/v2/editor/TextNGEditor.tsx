@@ -37,7 +37,6 @@ export interface TextNGEditorProps {
   showLineNumbers: boolean;
   codeLanguage?: CodeLanguage;
   renderMode?: RenderMode;
-  maxRows?: number;
   series?: DataFrame[];
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
@@ -72,7 +71,6 @@ export function TextNGEditor({
   showLineNumbers,
   codeLanguage,
   renderMode,
-  maxRows,
   series,
   replaceVariables,
   suggestions,
@@ -146,10 +144,10 @@ export function TextNGEditor({
     () =>
       catchTemplateError(() =>
         showPreview
-          ? interpolateTemplate({ content: previewSource, mode, series, renderMode, maxRows, format }, replaceVariables)
+          ? interpolateTemplate({ content: previewSource, mode, series, renderMode, format }, replaceVariables)
           : ''
       ),
-    [showPreview, previewSource, mode, series, renderMode, maxRows, format, replaceVariables]
+    [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]
   );
 
   const previewHtml = useMemo(

@@ -1,8 +1,8 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
-import CodeMirror from '@uiw/react-codemirror';
-import { memo, useMemo } from 'react';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { memo, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -92,6 +92,7 @@ export const CodeEditor = memo(function CodeEditor({
   sqlDialect,
   height = '200px',
   onChange,
+  onBlur,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledby,
   completionSources,
@@ -112,7 +113,14 @@ export const CodeEditor = memo(function CodeEditor({
   const additionalExtensions = useShallowStable(additionalExtensionsProp);
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
   const handleChange = useStableCallback(onChange);
+  const handleBlur = useStableCallback(() => {
+    const editorView = editorRef.current?.view;
+    if (editorView) {
+      onBlur?.(editorView.state.doc.toString());
+    }
+  });
 
   const extensions = useMemo(
     () => [
@@ -145,11 +153,13 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
+        ref={editorRef}
         theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
         onChange={handleChange}
+        onBlur={onBlur ? handleBlur : undefined}
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
         readOnly={readOnly}
