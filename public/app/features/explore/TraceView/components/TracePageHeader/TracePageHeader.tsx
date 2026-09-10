@@ -67,9 +67,9 @@ import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
-import { TraceBanner } from './TraceBanner';
+import { TraceBanner } from './TraceBanner/TraceBanner';
+import { findTraceBanner } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
-import { findTraceBanner } from './findTraceBanner';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 enum HttpStatusClass {

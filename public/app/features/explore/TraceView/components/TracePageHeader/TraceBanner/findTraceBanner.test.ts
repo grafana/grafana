@@ -1,4 +1,4 @@
-import { type TraceSpan } from '../types/trace';
+import { type TraceSpan } from '../../types/trace';
 
 import { findTraceBanner, getSpanTracePercent, getTraceBannerOperationLabel } from './findTraceBanner';
 

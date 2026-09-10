@@ -5,8 +5,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { formatDuration } from '../utils/date';
-import { getServiceDisplayName } from '../utils/service-name';
+import { formatDuration } from '../../utils/date';
+import { getServiceDisplayName } from '../../utils/service-name';
 
 import { type TraceBannerHighlight, getSpanTracePercent, getTraceBannerOperationLabel } from './findTraceBanner';
 

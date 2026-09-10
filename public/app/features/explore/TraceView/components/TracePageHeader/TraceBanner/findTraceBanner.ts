@@ -1,5 +1,5 @@
-import { isErrorSpan } from '../TraceTimelineViewer/utils';
-import { type TraceSpan } from '../types/trace';
+import { isErrorSpan } from '../../TraceTimelineViewer/utils';
+import { type TraceSpan } from '../../types/trace';
 
 export type TraceBannerSeverity = 'error' | 'warning';
 
