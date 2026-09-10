@@ -143,6 +143,27 @@ describe('HeaderCell', () => {
     expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).not.toBe('0');
   });
 
+  it('sits the header controls with the last line of a wrapped title', () => {
+    // A wrapped title grows downward while the controls beside it stay one line tall, so centring
+    // them leaves the arrow and the column menu floating against the middle of the block.
+    const wrapped = makeField({ config: { custom: { wrapHeaderText: true, filterable: true } } });
+    const { container, unmount } = render(
+      <HeaderCell {...baseProps} field={wrapped} direction="ASC" tableRefreshEnabled />
+    );
+    const alignments = (root: Element) =>
+      [root, ...Array.from(root.children)].map((el) => window.getComputedStyle(el).alignItems);
+    expect(alignments(container.firstElementChild!)).toEqual(['flex-end', 'flex-end', 'flex-end']);
+
+    unmount();
+
+    // an unwrapped title is one line tall itself, so its controls stay centred on it
+    const oneLine = makeField({ config: { custom: { filterable: true } } });
+    const { container: unwrapped } = render(
+      <HeaderCell {...baseProps} field={oneLine} direction="ASC" tableRefreshEnabled />
+    );
+    expect(alignments(unwrapped.firstElementChild!)).toEqual(['center', 'center', 'center']);
+  });
+
   it('renders the label at the line box the header row is sized with', () => {
     // `useHeaderHeight` multiplies TABLE.HEADER_LINE_HEIGHT by the wrapped line count to size the
     // header row, so the label's own line box has to be that same number. A divergence is invisible
