@@ -743,6 +743,17 @@ describe('TableNG', () => {
       expect(screen.getByText('No rows')).toBeInTheDocument();
       expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
+
+    it('gives the columns the full width when there are no rows to expand', () => {
+      // With no nested frame to expand into there's no expander column, so its width shouldn't be
+      // held back from the real columns — rdg's grid-template-columns shows what they actually got.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createEmptyNestedDataFrame()} width={800} height={600} />
+      );
+
+      const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
+      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
+    });
   });
 
   describe('Nested table footer', () => {
@@ -1183,6 +1194,25 @@ describe('TableNG', () => {
       // Sum of Column B values (1+2+3=6)
       expect(screen.getByText('6')).toBeInTheDocument();
     });
+
+    it("drops the footer cells' bottom border under table.refresh", () => {
+      // The footer is the grid's last row, so react-data-grid's per-cell bottom border draws a
+      // hairline along the table's own bottom edge. Its top border still divides it from the rows.
+      const baseFrame = createBasicDataFrame();
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frameWithReducers} width={800} height={600} tableRefreshEnabled />
+      );
+
+      const footerCell = container.querySelector<HTMLElement>('.rdg-bottom-summary-row .rdg-cell')!;
+      expect(window.getComputedStyle(footerCell).getPropertyValue('border-block-end')).toBe('none');
+    });
   });
 
   describe('Pagination', () => {
@@ -1238,6 +1268,37 @@ describe('TableNG', () => {
       // Verify that pagination summary text is shown
       const paginationText = container.textContent;
       expect(paginationText).toContain('of 100 rows');
+    });
+
+    it('only gives the pagination controls a bottom margin when the panel has no padding of its own', () => {
+      const frame = toDataFrame({
+        name: 'LargeData',
+        fields: [
+          {
+            name: 'Index',
+            type: FieldType.number,
+            values: Array.from({ length: 100 }, (_, i) => i),
+            config: { custom: {} },
+            display: (v: number) => ({ text: String(v), numeric: Number(v) }),
+          },
+        ],
+      });
+
+      function pagerMarginBlockEnd(noPanelPadding: boolean) {
+        const { container, unmount } = render(
+          <TableNG data={frame} width={800} height={300} enablePagination noPanelPadding={noPanelPadding} />
+        );
+        const pager = container.querySelector('.table-ng-pagination')!.parentElement!;
+        // logical property: jsdom doesn't fold `margin-block-end` into `marginBottom`
+        const marginBlockEnd = window.getComputedStyle(pager).getPropertyValue('margin-block-end');
+        unmount();
+        return marginBlockEnd;
+      }
+
+      // the panel's own padding already sits below the controls here...
+      expect(pagerMarginBlockEnd(false)).toBe('0');
+      // ...but with it dropped, the controls would otherwise sit on the panel edge
+      expect(pagerMarginBlockEnd(true)).toBe('8px');
     });
 
     it('navigates between pages when pagination controls are clicked', async () => {

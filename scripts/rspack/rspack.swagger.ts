@@ -6,7 +6,7 @@ import WebpackBar from 'webpackbar';
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { assetsManifestOptions } from './plugins/assetsManifest.ts';
-import { swcRule, sassRule, type Env } from './rspack.common.ts';
+import { createSwcRule, sassRule, type Env } from './rspack.common.ts';
 
 export default (env: Env = {}): Configuration => {
   const config: Configuration = {
@@ -37,7 +37,7 @@ export default (env: Env = {}): Configuration => {
         },
       },
       rules: [
-        swcRule,
+        createSwcRule(),
         sassRule,
         {
           test: /\.(svg)(\?.*)?$/,

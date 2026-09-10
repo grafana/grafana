@@ -260,9 +260,18 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			finalizer:     nil,
-			client:        nil,
-			statusPatcher: nil,
+			finalizer: nil,
+			client:    nil,
+			statusPatcher: func() StatusPatcher {
+				// A build failure records status.deleteError too, so a patcher
+				// must be present.
+				s := mocks.NewStatusPatcher(t)
+				s.
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					Once().
+					Return(nil)
+				return s
+			}(),
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -354,7 +363,16 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return c
 			}(),
-			statusPatcher: nil,
+			statusPatcher: func() StatusPatcher {
+				// The removal-patch failure records status.deleteError too, so a
+				// patcher must be present.
+				s := mocks.NewStatusPatcher(t)
+				s.
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					Once().
+					Return(nil)
+				return s
+			}(),
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
@@ -458,10 +476,21 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 		},
 	}
 
+	// The removal-patch failure is a blind spot for the finalizer SLO, so it must
+	// be metered and recorded on status.deleteError instead.
+	statusPatcher := mocks.NewStatusPatcher(t)
+	statusPatcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		Once().
+		Return(nil)
+
+	reg := prometheus.NewPedanticRegistry()
 	c := &RepositoryController{
-		repoFactory: factory,
-		finalizer:   finalizer,
-		tracer:      tracing.InitializeTracerForTest(),
+		repoFactory:     factory,
+		finalizer:       finalizer,
+		tracer:          tracing.InitializeTracerForTest(),
+		statusPatcher:   statusPatcher,
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -476,6 +505,141 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	require.Error(t, err)
 	require.ErrorContains(t, err, "remove finalizers")
 	require.Greater(t, atomic.LoadInt32(&calls), int32(1), "should retry at least once before giving up")
+	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageRemoveFinalizers))
+}
+
+// TestRepositoryController_handleDelete_BuildFailureIsMetered verifies that a
+// repoFactory.Build failure during deletion — which leaves the repository
+// terminating without ever running finalizers — is counted under the build stage
+// rather than going unmetered.
+func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, assert.AnError)
+
+	statusPatcher := mocks.NewStatusPatcher(t)
+	statusPatcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		Once().
+		Return(nil)
+
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		repoFactory:     factory,
+		statusPatcher:   statusPatcher,
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+	}
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "create repository from configuration")
+	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageBuild))
+}
+
+// TestRepositoryController_handleDelete_ObservesPendingAge verifies the wiring
+// from handleDelete to the pending-age histogram and the completion counter: a
+// terminating repository observes its age, and the deletion is counted once when
+// its finalizers are removed.
+func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
+
+	finalizer := NewMockFinalizerProcessor(t)
+	finalizer.
+		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		Once().
+		Return(nil)
+
+	repoClient := &mockRepoInterface{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+			return &provisioning.Repository{}, nil
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		repoFactory:     factory,
+		finalizer:       finalizer,
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+		client: &mockProvisioningV0alpha1Interface{
+			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+		},
+	}
+
+	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &deletion,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
+	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
+}
+
+// TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount verifies that
+// re-observing a terminating repository whose finalizers are already gone (an
+// informer re-enqueue before GC, or a resync while it lingers) does not
+// re-increment the completion counter -- it would otherwise double-count the same
+// deletion.
+func TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+	}
+
+	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &deletion,
+		},
+	}
+	err := c.handleDelete(context.Background(), repo)
+	require.NoError(t, err)
+	// Age is still observed, but the deletion is not (re-)counted.
+	assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryDeletionPendingMetric))
+	assert.Equal(t, 0.0, counterValue(t, reg, repositoryDeletionsMetric))
+}
+
+// TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged guards against a
+// hot-loop: re-writing the same deleteError bumps the resourceVersion, which the
+// informer turns back into a re-enqueue, so an unchanged error must not be
+// patched. A patcher with no expectations fails the test if Patch is called.
+func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T) {
+	c := &RepositoryController{statusPatcher: mocks.NewStatusPatcher(t)}
+	repo := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{DeleteError: "boom"},
+	}
+	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
+	require.NoError(t, err)
+}
+
+// TestRepositoryController_updateDeleteStatus_UsesAddOp verifies the patch uses
+// "add" (not "replace") so it creates the omitempty deleteError field on the
+// first failure, and only patches when the error actually changed.
+func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
+			return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
+		})).
+		Once().
+		Return(nil)
+	c := &RepositoryController{statusPatcher: patcher}
+	repo := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{DeleteError: "old"},
+	}
+	err := c.updateDeleteStatus(context.Background(), repo, errors.New("new"))
+	require.NoError(t, err)
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {
@@ -2118,6 +2282,45 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
 }
 
+// TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies
+// that the expired counter is incremented only for an already-expired token,
+// independently of whether a refresh is triggered.
+func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t *testing.T) {
+	resyncInterval := 5 * time.Minute
+	oldEnough := time.Now().Add(-time.Hour)
+
+	tests := []struct {
+		name        string
+		expiration  int64 // epoch millis; 0 means non-expiring
+		wantExpired float64
+	}{
+		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 1},
+		{"near expiry is not counted as expired", time.Now().Add(30 * time.Second).UnixMilli(), 0},
+		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0},
+		{"non-expiring returns before classification", 0, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				tokenMetrics:   registerRepositoryTokenMetrics(reg),
+				resyncInterval: resyncInterval,
+			}
+			obj := &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Token: provisioning.TokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
+				},
+				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Create: "existing-token"}},
+			}
+
+			rc.shouldGenerateTokenFromConnection(obj)
+
+			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_repository_tokens_expired_total"))
+		})
+	}
+}
+
 // TestRepositoryController_process_TokenRefreshedWhileOverQuota verifies that auth token
 // refresh is not skipped when a repository is blocked due to namespace quota being exceeded.
 func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T) {
@@ -2445,6 +2648,41 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
 	})
+}
+
+// TestShouldRotateWebhookSecret_OverdueCounter verifies the overdue counter is
+// incremented only when a secret is actually due for rotation.
+func TestShouldRotateWebhookSecret_OverdueCounter(t *testing.T) {
+	interval := 30 * 24 * time.Hour
+	writeWorkflow := []provisioning.Workflow{provisioning.WriteWorkflow}
+
+	tests := []struct {
+		name        string
+		lastRotated int64
+		wantOverdue float64
+	}{
+		{"overdue past interval", time.Now().Add(-31 * 24 * time.Hour).UnixMilli(), 1},
+		{"never rotated", 0, 1},
+		{"within interval", time.Now().Add(-1 * 24 * time.Hour).UnixMilli(), 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				webhookSecretRotationInterval: interval,
+				webhookMetrics:                registerWebhookSecretMetrics(reg),
+			}
+			obj := &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{Workflows: writeWorkflow},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: tt.lastRotated}},
+			}
+
+			rc.shouldRotateWebhookSecret(obj)
+
+			assert.Equal(t, tt.wantOverdue, counterValue(t, reg, "grafana_provisioning_webhook_secret_rotation_overdue_total"))
+		})
+	}
 }
 
 // hookRepoStub implements repository.WebhookRepository so we can observe whether

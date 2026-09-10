@@ -201,7 +201,7 @@ func TestGroupScopesByActionContext(t *testing.T) {
 			name: "multiple actions with varying scope counts",
 			permissions: func() []Permission {
 				var perms []Permission
-				for i := 0; i < 3; i++ {
+				for i := range 3 {
 					for j := 0; j < 2+i; j++ {
 						perms = append(perms, Permission{
 							Action: fmt.Sprintf("action:%d", i),

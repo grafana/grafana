@@ -10,6 +10,7 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
 import { notebookNewEditUrl } from '../urls';
@@ -34,6 +35,10 @@ export function NotebooksListPage() {
     createdByMe,
     setCreatedByMe,
     canFilterByMe,
+    tagFilter,
+    setTagFilter,
+    loadedTags,
+    addTagFilter,
     isLoading,
     isReloading,
     filterKey,
@@ -124,14 +129,20 @@ export function NotebooksListPage() {
               )}
               <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                 <Stack alignItems="center" gap={1} wrap="wrap">
-                  {/* Without an explicit width FilterInput fills the row and pushes the author
-                      checkbox onto the next line. */}
                   <FilterInput
                     width={40}
                     value={searchQuery}
                     onChange={setSearchQuery}
                     escapeRegex={false}
                     placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  />
+                  <NotebookTagsField
+                    value={tagFilter}
+                    onChange={setTagFilter}
+                    // Where the search route is not served the facet cannot answer, and these are
+                    // the only tags there are to offer.
+                    fallbackTags={loadedTags}
+                    placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                   />
                   {canFilterByMe && (
                     <Checkbox
@@ -168,7 +179,7 @@ export function NotebooksListPage() {
               ) : rows.length > 0 ? (
                 // Keyed by the filters so narrowing the set drops the page index the reader was on,
                 // which is the one case the table itself no longer resets for.
-                <NotebooksTable key={filterKey} notebooks={rows} />
+                <NotebooksTable key={filterKey} notebooks={rows} onTagClick={addTagFilter} />
               ) : (
                 // Only when the request answered: after a failure the alert above explains the
                 // empty table, and "No notebooks found" would report a result nobody returned.
