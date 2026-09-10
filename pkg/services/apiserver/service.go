@@ -415,7 +415,12 @@ func (s *service) start(ctx context.Context) error {
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
-	searchRoutes := searchroutes.Build(searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
+	searchRoutes := searchroutes.BuildWithOptions(
+		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
+			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
+		}},
+	)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
