@@ -2115,6 +2115,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayGuardrails",
+        "resourceVersion": "1788974867002",
+        "creationTimestamp": "2026-09-09T17:27:47Z"
+      },
+      "spec": {
+        "description": "Data source query gateway guardrails",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

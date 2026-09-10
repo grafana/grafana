@@ -1021,4 +1021,8 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagDatasourcesGatewayGuardrails
+	// Data source query gateway guardrails
+	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 )
