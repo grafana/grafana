@@ -176,17 +176,24 @@ var folderAccessProbes = []folderProbe{
 	{correlationID: "silence-write", group: notificationsGroup, resource: "silences", verb: utils.VerbUpdate, action: "alert.silences:write", inFolder: true},
 }
 
-// probeBatch is the set of probes sharing one group/resource pair.
+// probeBatch is the set of probes sharing one group/resource/subresource.
 type probeBatch struct {
 	probes []folderProbe
 }
 
-// folderAccessProbeBatches splits the probes by group/resource because
-// rolloutAccessClient picks one backend per BatchCheck call from the first
-// item, and falls back to RBAC for the whole batch when the items disagree.
-// Sending one batch per group/resource keeps each call routable, so folders
-// participating in a Zanzana rollout are still answered by Zanzana.
+// folderAccessProbeBatches splits the probes by group/resource/subresource
+// because rolloutAccessClient picks one backend per BatchCheck call from the
+// first item, and falls back to RBAC for the whole batch when the items
+// disagree. Sending one homogeneous batch per resource keeps each call
+// routable, so folders participating in a Zanzana rollout are still answered
+// by Zanzana.
 var folderAccessProbeBatches = batchProbesByResource(folderAccessProbes)
+
+// maxConcurrentProbeBatches bounds the fan-out below. The authz server admits
+// requests with a non-blocking semaphore and rejects the overflow with
+// ResourceExhausted (zanzana.server.max_concurrent_requests_per_namespace), so
+// a single /access call should not try to occupy every slot a tenant has.
+const maxConcurrentProbeBatches = 4
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -229,9 +236,10 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 // legacy newToFolderDto in pkg/api/folder.go.
 func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user identity.Requester, name, parent string) (*foldersV1.FolderAccessInfo, error) {
 	// The batches are independent, so they run concurrently and the endpoint
-	// costs one round trip rather than one per resource.
+	// costs a few round trips rather than one per resource.
 	responses := make([]authlib.BatchCheckResponse, len(folderAccessProbeBatches))
 	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrentProbeBatches)
 	for i, batch := range folderAccessProbeBatches {
 		g.Go(func() error {
 			checks := make([]authlib.BatchCheckItem, len(batch.probes))
@@ -287,13 +295,14 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 	return rsp, nil
 }
 
-// batchProbesByResource groups probes that share a group/resource pair,
-// preserving the order they are declared in.
+// batchProbesByResource groups probes that share a group/resource/subresource,
+// preserving the order they are declared in. The subresource is part of the key
+// because the rollout map treats it as a distinct routable resource.
 func batchProbesByResource(probes []folderProbe) []probeBatch {
 	var batches []probeBatch
 	index := make(map[string]int)
 	for _, p := range probes {
-		key := p.group + "/" + p.resource
+		key := p.group + "/" + p.resource + "/" + p.subresource
 		i, ok := index[key]
 		if !ok {
 			i = len(batches)

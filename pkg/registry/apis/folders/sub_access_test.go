@@ -74,13 +74,14 @@ func TestFolderAccessProbeBatches(t *testing.T) {
 	for _, batch := range folderAccessProbeBatches {
 		require.NotEmpty(t, batch.probes, "empty batch")
 		first := batch.probes[0]
-		key := first.group + "/" + first.resource
-		require.False(t, seenKey[key], "group/resource %q is split across batches", key)
+		key := first.group + "/" + first.resource + "/" + first.subresource
+		require.False(t, seenKey[key], "resource %q is split across batches", key)
 		seenKey[key] = true
 
 		for _, p := range batch.probes {
 			require.Equal(t, first.group, p.group, "batch mixes groups")
 			require.Equal(t, first.resource, p.resource, "batch mixes resources")
+			require.Equal(t, first.subresource, p.subresource, "batch mixes subresources")
 		}
 		batched += len(batch.probes)
 	}
@@ -279,7 +280,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, got)
 
-			require.Equal(t, len(folderAccessProbeBatches), ac.calls(), "one BatchCheck per group/resource")
+			require.Equal(t, len(folderAccessProbeBatches), ac.calls(), "one BatchCheck per resource")
 			if tc.assertItems != nil {
 				tc.assertItems(t, ac.items())
 			}
