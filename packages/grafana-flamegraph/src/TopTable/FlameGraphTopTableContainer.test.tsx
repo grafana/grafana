@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
-import { mockBoundingClientRect } from '@grafana/test-utils';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -10,6 +10,13 @@ import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+
+// AutoSizer needs a measurable rect, and react-data-grid additionally sizes its virtualized viewport
+// from the client box - jsdom reports 0 for both.
+function mockTableSize({ width, height }: { width: number; height: number } = { width: 500, height: 500 }) {
+  mockBoundingClientRect({ width, height });
+  mockClientSize({ width, height });
+}
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = (props?: { useTableNG?: boolean }) => {
@@ -26,7 +33,6 @@ describe('FlameGraphTopTableContainer', () => {
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
         useTableNG={props?.useTableNG}
-        enableVirtualization={props?.useTableNG ? false : undefined}
       />
     );
 
@@ -34,8 +40,7 @@ describe('FlameGraphTopTableContainer', () => {
   };
 
   it('should render correctly', async () => {
-    // Needed for AutoSizer to work in test
-    mockBoundingClientRect({ width: 500, height: 500 });
+    mockTableSize();
 
     setup();
     const rows = screen.getAllByRole('row');
@@ -102,7 +107,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
         tableRefreshEnabled={props?.tableRefreshEnabled}
-        enableVirtualization={false}
       />
     );
 
@@ -110,8 +114,7 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
   };
 
   it('should render correctly', async () => {
-    // Needed for AutoSizer to work in test
-    mockBoundingClientRect({ width: 500, height: 500 });
+    mockTableSize();
 
     setup();
 
@@ -142,7 +145,7 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
   ])(
     'with tableRefreshEnabled=$tableRefreshEnabled renders the sort arrow $placement the header label',
     async ({ tableRefreshEnabled }) => {
-      mockBoundingClientRect({ width: 500, height: 500 });
+      mockTableSize();
 
       setup({ tableRefreshEnabled });
 
@@ -181,7 +184,7 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
   });
 
   it('should sort by column header and call onTableSort', async () => {
-    mockBoundingClientRect({ width: 500, height: 500 });
+    mockTableSize();
     const onTableSort = jest.fn();
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
@@ -195,7 +198,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         onTableSort={onTableSort}
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
-        enableVirtualization={false}
       />
     );
 
@@ -207,7 +209,7 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
   });
 
   it('does not sort when the actions column header is clicked', async () => {
-    mockBoundingClientRect({ width: 500, height: 500 });
+    mockTableSize();
     const onTableSort = jest.fn();
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
@@ -221,7 +223,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         onTableSort={onTableSort}
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
-        enableVirtualization={false}
       />
     );
 
@@ -379,8 +380,7 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
   });
 
   it('fits the columns in the space the scrollbar leaves rather than the full width', async () => {
-    // Needed for AutoSizer to work in test
-    mockBoundingClientRect({ width: GRID_WIDTH, height: GRID_WIDTH });
+    mockTableSize({ width: GRID_WIDTH, height: GRID_WIDTH });
     mockGridScrollbar();
 
     const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
@@ -392,7 +392,6 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
         onSandwich={jest.fn()}
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
-        enableVirtualization={false}
       />
     );
 

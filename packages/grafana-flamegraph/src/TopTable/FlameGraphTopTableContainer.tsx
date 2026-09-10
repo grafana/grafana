@@ -46,9 +46,6 @@ type Props = {
   // Feature-toggle values for TableNG, passed in by the host. See FlameGraphContainer's props.
   tableRefreshEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
-  // Escape hatch to disable table virtualization when useTableNG is set. Only intended for tests, where jsdom
-  // cannot measure the grid and virtualization would otherwise render no rows.
-  enableVirtualization?: boolean;
 };
 
 const FlameGraphTopTableContainer = memo(
@@ -65,7 +62,6 @@ const FlameGraphTopTableContainer = memo(
     useTableNG,
     tableRefreshEnabled,
     contentAwareWidthsEnabled,
-    enableVirtualization,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
@@ -117,7 +113,6 @@ const FlameGraphTopTableContainer = memo(
                     height={height}
                     tableRefreshEnabled={tableRefreshEnabled}
                     contentAwareWidthsEnabled={contentAwareWidthsEnabled}
-                    enableVirtualization={enableVirtualization}
                   />
                 </div>
               );

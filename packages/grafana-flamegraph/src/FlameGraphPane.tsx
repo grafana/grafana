@@ -36,8 +36,6 @@ type FlameGraphPaneProps = {
   // Feature-toggle values for the top table's TableNG, passed in by the host. See FlameGraphContainer's props.
   tableRefreshEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
-  // Test-only escape hatch to disable top-table virtualization in jsdom.
-  enableVirtualization?: boolean;
   // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
   fillHeight?: boolean;
 };
@@ -65,7 +63,6 @@ const FlameGraphPane = ({
   useTableNG,
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
-  enableVirtualization,
   fillHeight,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
@@ -256,7 +253,6 @@ const FlameGraphPane = ({
             useTableNG={useTableNG}
             tableRefreshEnabled={tableRefreshEnabled}
             contentAwareWidthsEnabled={contentAwareWidthsEnabled}
-            enableVirtualization={enableVirtualization}
           />
         </div>
       );

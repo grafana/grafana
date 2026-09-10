@@ -113,12 +113,6 @@ export type Props = {
    */
   tableRefreshEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
-
-  /**
-   * Escape hatch to disable virtualization of the top table when useTableNG is set. Only intended for tests,
-   * where jsdom cannot measure the grid and virtualization would otherwise render no rows.
-   */
-  enableVirtualization?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -140,7 +134,6 @@ const FlameGraphContainer = ({
   useTableNG,
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
-  enableVirtualization,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
 
@@ -224,7 +217,8 @@ const FlameGraphContainer = ({
     focusedItemIndexes,
     setFocusedItemIndexes,
     useTableNG,
-    enableVirtualization,
+    tableRefreshEnabled,
+    contentAwareWidthsEnabled,
     fillHeight,
   };
 
