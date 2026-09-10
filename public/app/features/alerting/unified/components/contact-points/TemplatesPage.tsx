@@ -5,6 +5,7 @@ import { isSupported } from '../../hooks/abilities/abilityUtils';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
@@ -26,7 +27,7 @@ function TemplatesPageContent() {
           <LinkButton
             icon="plus"
             variant="primary"
-            href="/alerting/notifications/templates/new"
+            href={createRelativeUrl('/alerting/notifications/templates/new')}
             disabled={!createTemplateAbility.granted}
           >
             <Trans i18nKey="alerting.templates-page.add-template">New notification template</Trans>

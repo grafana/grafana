@@ -8,6 +8,7 @@ import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanage
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
 import { useSettingsPageNav } from './settings/navigation';
+import { createRelativeUrl } from './utils/url';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 function AlertmanagerSettingsPage() {
@@ -34,7 +35,7 @@ function AlertmanagerSettingsContent() {
           key="add-alertmanager"
           title={t('alerting.settings-content.title-alerting-settings', 'Alerting settings')}
           component={
-            <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="primary">
+            <LinkButton href={createRelativeUrl('/connections/datasources/alertmanager')} icon="plus" variant="primary">
               <Trans i18nKey="alerting.settings-content.add-new-alertmanager">Add new Alertmanager</Trans>
             </LinkButton>
           }

@@ -2,6 +2,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
+
 import SettingsPage from './Settings';
 import DataSourcesResponse from './components/settings/mocks/api/datasources.json';
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
@@ -79,6 +81,22 @@ describe('Alerting settings', () => {
       // expect link to data source, provisioned badge, type, and status
       expect(within(card).getByRole('link', { name: ds.name })).toBeInTheDocument();
     });
+  });
+
+  it('includes the app sub path in the add Alertmanager link', async () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/sub';
+
+    try {
+      render(<SettingsPage />);
+
+      expect(await screen.findByRole('link', { name: /add new alertmanager/i })).toHaveAttribute(
+        'href',
+        '/sub/connections/datasources/alertmanager'
+      );
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   it('should render the page with external only', async () => {
