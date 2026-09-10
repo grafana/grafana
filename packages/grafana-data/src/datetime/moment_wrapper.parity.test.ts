@@ -49,6 +49,14 @@ describe('Luxon-backed DateTime wrapper', () => {
     expect(wrapper.toDuration(source, 'days').asMilliseconds()).toBe(5400000);
   });
 
+  it('accepts toDuration results in public arithmetic', () => {
+    const duration = wrapper.toDuration(5, 'minutes');
+    const value = wrapper.toUtc('2024-05-08T12:00:00Z');
+
+    expect(value.add(duration).toISOString()).toBe('2024-05-08T12:05:00.000Z');
+    expect(value.subtract(duration).toISOString()).toBe('2024-05-08T12:00:00.000Z');
+  });
+
   it('activates the week-start override and resets to the base locale', () => {
     wrapper.setLocale('de');
     wrapper.setWeekStart('Sunday');

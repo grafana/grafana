@@ -104,6 +104,26 @@ describe('moment compatibility parity', () => {
   });
 
   describe('duration objects', () => {
+    it('uses duration-instance totals for copies, addition, and subtraction', () => {
+      const duration = moment.duration(5, 'minutes');
+      const value = moment.utc('2024-05-08T12:00:00Z');
+
+      expect(moment.duration(duration).asMilliseconds()).toBe(300000);
+      expect(value.clone().add(duration).toISOString()).toBe('2024-05-08T12:05:00.000Z');
+      expect(value.clone().subtract(duration).toISOString()).toBe('2024-05-08T11:55:00.000Z');
+    });
+
+    it('retains elapsed-millisecond arithmetic for duration instances across DST', () => {
+      const value = moment.tz('2024-03-09T12:00:00', 'America/New_York');
+      expect(value.add(moment.duration(1, 'day')).toISOString()).toBe('2024-03-10T17:00:00.000Z');
+    });
+
+    it('preserves invalid duration-instance totals', () => {
+      const duration = moment.duration(NaN);
+      expect(moment.duration(duration).asMilliseconds()).toBeNaN();
+      expect(moment.utc(0).add(duration).isValid()).toBe(false);
+    });
+
     it.each([
       { form: 'singular', input: { hour: 1, minute: '30' } },
       { form: 'plural', input: { hours: 1, minutes: '30' } },

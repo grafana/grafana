@@ -71,7 +71,13 @@ type FormatArg = string | undefined;
 type UnitGetter = Exclude<StartEndUnit, undefined> | 'weekday' | 'weekdays' | 'e' | 'isoWeekday' | 'isoWeekdays' | 'E';
 
 export type MomentDurationInputObject = Partial<Record<ArithmeticUnit, number | string>>;
-type MomentDurationInput = number | string | MomentDurationInputObject | undefined | null;
+type MomentDurationInput =
+  | number
+  | string
+  | MomentDurationInputObject
+  | Pick<MomentDurationLike, 'asMilliseconds'>
+  | undefined
+  | null;
 
 interface MomentOptions {
   locale?: string;
@@ -408,6 +414,11 @@ function normalizeDurationInput(input?: MomentDurationInput, unit?: ArithmeticUn
   }
 
   if (typeof input === 'object') {
+    if ('asMilliseconds' in input) {
+      // Preserve elapsed-millisecond arithmetic for duration instances, not their component methods.
+      return normalizeDurationInput(input.asMilliseconds());
+    }
+
     const fields: Partial<Record<DurationUnit, number>> = {};
     for (const key of Object.keys(input)) {
       if (isMomentUnit(key)) {

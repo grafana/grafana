@@ -35,7 +35,7 @@ export interface DateTimeDuration {
 }
 
 export interface DateTime extends Object {
-  add: (amount?: DateTimeInput | MomentDurationInputObject, unit?: DurationUnit) => DateTime;
+  add: (amount?: DateTimeInput | DurationInput, unit?: DurationUnit) => DateTime;
   set: (unit: DurationUnit | 'date', amount: DateTimeInput) => void;
   diff: (amount: DateTimeInput, unit?: DurationUnit, asFloat?: boolean) => number;
   endOf: (unitOfTime: DurationUnit) => DateTime;
@@ -48,7 +48,7 @@ export interface DateTime extends Object {
   local: () => DateTime;
   locale: (locale: string) => DateTime;
   startOf: (unitOfTime: DurationUnit) => DateTime;
-  subtract: (amount?: DateTimeInput | MomentDurationInputObject, unit?: DurationUnit) => DateTime;
+  subtract: (amount?: DateTimeInput | DurationInput, unit?: DurationUnit) => DateTime;
   toDate: () => Date;
   toISOString: (keepOffset?: boolean) => string;
   isoWeekday: (day?: number | string) => number | string;
