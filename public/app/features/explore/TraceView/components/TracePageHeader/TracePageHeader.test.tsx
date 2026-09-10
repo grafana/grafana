@@ -252,6 +252,74 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByLabelText('Trace warning banner')).not.toBeInTheDocument();
   });
 
+  it('shows a warning icon when a child span is 4xx even if the root request succeeded', () => {
+    const warningTraceId = 'child-warning-trace-id';
+    const warningTrace = {
+      ...trace,
+      traceID: warningTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: warningTraceId,
+          spanID: 'root-ok',
+          depth: 0,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '200' },
+          ],
+        },
+        {
+          ...trace.spans[1],
+          traceID: warningTraceId,
+          spanID: 'child-404',
+          depth: 1,
+          tags: [{ key: 'http.status_code', type: 'String', value: '404' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, warningTrace);
+
+    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trace warning banner')).toBeInTheDocument();
+  });
+
+  it('shows an error icon when a child span failed even if the root request succeeded', () => {
+    const errorTraceId = 'child-error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-ok',
+          depth: 0,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '200' },
+          ],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'child-error',
+          depth: 1,
+          tags: [{ key: 'error', type: 'String', value: 'true' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trace error banner')).toBeInTheDocument();
+  });
+
   it('highlights the deepest error span and does not list the other error spans', () => {
     const errorTraceId = 'multi-error-trace-id';
     const errorTrace = {

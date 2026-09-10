@@ -1,6 +1,12 @@
 import { isErrorSpan } from '../../TraceTimelineViewer/utils';
 import { type TraceSpan } from '../../types/trace';
 
+export enum HttpStatusClass {
+  Success = '2',
+  ClientError = '4',
+  ServerError = '5',
+}
+
 type TraceBannerSeverity = 'error' | 'warning';
 
 export type TraceBannerHighlight = {
@@ -24,10 +30,10 @@ function getTagValue(span: TraceSpan, keys: string[]): string | undefined {
 
 function getSpanBannerSeverity(span: TraceSpan): TraceBannerSeverity | undefined {
   const statusClass = getTagValue(span, HTTP_STATUS_KEYS)?.charAt(0);
-  if (isErrorSpan(span) || statusClass === '5') {
+  if (isErrorSpan(span) || statusClass === HttpStatusClass.ServerError) {
     return 'error';
   }
-  if (statusClass === '4') {
+  if (statusClass === HttpStatusClass.ClientError) {
     return 'warning';
   }
   return undefined;
