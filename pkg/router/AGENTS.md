@@ -83,7 +83,7 @@ latency blip across all traffic when only one route changed.
 Implementation: `GrafanaRouter.served` is a persistent `map[group]*handlerEntry`, keyed by group.
 Each entry holds the live `Backend` (kept so discovery synthesis reflects what's actually served,
 not the raw `Load()` result — see Discovery endpoints below), its resolved `http.Handler`, and
-`lastRV`, the fingerprint last applied. On reconcile, groups whose `lastRV` is unchanged are left
+`lastKey`, the fingerprint last applied. On reconcile, groups whose `lastKey` is unchanged are left
 untouched, changed/new groups are rebuilt, and removed groups are dropped; then a fresh immutable
 `map[group]Backend` snapshot is published via one atomic store. **Connection-pool survival comes
 from the shared transport cache, not the Backend identity** (`transportFor`, keyed by
@@ -94,7 +94,7 @@ Because reconcile only rebuilds the *changed* group, unrelated backends are neve
 
 The router serves by **group**, the natural key of the loaded config — not by flattened path
 prefixes. `GrafanaRouter.snapshot` is an `atomic.Pointer[map[group]servingEntry]` (handler plus the
-group's current RV, needed by the `/openapi/v3/apis/<group>/<version>` cache — see Discovery
+group's current key, needed by the `/openapi/v3/apis/<group>/<version>` cache — see Discovery
 endpoints below); reconcile rebuilds and stores it, serving loads it lock-free per request.
 
 **Why not a general path mux (e.g. a `PathRecorderMux` port).** A kube-aggregator-style mux flattens
@@ -153,7 +153,7 @@ TBD. Possibly inspect a manifest. Use a gRPC client to translate http calls via 
 | `/apis/{group}`                                | single backend | proxy to the owning backend (see decision)    |
 | `/apis`                                        | router         | **synthesized** `metav1.APIGroupList`         |
 | `/openapi/v3`                                  | router         | **synthesized** `handler3.OpenAPIV3Discovery` |
-| `/openapi/v3/apis/{group}/{version}`           | single backend | proxy, cached and RV-busted (see below)       |
+| `/openapi/v3/apis/{group}/{version}`           | single backend | proxy, cached and key-busted (see below)      |
 
 **Decision: one backend owns ALL versions of a given group.** A group is never split across
 backends (reconcile keys `served` by group; a duplicate group is last-wins, and discovery is
@@ -163,10 +163,10 @@ synthesized from `served`, so it never advertises both). Consequences:
   directly to the single owning backend**. No cross-backend merge is needed at group level.
 - `/apis` (root, `APIGroupList` — the union across every group) and `/openapi/v3` (root, a small
   path→hash discovery index, **never** a merged OpenAPI schema) both require router-side synthesis
-  from each backend's `Manifest()`, done once per `reconcile()` cycle and stored via `atomic.Pointer`
+  from each backend's `Group()`, done once per `reconcile()` cycle and stored via `atomic.Pointer`
   alongside `snapshot` (`buildAPIGroupList`/`buildOpenAPIV3Index` in `discovery.go`).
 - `/openapi/v3/apis/{group}/{version}` (the actual heavy per-group document) is a pure proxy to the
-  owning backend, same as `/apis/{group}/{version}` — fronted by an RV-keyed `sync.Map` cache
+  owning backend, same as `/apis/{group}/{version}` — fronted by a key-validated `sync.Map` cache
   (`openapiDocs` in `router.go`) so repeat requests between manifest changes skip the backend
   round-trip. Cache-miss proxy requests strip `If-None-Match`/`If-Modified-Since` before forwarding,
   so an unrelated backend ETag scheme can't produce a bodyless 304 the router would otherwise have
@@ -208,7 +208,7 @@ The signal and the state are split; do not conflate them.
   with **no payload**. The router treats it as a level trigger, not a stream of deltas. How the
   loader produces or coalesces that edge is the loader's concern, not the router's.
 - **`reconcile` is level-triggered.** On each wake it calls `RoutesLoader.Load` to re-read the full
-  desired set, then converges: upsert changed groups (`lastRV` compare), skip unchanged ones, drop
+  desired set, then converges: upsert changed groups (`lastKey` compare), skip unchanged ones, drop
   groups that disappeared. Safe to run on any wake — dropped signals cost nothing because Load reads
   current truth.
 - **Ordering:** receive from the channel *before* calling Load (drain-then-load), so an event during
@@ -228,7 +228,7 @@ The signal and the state are split; do not conflate them.
 - **`Ready` must not fail on a partial reconcile error — but must fail if nothing has ever been
   served.** A non-nil reconcile error (one group's `Backend.Load` failed) does not stop the router
   serving every other group on last-known-good — that is the whole point of the "keep serving, don't
-  advance `lastRV`" design above. Gating `/readyz` (the enterprise command wires `Ready` there) on any
+  advance `lastKey`" design above. Gating `/readyz` (the enterprise command wires `Ready` there) on any
   error would drain the whole router from its LB rotation over one misconfigured group, while it's
   still able to proxy everything else. The first fix for this went too far, though — making `Ready`
   ignore `err` entirely whenever `phase == serving` — and regressed the case where the *very first*
