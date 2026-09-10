@@ -45,8 +45,22 @@ export interface NotebookPageState {
  * dashboard analytics (DashboardView meta-analytics, dashboardInitialized, the dashboard_view
  * query profile) and forced the notebook through the dashboard envelope/transform.
  */
+/**
+ * Scenes by uid, shared across every manager instance rather than held per instance.
+ *
+ * A notebook can be on screen more than once — the route plus an embed of the same notebook in a
+ * host that is not the route. Each consumer gets its own manager, so its own loading and error
+ * state, but they must resolve the SAME scene: a scene owns its autosave, and two scenes for one
+ * notebook means two autosaves writing the whole spec over each other, the later one silently
+ * undoing edits made through the other. Scene activation is reference counted, so one scene safely
+ * serves several consumers and tears down when the last releases it.
+ */
+const sceneCache = new Map<string, { generation?: number; scene: NotebookScene }>();
+
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
-  private cache = new Map<string, { generation?: number; scene: NotebookScene }>();
+  private get cache() {
+    return sceneCache;
+  }
 
   // Identifies the load the page currently wants. `await` does not cancel, so a load started for an
   // earlier request still resumes and would write over a newer one — the page renders whatever is in
@@ -191,6 +205,22 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     // is gone repopulates the singleton, and the next notebook opened flashes the previous one first.
     this.requestSeq++;
     this.setState({ scene: undefined, isLoading: false, loadError: undefined });
+  }
+
+  /**
+   * @internal -- test seam.
+   *
+   * Deliberately goes through `this.cache`, the same accessor `loadNotebook` reads, rather than the
+   * module map directly: reaching for the module map would make the sharing test pass even if the
+   * cache went back to being per instance, which is the regression it exists to catch.
+   */
+  public setSceneCacheForTests(uid: string, scene: NotebookScene): void {
+    this.cache.set(uid, { generation: undefined, scene });
+  }
+
+  /** @internal -- test seam, as above. */
+  public getCachedSceneForTests(uid: string): NotebookScene | undefined {
+    return this.cache.get(uid)?.scene;
   }
 
   public removeSceneCache(uid: string): void {

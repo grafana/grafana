@@ -153,7 +153,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         destroyMutationClient();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
-        window.__grafanaSceneContext = prevSceneContext;
+        // Only while this notebook is still the context. Documents can be mounted at once now — an
+        // embedded notebook over whatever else is open — and they do not deactivate in the order
+        // they activated. Restoring unconditionally let a notebook closing underneath a newer one
+        // hand the context back to a document that had already gone, leaving panel interpolation
+        // and TimeSrv resolving against a deactivated scene.
+        if (window.__grafanaSceneContext === this) {
+          window.__grafanaSceneContext = prevSceneContext;
+        }
       };
     });
   }
