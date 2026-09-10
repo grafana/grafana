@@ -113,6 +113,9 @@ type listResourcePermissionsQueryTemplate struct {
 }
 
 func (r listResourcePermissionsQueryTemplate) Validate() error {
+	if r.Query == nil || r.Query.OrgID <= 0 {
+		return fmt.Errorf("orgID must be set")
+	}
 	return nil
 }
 

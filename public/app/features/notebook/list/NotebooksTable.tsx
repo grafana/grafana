@@ -18,6 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
@@ -96,7 +97,7 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
   // Held here rather than in the row menu, which lives in a Dropdown overlay that unmounts as the menu
   // closes. Only the uid and title, because the rows are flattened and carry no resource envelope.
   const [toDelete, setToDelete] = useState<{ uid: string; title: string } | undefined>();
-  const { remove, isDeleting } = useDeleteNotebook();
+  const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_LIST);
 
   // Stable, so the memoized rows and the memoized columns below are not rebuilt on every render.
   const onDelete = useCallback((uid: string, title: string) => setToDelete({ uid, title }), []);

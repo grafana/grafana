@@ -9156,6 +9156,9 @@
       "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
+      "trace-banner-error": "Trace error banner",
+      "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
+      "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
       "url": "URL",
       "warning-indicator": "Trace has client errors"
@@ -10667,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
       "errors-and-notices": "Errors and notices",
-      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
