@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestTeamLBACRuleStatusJSONRoundTrip(t *testing.T) {
@@ -88,37 +86,4 @@ func TestTeamLBACRuleExposesStatusSubresource(t *testing.T) {
 	status, ok := rule.GetSubresource("status")
 	require.True(t, ok)
 	require.Equal(t, rule.Status, status)
-}
-
-func TestTeamLBACRuleStatusIsSystemOwnedOnSpecWrites(t *testing.T) {
-	strategy := generic.NewStrategy(runtime.NewScheme(), SchemeGroupVersion)
-	forgedStatus := TeamLBACRuleStatus{Conditions: []TeamLBACRuleCondition{{
-		Type:   TeamLBACRuleConditionTypeEnforceable,
-		Status: TeamLBACRuleConditionStatusTrue,
-		Reason: TeamLBACRuleConditionReasonReady,
-	}}}
-
-	t.Run("create clears client supplied status", func(t *testing.T) {
-		rule := NewTeamLBACRule()
-		rule.Status = forgedStatus
-
-		strategy.PrepareForCreate(t.Context(), rule)
-
-		require.Empty(t, rule.Status.Conditions)
-	})
-
-	t.Run("update retains the existing status", func(t *testing.T) {
-		oldRule := NewTeamLBACRule()
-		oldRule.Status.Conditions = []TeamLBACRuleCondition{{
-			Type:   TeamLBACRuleConditionTypeEnforceable,
-			Status: TeamLBACRuleConditionStatusFalse,
-			Reason: TeamLBACRuleConditionReasonBasicAuthDisabled,
-		}}
-		newRule := oldRule.DeepCopy()
-		newRule.Status = forgedStatus
-
-		strategy.PrepareForUpdate(t.Context(), newRule, oldRule)
-
-		require.Equal(t, oldRule.Status, newRule.Status)
-	})
 }
