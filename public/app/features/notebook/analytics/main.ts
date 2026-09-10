@@ -15,7 +15,7 @@ import {
 } from './types';
 
 /** @owner sharing-squad */
-export const createNotebookEvent = defineFeatureEvents('grafana', 'notebook');
+const createNotebookEvent = defineFeatureEvents('grafana', 'notebook');
 
 /** Fired once per navigation that actually renders a notebook: a fresh fetch or a cache hit. */
 const createLoadedEvent = createNotebookEvent<NotebookLoadedProperties>('loaded');
