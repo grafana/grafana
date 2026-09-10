@@ -310,12 +310,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this.state.openPane?.getId() === 'element' && this.state.selectionContext.selected.length === 1) {
       const selectedObj = this.getSelectedObject();
       if (selectedObj) {
-        void import(
-          /* webpackChunkName: "dashboard-edit-actions" */ '../actions/utils/getEditableElementFor'
-        ).then(({ getEditableElementFor }) => {
-          const element = getEditableElementFor(selectedObj);
-          element?.scrollIntoView?.();
-        });
+        void import(/* webpackChunkName: "dashboard-edit-actions" */ '../actions/utils/getEditableElementFor').then(
+          ({ getEditableElementFor }) => {
+            const element = getEditableElementFor(selectedObj);
+            element?.scrollIntoView?.();
+          }
+        );
       }
     }
   }

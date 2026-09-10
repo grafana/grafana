@@ -103,15 +103,15 @@ describe('<DashboardVariablesList />', () => {
   test('renders 3 sections (one per variable display type)', async () => {
     const { visibleVar1, visibleVar2, controlsMenuVar1, hiddenVar1 } = buildTestVariables();
     const { container, getByRole, elements } = renderVariablesList([
-          hiddenVar1,
-          controlsMenuVar1,
-          visibleVar2,
-          visibleVar1,
-        ]);
+      hiddenVar1,
+      controlsMenuVar1,
+      visibleVar2,
+      visibleVar1,
+    ]);
 
-        await waitFor(() => {
-          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
-        });
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -131,9 +131,9 @@ describe('<DashboardVariablesList />', () => {
     const { visibleVar1 } = buildTestVariables();
     const { container, getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
 
-        await waitFor(() => {
-          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
-        });
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     expect(getByRole('heading', { name: /top of row/i })).toBeInTheDocument();
   });
@@ -142,9 +142,9 @@ describe('<DashboardVariablesList />', () => {
     const { hiddenVar1 } = buildTestVariables();
     const { container, getByRole } = renderVariablesList([hiddenVar1]);
 
-        await waitFor(() => {
-          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
-        });
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();

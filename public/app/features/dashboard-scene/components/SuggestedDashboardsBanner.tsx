@@ -17,9 +17,9 @@ import { type DashboardScene } from '../scene/DashboardScene';
 // suggestedDashboardBanner query param, so the dashboard-library UI stays out of the
 // dashboard page chunk.
 const LazySuggestedDashboardsLoader = lazy(() =>
-  import(/* webpackChunkName: "dashboard-library" */ 'app/features/datasources/components/SuggestedDashboardsLoader').then(
-    (m) => ({ default: m.SuggestedDashboardsLoader })
-  )
+  import(
+    /* webpackChunkName: "dashboard-library" */ 'app/features/datasources/components/SuggestedDashboardsLoader'
+  ).then((m) => ({ default: m.SuggestedDashboardsLoader }))
 );
 
 function SuggestedDashboardsLoader(props: ComponentProps<typeof LazySuggestedDashboardsLoader>) {
