@@ -17,8 +17,8 @@ import {
   useColWidths,
   useRowCompiler,
 } from './hooks';
-import { type FilterType, type TableRow } from './types';
-import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+import { type FilterType, type TableRow, type TypographyCtx } from './types';
+import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
 const emptyFilterResult = applyFilter([], {}, []);
 
@@ -791,6 +791,63 @@ describe('TableNG hooks', () => {
 
       // colWidth 100 - chrome 13 - sort arrow 22 - column menu 22 - active filter icon 22 = 21
       expect(heightFn).toHaveBeenCalledWith('name', 21, filterable[0], -1, TABLE.HEADER_LINE_HEIGHT);
+    });
+
+    it('gives a wrapped label exactly the room the width path sized its column for', () => {
+      // The two paths are halves of one sum: `computeContentAwareColWidths` adds the label width, the
+      // cell chrome and the header affordances up into a column width, and `useHeaderHeight` subtracts
+      // the chrome and affordances back out to find the label's room. Drop an affordance on either
+      // side, or measure the label any differently from the way the line counter measures it, and a
+      // content-sized column lands a fraction inside the wrap boundary: the header then reserves a
+      // second line for a label the browser draws on one.
+      const CHAR_W = 8;
+      const measureWidth = (text: string) => text.length * CHAR_W;
+      const ctx: TypographyCtx = {
+        ...typographyCtx,
+        measureWidth,
+        // count lines the way uwrap does — off the summed per-character widths, not a kerned string
+        measureHeight: (value, width, _field, _rowIdx, lineHeight) =>
+          Math.max(1, Math.ceil(measureWidth(String(value)) / width)) * lineHeight,
+      };
+
+      const displayName = 'Longer name that needs wrapping';
+      const { fields } = setupData();
+      // every affordance at once: type icon, sort arrow, tooltip button, column menu, active filter
+      const headerFields = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              name: displayName,
+              config: {
+                ...field.config,
+                custom: { ...field.config?.custom, wrapHeaderText: true, filterable: true, headerTooltip: 'why' },
+              },
+            }
+          : field
+      );
+      const opts = {
+        showTypeIcons: true,
+        tableRefreshEnabled: true,
+        filter: { name: { filtered: [], searchFilter: '', displayName } } as unknown as FilterType,
+      };
+
+      // availWidth 0, so nothing is grown into leftover space and each column is its content width
+      const columnWidths = computeContentAwareColWidths(headerFields, 0, {
+        typographyCtx: ctx,
+        headerTypographyCtx: ctx,
+        ...opts,
+      });
+
+      const headerHeight = (widths: number[]) =>
+        renderHook(() =>
+          useHeaderHeight({ fields: headerFields, columnWidths: widths, enabled: true, typographyCtx: ctx, ...opts })
+        ).result.current;
+
+      expect(headerHeight(columnWidths)).toBe(TABLE.HEADER_HEIGHT);
+      // and the column is that wide exactly, not comfortably wider: a single pixel less wraps
+      expect(headerHeight(columnWidths.map((w, i) => (i === 0 ? w - 1 : w)))).toBe(
+        2 * TABLE.HEADER_LINE_HEIGHT + 2 * TABLE.CELL_PADDING
+      );
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {

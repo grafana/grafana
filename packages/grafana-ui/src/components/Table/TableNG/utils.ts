@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
-import { type Count, varPreLine } from 'uwrap';
+import { type Count, type uWrap, varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -247,7 +247,7 @@ export function createTypographyContext(
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. 1234567890 ALL CAPS TO HELP WITH MEASUREMENT.";
   const txtWidth = ctx.measureText(txt).width;
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
-  const { count } = varPreLine(ctx);
+  const uwrap = varPreLine(ctx);
 
   return {
     ctx,
@@ -255,7 +255,34 @@ export function createTypographyContext(
     letterSpacing,
     avgCharWidth,
     estimateHeight: getTextHeightEstimator(avgCharWidth),
-    measureHeight: getTextHeightMeasurerFromUwrapCount(count),
+    measureHeight: getTextHeightMeasurerFromUwrapCount(uwrap.count),
+    measureWidth: createFitWidthMeasurer(ctx, uwrap),
+  };
+}
+
+/**
+ * @internal The narrowest width at which the line counter agrees the text fits on one line.
+ *
+ * `measureText` on the whole string is not that width: it is kerned end to end, while uwrap — the
+ * same code that counts the lines — accumulates its own per-character widths and only models kerning
+ * after capitals, so it reads most strings a fraction (0.1–1px, in practice) *wider*. Size a column
+ * to exactly its header text using the kerned number and uwrap then puts that text on two lines: the
+ * header row grows for a label the browser draws on one.
+ *
+ * uwrap doesn't export its width LUT, and reimplementing that arithmetic here is precisely the thing
+ * that would drift out of step again, so let uwrap arbitrate instead: start from the kerned width,
+ * which never over-shoots, and nudge up until `test` agrees the text stays on one line. That is a
+ * pixel or two of nudging, and `test` bails at the second line rather than wrapping the whole
+ * string — but it is work per call, so this is meant for the handful of header labels a table has,
+ * not for every cell.
+ */
+export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: uWrap): (text: string) => number {
+  return (text: string) => {
+    let width = Math.ceil(ctx.measureText(text).width);
+    while (test(text, width)) {
+      width++;
+    }
+    return width;
   };
 }
 
@@ -443,6 +470,8 @@ export function buildCellHeightMeasurers(
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
+      // kerned whole-string width, deliberately: the pill measurer lays pills out itself rather than
+      // handing the text to the line counter, so a pill is as wide as the browser draws it.
       return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
     },
   } as const;
@@ -1439,9 +1468,7 @@ export function getHeaderAffordanceWidth(
 }
 
 function measureHeaderWidth(field: Field, ctx: TypographyCtx, opts: HeaderAffordanceOptions): number {
-  return (
-    ctx.ctx.measureText(getDisplayName(field)).width + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts)
-  );
+  return ctx.measureWidth(getDisplayName(field)) + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts);
 }
 
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
@@ -1481,6 +1508,8 @@ function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
     if (value != null) {
       valueText = FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
     }
+    // kerned whole-string widths, deliberately: footer text is `nowrap` and never line-counted, so
+    // unlike a header label it wants the width the browser draws, not the width uwrap would assume.
     const rowWidth =
       headerCtx.ctx.measureText(label).width + FOOTER_LABEL_GAP + headerCtx.ctx.measureText(valueText).width;
     widest = Math.max(widest, rowWidth);
