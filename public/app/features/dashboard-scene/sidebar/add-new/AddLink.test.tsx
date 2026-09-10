@@ -10,8 +10,8 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 import { AddLink } from './AddLink';
 
 const mockOpenAddLinkPane = jest.fn();
-jest.mock('../../settings/links/LinkAddEditableElement', () => ({
-  ...jest.requireActual('../../settings/links/LinkAddEditableElement'),
+jest.mock('../../settings/links/LinkEdit', () => ({
+  ...jest.requireActual('../../settings/links/LinkEdit'),
   openAddLinkPane: (...args: unknown[]) => mockOpenAddLinkPane(...args),
 }));
 

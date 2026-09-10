@@ -121,12 +121,15 @@ describe('Step1AlertmanagerResources', () => {
   });
 
   describe('Step1Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
+    it('should render permission warning when canImport=false', async () => {
       render(
         <TestWrapper>
           <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
+
+      // The YAML source mounts a lazy template dropzone even without import permission.
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
