@@ -61,8 +61,7 @@ export function useTransformationInputData({
     // applies that filter itself and merges the rest back afterwards — so the editor has to be shown
     // the same narrowed set. Otherwise an Organize editor sits behind a filter that picks one frame
     // and still reports on all of them.
-    const matcher =
-      interpolatedSelf && isInterpolatable(interpolatedSelf) ? frameMatcherFor(interpolatedSelf) : undefined;
+    const matcher = isInterpolatable(interpolatedSelf) ? frameMatcherFor(interpolatedSelf) : undefined;
 
     return matcher ? precedingOutput.filter((frame) => matcher(frame)) : precedingOutput;
   }, [interpolatedSelf, precedingOutput]);
