@@ -80,14 +80,18 @@ afterEach(() => {
 });
 
 describe('<DashboardFiltersList />', () => {
-  test('renders 3 sections (one per filter display type)', () => {
+  test('renders 3 sections (one per filter display type)', async () => {
     const { visibleFilter1, visibleFilter2, controlsMenuFilter1, hiddenFilter1 } = buildTestFilters();
-    const { getByRole, elements } = renderFiltersList([
+    const { container, getByRole, elements } = renderFiltersList([
       hiddenFilter1,
       controlsMenuFilter1,
       visibleFilter2,
       visibleFilter1,
     ]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
