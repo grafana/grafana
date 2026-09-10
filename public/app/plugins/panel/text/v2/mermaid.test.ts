@@ -34,6 +34,11 @@ async function hydrate(html: string) {
   return el;
 }
 
+/** A theme flip re-runs over the same DOM; only an html change rebuilds it. */
+async function redraw(el: HTMLElement) {
+  await renderMermaidDiagrams(el, theme, new AbortController().signal);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -113,6 +118,51 @@ describe('renderMermaidDiagrams', () => {
     const el = await hydrate(`${FENCE}${FENCE}${FENCE}`);
 
     expect(el.querySelectorAll('.textng-mermaid svg')).toHaveLength(2);
+    expect(el.querySelectorAll('.textng-mermaid-error')).toHaveLength(1);
+  });
+
+  it('drops the error message once a redraw succeeds, so a working diagram is not captioned as broken', async () => {
+    parse.mockResolvedValueOnce(false);
+
+    const el = await hydrate(FENCE);
+    expect(el.querySelector('.textng-mermaid-error')).not.toBeNull();
+
+    await redraw(el);
+
+    expect(el.querySelector('.textng-mermaid-error')).toBeNull();
+    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+  });
+
+  it('puts the source back when a redraw fails, rather than leaving the previous theme drawing', async () => {
+    const el = await hydrate(FENCE);
+    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+
+    render.mockRejectedValue(new Error('boom'));
+    await redraw(el);
+
+    expect(el.querySelector('.textng-mermaid')).toBeNull();
+    expect(el.querySelector('pre.mermaid')?.textContent).toBe('graph TD\n  A[Start] --> B[End]\n');
+    expect(el.querySelector('.textng-mermaid-error')?.nextElementSibling).toBe(el.querySelector('pre.mermaid'));
+  });
+
+  it('renders the restored source on a later redraw', async () => {
+    const el = await hydrate(FENCE);
+
+    render.mockRejectedValueOnce(new Error('boom'));
+    await redraw(el);
+    await redraw(el);
+
+    expect(render).toHaveBeenLastCalledWith(expect.any(String), 'graph TD\n  A[Start] --> B[End]\n');
+    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+    expect(el.querySelector('.textng-mermaid-error')).toBeNull();
+  });
+
+  it('updates the existing message when a redraw hits the same failure', async () => {
+    parse.mockResolvedValue(false);
+
+    const el = await hydrate(FENCE);
+    await redraw(el);
+
     expect(el.querySelectorAll('.textng-mermaid-error')).toHaveLength(1);
   });
 

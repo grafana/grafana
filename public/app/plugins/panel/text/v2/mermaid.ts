@@ -36,7 +36,7 @@ export async function renderMermaidDiagrams(container: HTMLElement, theme: Grafa
     ({ default: mermaid } = await import(/* webpackChunkName: "mermaid" */ 'mermaid'));
     mermaid.initialize(getMermaidConfig(theme));
   } catch (error) {
-    diagrams.forEach(({ target }) => markFailed(target, asError(error)));
+    diagrams.forEach(({ source, target }) => markFailed(target, source, asError(error)));
     return;
   }
 
@@ -51,9 +51,11 @@ export async function renderMermaidDiagrams(container: HTMLElement, theme: Grafa
       diagram.className = DIAGRAM_CLASS;
       diagram.setAttribute(SOURCE_ATTR, source);
       diagram.innerHTML = textUtil.sanitizeSVGContent(result);
+      // A recovered redraw takes the earlier message with it.
+      clearError(target);
       target.replaceWith(diagram);
     } else {
-      markFailed(target, result);
+      markFailed(target, source, result);
     }
   }
 }
@@ -72,11 +74,14 @@ async function renderDiagram(mermaid: Mermaid, source: string): Promise<string |
   }
 }
 
-function markFailed(target: Element, error: Error) {
+function markFailed(target: Element, source: string, error: Error) {
   const text = t('textng.mermaid.render-error', 'Diagram error: {{message}}', { message: error.message });
 
+  // A rendered diagram belongs to the old theme, so a failed redraw swaps it back to the source.
+  const anchor = target.classList.contains(DIAGRAM_CLASS) ? restoreSource(target, source) : target;
+
   // A theme-change redraw may hit the same failure again; update the existing message instead of duplicating it.
-  const previous = target.previousElementSibling;
+  const previous = anchor.previousElementSibling;
   if (previous?.classList.contains(DIAGRAM_ERROR_CLASS)) {
     previous.textContent = text;
     return;
@@ -85,7 +90,24 @@ function markFailed(target: Element, error: Error) {
   const message = document.createElement('div');
   message.className = DIAGRAM_ERROR_CLASS;
   message.textContent = text;
-  target.insertAdjacentElement('beforebegin', message);
+  anchor.insertAdjacentElement('beforebegin', message);
+}
+
+/** Restores the source in a form a later redraw picks up again. */
+function restoreSource(diagram: Element, source: string): Element {
+  const pre = document.createElement('pre');
+  pre.className = 'mermaid';
+  pre.setAttribute(SOURCE_ATTR, source);
+  pre.textContent = source;
+  diagram.replaceWith(pre);
+  return pre;
+}
+
+function clearError(target: Element) {
+  const previous = target.previousElementSibling;
+  if (previous?.classList.contains(DIAGRAM_ERROR_CLASS)) {
+    previous.remove();
+  }
 }
 
 function asError(error: unknown): Error {
