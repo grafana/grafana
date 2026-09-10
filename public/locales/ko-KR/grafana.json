@@ -5981,7 +5981,6 @@
       "description": "패널, 텍스트 및 코드 셀을 세로로 배열한 시퀀스",
       "name": "노트북",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "시간",
       "title-edit": "",
@@ -7046,6 +7045,12 @@
       "type": "유형"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
     },
     "dashboard-scene": {
@@ -7592,6 +7597,10 @@
       "required": "필수 항목"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "변경 사항",
         "label-details": "세부 정보",
@@ -9089,6 +9098,7 @@
       "share-export-json": "JSON으로 내보내기",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "시작 시간",
       "success-indicator": "",
       "target": "대상",
@@ -12476,6 +12486,7 @@
       "title": "생성"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "새 경고 규칙"
     },
     "create-dashboard": {
@@ -12965,7 +12976,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +12995,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13045,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13062,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13110,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "설정 지우기"
+      "clear-tooltip": "설정 지우기",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "기준별 색상 시리즈"
@@ -16497,8 +16510,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
