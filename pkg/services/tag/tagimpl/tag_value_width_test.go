@@ -22,7 +22,7 @@ func TestIntegrationSavingLongTagValues(t *testing.T) {
 	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := &sqlStore{db: ss}
 
-	longValue := strings.Repeat("Business Units/Tecnología y digital/Productos y plataformas/", 4)
+	longValue := strings.Repeat("Business Units/Technology and Digital/Products and Platforms/", 4)
 	require.Greater(t, len(longValue), 100, "test value must exceed the historical column width")
 
 	tags, err := store.EnsureTagsExist(context.Background(), []*tag.Tag{
