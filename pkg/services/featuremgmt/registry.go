@@ -3315,6 +3315,15 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:         "saml.gosaml2Provider",
+			Description:  "Use the gosaml2 library instead of the crewjam SAML library for SAML authentication",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "grafana.multiTenantUserPermissions",
 			Description:  "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
 			Stage:        FeatureStageExperimental,

@@ -1017,4 +1017,8 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagSamlGosaml2Provider
+	// Use the gosaml2 library instead of the crewjam SAML library for SAML authentication
+	FlagSamlGosaml2Provider = "saml.gosaml2Provider"
 )

@@ -595,6 +595,7 @@ import (
 	_ "github.com/redis/go-redis/extra/redisotel/v9"
 	_ "github.com/redis/go-redis/v9"
 	_ "github.com/robfig/cron/v3"
+	_ "github.com/russellhaering/gosaml2"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra"
 	_ "github.com/spf13/pflag"
