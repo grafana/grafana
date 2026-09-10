@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -256,34 +257,86 @@ func TestIntegrationDirectSQLStatsSplitsRecordingRules(t *testing.T) {
 	})
 }
 
-func TestLegacyTableIsStale(t *testing.T) {
+func TestIntegrationLegacyTableIsStale(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	cfgWithMode := func(resource string, mode grafanarest.DualWriterMode) *setting.Cfg {
 		return &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 			resource: {DualWriterMode: mode},
 		}}
 	}
 
+	// legacyTableIsStale queries kv_store when Cfg is nil, so every case needs a real
+	// session/helper, even the ones exercising the config-based fast path.
+	// The check itself must run inside the WithDbSession callback -- the session isn't
+	// valid once that callback returns.
+	withSession := func(t *testing.T, check func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper)) {
+		t.Helper()
+		testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		provider := legacysql.NewDatabaseProvider(testDB)
+		helper, err := provider(context.Background())
+		require.NoError(t, err)
+		require.NoError(t, helper.DB.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			check(sess, helper)
+			return nil
+		}))
+	}
+
 	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
-		require.False(t, s.legacyTableIsStale(alertRuleResource))
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+		})
 	})
 
 	t.Run("unconfigured resource is still the source of truth", func(t *testing.T) {
 		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode5)}
-		require.False(t, s.legacyTableIsStale(alertRuleResource))
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+		})
 	})
 
 	t.Run("dual write modes keep the legacy table", func(t *testing.T) {
 		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode1, grafanarest.Mode2, grafanarest.Mode3} {
 			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
-			require.False(t, s.legacyTableIsStale(alertRuleResource), "mode %d", mode)
+			withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+				stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+				require.NoError(t, err)
+				require.False(t, stale, "mode %d", mode)
+			})
 		}
 	})
 
 	t.Run("unified storage modes drop the legacy table", func(t *testing.T) {
 		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode4, grafanarest.Mode5} {
 			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
-			require.True(t, s.legacyTableIsStale(alertRuleResource), "mode %d", mode)
+			withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+				stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+				require.NoError(t, err)
+				require.True(t, stale, "mode %d", mode)
+			})
 		}
+	})
+
+	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
+		s := &LegacyStatsGetter{}
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, `key`, value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
+				migratedKVNamespace, alertRuleResource, migratedKVValue, time.Now(), time.Now())
+			require.NoError(t, err)
+
+			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+
+			// A different resource's key must not be affected.
+			stale, err = s.legacyTableIsStale(sess, helper, recordingRuleResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+		})
 	})
 }
