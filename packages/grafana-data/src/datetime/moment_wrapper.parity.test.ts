@@ -49,6 +49,13 @@ describe('Luxon-backed DateTime wrapper', () => {
     expect(wrapper.toDuration(source, 'days').asMilliseconds()).toBe(5400000);
   });
 
+  it('exposes chainable UTC offset setters through the public DateTime API', () => {
+    const value = wrapper.toUtc('2024-05-08T12:00:00Z');
+    expect(value.utcOffset('+05:30', true)).toBe(value);
+    expect(value.utcOffset()).toBe(330);
+    expect(value.toISOString()).toBe('2024-05-08T06:30:00.000Z');
+  });
+
   it('accepts toDuration results in public arithmetic', () => {
     const duration = wrapper.toDuration(5, 'minutes');
     const value = wrapper.toUtc('2024-05-08T12:00:00Z');

@@ -6,15 +6,15 @@ const PADDED_ONE_TO_TWENTY_FOUR_HOUR_FORMAT = "'__khs__'HH'__khe__'";
 
 const TOKEN_MAP: Record<string, string> = {
   // moment's L* tokens are locale-aware (word order changes per locale), so map them to luxon's
-  // localized macro tokens rather than fixed patterns. `L` is expanded separately to pad the date.
-  // No macro uses an abbreviated weekday, so `llll` keeps an en-US shaped pattern.
+  // localized macro tokens rather than fixed patterns. `L` and `llll` use generated Intl patterns
+  // for padded dates and abbreviated weekdays, respectively.
   LLLL: 'DDDD t',
   LLL: 'DDD t',
   LL: 'DDD',
   LTS: 'tt',
   LT: 't',
   L: 'MM/dd/yyyy',
-  llll: 'ccc, LLL d, yyyy h:mm a',
+  llll: 'ccc, DD t',
   lll: 'DD t',
   ll: 'DD',
   l: 'D',
@@ -29,6 +29,8 @@ const TOKEN_MAP: Record<string, string> = {
   D: 'd',
   dddd: 'cccc',
   ddd: 'ccc',
+  dd: "'__weekdayMin__'",
+  d: "'__weekdayNumber__'",
   // HH/H, hh/h, mm/m, ss/s are identical in moment and luxon and pass through unmapped.
   // Moment's k/kk clock runs from 1-24, while Luxon's H/HH clock runs from 0-23.
   kk: PADDED_ONE_TO_TWENTY_FOUR_HOUR_FORMAT,
@@ -57,6 +59,8 @@ const TOKEN_MAP: Record<string, string> = {
 
 const PARSING_TOKEN_MAP: Record<string, string> = {
   ...TOKEN_MAP,
+  dd: 'ccc',
+  d: 'c',
   kk: 'HH',
   k: 'H',
   SSSSSSSSS: 'u',
@@ -81,12 +85,14 @@ const LOWER_MERIDIEM_MARKER_PATTERN = /__mls__(.*?)__mle__/g;
 const ONE_TO_TWENTY_FOUR_HOUR_MARKER = '__khs__';
 const ONE_TO_TWENTY_FOUR_HOUR_MARKER_PATTERN = /__khs__(\d{1,2})__khe__/g;
 const ORDINAL_SUFFIXES = ['th', 'st', 'nd', 'rd'] as const;
+const WEEKDAY_MARKER_PATTERN = /__weekday(Number|Min)__/g;
 
 interface ConvertedFormat {
   luxonFormat: string;
   hasOrdinal: boolean;
   hasMeridiem: boolean;
   hasOneToTwentyFourHour: boolean;
+  hasWeekday: boolean;
 }
 
 // format conversion runs on every format() call in hot paths (table cells, axis ticks) and format
@@ -111,6 +117,7 @@ function convertFormat(format: string, omitZoneName = false, forParsing = false,
       hasOrdinal: luxonFormat.includes(ORDINAL_MARKER),
       hasMeridiem: luxonFormat.includes(MERIDIEM_START_MARKER),
       hasOneToTwentyFourHour: luxonFormat.includes(ONE_TO_TWENTY_FOUR_HOUR_MARKER),
+      hasWeekday: luxonFormat.includes('__weekday'),
     };
     convertedFormatCache.set(cacheKey, converted);
   }
@@ -141,14 +148,22 @@ function replaceMomentToken(
     return `d'${ORDINAL_MARKER}'`;
   }
 
-  if (match === 'L') {
-    const localizedFormat = DateTime.parseFormatForOpts(
-      { year: 'numeric', month: '2-digit', day: '2-digit' },
-      { locale }
-    );
+  if (match === 'L' || match === 'llll') {
+    // Resolve llll fields first to preserve Intl's effective time padding and numeric month choices.
+    const options =
+      match === 'L'
+        ? { year: 'numeric', month: '2-digit', day: '2-digit' }
+        : new Intl.DateTimeFormat(locale, DateTime.DATETIME_MED_WITH_WEEKDAY).resolvedOptions();
+    // Intl resolves valid format options, but its declarations widen field values to strings.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const localizedFormat = DateTime.parseFormatForOpts(options as Intl.DateTimeFormatOptions, { locale });
     // Luxon generates a parser-only numeric-year token; adapt only this generated pattern,
     // not the user's tokens or escaped literals, so the same pattern also formats correctly.
-    return (localizedFormat ?? TOKEN_MAP.L).replace('yyyyy', 'yyyy');
+    // Keep generated name tokens consistent with the shim's mappings so formatted names also parse.
+    return (localizedFormat ?? TOKEN_MAP[match])
+      .replace('yyyyy', 'yyyy')
+      .replace('EEE', TOKEN_MAP.ddd)
+      .replace('MMM', TOKEN_MAP.MMM);
   }
 
   return (forParsing ? PARSING_TOKEN_MAP : TOKEN_MAP)[match] ?? match;
@@ -176,7 +191,7 @@ function getOrdinal(day: number): string {
 }
 
 export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string): string {
-  const { luxonFormat, hasOrdinal, hasMeridiem, hasOneToTwentyFourHour } = convertFormat(
+  const { luxonFormat, hasOrdinal, hasMeridiem, hasOneToTwentyFourHour, hasWeekday } = convertFormat(
     momentFormat,
     luxonDateTime.zone.type === 'system',
     false,
@@ -206,6 +221,12 @@ export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string)
   if (hasOneToTwentyFourHour) {
     formatted = formatted.replace(ONE_TO_TWENTY_FOUR_HOUR_MARKER_PATTERN, (_: string, rawHour: string) =>
       Number(rawHour) === 0 ? '24' : rawHour
+    );
+  }
+
+  if (hasWeekday) {
+    formatted = formatted.replace(WEEKDAY_MARKER_PATTERN, (_: string, kind: string) =>
+      kind === 'Number' ? String(luxonDateTime.weekday % 7) : (luxonDateTime.weekdayShort?.slice(0, 2) ?? '')
     );
   }
 

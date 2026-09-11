@@ -118,7 +118,7 @@ describe('VariableTypeChangePane', () => {
 
     renderVariableSidebar(dashboard);
 
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
@@ -149,7 +149,7 @@ describe('VariableTypeChangePane', () => {
 
     renderVariableSidebar(dashboard);
 
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
 
     await user.click(
