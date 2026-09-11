@@ -5,6 +5,7 @@ import { TracedError } from '../../utils/TracedError';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
+import { getAppPluginMetasStrict } from './apps';
 import {
   getPluginMetaFromCache,
   getPluginMetasUrl,
@@ -217,6 +218,38 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
 
       expect(response).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    // The accessors share one cache entry, so each must apply its own failure
+    // handling regardless of which of them populated the cache first.
+    it('getAppPluginMetasStrict rejects on failure when initPluginMetas started the shared fetch', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      const fallback = initPluginMetas();
+      const strict = getAppPluginMetasStrict();
+
+      await expect(fallback).resolves.toBeNull();
+      await expect(strict).rejects.toThrow('plugin metas failed to load');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('initPluginMetas falls back on failure when getAppPluginMetasStrict started the shared fetch', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      const strict = getAppPluginMetasStrict();
+      const fallback = initPluginMetas();
+
+      await expect(strict).rejects.toThrow('plugin metas failed to load');
+      await expect(fallback).resolves.toBeNull();
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
   });
