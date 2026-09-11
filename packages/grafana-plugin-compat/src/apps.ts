@@ -21,7 +21,7 @@ function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert =
 }
 
 export function updatePluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
-  if (runtimeUpdateAppPluginSettings || typeof runtimeUpdateAppPluginSettings === 'function') {
+  if (runtimeUpdateAppPluginSettings && typeof runtimeUpdateAppPluginSettings === 'function') {
     return runtimeUpdateAppPluginSettings(pluginId, data);
   }
 
