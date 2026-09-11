@@ -481,6 +481,7 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.17 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/grafana/grafana-enterprise v0.0.0
 	github.com/grafana/nanogit v1.4.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.3.0 // indirect
@@ -693,7 +694,7 @@ require (
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.5.0
 	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
@@ -731,3 +732,5 @@ replace (
 // This was retracted, but seems to be known by the Go module proxy,
 // and is otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+replace github.com/grafana/grafana-enterprise => ../grafana-enterprise

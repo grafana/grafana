@@ -66,7 +66,6 @@ import (
 	_ "github.com/prometheus/client_golang/prometheus/testutil"
 	_ "go.opentelemetry.io/otel/sdk/trace"
 	_ "go.opentelemetry.io/otel/sdk/trace/tracetest"
-	_ "go.opentelemetry.io/otel/trace/noop"
 	_ "go.uber.org/mock/gomock"
 	_ "golang.org/x/net/websocket"
 	_ "google.golang.org/grpc/resolver"
