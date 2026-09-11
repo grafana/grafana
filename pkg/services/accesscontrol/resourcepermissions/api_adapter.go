@@ -240,11 +240,9 @@ type resolvedSubjects struct {
 	permissionIDs map[string]int64
 }
 
-// teamBatchSize bounds a single SearchTeams call. With the Kubernetes-backed
-// team service the query is served by the paginated searchTeams endpoint, which
-// rejects a limit above common.MaxListLimit, so the UID list has to be chunked
-// rather than sent whole.
-const teamBatchSize = 500
+// teamBatchSize matches the searchTeams endpoint's maximum number of uid
+// filters. This is tighter than the endpoint's general list limit.
+const teamBatchSize = 100
 
 // resolveSubjects looks up the subjects of a whole ResourcePermission spec up
 // front. Resolving per entry cost two queries per assignment — an identity

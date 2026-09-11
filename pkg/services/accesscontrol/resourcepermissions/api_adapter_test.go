@@ -547,6 +547,7 @@ type countingTeamService struct {
 	searchCalls int
 	getCalls    int
 	lastQuery   *team.SearchTeamsQuery
+	querySizes  []int
 }
 
 func (s *countingTeamService) GetTeamByID(context.Context, *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
@@ -557,6 +558,7 @@ func (s *countingTeamService) GetTeamByID(context.Context, *team.GetTeamByIDQuer
 func (s *countingTeamService) SearchTeams(_ context.Context, q *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	s.searchCalls++
 	s.lastQuery = q
+	s.querySizes = append(s.querySizes, len(q.UIDs))
 	res := team.SearchTeamQueryResult{}
 	for _, uid := range q.UIDs {
 		if t, ok := s.teams[uid]; ok {
@@ -643,6 +645,50 @@ func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
 	assert.Equal(t, "user-2", perms[2].UserLogin)
 	assert.Equal(t, "team-2", perms[3].Team)
 	assert.Equal(t, "user-1", perms[4].UserLogin)
+}
+
+func TestConvertK8sResourcePermissionToDTOChunksTeamLookupsAtUIDFilterLimit(t *testing.T) {
+	const teamCount = 201
+	teamSvc := &countingTeamService{
+		FakeService: teamtest.NewFakeService(),
+		teams:       make(map[string]*team.TeamDTO, teamCount),
+	}
+	permissions := make([]iamv0.ResourcePermissionspecPermission, 0, teamCount)
+	for i := range teamCount {
+		uid := fmt.Sprintf("team-uid-%d", i)
+		teamSvc.teams[uid] = &team.TeamDTO{ID: int64(i + 1), UID: uid, Name: fmt.Sprintf("team-%d", i)}
+		permissions = append(permissions, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKindTeam,
+			Name: uid,
+			Verb: "view",
+		})
+	}
+
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: usertest.NewUserServiceFake(),
+			teamService: teamSvc,
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(
+		context.Background(),
+		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{Permissions: permissions}},
+		"stack-123-org-1",
+		false,
+	)
+	require.NoError(t, err)
+	require.Len(t, perms, teamCount)
+	assert.Equal(t, []int{100, 100, 1}, teamSvc.querySizes,
+		"the searchTeams endpoint rejects more than 100 uid filters per request")
 }
 
 // TestConvertK8sResourcePermissionToDTODropsStaleAssignments checks that an
