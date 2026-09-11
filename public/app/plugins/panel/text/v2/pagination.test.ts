@@ -5,6 +5,7 @@ import { toDataFrame } from '@grafana/data';
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import {
+  BLOCKS_ATTR,
   clampPageSize,
   CONTENT_PADDING,
   countRows,
@@ -14,18 +15,26 @@ import {
 } from './pagination';
 import { MAX_RENDERED_ROWS } from './renderContent';
 
-/** jsdom lays nothing out, so the geometry the hook reads is defined here. */
+/**
+ * jsdom lays nothing out, so the geometry is defined here, in the rendered shape: a
+ * wrapper with no box of its own, and a blocks container stretched to the box.
+ */
 function boxWithClientHeight(contentHeight: () => number, clientHeight: number): HTMLElement {
   const container = document.createElement('div');
+  const wrapper = document.createElement('div');
   const blocks = document.createElement('div');
   const block = document.createElement('div');
 
   Object.defineProperty(container, 'clientHeight', { value: clientHeight });
+  Object.defineProperty(blocks, 'offsetTop', { value: 0 });
+  Object.defineProperty(blocks, 'offsetHeight', { value: clientHeight });
   Object.defineProperty(block, 'offsetTop', { value: 0 });
   Object.defineProperty(block, 'offsetHeight', { get: contentHeight });
 
+  blocks.setAttribute(BLOCKS_ATTR, '');
   blocks.appendChild(block);
-  container.appendChild(blocks);
+  wrapper.appendChild(blocks);
+  container.appendChild(wrapper);
   return container;
 }
 
@@ -218,6 +227,16 @@ describe('usePagination', () => {
 
     // Code mode renders no blocks, so it attaches no box: 400 - 38 over the 24px estimate.
     act(() => result.current.contentRef(null));
+
+    expect(result.current.rowWindow?.count).toBe(15);
+  });
+
+  it('keeps the estimate when the box holds no blocks, as the editor pane does in code mode', () => {
+    const pane = document.createElement('div');
+    Object.defineProperty(pane, 'clientHeight', { value: 300 });
+    pane.appendChild(document.createElement('div'));
+
+    const { result } = setup({}, pane);
 
     expect(result.current.rowWindow?.count).toBe(15);
   });
