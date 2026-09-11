@@ -479,7 +479,7 @@ func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *
 	// The event must be persisted even though the client cancelled right after
 	// the data was committed.
 	found := false
-	for ev, err := range backend.eventStore.ListSince(context.Background(), 0, SortOrderAsc) {
+	for ev, err := range backend.eventStore.ListSince(context.Background(), 0) {
 		require.NoError(t, err)
 		if ev.Name == resourceName {
 			found = true
@@ -739,7 +739,7 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	// hand: a DataKey carries the folder and action too, and guessing either makes
 	// the batched read silently miss.
 	batch := make([]Event, 0, numEvents)
-	for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+	for event, err := range backend.eventStore.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		batch = append(batch, event)
 	}
@@ -912,7 +912,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		}
 
 		batch := make([]Event, 0, numEvents)
-		for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+		for event, err := range backend.eventStore.ListSince(ctx, 0) {
 			require.NoError(t, err)
 			batch = append(batch, event)
 		}

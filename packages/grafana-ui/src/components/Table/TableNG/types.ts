@@ -30,6 +30,7 @@ export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilte
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type TableDisplayedRowIndicesCallback = (rowIndices: number[]) => void;
 type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
@@ -122,6 +123,11 @@ interface BaseTableProps {
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
+  /**
+   * Called when the filtered + sorted row order changes. Values are original
+   * frame indexes (`TableRow.__index`), not the current page slice.
+   */
+  onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
   frozenColumns?: number;

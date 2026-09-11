@@ -14,6 +14,7 @@ import (
 )
 
 type fakeClient struct {
+	wantErr   error
 	mu        sync.Mutex
 	calls     [][]string
 	dim       int
@@ -24,6 +25,9 @@ type fakeClient struct {
 }
 
 func (f *fakeClient) EmbedTexts(_ context.Context, texts []string, dimensions int) (EmbedResult, error) {
+	if f.wantErr != nil {
+		return EmbedResult{}, f.wantErr
+	}
 	n := atomic.AddInt32(&f.callNum, 1)
 	f.mu.Lock()
 	f.calls = append(f.calls, texts)
@@ -118,4 +122,16 @@ func TestDenseEmbedder_EmbedText_SumsTokensAcrossChunks(t *testing.T) {
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: texts})
 	require.NoError(t, err)
 	assert.Equal(t, 21, out.InputTokens)
+}
+
+func TestDenseEmbedder_EmbedText_RetryableCallTimeout(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(t.Context())
+	cancel(ErrCallTimeout)
+	fc := &fakeClient{wantErr: context.Canceled}
+	e := NewDenseEmbedder(fc, 4, 1)
+	_, err := e.EmbedText(ctx, embedder.EmbedTextInput{Texts: []string{"CPU usage"}})
+	var retryErr *embedder.RetryableError
+	require.ErrorAs(t, err, &retryErr)
+	assert.ErrorIs(t, err, ErrCallTimeout)
+	assert.Zero(t, retryErr.RetryAfter)
 }

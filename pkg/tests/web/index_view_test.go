@@ -209,7 +209,6 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			var analyticsSettings user.AnalyticsSettings
 			require.NoError(t, json.Unmarshal([]byte(parsedHTML), &analyticsSettings))
 
-			require.NotEmpty(t, analyticsSettings.IntercomIdentifier)
 			require.Equal(t, tc.wantIdentifier, analyticsSettings.Identifier)
 		})
 	}

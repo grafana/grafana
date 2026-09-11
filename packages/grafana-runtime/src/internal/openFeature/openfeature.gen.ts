@@ -43,6 +43,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query gateway guardrails */
+  DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -370,6 +372,17 @@ export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvalua
  */
 export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Data source query gateway guardrails
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayGuardrails`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayGuardrails", false, options).value;
 };
 
 /**
@@ -872,10 +885,10 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  *
  * **Details:**
  * - flag key: `logsTablePanelNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logsTablePanelNG", false, options).value;
+  return useFlag("logsTablePanelNG", true, options).value;
 };
 
 /**
