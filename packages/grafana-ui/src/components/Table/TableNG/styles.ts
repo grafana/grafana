@@ -9,9 +9,11 @@ import {
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
-  getPaginationChromeHeight,
+  NESTED_ROW_CLASS,
   PAGINATION_MARGIN,
+  STRIPED_ROW_CLASS,
   TABLE,
+  getPaginationChromeHeight,
 } from './constants';
 import { type TableCellStyles } from './types';
 
@@ -54,10 +56,19 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
 // `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
 // — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
 // `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
+// white), so the header was indistinguishable from its rows.
+//
+// 0.06 lands the refreshed themes on the surfaces design picked for the header — ink700 in dark
+// (#1f2227 against #202429) and neutral150 in light (#f0f0f0 against #f0f0ef), both within 2/255 —
+// without reaching for the raw palette, which would paint the same blue-grey header onto every
+// custom theme in `themeDefinitions/` regardless of its hue.
+const HEADER_BACKGROUND_EMPHASIS = 0.06;
+
+// How far a zebra stripe steps away from the background the unstriped rows sit on. Deliberately
+// half the header's step: the stripe is a reading aid, not a surface, and keeping it inside the
+// header's step leaves a hovered striped row somewhere to go. 0.04 lands the refreshed themes on
+// ink750 in dark and neutral100 in light, the pair design picked, within 1/255 of each.
+const ZEBRA_STRIPE_EMPHASIS = 0.04;
 
 export const getGridStyles = memoize(
   (
@@ -65,25 +76,48 @@ export const getGridStyles = memoize(
     enablePagination?: boolean,
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
-    noPanelPadding?: boolean
+    noPanelPadding?: boolean,
+    zebraStriping?: boolean
   ) => {
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
     let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
     if (visualRefreshEnabled) {
       bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
     }
+    // `border.weak` is faint by design, and in a dark theme it loses the little contrast it had
+    // once `table.refresh` steps the header this far off the row background — the grid lines read
+    // as missing beside it. `border.medium` puts them back. Light themes keep `weak`: there the
+    // step darkens rather than lightens, so the lines never went soft.
+    const borderToken = tableRefreshEnabled && theme.isDark ? theme.colors.border.medium : theme.colors.border.weak;
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
     // unpredictable for background color cells
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
+    const borderColor = colorManipulator.onBackground(borderToken, bgColor).toHexString();
     const selectedRowColor = theme.isDark
       ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
       : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
 
-    const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
+    // Same reason as `rowHoverBackgroundColor` below: with striping on, the overlay is the only
+    // thing hover moves, on a selected row as much as on any other.
+    const selectedRowHoverColor = zebraStriping
+      ? 'var(--rdg-row-selected-background-color)'
+      : theme.colors.emphasize(selectedRowColor, 0.05);
 
     const headerBackgroundColor = tableRefreshEnabled
       ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
       : bgColor;
+
+    const zebraStripeBackgroundColor = theme.colors.emphasize(bgColor, ZEBRA_STRIPE_EMPHASIS);
+
+    // Striping draws hover as an overlay over whatever background the row already has (see the
+    // rule below), so react-data-grid's own swap has to stop moving the colour — a plain row would
+    // otherwise lift twice, and a striped one would lose its stripe on the way.
+    const rowHoverBackgroundColor = zebraStriping
+      ? 'var(--rdg-row-background-color)'
+      : tableRefreshEnabled
+        ? headerBackgroundColor
+        : transparent
+          ? theme.colors.background.primary
+          : theme.colors.background.secondary;
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
@@ -109,11 +143,7 @@ export const getGridStyles = memoize(
         // background" means one thing across the table. The old pair had the same blind spot the
         // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
         // light theme is white on near-white.
-        '--rdg-row-hover-background-color': tableRefreshEnabled
-          ? headerBackgroundColor
-          : transparent
-            ? theme.colors.background.primary
-            : theme.colors.background.secondary,
+        '--rdg-row-hover-background-color': rowHoverBackgroundColor,
         '--rdg-row-selected-background-color': selectedRowColor,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
@@ -168,6 +198,41 @@ export const getGridStyles = memoize(
             backgroundColor: 'var(--rdg-row-selected-background-color)',
           },
         },
+
+        // Which rows carry a stripe is decided in `makeStripedRowClass`, not by react-data-grid's
+        // own `rdg-row-odd` — see that function for why. Selection still wins over the stripe, and
+        // has to be excluded by hand rather than left to win on specificity: react-data-grid paints
+        // it inside its own `@layer rdg.Row`, and an unlayered rule — which everything in here is —
+        // beats a layered one whatever its specificity.
+        ...(zebraStriping && {
+          [`.${STRIPED_ROW_CLASS}:not([aria-selected='true'])`]: {
+            backgroundColor: zebraStripeBackgroundColor,
+            // A `.rdg-cell` inherits its background from the row, which is how the row rule reaches
+            // the cells at all (rows are `display: contents`, so they paint no box of their own).
+            // Frozen cells are the exception: they set an opaque background so they can occlude the
+            // cells scrolling behind them, so the stripe has to be repeated here or a striped row's
+            // frozen column falls back to the plain row background.
+            '.rdg-cell.rdg-cell-frozen': {
+              backgroundColor: zebraStripeBackgroundColor,
+            },
+          },
+
+          // Hover is a lift *over* the row's own background rather than a different background:
+          // with two row backgrounds in play, no single hover colour can sit the same distance from
+          // both, and replacing it made hover a weaker signal on exactly the striped rows. An
+          // `action.hover` overlay is the same relative step on plain, striped and selected rows
+          // alike, and it leaves the stripe visible underneath instead of erasing it.
+          //
+          // It goes on the cells, not the row: a row paints no box of its own, and frozen cells
+          // carry their own opaque background that a row-level rule would never reach. Cells whose
+          // own colour comes from a cell display mode set it inline, so they keep ignoring hover
+          // exactly as they do today. Nested containers are skipped because hovering a row of an
+          // inner table also hovers the container that table sits in, which would tint the whole
+          // sub-table.
+          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}):hover > .rdg-cell`]: {
+            backgroundImage: `linear-gradient(${theme.colors.action.hover}, ${theme.colors.action.hover})`,
+          },
+        }),
 
         '.rdg-header-row, .rdg-summary-row': {
           '.rdg-cell': {

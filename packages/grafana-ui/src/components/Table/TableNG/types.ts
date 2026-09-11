@@ -165,6 +165,8 @@ interface BaseTableProps {
   contentAwareWidthsEnabled?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
