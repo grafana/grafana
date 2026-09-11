@@ -200,7 +200,7 @@ describe('DashboardSidebarRenderer', () => {
 
       // Select the panel programmatically (clicking a panel in real UX)
       const panel = scene.state.body.getVizPanels()[0];
-      act(() => scene.state.sidebar.selectObject(panel));
+      await act(async () => scene.state.sidebar.selectObject(panel));
 
       // Sidebar pops up — effective isDocked is false during temp-show
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
