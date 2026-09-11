@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, isArray, isObject, isString } from 'lodash';
+import { cloneDeepWith, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -348,6 +348,12 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
         return dateTime(value);
       }
 
+      // React elements pass through untouched: proxying them breaks reconciliation, and their
+      // fiber back-references make any deep traversal explode.
+      if (React.isValidElement(value)) {
+        return value;
+      }
+
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
           cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
@@ -377,10 +383,19 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
     return value;
   }
 
+  // React elements pass through untouched (see the matching guard in getMutationObserverProxy).
+  if (React.isValidElement(value)) {
+    return value;
+  }
+
   const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
 
-  // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
+  // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation
+  // is attempted. React elements are kept by reference: cloning their fiber back-references overflows the stack.
+  return getMutationObserverProxy(
+    cloneDeepWith(value, (v) => (React.isValidElement(v) ? v : undefined)),
+    { log, pluginId, pluginVersion, source }
+  );
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {
