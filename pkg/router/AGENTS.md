@@ -324,6 +324,19 @@ writeup:
   same 502 as a real transport failure, so without the exclusion a few abandoned client requests trip
   the breaker for every other caller on that group.
 
+### Active discovery is a different concern from passive health
+
+The decision above is about *health* — whether a group's backend is serving well right now, and
+whether that should gate `/apis`/`/openapi/v3`. It says nothing about *discovery* — learning which
+groups exist in the first place. `forward` backends (RouteBackend CRs) get discovery for free from the
+CR; the two fixed aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`, implemented in
+`aggregate_*.go` files) have no CR, so the router polls their `/apis` endpoint on a cooldown-paced
+background loop to learn their group list. That poll result only ever changes *which groups are
+installed* — the same `r.served`-sourced discovery synthesis and the same per-group `gobreaker`
+breaker apply to an aggregate-discovered group exactly as they do to a forward one; nothing here
+reintroduces kube-aggregator's `AvailabilityController`-style active health gating that the section
+above rejects.
+
 ## Settings (`[cloud_router]`, `cloud_router.go`)
 
 Not documented in OSS `conf/defaults.ini` -- read directly via
@@ -334,15 +347,22 @@ presence is what actually gates activation, not the section's existence. Keys:
 
 | Key                   | Required             | Meaning                                                                 |
 | --------------------- | --------------------- | ------------------------------------------------------------------------ |
-| `appmanifest_apiserver_url`       | gates activation      | Base URL of the remote apiserver serving `apps.grafana.app`. Empty -> `ProvideCloudRoutesLoaderFactory` returns `(nil, nil)` and the dummy loader is used instead. |
-| `cap_token`           | yes, once `appmanifest_apiserver_url` is set | Grafana Cloud Access Policy token exchanged for a signed access token. |
-| `token_exchange_url`  | yes, once `appmanifest_apiserver_url` is set | URL of the token exchange service used to sign `cap_token` per request. |
-| `apiserver_ca_file`   | no                    | CA bundle file used to verify the apiserver TLS cert.                    |
-| `apiserver_insecure`  | no                    | Skip TLS verification of the apiserver. Dev only.                       |
+| `appmanifest_apiserver_url`       | gates AppManifest CR loader      | Base URL of the remote apiserver serving `apps.grafana.app` RouteBackend/AppManifest CRs. Empty → CRD-backed loader is disabled, but aggregate targets may still be active. |
+| `cap_token`           | yes, if any apiserver_url is set | Grafana Cloud Access Policy token exchanged for a signed access token per request; shared across appmanifest and aggregate targets. |
+| `token_exchange_url`  | yes, if any apiserver_url is set | URL of the token exchange service used to sign `cap_token` per request; shared across appmanifest and aggregate targets. |
+| `apiserver_ca_file`   | no                    | CA bundle file used to verify `appmanifest_apiserver_url`'s TLS cert. Does **not** apply to aggregate targets. |
+| `apiserver_insecure`  | no                    | Skip TLS verification of `appmanifest_apiserver_url`. Dev only. Does **not** apply to aggregate targets. |
+| `baas_apiserver.url`  | no                    | Base URL of the BaaS apiserver. If unset, BaaS group discovery is skipped. |
+| `baas_apiserver.audience` | no                  | OIDC audience string to request when exchanging the CAP token for this target's access token. Optional; if unset, the target receives only the base access token. |
+| `baas_apiserver.group_regex` | no                | Comma-separated glob patterns (e.g., `*.grafana.app,*.internal`) to filter discovered groups. Unset means accept all groups discovered from this target. |
+| `cloud_app_platform_apiserver.url` | no          | Base URL of the Cloud App Platform apiserver. If unset, CAP group discovery is skipped. |
+| `cloud_app_platform_apiserver.audience` | no    | OIDC audience string for this target; optional, same semantics as baas_apiserver. |
+| `cloud_app_platform_apiserver.group_regex` | no | Comma-separated glob patterns to filter CAP-discovered groups; same semantics as baas_apiserver. |
 
-`appmanifest_apiserver_url` set without `cap_token` or `token_exchange_url` is a hard error, not a silent
-fallback to the dummy loader -- a partially configured `cloud_router` section means the operator
-meant to enable it, so failing loudly beats silently serving dummy routes.
+Either or both of `appmanifest_apiserver_url`, `baas_apiserver.url`, and `cloud_app_platform_apiserver.url` may be set
+independently. `cap_token` and `token_exchange_url` are required only if **any** of the three is set (CRs or aggregates).
+Aggregate targets activate independently of the AppManifest loader — the router can serve aggregate-discovered groups
+without any RouteBackend CRs, and vice versa.
 
 ## Lifecycle / ownership
 
