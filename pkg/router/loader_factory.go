@@ -16,8 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader returns two dummy API groups for exercising the OSS
-// router target end to end. Plugin manifests will replace these dummy backends
+// ProvideRoutesLoader wires the cloud-router RoutesLoader ahead of the dummy
+// one: when [cloud_router].apiserver_url is configured, that loader wins;
+// otherwise this falls back to two dummy API groups for exercising the OSS
+// router target end to end. Plugin manifests will replace the dummy backends
 // in a later iteration.
 func ProvideRoutesLoader(
 	pluginClient plugins.Client,
@@ -33,11 +35,17 @@ func ProvideRoutesLoader(
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
-) RoutesLoader {
+) (RoutesLoader, error) {
+	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg); err != nil {
+		return nil, err
+	} else if cloud != nil {
+		return cloud, nil
+	}
+
 	return dummyRoutesLoader{groups: []string{
 		"dummy-backend-1.ext.grafana.app",
 		"dummy-backend-2.ext.grafana.app",
-	}}
+	}}, nil
 }
 
 // RoutesLoaderClients groups clients that are constructed by the router module
@@ -60,7 +68,7 @@ func ProvideRoutesLoaderWithClients(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	clients RoutesLoaderClients,
-) RoutesLoader {
+) (RoutesLoader, error) {
 	return ProvideRoutesLoader(
 		pluginClient,
 		contextProvider,
