@@ -221,6 +221,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     json: css({
       flexGrow: 1,
+      minHeight: '300px',
       maxHeight: '800px',
     }),
     // Alert's wrapper sets flexGrow: 1, which in this column layout makes it swallow all the
