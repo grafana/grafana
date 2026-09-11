@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { mockDataQuery, mockReduceExpression, mockResampleExpression, mockThresholdExpression } from '../../../mocks';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
@@ -174,25 +172,14 @@ describe('buildAlertRuleResource label stripping', () => {
     ],
   });
 
-  it('strips __grafana_managed_route__ from the resource labels when FF is ON', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: true,
-    });
-
+  it('always strips __grafana_managed_route__ from the resource labels', () => {
     const result = buildAlertRuleResource(baseValues());
 
     expect(result.spec.labels).not.toHaveProperty(NAMED_ROOT_LABEL_NAME);
     expect(result.spec.labels).toHaveProperty('env', 'prod');
-    jest.restoreAllMocks();
   });
 
-  it('strips the legacy label when a NamedRoutingTree is selected, even if FF is OFF', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-
+  it('strips the legacy label when a NamedRoutingTree is selected', () => {
     const result = buildAlertRuleResource({
       ...baseValues(),
       manualRouting: false,
@@ -201,18 +188,5 @@ describe('buildAlertRuleResource label stripping', () => {
 
     expect(result.spec.notificationSettings).toEqual({ type: 'NamedRoutingTree', routingTree: 'OtherPolicy' });
     expect(result.spec.labels).not.toHaveProperty(NAMED_ROOT_LABEL_NAME);
-    jest.restoreAllMocks();
-  });
-
-  it('preserves __grafana_managed_route__ when FF is OFF and no policy is selected', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-
-    const result = buildAlertRuleResource(baseValues());
-
-    expect(result.spec.labels).toHaveProperty(NAMED_ROOT_LABEL_NAME, 'TestPolicy');
-    jest.restoreAllMocks();
   });
 });

@@ -8,14 +8,13 @@ import {
   type RecordingRuleExpression,
   type RecordingRuleSpec,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { config } from '@grafana/runtime';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
-import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
+import { stripInternalLabels } from '../../notification-policies/useNotificationPolicyRoute';
 
 const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
@@ -69,15 +68,12 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
     throw new Error('Condition is required to create a Grafana-managed alert rule');
   }
 
-  const labels = toRecord(cleanLabels(values.labels));
+  // The legacy label is fully superseded by routingTree — never send it, since the backend derives
+  // the same routing label from routingTree and a stale one left in `labels` would win once
+  // routingTree is unset (e.g. back to the Default policy).
+  const labels = stripInternalLabels(toRecord(cleanLabels(values.labels)));
   const annotations = toRecord(cleanAnnotations(values.annotations));
   const notificationSettings = getNotificationSettings(values);
-  // The legacy label and the routingTree field must not coexist, since the backend derives
-  // the same routing label from routingTree — a stale one left in `labels` would win once
-  // routingTree is unset (e.g. back to the Default policy).
-  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.type === 'NamedRoutingTree') {
-    delete labels[NAMED_ROOT_LABEL_NAME];
-  }
 
   const spec = {
     title: values.name,
