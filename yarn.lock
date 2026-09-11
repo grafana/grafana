@@ -20496,7 +20496,7 @@ __metadata:
     marked: "npm:16.3.0"
     memfs: "npm:^3.5.3"
     memoize-one: "npm:6.0.0"
-    mermaid: "npm:11.17.0"
+    mermaid: "npm:11.17.2"
     micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.2"
     ml-regression-polynomial: "npm:^3.0.0"
@@ -25468,9 +25468,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mermaid@npm:11.17.0":
-  version: 11.17.0
-  resolution: "mermaid@npm:11.17.0"
+"mermaid@npm:11.17.2":
+  version: 11.17.2
+  resolution: "mermaid@npm:11.17.2"
   dependencies:
     "@braintree/sanitize-url": "npm:^7.1.2"
     "@iconify/utils": "npm:^3.0.2"
@@ -25494,7 +25494,7 @@ __metadata:
     stylis: "npm:^4.3.6"
     ts-dedent: "npm:^2.2.0"
     uuid: "npm:^11.1.0 || ^12 || ^13 || ^14.0.0"
-  checksum: 10/d831d384f4c60394aa00b3e9deb75c5eaf6f3ad3067c76435e83891cae18c35ccaa55cad03180c6aa5f7c3483ead52f87fed264557750f3933607a50e5d092ee
+  checksum: 10/4a6930587ebc4027357de00a960bf9c963d4a5d290b3b70bc5ff7a8259eeb5d4ae7f4609d73dcbab8f533ad0b772ff8b35b5683c287bb23fafc21f4e6d766508
   languageName: node
   linkType: hard
 
