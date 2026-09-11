@@ -6,6 +6,7 @@ import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
+import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -63,6 +64,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Access to the Query Library',
         description: 'Access to the Query Library',
         component: OpenQueryLibraryExposedComponent,
+      },
+      {
+        id: PluginExtensionExposedComponents.NotebookViewV1,
+        title: 'Notebook',
+        description: 'An editable notebook, for a host rendering one outside the notebooks route',
+        component: NotebookViewLazy,
       },
     ],
   });
