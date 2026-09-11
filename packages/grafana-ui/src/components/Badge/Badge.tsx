@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
@@ -22,17 +22,56 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   tooltip?: PopoverContent;
 }
 
-const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(getStyles, color);
+interface BadgeTextProps {
+  text: NonNullable<React.ReactNode>;
+}
 
-  const textElement = (ref?: React.ForwardedRef<HTMLElement>) => (
+/* Two use cases now that behind visualDesignRefresh toggle we will truncate long texts:
+  1. The user sets a custom tooltip. It renders wrapping the badge. The badge text can be too long and therefore, truncated, or not.
+  2. The user do not set a tooltip. We use TruncatedText, that evaluates if the text is too long and truncates it, adding a tooltip with the same text. It renders a normal badge if the text has an expected length.
+  */
+
+// Case 1: custom tooltip so the text only needs truncation
+const BadgeText = ({ text }: BadgeTextProps) => {
+  const styles = useStyles2(getTextStyles);
+  return <span className={styles.text}>{text}</span>;
+};
+
+// Case 2: no custom tooltip, so TruncatedText measures the text and truncates it if needed
+const AutoTruncatingBadgeText = ({ text }: BadgeTextProps) => {
+  const styles = useStyles2(getTextStyles);
+  const spanWithRef = (ref?: React.ForwardedRef<HTMLElement>) => (
     <span className={styles.text} ref={ref}>
       {text}
     </span>
   );
+  return <TruncatedText childElement={spanWithRef} />;
+};
 
-  const textNode =
-    text == null ? null : !tooltip ? <TruncatedText childElement={textElement}>{text}</TruncatedText> : textElement();
+const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
+  const styles = useStyles2(getStyles, color);
+  const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+
+  const getTextNode = (text: React.ReactNode, hasTooltip: boolean) => {
+    let textNode = null;
+    if (text != null) {
+      // No feature toggle renders text as usual
+      if (!visualRefreshEnabled) {
+        textNode = text;
+        // If visual refresh enabled
+      } else {
+        // Applies styles to truncate text if needed
+        if (hasTooltip) {
+          textNode = <BadgeText text={text} />;
+        } else {
+          // If no tooltip, shows the same text when truncation is needed
+          textNode = <AutoTruncatingBadgeText text={text} />;
+        }
+      }
+    }
+    return textNode;
+  };
 
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
@@ -41,7 +80,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
           <Icon name={icon} size="sm" />
         </span>
       )}
-      {textNode}
+      {getTextNode(text, Boolean(tooltip))}
     </div>
   );
 
@@ -124,14 +163,15 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       // keep the icon from being squeezed once the text starts truncating
       flexShrink: 0,
     }),
-    text: css(
-      theme.flags.visualDesignRefresh && {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        // flex items default to min-width: auto (their own content size); override so nowrap text can shrink
-        minWidth: 0,
-      }
-    ),
   };
 };
+
+const getTextStyles = () => ({
+  text: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    // flex items default to min-width: auto (their own content size); override so nowrap text can shrink
+    minWidth: 0,
+  }),
+});
