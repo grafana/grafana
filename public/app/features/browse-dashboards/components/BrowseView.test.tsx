@@ -6,6 +6,7 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import * as useFolderDocsModule from 'app/features/provisioning/hooks/useFolderDocs';
 import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -168,21 +169,35 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   describe('inline README row', () => {
+    const mockRepository = {
+      name: 'r',
+      target: 'folder',
+      title: 'r',
+      type: 'github',
+      url: 'https://github.com/o/r',
+      branch: 'main',
+      workflows: [],
+    } as never;
+
+    function mockDocs(docs: useFolderDocsModule.UseFolderDocsResult['docs'] = []) {
+      jest.spyOn(useFolderDocsModule, 'useFolderDocs').mockReturnValue({
+        repository: mockRepository,
+        folder: undefined,
+        sourceDir: '',
+        docs,
+        isLoading: false,
+      });
+    }
+
     function mockReadme(markdownContent = '# README\n\nbody') {
+      mockDocs([{ key: 'readme', path: 'README.md', fileName: 'README.md' }]);
       jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: {
-          name: 'r',
-          target: 'folder',
-          title: 'r',
-          type: 'github',
-          url: 'https://github.com/o/r',
-          branch: 'main',
-          workflows: [],
-        } as never,
+        repository: mockRepository,
         folder: undefined,
         readmePath: 'README.md',
         status: 'ok',
         isLoading: false,
+        isFetching: false,
         markdownContent,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -190,20 +205,14 @@ describe('browse-dashboards BrowseView', () => {
     }
 
     function mockReadmeMissing() {
+      mockDocs([]);
       jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: {
-          name: 'r',
-          target: 'folder',
-          title: 'r',
-          type: 'github',
-          url: 'https://github.com/o/r',
-          branch: 'main',
-          workflows: [],
-        } as never,
+        repository: mockRepository,
         folder: undefined,
         readmePath: 'README.md',
         status: 'missing',
         isLoading: false,
+        isFetching: false,
         markdownContent: undefined,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -231,7 +240,7 @@ describe('browse-dashboards BrowseView', () => {
         />
       );
 
-      expect(await screen.findByText('README.md')).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'README' })).toBeInTheDocument();
     });
 
     it('does not append the README row when the toggle is off', async () => {
@@ -249,7 +258,7 @@ describe('browse-dashboards BrowseView', () => {
       );
       await screen.findByText(folderA_folderA.item.title);
 
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
     });
 
     it('does not append the README row when the folder is not provisioned', async () => {
@@ -259,7 +268,7 @@ describe('browse-dashboards BrowseView', () => {
       render(<BrowseView permissions={mockPermissions} folderUID={folderA.item.uid} width={WIDTH} height={HEIGHT} />);
       await screen.findByText(folderA_folderA.item.title);
 
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
     });
 
     it('does not append the README row when there is no folderUID (root)', async () => {
@@ -277,7 +286,7 @@ describe('browse-dashboards BrowseView', () => {
       );
       await screen.findByText(folderA.item.title);
 
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
     });
 
     it('appends the README panel for empty provisioned folders', async () => {
@@ -295,7 +304,7 @@ describe('browse-dashboards BrowseView', () => {
       );
 
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('README.md')).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'README' })).toBeInTheDocument();
     });
 
     it('shows the Add README CTA for empty provisioned folders without a README', async () => {
