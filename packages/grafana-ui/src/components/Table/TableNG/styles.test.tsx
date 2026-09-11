@@ -54,6 +54,10 @@ function gridVarsFor(theme: GrafanaTheme2, props: Partial<React.ComponentProps<t
     headerBackground: computed.getPropertyValue('--rdg-header-background-color'),
     rowHoverBackground: computed.getPropertyValue('--rdg-row-hover-background-color'),
     borderColor: computed.getPropertyValue('--rdg-border-color'),
+    /** Background each body row resolves to, in document order. */
+    rowBackgrounds: Array.from(container.querySelectorAll('.rdg-row:not(.rdg-summary-row)')).map(
+      (row) => window.getComputedStyle(row).backgroundColor
+    ),
   };
 }
 
@@ -107,6 +111,57 @@ describe('getGridStyles', () => {
       const legacy = gridVarsFor(lightTheme, { tableRefreshEnabled: false });
 
       expect(refreshed.borderColor).toBe(legacy.borderColor);
+    });
+  });
+
+  describe('zebra striping', () => {
+    it.each([
+      ['dark', darkTheme, 'rgb(33, 36, 39)'],
+      ['light', lightTheme, 'rgb(244, 244, 244)'],
+    ])('stripes every other row in a %s theme, starting from the second', (_name, theme, stripe) => {
+      const { rowBackgrounds } = gridVarsFor(theme, { zebraStriping: true });
+
+      expect(rowBackgrounds).toHaveLength(4);
+      // The first row keeps the plain row background, which the grid sets as a custom property
+      // rather than a color of its own - so the stripe is what distinguishes them here.
+      expect(rowBackgrounds[1]).toBe(stripe);
+      expect(rowBackgrounds[3]).toBe(stripe);
+      expect(rowBackgrounds[0]).not.toBe(stripe);
+      expect(rowBackgrounds[2]).not.toBe(stripe);
+    });
+
+    it('leaves every row on the same background with the option off', () => {
+      const { rowBackgrounds } = gridVarsFor(darkTheme, { zebraStriping: false });
+
+      expect(rowBackgrounds).toHaveLength(4);
+      expect(new Set(rowBackgrounds).size).toBe(1);
+    });
+
+    // Hover is drawn as an overlay on the hovered cells instead, so that it is the same relative
+    // step over a plain row and a striped one. jsdom never applies `:hover`, so what is asserted
+    // here is the half that is assertable: that the swap no longer moves the color.
+    it.each([
+      ['on', true],
+      ['off', false],
+    ])('stops hover replacing the row background, with table.refresh %s', (_name, tableRefreshEnabled) => {
+      const { rowHoverBackground } = gridVarsFor(darkTheme, {
+        zebraStriping: true,
+        tableRefreshEnabled,
+      });
+
+      // Pointed at the row background rather than a color of its own, so the swap is a no-op and
+      // the overlay is the only thing that moves.
+      expect(rowHoverBackground).toBe('var(--rdg-row-background-color)');
+    });
+
+    it('leaves hover replacing the row background when striping is off', () => {
+      const { rowHoverBackground, rowBackground, headerBackground } = gridVarsFor(darkTheme, {
+        zebraStriping: false,
+        tableRefreshEnabled: true,
+      });
+
+      expect(rowHoverBackground).toBe(headerBackground);
+      expect(rowHoverBackground).not.toBe(rowBackground);
     });
   });
 });

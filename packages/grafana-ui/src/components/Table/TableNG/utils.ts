@@ -45,6 +45,8 @@ import {
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
   LAST_COLUMN_CLASS,
+  NESTED_ROW_CLASS,
+  STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
 import type { TextAlign } from './styles';
@@ -1932,3 +1934,36 @@ export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => 
   const key = frame?.meta?.custom?.stableRowKey;
   return key != null ? String(key) : String(rowIndex);
 };
+
+/**
+ * Builds a `rowClass` that stripes every other row of data.
+ *
+ * The parity is counted over the rows themselves rather than taken from react-data-grid's own
+ * `rdg-row-odd`, which counts every row it renders: a nested table interleaves a container row
+ * after each parent that has nested data, so that parity landed on the containers and never on a
+ * parent row. Counting only `__depth === 0` rows also keeps the rhythm steady as rows are expanded
+ * and collapsed, and when only some parents have anything to expand.
+ *
+ * Containers are marked rather than striped, because the hover overlay has to skip them: hovering
+ * a row of an inner table also hovers the container that table sits in.
+ */
+export function makeStripedRowClass(rows: TableRow[]): (row: TableRow) => string | undefined {
+  const striped = new WeakSet<TableRow>();
+  let ordinal = 0;
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    if (ordinal % 2 === 1) {
+      striped.add(row);
+    }
+    ordinal++;
+  }
+
+  return (row) => {
+    if (row.__depth !== 0) {
+      return NESTED_ROW_CLASS;
+    }
+    return striped.has(row) ? STRIPED_ROW_CLASS : undefined;
+  };
+}

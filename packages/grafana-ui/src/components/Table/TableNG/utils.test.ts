@@ -19,7 +19,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
-import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_ROW_CLASS, STRIPED_ROW_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
@@ -40,6 +40,7 @@ import {
   compileFrameToRecords,
   computeColWidths,
   computeContentAwareColWidths,
+  createBoundedCache,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -50,17 +51,17 @@ import {
   getCellLinks,
   getCellOptions,
   getColumnTypes,
-  markEdgeColumns,
   getComparator,
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
   getPillCellHeightMeasurer,
   getRowHeight,
-  inferPills,
-  createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
+  inferPills,
+  makeStripedRowClass,
+  markEdgeColumns,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
@@ -3396,5 +3397,55 @@ describe('TableNG utils', () => {
     ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
       expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
     });
+  });
+});
+
+describe('makeStripedRowClass', () => {
+  const flatRows = (count: number): TableRow[] => Array.from({ length: count }, (_, i) => ({ __index: i, __depth: 0 }));
+
+  it('stripes every other row of a flat table, starting from the second', () => {
+    const rows = flatRows(5);
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.map(rowClass)).toEqual([undefined, STRIPED_ROW_CLASS, undefined, STRIPED_ROW_CLASS, undefined]);
+  });
+
+  // A nested table interleaves a container row after each parent that has nested data, in one
+  // grid. Counting every row - as react-data-grid's own `rdg-row-odd` does - put the parity on the
+  // containers and left every parent row unstriped.
+  it('counts only the parent rows of a nested table, skipping the containers', () => {
+    const rows: TableRow[] = [
+      { __index: 0, __depth: 0 },
+      { __index: 0, __depth: 1 },
+      { __index: 1, __depth: 0 },
+      { __index: 1, __depth: 1 },
+      { __index: 2, __depth: 0 },
+      { __index: 2, __depth: 1 },
+    ];
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.map(rowClass)).toEqual([
+      undefined,
+      NESTED_ROW_CLASS,
+      STRIPED_ROW_CLASS,
+      NESTED_ROW_CLASS,
+      undefined,
+      NESTED_ROW_CLASS,
+    ]);
+  });
+
+  // Only rows with nested data get a container row, so the interleaving isn't regular and the
+  // parity can't be derived from the grid's own row index arithmetic either.
+  it('keeps the rhythm when only some parents have a container row', () => {
+    const rows: TableRow[] = [
+      { __index: 0, __depth: 0 },
+      { __index: 0, __depth: 1 },
+      { __index: 1, __depth: 0 },
+      { __index: 2, __depth: 0 },
+      { __index: 2, __depth: 1 },
+    ];
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.filter((r) => r.__depth === 0).map(rowClass)).toEqual([undefined, STRIPED_ROW_CLASS, undefined]);
   });
 });
