@@ -114,10 +114,8 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       asyncWebAssembly: true,
     },
     output: {
-      // rspack.boot.ts writes boot.js into this directory from its own compilation, which
-      // cleaning would otherwise delete. The two compile concurrently, so ordering the build
-      // is no substitute for this. Keep the string form: a `keep` regex or function is
-      // matched against the absolute path, so an anchored `/^boot\.js$/` never matches.
+      // rspack.boot.ts writes boot.js into the build directory from its own compilation.
+      // As the two compile concurrently we need to guarantee that boot.js doesn't get deleted.
       clean: { keep: 'boot.js' },
       // keep `path` and `publicPath` aligned otherwise 404s will occur.
       path: path.resolve(import.meta.dirname, '../..', PUBLIC_PATH),
