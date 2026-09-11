@@ -252,6 +252,10 @@ function hasSelectedDescendants(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
+  if (item.kind !== 'folder') {
+    return false;
+  }
+
   const collection = childrenByParentUID[item.uid];
   if (!collection) {
     return false;
