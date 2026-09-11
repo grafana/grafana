@@ -160,6 +160,14 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  /**
+   * Set by callers that would rather see a column's content truncated than have the table scroll
+   * sideways — a table embedded in a fixed layout, where a horizontal scrollbar hides columns the
+   * surrounding UI has already reserved room for. Auto columns are then levelled down to fit the
+   * available width, widest first, instead of keeping their content width. Only affects
+   * content-aware widths (`contentAwareWidthsEnabled`).
+   */
+  preventHorizontalOverflow?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
 }

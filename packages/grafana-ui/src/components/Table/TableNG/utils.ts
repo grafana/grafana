@@ -1286,6 +1286,12 @@ export interface ContentAwareColWidthsOptions {
   filter?: FilterType;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
+  /**
+   * Truncate rather than scroll: auto columns are levelled down to fit `availWidth` even when their
+   * content doesn't wrap, so an embedding layout that has already reserved room for every column
+   * doesn't lose the last of them behind a horizontal scrollbar.
+   */
+  preventHorizontalOverflow?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1598,6 +1604,20 @@ function isReflowingCol(field: Field, resolvedType: TableCellDisplayMode): boole
   return shouldTextWrap(field) || resolvedType === TableCellDisplayMode.Markdown;
 }
 
+// Cell types whose width is chrome rather than text: a gauge, a sparkline, an image, a row of action
+// buttons. There is nothing in them to ellipsize, so squeezing one clips the control itself — they
+// stay at their measured width even under `preventHorizontalOverflow`.
+const UNSHRINKABLE_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Sparkline,
+  TableCellDisplayMode.Gauge,
+  TableCellDisplayMode.BasicGauge,
+  TableCellDisplayMode.GradientGauge,
+  TableCellDisplayMode.LcdGauge,
+  TableCellDisplayMode.Image,
+  TableCellDisplayMode.Geo,
+  TableCellDisplayMode.Actions,
+]);
+
 /**
  * Reclaims up to `deficit` px from `widths` (mutated in place) by levelling its widest entries down:
  * the widest column is cut to the next-widest, then the two are cut together, and so on. The columns
@@ -1648,15 +1668,17 @@ function levelDownColWidths(widths: Map<number, number>, floors: Map<number, num
  *      graphical cells, whichever applies, unioned with its header label width;
  *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
  *   3. then, if the auto columns overflow the available width, the overflow is taken back out of the
- *      columns that wrap, widest first (see {@link levelDownColWidths}) — a wrapped column can trade
- *      width for height, so it absorbs the overflow rather than leaving the grid to scroll sideways;
+ *      columns that can absorb it, widest first (see {@link levelDownColWidths}): a wrapped column
+ *      trades the width for extra row height, and under `preventHorizontalOverflow` every
+ *      text-bearing column trades it for an ellipsis, either being preferable to a horizontal
+ *      scrollbar;
  *   4. or, if the auto columns don't fill the available width, the leftover is distributed by a
  *      growth share of `growthWeight × √(content width)`, so a column with more content still takes
  *      more slack (a busy pill column beats a sparse one) while the √ damps the spread enough that
  *      the widest column doesn't run away from its neighbours; numeric/boolean columns grow only
  *      modestly (see {@link growthWeight}).
- * When the overflow survives step 3 — no wrapped columns, or their floors reached — the remaining
- * content widths are kept and the grid scrolls.
+ * When the overflow survives step 3 — nothing able to absorb it, or the floors reached — the
+ * remaining content widths are kept and the grid scrolls.
  *
  * Every input is independent of the sort and filter state (fields hold the full, unsorted values),
  * so widths stay put when the user sorts or filters. See {@link measureHeaderWidth} for the sort
@@ -1674,6 +1696,7 @@ export function computeContentAwareColWidths(
     filter,
     sampleSize,
     noPanelPadding = false,
+    preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1699,8 +1722,8 @@ export function computeContentAwareColWidths(
   // content width per auto column, clamped to [floor, cap]
   const contentWidths = new Map<number, number>();
   let contentTotal = 0;
-  // lower bound per wrapped auto column, for the overflow step below; absent for columns that can't
-  // reflow, or that are already sitting at their bound.
+  // lower bound per shrinkable auto column, for the overflow step below; absent for columns that
+  // can't give width back, or that are already sitting at their bound.
   const shrinkFloors = new Map<number, number>();
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
@@ -1742,19 +1765,25 @@ export function computeContentAwareColWidths(
     contentWidths.set(i, clamped + extraPadding);
     contentTotal += clamped + extraPadding;
 
-    if (isReflowingCol(field, resolvedType)) {
+    // Two ways a column can give width back rather than push the table into a horizontal scroll: a
+    // wrapped column reflows the content it gives up into extra row height, and under
+    // `preventHorizontalOverflow` the caller has said it would rather see content ellipsized than
+    // scroll, which puts every text-bearing column in play.
+    const canShrink =
+      isReflowingCol(field, resolvedType) || (preventHorizontalOverflow && !UNSHRINKABLE_CELL_TYPES.has(resolvedType));
+    if (canShrink) {
       // Anything the column asked for above its header, footer and configured minimum is width it
-      // can give back as extra row height instead. The header label and footer summary can't reflow
-      // — they'd truncate — so they stay a hard bound even on a wrapped column.
-      const reflowFloor = Math.min(Math.max(headerWidth, footerWidth, floor), cap) + extraPadding;
-      if (reflowFloor < clamped + extraPadding) {
-        shrinkFloors.set(i, reflowFloor);
+      // gives up first. The header label and footer summary can neither reflow nor ellipsize without
+      // costing the column its identity, so they stay a hard bound however it was measured.
+      const shrinkFloor = Math.min(Math.max(headerWidth, footerWidth, floor), cap) + extraPadding;
+      if (shrinkFloor < clamped + extraPadding) {
+        shrinkFloors.set(i, shrinkFloor);
       }
     }
   }
 
-  // Wrapped columns trade width for height, so hand the overflow back to them before letting the
-  // grid scroll sideways.
+  // Hand the overflow back to the columns that can absorb it — as height, or as an ellipsis — before
+  // letting the grid scroll sideways.
   const deficit = definedWidth + contentTotal - availWidth;
   const reclaimed =
     deficit > SHRINK_EPS && shrinkFloors.size > 0 ? levelDownColWidths(contentWidths, shrinkFloors, deficit) : 0;
