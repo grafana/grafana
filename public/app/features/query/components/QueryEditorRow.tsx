@@ -93,7 +93,7 @@ export interface Props<TQuery extends DataQuery> {
    * a fixed delay.
    */
   scrollIntoView?: boolean;
-  /** Called after the scroll happens so the owner can clear the flag. */
+  /** Called as soon as the scroll starts so the owner can clear the one-shot flag. */
   onScrollIntoView?: () => void;
 }
 
@@ -136,10 +136,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       this.hasStartedScrollIntoView = true;
       // A single scroll is not enough: the other rows' editors load asynchronously and push this
       // row away as they grow, so keep it pinned until the layout settles or the user scrolls.
-      this.cancelScrollPin = pinScrollIntoView(this.editorRef.current, () => {
-        this.cancelScrollPin = undefined;
-        this.props.onScrollIntoView?.();
-      });
+      this.cancelScrollPin = pinScrollIntoView(this.editorRef.current);
+      // Report as soon as the pin starts. The owner's flag is one-shot and it has no use for pin
+      // completion, so reporting at the end would leave the flag set for good whenever the pin is
+      // cancelled instead of finishing — which is what unmounting the row does.
+      this.props.onScrollIntoView?.();
     }
   }
 
@@ -199,12 +200,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       this.setState({ data: dataFilteredByRefId });
     }
 
-    // The owner retargeted the scroll (e.g. a second expression added before this pin settled).
-    // Drop this row's pin so it stops fighting the new target — cancelling rather than finishing,
-    // since finishing would report back and clear the target the owner just set.
-    if (prevProps.scrollIntoView && !this.props.scrollIntoView) {
-      this.cancelScrollPin?.();
-      this.cancelScrollPin = undefined;
+    // The owner pointed the scroll back at this row after we cleared the flag at pin start, so
+    // this is a new request rather than the render that follows our own report.
+    if (!prevProps.scrollIntoView && this.props.scrollIntoView) {
       this.hasStartedScrollIntoView = false;
     }
 
