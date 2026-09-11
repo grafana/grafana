@@ -1002,6 +1002,10 @@ const (
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
 
+	// FlagFeaturesLegacyOverrideLookupBypass
+	// Skips checking for flag overrides.
+	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
+
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
 	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
