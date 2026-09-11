@@ -2921,6 +2921,63 @@ func TestReplaceGroup(t *testing.T) {
 	})
 }
 
+func TestSetRuleGroupsManager(t *testing.T) {
+	orgID := rand.Int63()
+	u := &user.SignedInUser{OrgID: orgID}
+	groupKey := models.GenerateGroupKey(orgID)
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(2)
+	group := &models.AlertRuleGroup{Title: groupKey.RuleGroup, FolderUID: groupKey.NamespaceUID}
+	for _, rule := range rules {
+		group.Rules = append(group.Rules, *rule)
+	}
+
+	t.Run("rewrites manager without touching rule content", func(t *testing.T) {
+		service, ruleStore, provenanceStore, _ := initService(t)
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceConvertedPrometheus))
+		}
+
+		err := service.SetRuleGroupsManager(context.Background(), u, []*models.AlertRuleGroup{group}, utils.ManagerProperties{})
+		require.NoError(t, err)
+
+		for _, rule := range rules {
+			m, err := provenanceStore.GetManagerProperties(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			assert.Equal(t, utils.ManagerProperties{}, m, "rewritten to unmanaged/native")
+		}
+		updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			a, ok := cmd.([]models.UpdateRule)
+			return a, ok
+		})
+		require.Empty(t, updates, "content is never touched, only the manager")
+	})
+
+	t.Run("idempotent: a rule already at the target manager is skipped", func(t *testing.T) {
+		service, _, provenanceStore, _ := initService(t)
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceNone)) // -> ManagerKindUnknown
+		}
+
+		err := service.SetRuleGroupsManager(context.Background(), u, []*models.AlertRuleGroup{group}, utils.ManagerProperties{})
+		require.NoError(t, err)
+
+		for _, call := range provenanceStore.Calls {
+			assert.NotEqual(t, "SetManagerProperties", call.MethodName, "already at the target manager: no write needed")
+		}
+	})
+
+	t.Run("rejects a transition CanUpdateManagerInRuleGroup disallows", func(t *testing.T) {
+		service, _, provenanceStore, _ := initService(t)
+		for _, rule := range rules {
+			require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceFile))
+		}
+
+		err := service.SetRuleGroupsManager(context.Background(), u, []*models.AlertRuleGroup{group}, utils.ManagerProperties{Kind: utils.ManagerKindTerraform})
+		require.Error(t, err)
+	})
+}
+
 func TestDeleteRuleGroup(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}

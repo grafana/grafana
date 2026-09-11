@@ -921,6 +921,13 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref c
 							Format:      "",
 						},
 					},
+					"promote": {
+						SchemaProps: spec.SchemaProps{
+							Description: "promote, when true, converts the rules already synced from datasourceUid into native Grafana rules the org owns (their management is cleared so they become freely editable) and stops syncing them. This is a one-way action scoped to that datasourceUid: once promoted, it cannot be reverted back to false for the same datasourceUid. Pointing datasourceUid at a different source resumes normal syncing for it, regardless of this flag. Ignored while the operator ini override `unified_alerting.external_ruler_uid` is set.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"pollInterval": {
 						SchemaProps: spec.SchemaProps{
 							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 1m. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 1m default.",
@@ -956,7 +963,7 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref
 					},
 					"lastAppliedHash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "lastAppliedHash is the upstream config hash from the last successful sync via this resource. The worker reads it back (API path only) to skip an unchanged re-apply across restarts and replicas, where an in-memory-only dedup cache would otherwise start empty. Internal bookkeeping; not user-facing.",
+							Description: "lastAppliedHash is the dedup key (upstream config hash combined with the resolved targetDatasourceUid) from the last successful sync via this resource. The worker reads it back (API path only) to skip an unchanged re-apply across restarts and replicas, where an in-memory-only dedup cache would otherwise start empty. Internal bookkeeping; not user-facing.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
