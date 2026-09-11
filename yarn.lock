@@ -21118,14 +21118,14 @@ __metadata:
   linkType: hard
 
 "i18next@npm:^26.3.6":
-  version: 26.3.6
-  resolution: "i18next@npm:26.3.6"
+  version: 26.4.2
+  resolution: "i18next@npm:26.4.2"
   peerDependencies:
     typescript: ^5 || ^6 || ^7
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10/529f1dbfae6b0fe98d997af98af5d6d0a0e27ddf5b91b81c5dfccad94e3a66dceeba2d1b7327f0045085bc4d552abbf4a1efbfadd4bbb98d13a54e3310eae428
+  checksum: 10/7cf060a81682a63d0900c584b03a25557da88afcefebca613ca24c2a1af1322cdf606ba3dffa2d3900b3cf0fa6c3a945d89a0e50517d1b76ac5acb070ac76173
   languageName: node
   linkType: hard
 
