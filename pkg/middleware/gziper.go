@@ -184,6 +184,10 @@ func Gziper() func(http.Handler) http.Handler {
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
 
+			// Close is idempotent, so this only does anything when a panic unwinds
+			// past the close below, which would otherwise leak pgzip's goroutine.
+			defer func() { _ = grw.w.Close() }()
+
 			next.ServeHTTP(grw, req)
 
 			// A failed response write cannot be reported to the caller at this
