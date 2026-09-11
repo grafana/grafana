@@ -7717,6 +7717,7 @@
         "model-label": "Model",
         "v2-resource": "V2 Resource"
       },
+      "json-preview-label": "Provisioned dashboard JSON",
       "label-description": "Description",
       "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",

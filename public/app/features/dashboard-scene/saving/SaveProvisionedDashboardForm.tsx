@@ -12,7 +12,6 @@ import {
   Button,
   ClipboardButton,
   Stack,
-  CodeEditor,
   Box,
   Label,
   RadioButtonGroup,
@@ -20,6 +19,7 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -176,14 +176,16 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
           ) : (
             <AutoSizer disableWidth>
               {({ height }) => (
-                <CodeEditor
-                  width="100%"
-                  height={height}
+                <CodeMirrorEditor
+                  height={`${height}px`}
                   language="json"
-                  showLineNumbers={true}
-                  showMiniMap={displayJson.length > 100}
                   value={displayJson}
-                  readOnly={true}
+                  aria-label={t(
+                    'dashboard-scene.save-provisioned-dashboard-form.json-preview-label',
+                    'Provisioned dashboard JSON'
+                  )}
+                  onChange={() => {}}
+                  readOnly
                 />
               )}
             </AutoSizer>
