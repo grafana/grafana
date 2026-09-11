@@ -3,7 +3,7 @@ import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
 import { PromRuleType, type RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -30,6 +30,7 @@ import {
 } from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
+import { useDataSourceInstanceListByUid } from './useDataSourceInstanceListByUid';
 import { useURLSearchParams } from './useURLSearchParams';
 
 export function useRulesFilter() {
@@ -104,8 +105,13 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   const deferredNamespaces = useDeferredValue(namespaces);
   const deferredFilterState = useDeferredValue(filterState);
 
+  const { byUid: dataSourceByUid, isLoading, error } = useDataSourceInstanceListByUid();
+  // Skip the data-source filter (rather than exclude every rule) while the list is unresolved,
+  // since an empty map would otherwise look identical to "no rules match".
+  const skipDataSourceFilter = isLoading || !!error;
+
   return useMemo(() => {
-    const filteredRules = filterRules(deferredNamespaces, deferredFilterState);
+    const filteredRules = filterRules(deferredNamespaces, deferredFilterState, dataSourceByUid, skipDataSourceFilter);
 
     // Totals recalculation is a workaround for the lack of server-side filtering
     filteredRules.forEach((namespace) => {
@@ -124,12 +130,14 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     });
 
     return filteredRules;
-  }, [deferredNamespaces, deferredFilterState]);
+  }, [deferredNamespaces, deferredFilterState, dataSourceByUid, skipDataSourceFilter]);
 };
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
+  filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] },
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem> = new Map(),
+  skipDataSourceFilter = false
 ): CombinedRuleNamespace[] => {
   let filteredNamespaces = namespaces;
 
@@ -150,7 +158,10 @@ export const filterRules = (
   const filteredRuleNamespaces: CombinedRuleNamespace[] = [];
 
   try {
-    const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
+    const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(
+      reduceNamespaces(filterState, dataSourceByUid, skipDataSourceFilter),
+      []
+    );
     matches.forEach((match) => {
       filteredRuleNamespaces.push(match);
     });
@@ -163,7 +174,11 @@ export const filterRules = (
   return filteredRuleNamespaces;
 };
 
-const reduceNamespaces = (filterState: RulesFilter) => {
+const reduceNamespaces = (
+  filterState: RulesFilter,
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>,
+  skipDataSourceFilter: boolean
+) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groupNameFilter = filterState.groupName;
     let filteredGroups = namespace.groups;
@@ -172,7 +187,10 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       filteredGroups = fuzzyFilter(filteredGroups, (g) => g.name, groupNameFilter);
     }
 
-    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(reduceGroups(filterState), []);
+    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(
+      reduceGroups(filterState, dataSourceByUid, skipDataSourceFilter),
+      []
+    );
 
     if (filteredGroups.length) {
       namespaceAcc.push({
@@ -186,7 +204,11 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filterState: RulesFilter) => {
+const reduceGroups = (
+  filterState: RulesFilter,
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>,
+  skipDataSourceFilter: boolean
+) => {
   const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
 
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
@@ -266,7 +288,12 @@ const reduceGroups = (filterState: RulesFilter) => {
 
       if ('dataSourceNames' in matchesFilterFor) {
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
+          const doesNotQueryDs = isQueryingDataSource(
+            rule.rulerRule,
+            filterState,
+            dataSourceByUid,
+            skipDataSourceFilter
+          );
 
           if (doesNotQueryDs) {
             matchesFilterFor.dataSourceNames = true;
@@ -344,8 +371,13 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   }
 }
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
-  if (!filterState.dataSourceNames?.length) {
+const isQueryingDataSource = (
+  rulerRule: RulerGrafanaRuleDTO,
+  filterState: RulesFilter,
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>,
+  skipDataSourceFilter: boolean
+): boolean => {
+  if (!filterState.dataSourceNames?.length || skipDataSourceFilter) {
     return true;
   }
 
@@ -353,8 +385,8 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
     if (!query.datasourceUid) {
       return false;
     }
-    const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
+    const ds = dataSourceByUid.get(query.datasourceUid);
+    return ds && filterState?.dataSourceNames?.includes(ds.name);
   });
 };
 

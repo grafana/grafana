@@ -2,15 +2,16 @@ import { HttpResponse, http } from 'msw';
 import { act, getWrapper, renderHook } from 'test/test-utils';
 
 import { type ComboboxOption } from '@grafana/ui';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../../mockApi';
-import { grantUserPermissions } from '../../../mocks';
+import { grantUserPermissions, mockDataSource } from '../../../mocks';
 import { setGrafanaPromRules, setPrometheusRules } from '../../../mocks/server/configure';
 import { alertingFactory } from '../../../mocks/server/db';
 
-import { useNamespaceAndGroupOptions } from './useRuleFilterAutocomplete';
+import { useAlertingDataSourceOptions, useNamespaceAndGroupOptions } from './useRuleFilterAutocomplete';
 
 const server = setupMswServer();
 
@@ -263,6 +264,34 @@ describe('useNamespaceAndGroupOptions', () => {
       // the typed text is forwarded to the backend, and only matching folders come back
       expect(requests[0].get('search.folder')).toBe('authnz');
       expect(options).toEqual([{ label: 'systems/authnz', value: 'systems/authnz', description: 'Grafana folder' }]);
+    });
+  });
+
+  describe('useAlertingDataSourceOptions', () => {
+    it('returns only alerting-capable data sources as options', async () => {
+      setupDataSources(
+        mockDataSource({ name: 'mimir' }, { alerting: true }),
+        mockDataSource({ name: 'loki' }, { alerting: false })
+      );
+
+      const { result } = renderHook(() => useAlertingDataSourceOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current(''));
+
+      expect(options).toEqual([{ label: 'mimir', value: 'mimir' }]);
+    });
+
+    it('filters the returned options by the search input', async () => {
+      setupDataSources(
+        mockDataSource({ name: 'mimir' }, { alerting: true }),
+        mockDataSource({ name: 'loki' }, { alerting: true })
+      );
+
+      const { result } = renderHook(() => useAlertingDataSourceOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current('lok'));
+
+      expect(options).toEqual([{ label: 'loki', value: 'loki' }]);
     });
   });
 
