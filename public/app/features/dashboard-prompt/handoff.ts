@@ -22,10 +22,8 @@ interface StartPlanningArgs {
   displayPrompt: string;
   /** Datasources already scoped to the seed or picked on the landing prompt. */
   datasources: PromptDatasource[];
-  /**
-   * Picked DSs to re-attach as sidebar chips in the new conversation. Only relevant for the UI.
-   */
-  attachedDatasources?: PromptDatasource[];
+  /** Original context items selected in the landing prompt. */
+  context?: ChatContextItem[];
   /** Dashboards the user attached as context on the landing prompt. */
   dashboards?: PromptDashboardRef[];
   /** Folder the draft should land in, when the entry point knows one. */
@@ -83,25 +81,10 @@ export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
     mode: 'dashboarding',
     autoSend: true,
     prompt: args.displayPrompt,
-    context: [planningItem, ...buildAttachedResourceContext(args)],
+    context: [planningItem, ...(args.context ?? [])],
   });
 
   return true;
-}
-
-function buildAttachedResourceContext(args: StartPlanningArgs): ChatContextItem[] {
-  const datasourceItems = (args.attachedDatasources ?? []).map((datasource) =>
-    createAssistantContextItem('datasource', {
-      datasourceUid: datasource.uid,
-    })
-  );
-  const dashboardItems = (args.dashboards ?? []).map((dashboard) =>
-    createAssistantContextItem('dashboard', {
-      dashboardUid: dashboard.uid,
-      dashboardTitle: dashboard.title,
-    })
-  );
-  return [...datasourceItems, ...dashboardItems];
 }
 
 /**

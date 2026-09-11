@@ -2,10 +2,10 @@ import { screen } from '@testing-library/react';
 import { lazy } from 'react';
 import { render } from 'test/test-utils';
 
+import { type ChatContextItem } from '@grafana/assistant';
 import { usePluginComponent } from '@grafana/runtime';
 
 import { DashboardLandingPrompt, STANDALONE_PROMPT_COMPONENT_ID } from './DashboardLandingPrompt';
-import { type DashboardLandingPromptSelection } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -15,7 +15,7 @@ jest.mock('@grafana/runtime', () => ({
 const usePluginComponentMock = jest.mocked(usePluginComponent);
 
 interface CapturedPromptProps {
-  onSubmit: (prompt: string, selection: DashboardLandingPromptSelection[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
   placeholder?: string;
   includeContextSections?: readonly string[];
   hideModeSelector?: boolean;

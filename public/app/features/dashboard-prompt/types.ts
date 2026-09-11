@@ -12,16 +12,6 @@ export interface PromptDashboardRef {
 }
 
 /**
- * Host-side copy of grafana-assistant-app `PromptContextSelection`.
- */
-export interface DashboardLandingPromptSelection {
-  kind: 'datasource' | 'dashboard';
-  uid: string;
-  name: string;
-  datasourceType?: string;
-}
-
-/**
  * Pre-seeded context for entry points that already know what the user is
  * looking at — today that's a datasource's settings page.
  */

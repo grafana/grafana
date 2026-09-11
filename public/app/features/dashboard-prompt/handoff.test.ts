@@ -1,4 +1,4 @@
-import { openAssistant } from '@grafana/assistant';
+import { type ChatContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
 
 import { buildPlanningInstructions, startPlanningInAssistant } from './handoff';
@@ -138,30 +138,35 @@ describe('startPlanningInAssistant skipNavigation', () => {
     expect(openAssistantMock).toHaveBeenCalledTimes(1);
   });
 
-  it('attaches picked dashboards as context items', () => {
-    startPlanningInAssistant({
-      ...args,
-      skipNavigation: true,
-      dashboards: [{ uid: 'dash-1', title: 'Checkout' }],
-    });
+  it('preserves selected context objects alongside the hidden planning instructions', () => {
+    const contextItems: ChatContextItem[] = [
+      {
+        node: {
+          id: 'prom-1',
+          name: 'Prometheus',
+          navigable: false,
+          img: '/prometheus.svg',
+          data: { type: 'datasource', datasourceUid: 'prom-1', formatForLLM: () => 'Datasource context' },
+        },
+        occurrences: ['mention-1'],
+      },
+      {
+        node: {
+          id: 'dashboards/dash-1',
+          name: 'Checkout',
+          navigable: false,
+          data: { type: 'dashboard', dashboardUid: 'dash-1', folderUid: 'folder-2', folderTitle: 'Payments' },
+        },
+        occurrences: [],
+      },
+    ];
+    startPlanningInAssistant({ ...args, skipNavigation: true, context: contextItems });
 
-    const call = openAssistantMock.mock.calls[0][0];
-    expect(call.context).toHaveLength(2);
-    expect(call.context?.[1]?.node.data?.params).toEqual(
-      expect.objectContaining({ dashboardUid: 'dash-1', dashboardTitle: 'Checkout' })
-    );
-  });
-
-  it('attaches picked datasources as context items without dumping the instruction-scope list', () => {
-    startPlanningInAssistant({
-      ...args,
-      skipNavigation: true,
-      attachedDatasources: [{ uid: 'prom-1', type: 'prometheus', name: 'Prometheus' }],
-    });
-
-    const call = openAssistantMock.mock.calls[0][0];
-    expect(call.context).toHaveLength(2);
-    expect(call.context?.[1]?.node.data?.params).toEqual(expect.objectContaining({ datasourceUid: 'prom-1' }));
+    const context = openAssistantMock.mock.calls[0][0].context;
+    expect(context).toHaveLength(3);
+    expect(context?.[0].node.name).toBe('Dashboard planning instructions');
+    expect(context?.[1]).toBe(contextItems[0]);
+    expect(context?.[2]).toBe(contextItems[1]);
   });
 
   it('does not attach the destination folder as context when already on the page', () => {

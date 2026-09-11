@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useId, useState } from 'react';
 
+import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -13,7 +14,6 @@ import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/lay
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
 import { getPromptDatasources } from './datasources';
 import { startPlanningInAssistant } from './handoff';
-import { type DashboardLandingPromptSelection } from './types';
 
 interface Props {
   dashboard: DashboardScene;
@@ -54,23 +54,38 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   };
 
   const onSubmitPrompt = useCallback(
-    (prompt: string, selection: DashboardLandingPromptSelection[]) => {
-      const selectedDatasources = selection
-        .filter((item) => item.kind === 'datasource')
-        .map((item) => ({
-          uid: item.uid,
-          type: item.datasourceType ?? 'unknown',
-          name: item.name,
-        }));
-      const dashboards = selection
-        .filter((item) => item.kind === 'dashboard')
-        .map((item) => ({ uid: item.uid, title: item.name }));
+    (prompt: string, contextItems: ChatContextItem[]) => {
+      const selectedDatasources = contextItems.flatMap(({ node }) => {
+        const data = node.data;
+        if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
+          return [];
+        }
+        return [
+          {
+            uid: data.datasourceUid,
+            type: typeof data.datasourceType === 'string' ? data.datasourceType : 'unknown',
+            name: typeof data.datasourceName === 'string' ? data.datasourceName : node.name,
+          },
+        ];
+      });
+      const dashboards = contextItems.flatMap(({ node }) => {
+        const data = node.data;
+        if (data?.type !== 'dashboard' || typeof data.dashboardUid !== 'string') {
+          return [];
+        }
+        return [
+          {
+            uid: data.dashboardUid,
+            title: typeof data.dashboardTitle === 'string' ? data.dashboardTitle : node.name,
+          },
+        ];
+      });
 
       const started = startPlanningInAssistant({
         request: prompt,
         displayPrompt: prompt,
         datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
-        attachedDatasources: selectedDatasources,
+        context: contextItems,
         dashboards,
         folderUid: dashboard.state.meta.folderUid,
         skipNavigation: true,

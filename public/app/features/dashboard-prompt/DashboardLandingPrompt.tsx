@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { Suspense } from 'react';
 
+import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponent } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
-
-import { type DashboardLandingPromptSelection } from './types';
 
 export const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-prompt/v1';
 
@@ -17,7 +16,7 @@ const DASHBOARD_PROMPT_CONTEXT_SECTIONS = ['datasources', 'dashboards'] as const
  * keep in sync with grafana-assistant-app `StandaloneAssistantPromptProps`
  */
 interface StandalonePromptProps {
-  onSubmit: (prompt: string, selection: DashboardLandingPromptSelection[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
   placeholder?: string;
   includeContextSections?: readonly string[];
   hideModeSelector?: boolean;
@@ -26,7 +25,7 @@ interface StandalonePromptProps {
 }
 
 interface DashboardLandingPromptProps {
-  onSubmit: (prompt: string, selection: DashboardLandingPromptSelection[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
   placeholder?: string;
   className?: string;
 }
