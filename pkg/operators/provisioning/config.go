@@ -588,10 +588,10 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 }
 
 func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
-	// Folder metadata read metrics are a process-global singleton recorded by
-	// resources.ReadFolderMetadata rather than threaded through the returned
-	// extras, so they must be registered regardless of which extras path is taken
-	// below — including the custom RepositoryExtrasFunc path, which returns early.
+	// Folder metadata read metrics are a process-global singleton recorded by the
+	// code that uses them rather than threaded through the returned extras, so they
+	// must be registered regardless of which extras path is taken below — including
+	// the custom RepositoryExtrasFunc path, which returns early.
 	resources.RegisterFolderMetadataMetrics(c.Registry())
 
 	if c.repositoryExtras != nil {
@@ -614,6 +614,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
+	clientMetrics := gitrepo.RegisterClientMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -630,7 +631,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -644,7 +645,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 					),
 				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
