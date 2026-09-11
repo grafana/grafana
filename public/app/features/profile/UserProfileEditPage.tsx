@@ -75,7 +75,7 @@ export function UserProfileEditPage({
               resourceUri={userResourceUri}
               preferenceType="user"
               legend={
-                <Text element="h2" variant="h3">
+                <Text element="h2" variant="h2">
                   <Trans i18nKey="shared-preferences.title">Preferences</Trans>
                 </Text>
               }
@@ -83,7 +83,7 @@ export function UserProfileEditPage({
             <Stack direction="column" gap={6}>
               {!teamsAreLoading && teams.length > 0 && (
                 <div className="page-sub-heading">
-                  <Text element="h2" variant="h3">
+                  <Text element="h2" variant="h2">
                     <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
                   </Text>
                 </div>

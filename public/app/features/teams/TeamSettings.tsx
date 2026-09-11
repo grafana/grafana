@@ -101,7 +101,7 @@ const TeamSettings = ({ team }: Props) => {
       </form>
       <SharedPreferences
         legend={
-          <Text element="h2" variant="h3">
+          <Text element="h2" variant="h2">
             {t('shared-preferences.title', 'Preferences')}
           </Text>
         }

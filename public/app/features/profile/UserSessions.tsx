@@ -26,7 +26,7 @@ const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) =>
       {sessions.length > 0 && (
         <>
           <div className="page-sub-heading">
-            <Text variant="h3" element="h2">
+            <Text variant="h2" element="h2">
               <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
             </Text>
           </div>
