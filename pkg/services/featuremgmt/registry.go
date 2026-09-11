@@ -397,6 +397,16 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:            "kubernetesFolderCountsLegacyStorage",
+			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
@@ -3366,6 +3376,16 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
+		{
+			Name:         "alerting.folderHasRulesLabel",
+			Description:  "Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

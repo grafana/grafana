@@ -8,6 +8,7 @@
 import type * as z from 'zod';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
@@ -113,4 +114,36 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
   scene.activateSidebar();
+}
+
+const GLOBAL_DASHBOARD_VARIABLES_DISABLED =
+  'Cross-dashboard variables require the grafana.dashboardGlobalVariables feature toggle to be enabled.';
+
+function isGlobalDashboardVariablesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false);
+}
+
+/** Requires the global-dashboard-variables feature toggle (read-only). */
+export function requiresGlobalDashboardVariablesReadOnly(_scene: DashboardScene): PermissionCheckResult {
+  if (!isGlobalDashboardVariablesEnabled()) {
+    return { allowed: false, error: GLOBAL_DASHBOARD_VARIABLES_DISABLED };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Requires the global-dashboard-variables feature toggle, edit permissions, and
+ * a dashboard that is not a locked managed resource.
+ */
+export function requiresGlobalDashboardVariables(scene: DashboardScene): PermissionCheckResult {
+  if (!isGlobalDashboardVariablesEnabled()) {
+    return { allowed: false, error: GLOBAL_DASHBOARD_VARIABLES_DISABLED };
+  }
+  if (scene.managedResourceCannotBeEdited()) {
+    return {
+      allowed: false,
+      error: 'Cannot edit cross-dashboard variables: dashboard is a managed resource',
+    };
+  }
+  return requiresEdit(scene);
 }

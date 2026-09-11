@@ -121,6 +121,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.folderHasRulesLabel",
+        "resourceVersion": "1786558190831",
+        "creationTimestamp": "2026-08-12T18:09:50Z"
+      },
+      "spec": {
+        "description": "Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1785243477586",
         "creationTimestamp": "2026-07-28T12:57:57Z"
@@ -4287,6 +4301,24 @@
         "description": "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFolderCountsLegacyStorage",
+        "resourceVersion": "1789000129079",
+        "creationTimestamp": "2026-09-09T23:57:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-10 00:28:49.079657382 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
