@@ -72,6 +72,22 @@ describe('DashboardSidebarSplitter', () => {
     const scrollContainer = screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer);
     expect(scrollContainer).toHaveAttribute('tabindex', '0');
   });
+
+  it('moves the tighter canvas padding to the side containing the sidebar', async () => {
+    const user = userEvent.setup();
+    const scene = buildTestScene();
+
+    render(<DashboardSidebarSplitter dashboard={scene} />);
+
+    const scrollContainer = screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer);
+    expect(getComputedStyle(scrollContainer).paddingLeft).toBe('16px');
+    expect(getComputedStyle(scrollContainer).paddingRight).toBe('8px');
+
+    await user.click(screen.getByRole('button', { name: 'Move sidebar left' }));
+
+    expect(getComputedStyle(scrollContainer).paddingLeft).toBe('8px');
+    expect(getComputedStyle(scrollContainer).paddingRight).toBe('16px');
+  });
 });
 
 export function buildTestScene() {
