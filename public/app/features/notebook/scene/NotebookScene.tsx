@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
-import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -19,15 +20,20 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
-import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { canEditNotebooks } from '../permissions';
+import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
+import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -50,6 +56,58 @@ export interface NotebookSceneState extends SceneObjectState {
    * the cells gain no real editing UI beyond becoming writable.
    */
   isEditing?: boolean;
+  /**
+   * A document with no Notebook resource behind it, and none to be created for it until its host
+   * says so.
+   *
+   * Autosave is not started for one. Its ordinary behaviour with no uid is to `createNotebook` on
+   * the first edit and adopt the uid, which is right for /notebooks/new — where the notebook is
+   * meant to come into existence as soon as it has content — and wrong for a host holding a draft
+   * nobody has chosen to save: the assistant's canvas, where a notebook is authored and edited
+   * against the conversation and only becomes a resource when someone publishes it.
+   *
+   * Editing, undo/redo, panels and queries are unaffected; none of them need the resource to exist.
+   * Only the writing is suppressed, so the host is the sole route to persistence.
+   */
+  isDraft?: boolean;
+}
+
+/**
+ * Notebooks currently holding the global scene context, most recently activated last, and whatever
+ * held it before the first of them.
+ *
+ * A stack rather than each activation remembering its own predecessor, because deactivation order is
+ * not activation order: more than one notebook can be mounted at a time — an embedded one over
+ * whatever else is open — and the naive version got both ends wrong. An older notebook closing used
+ * to hand the context back while a newer one was still live, and the last one closing handed it to
+ * an already-deactivated sibling, leaving panel interpolation and TimeSrv resolving against a dead
+ * scene. Splicing by identity is correct for any order.
+ *
+ * Only notebooks are tracked. A dashboard deactivating still restores unconditionally and can take
+ * the context from a live notebook; that is a pre-existing behaviour of DashboardScene and is
+ * deliberately left alone here.
+ */
+const sceneContextStack: NotebookScene[] = [];
+let beforeFirstSceneContext: SceneObject | undefined;
+
+function claimSceneContext(scene: NotebookScene): void {
+  if (sceneContextStack.length === 0) {
+    beforeFirstSceneContext = window.__grafanaSceneContext;
+  }
+  sceneContextStack.push(scene);
+  window.__grafanaSceneContext = scene;
+}
+
+function releaseSceneContext(scene: NotebookScene): void {
+  const index = sceneContextStack.lastIndexOf(scene);
+  if (index !== -1) {
+    sceneContextStack.splice(index, 1);
+  }
+  // The newest notebook still mounted, or whatever held it before any of them.
+  window.__grafanaSceneContext = sceneContextStack[sceneContextStack.length - 1] ?? beforeFirstSceneContext;
+  if (sceneContextStack.length === 0) {
+    beforeFirstSceneContext = undefined;
+  }
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -80,8 +138,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     this.addActivationHandler(() => {
       // template_srv and TimeSrv resolve variables/time for panel plugins through the global
       // scene context; without this, plugin-side interpolation silently degrades.
-      const prevSceneContext = window.__grafanaSceneContext;
-      window.__grafanaSceneContext = this;
+      claimSceneContext(this);
 
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
       // plain state, so they are activated by their renderers. With the controls row hidden nothing
@@ -119,6 +176,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.tags !== prevState.tags) {
           newState.body.setTags?.(newState.tags);
         }
+        // `title` is mirrored on the same terms as `tags` above.
+        if (newState.body !== prevState.body || newState.title !== prevState.title) {
+          newState.body.setTitle?.(newState.title);
+        }
         // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
         // the steps cannot run any more.
         if (newState.body !== prevState.body) {
@@ -127,14 +188,16 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
-      const stopAutosave = this.autosave.start();
+      // Read once, at activation: a document does not become a draft, or stop being one, while it is
+      // mounted. Its host decides that before handing it over.
+      const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
 
       return () => {
-        stopAutosave();
+        stopAutosave?.();
         destroyMutationClient();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
-        window.__grafanaSceneContext = prevSceneContext;
+        releaseSceneContext(this);
       };
     });
   }
@@ -163,13 +226,62 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
 
+    // Asked before editing begins, so not answering leaves the notebook where it already was.
+    const changed = this.autosave.viewOnlyVizChanges();
+    if (changed.length > 0) {
+      this.askAboutViewOnlyChanges(changed);
+      return;
+    }
+
+    this.startEditing();
+  };
+
+  private startEditing(): void {
     // Before the state change, because entering edit mode is itself a state change and autosave decides
     // what to write the moment it sees one.
     this.autosave.notifyEditingStarted();
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
-  };
+  }
+
+  /**
+   * Asks what to do about anything a reader changed, and only starts editing once they say. Only the
+   * person who changed it knows whether they meant it for the notebook or for their own view.
+   *
+   * Laid out like the dashboard's unsaved-changes modal: discard confirms and keep is the alternative,
+   * so cancel carries nothing and leaves the notebook open for reading.
+   *
+   * Both answers start editing first, because `notifyEditingStarted` clears what counted as edited and
+   * a kept colour has to survive that.
+   */
+  private askAboutViewOnlyChanges(changed: string[]): void {
+    // Refusing produces no state change, so nothing would rewrite the url and `?edit=true` would sit
+    // there claiming a mode the notebook is not in. NotebookSceneUrlSync cleans it up for the same reason.
+    locationService.partial({ [NOTEBOOK_EDIT_PARAM]: null }, true);
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('notebook.panel-changes.confirm-title', 'Unsaved panel changes'),
+        text: t(
+          'notebook.panel-changes.confirm-text',
+          'Do you want to keep the changes you made while viewing this notebook?'
+        ),
+        yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
+        yesButtonVariant: 'destructive',
+        onConfirm: () => {
+          this.startEditing();
+          this.autosave.discardVizChanges();
+        },
+        altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
+        onAltAction: () => {
+          this.startEditing();
+          this.autosave.keepVizChanges(changed);
+        },
+        noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
+      })
+    );
+  }
 
   public onExitEditMode = () => {
     this.state.body.commitPendingEdits();
@@ -186,6 +298,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    */
   public onTagsChange = (tags: string[]) => {
     this.setState({ tags });
+  };
+
+  /**
+   * Single writer for the title, on the same terms as onTagsChange above. Nothing persists it here:
+   * the save model reads this state, and autosave writes on any change made while editing.
+   */
+  public onTitleChange = (title: string) => {
+    this.setState({ title });
   };
 
   public showModal(modal: SceneObject) {
@@ -221,8 +341,16 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  /**
+   * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
+   * no app header at the same time, and those two share one scene object — so the answer has to come
+   * from where it is being drawn rather than from what is being drawn.
+   */
+  const embedded = useIsNotebookEmbedded();
+  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
+  // there is no app header for it to describe.
+  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
 
   return (
     <div className={styles.container}>

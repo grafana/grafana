@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"math/rand/v2"
 	"net/http"
 	"slices"
@@ -44,7 +45,6 @@ import (
 const (
 	defaultListBufferSize             = 100
 	defaultEventRetentionPeriod       = 1 * time.Hour
-	minEventRetentionPeriod           = 10 * time.Minute
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
@@ -381,11 +381,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	eventStore := newEventStore(kv)
 
 	eventRetentionPeriod := opts.EventRetentionPeriod
-	if eventRetentionPeriod < minEventRetentionPeriod {
-		if eventRetentionPeriod > 0 {
-			logger.Warn("configured event_retention_period is below the minimum; falling back to the default",
-				"configured", eventRetentionPeriod, "minimum", minEventRetentionPeriod, "default", defaultEventRetentionPeriod)
-		}
+	if eventRetentionPeriod <= 0 {
 		eventRetentionPeriod = defaultEventRetentionPeriod
 	}
 
@@ -412,7 +408,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			cancel()
 			return nil, errors.New("holder is required when enable_kv_leases is true")
 		}
-		leaseManager = lease.NewManager(kv, opts.Holder, opts.Reg)
+		leaseManager = lease.NewManager(kv, opts.Holder, "storage", opts.Reg)
 	}
 
 	backend := &kvStorageBackend{
@@ -743,7 +739,13 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"group", gr.Group,
 				"resource", gr.Resource,
 				"error", err)
-			break
+
+			// A cancelled context means the process is shutting down, so give up on the whole
+			// cycle. Any other failure only affects this group, and stopping here would leave
+			// the groups after it uncollected for good.
+			if ctx.Err() != nil {
+				return
+			}
 		}
 	}
 }
@@ -862,28 +864,24 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		}
 	}
 
-	if totalDeleted > 0 {
-		msg := "garbage collection deleted history"
-		perNamespaceMsg := "garbage collection deleted history per namespace"
-		if b.garbageCollection.DryRun {
-			msg = "garbage collection dry run"
-			perNamespaceMsg = "garbage collection dry run per namespace"
-		}
-
-		b.log.Info(msg,
+	// Logged even when nothing was eligible. A pass that finds no trash is the normal
+	// case for most groups, and staying silent leaves no way to tell it apart from a
+	// pass that never ran or was cut short.
+	b.log.Info("garbage collection finished",
+		"group", group,
+		"resource", resourceName,
+		"rows", totalDeleted,
+		"dryRun", b.garbageCollection.DryRun,
+		"seconds", time.Since(start).Seconds(),
+	)
+	for ns, count := range deletedPerNamespace {
+		b.log.Info("garbage collection finished per namespace",
 			"group", group,
 			"resource", resourceName,
-			"rows", totalDeleted,
-			"seconds", time.Since(start).Seconds(),
+			"namespace", ns,
+			"rows", count,
+			"dryRun", b.garbageCollection.DryRun,
 		)
-		for ns, count := range deletedPerNamespace {
-			b.log.Info(perNamespaceMsg,
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
 	}
 
 	return nil
@@ -1056,6 +1054,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	rv = k.snowflake.Generate().Int64()
 	namespace := event.Key.Namespace
 
+	var previousKey DataKey
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
@@ -1094,6 +1093,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
+		previousKey = latestKey
 	}
 
 	obj := event.Object
@@ -1299,6 +1299,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
+		PreviousAction:  previousKey.Action,
+		PreviousFolder:  previousKey.Folder,
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
@@ -2438,6 +2440,8 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Value:           data,
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
+			PreviousAction:  event.PreviousAction,
+			PreviousFolder:  event.PreviousFolder,
 			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 		}:
 		case <-ctx.Done():
@@ -2445,106 +2449,6 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 		}
 	}
 	return true
-}
-
-// eventToWrittenEvent maps an event-store entry to a metadata-only WrittenEvent.
-// The object value is intentionally left nil: the resource server materialises
-// it lazily (via ReadResource) before sending to the client, so we don't read
-// from the database objects that would otherwise be discarded.
-func eventToWrittenEvent(event Event) *WrittenEvent {
-	var t resourcepb.WatchEvent_Type
-	switch event.Action {
-	case DataActionCreated:
-		t = resourcepb.WatchEvent_ADDED
-	case DataActionUpdated:
-		t = resourcepb.WatchEvent_MODIFIED
-	case DataActionDeleted:
-		t = resourcepb.WatchEvent_DELETED
-	}
-
-	return &WrittenEvent{
-		Key: &resourcepb.ResourceKey{
-			Namespace: event.Namespace,
-			Group:     event.Group,
-			Resource:  event.Resource,
-			Name:      event.Name,
-		},
-		Type:            t,
-		Folder:          event.Folder,
-		ResourceVersion: event.ResourceVersion,
-		PreviousRV:      event.PreviousRV,
-		Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
-	}
-}
-
-// maxEventReplayAge is how far back a watch may be resumed from: half the event
-// retention period. Staying strictly below the retention period leaves a margin
-// so the pruner cannot delete events in the range we are about to replay.
-func (k *kvStorageBackend) maxEventReplayAge() time.Duration {
-	return k.eventRetentionPeriod / 2
-}
-
-func (k *kvStorageBackend) CanReplayFrom(ctx context.Context, sinceRV int64) error {
-	latest, err := k.eventStore.LastEventKey(ctx)
-	switch {
-	case errors.Is(err, ErrNotFound):
-		return nil // no events at all
-	case err != nil:
-		return err
-	case sinceRV >= latest.ResourceVersion:
-		// Nothing was written after sinceRV, so there is nothing to replay.
-		return nil
-	}
-
-	if ResourceVersionTime(sinceRV).Before(time.Now().Add(-k.maxEventReplayAge())) {
-		return NewResourceVersionExpiredError(sinceRV)
-	}
-	return nil
-}
-
-// ListEventsSince returns metadata-only write events with a resource version
-// greater than sinceRV, in ascending resource version order. It reads straight
-// from the event store, so it is only complete for resource versions that are still
-// within the event retention period (see EventRetentionPeriod).
-//
-// Only events older than the settle window (now - SettleDelay) are returned.
-// Writes are not globally ordered without a hard lock, so a recent event may
-// still have a concurrent, lower-RV write that has not landed in the store yet.
-// To get the writes past (now - SettleDelay) the caller must subscribe to the watch stream
-// BEFORE calling ListEventsSince
-func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) iter.Seq2[*WrittenEvent, error] {
-	return func(yield func(*WrittenEvent, error) bool) {
-		ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListEventsSince", trace.WithAttributes(
-			attribute.Int64("sinceRV", sinceRV),
-		))
-		defer span.End()
-
-		// Snapshot the settle frontier once so a slow replay keeps a stable upper
-		// bound; events past it are the broadcaster's responsibility.
-		settledRV := snowflakeFromTime(time.Now().Add(-k.watchOpts.SettleDelay))
-
-		for event, err := range k.eventStore.ListSince(ctx, sinceRV, SortOrderAsc) {
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			if event.ResourceVersion <= sinceRV {
-				continue
-			}
-			// Ascending order: once we reach the unsettled window everything left
-			// is also unsettled, so stop and let the broadcaster deliver the rest.
-			if event.ResourceVersion > settledRV {
-				return
-			}
-			// Events written as part of a bulk update are not streamed to watchers.
-			if event.PreviousRV < 0 {
-				continue
-			}
-			if !yield(eventToWrittenEvent(event), nil) {
-				return
-			}
-		}
-	}
 }
 
 // GetResourceStats returns resource stats within the storage backend.
@@ -2585,22 +2489,15 @@ func (k *kvStorageBackend) ListStoredResources(ctx context.Context, filter Names
 	return k.dataStore.ListStoredResources(ctx, filter)
 }
 
-func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTimes")
+func (k *kvStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTime", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+	defer span.End()
 
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		defer span.End()
-		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
-		if err != nil {
-			yield(ResourceLastImportTime{}, err)
-			return
-		}
-		for _, v := range valid {
-			if !yield(v.ToResourceLastImportTime(), nil) {
-				return
-			}
-		}
-	}
+	return k.lastImportStore.GetLastImportTime(ctx, nsr, k.lastImportTimeMaxAge)
 }
 
 type kvBulkImportItem struct {
@@ -2798,9 +2695,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batchLastMicroRV := lastMicroRV
 		if rvManagerDB != nil {
 			batchLastMicroRV = make(map[string]int64, len(lastMicroRV)+len(batch))
-			for key, value := range lastMicroRV {
-				batchLastMicroRV[key] = value
-			}
+			maps.Copy(batchLastMicroRV, lastMicroRV)
 		}
 
 		for _, req := range batch {

@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "폴더에서 상속됨",
-      "locked-aria-label": "잠긴 권한 표시기",
       "remove-aria-label": "{{identifier}}에 대한 권한 제거",
       "tooltip-inherited-permission": "상속된 권한",
       "tooltip-provisioned-permission": "프로비저닝된 권한"
@@ -2647,7 +2646,9 @@
       "view-in-explore": "탐색에서 보기"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "옵션",
+      "invalid-interval-error": "",
       "label-time-range": "시간 범위",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "최소 간격 = {{minInterval}}"
@@ -3227,6 +3228,7 @@
         "disable-confirm-title": "비활성화하면 지속적인 동기화가 중지됩니다?",
         "disable-success": "Mimir Alertmanager 자동 동기화 비활성화됨",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "이 값은 grafana.ini의 <1>[unified_alerting] external_alertmanager_uid</1> 키에 의해 설정되며 UI에서는 변경할 수 없습니다. 구성 파일을 편집하고 Grafana를 다시 시작하거나, 여기에서 동기화를 관리하려면 해당 키를 제거하세요.",
         "operator-managed-title": "운영자가 관리함",
         "orphan-warning": "구성된 데이터 소스 UID({{uid}})를 사용할 수 없습니다. 계속하려면 동기화를 비활성화하거나 데이터 소스를 복구하세요.",
@@ -3235,6 +3237,7 @@
         "picker-label": "데이터 소스",
         "picker-placeholder": "Mimir 또는 Cortex Alertmanager 데이터 소스를 선택하세요…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "저장을 활성화하려면 Mimir 또는 Cortex Alertmanager 데이터 소스를 선택하세요.",
         "save-disabled-staged-config": "",
         "save-error": "Mimir Alertmanager 자동 동기화 저장 실패",
@@ -3318,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "경고 관리자",
+        "alert-managers": "",
         "import": "가져오기"
       }
     },
@@ -5977,11 +5980,13 @@
     "notebook-layout": {
       "description": "패널, 텍스트 및 코드 셀을 세로로 배열한 시퀀스",
       "name": "노트북",
-      "pill": "게시된 노트북",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "시간"
+      "time": "시간",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6005,6 +6010,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "일 전",
         "compare-month-before": "이전 달",
         "compare-week-before": "이전 주",
@@ -6259,6 +6269,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "주석",
         "description": "설명",
@@ -6362,17 +6385,6 @@
           "empty": "(비어 있음)",
           "no-title": "<제목 없음>"
         }
-      },
-      "predefined-variables": {
-        "all": "전체",
-        "description": "",
-        "folder": "폴더",
-        "global": "전체",
-        "label": "사전 정의된 변수",
-        "none": "없음",
-        "pane-header": "사전 정의된 변수",
-        "title": "사전 정의된 변수",
-        "tooltip": "이 대시보드에서 사용할 전역 및 폴더 변수 선택"
       },
       "redo": "다시 실행",
       "row": {
@@ -6987,6 +6999,10 @@
       "recommendation": "기능이 다시 활성화되면, 대시보드가 동적 대시보드 형식으로 정상 표시됩니다. 따라서 해당 기능이 다시 활성화될 때까지 해당 대시보드에 변경 사항을 적용하지 않을 것을 강력히 권장합니다. 클래식 모드에서 수행된 편집은 예상치 못한 결과를 초래할 수 있습니다. 또는 대시보드 저장 메뉴에서 '사본으로 저장' 옵션을 사용하여 대시보드의 사본을 저장할 수 있습니다.",
       "save-warning": "동적 대시보드로 생성되거나 변환된 모든 대시보드는 클래식 대시보드로 열립니다. 대시보드를 저장하면 이미 설정된 동적 대시보드 기능이 손실될 수 있습니다."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "사용자 지정 옵션",
       "json-values-tooltip": "객체 배열을 나타내는 JSON을 입력하세요. 각 객체에는 임의의 속성을 포함할 수 있습니다.<br/>자세한 내용은 <4>문서</4>를 참고하세요.",
@@ -7029,6 +7045,12 @@
       "type": "유형"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
     },
     "dashboard-scene": {
@@ -7457,13 +7479,6 @@
       },
       "title-close": "닫기"
     },
-    "predefined-variables": {
-      "label-all": "전체",
-      "label-custom": "사용자 지정",
-      "label-folder": "폴더",
-      "label-global": "전체",
-      "label-none": "없음"
-    },
     "provisioned-controls-section": {
       "label": "데이터 소스에서 프로비저닝",
       "tooltip": "{{pluginName}} 플러그인에서 추가함",
@@ -7582,6 +7597,10 @@
       "required": "필수 항목"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "변경 사항",
         "label-details": "세부 정보",
@@ -8339,7 +8358,7 @@
       "fixed-value-options": {
         "label-fixed-values": "고정값"
       },
-      "label": "스칼라",
+      "label-field": "",
       "label-limit": "제한",
       "label-value": "값",
       "noOptionsMessage-no-fields-found": "필드를 찾을 수 없습니다",
@@ -8733,7 +8752,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "{{name}} 접기",
@@ -9059,6 +9080,7 @@
       "critical-path": "임계 경로",
       "critical-path-tooltip": "임계 경로(최소 추적 기간을 결정하는 가장 긴 종속 작업 시퀀스) 내 구간을 선택합니다.",
       "duration": "지속 시간",
+      "error-indicator": "",
       "errors": "오류",
       "errors-tooltip": "상태가 오류인 구간을 선택합니다.",
       "export-started": "내보내기가 시작되었습니다",
@@ -9076,11 +9098,17 @@
       "share-export-json": "JSON으로 내보내기",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "시작 시간",
+      "success-indicator": "",
       "target": "대상",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "트레이스 ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9669,6 +9697,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "그저께",
           "previousFiscalQuarter": "이전 회계 분기",
@@ -10577,7 +10607,6 @@
       "ariaLabel-panel-loading": "패널 로딩 표시줄",
       "ariaLabel-panel-status": "패널 상태",
       "errors-and-notices": "오류 및 알림",
-      "inspect-errors-notices": "검사",
       "tooltip-cancel": "쿼리 취소",
       "tooltip-cancel-loading": "쿼리 취소",
       "tooltip-stop-streaming": "스트리밍 중지",
@@ -10659,9 +10688,13 @@
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "클립보드로 복사",
       "csv-counts": "행:{{rows}}, 열:{{columns}}",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
@@ -12387,6 +12420,9 @@
       "subtitle": "경고 발생 여부를 결정하는 규칙",
       "title": "경고 규칙"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "경고 인스턴스가 실행될 때 연락처에 알리는 방법을 선택",
       "title": "연락처"
@@ -12456,6 +12492,7 @@
       "title": "생성"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "새 경고 규칙"
     },
     "create-dashboard": {
@@ -12490,6 +12527,10 @@
     },
     "explore": {
       "title": "탐색"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "실제 사용자 모니터링 인사이트 얻기",
@@ -12571,6 +12612,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "온콜"
     },
@@ -12601,6 +12646,10 @@
     },
     "profiles": {
       "title": "프로필"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -12869,8 +12918,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12885,6 +12933,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12898,15 +12950,64 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -12926,13 +13027,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12940,15 +13047,14 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -12962,9 +13068,13 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "new": {
+      "default-title": ""
     },
     "save-status": {
       "failed": "",
@@ -12974,6 +13084,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13005,10 +13116,19 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "설정 지우기"
+      "clear-tooltip": "설정 지우기",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "기준별 색상 시리즈"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13143,6 +13263,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "복사",
       "copy-styles": "스타일 복사",
       "download-diagnostics": "진단 다운로드",
@@ -14960,6 +15081,75 @@
       "title-data-source-help": "데이터 소스 도움말"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "필터 추가",
@@ -15732,7 +15922,6 @@
       "home-dashboard-placeholder": "기본 대시보드",
       "language-preference-label": "언어",
       "language-preference-placeholder": "언어 선택",
-      "theme-description": "실험적 테마가 맘에 드시나요? <2>여기</2>에서 원하시는 테마를 알려 주세요.</2>",
       "theme-label": "인터페이스 테마",
       "week-start-label": "주 시작 요일"
     },
@@ -16330,8 +16519,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16497,6 +16685,8 @@
       "name-faceted-filter": "시리즈 공개 여부"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "접근 가능 → 접근 가능한",
         "label-dash": "대시",
@@ -17643,7 +17833,7 @@
       "delete-modal-body": "\"{{name}}\"을(를) 삭제하시겠습니까?",
       "delete-modal-confirm": "삭제",
       "delete-modal-title": "변수 삭제",
-      "folder-description": "변수의 범위를 폴더로 지정하거나 루트 대시보드 폴더를 선택하여 전역으로 설정하세요(조직의 모든 곳에서 사용 가능)",
+      "folder-description": "",
       "folder-description-folder-only": "변수의 범위를 편집 가능한 폴더로 지정하세요.",
       "folder-label": "폴더",
       "moved": "변수 이동됨",
@@ -17663,7 +17853,7 @@
       "move": "이동",
       "moving": "이동 중...",
       "title": "변수 이동",
-      "body_other": "선택한 변수 {{count}}개를 이동합니다. 루트 대시보드 폴더를 선택하면 전역으로 설정됩니다(조직의 모든 곳에서 사용 가능).",
+      "body_other": "",
       "body-folder-only_other": "선택한 {{count}}개 변수를 편집 가능한 폴더로 이동하세요."
     },
     "page": {
@@ -17685,6 +17875,14 @@
       "select-all": "모든 변수 선택",
       "select-folder": "{{title}} 폴더의 모든 변수 선택",
       "select-variable": "{{name}} 변수 선택 "
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

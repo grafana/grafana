@@ -385,6 +385,10 @@ type AlertRule struct {
 	// If nil, alerts resolve after 2 missing evaluation intervals
 	// (i.e., resolution occurs during the second evaluation where data is absent).
 	MissingSeriesEvalsToResolve *int64
+	// K8sStatus is the serialized app-platform status subresource for this rule.
+	// It is opaque to ngalert internals — persisted and surfaced only by the rules
+	// API legacy storage adapter. nil when no status has been written yet.
+	K8sStatus []byte
 }
 
 type AlertRuleVersion struct {
@@ -635,6 +639,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 		ops,
 		cmp.Reporter(&reporter),
 		cmpopts.IgnoreFields(AlertQuery{}, "modelProps", "DatasourceType", "IsMTQuery"),
+		cmpopts.IgnoreFields(AlertRule{}, "K8sStatus"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)
@@ -962,16 +967,12 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Annotations != nil {
 		result.Annotations = make(map[string]string, len(alertRule.Annotations))
-		for s, s2 := range alertRule.Annotations {
-			result.Annotations[s] = s2
-		}
+		maps.Copy(result.Annotations, alertRule.Annotations)
 	}
 
 	if alertRule.Labels != nil {
 		result.Labels = make(map[string]string, len(alertRule.Labels))
-		for s, s2 := range alertRule.Labels {
-			result.Labels[s] = s2
-		}
+		maps.Copy(result.Labels, alertRule.Labels)
 	}
 
 	if alertRule.Record != nil {

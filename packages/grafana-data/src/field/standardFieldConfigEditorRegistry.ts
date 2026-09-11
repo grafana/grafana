@@ -3,6 +3,7 @@ import { type ComponentType } from 'react';
 import { type EventBus } from '../events/types';
 import { type DataFrame } from '../types/dataFrame';
 import { type VariableSuggestionsScope, type VariableSuggestion } from '../types/dataLink';
+import { type FieldConfigSource } from '../types/fieldOverrides';
 import { type InterpolateFunction } from '../types/panel';
 import { Registry, type RegistryItem } from '../utils/Registry';
 
@@ -17,6 +18,13 @@ export interface StandardEditorContext<TOptions, TState = any> {
   instanceState?: TState;
   isOverride?: boolean;
   annotations?: DataFrame[];
+  /**
+   * The panel's field config - standard defaults, custom defaults and override rules.
+   *
+   * Undefined outside a panel options pane (transformation editors, canvas inline edit) and while
+   * PanelPlugin collects static defaults, so always guard before reading.
+   */
+  fieldConfig?: FieldConfigSource;
 }
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any, TState = any> {

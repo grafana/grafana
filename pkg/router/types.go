@@ -4,27 +4,24 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Backend interface {
-	// The resource version string -- if this changes, you know that something has changed
-	RV() string
+	// The backend fingerprint; a change means the route must be rebuilt.
+	Key() string
 
 	// The group this route serves (must not contain /)
-	Group() string
+	Group() metav1.APIGroup
 
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
 	Load(context.Context) (http.Handler, error)
-
-	// Includes group, versions, resources, and custom route information
-	Manifest() app.ManifestData
 }
 
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory
-	// and that comparing changes can depend on the RV to know if anything has changed for the prefix
+	// and that comparing changes can depend on the key to know if anything has changed for the prefix
 	Load(context.Context) ([]Backend, error)
 
 	// Something changed with routing... reload the configs. The channel is a pure

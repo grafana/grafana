@@ -2,21 +2,61 @@ package appplugin
 
 import (
 	"fmt"
+	"maps"
+	"net/http"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	openapiutil "k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
 func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return apppluginV0.GetOpenAPIDefinitions
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		base := apppluginV0.GetOpenAPIDefinitions(ref)
+		if b.manifest != nil {
+			maps.Copy(base, kindstore.LoadOpenAPIDefinitions(ref, b.group, b.manifest))
+
+			// Server-side apply finds manifest GVKs through these generic route models.
+			base[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})] = b.unstructuredOpenAPIDefinition("")
+			base[openapiutil.GetCanonicalTypeName(unstructured.UnstructuredList{})] = b.unstructuredOpenAPIDefinition("List")
+		}
+		return base
+	}
+}
+
+// unstructuredOpenAPIDefinition adds the GVK metadata required by server-side apply.
+func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) common.OpenAPIDefinition {
+	s := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	gvks := []any{}
+	for _, version := range b.manifest.Versions {
+		if !version.Served {
+			continue
+		}
+		for _, kind := range version.Kinds {
+			gvks = append(gvks, map[string]any{
+				"group":   b.group,
+				"version": version.Name,
+				"kind":    kind.Kind + kindSuffix,
+			})
+		}
+	}
+	if len(gvks) > 0 {
+		s.AddExtension("x-kubernetes-group-version-kind", gvks)
+	}
+	return common.OpenAPIDefinition{Schema: s}
 }
 
 func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -28,7 +68,8 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if b.schemas != nil {
 		schema = b.schemas[version]
 		if schema.IsZero() {
-			schema = b.schemas[apppluginV0.VERSION] // v0 is always configured
+			// The settings kind uses the same schema in every version.
+			schema = b.schemas[apppluginV0.VERSION]
 		}
 	}
 
@@ -48,7 +89,10 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	oas.Info.AddExtension("x-grafana-plugin", info)
 
 	// The root api URL
-	root := fmt.Sprintf("/apis/%s/%s/", b.pluginJSON.ID, version)
+	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
+
+	b.postProcessManifestKinds(oas, root, version)
+	b.dropUnstructuredModels(oas, version)
 
 	// Hide the resource+proxy routes -- explicit ones will be added if defined below
 	for _, v := range []string{"resources", "proxy"} {
@@ -71,7 +115,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if !ok {
 		return nil, fmt.Errorf("missing settings type")
 	}
-	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.pluginJSON.ID, version))
+	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
 
 	// Always transform results
@@ -91,17 +135,199 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	})
 }
 
-// specVersion returns the version of the group-version spec being processed.
-// The builder framework stamps every per-version spec with
-// Info.Title = "<group>/<version>" before post-processing runs, and for app
-// plugins the group is the plugin id.
+// specVersion reads the group version from the title set by the API builder.
 func (b *AppPluginAPIBuilder) specVersion(oas *spec3.OpenAPI) string {
 	if oas.Info != nil {
-		if version, ok := strings.CutPrefix(oas.Info.Title, b.pluginJSON.ID+"/"); ok && version != "" {
+		if version, ok := strings.CutPrefix(oas.Info.Title, b.group+"/"); ok && version != "" {
 			return version
 		}
 	}
 	return apppluginV0.VERSION
+}
+
+// postProcessManifestKinds replaces generic route schemas with manifest schemas.
+func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root string, version string) {
+	if b.manifest == nil || oas.Components == nil || oas.Components.Schemas == nil {
+		return
+	}
+
+	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
+		return spec.MustCreateRef("#/components/schemas/" + name)
+	}, b.group, b.manifest)
+	prefix := b.group + "." + version + "."
+	for name, def := range defs {
+		if strings.HasPrefix(name, prefix) {
+			s := def.Schema
+			oas.Components.Schemas[name] = &s
+		}
+	}
+
+	info := &operationInfo{defs: defs}
+	gvk := schema.GroupVersionKind{Group: b.group}
+	for _, v := range b.manifest.Versions {
+		if v.Name != version || !v.Served {
+			continue
+		}
+		gvk.Version = v.Name
+		for _, kind := range v.Kinds {
+			if kind.Schema == nil {
+				continue
+			}
+			gvk.Kind = kind.Kind
+			name := kindstore.OpenAPIName(gvk)
+			ref := spec.MustCreateRef("#/components/schemas/" + name)
+			base := root + "namespaces/{namespace}/" + strings.ToLower(kind.Plural)
+			if kind.Scope == kindstore.ClusterScope {
+				base = root + strings.ToLower(kind.Plural)
+			}
+
+			info.kind = &kind
+			info.gvk = gvk
+			info.name = name
+
+			// PATCH requests contain patch documents, not full resources.
+			for _, path := range []string{base, base + "/{name}", base + "/{name}/status"} {
+				if p := oas.Paths.Paths[path]; p != nil {
+					for _, op := range []*spec3.Operation{p.Get, p.Put, p.Post} {
+						info.isPOST = p.Post == op
+						setOperationRequestResponseBodies(op, ref, info)
+					}
+					setOperationResponseBodies(p.Patch, ref)
+				}
+			}
+
+			listName := name + "List"
+			oas.Components.Schemas[listName] = kindListSchema(kind.Kind, ref)
+			if p := oas.Paths.Paths[base]; p != nil && p.Get != nil {
+				setResponseSchemaRef(p.Get, http.StatusOK,
+					spec.MustCreateRef("#/components/schemas/"+listName))
+			}
+		}
+	}
+}
+
+// dropUnstructuredModels removes the generic models a manifest kind's own schema
+// replaced.
+//
+// A manifest kind is stored as an unstructured object, so the route builder
+// describes its bodies with that Go type's model, published under a name like
+// "k8s.io~1apimachinery~1pkg~1apis~1meta~1v1~1unstructured.Unstructured".
+// postProcessManifestKinds points every one of those bodies at the kind's own
+// schema, which leaves the models in the spec with nothing referring to them.
+//
+// They stay in GetOpenAPIDefinitions, which is a different consumer: server-side
+// apply resolves a manifest GVK through the group-version-kind extension on
+// them. That is the server's own bookkeeping, and a client reading this spec has
+// the kind's real schema instead.
+func (b *AppPluginAPIBuilder) dropUnstructuredModels(oas *spec3.OpenAPI, version string) {
+	if b.manifest == nil || oas.Components == nil || oas.Components.Schemas == nil {
+		return
+	}
+	for _, v := range b.manifest.Versions {
+		if v.Name != version || !v.Served {
+			continue
+		}
+		for _, kind := range v.Kinds {
+			// A kind with no schema had nothing to be replaced by, so its bodies
+			// still refer to the generic model and it has to stay.
+			if kind.Schema == nil {
+				return
+			}
+		}
+	}
+	for _, model := range []any{unstructured.Unstructured{}, unstructured.UnstructuredList{}} {
+		delete(oas.Components.Schemas,
+			common.EscapeJsonPointer(openapiutil.GetCanonicalTypeName(model)))
+	}
+}
+
+// kindListSchema builds a list without kube-openapi's unavailable ref-wrapping pass.
+func kindListSchema(kind string, itemRef spec.Ref) *spec.Schema {
+	return &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Description: kind + "List is a list of " + kind,
+			Type:        []string{"object"},
+			Properties: map[string]spec.Schema{
+				"kind": *spec.StringProperty().WithDescription(
+					"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"),
+				"apiVersion": *spec.StringProperty().WithDescription(
+					"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"),
+				"metadata": {SchemaProps: spec.SchemaProps{
+					Ref: spec.MustCreateRef("#/components/schemas/" + v1.ListMeta{}.OpenAPIModelName()),
+				}},
+				"items": {SchemaProps: spec.SchemaProps{
+					Type: []string{"array"},
+					Items: &spec.SchemaOrArray{
+						Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: itemRef}},
+					},
+				}},
+			},
+			Required: []string{"metadata", "items"},
+		},
+	}
+}
+
+// setResponseSchemaRef updates every media type for one response code.
+func setResponseSchemaRef(op *spec3.Operation, code int, ref spec.Ref) {
+	if op.Responses == nil {
+		return
+	}
+	resp := op.Responses.StatusCodeResponses[code]
+	if resp == nil {
+		return
+	}
+	for _, mt := range resp.Content {
+		mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+	}
+}
+
+// setOperationRequestResponseBodies updates an operation's request and responses.
+func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref, info *operationInfo) {
+	if op == nil {
+		return
+	}
+	if op.RequestBody != nil {
+		for _, mt := range op.RequestBody.Content {
+			mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+
+			if info.isPOST {
+				example := &unstructured.Unstructured{}
+				example.SetAPIVersion(info.gvk.GroupVersion().String())
+				example.SetKind(info.gvk.Kind)
+				example.SetGenerateName("x")
+				if info.kind != nil && kindstore.IsFolderScoped(*info.kind) {
+					example.SetAnnotations(map[string]string{
+						utils.AnnoKeyFolder: "{folder-name}",
+					})
+				}
+
+				// SPEC -- TODO? add an example in the manifest
+				if prop := info.specProperty(); prop != nil {
+					if v := info.exampleValue(prop, map[string]bool{}, "spec"); v != nil {
+						example.Object["spec"] = v
+					}
+				}
+
+				mt.Example = example
+			}
+		}
+	}
+	setOperationResponseBodies(op, ref)
+}
+
+// setOperationResponseBodies updates every response body for an operation.
+func setOperationResponseBodies(op *spec3.Operation, ref spec.Ref) {
+	if op == nil || op.Responses == nil {
+		return
+	}
+	for code, res := range op.Responses.StatusCodeResponses {
+		if code < http.StatusOK || code >= http.StatusMultipleChoices {
+			continue
+		}
+		for _, mt := range res.Content {
+			mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+		}
+	}
 }
 
 func defaultSchema() *pluginschema.PluginSchema {
@@ -134,4 +360,116 @@ func defaultSchema() *pluginschema.PluginSchema {
 			},
 		},
 	}
+}
+
+type operationInfo struct {
+	defs   map[string]common.OpenAPIDefinition
+	gvk    schema.GroupVersionKind
+	kind   *app.ManifestVersionKind
+	name   string // schema name {group}.{version}.{kind}
+	isPOST bool
+}
+
+// specProperty returns the kind's spec property. It is usually a $ref into the
+// manifest definitions, so it must be resolved before it can be walked.
+func (info *operationInfo) specProperty() *spec.Schema {
+	def, ok := info.defs[info.name]
+	if !ok {
+		return nil
+	}
+	prop, ok := def.Schema.Properties["spec"]
+	if !ok {
+		return nil
+	}
+	return &prop
+}
+
+// refName returns the definition key a $ref points at. Manifest refs are
+// written as "#/components/schemas/{group}.{version}.{Kind}{Field}".
+func refName(ref spec.Ref) string {
+	s := ref.String()
+	if i := strings.LastIndex(s, "/"); i >= 0 {
+		return s[i+1:]
+	}
+	return s
+}
+
+// exampleValue builds a placeholder value for a schema, resolving $refs against
+// the manifest definitions. visited holds the refs on the current path so a
+// self-referencing kind (a tree node containing itself) terminates.
+func (info *operationInfo) exampleValue(s *spec.Schema, visited map[string]bool, parent string) any {
+	if s == nil {
+		return nil
+	}
+	if name := refName(s.Ref); name != "" {
+		def, ok := info.defs[name]
+		if !ok || visited[name] {
+			// Unknown (eg ObjectMeta) or recursive -- stop expanding here.
+			return map[string]any{}
+		}
+		visited[name] = true
+		defer delete(visited, name)
+		s = &def.Schema
+	}
+	switch {
+	case s.Example != nil:
+		return s.Example
+	case s.Default != nil:
+		return s.Default
+	case len(s.Enum) > 0:
+		return s.Enum[0]
+	}
+	switch {
+	case len(s.Properties) > 0:
+		obj := map[string]any{}
+		for k, prop := range s.Properties {
+			if prop.ReadOnly {
+				continue
+			}
+			obj[k] = info.exampleValue(&prop, visited, k)
+		}
+		return obj
+	case s.Type.Contains("array"):
+		if s.Items != nil && s.Items.Schema != nil {
+			return []any{info.exampleValue(s.Items.Schema, visited, parent)}
+		}
+		return []any{}
+	case s.Type.Contains("object"):
+		obj := map[string]any{}
+		if s.AdditionalProperties != nil && s.AdditionalProperties.Schema != nil {
+			obj["key"] = info.exampleValue(s.AdditionalProperties.Schema, visited, parent)
+		}
+		return obj
+	case s.Type.Contains("string"):
+		return exampleString(s.Format, parent)
+	case s.Type.Contains("integer"):
+		return 0
+	case s.Type.Contains("number"):
+		return 0.0
+	case s.Type.Contains("boolean"):
+		return false
+	}
+	return nil
+}
+
+// exampleString returns a value that satisfies the common string formats, since
+// a plain "example" is rejected by clients validating format.
+func exampleString(format string, key string) string {
+	switch format {
+	case "date-time":
+		return "2020-01-02T15:04:05Z"
+	case "date":
+		return "2020-01-02"
+	case "duration":
+		return "5m"
+	case "uuid":
+		return "00000000-0000-0000-0000-000000000000"
+	case "email":
+		return key + "@example.com"
+	case "uri", "url":
+		return "https://" + key + ".com"
+	case "byte":
+		return "ZXhhbXBsZQ=="
+	}
+	return key
 }

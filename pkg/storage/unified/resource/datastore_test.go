@@ -3240,7 +3240,7 @@ func TestIntegrationDataStore_BatchDelete(t *testing.T) {
 func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	keys := make([]DataKey, 95)
-	for i := 0; i < 95; i++ {
+	for i := range 95 {
 		rv := node.Generate().Int64()
 		keys[i] = DataKey{
 			Namespace:       "test-namespace",
@@ -3260,7 +3260,7 @@ func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) 
 	require.NoError(t, err)
 
 	// Verify all events were deleted
-	for i := 0; i < 95; i++ {
+	for i := range 95 {
 		_, err := ds.Get(ctx, DataKey{
 			Namespace: "test-namespace",
 			Group:     "test-group",
@@ -3283,7 +3283,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 		keys := make([]DataKey, 5)
 		expectedContent := make(map[string]string)
 
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			rv := node.Generate().Int64()
 			keys[i] = DataKey{
 				Namespace:       "test-namespace",
@@ -3323,7 +3323,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
 		existingKeys := make([]DataKey, 3) //nolint:prealloc
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{
 				Namespace:       "test-namespace",
@@ -3340,7 +3340,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 		// Create 2 non-existent keys (not saved to datastore)
 		nonExistentKeys := make([]DataKey, 2)
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			rv := node.Generate().Int64()
 			nonExistentKeys[i] = DataKey{
 				Namespace:       "test-namespace",
@@ -3381,7 +3381,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 		keys := make([]DataKey, numKeys)
 		expectedContent := make(map[string]string)
 
-		for i := 0; i < numKeys; i++ {
+		for i := range numKeys {
 			rv := node.Generate().Int64()
 			keys[i] = DataKey{
 				Namespace:       "batch-test",

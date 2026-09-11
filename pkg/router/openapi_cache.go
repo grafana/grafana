@@ -6,18 +6,18 @@ import (
 )
 
 // openapiCacheEntry is one cached per-group-version OpenAPI v3 document.
-// Valid only while rv matches the backend's current RV (checked by the
-// caller); a stale rv is a cache miss, not an eviction — the sync.Map entry
+// Valid only while key matches the backend's current key (checked by the
+// caller); a stale key is a cache miss, not an eviction — the sync.Map entry
 // is simply overwritten on the next successful fetch.
 type openapiCacheEntry struct {
-	rv   string
+	key  string
 	etag string
 	body []byte
 }
 
 // stripConditionalHeaders removes conditional-GET headers from a request
 // before proxying it upstream on a cache miss. Without this, a client's
-// If-None-Match that didn't match our RV-based ETag (so we decided to proxy)
+// If-None-Match that didn't match our key-based ETag (so we decided to proxy)
 // could still coincidentally match the backend's own unrelated ETag scheme,
 // producing a bodyless 304 we'd have no way to distinguish from "unchanged"
 // — a phantom empty response with nothing to cache or serve. Stripping
@@ -25,6 +25,26 @@ type openapiCacheEntry struct {
 func stripConditionalHeaders(req *http.Request) {
 	req.Header.Del("If-None-Match")
 	req.Header.Del("If-Modified-Since")
+}
+
+// stripHashQueryParam removes the "hash" query parameter before proxying a
+// request upstream. Our discovery doc (buildOpenAPIV3Index) hash-busts each
+// group-version's serverRelativeURL with our own key, an opaque cache token
+// with no relation to the backend's content. But kube-openapi's own
+// handler3 treats a client-supplied "hash" as a claim about ITS content
+// hash and 301-redirects to the correct one on mismatch -- a redirect
+// rejectBackendRedirects then turns into a 502. Since our key essentially
+// never matches the backend's real hash, forwarding it verbatim breaks
+// every cold-cache request. Stripping it here keeps the key-based
+// busting meaningful for our own cache/ETag while never surfacing our
+// token to a protocol that expects its own.
+func stripHashQueryParam(req *http.Request) {
+	q := req.URL.Query()
+	if !q.Has("hash") {
+		return
+	}
+	q.Del("hash")
+	req.URL.RawQuery = q.Encode()
 }
 
 // captureWriter records a proxied response (status + body) so it can be

@@ -33,6 +33,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const {
     currentLog,
     closeDetails,
+    displayedRowIndices,
     enableLogDetails,
     logs,
     prettifyDetailsJSON,
@@ -48,6 +49,20 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
+
+  const navigableLogs = useMemo(() => {
+    if (!displayedRowIndices.length) {
+      return logs;
+    }
+    const next: typeof logs = [];
+    for (const index of displayedRowIndices) {
+      const log = logs[index];
+      if (log) {
+        next.push(log);
+      }
+    }
+    return next;
+  }, [displayedRowIndices, logs]);
 
   const handleCloseDetails = useCallback(() => {
     inputRef.current = '';
@@ -85,10 +100,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
       } else {
         return;
       }
-      if (!currentLog || logs.findIndex((log) => log.uid === currentLog.uid) < 0) {
+      if (!currentLog || navigableLogs.findIndex((log) => log.uid === currentLog.uid) < 0) {
         return;
       }
-      const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
+      const nextLog = navigableLogs[navigableLogs.findIndex((log) => log.uid === currentLog.uid) + delta];
       if (!nextLog) {
         return;
       }
@@ -97,7 +112,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
     }
     document.addEventListener('keydown', handleKeydown);
     return () => document.removeEventListener('keydown', handleKeydown);
-  }, [containerElement, currentLog, logs, replaceDetails]);
+  }, [containerElement, currentLog, navigableLogs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;

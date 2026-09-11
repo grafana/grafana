@@ -99,6 +99,7 @@ export function getFieldOverrideCategories(
     const overrideData = getFramesForMatcherScope(data, override.matcher.scope);
     const context = {
       data: overrideData,
+      fieldConfig: currentFieldConfig,
       getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
       isOverride: true,
     };

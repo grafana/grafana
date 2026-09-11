@@ -104,19 +104,13 @@ export function setupAutoSyncConfigAbsent(server: SetupServer) {
   return { requestSpy };
 }
 
-/**
- * Quotes the resource name on purpose: they catch i18next escaping the interpolated message.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
- */
+/** Quotes the resource name on purpose: they catch i18next escaping the interpolated message. */
 export const CONFIG_READ_FAILURE_MESSAGE =
   'Internal error occurred: failed to read config "default": etcdserver: request timed out';
 
 /**
  * Fail the Config GET with something other than a 404 — no amount of waiting fixes it. The
  * `requestSpy` lets a test installing this mid-flight confirm the failing read landed.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export function setupAutoSyncConfigReadError(
   server: SetupServer,
@@ -146,8 +140,6 @@ interface PatchOperation {
  * Stateful Config handlers: PATCH applies to the stored object and GET serves it, so a refetch
  * observes the saved UID. Every write bumps `metadata.resourceVersion`, as a real apiserver does —
  * the UI must not pin it, since the worker bumps it every tick too.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export function setupStatefulAutoSyncConfig(server: SetupServer, options: AutoSyncConfigOptions = {}) {
   let stored = buildAutoSyncConfig(CONFIG_SINGLETON_NAME, options);
@@ -180,8 +172,6 @@ export function setupStatefulAutoSyncConfig(server: SetupServer, options: AutoSy
  * rejection or a backend error. Admission always allows *clearing* the UID, even for an
  * ini-managed org (see config_validator.go), so this does not represent that case — use
  * `setupStatefulAutoSyncConfig` with `origin: 'ini'` for an ini-managed sync instead.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export function setupAutoSyncConfigWriteError(
   server: SetupServer,
