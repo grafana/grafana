@@ -86,10 +86,7 @@ describe('NotebookAnalytics.loaded', () => {
   });
 });
 
-/**
- * The panel properties are read here rather than at the call site, so this asserts the payload that
- * goes out rather than what the caller handed over.
- */
+/** The wrapper reads the panel properties, so this asserts the payload that goes out. */
 describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
   let events: Array<Record<string, unknown>>;
   let unsubscribe: () => void;
@@ -124,8 +121,8 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
   });
 
   /**
-   * A library panel from a dashboard arrives inlined, as an ordinary Panel element. Reading the flag
-   * off that element reported every one of them as not a library panel, so it comes from the caller.
+   * A library panel arrives inlined, as an ordinary Panel element. Reading the flag off that element
+   * reported every library panel as not one. So the flag comes from the caller.
    */
   it('reports a library panel as one even though it arrives inlined', () => {
     NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'dashboard_panel', 0, {
@@ -140,8 +137,8 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
 });
 
 /**
- * The same panel properties as the add event, because a create from "Add to notebook" is the other
- * half of the same action: the panel lands in a notebook that did not exist yet.
+ * Carries the same panel properties as the add event. A create from "Add to notebook" is the other
+ * half of the same action.
  */
 describe('NotebookAnalytics.created', () => {
   let events: Array<Record<string, unknown>>;
@@ -174,8 +171,8 @@ describe('NotebookAnalytics.created', () => {
     ]);
   });
 
-  // The blank notebook route creates from whatever cells exist by the first save, so there is no one
-  // panel to describe and the four properties are left off rather than sent empty.
+  // The blank notebook route creates from whatever cells exist by the first save. There is no one
+  // panel to describe, so the four properties are left off rather than sent empty.
   it('sends no panel properties for a create that came with no panel', () => {
     NotebookAnalytics.created('nb-2', 'notebook_list', 3);
 

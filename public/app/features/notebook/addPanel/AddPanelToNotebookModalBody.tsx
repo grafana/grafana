@@ -52,8 +52,8 @@ interface Props {
   /** Which surface opened this modal, for the notebook_created analytics event when it creates one. */
   entryPoint: NotebookEntryPoint;
   /**
-   * Whether the panel being sent is a library panel, for the same analytics. Taken from the caller
-   * because the built element cannot say: a loaded library panel is inlined on the way here.
+   * Whether the panel is a library panel, for the same analytics. The caller passes it in, because a
+   * loaded library panel is inlined on the way here and the built element cannot say.
    */
   isLibraryPanel: boolean;
 }
@@ -117,8 +117,8 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
 
       isSubmittingRef.current = true;
 
-      // Tells a panel that would not serialize apart from a write that failed: both land in the
-      // same catch, as plain Errors.
+      // A failed serialize and a failed write both land in the catch below, as plain Errors. This
+      // tells them apart.
       let panelWasBuilt = false;
 
       try {
@@ -148,8 +148,8 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
         );
         onDismiss();
       } catch (error) {
-        // Reported here rather than beside the successes in addPanelToNotebook: this is the only
-        // place that sees both routes, and the panel build that comes before either of them.
+        // Reported here, not beside the successes in addPanelToNotebook. Only this place sees both
+        // routes, and the panel build that runs before them.
         NotebookAnalytics.addToNotebookFailed(
           existingUid ?? '',
           entryPoint,

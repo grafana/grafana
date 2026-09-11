@@ -51,8 +51,8 @@ const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('creat
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
 
 /**
- * Fired when a panel is added through "Add to notebook", from Explore or a dashboard. For a cell added
- * inside an editing session, the session keeps a count on `edit_session_ended` instead.
+ * Fired when a panel is added through "Add to notebook", from Explore or a dashboard. A cell added
+ * inside an editing session is counted on `edit_session_ended` instead.
  */
 const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAddedFromAddToNotebookProperties>(
   'cell_added_from_add_to_notebook'
@@ -62,18 +62,19 @@ const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAd
 const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
 
 /**
- * Fired when an "Add to notebook" submit fails, on either route: nothing was added and nothing was
- * created. The successes are `cell_added_from_add_to_notebook` for an existing notebook and
- * `created` for a new one, so `target` says which of the two this attempt was aiming for.
+ * Fired when an "Add to notebook" submit fails. Nothing was added and nothing was created.
+ *
+ * The successes are `cell_added_from_add_to_notebook` and `created`. `target` says which of the two
+ * this attempt was aiming for.
  */
 const createAddFailedEvent = createNotebookEvent<NotebookAddFailedProperties>('add_to_notebook_failed');
 
-/** The single panel an add or a create came with, so both events describe it the same way. */
+/** The one panel an add or a create came with, so both events describe it the same way. */
 interface AddedPanel {
   panel: PanelElement;
   /**
-   * Passed in rather than read off the panel: the dashboard inlines a loaded library panel on the way
-   * here, so the element itself no longer says that it came from the library.
+   * The caller passes this in. The dashboard inlines a loaded library panel on the way here, so the
+   * element no longer says that it came from the library.
    */
   isLibraryPanel: boolean;
 }
@@ -124,8 +125,8 @@ export const NotebookAnalytics = {
       notebookUid,
       source,
       cellCount,
-      // Absent for the blank notebook route, which creates the notebook from whatever cells exist by
-      // its first save rather than around one panel.
+      // The blank notebook route sends none of these. It creates from whatever cells exist by its
+      // first save, not around one panel.
       ...(addedPanel && addedPanelProperties(addedPanel)),
     });
   },

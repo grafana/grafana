@@ -14,9 +14,10 @@ function libraryPanelBehavior(isLoaded: boolean) {
 }
 
 /**
- * The flag is read off the panel the menu opened on rather than off the element the builder returns:
- * buildPanelElementFromDashboard inlines a loaded library panel, so that element reads as an
- * ordinary panel and reported every library panel as not being one.
+ * buildPanelElementFromDashboard inlines a loaded library panel. The element it returns then reads
+ * as an ordinary panel, which reported every library panel as not one.
+ *
+ * So the flag is read from the panel the menu opened on.
  */
 describe('AddPanelToNotebookScene.isLibraryPanel', () => {
   it.each([true, false])('is true for a library panel, whether or not its model has loaded: %p', (isLoaded) => {

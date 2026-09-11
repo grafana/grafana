@@ -1,13 +1,12 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 
-// EventProperty interfaces for each notebook analytics event land here, one per event, plus the
-// property groups that several events send. A group is shared when one reader in shape.ts computes
-// it in one go and every event that sends it means the same thing by it, so the wording is written
-// once. A property whose meaning changes per event, such as notebookUid or source, stays declared on
-// each event: the per-event caveat is the only thing those docs carry.
+// One EventProperty interface per notebook event, plus the property groups that several events send.
 //
-// The groups extend EventProperty like the events do, which the define-feature-events lint rule asks
-// of every interface in here. That is also what lets a reader in shape.ts return the group directly.
+// Share a group when one reader in shape.ts computes it in one go, and every event means the same
+// thing by it. Keep a property on each event when its meaning changes per event, like notebookUid.
+//
+// The groups extend EventProperty because the define-feature-events rule asks that of every
+// interface here. A reader in shape.ts can then return a group as it is.
 
 /** What a notebook held when the event fired, as readNotebookShape computes it. */
 export interface NotebookShape extends EventProperty {
@@ -31,7 +30,7 @@ export interface NotebookShape extends EventProperty {
   datasourceCount: number;
 }
 
-/** What the panel being added says about itself, as readAddedPanelShape reads it off the spec. */
+/** What the added panel says about itself, as readAddedPanelShape reads it off the spec. */
 export interface AddedPanelShape extends EventProperty {
   /** The panel's visualization plugin ID. Empty when only a library panel reference was stored. */
   panelType: string;
@@ -42,15 +41,13 @@ export interface AddedPanelShape extends EventProperty {
 }
 
 /**
- * Everything an event says about the panel being added: what the spec can answer, plus the one thing
- * it cannot. The dashboard inlines a loaded library panel before it is serialized, so the element
- * stops saying that it came from the library and the caller has to pass that in.
+ * What an event says about the added panel. The spec answers the first three.
+ *
+ * The caller passes isLibraryPanel in. The dashboard inlines a loaded library panel before we store
+ * it, so the stored element cannot answer that one.
  */
 interface AddedPanelProperties extends EventProperty, AddedPanelShape {
-  /**
-   * Whether the panel came from the library. The notebook stores it inlined, so it stops following
-   * later library edits.
-   */
+  /** Whether the panel came from the library. The notebook stores it inlined, so library edits stop reaching it. */
   isLibraryPanel: boolean;
 }
 
@@ -208,7 +205,7 @@ export interface NotebookAutosaveFailedProperties extends EventProperty {
   attempt: number;
 }
 
-/** Where the panel was headed: a notebook the user picked, or one the same submit would create. */
+/** Where the panel was headed. Either a notebook the user picked, or one the same submit creates. */
 export const NOTEBOOK_ADD_TARGET = {
   NEW: 'new',
   EXISTING: 'existing',
@@ -217,11 +214,13 @@ export const NOTEBOOK_ADD_TARGET = {
 export type NotebookAddTarget = (typeof NOTEBOOK_ADD_TARGET)[keyof typeof NOTEBOOK_ADD_TARGET];
 
 /**
- * Why an "Add to notebook" attempt failed. `build_failed` means the panel could not be turned into
- * a spec, so nothing was sent. `conflict` means someone else changed the notebook first, which is
- * the one failure a retry fixes. `write_failed` is every other failed request. `build_failed` and
- * `write_failed` are spelled as they are in `NOTEBOOK_AUTOSAVE_FAILED_REASON`, so both write paths
- * read the same across events.
+ * Why an "Add to notebook" attempt failed.
+ *
+ * `build_failed`: the panel could not be turned into a spec, so nothing was sent.
+ * `conflict`: someone else changed the notebook first. A retry fixes this one.
+ * `write_failed`: every other failed request.
+ *
+ * The two shared names match `NOTEBOOK_AUTOSAVE_FAILED_REASON`, so both write paths read the same.
  */
 export const NOTEBOOK_ADD_FAILED_REASON = {
   BUILD_FAILED: 'build_failed',
