@@ -542,9 +542,9 @@ describe('getVisualizationOptions', () => {
 
     const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-12', fieldConfig });
 
-    const getPlugin = (
+    const getPlugin = <TOptions>(
       fieldConfigItems: FieldConfigPropertyItem[],
-      optionsSupplier?: (builder: PanelOptionsEditorBuilder<unknown>) => void
+      optionsSupplier?: (builder: PanelOptionsEditorBuilder<TOptions>) => void
     ) =>
       ({
         meta: { skipDataQuery: false, name: 'Timeseries' },
@@ -619,6 +619,26 @@ describe('getVisualizationOptions', () => {
       };
 
       expect(buildOptions(getPlugin([], supplier), {})).toEqual([]);
+    });
+
+    it('types the editor context to the panel options, so a showIf needs no cast', () => {
+      interface LegendOptions {
+        legend: { showLegend: boolean };
+      }
+
+      const supplier = (builder: PanelOptionsEditorBuilder<LegendOptions>) => {
+        builder.addCustomEditor({
+          id: 'legendValues',
+          path: 'legend.values',
+          name: 'Legend values',
+          editor: jest.fn(),
+          // ctx.options is LegendOptions here, not unknown - this stops compiling if that regresses
+          showIf: (_options, _data, _annotations, ctx) => ctx?.options?.legend.showLegend === true,
+        });
+      };
+
+      expect(buildOptions(getPlugin([], supplier), { legend: { showLegend: true } })[0].items.length).toEqual(1);
+      expect(buildOptions(getPlugin([], supplier), { legend: { showLegend: false } })).toEqual([]);
     });
 
     it('shows a panel option when its showIf matches the field config', () => {

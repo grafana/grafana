@@ -7,7 +7,7 @@ import { type DataFrame } from './dataFrame';
  *
  * @beta
  */
-export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
+export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any, TContextOptions = unknown> {
   /**
    * Path of the option property to control.
    *
@@ -66,6 +66,6 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
     currentOptions: TOptions,
     data?: DataFrame[],
     annotations?: DataFrame[],
-    context?: StandardEditorContext<unknown>
+    context?: StandardEditorContext<TContextOptions>
   ) => boolean | undefined;
 }

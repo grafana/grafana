@@ -257,7 +257,8 @@ export function isNestedPanelOptions(item: unknown): item is NestedPanelOptionsB
 export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
   StandardEditorProps,
-  PanelOptionsEditorItem<TOptions>
+  PanelOptionsEditorItem<TOptions>,
+  TOptions
 > {
   addNestedOptions<Sub>(opts: NestedPanelOptions<Sub>) {
     const s = new NestedPanelOptionsBuilder<Sub>(opts);
