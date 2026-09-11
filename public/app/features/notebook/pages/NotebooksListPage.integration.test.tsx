@@ -68,9 +68,15 @@ function setupNotebooksApi() {
 
   server.use(
     http.post(NOTEBOOKS_SEARCH_URL, async ({ request }) => {
-      searchRequests++;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- shape asserted by the test
-      bodies.push((await request.json()) as Record<string, unknown>);
+      const body = (await request.json()) as Record<string, unknown>;
+      // The tag filter's facet shares this path. It is not a search for rows, so it is answered
+      // without being counted as one — otherwise "the list refetched" could pass on a facet.
+      if (body.facets) {
+        return HttpResponse.json({ metadata: { totalHits: 0, totalHitsRelation: 'eq' }, items: [] });
+      }
+      searchRequests++;
+      bodies.push(body);
       return HttpResponse.json({
         metadata: { totalHits: items.length, totalHitsRelation: 'eq' },
         items,
@@ -169,7 +175,12 @@ describe('NotebooksListPage (integration)', () => {
     server.use(
       http.post(NOTEBOOKS_SEARCH_URL, async ({ request }) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test-local shape
-        const body = (await request.json()) as { continue?: string };
+        const body = (await request.json()) as { continue?: string; facets?: string[] };
+        // The tag filter's facet is a POST to this same path. It asks for no rows and carries no
+        // cursor, so recording it here would count it as a page of the walk.
+        if (body.facets) {
+          return HttpResponse.json({ metadata: { totalHits: 0, totalHitsRelation: 'eq' }, items: [] });
+        }
         cursors.push(body.continue);
         // Tokens are named for the page they lead to, so the cursor doubles as the index.
         const page = body.continue ? pages[Number(body.continue.replace('cursor-', '')) - 1] : pages[0];

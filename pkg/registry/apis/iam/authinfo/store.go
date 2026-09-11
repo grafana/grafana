@@ -76,12 +76,12 @@ func (l *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 	return resourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-// encodeName builds the deterministic object name for a (userUID, authModule) pair.
-func encodeName(userUID, authModule string) string {
+// EncodeName builds the deterministic object name for a (userUID, authModule) pair.
+func EncodeName(userUID, authModule string) string {
 	return userUID + "." + strings.ReplaceAll(authModule, "_", "-")
 }
 
-// decodeName reverses encodeName.
+// decodeName reverses EncodeName.
 func decodeName(name string) (userUID, authModule string, ok bool) {
 	userUID, encodedModule, ok := strings.Cut(name, ".")
 	if !ok {
@@ -217,7 +217,7 @@ func (l *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	userUID := authInfoObj.Spec.UserRef.Name
 	authModule := authInfoObj.Spec.AuthModule
 
-	expectedName := encodeName(userUID, authModule)
+	expectedName := EncodeName(userUID, authModule)
 	if authInfoObj.Name != "" && authInfoObj.Name != expectedName {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("metadata.name must be %q for spec.userRef.name %q and spec.authModule %q", expectedName, userUID, authModule))
 	}
@@ -350,7 +350,7 @@ func (l *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 func mapToAuthInfoObject(ns claims.NamespaceInfo, userUID string, ua *login.UserAuth) iamv0alpha1.AuthInfo {
 	result := iamv0alpha1.AuthInfo{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              encodeName(userUID, ua.AuthModule),
+			Name:              EncodeName(userUID, ua.AuthModule),
 			Namespace:         ns.Value,
 			ResourceVersion:   fmt.Sprintf("%d", ua.Created.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(ua.Created),
