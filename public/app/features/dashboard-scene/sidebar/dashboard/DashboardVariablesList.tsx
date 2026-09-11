@@ -10,12 +10,10 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import {
-  partitionVariablesByDisplay,
-  partitionVariablesByEditability,
-} from '../../settings/variables/partitionVariables';
-import { getDefaultTopPlacementLabel } from '../../settings/variables/utils';
+import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
+import { getDefaultTopPlacementLabel, isVariableEditable } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
+import { partitionSceneObjects } from '../../utils/partitionSceneObjects';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
@@ -124,4 +122,11 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
       tooltip={t('dashboard.sidebar.variables.add-variable', 'Add variable')}
     />
   );
+}
+
+export function partitionVariablesByEditability(variables: SceneVariable[]) {
+  const { editable = [], nonEditable = [] } = partitionSceneObjects(variables, (v) =>
+    isVariableEditable(v) ? 'editable' : 'nonEditable'
+  );
+  return { editable, nonEditable };
 }
