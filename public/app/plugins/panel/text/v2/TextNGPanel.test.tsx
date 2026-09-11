@@ -51,6 +51,19 @@ jest.mock('@grafana/ui/unstable', () => ({
   ),
 }));
 
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
+}));
+
 const replaceVariablesMock = jest.fn();
 const defaultProps = createProps(replaceVariablesMock);
 

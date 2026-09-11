@@ -2,13 +2,21 @@ package vertex
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"strings"
+	"time"
 
 	aiplatform "cloud.google.com/go/aiplatform/apiv1"
 	"cloud.google.com/go/aiplatform/apiv1/aiplatformpb"
 	"google.golang.org/api/option"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
 // httpClient is the production Client backed by Google's aiplatform SDK
@@ -82,7 +90,7 @@ func (c *httpClient) PredictEmbeddings(ctx context.Context, model string, texts 
 
 	resp, err := c.pred.Predict(ctx, req)
 	if err != nil {
-		return EmbeddingResult{}, fmt.Errorf("vertex: predict: %w", err)
+		return EmbeddingResult{}, fmt.Errorf("vertex: predict: %w", retryableError(err))
 	}
 	if len(resp.GetPredictions()) != len(texts) {
 		return EmbeddingResult{}, fmt.Errorf("vertex: got %d predictions for %d inputs", len(resp.GetPredictions()), len(texts))
@@ -114,4 +122,26 @@ func (c *httpClient) Close() error {
 		return nil
 	}
 	return c.pred.Close()
+}
+
+func retryableError(err error) error {
+	var netErr net.Error
+	retryable := errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout())
+	switch status.Code(err) {
+	case codes.ResourceExhausted, codes.Unavailable, codes.DeadlineExceeded:
+		retryable = true
+	default:
+	}
+	if !retryable {
+		return err
+	}
+	var delay time.Duration
+	for _, detail := range status.Convert(err).Details() {
+		if info, ok := detail.(*errdetails.RetryInfo); ok {
+			if d := info.GetRetryDelay(); d != nil && d.CheckValid() == nil {
+				delay = max(delay, d.AsDuration())
+			}
+		}
+	}
+	return &embedder.RetryableError{Err: err, RetryAfter: delay}
 }
