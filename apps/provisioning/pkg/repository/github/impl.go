@@ -262,6 +262,22 @@ func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Ruleset
 	return nil, nil
 }
 
+func (r *githubClient) CheckBranchProtection(ctx context.Context, branch string) (bool, error) {
+	protection, err := r.GetBranchProtection(ctx, branch)
+	if err != nil {
+		return false, fmt.Errorf("check branch protection: %w", err)
+	}
+	if len(protection.BlocksDirectPush()) > 0 {
+		return true, nil
+	}
+
+	rulesets, err := r.GetRulesets(ctx, branch)
+	if err != nil {
+		return false, fmt.Errorf("check repository rulesets: %w", err)
+	}
+	return len(rulesets.BlocksDirectPush()) > 0, nil
+}
+
 func (r *githubClient) GetRepository(ctx context.Context) (Repository, error) {
 	repo, _, err := r.gh.Repositories.Get(ctx, r.owner, r.repo)
 	if err != nil {

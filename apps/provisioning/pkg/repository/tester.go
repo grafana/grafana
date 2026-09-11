@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -53,5 +55,40 @@ func (t *Tester) Test(ctx context.Context, repo Repository) (*provisioning.TestR
 		}
 	}
 
-	return repo.Test(ctx)
+	result, err := repo.Test(ctx)
+	if err != nil || result == nil || !result.Success || !slices.Contains(cfg.Spec.Workflows, provisioning.WriteWorkflow) {
+		return result, err
+	}
+
+	checker, ok := repo.(BranchProtectionChecker)
+	if !ok {
+		return result, nil
+	}
+
+	branch := cfg.Branch()
+	protected, err := checker.CheckBranchProtection(ctx, branch)
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  fmt.Sprintf("spec.%s.branch", cfg.Spec.Type),
+				Detail: fmt.Sprintf("failed to check branch protection for branch %q: %v", branch, err),
+			}},
+		}, nil
+	}
+	if protected {
+		return &provisioning.TestResults{
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  "spec.workflows",
+				Detail: fmt.Sprintf("branch %q does not allow direct pushes; the \"write\" workflow is not compatible with this branch", branch),
+			}},
+		}, nil
+	}
+
+	return result, nil
 }

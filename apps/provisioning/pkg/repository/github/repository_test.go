@@ -1363,7 +1363,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			expectBPCall:     true,
 			expectedSuccess:  false,
 			expectedErrField: "spec.workflows",
-			expectedDetail:   "required pull request reviews",
+			expectedDetail:   "does not allow direct pushes",
 		},
 		{
 			name:      "protected branch with lock and write workflow",
@@ -1375,7 +1375,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			expectBPCall:     true,
 			expectedSuccess:  false,
 			expectedErrField: "spec.workflows",
-			expectedDetail:   "branch is locked (read-only)",
+			expectedDetail:   "does not allow direct pushes",
 		},
 		{
 			name:      "both protection rules reported together",
@@ -1388,7 +1388,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			expectBPCall:     true,
 			expectedSuccess:  false,
 			expectedErrField: "spec.workflows",
-			expectedDetail:   "required pull request reviews",
+			expectedDetail:   "does not allow direct pushes",
 		},
 		{
 			name:            "unprotected branch with write workflow succeeds",
@@ -1461,6 +1461,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 				},
 			}
 
+			mockGitRepo.EXPECT().Config().Return(config).Once()
 			mockGitRepo.EXPECT().
 				Test(mock.Anything).
 				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
@@ -1468,20 +1469,12 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 
 			if tt.expectBPCall {
 				mockClient.EXPECT().
-					GetBranchProtection(mock.Anything, tt.branch).
-					Return(tt.bpResult, tt.bpError).
+					CheckBranchProtection(mock.Anything, tt.branch).
+					Return(len(tt.bpResult.BlocksDirectPush()) > 0, tt.bpError).
 					Once()
-
-				// If branch protection check succeeded, also expect rulesets check
-				if tt.bpError == nil {
-					mockClient.EXPECT().
-						GetRulesets(mock.Anything, tt.branch).
-						Return(nil, nil).
-						Once()
-				}
 			}
 
-			repo := &githubRepository{
+			githubRepo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,
@@ -1489,7 +1482,8 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 				repo:          "grafana",
 			}
 
-			result, err := repo.Test(context.Background())
+			tester := repo.NewTester()
+			result, err := tester.Test(context.Background(), githubRepo)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			assert.Equal(t, tt.expectedSuccess, result.Success)
@@ -1601,7 +1595,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			expectRulesetsCall: true,
 			expectedSuccess:    false,
 			expectedErrField:   "spec.workflows",
-			expectedDetail:     "ruleset requires pull request",
+			expectedDetail:     "does not allow direct pushes",
 		},
 		{
 			name:      "rulesets requiring pull request blocks write workflow",
@@ -1613,7 +1607,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			expectRulesetsCall: true,
 			expectedSuccess:    false,
 			expectedErrField:   "spec.workflows",
-			expectedDetail:     "ruleset requires pull request",
+			expectedDetail:     "does not allow direct pushes",
 		},
 		{
 			name:               "no blocking rulesets with write workflow succeeds",
@@ -1641,7 +1635,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			expectRulesetsCall: true,
 			expectedSuccess:    false,
 			expectedErrField:   "spec.github.branch",
-			expectedDetail:     "failed to check repository rulesets",
+			expectedDetail:     "failed to check branch protection",
 		},
 		{
 			name:               "GetRulesets unauthorized (401) returns test failure",
@@ -1651,7 +1645,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			expectRulesetsCall: true,
 			expectedSuccess:    false,
 			expectedErrField:   "spec.github.branch",
-			expectedDetail:     "failed to check repository rulesets",
+			expectedDetail:     "failed to check branch protection",
 		},
 		{
 			name:      "rulesets with no blocking rules does not block",
@@ -1681,25 +1675,20 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 				},
 			}
 
+			mockGitRepo.EXPECT().Config().Return(config).Once()
 			mockGitRepo.EXPECT().
 				Test(mock.Anything).
 				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
 				Once()
 
-			// Branch protection check always happens first
-			mockClient.EXPECT().
-				GetBranchProtection(mock.Anything, tt.branch).
-				Return(nil, nil).
-				Maybe()
-
 			if tt.expectRulesetsCall {
 				mockClient.EXPECT().
-					GetRulesets(mock.Anything, tt.branch).
-					Return(tt.rulesetsResult, tt.rulesetsError).
+					CheckBranchProtection(mock.Anything, tt.branch).
+					Return(len(tt.rulesetsResult.BlocksDirectPush()) > 0, tt.rulesetsError).
 					Once()
 			}
 
-			repo := &githubRepository{
+			githubRepo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,
@@ -1707,7 +1696,8 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 				repo:          "grafana",
 			}
 
-			result, err := repo.Test(context.Background())
+			tester := repo.NewTester()
+			result, err := tester.Test(context.Background(), githubRepo)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			assert.Equal(t, tt.expectedSuccess, result.Success)
@@ -1837,25 +1827,23 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 				},
 			}
 
+			mockGitRepo.EXPECT().Config().Return(config).Once()
 			mockGitRepo.EXPECT().
 				Test(mock.Anything).
 				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
 				Once()
 
+			protected := len(tt.bpResult.BlocksDirectPush()) > 0 || len(tt.rulesetsResult.BlocksDirectPush()) > 0
+			protectionErr := tt.bpError
+			if protectionErr == nil {
+				protectionErr = tt.rulesetsError
+			}
 			mockClient.EXPECT().
-				GetBranchProtection(mock.Anything, tt.branch).
-				Return(tt.bpResult, tt.bpError).
+				CheckBranchProtection(mock.Anything, tt.branch).
+				Return(protected, protectionErr).
 				Once()
 
-			// Only call GetRulesets if branch protection didn't error
-			if tt.bpError == nil {
-				mockClient.EXPECT().
-					GetRulesets(mock.Anything, tt.branch).
-					Return(tt.rulesetsResult, tt.rulesetsError).
-					Once()
-			}
-
-			repo := &githubRepository{
+			githubRepo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
 				gh:            mockClient,
@@ -1863,7 +1851,8 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 				repo:          "grafana",
 			}
 
-			result, err := repo.Test(context.Background())
+			tester := repo.NewTester()
+			result, err := tester.Test(context.Background(), githubRepo)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			assert.Equal(t, tt.expectedSuccess, result.Success)
@@ -1872,11 +1861,11 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 				require.NotEmpty(t, result.Errors)
 				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
 
-				// Check that all expected details are present in the error message
-				for _, expectedDetail := range tt.expectedDetails {
-					assert.Contains(t, result.Errors[0].Detail, expectedDetail)
+				if tt.bpError != nil || tt.rulesetsError != nil {
+					assert.Contains(t, result.Errors[0].Detail, "failed to check branch protection")
+				} else {
+					assert.Contains(t, result.Errors[0].Detail, "does not allow direct pushes")
 				}
-
 				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
 			}
 		})
