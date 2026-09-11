@@ -179,6 +179,7 @@ function createFlatTree(
       parentUID,
       level,
       isOpen,
+      disabled: item.access === 'ancestor',
     };
 
     const items = [thisItem, ...mappedChildren];

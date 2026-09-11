@@ -1,0 +1,111 @@
+{
+  "checkedAt": "2026-09-10T22:13:36+02:00",
+  "baseUrl": "http://127.0.0.1:3100",
+  "health": {
+    "database": "ok",
+    "version": "13.3.0-local",
+    "status": "pass"
+  },
+  "featureToggles": {
+    "accessibleFolderHierarchy": true,
+    "foldersAppPlatformAPI": true
+  },
+  "provisioning": {
+    "sqlite": "fresh temporary database",
+    "users": [
+      { "login": "teama", "basicOrgRole": "None", "team": "Team A" },
+      { "login": "teamb", "basicOrgRole": "None", "team": "Team B" },
+      { "login": "teamc", "basicOrgRole": "None", "team": "Team C" }
+    ],
+    "teamMemberCounts": { "Team A": 1, "Team B": 1, "Team C": 1 },
+    "leafPermission": "Edit",
+    "ancestorPermissionsGranted": false,
+    "folderCount": 12,
+    "status": "pass"
+  },
+  "treeEndpoint": "/apis/folder.grafana.app/v1/namespaces/default/folders/general/tree?permission=view",
+  "pickerTreeEndpoint": "/apis/folder.grafana.app/v1/namespaces/default/folders/general/tree?permission=edit",
+  "viewAndEditProjectionsMatched": true,
+  "projections": {
+    "teama": [
+      { "name": "restricted", "title": "restricted", "access": "ancestor" },
+      { "name": "department-a", "title": "department-a", "parent": "restricted", "access": "ancestor" },
+      { "name": "team-a", "title": "team-a", "parent": "department-a", "access": "full" }
+    ],
+    "teamb": [
+      { "name": "restricted", "title": "restricted", "access": "ancestor" },
+      { "name": "department-a", "title": "department-a", "parent": "restricted", "access": "ancestor" },
+      { "name": "team-b", "title": "team-b", "parent": "department-a", "access": "full" }
+    ],
+    "teamc": [
+      { "name": "restricted", "title": "restricted", "access": "ancestor" },
+      { "name": "department-b", "title": "department-b", "parent": "restricted", "access": "ancestor" },
+      { "name": "team-c", "title": "team-c", "parent": "department-b", "access": "full" }
+    ]
+  },
+  "normalFolderGetStatus": {
+    "teama": {
+      "restricted": 403,
+      "department-a": 403,
+      "department-b": 403,
+      "team-a": 200,
+      "team-b": 403,
+      "team-c": 403,
+      "experimental": 403,
+      "public": 403,
+      "proj-a": 403
+    },
+    "teamb": {
+      "restricted": 403,
+      "department-a": 403,
+      "department-b": 403,
+      "team-a": 403,
+      "team-b": 200,
+      "team-c": 403,
+      "experimental": 403,
+      "public": 403,
+      "proj-a": 403
+    },
+    "teamc": {
+      "restricted": 403,
+      "department-a": 403,
+      "department-b": 403,
+      "team-a": 403,
+      "team-b": 403,
+      "team-c": 200,
+      "experimental": 403,
+      "public": 403,
+      "proj-a": 403
+    }
+  },
+  "ui": {
+    "browse": "pass",
+    "folderPicker": "pass",
+    "projectedAncestorsExpandable": true,
+    "projectedAncestorsSelectable": false,
+    "authorizedLeafSelectable": true,
+    "accessibilityAudit": {
+      "scope": "Team C save picker with projected hierarchy fully expanded",
+      "standard": "axe-core 4.12.1, WCAG 2 A and AA",
+      "violations": 0,
+      "passes": 23,
+      "incompleteManualReview": 3
+    }
+  },
+  "demoRecording": {
+    "path": "accessible-folder-hierarchy-demo.mp4",
+    "codec": "h264",
+    "dimensions": "1440x1000",
+    "framesPerSecond": 20,
+    "durationSeconds": 62.7
+  },
+  "tests": {
+    "backendUnit": "pass",
+    "backendSQLiteIntegration": "pass",
+    "frontendSuites": 7,
+    "frontendTests": 82,
+    "frontendStatus": "pass",
+    "typescript": "pass"
+  },
+  "observedPermissionLeaks": []
+}

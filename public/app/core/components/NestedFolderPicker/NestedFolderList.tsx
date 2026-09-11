@@ -10,10 +10,8 @@ import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
-import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { useSelector } from 'app/types/store';
 
 import { FolderParent } from './FolderParent';
 import { FolderRepo } from './FolderRepo';
@@ -150,14 +148,9 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const { item, isOpen, level, parentUID, disabled } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
-  const rootCollection = useSelector(rootItemsSelector);
-  const childrenCollections = useSelector(childrenByParentUIDSelector);
-  const children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
-  let siblings: DashboardViewItem[] = [];
-  // only look for siblings if we're not at the root
-  if (item.uid) {
-    siblings = (parentUID ? childrenCollections[parentUID] : rootCollection)?.items ?? [];
-  }
+  const normalizedUID = item.uid || undefined;
+  const children = items.filter((candidate) => candidate.level === level + 1 && candidate.parentUID === normalizedUID);
+  const siblings = items.filter((candidate) => candidate.level === level && candidate.parentUID === parentUID);
 
   const styles = useStyles2(getStyles);
 
@@ -173,7 +166,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   const handleSelect = useCallback(() => {
-    if (item.kind === 'folder' && !disabled) {
+    if (item.kind === 'folder' && !disabled && item.access !== 'ancestor') {
       onFolderSelect(item);
       const folderType = teamFolderOwnersByUid?.[item.uid]
         ? 'team folder'
@@ -229,9 +222,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
       aria-disabled={disabled}
-      aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child.uid)).join(' ') : undefined}
-      aria-setsize={children.length}
-      aria-posinset={siblings.findIndex((i) => i.uid === item.uid) + 1}
+      aria-owns={
+        children.length > 0 ? children.map((child) => getDOMId(idPrefix, child.item.uid)).join(' ') : undefined
+      }
+      aria-setsize={siblings.length}
+      aria-posinset={siblings.findIndex((candidate) => candidate.item.uid === item.uid) + 1}
       id={getDOMId(idPrefix, item.uid)}
     >
       <div className={styles.rowBody}>

@@ -855,6 +855,55 @@
           }
         }
       ]
+    },
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{name}/tree": {
+      "get": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "connect GET requests to tree of Folder",
+        "operationId": "getFolderTree",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "folder.grafana.app",
+          "version": "v1",
+          "kind": "FolderInfoList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the FolderInfoList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -1008,6 +1057,10 @@
           "title"
         ],
         "properties": {
+          "access": {
+            "description": "Access classifies this item for authorization-aware navigation. \"full\" means the caller has the permission requested from the tree endpoint; \"ancestor\" means the item is path-only and must not be treated as readable.",
+            "type": "string"
+          },
           "description": {
             "description": "The folder description",
             "type": "string"

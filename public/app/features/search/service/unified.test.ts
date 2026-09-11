@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 
+import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { invalidateAccessibleFolderTree } from 'app/features/folders/api/accessibleFolderTree';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
@@ -15,6 +17,9 @@ import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSear
 
 beforeEach(() => {
   jest.clearAllMocks();
+  config.featureToggles.foldersAppPlatformAPI = false;
+  config.featureToggles.accessibleFolderHierarchy = false;
+  invalidateAccessibleFolderTree();
 });
 
 setBackendSrv(backendSrv);
@@ -76,6 +81,41 @@ describe('Unified Storage Searcher', () => {
     const locationInfo = df.meta?.custom?.locationInfo;
     expect(locationInfo).toBeDefined();
     expect(locationInfo?.folder2.name).toBe('Folder 2');
+  });
+
+  it('uses projected ancestors to keep authorized hits out of Shared with me', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+    config.featureToggles.accessibleFolderHierarchy = true;
+    folderAPIVersionResolver.set('v1');
+    server.use(
+      http.get(searchRoute, () =>
+        HttpResponse.json({
+          totalHits: 2,
+          hits: [
+            { name: 'team-a', title: 'Team A', resource: 'folders', folder: 'department-a' },
+            { name: 'dashboard-a', title: 'Dashboard A', resource: 'dashboards', folder: 'team-a' },
+          ],
+        })
+      ),
+      http.get('/apis/folder.grafana.app/v1/namespaces/:namespace/folders/general/tree', () =>
+        HttpResponse.json({
+          items: [
+            { name: 'restricted', title: 'Restricted', access: 'ancestor' },
+            { name: 'department-a', title: 'Department A', parent: 'restricted', access: 'ancestor' },
+            { name: 'team-a', title: 'Team A', parent: 'department-a', access: 'full' },
+          ],
+        })
+      )
+    );
+
+    const response = await new UnifiedSearcher().search({ query: '*', limit: 50 });
+
+    expect(response.view.get(0).folder).toBe('department-a');
+    expect(response.view.get(1).folder).toBe('team-a');
+    const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;
+    expect(locationInfo?.restricted).toMatchObject({ name: 'Restricted', url: '' });
+    expect(locationInfo?.['department-a']).toMatchObject({ name: 'Department A', url: '' });
+    expect(locationInfo?.['team-a'].url).toContain('/dashboards/f/team-a');
   });
 
   it('should perform paging even with inconsistent fields', async () => {

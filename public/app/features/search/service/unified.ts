@@ -20,6 +20,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { getAccessibleFolderTree } from 'app/features/folders/api/accessibleFolderTree';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -458,6 +459,30 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 }
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
+  if (config.featureToggles.foldersAppPlatformAPI && config.featureToggles.accessibleFolderHierarchy) {
+    const folders = await getAccessibleFolderTree('view');
+    const locationInfo: Record<string, LocationInfo> = {
+      general: {
+        kind: 'folder',
+        name: 'Dashboards',
+        url: `${config.appSubUrl}/dashboards`,
+      },
+      sharedwithme: {
+        kind: 'sharedwithme',
+        name: 'Shared with me',
+        url: '',
+      },
+    };
+    for (const folder of folders) {
+      locationInfo[folder.name] = {
+        name: folder.title,
+        kind: 'folder',
+        url: folder.access === 'full' ? toURL('folders', folder.name, folder.title) : '',
+      };
+    }
+    return locationInfo;
+  }
+
   // TODO: use proper pagination and API client for search.
   // TODO: This tries to load all the folders upfront even though it may not be neccessary if user does not render all
   //  the search results.

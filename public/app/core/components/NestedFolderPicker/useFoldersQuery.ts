@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { type PermissionLevel } from 'app/types/acl';
 
+import { useFoldersQueryAccessible } from './useFoldersQueryAccessible';
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
 import { useFoldersQueryLegacy } from './useFoldersQueryLegacy';
 
@@ -29,8 +30,19 @@ export function useFoldersQuery({
     rootFolderUID,
     rootFolderItem,
   });
+  const resultAccessible = useFoldersQueryAccessible({
+    isBrowsing,
+    openFolders,
+    permission,
+    rootFolderUID,
+    rootFolderItem,
+    enabled: Boolean(config.featureToggles.foldersAppPlatformAPI && config.featureToggles.accessibleFolderHierarchy),
+  });
 
   // Running the hooks themselves don't have any side effects, so we can just conditionally use one or the other
   // requestNextPage function from the result
+  if (config.featureToggles.foldersAppPlatformAPI && config.featureToggles.accessibleFolderHierarchy) {
+    return resultAccessible;
+  }
   return config.featureToggles.foldersAppPlatformAPI ? resultAppPlatform : resultLegacy;
 }

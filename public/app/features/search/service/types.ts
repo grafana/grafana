@@ -112,6 +112,7 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
+  access?: 'full' | 'ancestor';
   /**
    * Who manages this resource (e.g. provisioning). From unified search this is
    * the full object { kind, id }; from legacy or other paths it may be just the

@@ -43,6 +43,8 @@ export interface DashboardViewItem {
   icon?: string;
 
   parentUID?: string;
+  /** Whether this folder is usable or is only projected to preserve an authorized path. */
+  access?: 'full' | 'ancestor';
   /** @deprecated Not used in new Browse UI */
   parentTitle?: string;
   /** @deprecated Not used in new Browse UI */

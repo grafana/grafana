@@ -247,6 +247,13 @@ func schema_pkg_apis_folder_v1_FolderInfo(ref common.ReferenceCallback) common.O
 							Format:      "",
 						},
 					},
+					"access": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Access classifies this item for authorization-aware navigation. \"full\" means the caller has the permission requested from the tree endpoint; \"ancestor\" means the item is path-only and must not be treated as readable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"name", "title"},
 			},

@@ -41,7 +41,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (isNonSelectableVirtualFolder(item.uid) || isUnderTeamFolders(item.uid)) {
+  if (isNonSelectableVirtualFolder(item.uid) || isUnderTeamFolders(item.uid) || item.access === 'ancestor') {
     return <CheckboxSpacer />;
   }
 

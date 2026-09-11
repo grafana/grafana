@@ -996,6 +996,11 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
+  * Projects accessible folders into their minimum real ancestor hierarchy without granting access to ancestors
+  * @default false
+  */
+  accessibleFolderHierarchy?: boolean;
+  /**
   * Applies OTel formatting templates to displayed logs
   * @default false
   */

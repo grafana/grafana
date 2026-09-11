@@ -130,6 +130,15 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					"verbs": [
 						"get"
 					]
+				},
+				{
+					"name": "folders/tree",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderInfoList",
+					"verbs": [
+						"get"
+					]
 				}
 			]
 		}`, string(v1Disco))

@@ -4,6 +4,7 @@ import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getAccessibleFolderChildren } from 'app/features/folders/api/accessibleFolderTree';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
@@ -37,28 +38,30 @@ async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   });
 }
 
-const virtualFolderBase = {
-  kind: 'folder',
-  url: '',
-  panel_type: '',
-  tags: [],
-  location: '',
-  ds_uid: [],
-  score: 0,
-  explain: {},
-};
-
 async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
-  const searcher = getGrafanaSearcher();
-  const foldersResults = await searcher.search({
-    kind: ['folder'],
-    location: parentUID || 'general',
-    from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
-    limit: pageSize,
-    offset: (page - 1) * pageSize,
-  });
-
-  let folders: DashboardQueryResult[] = foldersResults.view.toArray();
+  let folders: NestedFolderDTO[];
+  if (config.featureToggles.accessibleFolderHierarchy) {
+    const projected = await getAccessibleFolderChildren(parentUID, 'view', page, pageSize);
+    folders = projected.map((item) => ({
+      uid: item.name,
+      title: item.title,
+      access: item.access,
+    }));
+  } else {
+    const searcher = getGrafanaSearcher();
+    const foldersResults = await searcher.search({
+      kind: ['folder'],
+      location: parentUID || 'general',
+      from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    });
+    folders = foldersResults.view.toArray().map((item: DashboardQueryResult) => ({
+      uid: item.uid,
+      title: item.name,
+      managedBy: item.managedBy,
+    }));
+  }
 
   // Virtual root folders are only injected at the top level (first page, no parent).
   if (page === 1 && !parentUID) {
@@ -67,17 +70,15 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     // picker for now. In the future we could to additional request to see if there are any children in it.
     if (config.sharedWithMeFolderUID) {
       folders.unshift({
-        ...virtualFolderBase,
         uid: config.sharedWithMeFolderUID,
-        name: t('browse-dashboards.shared-with-me', 'Shared with me'),
+        title: t('browse-dashboards.shared-with-me', 'Shared with me'),
       });
     }
 
     // Add team folders virtual item
     const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
     folders.splice(insertIndex, 0, {
-      ...virtualFolderBase,
-      name: t('browse-dashboards.my-team-folders', 'My team folders'),
+      title: t('browse-dashboards.my-team-folders', 'My team folders'),
       uid: TEAM_FOLDERS_UID,
     });
 
@@ -86,20 +87,13 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     if (starredFoldersEnabled()) {
       const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + 1;
       folders.splice(insertIndex, 0, {
-        ...virtualFolderBase,
-        name: t('browse-dashboards.starred-folders', 'Starred folders'),
+        title: t('browse-dashboards.starred-folders', 'Starred folders'),
         uid: STARRED_FOLDERS_UID,
       });
     }
   }
 
-  return folders.map<NestedFolderDTO>((item) => {
-    return {
-      uid: item.uid,
-      title: item.name,
-      managedBy: item.managedBy,
-    };
-  });
+  return folders;
 }
 
 export async function listFolders(
@@ -117,14 +111,16 @@ export async function listFolders(
     }
   }
 
-  return folders.map(({ uid, title, managedBy }) => {
-    const noUrl = isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid);
+  return folders.map(({ uid, title, managedBy, access }) => {
+    const noUrl =
+      access === 'ancestor' || isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid);
     return {
       kind: 'folder',
       uid,
       title,
       parentTitle,
       parentUID,
+      access,
       managedBy: extractManagerKind(managedBy),
       url: noUrl
         ? undefined

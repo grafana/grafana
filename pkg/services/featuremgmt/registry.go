@@ -1944,6 +1944,15 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "accessibleFolderHierarchy",
+			Description:  "Projects accessible folders into their minimum real ancestor hierarchy without granting access to ancestors",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Generate:     Generate{LegacyFrontend: true},
+			Expression:   "false",
+		},
+		{
 			Name:        "otelLogsFormatting",
 			Description: "Applies OTel formatting templates to displayed logs",
 			Stage:       FeatureStageExperimental,

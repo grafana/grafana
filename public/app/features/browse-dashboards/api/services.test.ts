@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, apiFoldersHandlers, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -10,6 +11,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { invalidateAccessibleFolderTree } from 'app/features/folders/api/accessibleFolderTree';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { setStore } from 'app/store/store';
 
@@ -76,7 +78,9 @@ describe('browse-dashboards services', () => {
       jest.clearAllMocks();
       mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
       config.featureToggles.foldersAppPlatformAPI = false;
+      config.featureToggles.accessibleFolderHierarchy = false;
       config.sharedWithMeFolderUID = 'sharedwithme';
+      invalidateAccessibleFolderTree();
     });
 
     describe('old API (foldersAppPlatformAPI = false)', () => {
@@ -194,6 +198,41 @@ describe('browse-dashboards services', () => {
         expect(result).toHaveLength(3);
         expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
         expect(result[0]).toMatchObject({ uid: TEAM_FOLDERS_UID });
+      });
+    });
+
+    describe('authorization-aware hierarchy', () => {
+      beforeEach(() => {
+        config.featureToggles.foldersAppPlatformAPI = true;
+        config.featureToggles.accessibleFolderHierarchy = true;
+        folderAPIVersionResolver.set('v1');
+        server.use(
+          http.get('/apis/folder.grafana.app/v1/namespaces/:namespace/folders/general/tree', () =>
+            HttpResponse.json({
+              items: [
+                { name: 'restricted', title: 'Restricted', access: 'ancestor' },
+                { name: 'department-a', title: 'Department A', parent: 'restricted', access: 'ancestor' },
+                { name: 'team-a', title: 'Team A', parent: 'department-a', access: 'full' },
+              ],
+            })
+          )
+        );
+      });
+
+      it('places an accessible leaf under non-actionable projected ancestors', async () => {
+        const root = await listFolders(undefined, undefined, 1, 100);
+        const department = await listFolders('restricted', undefined, 1, 100);
+        const team = await listFolders('department-a', undefined, 1, 100);
+
+        expect(root.find((item) => item.uid === 'restricted')).toMatchObject({
+          access: 'ancestor',
+          url: undefined,
+        });
+        expect(department).toEqual([
+          expect.objectContaining({ uid: 'department-a', access: 'ancestor', url: undefined }),
+        ]);
+        expect(team).toEqual([expect.objectContaining({ uid: 'team-a', access: 'full' })]);
+        expect([...root, ...department, ...team].some((item) => item.uid === 'team-b')).toBe(false);
       });
     });
 

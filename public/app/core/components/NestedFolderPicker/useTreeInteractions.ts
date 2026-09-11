@@ -69,8 +69,9 @@ export function useTreeInteractions({
           break;
         case 'Enter':
           ev.preventDefault();
-          const item = tree[focusedItemIndex].item;
-          if (item.kind === 'folder') {
+          const treeItem = tree[focusedItemIndex];
+          const item = treeItem.item;
+          if (item.kind === 'folder' && !treeItem.disabled && item.access !== 'ancestor') {
             handleFolderSelect(item);
           }
           break;

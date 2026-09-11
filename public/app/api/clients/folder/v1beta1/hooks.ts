@@ -30,6 +30,7 @@ import {
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
+import { invalidateAccessibleFolderTree } from 'app/features/folders/api/accessibleFolderTree';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -534,6 +535,7 @@ function useRefreshFolders() {
   const dispatch = useDispatch();
 
   return (options: { parentsOf?: string[]; childrenOf?: string }) => {
+    invalidateAccessibleFolderTree();
     if (options.parentsOf) {
       dispatch(refreshParents(options.parentsOf));
     }

@@ -109,14 +109,24 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 				{User: helper.Org1.Admin, Listing: `
 						└── top (admin,edit,save,delete)
 						....└── middle (admin,edit,save,delete)
-						........└── child (admin,edit,save,delete)`},
+						........└── child (admin,edit,save,delete)`, Projection: `
+						└── top (full)
+						....└── middle (full)
+						........└── child (full)`},
 				{User: helper.Org1.Viewer, Listing: `
 						└── top (view)
 						....└── middle (view)
-						........└── child (view)`},
+						........└── child (view)`, Projection: `
+						└── top (full)
+						....└── middle (full)
+						........└── child (full)`},
 				{User: helper.Org1.None, Listing: `
 						└── sharedwithme (???)
 						....└── child (view)`,
+					Projection: `
+						└── top (ancestor)
+						....└── middle (ancestor)
+						........└── child (full)`,
 					E403: []string{"top", "middle"},
 				},
 			},
@@ -141,6 +151,9 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 
 					search := getFoldersFromDashboardV0Search(t, client, expect.User.Identity.GetNamespace())
 					search.requireEqual(t, expect.Listing, "search")
+
+					projected := getFoldersFromProjectedTree(t, client, expect.User.Identity.GetNamespace())
+					projected.requireEqual(t, expect.Projection, "authorization-aware tree")
 
 					// ensure sure GET also works on each folder we can list
 					listed.forEach(func(fv *FolderView) {
@@ -187,9 +200,10 @@ func runIntegrationFolderTree(t *testing.T, opts testinfra.GrafanaOpts) {
 }
 
 type ExpectedTree struct {
-	User    apis.User
-	Listing string
-	E403    []string
+	User       apis.User
+	Listing    string
+	Projection string
+	E403       []string
 }
 
 type FolderDefinition struct {
@@ -304,11 +318,12 @@ func (f *FolderDefinition) RequireUniqueName(t *testing.T, names map[string]bool
 }
 
 type FolderView struct {
-	Name     string
-	Parent   string
-	Title    string
-	Children []*FolderView
-	Access   *folderV1.FolderAccessInfo
+	Name       string
+	Parent     string
+	Title      string
+	Children   []*FolderView
+	Access     *folderV1.FolderAccessInfo
+	Projection string
 }
 
 func (n *FolderView) forEach(cb func(*FolderView)) {
@@ -356,7 +371,11 @@ func accessDescription(access *folderV1.FolderAccessInfo) string {
 
 func (n *FolderView) build(tree treeprint.Tree) treeprint.Tree {
 	for _, child := range n.Children {
-		child.build(tree.AddBranch(fmt.Sprintf("%s (%s)", child.Name, accessDescription(child.Access))))
+		access := child.Projection
+		if access == "" {
+			access = accessDescription(child.Access)
+		}
+		child.build(tree.AddBranch(fmt.Sprintf("%s (%s)", child.Name, access)))
 	}
 	return tree
 }
@@ -483,6 +502,33 @@ func getFolderClients(t *testing.T, who apis.User) (dynamic.ResourceInterface, *
 	client, err := rest.RESTClientFor(cfg)
 	require.NoError(t, err)
 	return dc, client
+}
+
+func getFoldersFromProjectedTree(t *testing.T, client *rest.RESTClient, namespace string) *FolderView {
+	var statusCode int
+	result := client.Get().AbsPath("apis", folderV1.APIGroup, folderV1.APIVersion,
+		"namespaces", namespace, "folders", folder.GeneralFolderUID, "tree").
+		Param("permission", "view").
+		Do(context.Background()).
+		StatusCode(&statusCode)
+	require.NoError(t, result.Error(), "getting authorization-aware folder tree")
+	require.Equal(t, http.StatusOK, statusCode)
+
+	body, err := result.Raw()
+	require.NoError(t, err)
+	items := &folderV1.FolderInfoList{}
+	require.NoError(t, json.Unmarshal(body, items))
+
+	lookup := make(map[string]*FolderView, len(items.Items))
+	for _, item := range items.Items {
+		lookup[item.Name] = &FolderView{
+			Name:       item.Name,
+			Title:      item.Title,
+			Parent:     item.Parent,
+			Projection: item.Access,
+		}
+	}
+	return makeRoot(lookup, "folders/tree")
 }
 
 func getFoldersFromAPIServerList(t *testing.T, client dynamic.ResourceInterface) *FolderView {

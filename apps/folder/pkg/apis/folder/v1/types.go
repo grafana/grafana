@@ -42,6 +42,11 @@ type FolderInfo struct {
 
 	// This folder does not resolve
 	Detached bool `json:"detached,omitempty"`
+
+	// Access classifies this item for authorization-aware navigation. "full"
+	// means the caller has the permission requested from the tree endpoint;
+	// "ancestor" means the item is path-only and must not be treated as readable.
+	Access string `json:"access,omitempty"`
 }
 
 func (FolderInfo) OpenAPIModelName() string {

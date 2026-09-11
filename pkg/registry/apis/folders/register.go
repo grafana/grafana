@@ -305,6 +305,13 @@ func (b *FolderAPIBuilder) storageForVersion(
 		getter:   b.storage,
 		searcher: b.searcher,
 	}
+	// Always register this additive endpoint so the backend can roll out before clients opt in.
+	// accessibleFolderHierarchy gates frontend adoption, including mixed-version deployments.
+	storage[folders.StoragePath("tree")] = &subTreeREST{
+		getter:   b.storage,
+		searcher: b.searcher,
+		maxDepth: b.maxNestedFolderDepth,
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage
 	return nil

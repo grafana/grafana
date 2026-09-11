@@ -209,6 +209,9 @@ export function NestedFolderPicker({
 
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
+      if (item.access === 'ancestor') {
+        return;
+      }
       if (onChange) {
         onChange(item.uid, item.title);
       }
