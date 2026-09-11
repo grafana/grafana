@@ -209,11 +209,11 @@ describe('UserProfileEditPage', () => {
       expect(saveProfile()).toBeInTheDocument();
     });
 
-    it('should show shared preferences', async () => {
+    it('should show Preferences as a level-two heading in its group', async () => {
       await getTestContext();
 
-      // SharedPreferences itself is tested, so here just make sure it's being rendered
-      expect(screen.getByLabelText('Home Dashboard')).toBeInTheDocument();
+      const preferences = await screen.findByRole('group', { name: 'Preferences' });
+      expect(within(preferences).getByRole('heading', { name: 'Preferences', level: 2 })).toBeInTheDocument();
     });
 
     describe('and teams are loading', () => {
@@ -229,7 +229,7 @@ describe('UserProfileEditPage', () => {
         await getTestContext();
 
         const { teamsTable, teamsRow } = getSelectors();
-        expect(screen.getByRole('heading', { name: /teams/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /teams/i, level: 2 })).toBeInTheDocument();
         expect(teamsTable()).toBeInTheDocument();
         expect(teamsRow()).toBeInTheDocument();
       });

@@ -177,7 +177,14 @@ export const SharedPreferences = memo((props: Props) => {
           title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
         />
       )}
-      <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
+      <FieldSet
+        label={
+          <span role="heading" aria-level={2}>
+            <Trans i18nKey="shared-preferences.title">Preferences</Trans>
+          </span>
+        }
+        disabled={props.disabled}
+      >
         <Stack direction="column" gap={2}>
           {preferenceType === 'user' && <VisualRefreshInfo />}
           <Field

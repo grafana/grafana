@@ -20,9 +20,9 @@ export const UserTeams = memo<Props>(({ isLoading, teams }) => {
 
   return (
     <div>
-      <h3 className="page-sub-heading">
+      <h2 className="page-sub-heading">
         <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
-      </h3>
+      </h2>
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table
           className="filter-table form-inline"
