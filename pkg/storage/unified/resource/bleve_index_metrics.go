@@ -66,6 +66,8 @@ const (
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
+// ProvideIndexMetrics builds the index metrics. A nil reg leaves them
+// unregistered, so callers without a registry never have to check for nil.
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
