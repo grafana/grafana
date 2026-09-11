@@ -6,7 +6,7 @@ import {
 } from '@grafana/runtime/unstable';
 
 export function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
-  if (runtimeGetPluginSettings && typeof runtimeGetPluginSettings === 'function') {
+  if (typeof runtimeGetPluginSettings === 'function') {
     return runtimeGetPluginSettings(pluginId, showErrorAlert);
   }
 
@@ -21,7 +21,7 @@ function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert =
 }
 
 export function updatePluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
-  if (runtimeUpdateAppPluginSettings && typeof runtimeUpdateAppPluginSettings === 'function') {
+  if (typeof runtimeUpdateAppPluginSettings === 'function') {
     return runtimeUpdateAppPluginSettings(pluginId, data);
   }
 
