@@ -19,7 +19,6 @@ export function readNotebookShape(scene: NotebookScene): NotebookShape {
 
   return {
     cellCount: cells.length,
-    cellsByType,
     panelCount: panels.length,
     datasourceTypes,
     assistantCellCount: cells.filter((cell) => cell.state.source === 'assistant').length,

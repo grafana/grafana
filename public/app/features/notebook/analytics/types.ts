@@ -13,8 +13,6 @@ import { type EventProperty } from '@grafana/runtime/unstable';
 export interface NotebookShape extends EventProperty {
   /** Cells in the notebook, excluding the trailing empty editor block. */
   cellCount: number;
-  /** The type of each cell in cellCount, in order. */
-  cellsByType: string[];
   /** Panel cells among cellCount. */
   panelCount: number;
   /** Deduplicated datasource plugin IDs used by the notebook's panels. */

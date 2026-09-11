@@ -313,7 +313,6 @@ describe('NotebookScene', () => {
           editCount: 1,
           endReason: 'toggle',
           cellCount: 1,
-          cellsByType: ['markdown'],
           nonEmptyCellCount: 1,
         });
         expect(typeof ended[0].durationMs).toBe('number');

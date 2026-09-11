@@ -64,7 +64,6 @@ describe('readNotebookShape', () => {
 
     expect(readNotebookShape(scene)).toEqual({
       cellCount: 4,
-      cellsByType: ['markdown', 'code', 'panel', 'markdown'],
       panelCount: 1,
       datasourceTypes: ['prometheus'],
       assistantCellCount: 1,
@@ -81,7 +80,6 @@ describe('readNotebookShape', () => {
 
     expect(readNotebookShape(scene)).toEqual({
       cellCount: 0,
-      cellsByType: [],
       panelCount: 0,
       datasourceTypes: [],
       assistantCellCount: 0,
