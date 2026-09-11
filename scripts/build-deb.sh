@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+ 
 # Build a .deb package from an existing tar.gz package using fpm.
 #
 # Environment variables (with defaults where appropriate):
