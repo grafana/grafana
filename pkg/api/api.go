@@ -262,6 +262,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/login/ping", quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginAPIPing))
 
 	// expose plugin file system assets
+	// build-addressed (immutable) route: served from the retained build registry so
+	// no-affinity clients resolve chunks of their build from any replica; must be
+	// registered before the legacy wildcard route so :buildHash is matched.
+	r.Get("/public/plugins/:pluginId/:buildHash/*", hs.getBuildAddressedPluginAsset)
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
 	// add swagger support
@@ -433,6 +437,7 @@ func (hs *HTTPServer) registerRoutes() {
 		pluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":pluginId"))
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID)) // RBAC check performed in handler for App Plugins
+		apiRoute.Get("/plugins/:pluginId/build", reqSignedIn, routing.Wrap(hs.GetPluginBuildInfo))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), checkAppEnabled(hs.pluginStore, hs.PluginSettings), routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), checkAppEnabled(hs.pluginStore, hs.PluginSettings), hs.CallResource)
