@@ -74,7 +74,7 @@ func TestProvideCloudRoutesLoaderFactoryRequiresCapTokenAndExchangeURL(t *testin
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection(cloudRouterSection)
 	require.NoError(t, err)
-	_, err = section.NewKey("apiserver_url", "https://apiserver.example.com")
+	_, err = section.NewKey("appmanifest_apiserver_url", "https://apiserver.example.com")
 	require.NoError(t, err)
 
 	_, err = ProvideCloudRoutesLoaderFactory(cfg)
@@ -85,7 +85,7 @@ func TestProvideCloudRoutesLoaderFactoryBuildsLoader(t *testing.T) {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection(cloudRouterSection)
 	require.NoError(t, err)
-	_, err = section.NewKey("apiserver_url", "https://apiserver.example.com")
+	_, err = section.NewKey("appmanifest_apiserver_url", "https://apiserver.example.com")
 	require.NoError(t, err)
 	_, err = section.NewKey("cap_token", "token")
 	require.NoError(t, err)
@@ -96,4 +96,38 @@ func TestProvideCloudRoutesLoaderFactoryBuildsLoader(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 	require.IsType(t, &cloudLoader{}, loader)
+}
+
+// cfgWithCloudRouterSection is a test helper that builds a *setting.Cfg with a cloud_router section
+// populated with the provided key-value pairs.
+func cfgWithCloudRouterSection(t *testing.T, kv map[string]string) *setting.Cfg {
+	cfg := setting.NewCfg()
+	section, err := cfg.Raw.NewSection(cloudRouterSection)
+	require.NoError(t, err)
+	for key, value := range kv {
+		_, err := section.NewKey(key, value)
+		require.NoError(t, err)
+	}
+	return cfg
+}
+
+func TestProvideCloudRoutesLoaderFactory_RenamedKey(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"appmanifest_apiserver_url": "https://example.invalid",
+		"cap_token":                 "tok",
+		"token_exchange_url":        "https://exchange.invalid",
+	})
+
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, loader)
+}
+
+func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
+	t.Skip("enabled in Task 6")
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
 }

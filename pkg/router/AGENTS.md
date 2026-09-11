@@ -17,7 +17,7 @@ Everything lives here in OSS.
 - `dummyRoutesLoader` (`dummy.go`) — the OSS default: two static dummy API groups.
 - `cloudLoader`/`ProvideCloudRoutesLoaderFactory` (`cloud_router.go`) — the concrete `RoutesLoader`
   that reads RouteBackend/AppManifest custom resources off a remote control-plane apiserver. Only
-  activates when `[cloud_router].apiserver_url` is configured (see Settings below); otherwise
+  activates when `[cloud_router].appmanifest_apiserver_url` is configured (see Settings below); otherwise
   `ProvideRoutesLoader` (`loader_factory.go`) falls back to the dummy loader. This is the one file in
   the package that knows deployment-specific kinds (`v1alpha2.RouteBackend`/`AppManifest`) — keep that
   knowledge contained here, out of `router.go`/`types.go`.
@@ -329,18 +329,18 @@ writeup:
 Not documented in OSS `conf/defaults.ini` -- read directly via
 `cfg.SectionWithEnvOverrides("cloud_router")`, no `pkg/setting` struct field, since this is an
 optional, deployment-specific loader rather than a core Grafana concept. An ini section is never
-truly absent (`SectionWithEnvOverrides` always returns a valid, empty section), so `apiserver_url`'s
+truly absent (`SectionWithEnvOverrides` always returns a valid, empty section), so `appmanifest_apiserver_url`'s
 presence is what actually gates activation, not the section's existence. Keys:
 
 | Key                   | Required             | Meaning                                                                 |
 | --------------------- | --------------------- | ------------------------------------------------------------------------ |
-| `apiserver_url`       | gates activation      | Base URL of the remote apiserver serving `apps.grafana.app`. Empty -> `ProvideCloudRoutesLoaderFactory` returns `(nil, nil)` and the dummy loader is used instead. |
-| `cap_token`           | yes, once `apiserver_url` is set | Grafana Cloud Access Policy token exchanged for a signed access token. |
-| `token_exchange_url`  | yes, once `apiserver_url` is set | URL of the token exchange service used to sign `cap_token` per request. |
+| `appmanifest_apiserver_url`       | gates activation      | Base URL of the remote apiserver serving `apps.grafana.app`. Empty -> `ProvideCloudRoutesLoaderFactory` returns `(nil, nil)` and the dummy loader is used instead. |
+| `cap_token`           | yes, once `appmanifest_apiserver_url` is set | Grafana Cloud Access Policy token exchanged for a signed access token. |
+| `token_exchange_url`  | yes, once `appmanifest_apiserver_url` is set | URL of the token exchange service used to sign `cap_token` per request. |
 | `apiserver_ca_file`   | no                    | CA bundle file used to verify the apiserver TLS cert.                    |
 | `apiserver_insecure`  | no                    | Skip TLS verification of the apiserver. Dev only.                       |
 
-`apiserver_url` set without `cap_token` or `token_exchange_url` is a hard error, not a silent
+`appmanifest_apiserver_url` set without `cap_token` or `token_exchange_url` is a hard error, not a silent
 fallback to the dummy loader -- a partially configured `cloud_router` section means the operator
 meant to enable it, so failing loudly beats silently serving dummy routes.
 

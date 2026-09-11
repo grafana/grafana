@@ -33,11 +33,11 @@ import (
 const cloudRouterSection = "cloud_router"
 
 // ProvideCloudRoutesLoaderFactory builds the cloud-router RoutesLoader from
-// grafana.ini settings when [cloud_router].apiserver_url is set, so the
+// grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set, so the
 // router module (not a separate process) owns its lifecycle. Returns (nil,
-// nil) when apiserver_url is unset -- an ini section is never truly absent
+// nil) when appmanifest_apiserver_url is unset -- an ini section is never truly absent
 // (SectionWithEnvOverrides always returns a valid, empty section), so
-// apiserver_url's presence is what actually gates whether this loader
+// appmanifest_apiserver_url's presence is what actually gates whether this loader
 // activates; callers fall back to the dummy loader when it does.
 //
 // Auth is a CAP token exchanged for a signed access token on every request
@@ -46,15 +46,15 @@ const cloudRouterSection = "cloud_router"
 func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
-	apiserverURL := section.Key("apiserver_url").MustString("")
-	if apiserverURL == "" {
+	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
+	if appManifestApiserverURL == "" {
 		return nil, nil
 	}
 
 	capToken := section.Key("cap_token").MustString("")
 	tokenExchangeURL := section.Key("token_exchange_url").MustString("")
 	if capToken == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when apiserver_url is set", cloudRouterSection)
+		return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url is set", cloudRouterSection)
 	}
 
 	tokenExchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -67,7 +67,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 
 	restCfg := rest.Config{
 		APIPath: "/apis",
-		Host:    apiserverURL,
+		Host:    appManifestApiserverURL,
 		TLSClientConfig: rest.TLSClientConfig{
 			Insecure: section.Key("apiserver_insecure").MustBool(false),
 			CAFile:   section.Key("apiserver_ca_file").MustString(""),
