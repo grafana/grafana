@@ -1656,11 +1656,6 @@
       "count": 2
     }
   },
-  "public/app/features/annotations/utils/savedQueryUtils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/FieldRenderer.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
@@ -3087,9 +3082,6 @@
     }
   },
   "public/app/features/templating/template_srv.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
     },
@@ -3677,11 +3669,6 @@
   },
   "public/app/plugins/datasource/graphite/utils.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/mixed/MixedDataSource.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },

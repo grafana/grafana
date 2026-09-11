@@ -15,8 +15,13 @@ import { exploreReducer, navigateToExplore, splitClose, splitOpen } from './main
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn().mockReturnValue({}),
+    getInstanceSettings: jest.fn().mockReturnValue(undefined),
   }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {

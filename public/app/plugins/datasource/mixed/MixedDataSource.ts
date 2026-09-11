@@ -12,7 +12,8 @@ import {
   LoadingState,
   type ScopedVars,
 } from '@grafana/data';
-import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
@@ -92,15 +93,21 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
             continue;
           }
 
-          const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
+          const scopedVars: ScopedVars = {
+            ...request.scopedVars,
+            [variable.name]: { value: uid, text: undefined },
+          };
 
           batches.push({
-            datasource: getDataSourceSrv().get(uid),
+            // Keep batch construction sync; apply the settings name before the query runs.
+            datasource: Promise.all([getDataSourceInstance(uid), getDataSourceInstanceSettings(uid)]).then(
+              ([ds, dsSettings]) => {
+                scopedVars[variable.name] = { value: uid, text: dsSettings?.name };
+                return ds;
+              }
+            ),
             queries: cloneDeep(queries),
-            scopedVars: {
-              ...request.scopedVars,
-              [variable.name]: { value: uid, text: dsSettings?.name },
-            },
+            scopedVars,
           });
         }
 
@@ -110,7 +117,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     if (datasourceUid !== '') {
       batches.push({
-        datasource: getDataSourceSrv().get(datasourceUid),
+        datasource: getDataSourceInstance(datasourceUid),
         queries: cloneDeep(queries),
         scopedVars: {
           ...request.scopedVars,
