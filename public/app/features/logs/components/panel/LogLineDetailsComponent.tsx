@@ -24,6 +24,7 @@ import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } 
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
+import { LogLineDetailsOTelComponent } from './LogLineOTelDetailsComponent';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
@@ -48,7 +49,17 @@ export const LogLineDetailsComponent = ({
   timeRange,
   timeZone,
 }: LogLineDetailsComponentProps) => {
-  return (
+  return log.otelLanguage ? (
+    <LogLineDetailsOTelComponent
+      log={log}
+      logs={logs}
+      prettifyDetailsJSON={prettifyDetailsJSON}
+      search={search}
+      setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+      timeRange={timeRange}
+      timeZone={timeZone}
+    />
+  ) : (
     <LogLineDetailsLegacyComponent
       log={log}
       logs={logs}
