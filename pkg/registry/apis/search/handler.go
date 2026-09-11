@@ -107,6 +107,9 @@ func (h *Handler) TrashFor(kind kindRef) http.HandlerFunc {
 				return nil, nil, err
 			}
 			req, ferrs := TranslateTrashQuery(&q, kind.gvr(), namespace)
+			if len(ferrs) == 0 && h.fieldValueResultsEnabled != nil && h.fieldValueResultsEnabled(r.Context()) {
+				req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+			}
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {

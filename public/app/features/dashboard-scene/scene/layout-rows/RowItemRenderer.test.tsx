@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -81,8 +81,12 @@ describe('RowItemRenderer', () => {
     expect(await navigator.clipboard.readText()).toContain('drow=My-row');
   });
 
-  it('hides the copy link button while editing', () => {
+  it('hides the copy link button while editing', async () => {
     renderRow({ isEditing: true });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument();
+    });
 
     expect(screen.queryByRole('button', { name: 'Copy link to row' })).not.toBeInTheDocument();
   });

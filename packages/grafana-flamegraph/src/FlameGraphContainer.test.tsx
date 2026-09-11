@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
@@ -26,6 +27,13 @@ jest.mock('react-use', () => ({
     return [ref, { width: 1600 }];
   },
 }));
+
+// AutoSizer needs a measurable rect, and react-data-grid additionally sizes its virtualized viewport
+// from the client box - jsdom reports 0 for both.
+function mockTableSize({ width, height }: { width: number; height: number } = { width: 500, height: 500 }) {
+  mockBoundingClientRect({ width, height });
+  mockClientSize({ width, height });
+}
 
 describe('labelSearch', () => {
   let container: FlameGraphDataContainer;
@@ -216,5 +224,106 @@ describe('FlameGraphContainer', () => {
     // Check we didn't lose the one that should match
     expect(screen.queryAllByText(matchingText1).length).toBe(1);
     expect(screen.queryAllByText(matchingText2).length).toBe(1);
+  });
+});
+
+describe('FlameGraphContainer with useTableNG', () => {
+  mockTableSize();
+
+  const getTheme = () => createTheme({ colors: { mode: 'dark' } });
+  const makeFlameGraphData = () => {
+    const flameGraphData = createDataFrame(data);
+    flameGraphData.meta = { custom: { ProfileTypeID: 'cpu:foo:bar' } };
+    return flameGraphData;
+  };
+
+  it('should update search when row selected in top table', async () => {
+    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} useTableNG={true} />);
+
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+    expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
+  });
+
+  // TableNG's feature-toggle values have to travel from here down to the top table, and the refreshed
+  // header lifts the sort arrow out of the label button - so the arrow's placement is the observable
+  // proof that the whole chain is wired, not just the top table's own prop.
+  it.each([
+    { tableRefreshEnabled: undefined, placement: 'inside' },
+    { tableRefreshEnabled: true, placement: 'outside' },
+  ])(
+    'with tableRefreshEnabled=$tableRefreshEnabled renders the top table sort arrow $placement the header label',
+    async ({ tableRefreshEnabled }) => {
+      render(
+        <FlameGraphContainer
+          data={makeFlameGraphData()}
+          getTheme={getTheme}
+          useTableNG={true}
+          tableRefreshEnabled={tableRefreshEnabled}
+        />
+      );
+
+      // The top table sorts by Self descending by default, so that header owns the arrow.
+      const selfHeader = (await screen.findAllByRole('columnheader'))[2];
+      const label = selfHeader.querySelector('button');
+
+      expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
+      expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+    }
+  );
+});
+
+describe('FlameGraphContainer top table height', () => {
+  mockTableSize();
+
+  const getTheme = () => createTheme({ colors: { mode: 'dark' } });
+  const makeFlameGraphData = () => {
+    const flameGraphData = createDataFrame(data);
+    flameGraphData.meta = { custom: { ProfileTypeID: 'cpu:foo:bar' } };
+    return flameGraphData;
+  };
+
+  // The height lands on the table's own wrapper inside the pane, which is always the immediate parent of
+  // the div carrying the "topTable" testid.
+  const getTableWrapper = async () => (await screen.findByTestId('topTable')).parentElement;
+  // Emotion appends each style's `label` to its class name, so a pane's own wrapper can be reached
+  // without walking up from the table.
+  const getPaneContainer = (orientation: 'horizontal' | 'vertical') =>
+    document.querySelector(`[class$="-${orientation}PaneContainer"]`);
+
+  describe('without fillHeight (a host like Explore, which does not bound our height)', () => {
+    it('gives the table a fixed height in the split layout', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} />);
+
+      expect(await getTableWrapper()).toHaveStyle({ height: '800px' });
+      // The mocked container width puts us in the default split layout, so the table is sharing a row with
+      // the flame graph - the layout that regressed in Explore.
+      expect(document.querySelector('canvas')).toBeInTheDocument();
+      expect(getPaneContainer('horizontal')).toHaveStyle({ maxHeight: '800px' });
+    });
+
+    it('gives the table a fixed height in the vertical layout', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} vertical />);
+
+      expect(await getTableWrapper()).toHaveStyle({ height: '800px' });
+      expect(getPaneContainer('vertical')).toHaveStyle({ height: '800px' });
+    });
+  });
+
+  describe('with fillHeight (a host like a dashboard panel, which bounds our height)', () => {
+    it('fills the available height in the split layout', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} fillHeight />);
+
+      expect(await getTableWrapper()).toHaveStyle({ height: '100%' });
+      expect(document.querySelector('canvas')).toBeInTheDocument();
+      // The cap the unbounded host needs would stop the panes filling a taller panel.
+      expect(getPaneContainer('horizontal')).not.toHaveStyle({ maxHeight: '800px' });
+    });
+
+    it('splits the available height between the panes in the vertical layout', async () => {
+      render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} fillHeight vertical />);
+
+      expect(await getTableWrapper()).toHaveStyle({ height: '100%' });
+      expect(getPaneContainer('vertical')).toHaveStyle({ flex: '1 1 0' });
+    });
   });
 });

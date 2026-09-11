@@ -292,6 +292,7 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
+    // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
     this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
@@ -304,6 +305,7 @@ export class GrafanaBootConfig {
 // localstorage key: grafana.featureToggles
 // example value: panelEditor=1,panelInspector=1
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
+  // eslint-disable-next-line @grafana/no-config-feature-toggles -- implements the localStorage toggle override
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
   const localStorageValue = store.get(localStorageKey);
@@ -333,6 +335,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      // eslint-disable-next-line @grafana/no-config-feature-toggles -- implements the URL toggle override
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 

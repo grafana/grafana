@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Checkbox, Counter, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { AnnoKeyUseCrossDashboardVariables, type ObjectMeta } from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
@@ -15,84 +15,52 @@ import {
   parseUseCrossDashboardVariables,
   setScopeAll,
   toggleSelectionName,
-  writeUseCrossDashboardVariables,
   type PredefinedVariableScope,
   type UseCrossDashboardVariables,
 } from '../../utils/crossDashboardVariablesSelection';
 import { DashboardInteractions } from '../../utils/interactions';
+import {
+  parseUseCrossDashboardVariablesFromHost,
+  persistUseCrossDashboardVariables,
+  readUseCrossDashboardVariablesAnnotations,
+  type CrossDashboardVariablesHost,
+} from '../../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, getPredefinedOrigin } from '../../utils/predefinedVariables';
 
 /** Narrow host surface so this pane does not import DashboardScene (circular dep). */
-export type PredefinedVariablesDashboard = DashboardSceneLike & {
-  serializer: {
-    getK8SMetadata: () => { annotations?: Record<string, string | undefined> } | undefined;
-    setK8SAnnotations: (annotations: Record<string, string>) => void;
+export type CrossDashboardVariablesDashboard = DashboardSceneLike &
+  CrossDashboardVariablesHost & {
+    managedResourceCannotBeEdited: () => boolean;
   };
-  refreshPredefinedVariables: () => Promise<void>;
-  managedResourceCannotBeEdited: () => boolean;
-};
-
-function readAnnotationMap(dashboard: PredefinedVariablesDashboard): Record<string, string> {
-  const fromMeta = dashboard.state.meta.k8s?.annotations ?? {};
-  const fromSerializer = dashboard.serializer.getK8SMetadata()?.annotations ?? {};
-  const merged: Record<string, string> = {};
-  for (const [key, value] of Object.entries({ ...fromSerializer, ...fromMeta })) {
-    if (typeof value === 'string') {
-      merged[key] = value;
-    }
-  }
-  return merged;
-}
-
-function persistSelection(dashboard: PredefinedVariablesDashboard, selection: UseCrossDashboardVariables) {
-  const meta = dashboard.state.meta;
-  const annotations = readAnnotationMap(dashboard);
-  writeUseCrossDashboardVariables(annotations, selection);
-
-  const nextMetaK8s: Partial<ObjectMeta> = {
-    ...(meta.k8s ?? {}),
-    annotations,
-  };
-
-  dashboard.serializer.setK8SAnnotations(annotations);
-
-  // Changing meta triggers the change tracker; hasMetadataChanges includes this annotation
-  // so Save stays enabled until the dashboard is saved (or discarded).
-  dashboard.setState({
-    meta: {
-      ...meta,
-      k8s: nextMetaK8s,
-    },
-  });
-
-  void dashboard.refreshPredefinedVariables();
-}
 
 export function updateDashboardScopeVariable(
-  dashboard: PredefinedVariablesDashboard,
+  dashboard: CrossDashboardVariablesDashboard,
   scope: PredefinedVariableScope,
   name: string,
   checked: boolean,
   allNamesInScope: string[]
 ) {
-  const current = parseUseCrossDashboardVariables(readAnnotationMap(dashboard)) ?? {
+  const current = parseUseCrossDashboardVariablesFromHost(dashboard) ?? {
     global: 'none' as const,
     folder: 'none' as const,
   };
-  persistSelection(dashboard, toggleSelectionName(current, scope, name, checked, allNamesInScope));
+  void persistUseCrossDashboardVariables(
+    dashboard,
+    toggleSelectionName(current, scope, name, checked, allNamesInScope)
+  );
   DashboardInteractions.predefinedVariableToggled({ scope, checked });
 }
 
 export function updateDashboardScopeAll(
-  dashboard: PredefinedVariablesDashboard,
+  dashboard: CrossDashboardVariablesDashboard,
   scope: PredefinedVariableScope,
   checked: boolean
 ) {
-  const current = parseUseCrossDashboardVariables(readAnnotationMap(dashboard)) ?? {
+  const current = parseUseCrossDashboardVariablesFromHost(dashboard) ?? {
     global: 'none' as const,
     folder: 'none' as const,
   };
-  persistSelection(dashboard, {
+  void persistUseCrossDashboardVariables(dashboard, {
     ...current,
     [scope]: setScopeAll(checked),
   });
@@ -100,12 +68,12 @@ export function updateDashboardScopeAll(
 }
 
 interface Props {
-  dashboard: PredefinedVariablesDashboard;
+  dashboard: CrossDashboardVariablesDashboard;
 }
 
 type CandidatesLoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; variables: VariableKind[] };
 
-export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
+export function DashboardCrossDashboardVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
   const canEditSelection = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
@@ -116,7 +84,7 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
     return parseUseCrossDashboardVariables(
       annotationValue !== undefined
         ? { [AnnoKeyUseCrossDashboardVariables]: annotationValue }
-        : readAnnotationMap(dashboard)
+        : readUseCrossDashboardVariablesAnnotations(dashboard)
     );
   }, [annotationValue, dashboard]);
 
@@ -207,7 +175,7 @@ interface ScopeCheckboxSectionProps {
   canEdit: boolean;
   emptyLabel: string;
   sectionLabel: string;
-  dashboard: PredefinedVariablesDashboard;
+  dashboard: CrossDashboardVariablesDashboard;
 }
 
 function ScopeCheckboxSection({

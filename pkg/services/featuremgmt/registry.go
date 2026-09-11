@@ -120,6 +120,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "grafana.useRouterMiddleware",
+			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -385,6 +395,16 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true},
+		},
+		{
+			Name:            "kubernetesFolderCountsLegacyStorage",
+			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:            "grafana.kubernetesAnnotationsClient",
@@ -2654,10 +2674,10 @@ var (
 		{
 			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
