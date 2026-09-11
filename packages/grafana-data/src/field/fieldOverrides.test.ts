@@ -758,6 +758,63 @@ describe('applyFieldOverrides', () => {
     expect(data.fields[1].config.displayName).toBe('Kittens improved');
     expect(getFieldDisplayName(data.fields[1], data)).toBe('Kittens improved');
   });
+
+  it('interpolates dashboard variables in byRegexp override matchers', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1] },
+        { name: '1.2.3-chrome', type: FieldType.number, values: [10] },
+        { name: '9.9.9-chrome', type: FieldType.number, values: [20] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byRegexp, options: '/^${chrome_target_version}.*/' },
+            properties: [{ id: 'displayName', value: 'target' }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value.replaceAll('${chrome_target_version}', '1.2.3'),
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[1].config.displayName).toBe('target');
+    expect(data.fields[2].config.displayName).toBeUndefined();
+  });
+
+  it('interpolates dashboard variables in byRegexpOrNames override matchers', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'prod-api', type: FieldType.number, values: [1] },
+        { name: 'dev-api', type: FieldType.number, values: [2] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byRegexpOrNames, options: { pattern: '/.*${env}.*/' } },
+            properties: [{ id: 'displayName', value: 'env-match' }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value.replaceAll('${env}', 'prod'),
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[0].config.displayName).toBe('env-match');
+    expect(data.fields[1].config.displayName).toBeUndefined();
+  });
 });
 
 describe('setFieldConfigDefaults', () => {

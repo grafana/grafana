@@ -93,6 +93,31 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
   return { min, max, delta: (max ?? 0) - (min ?? 0) };
 }
 
+function interpolateMatcherOptions(matcherOptions: unknown, replaceVariables?: InterpolateFunction): unknown {
+  if (!replaceVariables) {
+    return matcherOptions;
+  }
+
+  if (typeof matcherOptions === 'string') {
+    return replaceVariables(matcherOptions);
+  }
+
+  if (
+    matcherOptions &&
+    typeof matcherOptions === 'object' &&
+    'pattern' in matcherOptions &&
+    typeof (matcherOptions as { pattern?: unknown }).pattern === 'string'
+  ) {
+    const options = matcherOptions as { pattern: string };
+    return {
+      ...options,
+      pattern: replaceVariables(options.pattern),
+    };
+  }
+
+  return matcherOptions;
+}
+
 /**
  * Return a copy of the DataFrame with all rules applied
  */
@@ -130,7 +155,7 @@ export function applyFieldOverrides(
       }
 
       override.push({
-        match: info.get(rule.matcher.options),
+        match: info.get(interpolateMatcherOptions(rule.matcher.options, options.replaceVariables)),
         properties: rule.properties,
       });
     }
