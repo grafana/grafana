@@ -87,6 +87,15 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * Controls whether this option is offered in the "Add override property" picker, based on the
+   * override editor context (panel options, data). Distinct from `showIf`, which is evaluated
+   * against the *default* field config and so cannot decide what a per-field override may set.
+   *
+   * Return `false` to hide the option. Anything else (including `undefined`) offers it.
+   */
+  showIfOverride?: (context: StandardEditorContext<unknown>) => boolean;
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
@@ -102,6 +111,13 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * Controls whether this option is offered in the "Add override property" picker, based on the
+   * override editor context (panel options, data). Returning `false` only removes it from the
+   * picker - a rule that already sets the property still renders and keeps its value.
+   */
+  showIfOverride?: (context: StandardEditorContext<unknown>) => boolean;
 
   /** Convert the override value to a well typed value */
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
