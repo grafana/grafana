@@ -276,6 +276,11 @@ export interface GrafanaConfig {
   anonymousEnabled: boolean;
   anonymousDeviceLimit: number;
   featureToggles: FeatureToggles;
+  /**
+   * When true, the frontend serves an empty `featureToggles` map so only OpenFeature flags resolve.
+   * Optional: a backend that predates the flag simply omits it.
+   */
+  disableLegacyFeatureToggles?: boolean;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;

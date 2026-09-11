@@ -28,7 +28,10 @@ import {
   type UnifiedAlertingConfig,
   type GrafanaConfig,
   type CurrentUserDTO,
+  AppEvents,
 } from '@grafana/data';
+
+import { getAppEvents } from './services/appEvents';
 
 /**
  * @deprecated Use the type from `@grafana/data`
@@ -146,6 +149,7 @@ export class GrafanaBootConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
+  disableLegacyFeatureToggles = false;
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
@@ -292,6 +296,13 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
+    // Installed after the overrides so the URL and localStorage switches still reach the real map,
+    // and before the bootData aliasing below so both access paths share the same proxy.
+    if (this.disableLegacyFeatureToggles) {
+      // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
+      this.featureToggles = blankLegacyFeatureToggles(this.featureToggles);
+    }
+
     // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
     this.bootData.settings.featureToggles = this.featureToggles;
 
@@ -300,6 +311,45 @@ export class GrafanaBootConfig {
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
   }
+}
+
+/**
+ * Returns a proxy that reports every legacy feature toggle read and resolves them all to
+ * undefined, so single-tenant Grafana behaves like the multi-tenant frontend service, which
+ * serves an empty toggle map.
+ */
+function blankLegacyFeatureToggles(featureToggles: FeatureToggles): FeatureToggles {
+  const warnedFeatureToggles = new Set<string>();
+
+  return new Proxy(featureToggles, {
+    get(_target, property) {
+      if (typeof property !== 'string') {
+        return undefined;
+      }
+
+      // One console warning per toggle, carrying a stack so the call site is findable.
+      if (!warnedFeatureToggles.has(property)) {
+        warnedFeatureToggles.add(property);
+        console.warn(
+          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated and now resolves to undefined. Use OpenFeature instead.`,
+          new Error().stack
+        );
+      }
+
+      // A toast every time, so the read cannot be missed. Reads that happen before the app event
+      // bus is wired up have nowhere to publish, and must not throw from inside a get trap.
+      try {
+        getAppEvents().publish({
+          type: AppEvents.alertError.name,
+          payload: [`Legacy feature toggle read: "${property}"`, 'Use OpenFeature instead.'],
+        });
+      } catch {
+        // The console warning above is enough in that case.
+      }
+
+      return undefined;
+    },
+  });
 }
 
 // localstorage key: grafana.featureToggles
