@@ -21,22 +21,12 @@ const defaultProps = {
 };
 
 describe('Condition', () => {
-  it('should render without crashing when condition.reducer is undefined', () => {
-    const conditionWithoutReducer: ClassicCondition = {
-      ...baseCondition,
-      reducer: undefined,
-    };
-
-    expect(() => render(<Condition {...defaultProps} condition={conditionWithoutReducer} />)).not.toThrow();
+  it('should render without crashing for a condition carrying the default reducer', () => {
+    expect(() => render(<Condition {...defaultProps} condition={baseCondition} />)).not.toThrow();
   });
 
-  it('should show the WHEN label when condition.reducer is undefined', () => {
-    const conditionWithoutReducer: ClassicCondition = {
-      ...baseCondition,
-      reducer: undefined,
-    };
-
-    render(<Condition {...defaultProps} condition={conditionWithoutReducer} />);
+  it('should show the WHEN label for the first condition', () => {
+    render(<Condition {...defaultProps} condition={baseCondition} />);
 
     // Component should render with no selected reducer value in the Select
     expect(screen.getByText('WHEN')).toBeInTheDocument();

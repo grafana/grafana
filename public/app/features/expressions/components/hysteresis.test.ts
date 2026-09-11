@@ -1,6 +1,7 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
+import type { ThresholdCondition } from '../schemas/threshold';
+import { ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
 
 import {
   isInvalid,
@@ -13,96 +14,75 @@ import {
 
 describe('isInvalid', () => {
   it('returns an error message if unloadEvaluator.params[0] is undefined', () => {
-    const condition: ClassicCondition = {
+    const condition: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsAbove,
         params: [],
       },
       evaluator: { type: EvalFunction.IsAbove, params: [10] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition)).toEqual({ errorMsg: 'This value cannot be empty' });
   });
 
   it('When using is above, returns an error message if the value in unloadevaluator is above the threshold', () => {
-    const condition: ClassicCondition = {
+    const condition: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsAbove,
         params: [15],
       },
       evaluator: { type: EvalFunction.IsAbove, params: [10] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition)).toEqual({ errorMsg: 'Enter a number less than or equal to 10' });
   });
 
   it('When using is below, returns an error message if the value in unloadevaluator is below the threshold', () => {
-    const condition: ClassicCondition = {
+    const condition: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsAbove,
         params: [9],
       },
       evaluator: { type: EvalFunction.IsBelow, params: [10] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition)).toEqual({ errorMsg: 'Enter a number more than or equal to 10' });
   });
 
   it('When using is within range, returns an error message if the value in unloadevaluator is within the range', () => {
     // first parameter is wrong
-    const condition: ClassicCondition = {
+    const condition: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsOutsideRange,
         params: [11, 21],
       },
       evaluator: { type: EvalFunction.IsWithinRange, params: [10, 20] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition)).toEqual({ errorMsgFrom: 'Enter a number less than or equal to 10' });
     // second parameter is wrong
-    const condition2: ClassicCondition = {
+    const condition2: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsOutsideRange,
         params: [9, 19],
       },
       evaluator: { type: EvalFunction.IsWithinRange, params: [10, 20] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition2)).toEqual({ errorMsgTo: 'Enter a number be more than or equal to 20' });
   });
   it('When using is outside range, returns an error message if the value in unloadevaluator is outside the range', () => {
     // first parameter is wrong
-    const condition: ClassicCondition = {
+    const condition: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsWithinRange,
         params: [8, 19],
       },
       evaluator: { type: EvalFunction.IsOutsideRange, params: [10, 20] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition)).toEqual({ errorMsgFrom: 'Enter a number more than or equal to 10' });
     // second parameter is wrong
-    const condition2: ClassicCondition = {
+    const condition2: ThresholdCondition = {
       unloadEvaluator: {
         type: EvalFunction.IsWithinRange,
         params: [11, 21],
       },
       evaluator: { type: EvalFunction.IsOutsideRange, params: [10, 20] },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
     };
     expect(isInvalid(condition2)).toEqual({ errorMsgTo: 'Enter a number less than or equal to 20' });
   });
@@ -113,21 +93,19 @@ describe('thresholdReducer', () => {
     jest.clearAllMocks();
   });
   const onError = jest.fn();
-  const thresholdCondition: ClassicCondition = {
+  const thresholdCondition: ThresholdCondition = {
     evaluator: { type: EvalFunction.IsAbove, params: [10, 0] },
     unloadEvaluator: {
       type: EvalFunction.IsBelow,
       params: [10, 0],
     },
-    query: { params: ['A', 'B'] },
-    reducer: { type: 'avg', params: [] },
-    type: 'query',
   };
 
   it('should return initial state', () => {
     expect(thresholdReducer(undefined, { type: '' })).toEqual({
       type: ExpressionQueryType.threshold,
-      conditions: [],
+      conditions: [expect.any(Object)],
+      expression: '',
       refId: '',
     });
   });
@@ -135,6 +113,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -147,6 +126,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -167,6 +147,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -191,6 +172,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -213,6 +195,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -235,6 +218,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -257,6 +241,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -278,6 +263,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -293,6 +279,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -311,6 +298,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -329,6 +317,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -345,6 +334,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -358,6 +348,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [
         {
           ...thresholdCondition,
@@ -376,6 +367,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -390,6 +382,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 
@@ -403,6 +396,7 @@ describe('thresholdReducer', () => {
     const initialState: ThresholdExpressionQuery = {
       type: ExpressionQueryType.threshold,
       refId: 'A',
+      expression: '',
       conditions: [thresholdCondition],
     };
 

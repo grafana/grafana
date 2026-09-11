@@ -2,14 +2,52 @@ import { isEmpty, omit } from 'lodash';
 
 import { ReducerID, getNextRefId } from '@grafana/data';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { isStrictReducer } from 'app/features/expressions/utils/expressionTypes';
+import { parseExpressionQuery, validateExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { makeReduceExpression, makeThresholdExpression } from 'app/features/expressions/schemas/factories';
+import { toReduceReducerId } from 'app/features/expressions/schemas/reduce';
+import { toThresholdEvalFunction } from 'app/features/expressions/schemas/threshold';
+import { ExpressionDatasourceUID, type ExpressionQuery } from 'app/features/expressions/types';
+import {
+  isReducerExpression,
+  isStrictReducer,
+  isThresholdExpression,
+} from 'app/features/expressions/utils/expressionTypes';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { type KVObject, type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
 import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
+
+/**
+ * Checks the expression models against the stricter rules the backend applies, and returns the
+ * first problem as a message.
+ *
+ * Deliberately only run on save: a half-finished expression is normal while someone is still
+ * editing, but it must not reach the backend, which would reject it with a much less helpful error.
+ */
+export function validateExpressionQueries(queries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>) {
+  for (const query of queries) {
+    if (!isExpressionQuery(query.model)) {
+      continue;
+    }
+
+    const parsed = parseExpressionQuery(query.model);
+
+    // Something we cannot read at all is handled by setQueryEditorSettings, not here.
+    if (!parsed) {
+      continue;
+    }
+
+    const result = validateExpressionQuery(parsed);
+
+    if (!result.success) {
+      return `${query.refId}: ${result.error.issues[0].message}`;
+    }
+  }
+
+  return true;
+}
 
 export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   // data queries only
@@ -97,6 +135,22 @@ export function setInstantOrRange(values: RuleFormValues): RuleFormValues {
 }
 
 /**
+ * Finds the first expression of a given type, keeping both the query's refId and the narrowed
+ * model, so callers can read type-specific fields without checking again.
+ */
+function findExpressionOfType<T extends ExpressionQuery>(
+  expressionQueries: Array<AlertQuery<ExpressionQuery>>,
+  isOfType: (model: ExpressionQuery) => model is T
+): { refId: string; model: T } | undefined {
+  for (const query of expressionQueries) {
+    if (isOfType(query.model)) {
+      return { refId: query.refId, model: query.model };
+    }
+  }
+  return undefined;
+}
+
+/**
  * A alert rule is "transformable" to a simple condition editor if
  * 1. we have a single data query
  * 2. we have _either_
@@ -121,14 +175,14 @@ export function areQueriesTransformableToSimpleCondition(
   const dataQuery = dataQueries.at(0);
 
   // find the reduce or threshold expressions
-  const reduceExpression = expressionQueries.find((query) => query.model.type === ExpressionQueryType.reduce);
-  const thresholdExpression = expressionQueries.find((query) => query.model.type === ExpressionQueryType.threshold);
+  const reduceExpression = findExpressionOfType(expressionQueries, isReducerExpression);
+  const thresholdExpression = findExpressionOfType(expressionQueries, isThresholdExpression);
 
   // reducer should be set to "strict" mode
   const reducerIsStrict = reduceExpression ? isStrictReducer(reduceExpression.model) : false;
   // threshold expression shouldn't have an unload evaluator (custom recovery threshold)
   const thresholdExpressionIsClean =
-    thresholdExpression?.model.conditions?.every((condition) => {
+    thresholdExpression?.model.conditions.every((condition) => {
       return isEmpty(condition.unloadEvaluator);
     }) ?? true;
 
@@ -174,31 +228,18 @@ export function createSimpleConditionExpressions(
   const tempQueries = [...dataQueries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
   const thresholdRefId = getNextRefId(tempQueries);
 
-  const reduceExpression: ExpressionQuery = {
-    refId: reduceRefId,
-    type: ExpressionQueryType.reduce,
-    datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID },
-    reducer: whenField,
-    expression: lastDataQueryRefId,
-  };
+  const reduceExpression = makeReduceExpression(
+    { refId: reduceRefId, datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID } },
+    { reducer: toReduceReducerId(whenField), expression: lastDataQueryRefId }
+  );
 
-  const thresholdExpression: ExpressionQuery = {
-    refId: thresholdRefId,
-    type: ExpressionQueryType.threshold,
-    datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: simpleCondition.evaluator.params,
-          type: simpleCondition.evaluator.type,
-        },
-        operator: { type: 'and' },
-        query: { params: [thresholdRefId] },
-        reducer: { params: [], type: 'last' as const },
-      },
-    ],
-    expression: reduceRefId,
+  const thresholdExpression = makeThresholdExpression(
+    { refId: thresholdRefId, datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID } },
+    { expression: reduceRefId }
+  );
+  thresholdExpression.conditions[0].evaluator = {
+    params: simpleCondition.evaluator.params,
+    type: toThresholdEvalFunction(simpleCondition.evaluator.type),
   };
 
   const expressionQueries: AlertQuery[] = [

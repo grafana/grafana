@@ -34,6 +34,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
+  validateExpressionQueries,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import {
@@ -95,12 +96,17 @@ interface Props {
 
 export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mode }: Props) => {
   const {
+    register,
     setValue,
     getValues,
     watch,
     formState: { errors },
     control,
   } = useFormContext<RuleFormValues>();
+
+  // The queries field has no input of its own, so register it purely to attach the save-time check
+  // on the expression models. Errors surface through the form's existing invalid-submit handling.
+  register('queries', { validate: validateExpressionQueries });
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading } = useAlertQueryRunner();
 
@@ -348,7 +354,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     if (newQueries[0].model) {
       if (isPromOrLokiQuery(newQueries[0].model)) {
         newQueries[0].model.expr = value;
-      } else {
+      } else if (!isExpressionQuery(newQueries[0].model)) {
         // first time we come from grafana-managed type
         // we need to convert the model to PromOrLokiQuery
         const promLoki: PromOrLokiQuery = {

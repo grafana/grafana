@@ -379,7 +379,6 @@ describe('getTargets', () => {
       refId: 'C',
       type: ExpressionQueryType.classic,
       datasource: ExpressionDatasourceRef,
-      expression: '',
       conditions: [
         {
           evaluator: {
@@ -413,6 +412,7 @@ describe('getTargets', () => {
       type: ExpressionQueryType.reduce,
       datasource: ExpressionDatasourceRef,
       expression: 'A',
+      reducer: 'last',
     };
 
     expect(getTargets(expression)).toEqual(['A']);

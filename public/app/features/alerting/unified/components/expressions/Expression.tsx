@@ -102,6 +102,11 @@ export const Expression: FC<ExpressionProps> = ({
         .filter((q) => query.refId !== q.refId)
         .map((q) => ({ value: q.refId, label: q.refId }));
 
+      // Read before the switch: every type is handled below, so inside the default branch the
+      // compiler has narrowed `query` away to nothing. The branch still matters at runtime, for a
+      // model that somehow carries a type we do not know.
+      const unsupportedType: string = query.type;
+
       switch (query.type) {
         case ExpressionQueryType.math:
           return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
@@ -150,7 +155,7 @@ export const Expression: FC<ExpressionProps> = ({
 
         default:
           return (
-            <Trans i18nKey="alerting.expression.not-supported" values={{ expression: query.type }}>
+            <Trans i18nKey="alerting.expression.not-supported" values={{ expression: unsupportedType }}>
               Expression not supported: {'{{expression}}'}
             </Trans>
           );

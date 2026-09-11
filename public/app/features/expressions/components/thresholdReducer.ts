@@ -2,7 +2,9 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
+import type { ThresholdEvalFunction } from '../schemas/common';
+import { type ThresholdCondition, defaultThresholdCondition } from '../schemas/threshold';
+import { ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
 import { isRangeEvaluator } from '../utils/expressionTypes';
 
 export const updateRefId = createAction<string | undefined>('thresold/updateRefId');
@@ -22,10 +24,15 @@ export const updateUnloadParams = createAction<{
 }>('thresold/updateUnloadParams');
 
 export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
-  { type: ExpressionQueryType.threshold, refId: '', conditions: [] },
+  {
+    type: ExpressionQueryType.threshold,
+    refId: '',
+    expression: '',
+    conditions: [structuredClone(defaultThresholdCondition)],
+  },
   (builder) => {
     builder.addCase(updateRefId, (state, action) => {
-      state.expression = action.payload;
+      state.expression = action.payload ?? '';
     });
     builder.addCase(updateThresholdType, (state, action) => {
       const typeInPayload = action.payload.evalFunction;
@@ -90,7 +97,7 @@ type OnError = ((error: string | undefined) => void) | undefined;
 
 // The recovery threshold has no field of its own, so its validation errors have to be pushed into
 // the form manually.
-function reportValidation(condition: ClassicCondition, onError: OnError) {
+function reportValidation(condition: ThresholdCondition, onError: OnError) {
   if (!onError) {
     return;
   }
@@ -101,7 +108,7 @@ function reportValidation(condition: ClassicCondition, onError: OnError) {
 // The recovery value defaults to the threshold value, which is not valid for every operator: for
 // "is equal to" an identical value makes the rule flap between Alerting and Normal on every
 // evaluation. So the default has to be validated, not assumed to be valid.
-function applyDefaultUnloadEvaluator(condition: ClassicCondition, onError: OnError) {
+function applyDefaultUnloadEvaluator(condition: ThresholdCondition, onError: OnError) {
   condition.unloadEvaluator = {
     type: getUnloadEvaluatorTypeFromEvaluatorType(condition.evaluator.type),
     // Copied, so that later edits to the threshold don't mutate the recovery value through a shared array.
@@ -110,7 +117,7 @@ function applyDefaultUnloadEvaluator(condition: ClassicCondition, onError: OnErr
   reportValidation(condition, onError);
 }
 
-function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
+function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction): ThresholdEvalFunction {
   // we don't let the user change the unload evaluator type. We just change it to the opposite of the evaluator type
   if (type === EvalFunction.IsAbove) {
     return EvalFunction.IsBelow;
@@ -147,7 +154,7 @@ function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
   return EvalFunction.IsBelow;
 }
 
-export function isInvalid(condition: ClassicCondition) {
+export function isInvalid(condition: ThresholdCondition) {
   // first check if the unload evaluator values are not empty
   const { unloadEvaluator, evaluator } = condition;
   if (!evaluator) {

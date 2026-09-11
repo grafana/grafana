@@ -6,7 +6,8 @@ import { Trans } from '@grafana/i18n';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
-import { type ClassicCondition, type ReducerType } from '../types';
+import { type ClassicCondition, toClassicOperator } from '../schemas/classic';
+import { type ReducerType } from '../types';
 
 interface Props {
   condition: ClassicCondition;
@@ -29,7 +30,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
   const onEvalOperatorChange = (evalOperator: SelectableValue<string>) => {
     onChange({
       ...condition,
-      operator: { type: evalOperator.value! },
+      operator: { type: toClassicOperator(evalOperator.value) },
     });
   };
 

@@ -1,13 +1,32 @@
-import { type DataQuery, ReducerID, type SelectableValue } from '@grafana/data';
+import { ReducerID, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { EvalFunction } from '../alerting/state/alertDef';
+
+import type {
+  ClassicCondition as ClassicConditionSchema,
+  ClassicExpressionQuery as ClassicExpressionQuerySchema,
+} from './schemas/classic';
+import type { ClassicReducerId } from './schemas/common';
+import type { ExpressionQuery as ExpressionQuerySchema } from './schemas/expressionQuery';
+import type { MathExpressionQuery as MathExpressionQuerySchema } from './schemas/math';
+import type {
+  ExpressionQuerySettings as ExpressionQuerySettingsSchema,
+  ReduceExpressionQuery as ReduceExpressionQuerySchema,
+} from './schemas/reduce';
+import type { ResampleExpressionQuery as ResampleExpressionQuerySchema } from './schemas/resample';
+import type { SqlExpressionQuery as SqlExpressionQuerySchema } from './schemas/sql';
+import type { ThresholdExpressionQuery as ThresholdExpressionQuerySchema } from './schemas/threshold';
 
 /**
  * MATCHES a constant in DataSourceWithBackend
  */
 export const ExpressionDatasourceUID = '__expr__';
 
+/**
+ * The enums live here rather than in `./schemas` because they are runtime values, and this repo
+ * does not allow re-exporting a value from another module. The schemas import them from here.
+ */
 export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
@@ -16,6 +35,32 @@ export enum ExpressionQueryType {
   threshold = 'threshold',
   sql = 'sql',
 }
+
+export enum ReducerMode {
+  Strict = '', // backend API wants an empty string to support "strict" mode
+  ReplaceNonNumbers = 'replaceNN',
+  DropNonNumbers = 'dropNN',
+}
+
+/**
+ * The shapes of each expression type are defined by the schemas under `./schemas`, which also
+ * handle reading and writing them. These aliases keep the familiar names available from here.
+ *
+ * Note that reading a field which only some types have is now a compile error until you narrow by
+ * `type` first - use the `is*Expression` helpers in `./schemas/expressionQuery`.
+ */
+export type ExpressionQuery = ExpressionQuerySchema;
+export type MathExpressionQuery = MathExpressionQuerySchema;
+export type ReduceExpressionQuery = ReduceExpressionQuerySchema;
+export type ResampleExpressionQuery = ResampleExpressionQuerySchema;
+export type ClassicExpressionQuery = ClassicExpressionQuerySchema;
+export type ThresholdExpressionQuery = ThresholdExpressionQuerySchema;
+export type SqlExpressionQuery = SqlExpressionQuerySchema;
+export type ExpressionQuerySettings = ExpressionQuerySettingsSchema;
+export type ClassicCondition = ClassicConditionSchema;
+
+/** The reducers a classic condition accepts. `reduce` expressions use a different, smaller set. */
+export type ReducerType = ClassicReducerId;
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
   switch (type) {
@@ -85,12 +130,6 @@ export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.last, label: 'Last', description: 'Get the last value' },
 ];
 
-export enum ReducerMode {
-  Strict = '', // backend API wants an empty string to support "strict" mode
-  ReplaceNonNumbers = 'replaceNN',
-  DropNonNumbers = 'dropNN',
-}
-
 export const reducerModes: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
@@ -135,67 +174,3 @@ export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
   { value: EvalFunction.IsWithinRangeIncluded, label: 'Is within range included' },
   { value: EvalFunction.IsOutsideRangeIncluded, label: 'Is outside range included' },
 ];
-
-/**
- * For now this is a single object to cover all the types.... would likely
- * want to split this up by type as the complexity increases
- */
-export interface ExpressionQuery extends DataQuery {
-  type: ExpressionQueryType;
-  reducer?: string;
-  expression?: string;
-  window?: string;
-  downsampler?: string;
-  upsampler?: string;
-  conditions?: ClassicCondition[];
-  settings?: ExpressionQuerySettings;
-}
-
-export interface SqlExpressionQuery extends ExpressionQuery {
-  /** Format `alerting` is expected when using SQL expressions in alert rules */
-  format?: 'alerting';
-}
-
-export interface ThresholdExpressionQuery extends ExpressionQuery {
-  conditions: ClassicCondition[];
-}
-export interface ExpressionQuerySettings {
-  mode?: ReducerMode;
-  replaceWithValue?: number;
-}
-
-export interface ClassicCondition {
-  evaluator: {
-    params: number[];
-    type: EvalFunction;
-  };
-  unloadEvaluator?: {
-    params: number[];
-    type: EvalFunction;
-  };
-  operator?: {
-    type: string;
-  };
-  query: {
-    params: string[];
-  };
-  reducer?: {
-    params: [];
-    type: ReducerType;
-  };
-  type: 'query';
-}
-
-export type ReducerType =
-  | 'avg'
-  | 'min'
-  | 'max'
-  | 'sum'
-  | 'count'
-  | 'last'
-  | 'median'
-  | 'diff'
-  | 'diff_abs'
-  | 'percent_diff'
-  | 'percent_diff_abs'
-  | 'count_non_null';

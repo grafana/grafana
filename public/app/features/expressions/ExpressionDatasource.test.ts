@@ -14,6 +14,7 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
+import { makeMathExpression, makeResampleExpression } from './schemas/factories';
 import { type ExpressionQuery, ExpressionQueryType } from './types';
 
 const mockGetDatasource = jest.fn();
@@ -40,19 +41,16 @@ describe('ExpressionDatasourceApi', () => {
   describe('expression queries with template variables', () => {
     it('should interpolate template variables in expression query', () => {
       const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
-      const query = ds.applyTemplateVariables(
-        { type: ExpressionQueryType.math, refId: 'B', expression: '$input + 5 + $A' },
-        {}
-      );
-      expect(query.expression).toBe('10 + 5 + $A');
+      const query = ds.applyTemplateVariables(makeMathExpression({ refId: 'B' }, '$input + 5 + $A'), {});
+      expect(query).toMatchObject({ expression: '10 + 5 + $A' });
     });
     it('should interpolate template variables in expression query', () => {
       const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
       const query = ds.applyTemplateVariables(
-        { type: ExpressionQueryType.resample, refId: 'B', window: '$window' },
+        makeResampleExpression({ refId: 'B' }, { expression: 'A', window: '$window' }),
         {}
       );
-      expect(query.window).toBe('10s');
+      expect(query).toMatchObject({ window: '10s' });
     });
   });
 
@@ -272,5 +270,53 @@ describe('ExpressionDatasourceApi', () => {
       expect(differentNames.fields[0].config.displayNameFromDS).toBeUndefined();
       expect(missingValue.fields[0].config.displayNameFromDS).toBeUndefined();
     });
+  });
+});
+
+describe('newQuery', () => {
+  const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+
+  it('defaults to a math expression', () => {
+    expect(ds.newQuery()).toMatchObject({ type: ExpressionQueryType.math });
+  });
+
+  it('uses a placeholder refId, which the caller replaces', () => {
+    expect(ds.newQuery()).toMatchObject({ refId: '--' });
+  });
+
+  it('points the query at the expression data source', () => {
+    expect(ds.newQuery().datasource).toMatchObject({ uid: '__expr__' });
+  });
+
+  it.each(Object.values(ExpressionQueryType))('builds a %s expression', (type) => {
+    expect(ds.newQuery({ type })).toMatchObject({ type });
+  });
+
+  // Callers used to have to remember to pass these in themselves, and two of them disagreed.
+  it('gives a reduce the reducer the backend requires', () => {
+    expect(ds.newQuery({ type: ExpressionQueryType.reduce })).toMatchObject({ reducer: 'mean' });
+  });
+
+  it('gives a threshold the one condition the backend accepts', () => {
+    expect(ds.newQuery({ type: ExpressionQueryType.threshold })).toMatchObject({
+      conditions: [{ evaluator: { type: 'gt', params: [0] } }],
+    });
+  });
+
+  it('gives a classic expression a condition to start from', () => {
+    expect(ds.newQuery({ type: ExpressionQueryType.classic })).toMatchObject({
+      conditions: [{ type: 'query', reducer: { type: 'avg' } }],
+    });
+  });
+
+  it('carries through the refId and expression it is given', () => {
+    expect(ds.newQuery({ type: ExpressionQueryType.reduce, refId: 'B', expression: 'A' })).toMatchObject({
+      refId: 'B',
+      expression: 'A',
+    });
+  });
+
+  it('does not give a reduce a conditions array', () => {
+    expect(Object.keys(ds.newQuery({ type: ExpressionQueryType.reduce }))).not.toContain('conditions');
   });
 });

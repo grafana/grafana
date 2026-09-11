@@ -1,6 +1,12 @@
 import { type RelativeTimeRange } from '@grafana/data';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import type { ClassicExpressionQuery } from '../../../expressions/schemas/classic';
+import type { MathExpressionQuery } from '../../../expressions/schemas/math';
+import type { ReduceExpressionQuery } from '../../../expressions/schemas/reduce';
+import type { ResampleExpressionQuery } from '../../../expressions/schemas/resample';
+import type { SqlExpressionQuery } from '../../../expressions/schemas/sql';
+import type { ThresholdExpressionQuery } from '../../../expressions/schemas/threshold';
 import { type ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';
 
 const FALL_BACK_TIME_RANGE = { from: 21600, to: 0 };
@@ -38,8 +44,8 @@ const getReferencedIds = (model: ExpressionQuery, queries: AlertQuery[]): string
   }
 };
 
-const getReferencedIdsForClassicCondition = (model: ExpressionQuery) => {
-  return model.conditions?.map((condition) => {
+const getReferencedIdsForClassicCondition = (model: ClassicExpressionQuery) => {
+  return model.conditions.map((condition) => {
     return condition.query.params[0];
   });
 };
@@ -63,17 +69,19 @@ const getTimeRanges = (referencedRefIds: string[], queries: AlertQuery[]) => {
   };
 };
 
-const getReferencedIdsForMath = (model: ExpressionQuery, queries: AlertQuery[]) => {
+const getReferencedIdsForMath = (model: MathExpressionQuery | SqlExpressionQuery, queries: AlertQuery[]) => {
   return (
     queries
       // filter queries of type query and filter expression on if it includes any refIds
-      .filter((q) => q.queryType === 'query' && model.expression?.includes(q.refId))
+      .filter((q) => q.queryType === 'query' && model.expression.includes(q.refId))
       .map((q) => {
         return q.refId;
       })
   );
 };
 
-const getReferencedIdsForReduce = (model: ExpressionQuery) => {
+const getReferencedIdsForReduce = (
+  model: ReduceExpressionQuery | ResampleExpressionQuery | ThresholdExpressionQuery
+) => {
   return model.expression ? [model.expression] : undefined;
 };

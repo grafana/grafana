@@ -1,4 +1,5 @@
 import { createTheme } from '@grafana/data';
+import { makeExpression } from 'app/features/expressions/schemas/factories';
 import { ExpressionQueryType, type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getExpressionSectionLabel, getHiddenMaskStyles } from './utils';
@@ -19,7 +20,7 @@ describe('getHiddenMaskStyles', () => {
 
 describe('getExpressionSectionLabel', () => {
   function expressionQuery(type: ExpressionQueryType): ExpressionQuery {
-    return { refId: 'A', type };
+    return makeExpression(type, { refId: 'A' });
   }
 
   it.each([

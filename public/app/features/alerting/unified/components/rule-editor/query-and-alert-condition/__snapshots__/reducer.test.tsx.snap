@@ -14,28 +14,6 @@ exports[`Query and expressions reducer should add a new expression 1`] = `
     {
       "datasourceUid": "__expr__",
       "model": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                0,
-                0,
-              ],
-              "type": "gt",
-            },
-            "operator": {
-              "type": "and",
-            },
-            "query": {
-              "params": [],
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg",
-            },
-            "type": "query",
-          },
-        ],
         "datasource": {
           "name": "Expression",
           "type": "__expr__",
@@ -101,28 +79,6 @@ exports[`Query and expressions reducer should add reduce expression if there is 
     {
       "datasourceUid": "__expr__",
       "model": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                0,
-                0,
-              ],
-              "type": "gt",
-            },
-            "operator": {
-              "type": "and",
-            },
-            "query": {
-              "params": [],
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg",
-            },
-            "type": "query",
-          },
-        ],
         "datasource": {
           "name": "Expression",
           "type": "__expr__",
@@ -139,6 +95,16 @@ exports[`Query and expressions reducer should add reduce expression if there is 
     {
       "datasourceUid": "__expr__",
       "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+              ],
+              "type": "gt",
+            },
+          },
+        ],
         "expression": "reducer",
         "refId": "C",
         "type": "threshold",
@@ -207,6 +173,16 @@ exports[`Query and expressions reducer should remove first reducer 1`] = `
     {
       "datasourceUid": "__expr__",
       "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+              ],
+              "type": "gt",
+            },
+          },
+        ],
         "expression": "A",
         "refId": "C",
         "type": "threshold",
@@ -232,6 +208,16 @@ exports[`Query and expressions reducer should remove reducer even if reducer is 
     {
       "datasourceUid": "__expr__",
       "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+              ],
+              "type": "gt",
+            },
+          },
+        ],
         "expression": "A",
         "refId": "C",
         "type": "threshold",
@@ -270,9 +256,7 @@ exports[`Query and expressions reducer should rewire expressions 1`] = `
               "type": "and",
             },
             "query": {
-              "params": [
-                "C",
-              ],
+              "params": [],
             },
             "reducer": {
               "params": [],
@@ -286,7 +270,6 @@ exports[`Query and expressions reducer should rewire expressions 1`] = `
           "type": "__expr__",
           "uid": "__expr__",
         },
-        "expression": "",
         "refId": "B",
         "type": "classic_conditions",
       },
@@ -316,9 +299,7 @@ exports[`Query and expressions reducer should set data queries 1`] = `
               "type": "and",
             },
             "query": {
-              "params": [
-                "A",
-              ],
+              "params": [],
             },
             "reducer": {
               "params": [],
@@ -332,7 +313,6 @@ exports[`Query and expressions reducer should set data queries 1`] = `
           "type": "__expr__",
           "uid": "__expr__",
         },
-        "expression": "",
         "refId": "B",
         "type": "classic_conditions",
       },
@@ -349,30 +329,6 @@ exports[`Query and expressions reducer should update an expression 1`] = `
     {
       "datasourceUid": "__expr__",
       "model": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                0,
-                0,
-              ],
-              "type": "gt",
-            },
-            "operator": {
-              "type": "and",
-            },
-            "query": {
-              "params": [
-                "A",
-              ],
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg",
-            },
-            "type": "query",
-          },
-        ],
         "datasource": {
           "name": "Expression",
           "type": "__expr__",
@@ -416,9 +372,7 @@ exports[`Query and expressions reducer should update an expression refId and rew
               "type": "and",
             },
             "query": {
-              "params": [
-                "C",
-              ],
+              "params": [],
             },
             "reducer": {
               "params": [],
@@ -432,7 +386,6 @@ exports[`Query and expressions reducer should update an expression refId and rew
           "type": "__expr__",
           "uid": "__expr__",
         },
-        "expression": "",
         "refId": "B",
         "type": "classic_conditions",
       },
