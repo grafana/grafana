@@ -7763,6 +7763,9 @@
         "title": "Unsaved changes"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": "Static dimensions CSV"
+    },
     "suggested-dashboard-banner": {
       "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <6>create one from scratch</6>.",
       "title": "You are viewing {{title}}"
@@ -8017,6 +8020,7 @@
       "title-label": "Title"
     },
     "json-editor": {
+      "aria-label": "Dashboard JSON model",
       "save-button": "Save changes",
       "save-button-disabled-tooltip": "Fix validation errors before saving",
       "save-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
