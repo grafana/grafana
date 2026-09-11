@@ -13,8 +13,9 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
+
+import { partitionVariablesByDisplay } from './partitionVariables';
 
 export interface SectionFiltersSetState extends SceneObjectState {
   sectionRef: SceneObjectRef<SceneObject>;

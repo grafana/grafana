@@ -16,14 +16,14 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
+import {
+  partitionVariablesByDisplay,
+  partitionVariablesByEditability,
+} from '../../settings/variables/partitionVariables';
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import {
-  DashboardVariablesList,
-  partitionVariablesByDisplay,
-  partitionVariablesByEditability,
-} from './DashboardVariablesList';
+import { DashboardVariablesList } from './DashboardVariablesList';
 
 jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
   openAddVariablePane: jest.fn(),
