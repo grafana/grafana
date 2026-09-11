@@ -44,6 +44,27 @@
   {
     "type": "changedfiles",
     "matches": [
+      "pkg/services/ssosettings/**/*",
+      "pkg/services/auth/**/*",
+      "pkg/services/authn/**/*",
+      "pkg/services/ldap/**/*",
+      "pkg/services/login/**/*",
+      "pkg/services/loginattempt/**/*",
+      "pkg/services/oauthtoken/**/*",
+      "pkg/services/serviceaccounts/**/*",
+      "pkg/services/signingkeys/**/*",
+      "pkg/services/scimutil/**/*",
+      "pkg/login/**/*",
+      "public/app/features/auth-config/**/*",
+      "conf/ldap.toml",
+      "conf/ldap_multiple.toml"
+    ],
+    "action": "updateLabel",
+    "addLabel": "area/auth"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
       "pkg/services/sqlstore/migrations/**/*",
       "**/*_mig.go"
     ],
@@ -301,6 +322,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/190"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/660"
     }
   },
   {
