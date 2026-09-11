@@ -2,6 +2,7 @@ package search
 
 import (
 	"maps"
+	"regexp/syntax"
 	"slices"
 	"testing"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"regexp/syntax"
 
 	"github.com/blevesearch/bleve/v2/search/query"
 
