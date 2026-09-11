@@ -671,6 +671,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/PanelDataErrorView.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/grafana-catalog
+/packages/grafana-runtime/src/config.test.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/dataSource @grafana/grafana-catalog
