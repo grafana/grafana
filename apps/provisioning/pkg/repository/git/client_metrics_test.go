@@ -26,7 +26,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 	})
 
 	t.Run("HTTP requests are counted per operation and status code", func(t *testing.T) {
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := RegisterClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
 		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 200, Duration: 5 * time.Millisecond, Attempt: 1})
@@ -39,7 +39,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 	})
 
 	t.Run("only attempts past the first count as retries", func(t *testing.T) {
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := RegisterClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
 		rec.HTTPRequest(ctx, metrics.HTTPRequestSample{Operation: metrics.OperationUploadPack, StatusCode: 500, Duration: time.Millisecond, Attempt: 1})
@@ -50,7 +50,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 	})
 
 	t.Run("fetched objects and bytes accumulate", func(t *testing.T) {
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := RegisterClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
 		rec.ObjectsFetched(ctx, metrics.ObjectsFetchedSample{Count: 10, Bytes: 2048})
@@ -61,7 +61,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 	})
 
 	t.Run("cache access is split by hit and miss", func(t *testing.T) {
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := RegisterClientMetrics(prometheus.NewRegistry())
 		rec := m.Recorder(provisioning.GitRepositoryType)
 
 		rec.CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
@@ -73,7 +73,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 	})
 
 	t.Run("labels follow the configured repository type", func(t *testing.T) {
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := RegisterClientMetrics(prometheus.NewRegistry())
 		m.Recorder(provisioning.GitHubRepositoryType).CacheAccess(ctx, metrics.CacheAccessSample{Hit: true})
 
 		assert.Equal(t, 1.0, testutil.ToFloat64(m.cacheAccesses.WithLabelValues("github", "hit")))
@@ -86,7 +86,7 @@ func TestClientMetrics_Recorder(t *testing.T) {
 // instead of the noop fallback. This is what makes the whole family record
 // without touching any nanogit call site.
 func TestGitRepository_InjectsClientRecorder(t *testing.T) {
-	m := newClientMetrics(prometheus.NewRegistry())
+	m := RegisterClientMetrics(prometheus.NewRegistry())
 	repo := &gitRepository{
 		gitConfig:     RepositoryConfig{Branch: "main"},
 		config:        &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}},
@@ -105,11 +105,24 @@ func TestGitRepository_InjectsClientRecorder(t *testing.T) {
 	assert.IsType(t, &metrics.NoopRecorder{}, metrics.FromContext(bareCtx))
 }
 
-// TestRegisterClientMetrics_Idempotent pins that registration binds once and
-// never panics on a second call, the way the process wiring relies on (two
-// binaries, and the operator's early-return paths, all call it).
-func TestRegisterClientMetrics_Idempotent(t *testing.T) {
-	first := RegisterClientMetrics(prometheus.NewRegistry())
-	second := RegisterClientMetrics(prometheus.NewRegistry())
-	assert.Same(t, first, second, "registration binds to the first registry and returns that instance")
+// TestRegisterClientMetrics_PerRegistry pins that each call registers its own
+// collectors on the given registry and returns a distinct instance — no
+// package-global bound to the first caller — so a service can register on
+// whatever registry it owns.
+func TestRegisterClientMetrics_PerRegistry(t *testing.T) {
+	regA := prometheus.NewRegistry()
+	regB := prometheus.NewRegistry()
+
+	a := RegisterClientMetrics(regA)
+	b := RegisterClientMetrics(regB)
+
+	require.NotNil(t, a)
+	require.NotNil(t, b)
+	assert.NotSame(t, a, b, "each registry gets its own instance")
+
+	// The collectors are registered on their own registry: recording on A shows up
+	// when gathering A, and B stays independent.
+	a.Recorder(provisioning.GitRepositoryType).CacheAccess(context.Background(), metrics.CacheAccessSample{Hit: true})
+	assert.Equal(t, 1.0, testutil.ToFloat64(a.cacheAccesses.WithLabelValues("git", "hit")))
+	assert.Equal(t, 0.0, testutil.ToFloat64(b.cacheAccesses.WithLabelValues("git", "hit")))
 }

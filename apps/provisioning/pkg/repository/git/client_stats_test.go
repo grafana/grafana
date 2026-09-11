@@ -17,7 +17,7 @@ import (
 // event into the ClientStats attached to the context it is handed, so a caller
 // that scopes a context with WithClientStats gets the git work done on it.
 func TestClientStats_AccumulatesFromRecorder(t *testing.T) {
-	rec := newClientMetrics(prometheus.NewRegistry()).Recorder(provisioning.GitRepositoryType)
+	rec := RegisterClientMetrics(prometheus.NewRegistry()).Recorder(provisioning.GitRepositoryType)
 
 	ctx, stats := WithClientStats(context.Background())
 
@@ -43,7 +43,7 @@ func TestClientStats_AccumulatesFromRecorder(t *testing.T) {
 // so instrumentation on an unscoped context (health checks, tests, ad-hoc calls)
 // is a no-op rather than a panic.
 func TestClientStats_NoStatsInContextIsNoop(t *testing.T) {
-	rec := newClientMetrics(prometheus.NewRegistry()).Recorder(provisioning.GitRepositoryType)
+	rec := RegisterClientMetrics(prometheus.NewRegistry()).Recorder(provisioning.GitRepositoryType)
 
 	assert.NotPanics(t, func() {
 		rec.HTTPRequest(context.Background(), metrics.HTTPRequestSample{Operation: metrics.OperationSmartInfo, StatusCode: 200, Attempt: 1})

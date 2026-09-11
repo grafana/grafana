@@ -65,6 +65,7 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 	metrics *repository.OperationMetrics,
+	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {

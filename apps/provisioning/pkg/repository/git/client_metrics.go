@@ -3,9 +3,9 @@ package git
 import (
 	"context"
 	"strconv"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/nanogit/metrics"
@@ -30,32 +30,22 @@ type ClientMetrics struct {
 	cacheAccesses  *prometheus.CounterVec   // repository_type, result
 }
 
-var (
-	clientMetricsOnce sync.Once
-	clientMetrics     *ClientMetrics
-)
-
-// RegisterClientMetrics registers the nanogit client metrics against reg and
-// stores them as the process-wide instance the git repositories report to. Like
-// the other provisioning metric families it binds to the first registry it is
-// given; subsequent calls return that same instance.
+// RegisterClientMetrics builds the nanogit client metrics, registers their
+// collectors on reg, and returns the instance to thread through the repository
+// wiring. It registers on whatever registry the owning service supplies (via
+// promauto) rather than binding a package-global to the first caller, so every
+// service instance gets its own collectors.
 func RegisterClientMetrics(reg prometheus.Registerer) *ClientMetrics {
-	clientMetricsOnce.Do(func() {
-		clientMetrics = newClientMetrics(reg)
-	})
-	return clientMetrics
-}
-
-func newClientMetrics(reg prometheus.Registerer) *ClientMetrics {
-	m := &ClientMetrics{
-		httpRequests: prometheus.NewCounterVec(
+	factory := promauto.With(reg)
+	return &ClientMetrics{
+		httpRequests: factory.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_http_requests_total",
 				Help: "Total HTTP requests nanogit made to the Git server, by protocol operation and status code. Counts every attempt, including retries.",
 			},
 			[]string{"repository_type", "operation", "status_code"},
 		),
-		httpDuration: prometheus.NewHistogramVec(
+		httpDuration: factory.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_git_client_http_request_duration_seconds",
 				Help:    "Duration of the HTTP round trips nanogit made to the Git server, by protocol operation.",
@@ -63,28 +53,28 @@ func newClientMetrics(reg prometheus.Registerer) *ClientMetrics {
 			},
 			[]string{"repository_type", "operation"},
 		),
-		httpRetries: prometheus.NewCounterVec(
+		httpRetries: factory.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_http_retries_total",
 				Help: "HTTP requests to the Git server that were retries (attempt > 1), by protocol operation.",
 			},
 			[]string{"repository_type", "operation"},
 		),
-		objectsFetched: prometheus.NewCounterVec(
+		objectsFetched: factory.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_objects_fetched_total",
 				Help: "Total Git objects nanogit parsed from fetch responses.",
 			},
 			[]string{"repository_type"},
 		),
-		fetchedBytes: prometheus.NewCounterVec(
+		fetchedBytes: factory.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_fetched_bytes_total",
 				Help: "Total response bytes nanogit read while fetching objects.",
 			},
 			[]string{"repository_type"},
 		),
-		cacheAccesses: prometheus.NewCounterVec(
+		cacheAccesses: factory.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_cache_accesses_total",
 				Help: "Packfile object cache lookups nanogit did before deciding whether to fetch, by result (hit/miss).",
@@ -92,16 +82,6 @@ func newClientMetrics(reg prometheus.Registerer) *ClientMetrics {
 			[]string{"repository_type", "result"},
 		),
 	}
-
-	reg.MustRegister(
-		m.httpRequests,
-		m.httpDuration,
-		m.httpRetries,
-		m.objectsFetched,
-		m.fetchedBytes,
-		m.cacheAccesses,
-	)
-	return m
 }
 
 // Recorder returns a metrics.Recorder that labels everything it observes with
