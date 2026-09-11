@@ -320,7 +320,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 Configure who receives notifications when the alert rule fires.
 
-The **Default** option allows to select a [contact point](ref:contact-points) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](ref:notification-policies).
+The **Default** option allows you to select a [contact point](ref:contact-points) to handle notifications for this alert rule. The **Advanced** option routes notifications through [notification policies](ref:notification-policies).
 
 {{< collapse title="Default options" >}}
 
