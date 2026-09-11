@@ -744,7 +744,7 @@ When a data point on the geomap represents one row&mdash;that is, only a single 
 
 When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with mulitple rows of associated data" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-multiple-row-marker-v12.1.png" max-width="750px" alt="A data point with multiple rows of associated data" >}}
 
 The text displayed in each tooltip row is associated with the first field value in each data row.
 Click it to expand and display the full details of the data row.
