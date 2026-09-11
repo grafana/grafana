@@ -150,6 +150,9 @@ const config: KnipConfig = {
       webpack: false,
       ignoreDependencies: ['.*'],
     },
+    'packages/grafana-plugin-compat': {
+      ignoreDependencies: packageIgnoreDeps,
+    },
   },
 };
 
