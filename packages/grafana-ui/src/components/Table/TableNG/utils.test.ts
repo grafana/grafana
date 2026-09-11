@@ -1814,11 +1814,12 @@ describe('TableNG utils', () => {
       return typographyCtx;
     };
 
-    const compute = (fields: Field[], availWidth: number, showTypeIcons = false) =>
+    const compute = (fields: Field[], availWidth: number, showTypeIcons = false, preventHorizontalOverflow = false) =>
       computeContentAwareColWidths(fields, availWidth, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
         showTypeIcons,
+        preventHorizontalOverflow,
       });
 
     afterEach(() => jest.restoreAllMocks());
@@ -1897,6 +1898,146 @@ describe('TableNG utils', () => {
       const fields: Field[] = [{ name: 's', type: FieldType.string, values: [longValue], config: {} }];
       // availWidth < cap, so leftover is negative: width stays at the cap and the grid scrolls.
       expect(compute(fields, 100)).toEqual([COLUMN.MAX_AUTO_WIDTH]);
+    });
+
+    it('levels a wrapped column down to fit the panel rather than overflowing it', () => {
+      const cols = (wrap: boolean): Field[] => [
+        // 100*8+13+6 = 819, well over the 400 cap.
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: wrap } } },
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floored to 50
+      ];
+
+      // Content totals 400 + 50 = 450 against a 300px panel. The wrapped column can trade the 150px
+      // of overflow for extra row height, so it gives all of it back and the table fits exactly.
+      expect(compute(cols(true), 300)).toEqual([250, 50]);
+      // Unwrapped, the same content would be clipped rather than reflowed, so it keeps its width and
+      // the grid scrolls instead.
+      expect(compute(cols(false), 300)).toEqual([COLUMN.MAX_AUTO_WIDTH, 50]);
+    });
+
+    it('takes the overflow from the widest wrapped column first, then levels them together', () => {
+      const fields: Field[] = [
+        // 40*8+13+6 = 339
+        { name: 'A', type: FieldType.string, values: ['x'.repeat(40)], config: { custom: { wrapText: true } } },
+        // 20*8+13+6 = 179
+        { name: 'B', type: FieldType.string, values: ['x'.repeat(20)], config: { custom: { wrapText: true } } },
+      ];
+
+      // Content totals 518. A 40px deficit comes entirely out of A, which is 160px wider than B:
+      // the narrower column gives up nothing while a wider one still has slack.
+      expect(compute(fields, 478)).toEqual([299, 179]);
+      // A 200px deficit first levels A down to B (160px), then splits the remaining 40px between
+      // them (20px each), so they land on a common width instead of A collapsing on its own.
+      expect(compute(fields, 318)).toEqual([159, 159]);
+    });
+
+    it('never levels a wrapped column below its header label, keeping the residual overflow', () => {
+      const fields: Field[] = [
+        {
+          name: 'A'.repeat(30), // header 30*8 + sort arrow 22 + 13 = 275
+          type: FieldType.string,
+          values: ['x'.repeat(60)], // 499 => capped to 400
+          config: { custom: { wrapText: true } },
+        },
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 50
+      ];
+
+      // The 250px deficit against a 200px panel is more than the wrapped column can give: the header
+      // label doesn't reflow, so it stops at 275 and the grid still scrolls, just 125px less far.
+      expect(compute(fields, 200)).toEqual([275, 50]);
+    });
+
+    it('never levels a wrapped column below its configured minWidth', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['x'.repeat(100)], // 819 => capped to 400
+          config: { custom: { wrapText: true, minWidth: 300 } },
+        },
+      ];
+
+      expect(compute(fields, 100)).toEqual([300]);
+    });
+
+    it('leaves a graphical column at its measured width even when wrapText is set on it', () => {
+      const fields: Field[] = [
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: true } } }, // capped to 400
+        {
+          name: 'g',
+          type: FieldType.number,
+          values: [1],
+          // wrapText has no effect on a sparkline's rendering, but a default applied to every column
+          // shouldn't make this one eligible for the level-down either — there's nothing to reflow.
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+        },
+      ];
+
+      // Same 300px deficit as the preventHorizontalOverflow case below: S gives back everything a
+      // wrapped column can (down to its header), the sparkline stays untouched.
+      expect(compute(fields, 250)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+    });
+
+    describe('preventHorizontalOverflow', () => {
+      it('levels an unwrapped column down to fit, truncating its content instead of scrolling', () => {
+        const fields: Field[] = [
+          // 100*8+13+6 = 819, well over the 400 cap; no wrapText, so the content ellipsizes.
+          { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: {} },
+          { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floored to 50
+        ];
+
+        // Content totals 450 against a 300px panel. With the option the 150px of overflow comes out
+        // of the text column, which then shows an ellipsis rather than hiding N behind a scrollbar.
+        expect(compute(fields, 300, false, true)).toEqual([250, 50]);
+        // Without it, an unwrapped column keeps its content width and the grid scrolls (the default).
+        expect(compute(fields, 300)).toEqual([COLUMN.MAX_AUTO_WIDTH, 50]);
+      });
+
+      it('still takes the overflow from the widest column first, then levels them together', () => {
+        const fields: Field[] = [
+          { name: 'A', type: FieldType.string, values: ['x'.repeat(40)], config: {} }, // 339
+          { name: 'B', type: FieldType.string, values: ['x'.repeat(20)], config: {} }, // 179
+        ];
+
+        // Same widest-first levelling wrapped columns get: a 40px deficit comes entirely out of A,
+        // which is 160px wider than B...
+        expect(compute(fields, 478, false, true)).toEqual([299, 179]);
+        // ...while a 200px deficit levels A down to B and then splits the last 40px between them.
+        expect(compute(fields, 318, false, true)).toEqual([159, 159]);
+      });
+
+      it('leaves graphical columns at their measured width — there is nothing in them to truncate', () => {
+        const fields: Field[] = [
+          { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: {} }, // capped to 400
+          {
+            name: 'g',
+            type: FieldType.number,
+            values: [1],
+            config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+          },
+        ];
+
+        // The 300px deficit is more than levelling S down to the sparkline's width would cover, so a
+        // shrinkable sparkline would have been dragged down with it ([125, 125]). Squeezing a
+        // sparkline clips the graphic instead of ellipsizing text, so S absorbs the whole deficit.
+        expect(compute(fields, 250, false, true)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+      });
+
+      it('still stops at the header label, keeping the residual overflow', () => {
+        const fields: Field[] = [
+          {
+            name: 'A'.repeat(30), // header 30*8 + sort arrow 22 + 13 = 275
+            type: FieldType.string,
+            values: ['x'.repeat(60)], // 499 => capped to 400
+            config: {},
+          },
+          { name: 'N', type: FieldType.number, values: [999], config: {} }, // 50
+        ];
+
+        // Truncating the values is fine; truncating the column's own title isn't. The option gets as
+        // close to fitting as the header allows and the grid scrolls the rest.
+        expect(compute(fields, 200, false, true)).toEqual([275, 50]);
+      });
     });
 
     it('measures the display-formatted string, not the raw value', () => {
@@ -1996,8 +2137,9 @@ describe('TableNG utils', () => {
       const longestLine = Math.max(...pretty.split('\n').map((line) => line.length));
       const expected = longestLine * CHAR_W + CELL_CHROME;
 
-      // availWidth below the content so it can't grow to fill (which would mask the difference).
-      expect(compute([jsonField(value, true)], 40)).toEqual([expected]);
+      // availWidth exactly at the content width, so the column neither grows to fill (which would
+      // mask the difference) nor levels down to fit (wrapped columns give width back on overflow).
+      expect(compute([jsonField(value, true)], expected)).toEqual([expected]);
       // the widest line is far narrower than the whole blob, which would hit the cap.
       expect(expected).toBeLessThan(COLUMN.MAX_AUTO_WIDTH);
       expect(pretty.length * CHAR_W + CELL_CHROME).toBeGreaterThan(COLUMN.MAX_AUTO_WIDTH);
@@ -2094,11 +2236,13 @@ describe('TableNG utils', () => {
       });
       // Wrapped links stack vertically, so the column follows the widest link ("Open dashboard",
       // 14*8+8=120; +CELL_CHROME 13 = 133) rather than the summed inline run of both links.
-      const wrapped = computeContentAwareColWidths([field(true)], 50, {
+      // availWidth is the wrapped content width, so neither column grows and the wrapped one has no
+      // overflow to level down into.
+      const wrapped = computeContentAwareColWidths([field(true)], 133, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
-      const inline = computeContentAwareColWidths([field(false)], 50, {
+      const inline = computeContentAwareColWidths([field(false)], 133, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });

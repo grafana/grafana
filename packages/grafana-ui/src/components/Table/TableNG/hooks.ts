@@ -796,6 +796,7 @@ export interface ContentAwareWidths {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
@@ -825,6 +826,7 @@ interface UseContentAwareWidthsOptions {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
 }
 
 /**
@@ -840,6 +842,7 @@ export function useContentAwareWidths({
   tableRefreshEnabled = false,
   filter,
   noPanelPadding = false,
+  preventHorizontalOverflow = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -863,6 +866,7 @@ export function useContentAwareWidths({
             tableRefreshEnabled,
             filter,
             noPanelPadding,
+            preventHorizontalOverflow,
           }
         : undefined,
     [
@@ -874,6 +878,7 @@ export function useContentAwareWidths({
       filter,
       tableRefreshEnabled,
       noPanelPadding,
+      preventHorizontalOverflow,
     ]
   );
 }
