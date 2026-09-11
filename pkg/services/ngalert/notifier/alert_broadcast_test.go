@@ -31,9 +31,9 @@ func TestBroadcastAlerts(t *testing.T) {
 		expected      *AlertBroadcastPayload
 	}{
 		{
-			name:  "broadcasts alerts when channel exists",
-			orgID: 1,
-			alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test alert"}}}},
+			name:          "broadcasts alerts when channel exists",
+			orgID:         1,
+			alerts:        apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test alert"}}}},
 			channelExists: true,
 			expected: &AlertBroadcastPayload{
 				OrgID:  1,
@@ -157,10 +157,20 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
 		require.NoError(t, err)
 
-		start := time.Now()
-		require.NoError(t, state.Merge(payload))
-		require.Less(t, time.Since(start), 100*time.Millisecond)
-		require.Eventually(t, func() bool { select { case <-entered: return true; default: return false } }, time.Second, 10*time.Millisecond)
+		mergeDone := make(chan error, 1)
+		go func() {
+			mergeDone <- state.Merge(payload)
+		}()
+
+		require.Eventually(t, func() bool {
+			select {
+			case <-entered:
+				return true
+			default:
+				return false
+			}
+		}, time.Second, 10*time.Millisecond)
+		require.NoError(t, <-mergeDone)
 		close(release)
 	})
 
@@ -169,22 +179,36 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		mockAM.On("Ready").Return(true)
 		entered := make(chan struct{})
 		release := make(chan struct{})
-		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(mock.Arguments) { close(entered); <-release }).Return(nil)
+		delivered := make(chan string, 2)
+		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			alerts := args.Get(1).(apimodels.PostableAlerts)
+			delivered <- string(alerts.PostableAlerts[0].Annotations["summary"])
+			if len(delivered) == 1 {
+				close(entered)
+				<-release
+			}
+		}).Return(nil)
 
 		moa := &MultiOrgAlertmanager{logger: log.NewNopLogger(), alertmanagers: map[int64]Alertmanager{1: mockAM}}
 		state := newAlertBroadcastState(log.NewNopLogger(), moa)
 		state.queue = make(chan AlertBroadcastPayload, 1)
-		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
-		require.NoError(t, err)
 
-		require.NoError(t, state.Merge(payload))
+		makePayload := func(summary string) []byte {
+			payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": summary}}}}})
+			require.NoError(t, err)
+			return payload
+		}
+
+		require.NoError(t, state.Merge(makePayload("alert 1")))
 		require.Eventually(t, func() bool { select { case <-entered: return true; default: return false } }, time.Second, 10*time.Millisecond)
-		require.NoError(t, state.Merge(payload))
-		start := time.Now()
-		require.NoError(t, state.Merge(payload))
-		require.Less(t, time.Since(start), 100*time.Millisecond)
+		require.NoError(t, state.Merge(makePayload("alert 2")))
+		require.NoError(t, state.Merge(makePayload("alert 3")))
 		require.Len(t, state.queue, 1)
+
 		close(release)
+		require.Eventually(t, func() bool { return len(delivered) == 2 }, time.Second, 10*time.Millisecond)
+		require.Equal(t, []string{"alert 1", "alert 2"}, []string{<-delivered, <-delivered})
+		mockAM.AssertExpectations(t)
 	})
 
 	t.Run("skips when alertmanager not found", func(t *testing.T) {
@@ -203,7 +227,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
 		require.NoError(t, err)
 		require.NoError(t, state.Merge(payload))
-		time.Sleep(10 * time.Millisecond)
+		require.Eventually(t, func() bool { return !state.isRunning() }, time.Second, 10*time.Millisecond)
 		mockAM.AssertNotCalled(t, "PutAlerts", mock.Anything, mock.Anything)
 	})
 
