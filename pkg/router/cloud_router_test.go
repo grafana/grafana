@@ -1,9 +1,15 @@
 package router
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/stretchr/testify/require"
@@ -124,10 +130,82 @@ func TestProvideCloudRoutesLoaderFactory_RenamedKey(t *testing.T) {
 }
 
 func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
-	t.Skip("enabled in Task 6")
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 
 	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
 	require.NoError(t, err)
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
+}
+
+func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":      "https://baas.invalid",
+		"baas_apiserver.audience": "baas",
+	})
+
+	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
+}
+
+func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"cap_token":          "tok",
+		"token_exchange_url": "https://exchange.invalid",
+		"baas_apiserver.url": "https://baas.invalid",
+	})
+
+	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.ErrorContains(t, err, "baas_apiserver.audience is required")
+}
+
+func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		list := metav1.APIGroupList{Groups: []metav1.APIGroup{{Name: "dashboard.grafana.app"}}}
+		_ = json.NewEncoder(w).Encode(list)
+	}))
+	defer upstream.Close()
+
+	// Fake token exchange endpoint: the real exchange client (authnlib)
+	// performs a real HTTP POST on every RoundTrip, so it needs somewhere
+	// to actually succeed against for the poll loop to reach upstream.
+	tokenExchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"ok","data":{"token":"fake-token"}}`))
+	}))
+	defer tokenExchange.Close()
+
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"cap_token":               "tok",
+		"token_exchange_url":      tokenExchange.URL,
+		"baas_apiserver.url":      upstream.URL,
+		"baas_apiserver.audience": "baas",
+	})
+
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, loaderIface) // must activate without appmanifest_apiserver_url set
+
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+	require.Nil(t, loader.routeBackendClient) // CRD side must stay unconfigured
+
+	svc, ok := loaderIface.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+	t.Cleanup(func() {
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
+	})
+
+	require.Eventually(t, func() bool {
+		backends, err := loader.Load(t.Context())
+		if err != nil {
+			return false
+		}
+		for _, b := range backends {
+			if b.Group().Name == "dashboard.grafana.app" {
+				return true
+			}
+		}
+		return false
+	}, 5*time.Second, 10*time.Millisecond)
 }

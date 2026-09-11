@@ -33,12 +33,14 @@ import (
 const cloudRouterSection = "cloud_router"
 
 // ProvideCloudRoutesLoaderFactory builds the cloud-router RoutesLoader from
-// grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set, so the
-// router module (not a separate process) owns its lifecycle. Returns (nil,
-// nil) when appmanifest_apiserver_url is unset -- an ini section is never truly absent
-// (SectionWithEnvOverrides always returns a valid, empty section), so
-// appmanifest_apiserver_url's presence is what actually gates whether this loader
-// activates; callers fall back to the dummy loader when it does.
+// grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set,
+// or any aggregate target (baas_apiserver, cloud_app_platform_apiserver) has
+// its .url configured, so the router module (not a separate process) owns
+// its lifecycle. Returns (nil, nil) when none of those are set -- an ini
+// section is never truly absent (SectionWithEnvOverrides always returns a
+// valid, empty section), so it's the presence of at least one of these
+// upstream apiserver URLs that actually gates whether this loader activates;
+// callers fall back to the dummy loader when it doesn't.
 //
 // Auth is a CAP token exchanged for a signed access token on every request
 // to the remote apiserver, carried on X-Access-Token rather than a static
@@ -47,14 +49,19 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
-	if appManifestApiserverURL == "" {
+	aggregateTargetConfigs, err := parseAggregateTargets(section)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+	}
+
+	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 {
 		return nil, nil
 	}
 
 	capToken := section.Key("cap_token").MustString("")
 	tokenExchangeURL := section.Key("token_exchange_url").MustString("")
 	if capToken == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url is set", cloudRouterSection)
+		return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url, baas_apiserver.url, or cloud_app_platform_apiserver.url is set", cloudRouterSection)
 	}
 
 	tokenExchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -65,21 +72,44 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		return nil, fmt.Errorf("token exchange client: %w", err)
 	}
 
-	restCfg := rest.Config{
-		APIPath: "/apis",
-		Host:    appManifestApiserverURL,
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: section.Key("apiserver_insecure").MustBool(false),
-			CAFile:   section.Key("apiserver_ca_file").MustString(""),
-		},
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, v1alpha2.APIGroup, clientauth.WildcardNamespace),
+	var aggregateTargets []*aggregateTarget
+	for _, targetCfg := range aggregateTargetConfigs {
+		if targetCfg.Audience == "" {
+			return nil, fmt.Errorf("%s: %s.audience is required when %s.url is set", cloudRouterSection, targetCfg.Name, targetCfg.Name)
+		}
+		restCfg := &rest.Config{
+			Host:          targetCfg.URL,
+			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace),
+		}
+		httpClient, err := rest.HTTPClientFor(restCfg)
+		if err != nil {
+			return nil, fmt.Errorf("%s: building http client for %s: %w", cloudRouterSection, targetCfg.Name, err)
+		}
+		target, err := newAggregateTarget(targetCfg, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
+		}
+		aggregateTargets = append(aggregateTargets, target)
 	}
 
-	// Base kubeconfig IS the remote apps config -- a single group, so no
-	// per-group overlay is needed.
-	clients := k8s.NewClientRegistry(restCfg, k8s.ClientConfig{})
+	var clients *k8s.ClientRegistry
+	if appManifestApiserverURL != "" {
+		restCfg := rest.Config{
+			APIPath: "/apis",
+			Host:    appManifestApiserverURL,
+			TLSClientConfig: rest.TLSClientConfig{
+				Insecure: section.Key("apiserver_insecure").MustBool(false),
+				CAFile:   section.Key("apiserver_ca_file").MustString(""),
+			},
+			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, v1alpha2.APIGroup, clientauth.WildcardNamespace),
+		}
 
-	return newCloudLoader(clients)
+		// Base kubeconfig IS the remote apps config -- a single group, so no
+		// per-group overlay is needed.
+		clients = k8s.NewClientRegistry(restCfg, k8s.ClientConfig{})
+	}
+
+	return newCloudLoader(clients, aggregateTargets)
 }
 
 // embeddedManifestKey is the key component used for API groups sourced from
@@ -93,9 +123,9 @@ const embeddedManifestKey = "embedded"
 type cloudLoader struct {
 	*services.BasicService
 
-	dirty                      chan struct{} // buffered 1; pure coalescing wake signal, no payload
-	routeBackendClient         *v1alpha2.RouteBackendClient
-	appManifestClient          *v1alpha2.AppManifestClient
+	dirty                      chan struct{}                // buffered 1; pure coalescing wake signal, no payload
+	routeBackendClient         *v1alpha2.RouteBackendClient // nil if appmanifest_apiserver_url is unset
+	appManifestClient          *v1alpha2.AppManifestClient  // nil if appmanifest_apiserver_url is unset
 	transports                 map[tlsCacheKey]*http.Transport
 	dialer                     *transport.DialHolder
 	coreGroupsWithoutManifests map[string]metav1.APIGroup
@@ -103,10 +133,17 @@ type cloudLoader struct {
 	// clients builds the informers that feed Watcher() -- started in
 	// starting/running so this loader satisfies LifecycleRoutesLoader and
 	// gets run by the router module alongside GrafanaRouter, instead of a
-	// separate process wiring the informers itself.
+	// separate process wiring the informers itself. nil if
+	// appmanifest_apiserver_url is unset, in which case the CRD/informer
+	// side is skipped entirely and this loader serves aggregate targets only.
 	clients    *k8s.ClientRegistry
 	rbInformer operator.Informer
 	amInformer operator.Informer
+
+	// aggregateTargets are the fixed upstream apiservers (baas_apiserver,
+	// cloud_app_platform_apiserver) this loader actively polls for API
+	// groups, independent of whether the CRD/appmanifest side is active.
+	aggregateTargets []*aggregateTarget
 }
 
 type tlsCacheKey struct {
@@ -119,25 +156,30 @@ type apiGroupWithKey struct {
 	key   string
 }
 
-func newCloudLoader(clients *k8s.ClientRegistry) (*cloudLoader, error) {
-	routeBackendCli, err := v1alpha2.NewRouteBackendClientFromGenerator(clients)
-	if err != nil {
-		return nil, err
-	}
-
-	appManifestCli, err := v1alpha2.NewAppManifestClientFromGenerator(clients)
-	if err != nil {
-		return nil, err
-	}
-
+func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget) (*cloudLoader, error) {
 	l := &cloudLoader{
-		routeBackendClient:         routeBackendCli,
-		appManifestClient:          appManifestCli,
 		dirty:                      make(chan struct{}, 1),
 		transports:                 map[tlsCacheKey]*http.Transport{},
 		coreGroupsWithoutManifests: getAPIGroupsForCoreGroupsWithoutManifests(),
 		clients:                    clients,
+		aggregateTargets:           aggregateTargets,
 	}
+
+	if clients != nil {
+		routeBackendCli, err := v1alpha2.NewRouteBackendClientFromGenerator(clients)
+		if err != nil {
+			return nil, err
+		}
+
+		appManifestCli, err := v1alpha2.NewAppManifestClientFromGenerator(clients)
+		if err != nil {
+			return nil, err
+		}
+
+		l.routeBackendClient = routeBackendCli
+		l.appManifestClient = appManifestCli
+	}
+
 	l.BasicService = services.NewBasicService(l.starting, l.running, nil).WithName("cloud-apps-routes-loader")
 	return l, nil
 }
@@ -146,8 +188,14 @@ func newCloudLoader(clients *k8s.ClientRegistry) (*cloudLoader, error) {
 // same Watcher() so either kind wakes the router (see AGENTS.md). Building
 // them here rather than in newCloudLoader keeps client construction (which
 // can happen well before the router module actually starts) separate from
-// the informers' own lifecycle.
+// the informers' own lifecycle. Skipped entirely when l.clients is nil, i.e.
+// appmanifest_apiserver_url wasn't configured -- this loader may still be
+// active for aggregate targets alone.
 func (l *cloudLoader) starting(context.Context) error {
+	if l.clients == nil {
+		return nil
+	}
+
 	watcher := l.Watcher()
 
 	rb, err := newInformer(v1alpha2.RouteBackendKind(), l.clients, watcher)
@@ -162,15 +210,24 @@ func (l *cloudLoader) starting(context.Context) error {
 	return nil
 }
 
-// running drives both informers until ctx is cancelled; either failing stops
-// the other and fails the loader's service, so the router module (which runs
-// this alongside GrafanaRouter, see newCompositeService in pkg/server) can
-// react instead of serving from a routing table that silently stopped
+// running drives the RouteBackend/AppManifest informers (if configured) and
+// every aggregate target's poll loop until ctx is cancelled; any one failing
+// stops the rest and fails the loader's service, so the router module (which
+// runs this alongside GrafanaRouter, see newCompositeService in pkg/server)
+// can react instead of serving from a routing table that silently stopped
 // updating.
 func (l *cloudLoader) running(ctx context.Context) error {
 	g, gctx := errgroup.WithContext(ctx)
-	g.Go(func() error { return l.rbInformer.Run(gctx) })
-	g.Go(func() error { return l.amInformer.Run(gctx) })
+	if l.clients != nil {
+		g.Go(func() error { return l.rbInformer.Run(gctx) })
+		g.Go(func() error { return l.amInformer.Run(gctx) })
+	}
+	for _, target := range l.aggregateTargets {
+		g.Go(func() error {
+			target.run(gctx, l.dirty)
+			return nil
+		})
+	}
 	return g.Wait()
 }
 
@@ -281,16 +338,24 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 }
 
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
-	backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
-	if err != nil {
-		return nil, err
+	var combined []Backend
+	if l.routeBackendClient != nil {
+		backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+		combined = l.combineByName(manifests.Items, backends.Items)
 	}
 
-	manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
-	if err != nil {
-		return nil, err
+	for _, target := range l.aggregateTargets {
+		combined = append(combined, target.Backends()...)
 	}
-	return l.combineByName(manifests.Items, backends.Items), nil
+	return combined, nil
 }
 
 // transportFor returns a transport for the given TLS settings, building and
