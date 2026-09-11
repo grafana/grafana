@@ -14,9 +14,9 @@ import (
 )
 
 // discoverGroups fetches and decodes the APIGroupList a target apiserver
-// exposes at /apis. This is the one place this router actively dials an
-// upstream to learn what it serves -- see AGENTS.md's discovery section for
-// why this is necessary here but not for forward backends.
+// exposes at /apis. Aggregate targets have no RouteBackend CR to define what
+// they serve, so this active discovery call is unavoidable; forward backends
+// avoid it by learning their group from their CR instead.
 func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+apisPrefix, nil)
 	if err != nil {
