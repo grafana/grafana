@@ -411,7 +411,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: t(
         'auth-config.fields.workload-identity-token-file-description',
-        'The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to "workload_identity". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.'
+        'The file path to the token file used to authenticate to the OAuth2 provider. This is required when client authentication is set to "workload_identity".'
       ),
       validation: {
         validate: (value, formValues) => {
