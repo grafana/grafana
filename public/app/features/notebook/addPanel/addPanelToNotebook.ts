@@ -3,7 +3,8 @@ import { t } from '@grafana/i18n';
 import { NotebookAnalytics } from '../analytics/main';
 import { type NotebookEntryPoint } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
-import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
+import { newNotebookSpec } from '../newNotebookSpec';
+import { type PanelElement } from '../types';
 
 import { appendPanelToNotebook } from './appendPanelToNotebook';
 
@@ -40,7 +41,7 @@ export async function createNotebookWithPanel(
 ): Promise<AddedToNotebook> {
   const spec = appendPanelToNotebook(
     {
-      ...defaultNotebookSpec(),
+      ...newNotebookSpec(),
       title: fields.title,
       // Omitted rather than empty: description is optional in the schema, and an empty string
       // would round-trip as a description the user never wrote.

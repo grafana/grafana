@@ -339,6 +339,16 @@ describe('NotebookPageStateManager', () => {
       expect(requested).toEqual([]);
     });
 
+    it('starts it on a fixed window rather than the default relative one', () => {
+      setBackendSrv({ fetch: jest.fn() } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+
+      expect(manager.state.scene?.state.$timeRange.state.from).not.toMatch(/now/);
+      expect(manager.state.scene?.state.$timeRange.state.to).not.toMatch(/now/);
+    });
+
     // The reason for the token at all: autosave creates these without asking for a name, so two
     // notebooks made one after the other have to be tellable apart in the list.
     it('gives each new notebook a title of its own', () => {

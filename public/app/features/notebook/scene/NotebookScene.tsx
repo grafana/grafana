@@ -45,8 +45,11 @@ export interface NotebookSceneState extends SceneObjectState {
   uid?: string;
   /** The vertical document of cells. */
   body: NotebookLayoutManager;
+  /** The controls row's time picker — a NotebookTimePicker in practice, so the range stays fixed. */
   timePicker: SceneTimePicker;
+  /** Not rendered at all, but activated by this scene so a spec's autoRefresh interval still runs. */
   refreshPicker: SceneRefreshPicker;
+  /** From `timeSettings.hideTimepicker`. Takes the time picker out of the controls row. */
   hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
@@ -88,14 +91,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       const prevSceneContext = window.__grafanaSceneContext;
       window.__grafanaSceneContext = this;
 
-      // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
-      // plain state, so they are activated by their renderers. With the controls row hidden nothing
-      // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
-      // starts. Same workaround as DashboardControls.
+      // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are plain
+      // state, so they are activated by their renderers. Nothing renders the refresh picker at all
+      // any more, so activate it here or the spec's autoRefresh interval never starts. Same
+      // workaround DashboardControls uses for a hidden picker.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
       const syncRefreshPickerActivation = (state: NotebookSceneState) => {
         refreshPickerDeactivation?.();
-        refreshPickerDeactivation = state.hideTimeControls ? state.refreshPicker.activate() : undefined;
+        refreshPickerDeactivation = state.refreshPicker.activate();
       };
       syncRefreshPickerActivation(this.state);
 
@@ -103,10 +106,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
       // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
       const stateSub = this.subscribeToState((newState, prevState) => {
-        if (
-          newState.refreshPicker !== prevState.refreshPicker ||
-          newState.hideTimeControls !== prevState.hideTimeControls
-        ) {
+        if (newState.refreshPicker !== prevState.refreshPicker) {
           syncRefreshPickerActivation(newState);
         }
         // Edit mode is held in two places: here, where the header reads it, and on the layout manager,
@@ -288,7 +288,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  const { body, timePicker, hideTimeControls, overlay, isEditing } = model.useState();
 
   return (
     <div className={styles.container}>
@@ -299,12 +299,9 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
         <NotebookSaveStatus autosave={model.autosave} />
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         <NotebookEditToggle notebook={model} />
-        {!hideTimeControls && (
-          <>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </>
-        )}
+        {/* No refresh picker beside it: a notebook holds a fixed window. The spec's autoRefresh still
+            runs — the activation handler above starts it. */}
+        {!hideTimeControls && <timePicker.Component model={timePicker} />}
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}

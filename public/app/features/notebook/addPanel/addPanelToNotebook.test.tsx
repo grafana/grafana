@@ -181,6 +181,15 @@ describe('createNotebookWithPanel', () => {
     expect(captured.body!.metadata?.generateName).toBe('n');
   });
 
+  it('records the window as fixed timestamps rather than the default relative one', async () => {
+    const captured = captureCreate();
+
+    await createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'));
+
+    expect(captured.body!.spec!.timeSettings.from).not.toMatch(/now/);
+    expect(captured.body!.spec!.timeSettings.to).not.toMatch(/now/);
+  });
+
   it('omits an empty description rather than writing one the user never typed', async () => {
     const captured = captureCreate();
 
