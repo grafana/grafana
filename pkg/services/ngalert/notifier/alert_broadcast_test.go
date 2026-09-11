@@ -227,7 +227,11 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		payload, err := json.Marshal(AlertBroadcastPayload{OrgID: 1, Alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Annotations: amv2.LabelSet{"summary": "test"}}}}})
 		require.NoError(t, err)
 		require.NoError(t, state.Merge(payload))
-		require.Eventually(t, func() bool { return !state.isRunning() }, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool {
+			state.mu.Lock()
+			defer state.mu.Unlock()
+			return !state.running
+		}, time.Second, 10*time.Millisecond)
 		mockAM.AssertNotCalled(t, "PutAlerts", mock.Anything, mock.Anything)
 	})
 
