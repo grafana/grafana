@@ -1394,7 +1394,12 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
 		rotateSpan.End()
 		if rotateErr != nil {
-			logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr)
+			cause := reconcileCauseSystem
+			if rc.isUserCaused(rotateErr) {
+				cause = reconcileCauseUser
+			}
+			rc.webhookMetrics.recordRotationError(cause)
+			logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr, "cause", cause)
 		}
 		if len(rotateOps) > 0 {
 			hookOps = append(hookOps, rotateOps...)

@@ -3026,6 +3026,93 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 		"an overdue rotation must not call EditWebhook while the hook failure cooldown is active")
 }
 
+// TestRepositoryController_process_RotationErrorRecordsMetric verifies that when
+// an overdue rotation is actually attempted (repository accessible, no cooldown)
+// and fails, the failure is counted on the rotation-error metric classified by
+// cause. Without this, a genuine rotation malfunction is indistinguishable from a
+// repository that is merely overdue because rotation can't run (e.g. auth broken):
+// only the overdue counter would climb in either case.
+func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			// Generation matches ObservedGeneration and the webhook is present, so
+			// there are no hook changes to run — only the overdue rotation fires.
+			ObservedGeneration: 1,
+			Webhook: &provisioning.WebhookStatus{
+				ID:          123,
+				LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli(),
+			},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	patcher := &capturePatcher{}
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		Maybe()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	// hookErrSet=false makes hookResult return assert.AnError (a generic, non-user
+	// error), so the health Test still reports success (repository accessible) but
+	// GetWebhook fails during rotation — classified as a system-caused failure.
+	stub := &hookRepoStub{cfg: repo}
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	mockJobs := &mockJobsQueueStore{
+		MockQueue: jobs.NewMockQueue(t),
+		MockStore: jobs.NewMockStore(t),
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	webhookMetrics := registerWebhookSecretMetrics(reg)
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:                         repoGetter,
+		quotaGetter:                   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:                  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:                 healthChecker,
+		statusPatcher:                 patcher,
+		repoFactory:                   repoFactory,
+		jobs:                          mockJobs,
+		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		tracer:                        tracing.InitializeTracerForTest(),
+		webhookMetrics:                webhookMetrics,
+		webhookSecretRotationInterval: 30 * 24 * time.Hour,
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "a failed rotation must not surface as a reconcile error")
+
+	assert.Equal(t, 1.0,
+		counterValueWithLabel(t, reg, "grafana_provisioning_webhook_secret_rotation_errors_total", "cause", reconcileCauseSystem),
+		"a failed rotation must increment the rotation-error counter with cause=system")
+}
+
 // TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError
 // verifies that a webhook call failing with repository.ErrUnauthorized is a
 // user-facing state, not a controller error: process() must return nil (no
