@@ -81,7 +81,7 @@ fi
 TOGGLE_PRESENT=$(echo "$FILTERED_DIFF" | \
   grep -E '^\+' | \
   grep -vE '^\+\+\+' | \
-  grep -E "(useFlag[A-Z][a-zA-Z]*\(|getBooleanValue\(|FlagKeys\.\w+|config\.featureToggles\.\w+)" || true)
+  grep -E "(useFlag[A-Z][A-Za-z0-9]*\(|getBooleanValue\(|FlagKeys\.\w+|config\.featureToggles\.\w+)" || true)
 
 if [[ -n "$TOGGLE_PRESENT" ]]; then
   echo "Endpoint migration detected AND feature toggle found. Check passed."

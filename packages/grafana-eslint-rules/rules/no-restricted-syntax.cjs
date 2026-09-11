@@ -62,16 +62,7 @@ module.exports = createNoRestrictedSyntax(
     // Matches on the property rather than `object.name="config"` because the receiver is not always
     // called config - aliased imports and namespace imports reach the same map.
     selector: 'MemberExpression[property.name="featureToggles"]',
-    message: [
-      'Usage of config.featureToggles is not allowed.',
-      'It is a static bootData snapshot and is empty in the multi-tenant frontend service, so every flag reads false there.',
-      'Read the flag via OpenFeature instead: useFlagXxx() from @grafana/runtime/internal in React,',
-      'or getFeatureFlagClient().getBooleanValue(FlagKeys.Xxx, default) outside React.',
-      'If the flag has no OpenFeature target yet, add `React: true` alongside its existing `LegacyFrontend`',
-      'in pkg/services/featuremgmt/registry.go - do not rename it - then run make gen-feature-toggles.',
-      'New flags should use `Generate{React: true}` with a component.flagName name and no legacy target.',
-      'See contribute/feature-toggles.md.',
-    ].join(' '),
+    message: 'Usage of legacy config.featureToggles is no longer allowed. Use OpenFeature feature flags instead.',
   },
   {
     name: 'no-direct-date-fns',

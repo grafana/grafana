@@ -370,10 +370,6 @@ const logger = getLogger('features.my-area');
 
 Disallow reads of the legacy `config.featureToggles` map. Feature flags should be read through OpenFeature instead — `useFlagXxx()` from `@grafana/runtime/internal` in React, or `getFeatureFlagClient().getBooleanValue(FlagKeys.Xxx, default)` outside it.
 
-`config.featureToggles` is a static snapshot taken from bootData at page load. The multi-tenant frontend service serves an empty map, so every flag read through it resolves to `false` there — including flags that are GA and enabled by default, which silently sends code down retired paths. OpenFeature resolves flags over OFREP per tenant instead, and picks up changes without a reload.
-
-The rule matches on the `featureToggles` property rather than a `config` receiver, because the receiver is not always named `config` — aliased imports (`config as grafanaConfig`), renamed locals (`cfg`) and namespace imports (`runtime.config`) all reach the same map.
-
 #### Examples
 
 ```ts
