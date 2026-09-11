@@ -86,6 +86,7 @@ declare module "@openfeature/core" {
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "table.refresh"
+    | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"

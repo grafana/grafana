@@ -6715,6 +6715,21 @@
     },
     {
       "metadata": {
+        "name": "table.refreshNewFeatures",
+        "resourceVersion": "1789154182177",
+        "creationTimestamp": "2026-09-11T19:16:22Z"
+      },
+      "spec": {
+        "description": "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-12-13T09:33:14Z"
