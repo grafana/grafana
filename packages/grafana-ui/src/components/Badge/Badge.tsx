@@ -75,7 +75,21 @@ const getSkeletonStyles = () => ({
 });
 
 const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
-  const { background, border, text } = theme.components.badge[color];
+  let badgeColor = theme.components.badge[color];
+
+  // the color prop is typed, but callers ignoring the typings would otherwise crash the whole tree
+  if (!badgeColor) {
+    const message = `Badge: unknown color '${color}', falling back to 'darkgrey'`;
+    console.warn(message);
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error(message);
+    }
+
+    badgeColor = theme.components.badge.darkgrey;
+  }
+
+  const { background, border, text } = badgeColor;
 
   return {
     wrapper: css(

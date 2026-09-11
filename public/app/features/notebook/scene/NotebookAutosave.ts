@@ -9,6 +9,8 @@ import {
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
@@ -568,6 +570,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       } finally {
         this.adoptingUid = false;
       }
+      // Only a blank notebook reaches this create, and the list is the only link to the blank route
+      // today. A second way in has to hand its own source to the autosave.
+      NotebookAnalytics.created(created, NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST, spec.layout.spec.cells.length);
       return { generation };
     });
   }

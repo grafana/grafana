@@ -1297,18 +1297,13 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
-  * Enables the new Flame Graph UI containing the Call Tree view
-  * @default false
-  */
-  flameGraphWithCallTree?: boolean;
-  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
+  * @default true
   */
   logsTablePanelNG?: boolean;
   /**
