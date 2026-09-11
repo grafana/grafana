@@ -114,16 +114,17 @@ token_exchange_url = ...
 
 # Fixed aggregate targets (each optional, independent)
 baas_apiserver.url = https://...
-baas_apiserver.audience = (optional OIDC audience)
+baas_apiserver.audience = <OIDC audience>  ; required if baas_apiserver.url is set
 baas_apiserver.group_regex = *.grafana.app  ; optional glob patterns, comma-separated
 
 cloud_app_platform_apiserver.url = https://...
-cloud_app_platform_apiserver.audience = (optional)
+cloud_app_platform_apiserver.audience = <OIDC audience>  ; required if cloud_app_platform_apiserver.url is set
 cloud_app_platform_apiserver.group_regex = (optional)
 ```
 
 If neither `appmanifest_apiserver_url` nor any aggregate target URL is set, the dummy loader is used.
-If any target is set, `cap_token` and `token_exchange_url` are required (hard error otherwise).
+If any target URL is set, `cap_token` and `token_exchange_url` are required (hard error otherwise).
+If a target's `.url` is set, its `.audience` is also required (hard error if missing).
 
 Each target's `group_regex` is optional; unset means "include every group discovered from that target".
 The regex patterns are glob-style (`*.grafana.app` → matches any group ending in `.grafana.app`),

@@ -353,13 +353,13 @@ presence is what actually gates activation, not the section's existence. Keys:
 | `apiserver_ca_file`   | no                    | CA bundle file used to verify `appmanifest_apiserver_url`'s TLS cert. Does **not** apply to aggregate targets. |
 | `apiserver_insecure`  | no                    | Skip TLS verification of `appmanifest_apiserver_url`. Dev only. Does **not** apply to aggregate targets. |
 | `baas_apiserver.url`  | no                    | Base URL of the BaaS apiserver. If unset, BaaS group discovery is skipped. |
-| `baas_apiserver.audience` | no                  | OIDC audience string to request when exchanging the CAP token for this target's access token. Optional; if unset, the target receives only the base access token. |
+| `baas_apiserver.audience` | yes, if `baas_apiserver.url` is set | OIDC audience string to request when exchanging the CAP token for this target's access token. |
 | `baas_apiserver.group_regex` | no                | Comma-separated glob patterns (e.g., `*.grafana.app,*.internal`) to filter discovered groups. Unset means accept all groups discovered from this target. |
 | `cloud_app_platform_apiserver.url` | no          | Base URL of the Cloud App Platform apiserver. If unset, CAP group discovery is skipped. |
-| `cloud_app_platform_apiserver.audience` | no    | OIDC audience string for this target; optional, same semantics as baas_apiserver. |
+| `cloud_app_platform_apiserver.audience` | yes, if `cloud_app_platform_apiserver.url` is set | OIDC audience string for this target. |
 | `cloud_app_platform_apiserver.group_regex` | no | Comma-separated glob patterns to filter CAP-discovered groups; same semantics as baas_apiserver. |
 
-Either or both of `appmanifest_apiserver_url`, `baas_apiserver.url`, and `cloud_app_platform_apiserver.url` may be set
+Any combination of `appmanifest_apiserver_url`, `baas_apiserver.url`, and `cloud_app_platform_apiserver.url` may be set
 independently. `cap_token` and `token_exchange_url` are required only if **any** of the three is set (CRs or aggregates).
 Aggregate targets activate independently of the AppManifest loader — the router can serve aggregate-discovered groups
 without any RouteBackend CRs, and vice versa.
