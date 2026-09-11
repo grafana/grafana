@@ -29,6 +29,10 @@ interface Rudderstack {
       };
       queueOptions?: {
         maxAttempts?: number;
+        batch?: {
+          enabled?: boolean;
+          flushInterval?: number;
+        };
       };
     }
   ) => void;
@@ -108,9 +112,14 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
         },
         migrate: false,
       },
-      // reduce the maximum number of retries for failed requests to avoid network spam.
+      // reduce the maximum number of retries for failed requests to avoid network spam,
+      // and enable batching of the events we generate to further reduce network spam.
       queueOptions: {
         maxAttempts: 3,
+        batch: {
+          enabled: true,
+          flushInterval: 5000,
+        },
       },
     });
 
