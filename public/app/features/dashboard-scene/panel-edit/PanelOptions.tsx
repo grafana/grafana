@@ -68,9 +68,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         searchQuery,
         (newConfig) => {
           panel.onFieldConfigChange(newConfig, true);
-        }
+        },
+        options
       ),
-    [data, searchQuery, panel, fieldConfig]
+    [data, searchQuery, panel, fieldConfig, options]
   );
 
   const isSearching = searchQuery.length > 0;
