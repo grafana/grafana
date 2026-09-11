@@ -39,6 +39,26 @@ func rootFolderTitle(dsUID string) string {
 
 const versionMessage = "external ruler sync"
 
+// defaultRulerSyncPollInterval is the effective poll interval when
+// spec.externalRulerSync.pollInterval is unset, and unconditionally on the ini
+// path (which has no spec to read a per-org value from). Matches the fixed
+// interval this syncer used before per-org intervals existed.
+const defaultRulerSyncPollInterval = time.Minute
+
+// baselineCheckInterval drives Run's ticker; it is not the sync cadence
+// itself (each org's own pollInterval is), just how often the loop notices an
+// org has become due. Not operator-configurable: AdminConfigPollInterval is
+// really AlertsRouter's own unrelated setting, so reusing it here would tie
+// this syncer to a different feature's knob for no reason. dueForSync keeps
+// checking a not-yet-due org free (no apiserver call), so a short, fixed
+// baseline is cheap.
+//
+// This shared-ticker-plus-due-check is pragmatic, not the ideal design: a real
+// per-org timer would fire exactly on interval, without re-checking every org
+// every baseline tick. Flag it so a future reader doesn't mistake this for the
+// final word.
+const baselineCheckInterval = 10 * time.Second
+
 // convertedPrometheusManager marks the rules the syncer owns. Mirrors the manager
 // the convert API assigns to converted-Prometheus imports.
 var convertedPrometheusManager = utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
@@ -90,6 +110,14 @@ type ExternalRulerSyncer struct {
 	lastSyncHashMu sync.RWMutex
 	lastSyncHash   map[int64]uint64
 
+	// lastAttemptMu guards dueForSync's per-org due-check cache: lastAttemptAt
+	// is when an org last actually ran, lastPollInterval its resolved cadence.
+	// No entry yet means always due, so a new org isn't stuck waiting out
+	// defaultRulerSyncPollInterval before its first sync.
+	lastAttemptMu    sync.RWMutex
+	lastAttemptAt    map[int64]time.Time
+	lastPollInterval map[int64]time.Duration
+
 	// cfgStore is required; NewExternalRulerSyncer's callers always pass a
 	// real one. See cfgStore for why its client is built lazily rather than
 	// at construction time.
@@ -127,6 +155,8 @@ func NewExternalRulerSyncer(
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
 		lastSyncHash:      make(map[int64]uint64),
+		lastAttemptAt:     make(map[int64]time.Time),
+		lastPollInterval:  make(map[int64]time.Duration),
 		cfgStore:          newCfgStore(clientGenerator, namespaceMapper),
 	}
 }
@@ -135,8 +165,18 @@ func NewExternalRulerSyncer(
 // org, after applying the ini override. A zero value (uid == "") means sync
 // isn't configured for the org.
 type resolvedRulerSync struct {
-	uid    string // datasource to sync rules from
-	origin externalSyncOrigin
+	uid       string // datasource to sync rules from
+	targetUID string // recording-rules write target (defaults to uid)
+	origin    externalSyncOrigin
+	// persistedHash is the last-applied upstream hash from Config status, read
+	// back on the API path only. The ini path relies on the in-memory cache
+	// alone; its own version-churn gap from that is a known, separate,
+	// already-shipped limitation, not addressed here.
+	persistedHash string
+	// pollInterval is this org's effective sync cadence: spec.pollInterval when
+	// set on the API path, defaultRulerSyncPollInterval otherwise (including
+	// unconditionally on the ini path). See dueForSync.
+	pollInterval time.Duration
 }
 
 // resolveExternalRulerConfig computes the effective sync config for the org.
@@ -146,16 +186,27 @@ type resolvedRulerSync struct {
 // falling back to anything.
 func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedRulerSync, error) {
 	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
-		return resolvedRulerSync{uid: iniUID, origin: originIni}, nil
+		return resolvedRulerSync{uid: iniUID, targetUID: iniUID, origin: originIni, pollInterval: defaultRulerSyncPollInterval}, nil
 	}
 
+	// cfgStore.Get returns (nil, nil) when the Config resource doesn't exist
+	// yet; every extraction helper below treats a nil Config the same as an
+	// unset field, so the not-found and found cases need no separate branch.
 	cfg, err := s.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return resolvedRulerSync{}, err
 	}
+	uid := externalRulerSyncDatasourceUIDFromConfig(cfg)
+	targetUID := externalRulerSyncTargetDatasourceUIDFromConfig(cfg)
+	if targetUID == "" {
+		targetUID = uid
+	}
 	return resolvedRulerSync{
-		uid:    externalRulerSyncDatasourceUIDFromConfig(cfg),
-		origin: originAPI,
+		uid:           uid,
+		targetUID:     targetUID,
+		origin:        originAPI,
+		persistedHash: externalRulerSyncLastAppliedHashFromConfig(cfg),
+		pollInterval:  externalRulerSyncPollIntervalFromConfig(cfg),
 	}, nil
 }
 
@@ -168,11 +219,12 @@ func (s *ExternalRulerSyncer) writeStatus(ctx context.Context, orgID int64, comp
 }
 
 // recordSyncResult writes the latest sync outcome (nil = success) onto the
-// org's Config.status.
-func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
+// org's Config.status. appliedHash, on success, is persisted so a later
+// restart or replica can skip an unchanged re-apply.
+func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error, appliedHash string) {
 	now := time.Now()
 	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
-		return computeSyncStatus(prev, uid, origin, syncErr, now)
+		return computeSyncStatus(prev, uid, origin, syncErr, now, appliedHash)
 	})
 }
 
@@ -188,14 +240,15 @@ func (s *ExternalRulerSyncer) recordNotConfigured(ctx context.Context, orgID int
 	})
 }
 
-// Run polls all orgs at AdminConfigPollInterval until ctx is cancelled. Always
+// Run checks all orgs at baselineCheckInterval until ctx is cancelled. Always
 // starts the ticker: sync can be enabled either operator-wide via the
 // external_ruler_uid ini setting or per-org via the rules Config resource,
 // and only a per-org tick can tell which — see resolveExternalRulerConfig.
-// Each tick is cheap for an org with neither configured.
+// Each org's real sync cadence is its own resolved pollInterval; dueForSync
+// makes checking an org that isn't due yet a cheap in-memory no-op.
 func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
-	s.logger.Info("Starting external ruler syncer", "poll_interval", s.settings.AdminConfigPollInterval)
-	ticker := time.NewTicker(s.settings.AdminConfigPollInterval)
+	s.logger.Info("Starting external ruler syncer", "check_interval", baselineCheckInterval)
+	ticker := time.NewTicker(baselineCheckInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -217,8 +270,42 @@ func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 		if _, disabled := s.settings.DisabledOrgs[orgID]; disabled {
 			continue
 		}
+		// dueForSync lives here, not inside SyncOrg: SyncOrg is "do the sync now"
+		// (callers, including tests and a possible future app-runner host, decide
+		// when that's warranted), while this loop is "notice which orgs are due".
+		if !s.dueForSync(orgID) {
+			continue
+		}
 		s.SyncOrg(ctx, orgID)
 	}
+}
+
+// dueForSync reports whether orgID's poll interval has elapsed since its
+// last attempt (always true if never attempted). Called from syncAllOrgs, so
+// Run's baseline ticker can skip resolveExternalRulerConfig's apiserver call
+// for orgs not yet due, without a per-org goroutine or timer.
+func (s *ExternalRulerSyncer) dueForSync(orgID int64) bool {
+	s.lastAttemptMu.RLock()
+	defer s.lastAttemptMu.RUnlock()
+	last, ok := s.lastAttemptAt[orgID]
+	if !ok {
+		return true
+	}
+	interval := s.lastPollInterval[orgID]
+	if interval <= 0 {
+		interval = defaultRulerSyncPollInterval
+	}
+	return time.Since(last) >= interval
+}
+
+// recordAttempt caches orgID's last-attempt time and interval for dueForSync.
+// Called after a successful resolve only, so a transient apiserver hiccup is
+// retried on the next tick rather than throttled by a stale interval.
+func (s *ExternalRulerSyncer) recordAttempt(orgID int64, interval time.Duration) {
+	s.lastAttemptMu.Lock()
+	s.lastAttemptAt[orgID] = time.Now()
+	s.lastPollInterval[orgID] = interval
+	s.lastAttemptMu.Unlock()
 }
 
 // IsConfiguredForOrg reports whether external ruler sync is configured for the
@@ -299,6 +386,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		s.logger.Warn("Failed to resolve external ruler config", "org_id", orgID, "error", err)
 		return
 	}
+	s.recordAttempt(orgID, rc.pollInterval)
 	if rc.uid == "" {
 		if rc.origin == originAPI {
 			// The API path is reachable and the Config resource was checked, but no
@@ -331,9 +419,17 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	// Recording rules write to the same datasource they are queried from unless
-	// spec.externalRulerSync.targetDatasourceUid overrides it (API path only).
+	// Recording rules write to the target datasource; it defaults to the query
+	// datasource (targetUID == uid on both the ini path and an unset API spec
+	// field), so only resolve a second datasource when one is distinctly set.
 	targetDS := ds
+	if rc.targetUID != rc.uid {
+		targetDS, err = s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: rc.targetUID, OrgID: orgID})
+		if err != nil {
+			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("target datasource %q: %w", rc.targetUID, err)})
+			return
+		}
+	}
 
 	cfg, hash, err := s.fetcher.Fetch(svcCtx, ds)
 	if err != nil {
@@ -346,7 +442,15 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	}
 	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
 
-	// Skip if the upstream is unchanged since the last successful apply.
+	// Skip if the upstream is unchanged since the last successful apply. The
+	// persisted hash (from Config status, API path only) survives restarts and
+	// multiple replicas; the in-memory map is the fast path and the fallback
+	// when a persisted hash isn't available.
+	hashStr := strconv.FormatUint(hash, 10)
+	if rc.persistedHash != "" && rc.persistedHash == hashStr {
+		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+		return
+	}
 	s.lastSyncHashMu.RLock()
 	prev, has := s.lastSyncHash[orgID]
 	s.lastSyncHashMu.RUnlock()
@@ -365,7 +469,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.lastSyncHashMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
-	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil)
+	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
 }
 
 type groupKey struct {
@@ -493,5 +597,5 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
-	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
+	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "")
 }

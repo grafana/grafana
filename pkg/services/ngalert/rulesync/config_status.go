@@ -3,6 +3,8 @@ package rulesync
 import (
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
+
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
@@ -31,12 +33,15 @@ const (
 )
 
 // computeSyncStatus maps a sync outcome (nil = success) to the
-// ExternalRulerSynced condition and folds it into prev.
-func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+// ExternalRulerSynced condition and folds it into prev. appliedHash is stored
+// only on success (empty keeps whatever hash prev already carried), so a
+// later restart or replica can skip an unchanged re-apply — see
+// resolvedRulerSync.persistedHash.
+func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	if syncErr == nil {
-		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
+		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now, appliedHash)
 	}
-	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
+	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now, "")
 }
 
 // computeNotConfiguredStatus returns prev with only the ExternalRulerSynced
@@ -56,13 +61,22 @@ func computeNotConfiguredStatus(prev *alertingrulesv0alpha1.ConfigStatus, now ti
 
 // buildSyncStatus folds an ExternalRulerSynced condition into prev, plus the
 // externalRulerSync context (datasource UID and origin) that produced it.
-func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+// appliedHash, when non-empty, overwrites the persisted dedup hash; when
+// empty, prev's hash (if any) carries forward unchanged.
+func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
 	st := cloneStatus(prev)
+	hash := appliedHash
+	if hash == "" && prev != nil && prev.ExternalRulerSync != nil && prev.ExternalRulerSync.LastAppliedHash != nil {
+		hash = *prev.ExternalRulerSync.LastAppliedHash
+	}
 	st.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
 		DatasourceUid: &uidCopy,
 		Origin:        &originCopy,
+	}
+	if hash != "" {
+		st.ExternalRulerSync.LastAppliedHash = &hash
 	}
 
 	synced := alertingrulesv0alpha1.ConfigCondition{
@@ -120,4 +134,45 @@ func externalRulerSyncDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Config) s
 		return ""
 	}
 	return *c.Spec.ExternalRulerSync.DatasourceUid
+}
+
+// externalRulerSyncTargetDatasourceUIDFromConfig returns the configured
+// recording-rules target datasource UID or "" when any level in the nested
+// optional chain is unset (callers default to the query datasource).
+func externalRulerSyncTargetDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Config) string {
+	if c == nil ||
+		c.Spec.ExternalRulerSync == nil ||
+		c.Spec.ExternalRulerSync.TargetDatasourceUid == nil {
+		return ""
+	}
+	return *c.Spec.ExternalRulerSync.TargetDatasourceUid
+}
+
+// externalRulerSyncLastAppliedHashFromConfig returns the persisted dedup hash
+// from status, or "" when any level in the nested optional chain is unset
+// (never synced yet, or synced by a build that predates this field).
+func externalRulerSyncLastAppliedHashFromConfig(c *alertingrulesv0alpha1.Config) string {
+	if c == nil ||
+		c.Status.ExternalRulerSync == nil ||
+		c.Status.ExternalRulerSync.LastAppliedHash == nil {
+		return ""
+	}
+	return *c.Status.ExternalRulerSync.LastAppliedHash
+}
+
+// externalRulerSyncPollIntervalFromConfig returns the configured poll interval,
+// or defaultRulerSyncPollInterval when unset, unparseable (the CUE pattern
+// already validates the string at admission time; this is a defensive
+// fallback, not the primary guard), or c is nil.
+func externalRulerSyncPollIntervalFromConfig(c *alertingrulesv0alpha1.Config) time.Duration {
+	if c == nil ||
+		c.Spec.ExternalRulerSync == nil ||
+		c.Spec.ExternalRulerSync.PollInterval == nil {
+		return defaultRulerSyncPollInterval
+	}
+	d, err := prommodel.ParseDuration(*c.Spec.ExternalRulerSync.PollInterval)
+	if err != nil {
+		return defaultRulerSyncPollInterval
+	}
+	return time.Duration(d)
 }
