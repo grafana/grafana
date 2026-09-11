@@ -134,9 +134,12 @@ const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
 };
 
 const originalToggles = { ...config.featureToggles };
+const originalProvisioningEnabled = config.provisioningEnabled;
+config.provisioningEnabled = false;
 afterAll(() => {
   // Restore the original feature toggle value changed during tests
   config.featureToggles = originalToggles;
+  config.provisioningEnabled = originalProvisioningEnabled;
 });
 
 describe('useGetFolderQueryFacade', () => {
@@ -268,6 +271,23 @@ describe('useGetFolderQueryFacade', () => {
       },
     });
   });
+
+  it.each([true, false])(
+    'stops reporting a folder once the uid is cleared (foldersAppPlatformAPI: %s)',
+    async (foldersAppPlatformAPI) => {
+      config.featureToggles.foldersAppPlatformAPI = foldersAppPlatformAPI;
+      const initialProps: { uid?: string } = { uid: folderA_folderA.item.uid };
+      const { result, rerender } = renderHook(({ uid }: { uid?: string }) => useGetFolderQueryFacade(uid), {
+        wrapper: getWrapper({}),
+        initialProps,
+      });
+      await waitFor(() => expect(result.current.data).toBeDefined());
+
+      rerender({ uid: undefined });
+
+      expect(result.current.data).toBeUndefined();
+    }
+  );
 });
 
 describe('useDeleteMultipleFoldersMutationFacade', () => {
@@ -312,7 +332,6 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
     jest.clearAllMocks();
     (useMoveFoldersMutationLegacy as jest.Mock).mockReturnValue([mockMoveFolders]);
     patchSpy.mockReset();
-    dispatchMockFn.mockReturnValue({ data: null });
   });
   afterEach(() => {
     folderAPIVersionResolver.reset();

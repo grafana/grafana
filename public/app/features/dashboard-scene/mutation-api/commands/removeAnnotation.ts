@@ -5,7 +5,7 @@
  * cannot be removed (they are auto-injected on dashboard load).
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import {
   findAnnotationLayer,

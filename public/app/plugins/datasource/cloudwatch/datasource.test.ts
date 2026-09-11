@@ -23,6 +23,11 @@ import { TimeRangeMock } from './mocks/timeRange';
 import { type CloudWatchQuery, type CloudWatchLogsRequest, type CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
+jest.mock('./utils/templateVariableUtils', () => ({
+  ...jest.requireActual('./utils/templateVariableUtils'),
+  getVariableName: jest.fn((name: string) => name.replace('$', '')),
+}));
+
 describe('datasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -354,9 +359,7 @@ describe('datasource', () => {
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
       const { datasource, templateService } = setupMockedDataSource();
       templateService.replace = jest.fn();
-      const mockGetVariableName = jest
-        .spyOn(templateUtils, 'getVariableName')
-        .mockImplementation((name: string) => name.replace('$', ''));
+      const mockGetVariableName = jest.mocked(templateUtils.getVariableName);
       const variableName = 'someVar';
       const metricsQuery: CloudWatchMetricsQuery = {
         queryMode: 'Metrics',

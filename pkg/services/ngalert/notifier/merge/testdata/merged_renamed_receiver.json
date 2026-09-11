@@ -65,17 +65,6 @@
         ]
       },
       {
-        "name": "ti-1",
-        "time_intervals": [
-          {
-            "weekdays": [
-              "saturday",
-              "sunday"
-            ]
-          }
-        ]
-      },
-      {
         "name": "mti-2",
         "time_intervals": [
           {
@@ -84,6 +73,17 @@
                 "start_time": "00:00",
                 "end_time": "12:00"
               }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "ti-1",
+        "time_intervals": [
+          {
+            "weekdays": [
+              "saturday",
+              "sunday"
             ]
           }
         ]

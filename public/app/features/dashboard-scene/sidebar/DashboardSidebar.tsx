@@ -10,6 +10,7 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -27,7 +28,6 @@ import {
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { getEditableElementFor } from './shared';
 import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
@@ -160,7 +160,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.clearSelection();
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObject(action.movedObject, { force: true });
     }
 
@@ -182,7 +182,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObject(action.movedObject, { force: true });
     }
 
@@ -318,7 +318,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   private updateSelection(selected: ElementSelectionContextItem[], selectedDisconnectedObject?: SceneObject) {
-    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
+    // onBlur events are not fired on unmount and some sidebar inputs have important onBlur events
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
@@ -416,8 +416,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(target: SceneObject | undefined) {
-    const panel = getDefaultVizPanel();
+  public async addNewPanel(target: SceneObject | undefined) {
+    const panel = await getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
     if (target) {

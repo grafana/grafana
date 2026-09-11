@@ -23,34 +23,35 @@ import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
+import { addElement } from '../../actions/element/addElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import {
   ObjectsReorderedOnCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   NewObjectAddedToCanvasEvent,
 } from '../../sidebar/events';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
-  getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  getVizPanelKeyForPanelId,
-  getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -163,7 +164,7 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      dashboardEditActions.addElement({
+      addElement({
         addedObject: vizPanel,
         source: this,
         perform: () => {
@@ -204,7 +205,7 @@ export class DefaultGridLayoutManager
     }
 
     if (config.featureToggles.dashboardNewLayouts) {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
         source: this,
@@ -253,7 +254,7 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    dashboardEditActions.removeElement({
+    removeElement({
       removedObject: gridItem.state.body,
       source: this,
       perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
@@ -321,7 +322,7 @@ export class DefaultGridLayoutManager
     }
 
     const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
       addedObject: newGridItem.state.body,
       source: this,
@@ -435,7 +436,7 @@ export class DefaultGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
-      // if we show the edit pane without animations it opens much faster and feels more responsive
+      // if we show the sidebar without animations it opens much faster and feels more responsive
       setTimeout(updateResizeAndDragging, 10);
       return;
     }
@@ -487,6 +488,10 @@ export class DefaultGridLayoutManager
     }
 
     return children;
+  }
+
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

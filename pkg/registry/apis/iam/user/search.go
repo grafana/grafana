@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -298,8 +297,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:  searchQuery,
 		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
-		// QueryField to specify which fields to search in (Type and Boost
-		// are ignored for wildcard queries).
+		// QueryField to specify which fields to search in (Boost is ignored
+		// for wildcard queries).
 		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 			{Name: resource.SEARCH_FIELD_TITLE},
 			{Name: fieldEmail},
@@ -340,20 +339,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				currField = sort[1:]
 				desc = true
 			}
-			if slices.Contains(builders.UserSortableExtraFields, currField) {
-				sort = resource.SEARCH_FIELD_PREFIX + currField
-			} else {
-				sort = currField
-			}
 			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: sort,
+				Field: currField,
 				Desc:  desc,
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
 	} else {
 		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
-			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+			Field: builders.USER_LOGIN,
 		})
 	}
 

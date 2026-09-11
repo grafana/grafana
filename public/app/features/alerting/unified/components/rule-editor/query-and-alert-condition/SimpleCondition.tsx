@@ -4,6 +4,7 @@ import { type Dispatch, type FormEvent } from 'react';
 import { type UnknownAction } from 'redux';
 
 import { type GrafanaTheme2, type PanelData, ReducerID, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
@@ -141,6 +142,7 @@ export const SimpleConditionEditor = ({
                   width={10}
                   key={simpleCondition.evaluator.params[0]}
                   defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                  data-testid={selectors.components.AlertRules.thresholdInput}
                   onBlur={(event) => {
                     onEvaluateValueChange(event, 0);
                   }}

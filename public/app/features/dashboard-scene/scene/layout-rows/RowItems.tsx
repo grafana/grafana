@@ -4,7 +4,7 @@ import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/compo
 import { type EditableDashboardElementInfo, type EditableDashboardElement } from '../types/EditableDashboardElement';
 
 import { type RowItem } from './RowItem';
-import { getEditOptions } from './RowItemsEditor';
+import { getSidebarOptions } from './RowItemsEditor';
 
 export class RowItems implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -15,8 +15,8 @@ export class RowItems implements EditableDashboardElement {
     return { typeName: t('dashboard.sidebar.elements.rows', 'Rows'), icon: 'folder', instanceName: '' };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
+    return getSidebarOptions(this);
   }
 
   public getRows(): RowItem[] {

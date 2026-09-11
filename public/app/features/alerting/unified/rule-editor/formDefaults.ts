@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import z from 'zod';
+import * as z from 'zod';
 
 import { store } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';

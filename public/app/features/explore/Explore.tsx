@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -92,13 +92,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreContainer',
       display: 'flex',
       flexDirection: 'column',
-      paddingRight: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
     wrapper: css({
       position: 'absolute',
       top: 0,
-      left: theme.spacing(2),
+      left: 0,
       right: 0,
       bottom: 0,
       display: 'flex',
@@ -597,8 +596,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
       showQueryInspector,
       setShowQueryInspector,
       compact,
-      queryLibraryRef,
+      editSavedQueryRef,
+      addingSavedQuery,
     } = this.props;
+
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     // Prometheus is the only datasource with an explorer to offer, so the whole sidebar
@@ -689,7 +690,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
           style={{
             position: 'relative',
             height: '100%',
-            paddingLeft: theme.spacing(2),
           }}
         >
           <div className={styles.wrapper}>
@@ -700,6 +700,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 showSignalExplorer={isPrometheusSelected}
                 queries={this.props.queries}
                 paneDatasource={datasourceInstance}
+                timeRange={this.props.range}
               />
             )}
             <ScrollContainer
@@ -733,7 +734,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
+                            isLive ||
+                            (isCorrelationsEditorMode && datasourceInstance.meta.mixed) ||
+                            !!editSavedQueryRef ||
+                            !!addingSavedQuery
                           }
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
                           //TODO:unification
@@ -855,8 +859,10 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supplementaryQueries,
     correlationEditorHelperData,
     compact,
-    queryLibraryRef,
+    editSavedQueryRef,
+    addingSavedQuery,
     queriesChangedIndexAtRun,
+    range,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -890,8 +896,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
-    queryLibraryRef,
+    editSavedQueryRef,
+    addingSavedQuery,
     queriesChangedIndexAtRun,
+    // The pane's raw range, not `queryResponse.timeRange`: the latter is the absolute snapshot of
+    // the last run, so a relative range would mint a new metric-cache key on every query.
+    range,
   };
 }
 

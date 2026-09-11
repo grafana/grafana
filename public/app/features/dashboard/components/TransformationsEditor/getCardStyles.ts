@@ -4,9 +4,14 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getCardStyles = (theme: GrafanaTheme2, fullWidth?: boolean) => ({
   baseCard: css({
+    background: theme.colors.background.secondary,
     maxWidth: fullWidth ? 'none' : '200px',
     width: fullWidth ? '100%' : 'auto',
     marginBottom: 0,
+
+    '&:hover': {
+      background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+    },
   }),
   image: css({
     display: 'block',

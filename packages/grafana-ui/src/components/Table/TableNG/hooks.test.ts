@@ -7,6 +7,7 @@ import { TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
   useSortedRows,
   useHeaderHeight,
@@ -156,6 +157,241 @@ describe('TableNG hooks', () => {
     });
   });
 
+  describe('useNotifyDisplayedRowIndices', () => {
+    it('reports parent row __index values in display order and skips nested rows', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 2 },
+        { __depth: 1, __index: 2 },
+        { __depth: 0, __index: 0 },
+        { __depth: 1, __index: 0 },
+      ];
+
+      renderHook(() => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange));
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+    });
+
+    it('does not notify again when the index order is unchanged', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when sort order changes', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1, 0]);
+    });
+
+    it('does not notify again when parent order is unchanged even if nested rows are present', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 2 },
+            { __depth: 1, __index: 2 },
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 2 },
+          { __depth: 1, __index: 2 },
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not notify when only nested rows are added, removed, or moved', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([0, 1]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when a parent row is filtered out', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 2]);
+    });
+
+    it('notifies when a parent row is added', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 1, 2]);
+    });
+
+    it('notifies when displayed parent rows become empty', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({ rows: [] });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it('notifies when a single parent index changes and the list length stays the same', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 3 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 3, 2]);
+    });
+
+    it('does not notify when only the callback reference changes', () => {
+      const firstCallback = jest.fn();
+      const secondCallback = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 0 },
+        { __depth: 0, __index: 1 },
+      ];
+      const { rerender } = renderHook(
+        ({ rows, onDisplayedRowIndicesChange }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
+        {
+          initialProps: { rows, onDisplayedRowIndicesChange: firstCallback },
+        }
+      );
+
+      rerender({ rows, onDisplayedRowIndicesChange: secondCallback });
+
+      expect(firstCallback).toHaveBeenCalledTimes(1);
+      expect(firstCallback).toHaveBeenCalledWith([0, 1]);
+      expect(secondCallback).not.toHaveBeenCalled();
+    });
+  });
+
   describe('useSortedRows', () => {
     it('should correctly set up the table with an initial sort', () => {
       const { fields, rows } = setupData();
@@ -258,7 +494,8 @@ describe('TableNG hooks', () => {
     });
 
     it('should handle pagination correctly', () => {
-      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total:
+      // (60 - pagination chrome 38) / rowHeight 10 = 2.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
@@ -385,6 +622,136 @@ describe('TableNG hooks', () => {
       expect(result.current.pageRangeEnd).toBe(5);
       expect(result.current.rowsPerPage).toBe(2);
     });
+
+    it('should use pageSize for rowsPerPage instead of deriving it from the panel height', () => {
+      // height alone would fit all 3 rows on one page ((300 - 38) / 10 = 26 rows); pageSize must win.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 300,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 2,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.numPages).toBe(2);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.rows.length).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].__index).toBe(2);
+    });
+
+    it('reserves an extra margin under the controls when the panel has no padding of its own', () => {
+      // The pager only needs a bottom margin when the panel has dropped its padding, and that margin
+      // comes out of the row area: (58 - 38) / 10 = 2 rows with the panel's padding in place, and
+      // (58 - 46) / 10 = 1 without it.
+      const { rows } = setupData();
+      const options = {
+        enabled: true,
+        height: 58,
+        width: 800,
+        rowHeight: 10,
+        headerHeight: 0,
+        footerHeight: 0,
+      };
+
+      const { result: withPanelPadding } = renderHook(() => usePaginatedRows(rows, options));
+      expect(withPanelPadding.current.rowsPerPage).toBe(2);
+
+      const { result: withoutPanelPadding } = renderHook(() =>
+        usePaginatedRows(rows, { ...options, noPanelPadding: true })
+      );
+      expect(withoutPanelPadding.current.rowsPerPage).toBe(1);
+    });
+
+    it('should fall back to the height-derived page size when pageSize is not a positive number', () => {
+      // (60 - pagination chrome 38) / 10 = 2 rows per page from height; pageSize: 0 must not
+      // override that.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 60,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 0,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.numPages).toBe(2);
+    });
+
+    it('should clamp a fractional pageSize in (0, 1) to one row per page instead of flooring to 0', () => {
+      // pageSize 0.5 is positive but floors to 0; without a guard that yields numPages = Infinity and crashes Pagination.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 300,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 0.5,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(1);
+      expect(result.current.numPages).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+    });
+
+    it('should clamp the page to the last valid page when pageSize grows and drops the page count', () => {
+      // 3 rows. pageSize 1 -> 3 pages (indices 0..2); land on the last page.
+      const { rows } = setupData();
+      const { result, rerender } = renderHook(
+        ({ pageSize }) =>
+          usePaginatedRows(rows, {
+            enabled: true,
+            height: 300,
+            width: 800,
+            rowHeight: 10,
+            headerHeight: 0,
+            footerHeight: 0,
+            pageSize,
+          }),
+        { initialProps: { pageSize: 1 } }
+      );
+
+      expect(result.current.numPages).toBe(3);
+
+      act(() => {
+        result.current.setPage(2);
+      });
+      expect(result.current.page).toBe(2);
+
+      // pageSize 2 -> 2 pages (indices 0..1). page 2 now overflows and must snap to the last valid page,
+      // rather than sitting on an empty page with a broken range summary.
+      rerender({ pageSize: 2 });
+
+      expect(result.current.numPages).toBe(2);
+      expect(result.current.page).toBe(1);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].__index).toBe(2);
+    });
   });
 
   describe('useNestedRows', () => {
@@ -470,7 +837,6 @@ describe('TableNG hooks', () => {
           columnWidths: [],
           enabled: false,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(0);
@@ -484,7 +850,6 @@ describe('TableNG hooks', () => {
           columnWidths: [],
           enabled: true,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
@@ -513,7 +878,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
-          sortColumns: [],
         });
       });
 
@@ -548,12 +912,13 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65,
+      // floor - 1 = 64.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 64, modifiedFields[0], -1, 22);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -579,12 +944,12 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21, floor - 1 = 20.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 20, modifiedFields[0], -1, 22);
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
@@ -595,7 +960,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100, 100],
           enabled: true,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
@@ -1301,6 +1665,43 @@ describe('TableNG hooks', () => {
       expect(result.current.nestedFieldWidths).toEqual([100, 100]);
       expect(result.current.nestedColWidths.get('a')).toEqual({ type: 'resized', width: 100 });
       expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 100 });
+    });
+
+    it('re-flows auto (unconfigured) column widths when the panel width changes', () => {
+      const fields: Field[] = ['a', 'b'].map((name) => ({ name, type: FieldType.string, config: {}, values: [] }));
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      const before = [...result.current.nestedFieldWidths];
+      rerender({ availableWidth: 600 });
+      const after = result.current.nestedFieldWidths;
+
+      // widening the panel widens the auto-sized nested columns (previously they stayed put until a
+      // structure change, so they ignored panel resize).
+      expect(after[0]).toBeGreaterThan(before[0]);
+      expect(after[1]).toBeGreaterThan(before[1]);
+    });
+
+    it('preserves a manual nested resize across a panel resize before it persists to config', () => {
+      const fields = makeFields(['a', 'b']); // configured width 100 each
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      // user drags column 'a' — local widths update immediately; config persists later on pointer-up.
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(new Map([['a', { type: 'resized', width: 250 }]]));
+      });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
+
+      // a panel resize lands before the drag persists — it must not overwrite the in-progress resize.
+      rerender({ availableWidth: 600 });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
     });
 
     it('handleNestedColumnWidthsChange updates nestedFieldWidths and nestedColWidths', () => {

@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -99,7 +99,19 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
-  it('Should sync sidebar docked state with edit pane state', async () => {
+  it('opens the add pane when the Add button is clicked', async () => {
+    const user = userEvent.setup();
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    await user.click(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton));
+
+    await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
+  });
+
+  it('Should sync sidebar docked state with sidebar state', async () => {
     const scene = buildTestScene();
 
     act(() => activateFullSceneTree(scene));
@@ -188,7 +200,7 @@ describe('DashboardSidebarRenderer', () => {
 
       // Select the panel programmatically (clicking a panel in real UX)
       const panel = scene.state.body.getVizPanels()[0];
-      act(() => scene.state.sidebar.selectObject(panel));
+      await act(async () => scene.state.sidebar.selectObject(panel));
 
       // Sidebar pops up — effective isDocked is false during temp-show
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();

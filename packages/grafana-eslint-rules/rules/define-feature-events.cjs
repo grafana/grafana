@@ -31,6 +31,21 @@ const defineFeatureEventsRule = createRule({
       return false;
     }
 
+    // Counts only the JSDoc blocks
+    /** @param {import('@typescript-eslint/utils').TSESTree.Node} node */
+    function countJsDocsBefore(node) {
+      const previousToken = context.sourceCode.getTokenBefore(node, { includeComments: false });
+
+      return context.sourceCode
+        .getCommentsBefore(node)
+        .filter(
+          (comment) =>
+            comment.type === 'Block' &&
+            comment.value.startsWith('*') &&
+            (!previousToken || comment.loc.start.line > previousToken.loc.end.line)
+        ).length;
+    }
+
     // Also handles arrow-wrapper variant: (props: X) => factory<X>('event')({ ...props })
     /** @param {import('@typescript-eslint/utils').TSESTree.Node} valueNode */
     function propertyValueCallsFactory(valueNode) {
@@ -118,8 +133,11 @@ const defineFeatureEventsRule = createRule({
             if (!propertyValueCallsFactory(prop.value)) {
               continue;
             }
-            if (context.sourceCode.getCommentsBefore(prop).length === 0) {
+            const numberOfJsDocs = countJsDocsBefore(prop);
+            if (numberOfJsDocs === 0) {
               context.report({ node: prop, messageId: 'missingEventComment' });
+            } else if (numberOfJsDocs >= 2) {
+              context.report({ node: prop, messageId: 'stackedJSDocComment' });
             }
           }
           return;
@@ -127,8 +145,11 @@ const defineFeatureEventsRule = createRule({
 
         // Pattern (b) — individual export
         if (callsFactoryVariable(init)) {
-          if (context.sourceCode.getCommentsBefore(node).length === 0) {
+          const numberOfJsDocs = countJsDocsBefore(node);
+          if (numberOfJsDocs === 0) {
             context.report({ node: decl.declarations[0].id, messageId: 'missingEventComment' });
+          } else if (numberOfJsDocs >= 2) {
+            context.report({ node: decl.declarations[0].id, messageId: 'stackedJSDocComment' });
           }
         }
       },
@@ -150,8 +171,11 @@ const defineFeatureEventsRule = createRule({
         }
 
         for (const member of node.body.body) {
-          if (context.sourceCode.getCommentsBefore(member).length === 0) {
+          const numberOfJsDocs = countJsDocsBefore(member);
+          if (numberOfJsDocs === 0) {
             context.report({ node: member, messageId: 'missingPropertyComment' });
+          } else if (numberOfJsDocs >= 2) {
+            context.report({ node: member, messageId: 'stackedJSDocComment' });
           }
         }
       },
@@ -170,6 +194,7 @@ const defineFeatureEventsRule = createRule({
       missingEventComment: 'Each event must have a JSDoc comment describing when it fires or its purpose.',
       interfaceMustExtend: 'Event property interfaces must extend `EventProperty` from `@grafana/runtime/internal`.',
       missingPropertyComment: 'Each interface property must have a JSDoc comment describing what it captures.',
+      stackedJSDocComment: 'Each interface property or event must just have one JSDoc comment describing it',
     },
     schema: [],
   },

@@ -9,7 +9,6 @@ import { getCodeStyles } from './code';
 import { getDashboardGridStyles } from './dashboardGrid';
 import { getDashDiffStyles } from './dashdiff';
 import { getElementStyles } from './elements';
-import { getExtraStyles } from './extra';
 import { getFilterTableStyles } from './filterTable';
 import { getFontStyles } from './fonts';
 import { getFormElementStyles } from './forms';
@@ -37,7 +36,6 @@ export function GlobalStyles() {
         getDashDiffStyles(theme),
         getDashboardGridStyles(theme),
         getElementStyles(theme),
-        getExtraStyles(theme),
         getFilterTableStyles(theme),
         getFontStyles(theme),
         getFormElementStyles(theme),

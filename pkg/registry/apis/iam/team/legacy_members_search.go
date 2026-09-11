@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/codes"
@@ -184,9 +185,9 @@ func userUIDFilter(req *resourcepb.ResourceSearchRequest) string {
 	if req == nil || req.Options == nil {
 		return ""
 	}
-	key := resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS
 	for _, r := range req.Options.Fields {
-		if r != nil && r.Key == key && len(r.Values) > 0 {
+		// Accept the bare name and the fields.-prefixed spelling an older caller may send.
+		if r != nil && strings.TrimPrefix(r.Key, resource.SEARCH_FIELD_PREFIX) == builders.TEAM_SEARCH_MEMBERS && len(r.Values) > 0 {
 			return r.Values[0]
 		}
 	}

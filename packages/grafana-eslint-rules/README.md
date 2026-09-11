@@ -12,6 +12,14 @@ Previously we hijacked the aria-label property to use as E2E selectors as an att
 
 Now, we prefer using data-testid for E2E selectors.
 
+### `serializable-e2e-selectors`
+
+Require function selectors in `@grafana/e2e-selectors` to be serializable to `public/e2e-selectors.json` for runtime delivery to `@grafana/plugin-e2e`.
+
+The selector tree is serialized to a data-only JSON file at build time by invoking each function selector and turning it into a template descriptor. This only works for functions that interpolate their parameters directly into a string, so anything with logic (method calls, operators, helper calls, multi-branch conditionals) would silently serialize to the wrong value.
+
+This rule flags such functions at authoring time. Allowed shapes are a string literal, a template literal interpolating parameters directly, a parameter returned as-is, and the single present/absent conditional `(x) => (x ? \`...${x}...\` : '...')`.
+
 ### `no-border-radius-literal`
 
 Check if border-radius theme tokens are used.
@@ -234,6 +242,34 @@ When a violation is detected, the rule reports:
 Import '../status-history/utils' reaches outside the 'histogram' plugin directory. Plugins should only import from external dependencies or relative paths within their own directory.
 ```
 
+### `zod-import-namespace`
+
+Require all zod imports to use a namespace named `z` from the root `zod` package.
+
+This rule allows only:
+
+```ts
+import * as z from 'zod';
+import type * as z from 'zod';
+```
+
+It disallows any other zod import style, including named/default imports and all zod subpath imports such as `zod/mini`. This ensures that all zod imports are consistent, allowing for a smaller bundle size.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { z } from 'zod';
+import z from 'zod';
+import * as zod from 'zod';
+import type { ZodType } from 'zod';
+import * as z from 'zod/mini';
+
+// Good ✅
+import * as z from 'zod';
+import type * as z from 'zod';
+```
+
 ### `define-feature-events`
 
 Enforces best practices when using `defineFeatureEvents` from `@grafana/runtime/internal`.
@@ -295,6 +331,23 @@ interface LoadedProperties extends EventProperty {
 }
 ```
 
+- **`stackedJSDocComment`** — Each event and interface property must be documented with a single JSDoc block. TypeScript allows stacking several blocks on one declaration, and the analytics report concatenates them into one description, which is rarely what the author intended. Merge the text, and move tags such as `@owner` into the same block.
+
+```ts
+// Bad ❌
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library. */
+  /** Only counts the ones rendered at load time. */
+  numberOfItems: number;
+}
+
+// Good ✅
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library, counting only the ones rendered at load time. */
+  numberOfItems: number;
+}
+```
+
 ### `no-direct-create-monitoring-logger`
 
 Disallow direct named imports of `createMonitoringLogger` from `@grafana/runtime`. New loggers must be registered in `packages/grafana-runtime/src/services/logging/loggers.ts` and retrieved via `getLogger` from `@grafana/runtime/unstable`.
@@ -312,3 +365,26 @@ const logger = createMonitoringLogger('features.my-area');
 import { getLogger } from '@grafana/runtime/unstable';
 const logger = getLogger('features.my-area');
 ```
+
+### `no-config-feature-toggles`
+
+Disallow reads of the legacy `config.featureToggles` map. Feature flags should be read through OpenFeature instead — `useFlagXxx()` from `@grafana/runtime/internal` in React, or `getFeatureFlagClient().getBooleanValue(FlagKeys.Xxx, default)` outside it.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { config } from '@grafana/runtime';
+if (config.featureToggles.myFeatureFlag) {
+}
+
+// Good ✅ — in React
+import { useFlagMyFeatureFlag } from '@grafana/runtime/internal';
+const enabled = useFlagMyFeatureFlag();
+
+// Good ✅ — outside React
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.MyFeatureFlag, false);
+```
+
+If the flag has no OpenFeature target yet, add `React: true` alongside its existing `LegacyFrontend` in `pkg/services/featuremgmt/registry.go` — do not rename it, since the name is the OFREP key — then run `make gen-feature-toggles`. New flags should use `Generate{React: true}` with a `component.flagName` name and no legacy target. See [the feature flags guide](../../contribute/feature-toggles.md).

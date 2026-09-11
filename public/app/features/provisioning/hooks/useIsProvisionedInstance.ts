@@ -1,5 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
+import { config } from '@grafana/runtime';
 import { type RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 interface UseIsProvisionedInstanceOptions {
@@ -9,8 +10,9 @@ interface UseIsProvisionedInstanceOptions {
 
 export function useIsProvisionedInstance(options: UseIsProvisionedInstanceOptions = {}) {
   const { settings, skip: skipQuery } = options;
+  const skip = !config.provisioningEnabled || skipQuery;
 
-  const settingsQuery = useGetFrontendSettingsQuery(settings || skipQuery ? skipToken : undefined);
+  const settingsQuery = useGetFrontendSettingsQuery(settings || skip ? skipToken : undefined);
 
   if (settingsQuery.isError) {
     return false;

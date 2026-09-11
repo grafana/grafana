@@ -12,7 +12,7 @@ import { ctaClicked } from '../analytics/main';
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
-import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
+import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -65,25 +65,8 @@ function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): stri
   return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
 }
 
-export function FiringAlertsCard() {
-  if (!canViewFiringAlerts()) {
-    return null;
-  }
-
-  return <FiringAlertsCardInner />;
-}
-
-/**
- * Inner component avoids calling hooks conditionally —
- * the permission gate is in the parent wrapper.
- */
-function FiringAlertsCardInner() {
-  const data = useFiringAlerts();
-  return <FiringAlertsCardView data={data} />;
-}
-
 /** Render-only card body; data comes from useFiringAlerts so callers control where the hook runs. */
-export function FiringAlertsCardView({
+export function FiringAlertsCard({
   data,
   hideFooterActions = false,
 }: {

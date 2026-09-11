@@ -31,7 +31,7 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return apierrors.NewBadRequest("user must have either login or email")
 	}
 
-	if err := validateRole(obj); err != nil {
+	if err := validateRole(requester, obj); err != nil {
 		return err
 	}
 
@@ -100,8 +100,14 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return apierrors.NewBadRequest("user must have either login or email")
 	}
 
-	if err := validateRole(newObj); err != nil {
-		return err
+	if newObj.Spec.Role != oldObj.Spec.Role {
+		if err := validateRole(requester, newObj); err != nil {
+			return err
+		}
+	} else if newObj.Spec.Role == "" {
+		return apierrors.NewBadRequest("role is required")
+	} else if !identity.RoleType(newObj.Spec.Role).IsValid() {
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", newObj.Spec.Role))
 	}
 
 	if newObj.Spec.Email != oldObj.Spec.Email {
@@ -144,13 +150,20 @@ func onlyAllowedFieldsChanged(oldSpec, newSpec iamv0alpha1.UserSpec) bool {
 	return true
 }
 
-func validateRole(obj *iamv0alpha1.User) error {
+func validateRole(requester identity.Requester, obj *iamv0alpha1.User) error {
 	if obj.Spec.Role == "" {
 		return apierrors.NewBadRequest("role is required")
 	}
 
-	if !identity.RoleType(obj.Spec.Role).IsValid() {
+	requestedRole := identity.RoleType(obj.Spec.Role)
+	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", obj.Spec.Role))
+	}
+
+	if !requester.HasRole(requestedRole) {
+		return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
+			obj.Name,
+			fmt.Errorf("cannot assign a role higher than user's role"))
 	}
 
 	return nil
@@ -159,11 +172,11 @@ func validateRole(obj *iamv0alpha1.User) error {
 func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, email string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
-			Key:      "fields.email",
+			Key:      fieldEmail,
 			Operator: string(selection.Equals),
 			Values:   []string{email},
 		},
-	}, []string{"fields.email", "fields.login"})
+	}, []string{fieldEmail, fieldLogin})
 
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
@@ -190,11 +203,11 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, login string) error {
 	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
 		{
-			Key:      "fields.login",
+			Key:      fieldLogin,
 			Operator: string(selection.Equals),
 			Values:   []string{login},
 		},
-	}, []string{"fields.email", "fields.login"})
+	}, []string{fieldEmail, fieldLogin})
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err

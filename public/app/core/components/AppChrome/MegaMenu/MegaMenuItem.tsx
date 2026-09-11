@@ -7,7 +7,9 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
@@ -110,7 +112,8 @@ export function MegaMenuItem({
     draggableProvided?.innerRef(node);
   };
 
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const dragStyles = useStyles2(getDragHandleStyles);
 
   // expand parent sections if child is active
@@ -247,6 +250,7 @@ export function MegaMenuItem({
                     })
               }
               aria-expanded={Boolean(sectionExpanded)}
+              data-testid={selectors.components.NavMenu.sectionToggleButton(link.url)}
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={getIconName(Boolean(sectionExpanded))}
@@ -311,9 +315,10 @@ export function MegaMenuItem({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
+    color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   img: css({
     height: theme.spacing(2),

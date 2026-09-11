@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { type Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
+import { type Input } from 'app/features/dashboard-scene/scene/export/exporters';
 import { type DashboardInput, type DataSourceInput, InputType } from 'app/features/manage-dashboards/types';
 
 import {

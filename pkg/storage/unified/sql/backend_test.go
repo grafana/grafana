@@ -777,14 +777,14 @@ func TestBackend_getHistory(t *testing.T) {
 				historyRows := sqlmock.NewRows(cols)
 				for _, rv := range tc.expectedVersions {
 					historyRows.AddRow(
-						"guid",                           // guid
-						rv,                               // resource_version
-						"ns",                             // namespace
-						"gr",                             // group
-						"rs",                             // resource
-						"nm",                             // name
-						"folder",                         // folder
-						[]byte(fmt.Sprintf("rv-%d", rv)), // value
+						"guid",                        // guid
+						rv,                            // resource_version
+						"ns",                          // namespace
+						"gr",                          // group
+						"rs",                          // resource
+						"nm",                          // name
+						"folder",                      // folder
+						fmt.Appendf(nil, "rv-%d", rv), // value
 					)
 				}
 				b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").WillReturnRows(historyRows)
@@ -956,14 +956,14 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	historyRows := sqlmock.NewRows(cols)
 	for _, rv := range resourceVersions {
 		historyRows.AddRow(
-			"guid",                           // guid
-			rv,                               // resource_version
-			"ns",                             // namespace
-			"gr",                             // group
-			"rs",                             // resource
-			"nm",                             // name
-			"folder",                         // folder
-			[]byte(fmt.Sprintf("rv-%d", rv)), // value
+			"guid",                        // guid
+			rv,                            // resource_version
+			"ns",                          // namespace
+			"gr",                          // group
+			"rs",                          // resource
+			"nm",                          // name
+			"folder",                      // folder
+			fmt.Appendf(nil, "rv-%d", rv), // value
 		)
 	}
 

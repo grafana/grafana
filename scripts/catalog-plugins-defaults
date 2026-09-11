@@ -10,5 +10,6 @@ mssql
 jaeger
 loki
 mysql
+influxdb
 grafana-postgresql-datasource
 grafana-pyroscope-datasource

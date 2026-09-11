@@ -30,9 +30,9 @@ export function AddVariable({
 
   return (
     <AddButton
-      icon="brackets-curly"
+      icon="gf-variable"
       testId={selectors.components.Sidebar.addNewVariableButton}
-      label={t('dashboard-scene.add-variable.label-variable', 'Variable')}
+      label={t('dashboard.sidebar.add.variable.label', 'Variable')}
       onClick={onAddVariableClick}
     />
   );

@@ -17,13 +17,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -284,10 +284,10 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
 			tsdbQuery := []backend.DataQuery{
 				{
-					JSON: []byte(fmt.Sprintf(`{
+					JSON: fmt.Appendf(nil, `{
 							"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
 							"azureMonitor": %s
-						}`, string(azureMonitorJSON))),
+						}`, string(azureMonitorJSON)),
 					RefID:    "A",
 					Interval: tt.queryInterval,
 					TimeRange: backend.TimeRange{

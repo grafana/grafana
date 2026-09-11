@@ -1,5 +1,6 @@
 import { type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { defaultOptions as defaultTableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 
@@ -52,5 +53,22 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       category,
       editor: PaginationEditor,
       defaultValue: defaultTableOptions?.enablePagination,
+    })
+    .addNumberInput({
+      path: 'pageSize',
+      name: t('table.name-page-size', 'Page size'),
+      description: t(
+        'table.description-page-size',
+        'Number of rows per page. When empty, the page size is based on the panel height.'
+      ),
+      category,
+      settings: {
+        placeholder: t('table.placeholder-page-size', 'auto'),
+        min: 1,
+        integer: true,
+      },
+      showIf: (opts) =>
+        Boolean(opts.enablePagination) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TablePaginationPageSize, false),
     });
 };

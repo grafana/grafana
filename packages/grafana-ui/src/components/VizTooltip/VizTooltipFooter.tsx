@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import {
   type ActionModel,
@@ -43,6 +43,8 @@ export interface VizTooltipFooterProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
+  /** Content rendered at the end of the footer. */
+  additionalContent?: ReactNode;
 }
 
 const ADD_ANNOTATION_ID = 'add-annotation-button';
@@ -113,6 +115,7 @@ export const VizTooltipFooter = ({
   annotate,
   adHocFilters = [],
   filterByGroupedLabels,
+  additionalContent,
 }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
@@ -127,7 +130,7 @@ export const VizTooltipFooter = ({
           {adHocFilters.map((item, index) => (
             <Button key={index} icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
               <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
-                Filter for '{{ value: item.value }}'
+                Filter for &apos;{{ value: item.value }}&apos;
               </Trans>
             </Button>
           ))}
@@ -167,6 +170,7 @@ export const VizTooltipFooter = ({
           </Button>
         </div>
       )}
+      {additionalContent}
     </div>
   );
 };

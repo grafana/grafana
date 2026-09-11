@@ -6,7 +6,6 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { useStepperState } from './StepperState';
 import { getWizardSteps } from './steps';
 import { type StepKey, StepState } from './types';
-import { useImportMethod } from './useImportMethod';
 
 /**
  * Stepper component - sidebar navigation for the wizard
@@ -19,9 +18,8 @@ export const Stepper = () => {
   const styles = useStyles2(getStyles);
   const { activeStep, setActiveStep, setVisitedStep, visitedSteps, isStepCompleted, isStepSkipped, hasStepErrors } =
     useStepperState();
-  const method = useImportMethod();
 
-  const steps = getWizardSteps(method);
+  const steps = getWizardSteps();
   const lastStep = steps[steps.length - 1];
 
   const handleStepClick = (stepId: StepKey) => {
