@@ -571,6 +571,7 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 		basicLogsEnabled     bool
 		auxiliaryLogsEnabled bool
 		expectedEnabled      bool
+		expectedError        string
 	}{
 		{
 			name:             "legacy query uses Basic Logs setting",
@@ -581,6 +582,7 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 			name:                 "legacy query is not enabled by Auxiliary Logs setting",
 			auxiliaryLogsEnabled: true,
 			expectedEnabled:      false,
+			expectedError:        "Basic Logs queries are disabled for this data source",
 		},
 		{
 			name:             "Basic query uses Basic Logs setting",
@@ -593,6 +595,7 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 			logTierJSON:          `, "logTier": "Basic"`,
 			auxiliaryLogsEnabled: true,
 			expectedEnabled:      false,
+			expectedError:        "Basic Logs queries are disabled for this data source",
 		},
 		{
 			name:                 "Auxiliary query uses Auxiliary Logs setting",
@@ -605,6 +608,7 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 			logTierJSON:      `, "logTier": "Auxiliary"`,
 			basicLogsEnabled: true,
 			expectedEnabled:  false,
+			expectedError:    "Auxiliary Logs queries are disabled for this data source",
 		},
 		{
 			name:                 "unknown tier is disabled",
@@ -612,6 +616,7 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 			basicLogsEnabled:     true,
 			auxiliaryLogsEnabled: true,
 			expectedEnabled:      false,
+			expectedError:        `unsupported Logs query tier "Unknown"`,
 		},
 	}
 
@@ -641,7 +646,7 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 
 			result, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, false)
 			if !tt.expectedEnabled {
-				require.Error(t, err)
+				require.EqualError(t, err, tt.expectedError)
 				require.Nil(t, result)
 				return
 			}

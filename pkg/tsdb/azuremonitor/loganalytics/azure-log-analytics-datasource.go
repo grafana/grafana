@@ -335,10 +335,20 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	}
 
 	if basicLogsQueryFlag {
-		logTierEnabled := isLogTierEnabled(azureLogAnalyticsTarget.LogTier, basicLogsEnabled, auxiliaryLogsEnabled)
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, logTierEnabled); meetsBasicLogsCriteriaErr != nil {
+		logTierEnabled, logTierErr := isLogTierEnabled(azureLogAnalyticsTarget.LogTier, basicLogsEnabled, auxiliaryLogsEnabled)
+		if logTierErr != nil {
+			return nil, logTierErr
+		}
+		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, true); meetsBasicLogsCriteriaErr != nil {
 			return nil, meetsBasicLogsCriteriaErr
 		} else {
+			if !logTierEnabled {
+				logTier := dataquery.AzureLogsQueryLogTierBasic
+				if azureLogAnalyticsTarget.LogTier != nil {
+					logTier = *azureLogAnalyticsTarget.LogTier
+				}
+				return nil, backend.DownstreamError(fmt.Errorf("%s Logs queries are disabled for this data source", logTier))
+			}
 			basicLogsQuery = meetsBasicLogsCriteria
 		}
 	}
@@ -382,12 +392,16 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	}, nil
 }
 
-func isLogTierEnabled(logTier *dataquery.AzureLogsQueryLogTier, basicLogsEnabled, auxiliaryLogsEnabled bool) bool {
+func isLogTierEnabled(logTier *dataquery.AzureLogsQueryLogTier, basicLogsEnabled, auxiliaryLogsEnabled bool) (bool, error) {
 	if logTier == nil || *logTier == dataquery.AzureLogsQueryLogTierBasic {
-		return basicLogsEnabled
+		return basicLogsEnabled, nil
 	}
 
-	return *logTier == dataquery.AzureLogsQueryLogTierAuxiliary && auxiliaryLogsEnabled
+	if *logTier == dataquery.AzureLogsQueryLogTierAuxiliary {
+		return auxiliaryLogsEnabled, nil
+	}
+
+	return false, backend.DownstreamError(fmt.Errorf("unsupported Logs query tier %q", *logTier))
 }
 
 func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) (*AzureLogAnalyticsQuery, error) {

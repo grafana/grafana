@@ -108,12 +108,15 @@ const LogsQueryEditor = ({
     const loadSchema = async () => {
       const schema = await datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]);
       if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
-        const tables = await Promise.all(
-          schema.database.tables.map(async (table: AzureLogAnalyticsMetadataTable) => ({
-            ...table,
-            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name),
-          }))
+        const planResults = await Promise.allSettled(
+          schema.database.tables.map((table: AzureLogAnalyticsMetadataTable) =>
+            datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name)
+          )
         );
+        const tables = schema.database.tables.map((table, index) => {
+          const planResult = planResults[index];
+          return planResult?.status === 'fulfilled' ? { ...table, plan: planResult.value } : table;
+        });
 
         return {
           ...schema,

@@ -891,6 +891,93 @@ describe('LogsQueryEditor', () => {
         })
       );
     });
+
+    it('keeps the base schema and successful table plans when a table plan request fails', async () => {
+      const tables = [
+        {
+          columns: [],
+          id: 'UnavailablePlanTable',
+          name: 'UnavailablePlanTable',
+          timespanColumn: 'TimeGenerated',
+          related: { solutions: [] },
+        },
+        {
+          columns: [],
+          id: 'BasicTable',
+          name: 'BasicTable',
+          timespanColumn: 'TimeGenerated',
+          related: { solutions: [] },
+        },
+      ];
+      const database = {
+        name: 'la-workspace',
+        tables,
+        functions: [],
+        majorVersion: 0,
+        minorVersion: 0,
+        entityGroups: [],
+      };
+      const mockSchema: EngineSchema = {
+        clusterType: 'Engine',
+        cluster: {
+          connectionString: 'la-workspace',
+          databases: [database],
+        },
+        database,
+      };
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(mockSchema);
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, tableName: string) => {
+        return tableName === 'UnavailablePlanTable'
+          ? Promise.reject(new Error('table plan request failed'))
+          : Promise.resolve(TablePlan.Basic);
+      });
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onQueryChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={jest.fn()}
+          onQueryChange={onQueryChange}
+          setError={jest.fn()}
+          basicLogsEnabled={true}
+        />
+      );
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'UnavailablePlanTable');
+      expect(onQueryChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            builderQuery: expect.objectContaining({
+              from: expect.objectContaining({
+                property: expect.objectContaining({ name: 'UnavailablePlanTable' }),
+              }),
+            }),
+          }),
+        })
+      );
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+      expect(onQueryChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            basicLogsQuery: true,
+            logTier: 'Basic',
+          }),
+        })
+      );
+    });
   });
 
   describe('tier auto-switch notification (Builder mode)', () => {
