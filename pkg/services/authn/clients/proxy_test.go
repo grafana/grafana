@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -324,7 +325,7 @@ func TestProxy_Hook(t *testing.T) {
 			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
 				cacheKey: []byte("1"),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): fmt.Appendf(nil, "users:johndoe-%s", role),
 			}
 			assert.Equal(t, expectedCache, cache.data)
 		}

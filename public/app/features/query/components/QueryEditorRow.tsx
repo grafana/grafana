@@ -69,10 +69,12 @@ export interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   hideActionButtons?: boolean;
+  draggable?: boolean;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
+  onQueryClosed?: () => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
@@ -309,14 +311,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   };
 
-  onCancelQueryLibraryEdit = () => {
-    const { query } = this.props;
-    reportInteraction('query_library-update_query_from_explore_cancelled', {
-      datasourceType: query.datasource?.type,
-    });
-    this.props.onExitQueryLibraryEdit?.();
-  };
-
   onExitQueryLibraryEditingMode = () => {
     this.props.onExitQueryLibraryEdit?.();
   };
@@ -527,6 +521,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.duplicate-query', 'Duplicate query')}
+            // Set explicitly so the test id stays stable across locales: QueryOperationAction
+            // otherwise derives it from the translated title.
+            dataTestId={selectors.components.QueryEditorRow.actionButton('Duplicate query')}
             icon="copy"
             onClick={this.onCopyQuery}
           />
@@ -582,8 +579,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       visualization,
       collapsable,
       hideActionButtons,
+      draggable = true,
       isOpen,
       onQueryOpenChanged,
+      onQueryClosed,
       app,
       editSavedQueryRef,
       addingSavedQuery,
@@ -611,13 +610,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const queryOperationRow = (
       <QueryOperationRow
         id={this.id}
-        draggable={!hideActionButtons && !inSavedQueryMode}
+        draggable={draggable && !hideActionButtons && !inSavedQueryMode}
         collapsable={collapsable}
         index={index}
         headerElement={this.renderHeader}
         actions={hideActionButtons ? undefined : this.renderActions}
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
+        onClose={onQueryClosed}
       >
         <div
           className={rowClasses}
@@ -651,7 +651,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             app={app}
             editSavedQueryRef={editSavedQueryRef}
             mode={addingSavedQuery ? 'add' : 'edit'}
-            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onCancelQueryLibraryEdit}
+            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onExitQueryLibraryEditingMode}
             onUpdateSuccess={this.onSavedQueryModeSuccess}
             onSelectQuery={this.onSelectQueryFromLibrary}
           />

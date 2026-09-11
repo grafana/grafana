@@ -51,11 +51,18 @@ package v0alpha1
 	fields:   #RuleSearchHitFields
 }
 
+// #TotalHitsRelation says how totalHits relates to the real number of matching
+// rules the caller may see: "eq" when it is exact, "lte" when it is an upper
+// bound because authorisation was applied after the search ranked its results.
+#TotalHitsRelation: "eq" | "lte"
+
 // #SearchResultsMetadata carries the paging token and total authorised match
 // count.
 #SearchResultsMetadata: {
 	continue?:  string
 	totalHits?: int64
+	// Always read totalHits together with totalHitsRelation.
+	totalHitsRelation?: #TotalHitsRelation
 }
 
 // #FacetValue is a single value/count pair in a facet breakdown.

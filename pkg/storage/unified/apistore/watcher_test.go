@@ -134,7 +134,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 	case StorageTypeUnified:
 		testutil.SkipIntegrationTestInShortMode(t)
-		dbstore := infraDB.InitTestDB(t)
+		dbstore := infraDB.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		cfg := setting.NewCfg()
 
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)

@@ -18,7 +18,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
   const dashboard = getDashboardSceneFor(model);
   const { searchQuery } = model.useState();
   const { isEditing } = dashboard.useState();
-  const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
+  const noTitleText = t('dashboard.sidebar.outline.tree-item.no-title', '<no title>');
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
@@ -33,7 +33,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%">
-      <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.outline.pane-header', 'Content outline')} />
       <div className={styles.container}>
         <FilterInput
           data-testid={selectors.pages.Dashboard.Sidebar.outline.searchInput}
@@ -59,7 +59,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
           ) : (
             <li className={styles.noResults}>
               <Text color="secondary">
-                <Trans i18nKey="dashboard.outline.search.no-results">No results found for your query</Trans>
+                <Trans i18nKey="dashboard.sidebar.outline.search.no-results">No results found for your query</Trans>
               </Text>
             </li>
           )}

@@ -1,16 +1,47 @@
 import { css, cx } from '@emotion/css';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
-import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction } from '@grafana/data';
-import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
+import {
+  CoreApp,
+  getFrameDisplayName,
+  type DataFrame,
+  type GrafanaTheme2,
+  type PanelProps,
+  type InterpolateFunction,
+  VariableSuggestionsScope,
+} from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import {
+  Alert,
+  Combobox,
+  Field,
+  Pagination,
+  ScrollContainer,
+  Stack,
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import config from 'app/core/config';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import {
+  type CodeOptions,
+  defaultCodeLanguage,
+  defaultCodeOptions,
+  defaultOptions,
+  type Options,
+  TextMode,
+} from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
-import { getInterpolateFormat, transformContent } from './utils';
+import { TextNGHtmlView } from './TextNGHtmlView';
+import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
+import { getEditorLayoutStyles } from './editor/editorLayout';
+import { usePagination } from './pagination';
+import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
+import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -18,99 +49,259 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables } = props;
+  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent, height, width } =
+    props;
+  const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
+  // Fit-content only applies to the rendered view: the inline editor keeps its
+  // bounded, scrollable layout since active editing needs stable interactive space.
+  const fitContentOn = fitContent && !isEditing;
   const content = options.content ?? defaultOptions.content ?? '';
 
-  const interpolatedContent = isEditing ? '' : interpolateContent(options, replaceVariables);
+  const frames = data.series;
+  const currentFrameIndex = getCurrentFrameIndex(frames, options);
+  const series = useMemo(() => (frames.length > 1 ? [frames[currentFrameIndex]] : frames), [frames, currentFrameIndex]);
 
-  const [processed, setProcessed] = useState<Options>(() => ({
-    mode: options.mode,
-    content: transformContent(options.mode, interpolatedContent, config.disableSanitizeHtml),
-  }));
+  // Values scope, so the ${__value} macros the renderer resolves are offered.
+  const suggestions = useMemo(
+    () => (isEditing ? getDataLinksVariableSuggestions(series, VariableSuggestionsScope.Values) : []),
+    [isEditing, series]
+  );
 
-  // Recompute synchronously when leaving edit mode so pre-edit content never flashes.
+  // Adding or removing a query toggles the frame picker, which changes the tree
+  // shape and remounts the editor, so its view mode is held here instead.
+  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
+
+  const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
+    usePagination({
+      content,
+      mode: options.mode,
+      renderMode: options.renderMode,
+      pageSize: options.pageSize,
+      series,
+      height,
+      width,
+      // Not fitContentOn: the editor must not offer a page the applied panel will not honour.
+      fitContent,
+    });
+
+  const [processed, setProcessed] = useState<ProcessedContent>(() =>
+    // The editor renders its own preview, so skip the render pass on entry.
+    isEditing
+      ? { mode: options.mode, content: EMPTY_CONTENT }
+      : renderPanelContent(options, series, replaceVariables, rowWindow)
+  );
+
+  // Recompute synchronously when leaving edit mode so pre-edit content never flashes,
+  // when the page moves, which should land as directly as a scroll would, and on a
+  // template change, which auto-fit measures.
   const [wasEditing, setWasEditing] = useState(isEditing);
-  if (wasEditing !== isEditing) {
+  const [prevWindow, setPrevWindow] = useState(rowWindow);
+  const [prevTemplate, setPrevTemplate] = useState(() => templateOf(options));
+  const template = templateOf(options);
+  if (
+    wasEditing !== isEditing ||
+    prevWindow?.start !== rowWindow?.start ||
+    prevWindow?.count !== rowWindow?.count ||
+    prevTemplate !== template
+  ) {
     setWasEditing(isEditing);
+    setPrevWindow(rowWindow);
+    setPrevTemplate(template);
     if (!isEditing) {
-      setProcessed({
-        mode: options.mode,
-        content: transformContent(options.mode, interpolatedContent, config.disableSanitizeHtml),
-      });
+      setProcessed(renderPanelContent(options, series, replaceVariables, rowWindow));
     }
   }
 
-  // Batches bursts of interpolated-content changes (data/variable refresh) so
-  // the markdown/sanitize pass runs once per burst, not per intermediate value.
+  // Batches bursts of change (data/variable refresh) so the interpolate and
+  // markdown/sanitize pass runs once per burst. renderCounter covers a
+  // referenced variable changing, which leaves options and data untouched.
   useDebounce(
     () => {
       if (isEditing) {
         return;
       }
-      const next = transformContent(options.mode, interpolatedContent, config.disableSanitizeHtml);
-      if (next !== processed.content || options.mode !== processed.mode) {
-        setProcessed({
-          mode: options.mode,
-          content: next,
-        });
+      const next = renderPanelContent(options, series, replaceVariables, rowWindow);
+      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+        setProcessed(next);
       }
     },
     100,
-    [isEditing, interpolatedContent, options.mode]
+    [
+      isEditing,
+      options.content,
+      options.mode,
+      options.renderMode,
+      options.code?.language,
+      series,
+      replaceVariables,
+      renderCounter,
+    ]
   );
 
-  if (isEditing) {
-    return (
-      // Show the rendered content while the editor chunk loads; the editor
-      // opens in Preview view, so the content stays in place.
-      <Suspense fallback={<EditorLoadingFallback options={options} replaceVariables={replaceVariables} />}>
-        <TextNGEditor
-          content={content}
-          mode={options.mode}
-          showLineNumbers={options.code?.showLineNumbers ?? false}
-          codeLanguage={options.code?.language}
+  const paginationBar = active ? (
+    <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
+      <Pagination
+        currentPage={page + 1}
+        numberOfPages={numPages}
+        showSmallVersion={smallVersion}
+        onNavigate={(toPage) => setPage(toPage - 1)}
+      />
+      {!smallVersion && (
+        <span className={styles.paginationSummary}>
+          <Trans i18nKey="textng.pagination.summary">
+            {{ rangeStart }} - {{ rangeEnd }} of {{ rowCount }} rows
+          </Trans>
+        </span>
+      )}
+    </Stack>
+  ) : null;
+
+  const panel = isEditing ? (
+    // Show the rendered content while the editor chunk loads; the editor
+    // opens in Preview view, so the content stays in place.
+    <Suspense
+      fallback={
+        <EditorLoadingFallback
+          options={options}
+          series={series}
           replaceVariables={replaceVariables}
-          onChange={(next) => onOptionsChange({ ...options, content: next })}
+          rowWindow={rowWindow}
+          transparent={transparent}
         />
-      </Suspense>
+      }
+    >
+      <TextNGEditor
+        content={content}
+        mode={options.mode}
+        showLineNumbers={options.code?.showLineNumbers ?? false}
+        codeLanguage={options.code?.language}
+        renderMode={options.renderMode}
+        rowWindow={rowWindow}
+        pagination={paginationBar}
+        previewRef={contentRef}
+        series={series}
+        replaceVariables={replaceVariables}
+        suggestions={suggestions}
+        onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
+        view={view}
+        onViewChange={setView}
+        transparent={transparent}
+      />
+    </Suspense>
+  ) : (
+    <TextNGView {...processed} code={options.code} fitContent={fitContentOn} contentRef={contentRef} />
+  );
+
+  const panelPagination = isEditing ? null : paginationBar;
+
+  const frameOptions = useMemo(
+    () => frames.map((frame, index) => ({ label: getFrameDisplayName(frame), value: index })),
+    [frames]
+  );
+
+  const framePicker =
+    frames.length > 1 ? (
+      <Field noMargin>
+        <Combobox
+          aria-label={t('textng.frame-picker.label', 'Query')}
+          options={frameOptions}
+          value={frameOptions[currentFrameIndex]}
+          onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
+        />
+      </Field>
+    ) : null;
+
+  if (!panelPagination && !framePicker) {
+    return panel;
+  }
+
+  // Fit-content: no fixed-height flex wrapper — the picker sits below the panel
+  // in normal flow so the stack's natural height, not a forced 100%, is what
+  // the layout measures.
+  if (fitContentOn) {
+    return (
+      <Stack direction="column" gap={1}>
+        {panel}
+        {panelPagination}
+        {framePicker}
+      </Stack>
     );
   }
 
-  return <TextNGView mode={processed.mode} content={processed.content} code={options.code} />;
+  return (
+    <Stack direction="column" gap={1} height="100%">
+      <Stack direction="column" grow={1} minHeight={0}>
+        {panel}
+      </Stack>
+      {panelPagination}
+      {framePicker}
+    </Stack>
+  );
 }
 
-interface TextNGViewProps {
+// What a render pass turns into blocks, leaving data and variables to the debounce.
+function templateOf(options: Options): string {
+  return `${options.content}|${options.mode}|${options.renderMode}|${options.code?.language}`;
+}
+
+interface ProcessedContent extends RenderedContent {
   mode: TextMode;
-  content: string;
-  code: Options['code'];
 }
 
-function TextNGView({ mode, content, code }: TextNGViewProps) {
+interface TextNGViewProps extends ProcessedContent {
+  code: Options['code'];
+  fitContent?: boolean;
+  contentRef?: Ref<HTMLDivElement>;
+  transparent?: boolean;
+}
+
+function TextNGView({ mode, content, error, code, fitContent, contentRef, transparent }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
+
+  if (error) {
+    return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
+  }
 
   if (mode === TextMode.Code) {
     const codeOptions = code ?? defaultCodeOptions;
+    // CodeMirror always wraps lines here, so a line-count estimate (as v1 uses
+    // for Monaco, which doesn't wrap) would undercount soft-wrapped lines. Use
+    // 'auto' instead: CodeMirror's own .cm-scroller is forced to a CSS height
+    // of 100%, which resolves to auto against an auto-height .cm-editor, so it
+    // grows to fit exactly what's rendered, wraps included.
+    const codeHeight = fitContent ? 'auto' : '100%';
     return (
-      <div className={styles.codeContainer} data-testid="TextNGPanel-code">
+      <div className={cx(styles.codeContainer, fitContent && styles.codeContainerFit)} data-testid="TextNGPanel-code">
         <TextNGCodeView
           content={content}
           language={codeOptions.language}
           showLineNumbers={codeOptions.showLineNumbers ?? false}
+          height={codeHeight}
+          transparent={transparent}
         />
       </div>
     );
   }
 
+  const rendered = (
+    <TextNGHtmlView
+      html={content}
+      className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
+      testId="TextNGPanel-converted-content"
+    />
+  );
+
+  // Fit-content: render in normal flow so the markdown/HTML defines the height.
+  // No size containment and no inner scroll — the cell's CSS bounds the result.
+  if (fitContent) {
+    return rendered;
+  }
+
   return (
     <div className={styles.containStrict}>
-      <ScrollContainer minHeight="100%">
-        <DangerouslySetHtmlContent
-          allowRerender
-          html={content}
-          className={cx('markdown-html', styles.markdownHtml)}
-          data-testid="TextNGPanel-converted-content"
-        />
+      <ScrollContainer minHeight="100%" ref={contentRef}>
+        {rendered}
       </ScrollContainer>
     </div>
   );
@@ -120,21 +311,85 @@ function TextNGView({ mode, content, code }: TextNGViewProps) {
 // at most once per edit session.
 function EditorLoadingFallback({
   options,
+  series,
   replaceVariables,
+  rowWindow,
+  transparent,
 }: {
   options: Options;
+  series: DataFrame[];
   replaceVariables: InterpolateFunction;
+  rowWindow?: RowWindow;
+  transparent?: boolean;
 }) {
-  const content = useMemo(
-    () => transformContent(options.mode, interpolateContent(options, replaceVariables), config.disableSanitizeHtml),
-    [options, replaceVariables]
+  const theme = useTheme2();
+  const layout = useStyles2(getEditorLayoutStyles);
+  const rendered = useMemo(
+    () => renderPanelContent(options, series, replaceVariables, rowWindow),
+    [options, series, replaceVariables, rowWindow]
   );
+  const isCode = options.mode === TextMode.Code;
 
-  return <TextNGView mode={options.mode} content={content} code={options.code} />;
+  return (
+    <div className={layout.wrapper}>
+      <Stack minHeight={theme.components.height.md} />
+      <div className={layout.body}>
+        <div
+          className={cx(
+            layout.pane,
+            layout.previewPane,
+            !transparent && layout.previewPaneOpaque,
+            !isCode && layout.htmlPreviewPane
+          )}
+        >
+          <TextNGView {...rendered} code={options.code} transparent={transparent} />
+        </div>
+      </div>
+      {isCode && <Stack minHeight={theme.components.height.md} />}
+    </div>
+  );
 }
 
-function interpolateContent(options: Options, interpolate: InterpolateFunction): string {
-  return interpolate(options.content ?? '', {}, getInterpolateFormat(options.code?.language));
+function applyEditorChange(options: Options, change: TextNGEditorChange): Options {
+  const { content, mode = options.mode, codeLanguage, showLineNumbers } = change;
+
+  if (codeLanguage === undefined && showLineNumbers === undefined) {
+    return { ...options, content, mode };
+  }
+
+  const code: CodeOptions = {
+    showMiniMap: false,
+    ...options.code,
+    language: codeLanguage ?? options.code?.language ?? defaultCodeLanguage,
+    showLineNumbers: showLineNumbers ?? options.code?.showLineNumbers ?? false,
+  };
+
+  return { ...options, content, mode, code };
+}
+
+function renderPanelContent(
+  options: Options,
+  series: DataFrame[],
+  replaceVariables: InterpolateFunction,
+  rowWindow?: RowWindow
+): ProcessedContent {
+  return {
+    mode: options.mode,
+    ...catchTemplateError(() =>
+      renderContent(
+        {
+          content: options.content ?? '',
+          mode: options.mode,
+          series,
+          renderMode: options.renderMode,
+          rowWindow,
+          format: getInterpolateFormat(options.mode, options.code?.language),
+        },
+        replaceVariables,
+        config.disableSanitizeHtml
+      )
+    ),
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -146,8 +401,32 @@ const getStyles = (theme: GrafanaTheme2) => ({
   markdownHtml: css({
     height: '100%',
   }),
+  // Flow layout for fit-content mode: no size containment, no fixed height, so
+  // the content defines the panel's height.
+  markdownHtmlFit: css({
+    height: 'auto',
+  }),
   codeContainer: css({
     height: '100%',
     overflow: 'hidden',
+    // CodeMirror's wrapper div has no height of its own, so without this the
+    // editor grows past the panel instead of scrolling internally
+    'div:has(> .cm-editor)': {
+      height: '100%',
+    },
+  }),
+  // Fit-content: let CodeMirror's explicit pixel height (see estimateCodeHeight)
+  // define the container instead of forcing it to fill the panel.
+  codeContainerFit: css({
+    height: 'auto',
+    overflow: 'visible',
+    'div:has(> .cm-editor)': {
+      height: 'auto',
+    },
+  }),
+  paginationSummary: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    whiteSpace: 'nowrap',
   }),
 });

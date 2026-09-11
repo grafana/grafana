@@ -65,6 +65,10 @@
         ]
       },
       {
+        "name": "mti-1_mimir-12345",
+        "time_intervals": null
+      },
+      {
         "name": "ti-1",
         "time_intervals": [
           {
@@ -92,10 +96,6 @@
             ]
           }
         ]
-      },
-      {
-        "name": "mti-1_mimir-12345",
-        "time_intervals": null
       }
     ],
     "receivers": [

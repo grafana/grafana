@@ -1,9 +1,11 @@
 import { generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { getGroupSelectedCategory } from '../scene/layouts-shared/GroupSelectedActions';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import {
   type EditableDashboardElement,
@@ -22,8 +24,14 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
     return { typeName: t('dashboard.sidebar.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return [];
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
+    return [getGroupSelectedCategory(this.getPanels())];
+  }
+
+  public getPanels(): VizPanel[] {
+    return this._panels
+      .map((panel) => ('panel' in panel ? panel.panel : undefined))
+      .filter((panel): panel is VizPanel => panel instanceof VizPanel);
   }
 
   public onConfirmDelete() {

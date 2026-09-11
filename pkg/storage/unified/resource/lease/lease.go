@@ -142,7 +142,7 @@ type Manager struct {
 
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
-func NewManager(store kv.KV, holder string, reg prometheus.Registerer, opts ...ManagerOption) *Manager {
+func NewManager(store kv.KV, holder string, component string, reg prometheus.Registerer, opts ...ManagerOption) *Manager {
 	m := &Manager{
 		store:        store,
 		holder:       holder,
@@ -150,7 +150,7 @@ func NewManager(store kv.KV, holder string, reg prometheus.Registerer, opts ...M
 		maxClockSkew: defaultMaxClockSkew,
 		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 		now:          time.Now,
-		metrics:      NewMetrics(reg),
+		metrics:      NewMetrics(reg, component),
 	}
 	m.garbageCollector = newGarbageCollector(store, m.log, m.now, m.metrics)
 	for _, opt := range opts {

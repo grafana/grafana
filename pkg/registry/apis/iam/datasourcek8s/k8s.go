@@ -68,7 +68,8 @@ func legacyActionToK8s(dsType, action string) (string, bool) {
 	if !ok || strings.Contains(legacyVerb, ":") {
 		return action, false
 	}
-	return LegacyVerbToK8sAction(dsType, legacyVerb), true
+	convertedAction := LegacyVerbToK8sAction(dsType, legacyVerb)
+	return convertedAction, convertedAction != action
 }
 
 // LegacyDatasourceAction replaces a legacy ds action string with its k8s form
@@ -92,9 +93,10 @@ func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (
 		return scope, action
 	}
 
-	scope = LegacyUIDScopeToK8s(datasourceType, uid)
-	if converted, ok := legacyActionToK8s(datasourceType, action); ok {
-		action = converted
+	convertedAction, ok := legacyActionToK8s(datasourceType, action)
+	if !ok {
+		return scope, action
 	}
-	return scope, action
+
+	return LegacyUIDScopeToK8s(datasourceType, uid), convertedAction
 }

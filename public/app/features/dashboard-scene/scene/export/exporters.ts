@@ -1,8 +1,8 @@
 import { defaults, each, sortBy } from 'lodash';
 
 import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type Panel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -121,7 +121,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
 
   const datasourceVariableRefNameMap: { [key: string]: string } = {};
 
-  const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
+  const templateizeDatasourceUsage = async (obj: any, fallback?: DataSourceRef) => {
     if (obj.datasource === undefined) {
       obj.datasource = fallback;
       return;
@@ -148,54 +148,52 @@ export async function makeExportableV1(dashboard: DashboardModel) {
       }
     }
 
-    return getDataSourceSrv()
-      .get(datasource)
-      .then((ds) => {
-        if (ds.meta?.builtIn) {
-          return;
-        }
+    const ds = await getDataSourceInstance(datasource);
 
-        // add data source type to require list
-        requires['datasource' + ds.meta?.id] = {
-          type: 'datasource',
-          id: ds.meta.id,
-          name: ds.meta.name,
-          version: ds.meta.info.version || '1.0.0',
-        };
+    if (ds.meta?.builtIn) {
+      return;
+    }
 
-        const libraryPanel = obj.libraryPanel;
-        const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
-        let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
-        const templatedUid = '${' + refName + '}';
+    // add data source type to require list
+    requires['datasource' + ds.meta?.id] = {
+      type: 'datasource',
+      id: ds.meta.id,
+      name: ds.meta.name,
+      version: ds.meta.info.version || '1.0.0',
+    };
 
-        datasources[refName] = {
-          name: refName,
-          label: ds.name,
-          description: '',
-          type: 'datasource',
-          pluginId: ds.meta?.id,
-          pluginName: ds.meta?.name,
-          usage: datasources[refName]?.usage,
-        };
+    const libraryPanel = obj.libraryPanel;
+    const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
+    let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+    const templatedUid = '${' + refName + '}';
 
-        if (!!libraryPanel) {
-          const libPanels = datasources[refName]?.usage?.libraryPanels || [];
-          libPanels.push({ name: libraryPanel.name, uid: libraryPanel.uid });
+    datasources[refName] = {
+      name: refName,
+      label: ds.name,
+      description: '',
+      type: 'datasource',
+      pluginId: ds.meta?.id,
+      pluginName: ds.meta?.name,
+      usage: datasources[refName]?.usage,
+    };
 
-          datasources[refName].usage = {
-            libraryPanels: libPanels,
-          };
-        }
+    if (!!libraryPanel) {
+      const libPanels = datasources[refName]?.usage?.libraryPanels || [];
+      libPanels.push({ name: libraryPanel.name, uid: libraryPanel.uid });
 
-        // if panel or query is relying on a datasource variable
-        // skip templating datasource uid but save the reference so we can set datasource variable's current prop
-        if (datasourceVariable && varName) {
-          datasourceVariableRefNameMap[varName] = '${' + refName + '}';
-          return;
-        }
+      datasources[refName].usage = {
+        libraryPanels: libPanels,
+      };
+    }
 
-        obj.datasource = { type: ds.meta.id, uid: templatedUid };
-      });
+    // if panel or query is relying on a datasource variable
+    // skip templating datasource uid but save the reference so we can set datasource variable's current prop
+    if (datasourceVariable && varName) {
+      datasourceVariableRefNameMap[varName] = '${' + refName + '}';
+      return;
+    }
+
+    obj.datasource = { type: ds.meta.id, uid: templatedUid };
   };
 
   const processPanel = async (panel: PanelModel) => {
@@ -358,9 +356,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     return newObj;
   } catch (err) {
     console.error('Export failed:', err);
-    return {
-      error: err,
-    };
+    return toExportableError(err);
   }
 }
 
@@ -462,7 +458,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     return varName !== undefined && datasourceVariablesByName.has(varName);
   };
 
-  const attachExportLabels = (
+  const attachExportLabels = async (
     group: string,
     datasourceUid: string,
     existingLabels: DataQueryKind['labels'] | AdhocVariableKind['labels']
@@ -471,7 +467,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     // show the original datasource name — same idea as V1's datasourceVariableRefNameMap.
     const varName = getDatasourceVariableName(datasourceUid);
     const resolvedUid = (varName ? datasourceVariablesByName.get(varName)?.currentUid : undefined) ?? datasourceUid;
-    const datasourceName = getDatasourceDisplayName(resolvedUid);
+    const datasourceName = await getDatasourceDisplayName(resolvedUid);
 
     return {
       ...(existingLabels ?? {}),
@@ -480,7 +476,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     };
   };
 
-  const processDataQueryKind = (dataQueryKind: DataQueryKind) => {
+  const processDataQueryKind = async (dataQueryKind: DataQueryKind) => {
     if (!dataQueryKind.datasource?.name) {
       return;
     }
@@ -489,15 +485,15 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
 
     if (isReferencingDsTemplateVariable(datasourceUid)) {
       // Keep $var on the query, but label it so external import can prompt for this DS type.
-      dataQueryKind.labels = attachExportLabels(dataQueryKind.group, datasourceUid, dataQueryKind.labels);
+      dataQueryKind.labels = await attachExportLabels(dataQueryKind.group, datasourceUid, dataQueryKind.labels);
       return;
     }
 
-    dataQueryKind.labels = attachExportLabels(dataQueryKind.group, datasourceUid, dataQueryKind.labels);
+    dataQueryKind.labels = await attachExportLabels(dataQueryKind.group, datasourceUid, dataQueryKind.labels);
     dataQueryKind.datasource = undefined;
   };
 
-  const processAdHocAndGroupByVariables = (variable: AdhocVariableKind | GroupByVariableKind) => {
+  const processAdHocAndGroupByVariables = async (variable: AdhocVariableKind | GroupByVariableKind) => {
     const datasourceUid = variable.datasource?.name;
 
     if (!datasourceUid) {
@@ -505,16 +501,16 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     }
 
     if (isReferencingDsTemplateVariable(datasourceUid)) {
-      variable.labels = attachExportLabels(variable.group, datasourceUid, variable.labels);
+      variable.labels = await attachExportLabels(variable.group, datasourceUid, variable.labels);
       return;
     }
 
-    variable.labels = attachExportLabels(variable.group, datasourceUid, variable.labels);
+    variable.labels = await attachExportLabels(variable.group, datasourceUid, variable.labels);
     variable.datasource = undefined;
   };
 
-  const getDatasourceDisplayName = (datasourceUid: string): string | undefined => {
-    const settings = getDataSourceSrv().getInstanceSettings(datasourceUid);
+  const getDatasourceDisplayName = async (datasourceUid: string): Promise<string | undefined> => {
+    const settings = await getDataSourceInstanceSettings(datasourceUid);
     if (!settings || settings.meta?.builtIn) {
       return undefined;
     }
@@ -537,17 +533,17 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     return `${datasourceGroup}-${index}`;
   };
 
-  const processPanel = (panel: PanelKind) => {
+  const processPanel = async (panel: PanelKind) => {
     if (panel.spec.data.spec.queries) {
       for (const query of panel.spec.data.spec.queries) {
-        processDataQueryKind(query.spec.query);
+        await processDataQueryKind(query.spec.query);
       }
     }
   };
 
-  const processVariable = (variable: DashboardV2Spec['variables'][number]) => {
+  const processVariable = async (variable: DashboardV2Spec['variables'][number]) => {
     if (variable.kind === 'QueryVariable') {
-      processDataQueryKind(variable.spec.query);
+      await processDataQueryKind(variable.spec.query);
       variable.spec.options = [];
       variable.spec.current = {
         text: '',
@@ -559,7 +555,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
         value: '',
       };
     } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
-      processAdHocAndGroupByVariables(variable);
+      await processAdHocAndGroupByVariables(variable);
     }
   };
 
@@ -569,13 +565,13 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     // process elements
     for (const [key, element] of Object.entries(elements)) {
       if (element.kind === 'Panel') {
-        processPanel(element);
+        await processPanel(element);
       } else if (element.kind === 'LibraryPanel') {
         if (isSharingExternally) {
           // Convert library panel to inline panel for external sharing
           const inlinePanel = await convertLibraryPanelToInlinePanel(element);
           // Apply datasource templating to the converted panel
-          processPanel(inlinePanel);
+          await processPanel(inlinePanel);
           // Replace the library panel with the inline panel
           elements[key] = inlinePanel;
         }
@@ -585,24 +581,30 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
 
     // process dashboard-level and section (row/tab) template variables
     for (const variable of dashboard.variables) {
-      processVariable(variable);
+      await processVariable(variable);
     }
+    const sectionVariables: DashboardV2Spec['variables'] = [];
     visitDashboardLayoutSections(dashboard.layout, (variables) => {
-      for (const variable of variables) {
-        processVariable(variable);
-      }
+      sectionVariables.push(...variables);
     });
+    for (const variable of sectionVariables) {
+      await processVariable(variable);
+    }
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
-      processDataQueryKind(annotation.spec.query);
+      await processDataQueryKind(annotation.spec.query);
     }
 
     return dashboard;
   } catch (err) {
     console.error('Export failed:', err);
-    return {
-      error: err,
-    };
+    return toExportableError(err);
   }
+}
+
+function toExportableError(err: unknown): { error: { message: string } } {
+  return {
+    error: { message: err instanceof Error ? err.message : String(err) },
+  };
 }

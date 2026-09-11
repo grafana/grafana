@@ -24,7 +24,7 @@ import {
   MIN_EXTENSION_SIDEBAR_WIDTH,
 } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
-import { FeatureControlFloating } from './FeatureControl/FeatureControlFloating';
+import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
 import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
 import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
@@ -223,7 +223,7 @@ export function AppChrome({ children }: Props) {
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
-      {!state.chromeless && <FeatureControlFloating />}
+      {!state.chromeless && <LazyFeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
@@ -308,9 +308,14 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       height: `calc(100% - ${headerHeight}px)`,
       zIndex: 1,
     }),
-    scopesDashboardsContainerDocked: css({
-      left: MENU_WIDTH,
-    }),
+    scopesDashboardsContainerDocked: css(
+      {
+        left: MENU_WIDTH,
+      },
+      visualRefreshEnabled && {
+        left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
+      }
+    ),
     topNav: css({
       display: 'flex',
       position: 'fixed',

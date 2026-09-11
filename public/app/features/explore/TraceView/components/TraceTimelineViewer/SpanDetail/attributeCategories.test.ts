@@ -1,4 +1,12 @@
-import { groupAttributesByCategory, isDatabaseAttribute, SERVICE_CATEGORY_ID } from './attributeCategories';
+import {
+  groupAttributesByCategory,
+  isDatabaseAttribute,
+  isFrontendObservabilityAttribute,
+  isKnowledgeGraphAttribute,
+  isKubernetesAttribute,
+  isServiceAttribute,
+  SERVICE_CATEGORY_ID,
+} from './attributeCategories';
 
 describe('isDatabaseAttribute', () => {
   it.each(['db.system', 'db.statement', 'db_name', 'DB.operation'])('matches %s', (key) => {
@@ -8,6 +16,52 @@ describe('isDatabaseAttribute', () => {
   it.each(['http.method', 'service.name', 'dbc.something', 'database.system'])('does not match %s', (key) => {
     expect(isDatabaseAttribute(key)).toBe(false);
   });
+});
+
+describe('isServiceAttribute', () => {
+  it.each(['service.name', 'service.namespace', 'service_name'])('matches %s', (key) => {
+    expect(isServiceAttribute(key)).toBe(true);
+  });
+
+  it.each(['k8s.pod.name', 'db.system', 'session.id'])('does not match %s', (key) => {
+    expect(isServiceAttribute(key)).toBe(false);
+  });
+});
+
+describe('isKubernetesAttribute', () => {
+  it.each(['k8s.cluster.name', 'k8s.pod.name', 'k8s_pod_name', 'container.id'])('matches %s', (key) => {
+    expect(isKubernetesAttribute(key)).toBe(true);
+  });
+
+  it.each(['service.name', 'container.name', 'db.system'])('does not match %s', (key) => {
+    expect(isKubernetesAttribute(key)).toBe(false);
+  });
+});
+
+describe('isFrontendObservabilityAttribute', () => {
+  it.each(['session.id', 'session_id', 'gf.feo11y.app.id', 'app_id', 'app_name', 'browser.name'])(
+    'matches %s',
+    (key) => {
+      expect(isFrontendObservabilityAttribute(key)).toBe(true);
+    }
+  );
+
+  it.each(['service.name', 'k8s.pod.name', 'http.method'])('does not match %s', (key) => {
+    expect(isFrontendObservabilityAttribute(key)).toBe(false);
+  });
+});
+
+describe('isKnowledgeGraphAttribute', () => {
+  it.each(['service.name', 'service.namespace', 'service_name'])('matches %s', (key) => {
+    expect(isKnowledgeGraphAttribute(key)).toBe(true);
+  });
+
+  it.each(['k8s.cluster.name', 'k8s.pod.name', 'db.system', 'session.id', 'http.method'])(
+    'does not match %s',
+    (key) => {
+      expect(isKnowledgeGraphAttribute(key)).toBe(false);
+    }
+  );
 });
 
 describe('groupAttributesByCategory', () => {
@@ -186,21 +240,37 @@ describe('groupAttributesByCategory', () => {
     expect(grouped.map(({ category }) => category.id)).toEqual(['kubernetes', SERVICE_CATEGORY_ID]);
   });
 
-  it('orders service first and alphabetizes remaining resource categories', () => {
+  it('orders resource categories by gravity', () => {
     const attributes = [
       { key: 'telemetry.sdk.language', value: 'go' },
       { key: 'k8s.namespace.name', value: 'default' },
       { key: 'service.name', value: 'api' },
       { key: 'cloud.provider', value: 'aws' },
+      { key: 'browser.name', value: 'Chrome' },
+      { key: 'deployment.environment', value: 'production' },
+      { key: 'db.system', value: 'postgres' },
+      { key: 'process.pid', value: '1' },
+      { key: 'jvm.memory.used', value: '512' },
+      { key: 'container.id', value: 'abc' },
+      { key: 'host.name', value: 'node-1' },
+      { key: 'custom.field', value: 'value' },
     ];
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
     expect(grouped.map(({ category }) => category.id)).toEqual([
+      'frontend',
       SERVICE_CATEGORY_ID,
-      'cloud',
+      'deployment',
+      'database',
+      'process',
+      'runtime',
+      'container',
       'kubernetes',
+      'host-os',
+      'cloud',
       'telemetry-sdk',
+      'other',
     ]);
   });
 

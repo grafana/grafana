@@ -3,6 +3,7 @@ import { type PropsWithChildren } from 'react';
 
 import { type GrafanaTheme2, locationUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { type AttributePluginPromo } from './attributePluginPromos';
@@ -12,11 +13,17 @@ type Props = PropsWithChildren<{
 }>;
 
 /**
- * Clickable attribute-value wrapper that promotes installing a related app plugin.
+ * Clickable attribute-value wrapper that promotes installing or activating a related app plugin.
  */
 export function AttributePluginPromoTip({ promo, children }: Props) {
   const styles = useStyles2(getStyles);
   const catalogUrl = locationUtil.assureBaseUrl(`/plugins/${promo.pluginId}`);
+
+  const onLearnMoreClick = () => {
+    reportInteraction('grafana_traces_trace_view_attribute_plugin_promo_clicked', {
+      pluginId: promo.pluginId,
+    });
+  };
 
   return (
     <Toggletip
@@ -36,7 +43,7 @@ export function AttributePluginPromoTip({ promo, children }: Props) {
         </div>
       }
       footer={
-        <LinkButton href={catalogUrl} size="sm">
+        <LinkButton href={catalogUrl} size="sm" onClick={onLearnMoreClick}>
           <Trans i18nKey="explore.trace-view.attribute-plugin-promo.learn-more">Learn more</Trans>
         </LinkButton>
       }
@@ -53,7 +60,8 @@ export function AttributePluginPromoTip({ promo, children }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   trigger: css({
     display: 'inline-flex',
-    alignItems: 'center',
+    // attribute values wrap, so keep the icon on the first line instead of centering it across all of them
+    alignItems: 'flex-start',
     gap: theme.spacing(0.5),
     padding: 0,
     margin: 0,

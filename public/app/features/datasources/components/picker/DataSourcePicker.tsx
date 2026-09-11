@@ -13,7 +13,18 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
-import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  floatingUtils,
+  Icon,
+  IconButton,
+  Input,
+  ModalsController,
+  Portal,
+  ScrollContainer,
+  Spinner,
+  useStyles2,
+} from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
@@ -44,6 +55,10 @@ export interface DataSourcePickerProps {
   noDefault?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  invalid?: boolean;
+  isLoading?: boolean;
+  /** When provided, a clear button is shown while a data source is selected */
+  onClear?: () => void;
   /** When provided, used to resolve variable expressions (e.g. section-level datasource variables) */
   scopedVars?: ScopedVars;
 
@@ -71,6 +86,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     noDefault = false,
     disabled = false,
     placeholder = 'Select data source',
+    invalid = false,
+    isLoading = false,
+    onClear,
     ...restProps
   } = props;
 
@@ -103,6 +121,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
+
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -154,6 +173,25 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     setOpen(false);
     markerElement?.focus();
   }, [setOpen, markerElement]);
+
+  // Like Combobox, the clear control renders next to the dropdown indicator instead of replacing it
+  const suffix = (
+    <>
+      {onClear && currentValue && !isLoading && (
+        <IconButton
+          name="times"
+          aria-label={t('datasources.data-source-picker.clear-button', 'Clear data source')}
+          onClick={(e) => {
+            // Don't let the click bubble up to the trigger, which would open the dropdown
+            e.stopPropagation();
+            onClose();
+            onClear();
+          }}
+        />
+      )}
+      {isLoading ? <Spinner inline /> : <Icon name={isOpen ? 'search' : 'angle-down'} />}
+    </>
+  );
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -252,7 +290,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           aria-activedescendant={isOpen ? activeItemId : undefined}
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
-          suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+          suffix={suffix}
+          invalid={invalid}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
           onFocus={() => {
             setInputHasFocus(true);
@@ -325,6 +364,7 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
       pointerEvents: props.disabled ? 'none' : 'auto',
     }),
     input: css({
+      cursor: 'pointer',
       'input::placeholder': {
         color: props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary,
       },
@@ -388,28 +428,36 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 PickerContent.displayName = 'PickerContent';
 
 function getStylesPickerContent(theme: GrafanaTheme2) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      display: 'flex',
-      flexDirection: 'column',
-      background: theme.colors.background.elevated,
-      borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
-      overflow: 'hidden',
-      minWidth: calculateMinWidth('97vw'),
-      [theme.breakpoints.up('md')]: {
-        minWidth: calculateMinWidth('80vw'),
+    container: css(
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        background: theme.colors.background.elevated,
+        borderRadius: theme.shape.radius.default,
+        boxShadow: theme.shadows.z3,
+        overflow: 'hidden',
+        minWidth: calculateMinWidth('97vw'),
+        [theme.breakpoints.up('md')]: {
+          minWidth: calculateMinWidth('80vw'),
+        },
+        [theme.breakpoints.up('lg')]: {
+          minWidth: calculateMinWidth('60vw'),
+        },
+        [theme.breakpoints.up('xl')]: {
+          minWidth: calculateMinWidth('50vw'),
+        },
+        [theme.breakpoints.up('xxl')]: {
+          minWidth: calculateMinWidth('40vw'),
+        },
       },
-      [theme.breakpoints.up('lg')]: {
-        minWidth: calculateMinWidth('60vw'),
-      },
-      [theme.breakpoints.up('xl')]: {
-        minWidth: calculateMinWidth('50vw'),
-      },
-      [theme.breakpoints.up('xxl')]: {
-        minWidth: calculateMinWidth('40vw'),
-      },
-    }),
+      visualRefreshEnabled && {
+        boxShadow: theme.shadows.z2,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+      }
+    ),
     picker: css({
       background: theme.colors.background.secondary,
     }),

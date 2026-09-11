@@ -59,7 +59,7 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
-	list := func(ctx context.Context) ([]runtime.Object, error) {
+	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Repositories(namespace).List(ctx, opts)
 		})

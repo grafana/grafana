@@ -14,6 +14,7 @@ import (
 )
 
 type fakeClient struct {
+	wantErr   error
 	mu        sync.Mutex
 	calls     [][]string
 	dim       int
@@ -24,6 +25,9 @@ type fakeClient struct {
 }
 
 func (f *fakeClient) EmbedTexts(_ context.Context, texts []string, dimensions int) (EmbedResult, error) {
+	if f.wantErr != nil {
+		return EmbedResult{}, f.wantErr
+	}
 	n := atomic.AddInt32(&f.callNum, 1)
 	f.mu.Lock()
 	f.calls = append(f.calls, texts)
@@ -103,4 +107,31 @@ func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	e := NewDenseEmbedder(fc, 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b"}})
 	require.Error(t, err)
+}
+
+func TestDenseEmbedder_EmbedText_SumsTokensAcrossChunks(t *testing.T) {
+	fc := &fakeClient{dim: 3, failAfter: -1, tokens: 7}
+	e := NewDenseEmbedder(fc, 0, 50)
+
+	// 130 inputs at batchSize=50 → 3 concurrent chunks, each reporting 7
+	// tokens; the sum must land on the output despite concurrent dispatch.
+	texts := make([]string, 130)
+	for i := range texts {
+		texts[i] = "x"
+	}
+	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: texts})
+	require.NoError(t, err)
+	assert.Equal(t, 21, out.InputTokens)
+}
+
+func TestDenseEmbedder_EmbedText_RetryableCallTimeout(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(t.Context())
+	cancel(ErrCallTimeout)
+	fc := &fakeClient{wantErr: context.Canceled}
+	e := NewDenseEmbedder(fc, 4, 1)
+	_, err := e.EmbedText(ctx, embedder.EmbedTextInput{Texts: []string{"CPU usage"}})
+	var retryErr *embedder.RetryableError
+	require.ErrorAs(t, err, &retryErr)
+	assert.ErrorIs(t, err, ErrCallTimeout)
+	assert.Zero(t, retryErr.RetryAfter)
 }

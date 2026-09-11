@@ -119,7 +119,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       // Setting same options for hovered and not hovered to overwrite any conflicting styles
       // There was a race condition with selectable elements styles
       '&:is(:hover),&:not(:hover)': {
-        outline: `2px solid ${theme.colors.primary.border}`,
+        outline: `2px solid ${theme.colors.accent.main}`,
         outlineOffset: '0px',
         borderRadius: theme.shape.radius.default,
       },

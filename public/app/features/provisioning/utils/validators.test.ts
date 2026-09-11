@@ -1,4 +1,5 @@
 import {
+  validateHttpUrl,
   validateNoHiddenCharacters,
   validateNoUserInfoInUrl,
   validateSigner,
@@ -138,6 +139,29 @@ describe('validateNoUserInfoInUrl', () => {
   it('returns error for URL with leading/trailing whitespace around credentials', () => {
     const url = '  https://user:token@github.com/owner/repo  '; // trufflehog:ignore
     expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
+  });
+});
+
+describe('validateHttpUrl', () => {
+  it('returns true for https URLs', () => {
+    expect(validateHttpUrl('https://ghe.example.com')).toBe(true);
+  });
+
+  it('returns true for http URLs', () => {
+    expect(validateHttpUrl('http://x.test')).toBe(true);
+  });
+
+  it('returns true for empty values so required handles them', () => {
+    expect(validateHttpUrl(undefined)).toBe(true);
+    expect(validateHttpUrl('  ')).toBe(true);
+  });
+
+  it('returns an error for a URL without a scheme', () => {
+    expect(validateHttpUrl('ghe.example.com')).toEqual(expect.stringContaining('valid URL'));
+  });
+
+  it('returns an error for non-http schemes', () => {
+    expect(validateHttpUrl('ftp://x')).toEqual(expect.stringContaining('valid URL'));
   });
 });
 

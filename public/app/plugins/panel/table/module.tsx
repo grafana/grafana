@@ -1,5 +1,6 @@
 import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   TableCellDisplayMode,
   type TableCellOptions,
@@ -22,6 +23,7 @@ function getTableNoValuePlaceholder(): string {
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
+  .setFitContentSupport()
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Actions]: {
@@ -93,6 +95,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             'Render a cell from a field (hidden or visible) in a tooltip'
           ),
           category: cellCategory,
+          settings: {
+            isClearable: true,
+          },
         })
         .addSelect({
           path: 'tooltip.placement',
@@ -136,3 +141,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     addTableCustomPanelOptions(builder);
   })
   .setSuggestionsSupplier(tableSuggestionsSupplier);
+
+// `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
+// rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.
+// TablePanel then passes `noPanelPadding` down so the table can re-align its content itself.
+if (getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false)) {
+  plugin.setNoPadding();
+}

@@ -3,6 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import {
   Box,
@@ -103,7 +104,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
-            <Card noMargin className={styles.card}>
+            <Card
+              noMargin
+              className={styles.card}
+              data-testid={selectors.pages.Provisioning.RepositoryOverview.resourcesCard}
+            >
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
@@ -133,7 +138,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           {/* Webhook */}
           {status?.webhook && (
             <div className={styles.cardContainer}>
-              <Card noMargin className={styles.card}>
+              <Card
+                noMargin
+                className={styles.card}
+                data-testid={selectors.pages.Provisioning.RepositoryOverview.webhookCard}
+              >
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
                 </Card.Heading>

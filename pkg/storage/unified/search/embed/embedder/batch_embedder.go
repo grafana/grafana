@@ -3,6 +3,7 @@ package embedder
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -30,12 +31,12 @@ func NewBatchEmbedder(e Embedder) *BatchEmbedder {
 // empty Content are dropped (the extractor already filters these, but be
 // defensive in case a future caller doesn't).
 //
-// namespace, resource, and rv are stamped onto every returned Vector;
-// they're not derivable from the Item alone.
+// namespace, resource, rv, and contentVersion (the calling Builder's Version()) are stamped onto every returned Vector.
 func (b *BatchEmbedder) Embed(
 	ctx context.Context,
 	namespace, resource string,
 	rv int64,
+	contentVersion int,
 	items []embed.Item,
 ) ([]vector.Vector, error) {
 	// Filter empties up-front so output indices line up with the embedded
@@ -82,6 +83,7 @@ func (b *BatchEmbedder) Embed(
 			Metadata:        it.Metadata,
 			Embedding:       out.Embeddings[i].Dense,
 			Model:           b.embedder.Model,
+			ContentVersion:  contentVersion,
 		}
 	}
 	return vectors, nil
@@ -90,3 +92,17 @@ func (b *BatchEmbedder) Embed(
 func (b *BatchEmbedder) Model() string {
 	return b.embedder.Model
 }
+
+// RetryableError identifies a transient embedding failure. Callers can use
+// errors.As to schedule a retry while errors.Is/As still reach the cause.
+type RetryableError struct {
+	Err error
+	// RetryAfter is the provider's suggested minimum delay; zero means no hint.
+	RetryAfter time.Duration
+}
+
+func (e *RetryableError) Error() string {
+	return fmt.Sprintf("embedding provider temporarily unavailable: %v", e.Err)
+}
+
+func (e *RetryableError) Unwrap() error { return e.Err }

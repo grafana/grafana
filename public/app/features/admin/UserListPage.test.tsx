@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { type GrafanaBootConfig } from '@grafana/runtime';
 import config from 'app/core/config';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
 import { contextSrv } from '../../core/services/context_srv';
@@ -163,5 +164,13 @@ describe('Tables rendering', () => {
     expect(screen.queryByTestId(tabsSelector.publicDashboardsUsers)).not.toBeInTheDocument();
 
     expect(screen.getByTestId(selectors.UsersListPage.container)).toBeInTheDocument();
+  });
+  it('should render the global admin user list when user only has UsersRead (not OrgUsersRead)', () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => action === AccessControlAction.UsersRead);
+
+    renderPage();
+
+    expect(screen.getByTestId(selectors.UserListAdminPage.container)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.UsersListPage.container)).not.toBeInTheDocument();
   });
 });

@@ -22,6 +22,7 @@ import {
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { SidebarCategoryType } from '../sidebar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -172,17 +173,17 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onAdd = () => {
+  public onAdd = async () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
     //add the new variable to the end of the array
-    const defaultNewVariable = getVariableDefault(variables);
+    const defaultNewVariable = await getVariableDefault(variables);
 
     this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
     this.setState({ editIndex: variableIndex });
   };
 
-  public onTypeChange = (type: EditableVariableType) => {
+  public onTypeChange = async (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -195,7 +196,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     const { name, label } = variable.state;
-    const newVariable = getVariableScene(type, { name, label });
+    const newVariable = await getVariableScene(type, { name, label });
     this.replaceEditVariable(newVariable);
   };
 
@@ -267,8 +268,8 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
     dashboard.state.sidebar.selectObject(dashboard);
     locationService.partial({
       editview: null,
-      [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-variables',
-      [CATEGORY_PARAM_NAME]: 'dashboard-variables',
+      [HIGHLIGHT_CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
+      [CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
     });
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });

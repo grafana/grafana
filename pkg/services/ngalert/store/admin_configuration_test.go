@@ -14,7 +14,7 @@ import (
 func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
