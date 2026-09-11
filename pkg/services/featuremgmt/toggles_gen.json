@@ -2952,6 +2952,22 @@
     },
     {
       "metadata": {
+        "name": "grafana.addRouterMiddleware",
+        "resourceVersion": "1789044117017",
+        "creationTimestamp": "2026-09-10T12:41:57Z",
+        "deletionTimestamp": "2026-09-10T13:32:56Z"
+      },
+      "spec": {
+        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1782832293915",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -3586,6 +3602,24 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.useRouterMiddleware",
+        "resourceVersion": "1789055902588",
+        "creationTimestamp": "2026-09-10T13:32:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-10 15:58:22.588096 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4602,19 +4636,19 @@
     {
       "metadata": {
         "name": "logsTablePanelNG",
-        "resourceVersion": "1782158134143",
+        "resourceVersion": "1787654578695",
         "creationTimestamp": "2026-05-22T09:03:04Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-06-22 19:55:34.143374 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-25 10:42:58.695317 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the logs tableNG panel to replace existing tableRT",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -6252,6 +6286,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "search.apiFieldValueResults",
+        "resourceVersion": "1789039361718",
+        "creationTimestamp": "2026-09-10T11:22:41Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for generic resource search API requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

@@ -738,11 +738,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/debug.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/utils/dom.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1273,12 +1268,10 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/utils/config.ts": {
+  "public/app/features/alerting/unified/utils/datasource.ts": {
     "@grafana/no-config-datasources": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/utils/datasource.ts": {
+    },
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }

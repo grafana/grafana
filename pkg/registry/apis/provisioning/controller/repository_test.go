@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -2451,6 +2452,83 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
 }
 
+// TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused verifies that when
+// token generation fails because access was lost (e.g. the GitHub App was uninstalled or its
+// permissions revoked, surfaced as connection.ErrAuthentication), the failure is classified as
+// cause="user" on both the token-generation-error metric and the reconcile-error metric, so an
+// SLO/alert filtering cause!="user" does not page on-call for a condition only the customer can fix.
+func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	connName := "my-connection"
+
+	// A missing token makes shouldGenerateTokenFromConnection return true, so the token phase runs.
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type:       provisioning.LocalRepositoryType,
+			Sync:       provisioning.SyncOptions{Enabled: false},
+			Connection: &provisioning.ConnectionInfo{Name: connName},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// Access lost: the connection can no longer mint a repository token.
+	authErr := fmt.Errorf("unable to create token for repository: %w", connection.ErrAuthentication)
+	mockConn := connection.NewMockConnection(t)
+	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(nil, authErr).Once()
+
+	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	provClient := &mockProvisioningV0alpha1Interface{
+		connectionsFunc: func(_ string) client.ConnectionInterface {
+			return mockConnectionInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+					return connObj, nil
+				},
+			}
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:             repoGetter,
+		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
+		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
+		statusPatcher:     &capturePatcher{},
+		connectionFactory: mockConnFactory,
+		client:            provClient,
+		tokenMetrics:      registerRepositoryTokenMetrics(reg),
+		reconcileMetrics:  registerReconcileErrorMetrics(reg),
+		resyncInterval:    5 * time.Minute,
+		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.Error(t, err, "a lost-access token failure must be returned to the workqueue")
+
+	assert.Equal(t, 1.0,
+		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
+		"token generation error must be labeled cause=user")
+	assert.Equal(t, 1.0,
+		reconcileErrorCount(t, reg, reconcilePhaseToken, reconcileCauseUser),
+		"reconcile error must be counted under phase=token, cause=user")
+}
+
 // TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound verifies that when the
 // repository token references a secret that can no longer be decrypted (e.g. it was deleted),
 // the controller regenerates it from the connection and rebuilds instead of failing forever.
@@ -3940,4 +4018,437 @@ func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
 	cancel()
 	<-runDone
 	assert.Equal(t, int32(1), processCount.Load(), "non-retryable errors must not be retried")
+}
+
+func TestRepositoryController_Run_DrainWaitsForInFlight(t *testing.T) {
+	processCh := make(chan struct{})
+	processingStarted := make(chan struct{})
+	var processed atomic.Bool
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-drain",
+			},
+		),
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) (string, error) {
+		close(processingStarted)
+		<-processCh
+		processed.Store(true)
+		return "", nil
+	}
+
+	rc.queue.Add("test/repo")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// Wait until the worker has actually picked up the item
+	<-processingStarted
+
+	// Cancel context to trigger shutdown
+	cancel()
+
+	// Run should NOT return yet because item is still being processed
+	select {
+	case <-runDone:
+		t.Fatal("Run returned before in-flight item completed")
+	case <-time.After(200 * time.Millisecond):
+		// Expected: still waiting for drain
+	}
+
+	// Complete the in-flight item
+	close(processCh)
+
+	// Now Run should return
+	select {
+	case <-runDone:
+		assert.True(t, processed.Load(), "item should have been fully processed")
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return after in-flight item completed")
+	}
+}
+
+func TestRepositoryController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
+	processingStarted := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-drain-timeout",
+			},
+		),
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 200 * time.Millisecond,
+	}
+
+	// processFn blocks forever to simulate a stuck reconciliation
+	rc.processFn = func(key string) (string, error) {
+		close(processingStarted)
+		select {}
+	}
+
+	rc.queue.Add("test/stuck")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// Wait until the worker has actually picked up the item
+	<-processingStarted
+	cancel()
+
+	// Run should return within the drain timeout + some buffer
+	select {
+	case <-runDone:
+		// Expected: drain timeout kicked in
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return after drain timeout")
+	}
+}
+
+func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
+	var shutdownCalledAt time.Time
+	var runReturnedAt time.Time
+	processCh := make(chan struct{})
+	processingStarted := make(chan struct{})
+	shutdownCalled := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-shutdown-ordering",
+			},
+		),
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) (string, error) {
+		close(processingStarted)
+		<-processCh
+		return "", nil
+	}
+
+	rc.queue.Add("test/ordering")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {
+			shutdownCalledAt = time.Now()
+			close(shutdownCalled)
+		})
+		runReturnedAt = time.Now()
+		close(runDone)
+	}()
+
+	<-processingStarted
+	cancel()
+
+	// Wait for onShutdown to be called before releasing the drain
+	<-shutdownCalled
+	close(processCh)
+
+	select {
+	case <-runDone:
+		require.False(t, shutdownCalledAt.IsZero(), "onShutdown should have been called")
+		require.False(t, runReturnedAt.IsZero(), "Run should have returned")
+		assert.True(t, shutdownCalledAt.Before(runReturnedAt),
+			"onShutdown should be called before Run returns (drain completes)")
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return")
+	}
+}
+
+// TestRepositoryController_RecordsProcessingByTrigger verifies the controller
+// counts the start of each reconcile under resource="repositories", attributed
+// to what enqueued the key.
+func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
+	repo := func(rv string) *provisioning.Repository {
+		return &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: rv}}
+	}
+	tests := []struct {
+		name        string
+		natsBacked  bool
+		feed        func(h cache.ResourceEventHandlerDetailedFuncs)
+		wantTrigger string
+	}{
+		{
+			name:        "apiserver live add",
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(repo("5"), false) },
+			wantTrigger: "live",
+		},
+		{
+			name:        "initial list add",
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(repo("5"), true) },
+			wantTrigger: "initial",
+		},
+		{
+			name:        "resync update is relist",
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.UpdateFunc(repo("5"), repo("5")) },
+			wantTrigger: "relist",
+		},
+		{
+			name:        "nats relist add",
+			natsBacked:  true,
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(repo("5"), false) },
+			wantTrigger: "relist",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			processedDone := make(chan struct{})
+
+			rc := &RepositoryController{
+				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+					workqueue.DefaultTypedControllerRateLimiter[string](),
+					workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-processed"},
+				),
+				logger:       logging.DefaultLogger.With("logger", "test"),
+				drainTimeout: 5 * time.Second,
+				processed:    usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
+				keyFunc:      repoKeyFunc,
+				processFn: func(string) (string, error) {
+					close(processedDone)
+					return "", nil
+				},
+			}
+			rc.enqueueRepository = rc.enqueue
+
+			tt.feed(rc.EventHandler())
+
+			ctx, cancel := context.WithCancel(context.Background())
+			runDone := make(chan struct{})
+			go func() {
+				rc.Run(ctx, 1, func() {}, func() {})
+				close(runDone)
+			}()
+
+			select {
+			case <-processedDone:
+			case <-time.After(5 * time.Second):
+				t.Fatal("key was not processed")
+			}
+			cancel()
+			<-runDone
+
+			assertOnlyProcessedTrigger(t, reg, "repositories", tt.wantTrigger)
+		})
+	}
+}
+
+// TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger reproduces the race a
+// live event (e.g. a status update the reconcile itself produces) that arrives
+// while the key is in flight: it marks the key dirty and records a fresh live
+// attribution, which the completing reconcile's queue.Forget must not clobber.
+// So the redelivery is counted as live, not misattributed to relist.
+func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-dirty"},
+		),
+		logger:    logging.DefaultLogger.With("logger", "test"),
+		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
+		keyFunc:   repoKeyFunc,
+	}
+	rc.enqueueRepository = rc.enqueue
+
+	var enqueuedDuringFlight atomic.Bool
+	rc.processFn = func(string) (string, error) {
+		// On the first reconcile, a live update (bumped RV) arrives while the key
+		// is in flight — the classic self-induced status update — marking it dirty.
+		if enqueuedDuringFlight.CompareAndSwap(false, true) {
+			rc.EventHandler().UpdateFunc(
+				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}},
+				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "6"}},
+			)
+		}
+		return "", nil
+	}
+
+	// Initial live add (apiserver watch, full RV, non-initial).
+	rc.EventHandler().AddFunc(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}}, false)
+
+	ctx := context.Background()
+	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update
+	require.True(t, rc.processNextWorkItem(ctx)) // dirty redelivery: must stay live
+
+	assert.Equal(t, 2.0, processedCounterValue(t, reg, "repositories", "live"), "both pickups are live")
+	assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", "relist"), "no pickup falls back to relist")
+}
+
+// TestRepositoryController_InternalRescheduleNotCounted verifies that a pickup
+// with no informer-set attribution — an internal re-schedule such as the token
+// read-after-write AddAfter, which re-adds the key directly — records nothing,
+// rather than masquerading as a relist recovery.
+func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	processedDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-internal"},
+		),
+		logger:    logging.DefaultLogger.With("logger", "test"),
+		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
+		keyFunc:   repoKeyFunc,
+		processFn: func(string) (string, error) {
+			close(processedDone)
+			return "", nil
+		},
+	}
+	rc.enqueueRepository = rc.enqueue
+
+	// Queue the key directly, as the token read-after-write AddAfter does — no
+	// informer event, no trigger entry.
+	rc.queue.Add("ns/repo")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	select {
+	case <-processedDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("key was not processed")
+	}
+	cancel()
+	<-runDone
+
+	for _, source := range []string{"live", "relist", "initial"} {
+		assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", source), "%s must not be recorded for an internal re-schedule", source)
+	}
+}
+
+// TestRepositoryController_WorkerQueueWaitHistogram verifies the queue-wait histogram
+// records one observation each time a worker picks a key up off the queue.
+func TestRepositoryController_WorkerQueueWaitHistogram(t *testing.T) {
+	const metricName = "grafana_provisioning_repository_worker_queue_wait_seconds"
+
+	reg := prometheus.NewRegistry()
+	rc := NewRepositoryController(
+		nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		reg,
+		nil,
+		1,
+		time.Minute, time.Minute, 30*time.Second,
+		nil, nil,
+		repository.IncrementalSyncPolicy{},
+		30*time.Second,
+		false,
+	)
+
+	require.Equal(t, uint64(0), histogramSampleCountByName(t, reg, metricName))
+
+	// Two distinct keys, but repo-a is enqueued twice: the workqueue coalesces the
+	// re-add onto the still-queued key, so only two keys are ever picked up and only
+	// two wait times are observed.
+	rc.queue.Add("ns/repo-a")
+	rc.queue.Add("ns/repo-a")
+	rc.queue.Add("ns/repo-b")
+
+	key, _ := rc.queue.Get()
+	rc.queue.Done(key)
+	require.Equal(t, uint64(1), histogramSampleCountByName(t, reg, metricName))
+
+	key, _ = rc.queue.Get()
+	rc.queue.Done(key)
+	require.Equal(t, uint64(2), histogramSampleCountByName(t, reg, metricName))
+}
+
+// TestRepositoryController_WorkerQueueSizeGauge verifies the worker-queue-size gauge
+// reports the live depth of the replica's local work queue at scrape time.
+func TestRepositoryController_WorkerQueueSizeGauge(t *testing.T) {
+	const metricName = "grafana_provisioning_repository_worker_queue_size"
+
+	reg := prometheus.NewRegistry()
+	rc := NewRepositoryController(
+		nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		reg,
+		nil,
+		1,
+		time.Minute, time.Minute, 30*time.Second,
+		nil, nil,
+		repository.IncrementalSyncPolicy{},
+		30*time.Second,
+		false,
+	)
+
+	require.Equal(t, 0.0, gaugeValueByName(t, reg, metricName))
+
+	rc.queue.Add("ns/repo-a")
+	rc.queue.Add("ns/repo-b")
+	require.Equal(t, 2.0, gaugeValueByName(t, reg, metricName))
+
+	// Get removes the key from the queue (Len drops); Done clears it from processing.
+	key, _ := rc.queue.Get()
+	rc.queue.Done(key)
+	require.Equal(t, 1.0, gaugeValueByName(t, reg, metricName))
+}
+
+// reconcileErrorCount returns the value of the reconcile-error counter for a
+// specific {phase, cause} label pair, or 0 if that series was never recorded.
+// counterValue only reads the first series, so a label-aware lookup is needed to
+// distinguish user- from system-caused failures.
+func reconcileErrorCount(t *testing.T, reg *prometheus.Registry, phase, cause string) float64 {
+	t.Helper()
+	family, ok := gatherMetrics(t, reg)["grafana_provisioning_repository_reconcile_errors_total"]
+	if !ok {
+		return 0
+	}
+	for _, m := range family.GetMetric() {
+		labels := map[string]string{}
+		for _, l := range m.GetLabel() {
+			labels[l.GetName()] = l.GetValue()
+		}
+		if labels["phase"] == phase && labels["cause"] == cause {
+			return m.GetCounter().GetValue()
+		}
+	}
+	return 0
+}
+
+// TestRepositoryController_recordReconcileError verifies that reconcile failures
+// are counted under the phase they occurred in and classified as user- or
+// system-caused, so SLOs can exclude the user-caused ones (e.g. revoked
+// credentials) that are surfaced on status rather than returned.
+func TestRepositoryController_recordReconcileError(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	rc := &RepositoryController{reconcileMetrics: registerReconcileErrorMetrics(reg)}
+
+	// User-caused: revoked or insufficient credentials, wrapped as the callers wrap them.
+	rc.recordReconcileError(reconcilePhaseDelete, fmt.Errorf("execute deletion hooks: %w", repository.ErrPermissionDenied))
+	rc.recordReconcileError(reconcilePhaseBuild, fmt.Errorf("create repository from configuration: %w", repository.ErrUnauthorized))
+	// System-caused: anything not attributable to the user.
+	rc.recordReconcileError(reconcilePhaseHook, errors.New("boom"))
+
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseUser))
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseBuild, reconcileCauseUser))
+	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseSystem))
+	// A system failure must not be miscounted as user-caused (which an SLO would ignore).
+	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
 }
