@@ -61,7 +61,7 @@ export const getStyles = (theme: GrafanaTheme2, isVisualRefreshEnabled?: boolean
         // needed for the icon/text gap below to take effect
         display: 'inline-flex',
         alignItems: 'center',
-        verticalAlign: 'center',
+        verticalAlign: 'middle',
         fontSize: theme.typography.size.xs,
         fontWeight: theme.typography.fontWeightRegular,
       }
