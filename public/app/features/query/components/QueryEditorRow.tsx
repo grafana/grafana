@@ -199,10 +199,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         queriedDataSourceIdentifier: identifier,
       });
     } catch {
-      // Both the targeted and default lookups failed. Drop the stale instance so the
-      // previous plugin's editor isn't mounted against the new query; `lastAttemptedIdentifier`
-      // already stops us re-trying the same identity.
-      this.setState({ datasource: null, queriedDataSourceIdentifier: identifier });
+      // Both lookups failed. Leave datasource and queriedDataSourceIdentifier
+      // untouched — same as main on throw. lastAttemptedIdentifier already
+      // stops us re-trying the same identity; isWaiting hides a stale editor.
     } finally {
       this.dsLoadInFlight = false;
       this.setState({ isDatasourceLoading: false });
@@ -628,12 +627,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'gf-form-disabled': isHidden,
     });
 
-    // Always mount the operation row. Returning null here when `datasource` is missing
-    // unmounted the header picker and skipped a `@hello-pangea/dnd` index; the plugin
-    // editor is already hidden until a matching instance loads.
+    if (!datasource) {
+      return null;
+    }
+
     const editor = this.renderPluginEditor();
-    const DatasourceCheatsheet = datasource?.components?.QueryEditorHelp;
-    const pluginId = datasource?.type ?? this.props.dataSource.type;
+    const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
+    const pluginId = datasource.type;
 
     const queryOperationRow = (
       <QueryOperationRow

@@ -672,9 +672,9 @@ describe('QueryEditorRow', () => {
         />
       );
 
-      // Wait until the default-instance fallback has also rejected. The loading
-      // gate hides the editor during the attempt; after both lookups fail the
-      // previous plugin must stay unmounted, but the row (header/actions) stays.
+      // Wait until the default-instance fallback has also rejected. State is
+      // left untouched (same as main on throw), so the row stays mounted but
+      // isWaiting hides the stale plugin editor against the new query.
       await waitFor(() => {
         expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
       });
@@ -714,9 +714,9 @@ describe('QueryEditorRow', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      // The row stays mounted after both lookups fail so the header picker remains
-      // a recovery path and dnd indices stay contiguous.
-      expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      // First load never produced an instance, so the row stays unmounted
+      // (same as main's `if (!datasource) return null`).
+      expect(screen.queryByTestId(selectors.components.QueryEditorRows.rows)).not.toBeInTheDocument();
       expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
 
       rerender(

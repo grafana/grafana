@@ -334,8 +334,7 @@ function QueryEditorRowWithResolvedDataSource({
   const varsKey = scopedVarsKey(scopedVars);
   // Stamp the interpolated identity onto the fetch so a variable change cannot reuse
   // the previous settings for one render (`useAsync` keeps the old value until the
-  // effect runs). Comparing settings fields is not enough: interpolation can yield a
-  // datasource name while `rawRef` stores the concrete uid.
+  // effect runs). Same fallback as main: query settings, else the group.
   const { value } = useAsync(
     async () => {
       if (!query.datasource) {
@@ -348,84 +347,10 @@ function QueryEditorRowWithResolvedDataSource({
     [datasourceKey, varsKey, interpolatedUid]
   );
 
-  const fetchMatches = Boolean(value && value.interpolatedUid === interpolatedUid);
-  const currentQuerySettings = fetchMatches ? value?.settings : undefined;
-  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings, {
-    lookupFailed: fetchMatches && currentQuerySettings === undefined,
-  });
+  const querySettings = value && value.interpolatedUid === interpolatedUid ? value.settings : undefined;
+  const dataSourceSettings = query.datasource ? querySettings || groupSettings : groupSettings;
 
-  // Always render the row so `@hello-pangea/dnd` indices stay contiguous. Returning null
-  // here skips a Draggable and also hides deleted-datasource queries with no recovery path.
   return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
-}
-
-export function resolveRowDataSourceSettings(
-  queryDatasource: DataQuery['datasource'],
-  querySettings: DataSourceInstanceSettings | undefined,
-  groupSettings: DataSourceInstanceSettings,
-  options?: { lookupFailed?: boolean }
-): DataSourceInstanceSettings {
-  if (!queryDatasource) {
-    return groupSettings;
-  }
-  if (querySettings) {
-    return querySettings;
-  }
-  if (!groupSettings.meta.mixed) {
-    return groupSettings;
-  }
-  if (isMixedQueryDatasource(queryDatasource, groupSettings) || !queryDatasourceUid(queryDatasource)) {
-    return groupSettings;
-  }
-  if (!options?.lookupFailed) {
-    return groupSettings;
-  }
-  // An interpolated uid that still contains `$` is "can't tell yet", not "definitely missing".
-  if (queryDatasourceUid(queryDatasource)?.includes('$')) {
-    return groupSettings;
-  }
-  return notFoundSettings(queryDatasource, groupSettings);
-}
-
-function queryDatasourceUid(queryDatasource: DataQuery['datasource'] | string): string | undefined {
-  return typeof queryDatasource === 'string' ? queryDatasource : queryDatasource?.uid;
-}
-
-function isMixedQueryDatasource(
-  queryDatasource: DataQuery['datasource'] | string,
-  groupSettings: DataSourceInstanceSettings
-): boolean {
-  const uid = queryDatasourceUid(queryDatasource);
-  if (uid && (uid === MIXED_DATASOURCE_NAME || uid === groupSettings.uid)) {
-    return true;
-  }
-  const type = typeof queryDatasource === 'string' ? undefined : queryDatasource?.type;
-  return type === 'mixed';
-}
-
-/**
- * Stand-in settings for a mixed-panel query whose datasource could not be resolved.
- * Name is the raw uid — `DataSourcePicker` already labels an unresolvable current
- * ref as `<uid> - not found`, so we must not append that suffix here.
- */
-function notFoundSettings(
-  queryDatasource: DataQuery['datasource'],
-  groupSettings: DataSourceInstanceSettings
-): DataSourceInstanceSettings {
-  const uid = typeof queryDatasource === 'string' ? queryDatasource : (queryDatasource?.uid ?? '');
-  const type = typeof queryDatasource === 'string' ? undefined : queryDatasource?.type;
-
-  return {
-    ...groupSettings,
-    uid,
-    name: uid,
-    type: type || groupSettings.type,
-    meta: {
-      ...groupSettings.meta,
-      mixed: false,
-    },
-    rawRef: undefined,
-  };
 }
 
 function stableKey(value: unknown): string {
