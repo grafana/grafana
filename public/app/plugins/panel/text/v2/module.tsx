@@ -5,7 +5,7 @@ import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
-import { hasRenderableData } from './renderContent';
+import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 function newFeaturesEnabled(): boolean {
@@ -54,6 +54,23 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
       ],
     },
     showIf: showForData,
+  });
+
+  builder.addNumberInput({
+    path: 'pageSize',
+    name: t('textng.options.page-size', 'Page size'),
+    description: t(
+      'textng.options.page-size-description',
+      'Number of rows per page. When empty, the page size is based on the panel height.'
+    ),
+    category: dataCategory,
+    settings: {
+      placeholder: t('textng.options.page-size-placeholder', 'auto'),
+      min: 1,
+      max: MAX_RENDERED_ROWS,
+      integer: true,
+    },
+    showIf: (options, data) => showForData(options, data) && options.renderMode === RenderMode.PerRow,
   });
 };
 

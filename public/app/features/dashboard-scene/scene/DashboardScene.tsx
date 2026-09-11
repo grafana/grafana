@@ -92,6 +92,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
   resolvePredefinedVariablesForDashboard,
+  type UseCrossDashboardVariables,
 } from '../utils/crossDashboardVariablesSelection';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
@@ -99,6 +100,7 @@ import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
+import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
@@ -406,6 +408,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
+  }
+
+  /** Persist the cross-dashboard variable selection annotation and re-inject. */
+  public setUseCrossDashboardVariables(selection: UseCrossDashboardVariables): Promise<void> {
+    return persistUseCrossDashboardVariables(this, selection);
   }
 
   public setDefaultLinks(defaultLinks: DashboardLink[]) {

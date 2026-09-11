@@ -148,6 +148,27 @@ describe('TimeSeriesPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
   });
 
+  describe('null values in the time field (#130379)', () => {
+    // A frame whose time field carries null cells must route to the error view
+    // instead of reaching the chart, where zoom-to-data would propagate a null
+    // timestamp into the dashboard time range and crash range parsing.
+    const frameWithNullTime = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: { custom: {} } },
+      ],
+    });
+
+    it('renders the error view instead of the chart when a time cell is null', () => {
+      renderPanel(undefined, [frameWithNullTime]);
+
+      expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+      expect(screen.getByText(/Unable to render data/)).toBeVisible();
+      expect(screen.getByText(/query A returned a time field with null values/i)).toBeVisible();
+    });
+  });
+
   describe('faceted filter pin-to-sidebar persistence', () => {
     it('calls onOptionsChange with facetedFilterPinned: true when "Pin to sidebar" is clicked', async () => {
       const { onOptionsChange, props } = renderPanelWithFacetedFilter();

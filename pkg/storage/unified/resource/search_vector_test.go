@@ -185,6 +185,7 @@ func newTestSearchServer(emb *embedder.Embedder, backend vector.VectorBackend, a
 		vectorBackend: backend,
 		embedder:      emb,
 		access:        ac,
+		indexMetrics:  ProvideIndexMetrics(nil),
 		// validKey()'s pair, allowed on both lists so tests exercise paths past the allowlist.
 		collectionAllowlist: vector.NewCollectionAllowlist([]string{"g/r"}, []string{"g/r"}),
 	}
