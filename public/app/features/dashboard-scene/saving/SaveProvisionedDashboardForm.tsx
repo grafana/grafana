@@ -85,8 +85,6 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
   const isK8sMode = exportFormat === ExportFormat.V2Resource && hasK8sMeta;
   const displayJson = isK8sMode ? (k8sResource.value ?? '') : classicJson;
   const isLossyClassicModel = !isK8sMode && isDashboardV2Spec(changedSaveModel);
-  const hasCommonOptions =
-    changeInfo.hasTimeChanges || changeInfo.hasVariableValueChanges || changeInfo.hasRefreshChange;
 
   const saveToFile = useCallback(() => {
     const blob = new Blob([displayJson], {
@@ -170,7 +168,7 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
           </Alert>
         )}
 
-        {hasCommonOptions && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+        <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
 
         <div className={styles.json}>
           {isK8sMode && k8sResource.loading ? (
