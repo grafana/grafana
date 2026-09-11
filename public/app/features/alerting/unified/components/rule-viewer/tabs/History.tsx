@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react';
 
 import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { StateHistoryImplementation, getStateHistoryImplementation } from '../../../utils/config';
+import { StateHistoryImplementation, useStateHistoryImplementation } from '../../../utils/config';
 
 const AnnotationsStateHistory = lazy(() => import('../../../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../../../components/rules/state-history/LokiStateHistory'));
@@ -12,7 +12,7 @@ interface HistoryProps {
 }
 
 const History = ({ rule }: HistoryProps) => {
-  const implementation = getStateHistoryImplementation();
+  const implementation = useStateHistoryImplementation();
 
   // no backend can answer history queries, so there is nothing to show
   if (implementation === StateHistoryImplementation.Unavailable) {

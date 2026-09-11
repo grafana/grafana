@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { StateHistoryImplementation, getStateHistoryImplementation } from '../utils/config';
+import { StateHistoryImplementation, useStateHistoryImplementation } from '../utils/config';
 
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
@@ -17,7 +17,7 @@ function useStateHistoryModal() {
 
   const styles = useStyles2(getStyles);
 
-  const implementation = getStateHistoryImplementation();
+  const implementation = useStateHistoryImplementation();
 
   const dismissModal = useCallback(() => {
     setRule(undefined);
