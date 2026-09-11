@@ -1770,7 +1770,7 @@ export function computeContentAwareColWidths(
     // `preventHorizontalOverflow` the caller has said it would rather see content ellipsized than
     // scroll, which puts every text-bearing column in play.
     const canShrink =
-      isReflowingCol(field, resolvedType) || (preventHorizontalOverflow && !UNSHRINKABLE_CELL_TYPES.has(resolvedType));
+      !UNSHRINKABLE_CELL_TYPES.has(resolvedType) && (isReflowingCol(field, resolvedType) || preventHorizontalOverflow);
     if (canShrink) {
       // Anything the column asked for above its header, footer and configured minimum is width it
       // gives up first. The header label and footer summary can neither reflow nor ellipsize without

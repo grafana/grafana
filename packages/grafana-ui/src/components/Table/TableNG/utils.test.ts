@@ -1960,6 +1960,24 @@ describe('TableNG utils', () => {
       expect(compute(fields, 100)).toEqual([300]);
     });
 
+    it('leaves a graphical column at its measured width even when wrapText is set on it', () => {
+      const fields: Field[] = [
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: true } } }, // capped to 400
+        {
+          name: 'g',
+          type: FieldType.number,
+          values: [1],
+          // wrapText has no effect on a sparkline's rendering, but a default applied to every column
+          // shouldn't make this one eligible for the level-down either — there's nothing to reflow.
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+        },
+      ];
+
+      // Same 300px deficit as the preventHorizontalOverflow case below: S gives back everything a
+      // wrapped column can (down to its header), the sparkline stays untouched.
+      expect(compute(fields, 250)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+    });
+
     describe('preventHorizontalOverflow', () => {
       it('levels an unwrapped column down to fit, truncating its content instead of scrolling', () => {
         const fields: Field[] = [
