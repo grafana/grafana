@@ -44,10 +44,12 @@ func toBackfillRecord(namespace string, a LegacyAnnotation) BackfillRecord {
 		LegacyID:  a.ID,
 	}
 
+	// Point annotations store TimeEnd == Time, matching the live write path's defaulting.
+	end := a.Epoch
 	if a.EpochEnd > a.Epoch {
-		end := a.EpochEnd
-		rec.TimeEnd = &end
+		end = a.EpochEnd
 	}
+	rec.TimeEnd = &end
 
 	// Match the live write path, which stores the typed identifier
 	// (e.g. "user:<uid>" or "service-account:<uid>") via Requester.GetUID().
