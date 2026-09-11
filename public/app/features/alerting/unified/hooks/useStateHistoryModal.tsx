@@ -3,17 +3,13 @@ import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { StateHistoryImplementation, getStateHistoryImplementation } from '../utils/config';
+
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
-
-export enum StateHistoryImplementation {
-  Loki = 'loki',
-  Annotations = 'annotations',
-}
 
 function useStateHistoryModal() {
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -21,18 +17,7 @@ function useStateHistoryModal() {
 
   const styles = useStyles2(getStyles);
 
-  // can be "loki", "multiple" or "annotations"
-  const stateHistoryBackend = config.unifiedAlerting.stateHistory?.backend;
-  // can be "loki" or "annotations"
-  const stateHistoryPrimary = config.unifiedAlerting.stateHistory?.primary;
-
-  // if "loki" is either the backend or the primary, show the new state history implementation
-  const usingNewAlertStateHistory = [stateHistoryBackend, stateHistoryPrimary].some(
-    (implementation) => implementation === StateHistoryImplementation.Loki
-  );
-  const implementation = usingNewAlertStateHistory
-    ? StateHistoryImplementation.Loki
-    : StateHistoryImplementation.Annotations;
+  const implementation = getStateHistoryImplementation();
 
   const dismissModal = useCallback(() => {
     setRule(undefined);
@@ -45,7 +30,8 @@ function useStateHistoryModal() {
   }, []);
 
   const StateHistoryModal = useMemo(() => {
-    if (!rule) {
+    // no backend can answer history queries, so there is nothing to open a modal for
+    if (!rule || implementation === StateHistoryImplementation.Unavailable) {
       return null;
     }
 
@@ -62,7 +48,7 @@ function useStateHistoryModal() {
         <Suspense fallback={'Loading...'}>
           {implementation === StateHistoryImplementation.Loki && <LokiStateHistory ruleUID={rule.grafana_alert.uid} />}
           {implementation === StateHistoryImplementation.Annotations && (
-            <AnnotationsStateHistory ruleUID={rule.grafana_alert.uid ?? ''} />
+            <AnnotationsStateHistory ruleUID={rule.grafana_alert.uid} />
           )}
         </Suspense>
       </Modal>

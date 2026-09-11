@@ -7,6 +7,7 @@ import { Alert, Box, Tab, TabContent, TabsBar, Text, TextLink, useStyles2 } from
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { NotificationsScene } from '../../../notifications/NotificationsScene';
+import { StateHistoryImplementation, getStateHistoryImplementation } from '../../../utils/config';
 import { DOCS_URL_CONFIGURE_ALERT_STATE_HISTORY } from '../../../utils/docs';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
@@ -22,10 +23,8 @@ function HistoryPage() {
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
   const notificationsEnabled = config.featureToggles.alertingNotificationHistoryGlobal;
-  const stateHistory = config.unifiedAlerting.stateHistory;
-  const backend = stateHistory?.backend?.trim().toLowerCase();
-  const primary = stateHistory?.primary?.trim().toLowerCase();
-  const alertHistoryEnabled = backend === 'loki' || (backend === 'multiple' && primary === 'loki');
+  // only Loki can answer history queries that are not scoped to a single rule
+  const alertHistoryEnabled = getStateHistoryImplementation() === StateHistoryImplementation.Loki;
 
   const activeTab =
     notificationsEnabled && queryParams.tab === ActiveTab.Notifications

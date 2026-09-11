@@ -8,6 +8,7 @@ import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting'
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
+import { isStateHistoryAvailable } from '../../utils/config';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink } from '../../utils/misc';
@@ -104,7 +105,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
     }
   }
 
-  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
+  if (isStateHistoryAvailable() && rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button

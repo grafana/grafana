@@ -46,6 +46,7 @@ import { useReturnTo } from '../../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
+import { isStateHistoryAvailable } from '../../utils/config';
 import { Annotation } from '../../utils/constants';
 import {
   GRAFANA_RULES_SOURCE_NAME,
@@ -507,8 +508,9 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.History);
         },
-        // alert state history is only available for Grafana managed alert rules
-        hideFromTabs: !isGrafanaAlertRule,
+        // alert state history is only available for Grafana managed alert rules, and only
+        // when a backend can actually answer history queries
+        hideFromTabs: !isGrafanaAlertRule || !isStateHistoryAvailable(),
       },
       {
         text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),
