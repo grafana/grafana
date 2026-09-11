@@ -260,7 +260,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
-          href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
+          href={createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`)}
         >
           {canEdit
             ? t('alerting.contact-point-header.button-edit', 'Edit')

@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -230,6 +231,25 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(await edgeUi.noDatasourcesMessage.find()).toBeInTheDocument();
     expect(edgeUi.addMimirDatasourceLink.get()).toBeInTheDocument();
     expect(edgeUi.addMimirDatasourceLink.get()).toHaveAttribute('href', '/connections/datasources/alertmanager');
+  });
+
+  it('case 7b: the "Add Mimir datasource" link keeps the app sub path', async () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/sub';
+    setupAutoSyncConfig(server);
+    setupDatasourcesEndpoint(server, []);
+    setupDataSources();
+
+    try {
+      render(<AutoSyncConfiguration />);
+
+      expect(await edgeUi.addMimirDatasourceLink.find()).toHaveAttribute(
+        'href',
+        '/sub/connections/datasources/alertmanager'
+      );
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   it('case 8: orphan UID — warning callout + Disable sync action visible, Save remains available for recovery', async () => {

@@ -1,7 +1,7 @@
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -60,6 +60,19 @@ describe('ImportToGMARules', () => {
 
     expect(ui.importSource.existingDatasource.get()).toBeInTheDocument();
     expect(ui.importSource.yaml.get()).toBeInTheDocument();
+  });
+
+  it('includes the app sub path in the cancel link', () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/sub';
+
+    try {
+      render(<ImportToGMARules />);
+
+      expect(byRole('link', { name: /cancel/i }).get()).toHaveAttribute('href', '/sub/alerting/list');
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   describe('existing datasource', () => {
