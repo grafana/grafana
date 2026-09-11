@@ -15,21 +15,27 @@ import (
 )
 
 func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
-	for _, syncType := range []string{"full", "incremental"} {
-		t.Run(syncType, func(t *testing.T) {
+	for _, tt := range []struct {
+		syncType     string
+		order        string
+		conflictPath string
+		validPath    string
+	}{
+		{"full", "conflict-first", "a-conflicting.json", "b-valid.json"},
+		{"full", "valid-first", "b-conflicting.json", "a-valid.json"},
+		{"incremental", "conflict-first", "a-conflicting.json", "b-valid.json"},
+		{"incremental", "valid-first", "b-conflicting.json", "a-valid.json"},
+	} {
+		t.Run(tt.syncType+"/"+tt.order, func(t *testing.T) {
 			helper := sharedGitHelper(t)
-			if syncType == "incremental" {
-				helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
-				t.Cleanup(func() { helper.SetQuotaStatus(provisioning.QuotaStatus{}) })
-			}
-			repoName := "git-manager-kind-" + syncType
+			helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+			t.Cleanup(func() { helper.SetQuotaStatus(provisioning.QuotaStatus{}) })
+			repoName := "git-manager-kind-" + tt.syncType + "-" + tt.order
 			_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 				"initial.json": common.DashboardJSON("initial", "Initial Dashboard", 1),
 			})
 			common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-			if syncType == "incremental" {
-				helper.WaitForResourceQuotaLimit(t, repoName, 2)
-			}
+			helper.WaitForResourceQuotaLimit(t, repoName, 2)
 			repoBefore, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(t, err)
 			previousRef := common.MustNestedString(repoBefore.Object, "status", "sync", "lastRef")
@@ -49,8 +55,8 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 			before, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboard.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 
-			require.NoError(t, local.CreateFile("conflicting.json", string(common.DashboardJSON("conflicting", "Git Dashboard", 1))))
-			require.NoError(t, local.CreateFile("valid.json", string(common.DashboardJSON("valid", "Valid Dashboard", 1))))
+			require.NoError(t, local.CreateFile(tt.conflictPath, string(common.DashboardJSON("conflicting", "Git Dashboard", 1))))
+			require.NoError(t, local.CreateFile(tt.validPath, string(common.DashboardJSON("valid", "Valid Dashboard", 1))))
 			gitCommitPush(t, local, "add conflicting and valid dashboards")
 			ref, err := local.Git("rev-parse", "HEAD")
 			require.NoError(t, err)
@@ -62,7 +68,7 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 			opts := []common.SyncOption{
 				common.Repo(repoName), common.Warning(), common.Expect(hasWarningContaining(conflict.Error())),
 			}
-			if syncType == "incremental" {
+			if tt.syncType == "incremental" {
 				opts = append(opts, common.Incremental)
 			}
 			common.SyncAndWait(t, helper, opts...)

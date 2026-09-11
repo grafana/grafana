@@ -1202,6 +1202,9 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 	// Second and third files: quota exceeded, skipped
 	progress.On("HasDirPathFailedCreation", "dashboards/b.json").Return(false).Maybe()
 	progress.On("HasDirPathFailedCreation", "dashboards/c.json").Return(false).Maybe()
+	for _, path := range []string{"dashboards/b.json", "dashboards/c.json"} {
+		repoResources.On("CheckResourceManagerKind", mock.Anything, path, "ref").Return("", schema.GroupVersionKind{}, 0, nil).Once()
+	}
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return (r.Path() == "dashboards/b.json" || r.Path() == "dashboards/c.json") &&
 			r.Warning() != nil && r.Error() == nil

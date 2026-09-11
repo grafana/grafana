@@ -89,6 +89,9 @@ func TestSync_ManagerKindConflictQuota(t *testing.T) {
 					if tt.allowsCreate {
 						repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").
 							Return("valid", gvk, 0, nil).Once()
+					} else {
+						repoResources.On("CheckResourceManagerKind", mock.Anything, "valid.json", "new-ref").
+							Return("valid", gvk, 0, nil).Once()
 					}
 					tracer := tracing.NewNoopTracerService()
 					metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
@@ -268,6 +271,101 @@ func TestFullSync_DeferredCreates(t *testing.T) {
 				}
 			}
 			require.False(t, tracker.TryAcquire())
+		})
+	}
+}
+
+func TestSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
+	conflict := utils.NewResourceManagerKindConflictError(
+		utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider", AllowsEdits: true},
+		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
+	)
+	for _, syncType := range []string{"full", "incremental"} {
+		t.Run(syncType, func(t *testing.T) {
+			for _, tt := range []struct {
+				name     string
+				checkErr error
+			}{
+				{name: "manager-kind conflict", checkErr: conflict},
+				{name: "genuine quota exhaustion"},
+				{name: "forbidden lookup", checkErr: apierrors.NewForbidden(schema.GroupResource{}, "second", fmt.Errorf("access denied"))},
+				{name: "server failure", checkErr: apierrors.NewInternalError(fmt.Errorf("server failure"))},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+					defer cancel()
+					tracker := quotas.NewInMemoryQuotaTracker(9, 10)
+					progress := jobs.NewMockJobProgressRecorder(t)
+					progress.On("SetTotal", mock.Anything, 2).Return()
+					progress.On("TooManyErrors").Return(nil)
+					validWritten := make(chan struct{})
+					progress.On("HasDirPathFailedCreation", "valid.json").Return(false)
+					progress.On("HasDirPathFailedCreation", "second.json").Run(func(mock.Arguments) {
+						select {
+						case <-validWritten:
+						case <-ctx.Done():
+							t.Error("valid write did not consume the last quota slot")
+						}
+					}).Return(false)
+					var resultsMu sync.Mutex
+					results := make(map[string]jobs.JobResourceResult)
+					progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+						resultsMu.Lock()
+						defer resultsMu.Unlock()
+						result := args.Get(1).(jobs.JobResourceResult)
+						results[result.Path()] = result
+					}).Return().Times(2)
+					repoResources := resources.NewMockRepositoryResources(t)
+					gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+					repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").Run(func(mock.Arguments) {
+						close(validWritten)
+					}).Return("valid", gvk, 0, nil).Once()
+					repoResources.On("CheckResourceManagerKind", mock.Anything, "second.json", "new-ref").Return("second", gvk, 0, tt.checkErr).Once()
+					metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+					tracer := tracing.NewNoopTracerService()
+					var err error
+					if syncType == "full" {
+						repo := repository.NewMockRepository(t)
+						repo.On("Config").Return(&provisioning.Repository{})
+						compare := NewMockCompareFn(t)
+						compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).Return([]ResourceFileChange{
+							{Path: "valid.json", Action: repository.FileActionCreated},
+							{Path: "second.json", Action: repository.FileActionCreated},
+						}, nil, nil, nil)
+						err = FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, false, 0)
+					} else {
+						repo := repository.NewMockVersioned(t)
+						repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
+							{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+							{Path: "second.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+						}, nil)
+						progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+						progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+						err = IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracer, metrics, tracker, false)
+					}
+					require.NoError(t, err)
+					require.Len(t, results, 2)
+					require.NoError(t, results["valid.json"].Error())
+					require.NoError(t, results["valid.json"].Warning())
+					require.Equal(t, repository.FileActionCreated, results["valid.json"].Action())
+					result := results["second.json"]
+					switch {
+					case tt.checkErr == nil:
+						require.NoError(t, result.Error())
+						require.Equal(t, repository.FileActionIgnored, result.Action())
+						require.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+					case utils.IsResourceManagerKindConflictError(tt.checkErr):
+						require.NoError(t, result.Error())
+						require.ErrorIs(t, result.Warning(), conflict)
+						require.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+						require.Equal(t, repository.FileActionCreated, result.Action())
+					default:
+						require.ErrorIs(t, result.Error(), tt.checkErr)
+						require.NoError(t, result.Warning())
+					}
+					require.False(t, tracker.TryAcquire(), "the manager check must not release another file's reservation")
+				})
+			}
 		})
 	}
 }

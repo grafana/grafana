@@ -752,11 +752,7 @@ loop:
 		change := resources[i]
 		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
 			if applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil) {
-				progress.Record(timeoutCtx, jobs.NewPathOnlyResult(change.Path).
-					WithAction(change.Action).
-					WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
-					AsSkipped().
-					Build())
+				recordQuotaBlockedCreate(timeoutCtx, change.Path, currentRef, repositoryResources, progress)
 			}
 		})
 	}
