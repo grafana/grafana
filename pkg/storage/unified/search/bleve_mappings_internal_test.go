@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"regexp/syntax"
 
 	"github.com/blevesearch/bleve/v2/search/query"
 
@@ -671,6 +672,9 @@ func TestRequirementQuery_RegexFieldDispatch(t *testing.T) {
 	}{
 		{name: "literal prefix", regex: "X.*", prefix: "X"},
 		{name: "redundant outer anchors", regex: "^X.*$", prefix: "X"},
+		{name: "prefixless alternation", regex: "X|Y"},
+		{name: "lazy quantifier", regex: "X.*?", prefix: "X"},
+		{name: "case insensitive expression", regex: "(?i)X.*"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: tag, Operator: string(resource.OperatorRegex), Values: []string{tc.regex}})
@@ -692,19 +696,76 @@ func TestRequirementQuery_RegexFieldDispatch(t *testing.T) {
 		{name: "lowercased title", field: resource.SEARCH_FIELD_TITLE, values: []string{"T.*"}},
 		{name: "missing value", field: tag},
 		{name: "multiple values", field: tag, values: []string{"X.*", "Y.*"}},
-		{name: "missing literal prefix", field: tag, values: []string{".*X"}},
-		{name: "character class prefix", field: tag, values: []string{"[XY].*"}},
-		{name: "alternation without prefix", field: tag, values: []string{"X|Y"}},
-		{name: "character class without prefix", field: tag, values: []string{"[a-z]"}},
-		{name: "lazy quantifier", field: tag, values: []string{"X.*?"}},
-		{name: "inline flags", field: tag, values: []string{"(?i)X.*"}},
-		{name: "line flags", field: tag, values: []string{"(?m)X.*"}},
-		{name: "inline flag removal", field: tag, values: []string{"(?-i)X.*"}},
+		{name: "line flags", field: tag, values: []string{"(?m)^X$"}},
+		{name: "mixed case behavior", field: tag, values: []string{"X(?i:Y)"}},
+		{name: "mixed dot behavior", field: tag, values: []string{"X.(?s:.)"}},
 		{name: "word boundary", field: tag, values: []string{`\bX`}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			assertBadRequest(t, b, tc.field, string(resource.OperatorRegex), tc.values...)
 		})
+	}
+}
+
+func TestNormalizeRegex(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		expression      string
+		caseInsensitive bool
+		dotMatchesNL    bool
+		matchesEmpty    bool
+		wantErr         bool
+	}{
+		{name: "literal", expression: "crit.*"},
+		{name: "alternation", expression: "critical|warn"},
+		{name: "character class", expression: "[a-z]{2,8}"},
+		{name: "outer anchors", expression: "^critical$"},
+		{name: "lazy star", expression: "crit.*?"},
+		{name: "lazy plus", expression: "crit.+?"},
+		{name: "lazy question", expression: "crit.??"},
+		{name: "lazy repeat", expression: "a{2,4}?"},
+		{name: "dotall", expression: "(?s).*", dotMatchesNL: true, matchesEmpty: true},
+		{name: "dotall field prefix", expression: "(?s)severity=.*", dotMatchesNL: true},
+		{name: "case insensitive", expression: "(?i)CRITICAL", caseInsensitive: true},
+		{name: "case insensitive dotall", expression: "(?is)critical.*", caseInsensitive: true, dotMatchesNL: true},
+		{name: "escaped anchors", expression: `\^critical\$`},
+		{name: "escaped question mark", expression: `foo\?`},
+		{name: "escaped trailing dollar", expression: `foo\$`},
+		{name: "escaped backslash before anchor", expression: `foo\\$`},
+		{name: "quoted flag-like text", expression: `\Q(?i)\E`},
+		{name: "quoted trailing dollar", expression: `\Qfoo$\E`},
+		{name: "quote-to-end trailing dollar", expression: `\Qfoo$`},
+		{name: "empty", expression: "", matchesEmpty: true},
+		{name: "nonempty", expression: ".+"},
+		{name: "non-capturing group", expression: "(?:foo)"},
+		{name: "uniform case-insensitive group", expression: "(?i:foo)", caseInsensitive: true},
+		{name: "uniform dotall group", expression: "(?s:.)", dotMatchesNL: true},
+		{name: "quoted flag-like text with dollar", expression: `\Q(?i)$\E`},
+		{name: "mixed case behavior", expression: "foo(?i:bar)", wantErr: true},
+		{name: "mixed dot behavior", expression: ".(?s:.)", wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			matcher, err := normalizeRegex(tc.expression)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			compiled, err := compileRegexMatcher(matcher)
+			require.NoError(t, err)
+			assertRegexModesCleared(t, matcher.expression)
+			assert.Equal(t, tc.caseInsensitive, matcher.caseInsensitive)
+			assert.Equal(t, tc.dotMatchesNL, matcher.dotMatchesNL)
+			assert.Equal(t, tc.matchesEmpty, compiled.MatchString(""))
+		})
+	}
+}
+
+func assertRegexModesCleared(t *testing.T, expression *syntax.Regexp) {
+	t.Helper()
+	assert.Zero(t, expression.Flags&(syntax.FoldCase|syntax.NonGreedy))
+	for _, child := range expression.Sub {
+		assertRegexModesCleared(t, child)
 	}
 }
 

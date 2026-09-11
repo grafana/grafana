@@ -21,238 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-const maxRegexTerms = 10000
+const (
+	maxRegexDictionaryTerms = 10_000
+	maxRegexExpandedTerms   = 10_000
+	regexModeCase           = "case"
+	regexModeDotNewline     = "dot-newline"
+)
 
-// boundedRegexQuery expands a portable regexp against the field dictionary at
-// search time. The query is intentionally not bleve's native regexp query:
-// that query can enumerate an unbounded number of terms before the caller can
-// enforce a limit.
-type boundedRegexQuery struct {
-	field         string
-	pattern       *regexp.Regexp
-	literalPrefix string
-	complete      bool
-}
-
-func newBoundedRegexQuery(field, expression string) (*boundedRegexQuery, error) {
-	normalized := stripOuterRegexAnchors(expression)
-	if hasInlineRegexFlags(normalized) {
-		return nil, errors.New("regular expression uses unsupported inline flags")
-	}
-	// Use the Perl/RE2-compatible grammar so the parser recognizes the same
-	// escapes as Go's regexp engine; validatePortableRegex narrows it to the
-	// backend-independent subset below.
-	parsed, err := syntax.Parse(normalized, syntax.Perl)
-	if err != nil {
-		return nil, fmt.Errorf("invalid regular expression: %w", err)
-	}
-	if err := validatePortableRegex(parsed); err != nil {
-		return nil, err
-	}
-
-	compiled, err := regexp.Compile(normalized)
-	if err != nil {
-		return nil, fmt.Errorf("invalid regular expression: %w", err)
-	}
-	// LiteralPrefix reports whether the whole expression is one literal. In
-	// that case the dictionary need not be enumerated at all.
-	prefix, complete := compiled.LiteralPrefix()
-	if prefix == "" {
-		return nil, errors.New("regular expression must have a literal prefix")
-	}
-	// The dictionary expansion is only a prefix-bounded prefilter. Anchor the
-	// actual predicate so a regex matches the complete indexed keyword value.
-	fullTerm, err := regexp.Compile("^(?:" + normalized + ")$")
-	if err != nil {
-		return nil, fmt.Errorf("invalid regular expression: %w", err)
-	}
-
-	return &boundedRegexQuery{
-		field:         field,
-		pattern:       fullTerm,
-		literalPrefix: prefix,
-		complete:      complete,
-	}, nil
-}
-
-// Searcher implements query.Query. It expands only the dictionary terms under
-// the literal prefix and refuses a query before constructing a disjunction that
-// would exceed the fixed expansion budget.
-func (q *boundedRegexQuery) Searcher(ctx context.Context, reader index.IndexReader, _ mapping.IndexMapping, options blevesearch.SearcherOptions) (blevesearch.Searcher, error) {
-	if q.complete {
-		return searcher.NewTermSearcher(ctx, reader, q.literalPrefix, q.field, 1, options)
-	}
-
-	terms, err := q.matchingTerms(ctx, reader)
-	if err != nil {
-		return nil, err
-	}
-	if len(terms) == 0 {
-		return query.NewMatchNoneQuery().Searcher(ctx, reader, nil, options)
-	}
-	// The fixed regex expansion limit is enforced above. Do not apply Bleve's
-	// optional clause limit as a second, backend-specific limit: it would make
-	// an otherwise valid portable regex fail at a different threshold.
-	return searcher.NewMultiTermSearcher(ctx, reader, terms, q.field, 1, options, false)
-}
-
-func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.IndexReader) (terms []string, err error) {
-	dict, err := reader.FieldDictPrefix(q.field, []byte(q.literalPrefix))
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		bytesRead := dict.BytesRead()
-		if callback, ok := ctx.Value(blevesearch.SearchIOStatsCallbackKey).(blevesearch.SearchIOStatsCallbackFunc); ok {
-			callback(bytesRead)
-		}
-		blevesearch.RecordSearchCost(ctx, blevesearch.AddM, bytesRead)
-		if closeErr := dict.Close(); err == nil && closeErr != nil {
-			err = closeErr
-		}
-	}()
-
-	terms = make([]string, 0, maxRegexTerms)
-	inspected := 0
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-
-		entry, nextErr := dict.Next()
-		if nextErr != nil {
-			return nil, nextErr
-		}
-		if entry == nil {
-			break
-		}
-
-		inspected++
-		if inspected > maxRegexTerms {
-			return nil, &regexExpansionError{field: q.field}
-		}
-		if matchesEntireTerm(q.pattern, entry.Term) {
-			terms = append(terms, entry.Term)
-		}
-	}
-	return terms, nil
-}
-
-func matchesEntireTerm(pattern *regexp.Regexp, value string) bool {
-	match := pattern.FindStringIndex(value)
-	return match != nil && match[0] == 0 && match[1] == len(value)
-}
-
-// stripOuterRegexAnchors accepts anchors that are redundant because search
-// terms are always matched in their entirety. Anchors elsewhere remain in the
-// syntax tree and are rejected by validatePortableRegex.
-func stripOuterRegexAnchors(expression string) string {
-	expression = strings.TrimPrefix(expression, "^")
-	if strings.HasSuffix(expression, "$") && !isEscaped(expression) {
-		expression = expression[:len(expression)-1]
-	}
-	return expression
-}
-
-func isEscaped(value string) bool {
-	index := len(value) - 1
-	backslashes := 0
-	for index > 0 && value[index-1] == '\\' {
-		backslashes++
-		index--
-	}
-	return backslashes%2 == 1
-}
-
-func hasInlineRegexFlags(expression string) bool {
-	inClass := false
-	for i := 0; i < len(expression); i++ {
-		switch expression[i] {
-		case '\\':
-			i++
-		case '[':
-			inClass = true
-		case ']':
-			inClass = false
-		case '(':
-			if !inClass && i+2 < len(expression) && expression[i+1] == '?' {
-				// These are mode flags (or '-' beginning flag removal); rejecting
-				// them keeps the contract case-sensitive and portable.
-				switch expression[i+2] {
-				case 'i', 'm', 's', 'U', '-':
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// validatePortableRegex rejects syntax the parser accepts but the portable
-// contract does not: case-sensitive, whole-term RE2-style matching without
-// inline flags, assertions, named captures, or lazy repetition. Constructs
-// the parser cannot represent fail during Parse.
-func validatePortableRegex(parsed *syntax.Regexp) error {
-	const parserFlags = syntax.ClassNL | syntax.OneLine | syntax.PerlX | syntax.UnicodeGroups
-	if parsed.Flags&^parserFlags != 0 {
-		return errors.New("regular expression uses unsupported inline flags")
-	}
-
-	switch parsed.Op {
-	case syntax.OpBeginLine, syntax.OpEndLine, syntax.OpBeginText, syntax.OpEndText,
-		syntax.OpWordBoundary, syntax.OpNoWordBoundary:
-		return errors.New("regular expression uses unsupported zero-width assertions")
-	case syntax.OpCapture:
-		if parsed.Name != "" {
-			return errors.New("regular expression uses unsupported named capture")
-		}
-	case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
-		if parsed.Flags&syntax.NonGreedy != 0 {
-			return errors.New("regular expression uses unsupported lazy quantifier")
-		}
-	default:
-		// Other parser operations are part of the supported RE2-style subset.
-	}
-
-	for _, child := range parsed.Sub {
-		if err := validatePortableRegex(child); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-type regexExpansionError struct {
-	field string
-}
-
-func (e *regexExpansionError) Error() string {
-	return fmt.Sprintf("regular expression on field %q exceeds the %d-term expansion limit", e.field, maxRegexTerms)
-}
-
-func (e *regexExpansionError) Status() metav1.Status {
-	return metav1.Status{
-		Status:  metav1.StatusFailure,
-		Reason:  metav1.StatusReasonBadRequest,
-		Message: e.Error(),
-		Code:    http.StatusBadRequest,
-	}
-}
-
-func regexErrorFromResult(result *bleve.SearchResult) error {
-	if result == nil || result.Status == nil {
-		return nil
-	}
-	var expansionErr *regexExpansionError
-	for _, err := range result.Status.Errors {
-		if errors.As(err, &expansionErr) {
-			return err
-		}
-	}
-	return nil
-}
+// Request translation
 
 func (b *bleveIndex) regexRequirementQuery(req *resourcepb.Requirement, negate bool) (query.Query, *resourcepb.ErrorResult) {
 	if len(req.Values) != 1 {
@@ -264,13 +40,54 @@ func (b *bleveIndex) regexRequirementQuery(req *resourcepb.Requirement, negate b
 		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support regex filtering", req.Key))
 	}
 	if kf.lowered {
-		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support case-sensitive regex filtering", req.Key))
+		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support regex filtering because it does not preserve original case", req.Key))
 	}
 
-	regex, err := newBoundedRegexQuery(kf.name, req.Values[0])
+	matcher, err := normalizeRegex(req.Values[0])
 	if err != nil {
 		return nil, resource.NewBadRequestError(fmt.Sprintf("invalid regex for field %s: %v", req.Key, err))
 	}
+	regex, err := newBoundedRegexQueryFromMatcher(kf.name, matcher)
+	if err != nil {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("invalid regex for field %s: %v", req.Key, err))
+	}
+
+	// Prometheus evaluates an absent label as the empty string. For flattened
+	// label fields, apply that rule to the value expression and use the label
+	// key/value prefix to determine whether that label exists. Other fields use the
+	// field-level existence query because their regex matches the whole value.
+	matchesEmpty := regex.pattern.MatchString("")
+	var exists query.Query
+	if valueMatchesEmpty, labelExists, ok, err := flattenedLabelRegexSemantics(kf.name, matcher, regex.pattern); err != nil {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("invalid regex for field %s: %v", req.Key, err))
+	} else if ok {
+		matchesEmpty = valueMatchesEmpty
+		exists = labelExists
+	}
+	if matchesEmpty {
+		if exists == nil {
+			existsMatcher, err := normalizeRegex("(?s).*")
+			if err != nil {
+				return nil, resource.NewBadRequestError(fmt.Sprintf("invalid regex for field %s: %v", req.Key, err))
+			}
+			exists, err = newBoundedRegexQueryFromMatcher(kf.name, existsMatcher)
+			if err != nil {
+				return nil, resource.NewBadRequestError(fmt.Sprintf("invalid regex for field %s: %v", req.Key, err))
+			}
+		}
+		if !negate {
+			missing := bleve.NewBooleanQuery()
+			missing.AddMust(bleve.NewMatchAllQuery())
+			missing.AddMustNot(exists)
+			return bleve.NewDisjunctionQuery(regex, missing), nil
+		}
+
+		boolQuery := bleve.NewBooleanQuery()
+		boolQuery.AddMust(exists)
+		boolQuery.AddMustNot(regex)
+		return boolQuery, nil
+	}
+
 	if !negate {
 		return regex, nil
 	}
@@ -289,4 +106,355 @@ func (b *bleveIndex) regexKeywordFieldFor(key string) (keywordField, bool) {
 		return keywordField{name: key, filterable: true}, true
 	}
 	return keywordField{}, false
+}
+
+// Missing-value and flattened-label semantics
+
+func flattenedLabelRegexSemantics(field string, matcher regexMatcher, pattern *regexp.Regexp) (valueMatchesEmpty bool, exists query.Query, ok bool, err error) {
+	if field != resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_LABELS {
+		return false, nil, false, nil
+	}
+
+	// This structural prefix is used only to recognize a flattened key=value
+	// expression. It is intentionally compiled without matcher modes and is not
+	// used to prune the dictionary.
+	structural, err := regexp.Compile("^(?:" + matcher.expression.String() + ")$")
+	if err != nil {
+		return false, nil, true, err
+	}
+	prefix, _ := structural.LiteralPrefix()
+	separator := strings.IndexByte(prefix, '=')
+	if separator <= 0 {
+		return false, nil, false, nil
+	}
+
+	labelPrefix := prefix[:separator+1]
+	existsMatcher := regexMatcher{
+		expression: &syntax.Regexp{
+			Op: syntax.OpConcat,
+			Sub: []*syntax.Regexp{
+				{Op: syntax.OpLiteral, Rune: []rune(labelPrefix)},
+				{Op: syntax.OpStar, Sub: []*syntax.Regexp{{Op: syntax.OpAnyChar}}},
+			},
+		},
+		caseInsensitive: matcher.caseInsensitive,
+		dotMatchesNL:    true,
+	}
+	existsQuery, err := newBoundedRegexQueryFromMatcher(field, existsMatcher)
+	if err != nil {
+		return false, nil, true, err
+	}
+	return pattern.MatchString(labelPrefix), existsQuery, true, nil
+}
+
+// Portable regex normalization
+
+// regexMatcher is the backend-neutral representation of one whole-value
+// matcher. The expression is normalized by regexp/syntax; the mode booleans
+// describe behavior that an alternate adapter may need to express separately.
+type regexMatcher struct {
+	expression      *syntax.Regexp
+	caseInsensitive bool
+	dotMatchesNL    bool
+}
+
+// normalizeRegex parses the RE2-compatible input, removes redundant top-level
+// whole-term anchors, and lifts uniform case and dot-newline modes out of the
+// AST. Lifting modes gives backend adapters a syntax-independent representation.
+// Mixed modes are rejected because applying one global mode would change the
+// language. Lazy quantifiers are made greedy because match preference does not
+// affect whole-term boolean matching.
+func normalizeRegex(expression string) (regexMatcher, error) {
+	// syntax.Perl enables Go/RE2's Perl-style classes, escapes, and inline modes.
+	// It does not enable unsupported PCRE features such as look-around or
+	// backreferences. DotNL is intentionally omitted; callers request it with (?s).
+	parsed, err := syntax.Parse(expression, syntax.Perl)
+	if err != nil {
+		return regexMatcher{}, fmt.Errorf("invalid regular expression: %w", err)
+	}
+	// Remove only top-level text anchors, which are redundant because every term
+	// is matched in full. Line or nested anchors remain and are rejected below.
+	parsed = trimWholeTermAnchors(parsed)
+
+	caseInsensitive, dotMatchesNL, err := normalizePortableRegex(parsed)
+	if err != nil {
+		return regexMatcher{}, err
+	}
+
+	matcher := regexMatcher{
+		expression:      parsed,
+		caseInsensitive: caseInsensitive,
+		dotMatchesNL:    dotMatchesNL,
+	}
+	return matcher, nil
+}
+
+// trimWholeTermAnchors removes only top-level text anchors, which are redundant
+// because every term is matched in full. Line or nested anchors remain and are
+// rejected by normalizeRegexNode.
+func trimWholeTermAnchors(expression *syntax.Regexp) *syntax.Regexp {
+	if expression.Op == syntax.OpBeginText || expression.Op == syntax.OpEndText {
+		return &syntax.Regexp{Op: syntax.OpEmptyMatch}
+	}
+	if expression.Op != syntax.OpConcat {
+		return expression
+	}
+
+	start := 0
+	for start < len(expression.Sub) && expression.Sub[start].Op == syntax.OpBeginText {
+		start++
+	}
+	end := len(expression.Sub)
+	for end > start && expression.Sub[end-1].Op == syntax.OpEndText {
+		end--
+	}
+	if start == 0 && end == len(expression.Sub) {
+		return expression
+	}
+	expression.Sub = expression.Sub[start:end]
+	switch len(expression.Sub) {
+	case 0:
+		return &syntax.Regexp{Op: syntax.OpEmptyMatch}
+	case 1:
+		return expression.Sub[0]
+	default:
+		return expression
+	}
+}
+
+type regexMode struct {
+	seen  bool
+	value bool
+}
+
+func normalizePortableRegex(expression *syntax.Regexp) (caseInsensitive, dotMatchesNL bool, err error) {
+	var caseMode, dotMode regexMode
+	if err := normalizeRegexNode(expression, &caseMode, &dotMode); err != nil {
+		return false, false, err
+	}
+	return caseMode.value, dotMode.value, nil
+}
+
+func normalizeRegexNode(expression *syntax.Regexp, caseMode, dotMode *regexMode) error {
+	switch expression.Op {
+	case syntax.OpNoMatch:
+		return errors.New("regular expression uses unsupported syntax")
+	case syntax.OpBeginLine, syntax.OpEndLine, syntax.OpBeginText, syntax.OpEndText,
+		syntax.OpWordBoundary, syntax.OpNoWordBoundary:
+		return errors.New("regular expression uses unsupported zero-width assertions")
+	case syntax.OpCapture:
+		if expression.Name != "" {
+			return errors.New("regular expression uses unsupported named capture")
+		}
+	case syntax.OpLiteral, syntax.OpCharClass:
+		if err := setRegexMode(caseMode, expression.Flags&syntax.FoldCase != 0, regexModeCase); err != nil {
+			return err
+		}
+	case syntax.OpAnyChar:
+		if err := setRegexMode(dotMode, true, regexModeDotNewline); err != nil {
+			return err
+		}
+	case syntax.OpAnyCharNotNL:
+		if err := setRegexMode(dotMode, false, regexModeDotNewline); err != nil {
+			return err
+		}
+	case syntax.OpEmptyMatch, syntax.OpStar, syntax.OpPlus, syntax.OpQuest,
+		syntax.OpRepeat, syntax.OpConcat, syntax.OpAlternate:
+		// These operations are supported; their children are checked below.
+	default:
+		return fmt.Errorf("regular expression uses unsupported syntax operation %s", expression.Op)
+	}
+
+	// The AST walk records each node's case and dot-newline behavior in caseMode
+	// and dotMode; clear the per-node flags before String serializes the AST so
+	// compileRegexMatcher can apply one uniform mode around the whole matcher.
+	// Non-greedy matching is also irrelevant for whole-term boolean matching.
+	expression.Flags &^= syntax.FoldCase | syntax.NonGreedy
+	for _, child := range expression.Sub {
+		if err := normalizeRegexNode(child, caseMode, dotMode); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setRegexMode(mode *regexMode, value bool, name string) error {
+	if mode.seen && mode.value != value {
+		return fmt.Errorf("regular expression uses mixed %s behavior", name)
+	}
+	mode.seen = true
+	mode.value = value
+	return nil
+}
+
+func compileRegexMatcher(matcher regexMatcher) (*regexp.Regexp, error) {
+	pattern := matcher.expression.String()
+	flags := ""
+	if matcher.caseInsensitive {
+		flags += "i"
+	}
+	if matcher.dotMatchesNL {
+		flags += "s"
+	}
+	if flags != "" {
+		pattern = "(?" + flags + ":" + pattern + ")"
+	}
+	compiled, err := regexp.Compile("^(?:" + pattern + ")$")
+	if err != nil {
+		return nil, fmt.Errorf("invalid regular expression: %w", err)
+	}
+	return compiled, nil
+}
+
+// Bounded Bleve execution
+
+// boundedRegexQuery expands a portable regexp against the field dictionary at
+// search time. The query is intentionally not bleve's native regexp query:
+// that query can enumerate an unbounded number of terms before the caller can
+// enforce a limit.
+type boundedRegexQuery struct {
+	field         string
+	pattern       *regexp.Regexp
+	literalPrefix string
+	complete      bool
+}
+
+func newBoundedRegexQueryFromMatcher(field string, matcher regexMatcher) (*boundedRegexQuery, error) {
+	compiled, err := compileRegexMatcher(matcher)
+	if err != nil {
+		return nil, err
+	}
+	// LiteralPrefix is only safe for case-sensitive expressions. A prefix from a
+	// case-insensitive expression would omit differently-cased dictionary terms.
+	prefix, complete := compiled.LiteralPrefix()
+	if matcher.caseInsensitive {
+		prefix = ""
+		complete = false
+	}
+
+	return &boundedRegexQuery{
+		field:         field,
+		pattern:       compiled,
+		literalPrefix: prefix,
+		complete:      complete,
+	}, nil
+}
+
+// Searcher implements query.Query. It expands only the dictionary terms under
+// the literal prefix and refuses a query before constructing a disjunction that
+// would exceed the fixed expansion budget.
+func (q *boundedRegexQuery) Searcher(ctx context.Context, reader index.IndexReader, _ mapping.IndexMapping, options blevesearch.SearcherOptions) (blevesearch.Searcher, error) {
+	if q.complete && q.literalPrefix != "" {
+		return searcher.NewTermSearcher(ctx, reader, q.literalPrefix, q.field, 1, options)
+	}
+
+	terms, err := q.matchingTerms(ctx, reader)
+	if err != nil {
+		return nil, err
+	}
+	if len(terms) == 0 {
+		return query.NewMatchNoneQuery().Searcher(ctx, reader, nil, options)
+	}
+	// The fixed regex expansion limit is enforced above. Do not apply Bleve's
+	// optional clause limit as a second, backend-specific limit: it would make
+	// an otherwise valid portable regex fail at a different threshold.
+	return searcher.NewMultiTermSearcher(ctx, reader, terms, q.field, 1, options, false)
+}
+
+func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.IndexReader) (terms []string, err error) {
+	var dict index.FieldDict
+	if q.literalPrefix == "" {
+		dict, err = reader.FieldDict(q.field)
+	} else {
+		dict, err = reader.FieldDictPrefix(q.field, []byte(q.literalPrefix))
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		bytesRead := dict.BytesRead()
+		// Bleve's IO callback contributes to SearchResult.Cost, while
+		// RecordSearchCost feeds unified search's incremental QueryCost accounting.
+		// Dictionary reads must be reported through both paths.
+		if callback, ok := ctx.Value(blevesearch.SearchIOStatsCallbackKey).(blevesearch.SearchIOStatsCallbackFunc); ok {
+			callback(bytesRead)
+		}
+		blevesearch.RecordSearchCost(ctx, blevesearch.AddM, bytesRead)
+		if closeErr := dict.Close(); err == nil && closeErr != nil {
+			err = closeErr
+		}
+	}()
+
+	terms = make([]string, 0, 16)
+	inspected := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
+		entry, nextErr := dict.Next()
+		if nextErr != nil {
+			return nil, nextErr
+		}
+		if entry == nil {
+			break
+		}
+
+		inspected++
+		if q.pattern.MatchString(entry.Term) {
+			terms = append(terms, entry.Term)
+			if len(terms) > maxRegexExpandedTerms {
+				return nil, &regexLimitError{field: q.field, kind: regexExpansionLimit}
+			}
+		}
+		if inspected > maxRegexDictionaryTerms {
+			return nil, &regexLimitError{field: q.field, kind: regexDictionaryLimit}
+		}
+	}
+	return terms, nil
+}
+
+// Runtime error propagation
+
+type regexLimitKind uint8
+
+const (
+	regexExpansionLimit regexLimitKind = iota
+	regexDictionaryLimit
+)
+
+type regexLimitError struct {
+	field string
+	kind  regexLimitKind
+}
+
+func (e *regexLimitError) Error() string {
+	if e.kind == regexDictionaryLimit {
+		return fmt.Sprintf("regular expression on field %q exceeds the %d-term dictionary scan limit", e.field, maxRegexDictionaryTerms)
+	}
+	return fmt.Sprintf("regular expression on field %q exceeds the %d-term expansion limit", e.field, maxRegexExpandedTerms)
+}
+
+func (e *regexLimitError) Status() metav1.Status {
+	return metav1.Status{
+		Status:  metav1.StatusFailure,
+		Reason:  metav1.StatusReasonBadRequest,
+		Message: e.Error(),
+		Code:    http.StatusBadRequest,
+	}
+}
+
+func regexErrorFromResult(result *bleve.SearchResult) error {
+	if result == nil || result.Status == nil {
+		return nil
+	}
+	var limitErr *regexLimitError
+	for _, err := range result.Status.Errors {
+		if errors.As(err, &limitErr) {
+			return err
+		}
+	}
+	return nil
 }
