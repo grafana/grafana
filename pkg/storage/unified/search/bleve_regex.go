@@ -24,8 +24,6 @@ import (
 const (
 	maxRegexDictionaryTerms = 10_000
 	maxRegexExpandedTerms   = 10_000
-	regexModeCase           = "case"
-	regexModeDotNewline     = "dot-newline"
 )
 
 // Request translation
@@ -247,15 +245,15 @@ func normalizeRegexNode(expression *syntax.Regexp, caseMode, dotMode *regexMode)
 			return errors.New("regular expression uses unsupported named capture")
 		}
 	case syntax.OpLiteral, syntax.OpCharClass:
-		if err := setRegexMode(caseMode, expression.Flags&syntax.FoldCase != 0, regexModeCase); err != nil {
+		if err := setRegexMode(caseMode, expression.Flags&syntax.FoldCase != 0, "case"); err != nil {
 			return err
 		}
 	case syntax.OpAnyChar:
-		if err := setRegexMode(dotMode, true, regexModeDotNewline); err != nil {
+		if err := setRegexMode(dotMode, true, "dot-newline"); err != nil {
 			return err
 		}
 	case syntax.OpAnyCharNotNL:
-		if err := setRegexMode(dotMode, false, regexModeDotNewline); err != nil {
+		if err := setRegexMode(dotMode, false, "dot-newline"); err != nil {
 			return err
 		}
 	case syntax.OpEmptyMatch, syntax.OpStar, syntax.OpPlus, syntax.OpQuest,
