@@ -88,7 +88,7 @@ function loadDragAndDrop() {
  * it returns inert passthrough components, so callers can render the same JSX unconditionally
  * without pulling the library into their initial chunk.
  *
- * @internal Exported through `@grafana/ui/unstable` for Grafana core only.
+ * @internal Exported through `@grafana/ui/internal` for Grafana core only.
  */
 export function useDragAndDrop(enabled = true): DragAndDropComponents {
   const [module, setModule] = useState(enabled ? loadedModule : undefined);

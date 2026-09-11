@@ -768,26 +768,51 @@ const updateDashboardSettingsPayloadSchema = z.object({
   preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
 });
 
-const getSpecPayloadSchema = z
+const scopeSelectionSchema = z.union([
+  z.literal('all'),
+  z.literal('none'),
+  z.array(z.string()).describe('Variable names in this scope'),
+]);
+
+// Literal (not the AnnoKey import) so this file stays free of the apiserver/scene graph.
+const useCrossDashboardVariablesAnnoKey = 'grafana.app/useCrossDashboardVariables';
+
+const useCrossDashboardVariablesValueSchema = z.object({
+  global: scopeSelectionSchema.describe('Which org-wide variables this dashboard receives'),
+  folder: scopeSelectionSchema.describe('Which folder-scoped variables this dashboard receives'),
+});
+
+const metadataAnnotationKeySchema = z
+  .enum([useCrossDashboardVariablesAnnoKey])
+  .describe('Allowlisted metadata.annotations key');
+
+const getMetadataAnnotationsPayloadSchema = z
   .object({
-    validate: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('When true, validate the serialized spec against the v2 schema and fail if it is invalid.'),
+    annotations: z
+      .array(metadataAnnotationKeySchema)
+      .min(1)
+      .describe(
+        'Metadata annotation keys to read. Only grafana.app/useCrossDashboardVariables is allowed today; unknown keys are rejected. This is not a query annotation layer.'
+      ),
   })
   .strict();
 
-const applySpecPayloadSchema = z.object({
-  spec: z
-    .record(z.string(), z.unknown())
-    .describe('A complete v2 DashboardSpec to apply (same shape GET_SPEC returns).'),
-  validate: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
-});
+const updateMetadataAnnotationsPayloadSchema = z
+  .object({
+    annotations: z
+      .object({
+        [useCrossDashboardVariablesAnnoKey]: z
+          .union([useCrossDashboardVariablesValueSchema, z.null()])
+          .describe(
+            'Which global and folder-scoped variables this dashboard receives. null or both scopes "none" clears the opt-in.'
+          ),
+      })
+      .strict()
+      .describe(
+        'Metadata annotations to write. Only grafana.app/useCrossDashboardVariables is allowed today; unknown keys are rejected. This is not a query annotation layer.'
+      ),
+  })
+  .strict();
 
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
@@ -832,9 +857,10 @@ export const payloads = {
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
-  getSpec: getSpecPayloadSchema.describe('Return the entire dashboard as a v2 DashboardSpec JSON object'),
-  applySpec: applySpecPayloadSchema.describe(
-    'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
-      '(settings, variables, annotations, panels, and nested rows/tabs layout).'
+  getMetadataAnnotations: getMetadataAnnotationsPayloadSchema.describe(
+    'Read allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is readable. Not a query annotation layer (use LIST_ANNOTATIONS). GET_SPEC / APPLY_SPEC do not include these annotations.'
+  ),
+  updateMetadataAnnotations: updateMetadataAnnotationsPayloadSchema.describe(
+    'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
 };
