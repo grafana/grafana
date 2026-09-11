@@ -19,6 +19,10 @@ const (
 	// Support new streaming approach for loki (prototype, needs special loki build)
 	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
+	// FlagGrafanaDatasourceForwardHeaders
+	// Forward allow-listed HTTP request headers from the user's request to data sources (per-datasource `jsonData.allowedHeaders`, filtered by the `[datasource_forward_headers]` deny-list).
+	FlagGrafanaDatasourceForwardHeaders = "grafana.datasourceForwardHeaders"
+
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
