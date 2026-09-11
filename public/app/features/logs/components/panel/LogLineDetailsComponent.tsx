@@ -39,7 +39,29 @@ interface LogLineDetailsComponentProps {
   timeZone: string;
 }
 
-export const LogLineDetailsComponent = memo(
+export const LogLineDetailsComponent = ({
+  log,
+  logs,
+  prettifyDetailsJSON,
+  search = '',
+  setPrettifyDetailsJSON,
+  timeRange,
+  timeZone,
+}: LogLineDetailsComponentProps) => {
+  return (
+    <LogLineDetailsLegacyComponent
+      log={log}
+      logs={logs}
+      prettifyDetailsJSON={prettifyDetailsJSON}
+      search={search}
+      setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+      timeRange={timeRange}
+      timeZone={timeZone}
+    />
+  );
+};
+
+const LogLineDetailsLegacyComponent = memo(
   ({
     log,
     logs,
@@ -296,7 +318,7 @@ export const LogLineDetailsComponent = memo(
     );
   }
 );
-LogLineDetailsComponent.displayName = 'LogLineDetailsComponent';
+LogLineDetailsLegacyComponent.displayName = 'LogLineDetailsLegacyComponent';
 
 function groupOptionName(group: string) {
   return `${camelCase(group)}Open`;
