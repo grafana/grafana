@@ -1586,6 +1586,60 @@ function growthWeight(type: FieldType): number {
   return GROWTH_WEIGHTS[type] ?? DEFAULT_GROWTH_WEIGHT;
 }
 
+// Below half a pixel there's nothing left worth redistributing, and the accumulated float error is
+// the same order as the gain, so the levelling below stops here rather than chasing an exact fit.
+const SHRINK_EPS = 0.5;
+
+// Cell types that reflow their content into extra row height rather than clipping it. Their measured
+// content width is a preference rather than a requirement, so it's the first thing we give back when
+// the table would otherwise overflow the panel.
+function isReflowingCol(field: Field, resolvedType: TableCellDisplayMode): boolean {
+  // Markdown renders wrapped whatever `wrapText` says (see measureMarkdownColWidth).
+  return shouldTextWrap(field) || resolvedType === TableCellDisplayMode.Markdown;
+}
+
+/**
+ * Reclaims up to `deficit` px from `widths` (mutated in place) by levelling its widest entries down:
+ * the widest column is cut to the next-widest, then the two are cut together, and so on. The columns
+ * responsible for the overflow therefore give the space back before their narrower neighbours give
+ * up any, and a column already narrower than the level we land on is never touched at all. No column
+ * goes below its `floors` entry, so this returns less than `deficit` when the floors are hit first.
+ *
+ * Only columns present in `floors` are candidates.
+ */
+function levelDownColWidths(widths: Map<number, number>, floors: Map<number, number>, deficit: number): number {
+  let pool = Array.from(floors.keys()).filter((i) => widths.get(i)! > floors.get(i)! + SHRINK_EPS);
+  let remaining = deficit;
+
+  while (remaining > SHRINK_EPS && pool.length > 0) {
+    const level = Math.max(...pool.map((i) => widths.get(i)!));
+    const tier: number[] = [];
+    let nextLevel = 0;
+    for (const i of pool) {
+      const width = widths.get(i)!;
+      if (width >= level - SHRINK_EPS) {
+        tier.push(i);
+      } else {
+        nextLevel = Math.max(nextLevel, width);
+      }
+    }
+
+    // How deep the current tier can be cut in one pass: down to the next-widest column, down to the
+    // highest floor in the tier, or just far enough to cover what's left of the deficit — whichever
+    // comes first. Each of those outcomes re-tiers the next pass (a wider tier, a smaller pool, or
+    // done), so the loop always makes progress.
+    const tierFloor = Math.max(...tier.map((i) => floors.get(i)!));
+    const step = Math.min(remaining / tier.length, level - nextLevel, level - tierFloor);
+    for (const i of tier) {
+      widths.set(i, widths.get(i)! - step);
+    }
+    remaining -= step * tier.length;
+    pool = pool.filter((i) => widths.get(i)! > floors.get(i)! + SHRINK_EPS);
+  }
+
+  return deficit - remaining;
+}
+
 /**
  * @internal
  * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
@@ -1593,12 +1647,16 @@ function growthWeight(type: FieldType): number {
  *   1. its cell content (a sampled, display-formatted, measured max) or a per-type default for
  *      graphical cells, whichever applies, unioned with its header label width;
  *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
- *   3. then, if the auto columns don't fill the available width, the leftover is distributed by a
+ *   3. then, if the auto columns overflow the available width, the overflow is taken back out of the
+ *      columns that wrap, widest first (see {@link levelDownColWidths}) — a wrapped column can trade
+ *      width for height, so it absorbs the overflow rather than leaving the grid to scroll sideways;
+ *   4. or, if the auto columns don't fill the available width, the leftover is distributed by a
  *      growth share of `growthWeight × √(content width)`, so a column with more content still takes
  *      more slack (a busy pill column beats a sparse one) while the √ damps the spread enough that
  *      the widest column doesn't run away from its neighbours; numeric/boolean columns grow only
  *      modestly (see {@link growthWeight}).
- * When content overflows the available width the content widths are kept and the grid scrolls.
+ * When the overflow survives step 3 — no wrapped columns, or their floors reached — the remaining
+ * content widths are kept and the grid scrolls.
  *
  * Every input is independent of the sort and filter state (fields hold the full, unsorted values),
  * so widths stay put when the user sorts or filters. See {@link measureHeaderWidth} for the sort
@@ -1641,6 +1699,9 @@ export function computeContentAwareColWidths(
   // content width per auto column, clamped to [floor, cap]
   const contentWidths = new Map<number, number>();
   let contentTotal = 0;
+  // lower bound per wrapped auto column, for the overflow step below; absent for columns that can't
+  // reflow, or that are already sitting at their bound.
+  const shrinkFloors = new Map<number, number>();
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
@@ -1680,23 +1741,45 @@ export function computeContentAwareColWidths(
 
     contentWidths.set(i, clamped + extraPadding);
     contentTotal += clamped + extraPadding;
+
+    if (isReflowingCol(field, resolvedType)) {
+      // Anything the column asked for above its header, footer and configured minimum is width it
+      // can give back as extra row height instead. The header label and footer summary can't reflow
+      // — they'd truncate — so they stay a hard bound even on a wrapped column.
+      const reflowFloor = Math.min(Math.max(headerWidth, footerWidth, floor), cap) + extraPadding;
+      if (reflowFloor < clamped + extraPadding) {
+        shrinkFloors.set(i, reflowFloor);
+      }
+    }
   }
 
+  // Wrapped columns trade width for height, so hand the overflow back to them before letting the
+  // grid scroll sideways.
+  const deficit = definedWidth + contentTotal - availWidth;
+  const reclaimed =
+    deficit > SHRINK_EPS && shrinkFloors.size > 0 ? levelDownColWidths(contentWidths, shrinkFloors, deficit) : 0;
+  contentTotal -= reclaimed;
+
   // Distribute leftover space by growthWeight × √(content width): a column with more content grows
-  // more, but the √ damps the spread so the widest column doesn't run away from its neighbours. On
-  // overflow content widths are kept (grid scrolls).
+  // more, but the √ damps the spread so the widest column doesn't run away from its neighbours. If
+  // the columns still overflow after the level-down above, their widths are kept and the grid
+  // scrolls.
   const growShare = (i: number) => growthWeight(fields[i].type) * Math.sqrt(contentWidths.get(i)!);
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
   const shouldGrow = leftover > 0 && growTotal > 0;
+  // A level-down that absorbed the whole deficit leaves the columns summing to availWidth exactly,
+  // so rounding up from there would put them straight back over it. One that ran into the floors
+  // still overflows, and takes the round-up path below like any other overflow.
+  const shrankToFit = reclaimed > 0 && leftover > -SHRINK_EPS;
   // Round cumulatively so the rounded widths sum to the same total as the exact ones. Rounding each
   // independently can push the total past availWidth and trigger a spurious horizontal scrollbar.
   let exactSoFar = 0;
   let roundedSoFar = 0;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
-    if (!shouldGrow) {
+    if (!shouldGrow && !shrankToFit) {
       // No leftover to distribute — the columns already fill or overflow availWidth, so the grid
       // scrolls regardless and matching the total exactly no longer matters. Round up instead of
       // cumulatively: a column sitting exactly at its measured content need (canvas measurement is
@@ -1705,8 +1788,8 @@ export function computeContentAwareColWidths(
       widths[i] = Math.ceil(contentWidth);
       continue;
     }
-    const grown = contentWidth + leftover * (growShare(i) / growTotal);
-    exactSoFar += grown;
+    const target = shouldGrow ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
+    exactSoFar += target;
     const rounded = Math.round(exactSoFar) - roundedSoFar;
     roundedSoFar += rounded;
     widths[i] = rounded;
