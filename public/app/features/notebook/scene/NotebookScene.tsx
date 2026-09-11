@@ -33,6 +33,7 @@ import { NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
+import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -55,16 +56,6 @@ export interface NotebookSceneState extends SceneObjectState {
    * the cells gain no real editing UI beyond becoming writable.
    */
   isEditing?: boolean;
-  /**
-   * Rendered somewhere other than the notebooks route, with no Grafana app header above it — the
-   * assistant's canvas tab.
-   *
-   * Only the sticky controls row cares. Its offset is the app header's height, because on the route
-   * that header is fixed over the document and a row stuck to 0 would sit underneath it. In a host
-   * that has no such header the same offset pushes the row down into the document instead, where it
-   * floats over the first cells as they scroll past.
-   */
-  embedded?: boolean;
   /**
    * A document with no Notebook resource behind it, and none to be created for it until its host
    * says so.
@@ -320,9 +311,15 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing, embedded } = model.useState();
-  // Called unconditionally above so the hook order never changes, then discarded when there is no app
-  // header for it to describe.
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  /**
+   * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
+   * no app header at the same time, and those two share one scene object — so the answer has to come
+   * from where it is being drawn rather than from what is being drawn.
+   */
+  const embedded = useIsNotebookEmbedded();
+  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
+  // there is no app header for it to describe.
   const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
 
   return (

@@ -8,6 +8,7 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 
 import { notebookResourceFor } from '../api/notebookResource';
 import { NotebookPageStateManager, type NotebookLoadError } from '../pages/NotebookPageStateManager';
+import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
@@ -131,9 +132,9 @@ function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: Dra
    */
   const scene = useMemo(() => {
     const built = transformNotebookToScene(notebookResourceFor(undefined, spec));
-    // Both set before anything activates it. `isDraft` is what stops the autosave from starting and
+    // Set before anything activates it: `isDraft` is what stops the autosave from starting and
     // creating a real notebook out from under the host on the first edit.
-    built.setState({ isDraft: true, embedded: true });
+    built.setState({ isDraft: true });
     return built;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately built from the first spec only; see above
   }, []);
@@ -200,18 +201,22 @@ function useNotebookDraftChanges(
 function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTitleChange?: (title: string) => void }) {
   const { title } = scene.useState();
 
-  useEffect(() => {
-    // Set before activation so the first paint already has the right sticky offset, rather than the
-    // controls row jumping once this lands.
-    scene.setState({ embedded: true });
-    return scene.activate();
-  }, [scene]);
+  useEffect(() => scene.activate(), [scene]);
 
   useEffect(() => {
     onTitleChange?.(title);
   }, [onTitleChange, title]);
 
-  return <scene.Component model={scene} />;
+  /**
+   * Wrapped rather than flagged on the scene: this tree has no app header, but the same scene may
+   * also be mounted on /notebooks, which does, and the two share one object so they share one
+   * autosave. Only the tree can answer per mount.
+   */
+  return (
+    <NotebookEmbeddedHost>
+      <scene.Component model={scene} />
+    </NotebookEmbeddedHost>
+  );
 }
 
 /**
