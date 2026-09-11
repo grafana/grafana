@@ -287,7 +287,7 @@ export function TextNGEditor({
               lineWrapping
               basicSetup={basicSetup}
               height="100%"
-              aria-label={t('textng.editor.aria-l gabel-content', 'Text content')}
+              aria-label={t('textng.editor.aria-label-content', 'Text content')}
               theme={editorTheme}
             />
           </div>
