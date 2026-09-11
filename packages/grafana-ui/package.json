@@ -16,16 +16,22 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-ui"
   },
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
+  "main": "./dist/cjs/index.plugin.cjs",
+  "module": "./dist/esm/index.plugin.mjs",
+  "types": "./dist/types/index.plugin.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "types": "./dist/types/index.plugin.d.ts",
+      "import": "./dist/esm/index.plugin.mjs",
+      "require": "./dist/cjs/index.plugin.cjs"
+    },
+    "./slate": {
+      "@grafana-app/source": "./src/slate.ts",
+      "types": "./dist/types/slate.d.ts",
+      "import": "./dist/esm/slate.mjs",
+      "require": "./dist/cjs/slate.cjs"
     },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",

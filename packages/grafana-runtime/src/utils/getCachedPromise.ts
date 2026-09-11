@@ -1,4 +1,3 @@
-import { hash } from 'immutable';
 import { LRUCache } from 'lru-cache';
 
 import { generateUUID } from '@grafana/data';
@@ -150,6 +149,15 @@ export function getFetchErrorContext(cause: unknown): LogContext {
   return context;
 }
 
+export function hashFunctionSource(source: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < source.length; index++) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash | 0;
+}
+
 function logError({ error, key }: LogErrorArgs): void {
   try {
     const logger = getLogger('grafana/runtime.utils.getCachedPromise');
@@ -225,7 +233,7 @@ export function getCacheKeyFromPromise<T>(promise?: PromiseFunction<T>): string 
   }
 
   const name = promise.name;
-  const hashValue = hash(promise.toString());
+  const hashValue = hashFunctionSource(promise.toString());
   const key = `${name}:${hashValue}`;
   return key;
 }
