@@ -172,30 +172,53 @@ function useNotebookDraftChanges(
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let pending = false;
+    /** Whether the host has been told there are unsaved edits, so it is only told once either way. */
+    let dirtyReported = false;
     // The document as last handed to the host, to compare against. Seeded with what it already has,
     // so mounting alone reports nothing.
     let reported = JSON.stringify(transformNotebookSceneToSaveModel(scene));
 
+    const serializeNow = () => JSON.stringify(transformNotebookSceneToSaveModel(scene));
+
+    /**
+     * Both signals answer the same question — has the DOCUMENT changed — and neither answers it from
+     * the event, because scene events fire for reader-owned changes too: a SceneQueryRunner writes
+     * its results into its own state on every refresh and that bubbles up here. Query results are
+     * not part of the serialized document, so comparing documents filters them out by construction,
+     * and one definition of "changed" serves both callbacks.
+     *
+     * Cheap despite serializing, because it stops at the first `dirtyReported`: one serialization on
+     * the transition from clean to dirty, then nothing for the rest of the editing session. While
+     * clean it does cost one per bubbling event, which is a query refresh every few seconds.
+     */
+    const checkDirty = () => {
+      if (dirtyReported || serializeNow() === reported) {
+        return;
+      }
+      dirtyReported = true;
+      onDirtyChangeRef.current?.(true);
+    };
+
+    const settle = () => {
+      if (dirtyReported) {
+        dirtyReported = false;
+        onDirtyChangeRef.current?.(false);
+      }
+    };
+
     const report = () => {
       timer = undefined;
+      pending = false;
       const spec = transformNotebookSceneToSaveModel(scene);
       const serialized = JSON.stringify(spec);
 
-      /**
-       * Compared by content, not by which event arrived. Scene events fire for reader-owned changes
-       * too — a SceneQueryRunner writes its results into `$data` on every refresh, and that bubbles
-       * — so a draft with a live panel would otherwise report on every tick. Query results are not
-       * part of the serialized document, so comparing the document filters them out by construction.
-       */
       if (serialized === reported) {
-        pending = false;
-        onDirtyChangeRef.current?.(false);
+        settle();
         return;
       }
 
       reported = serialized;
-      pending = false;
-      onDirtyChangeRef.current?.(false);
+      settle();
       onChangeRef.current?.(spec);
     };
 
@@ -207,8 +230,11 @@ function useNotebookDraftChanges(
      * NotebookAutosave catches the same edits.
      */
     const subscription = scene.subscribeToEvent(SceneObjectStateChangedEvent, () => {
+      // Set for any event, before knowing whether the document moved, so the unmount flush below
+      // never skips a real edit. `report` decides whether there is anything to hand over.
       pending = true;
-      onDirtyChangeRef.current?.(true);
+      // Synchronous, so a host that guards navigation on unsaved edits is never a tick behind.
+      checkDirty();
       clearTimeout(timer);
       timer = setTimeout(report, DRAFT_REPORT_DEBOUNCE_MS);
     });

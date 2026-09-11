@@ -303,24 +303,58 @@ describe('NotebookView', () => {
       jest.useRealTimers();
     });
 
-    // Scene events bubble, so a panel refresh reaches this subscription too. Reporting on one would
-    // have the host writing a snapshot per refresh tick for a document nobody touched.
-    it('reports nothing when the document itself did not change', async () => {
+    /**
+     * Scene events bubble, so a panel refresh reaches this subscription too — a SceneQueryRunner
+     * writes its results into its own state on every tick. Neither signal may react: reporting would
+     * have the host writing a snapshot per refresh, and flagging dirty would leave a draft nobody
+     * touched claiming unsaved edits.
+     */
+    it('reports nothing and stays clean when the document itself did not change', async () => {
       jest.useFakeTimers();
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       const onChange = jest.fn();
+      const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec()} onChange={onChange} />);
+      render(<NotebookView spec={aDraftSpec()} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
-        // A state change that is not part of the serialized document, as a query runner's results
-        // are not: the event fires, the document is identical, so nothing is reported.
+        // A state change that is not part of the serialized document, as query results are not.
         draftScene().setState({ isEditing: true });
         jest.advanceTimersByTime(3000);
       });
 
       expect(onChange).not.toHaveBeenCalled();
+      expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+      jest.useRealTimers();
+    });
+
+    // The counterpart: a real edit must still raise the flag before the document callback lands.
+    it('flags unsaved edits ahead of the debounced report', async () => {
+      jest.useFakeTimers();
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const onChange = jest.fn();
+      const onDirtyChange = jest.fn();
+      const draftScene = captureDraftScene();
+
+      render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} onDirtyChange={onDirtyChange} />);
+
+      await act(async () => {
+        const scene = draftScene();
+        scene.state.body.setCellContent(seededCell(scene), { kind: 'Markdown', spec: { text: 'edited' } });
+        // Only far enough for the dirty check, not the 2s report.
+        jest.advanceTimersByTime(1);
+      });
+
+      expect(onDirtyChange).toHaveBeenCalledWith(true);
+      expect(onChange).not.toHaveBeenCalled();
+
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(onChange).toHaveBeenCalled();
+      expect(onDirtyChange).toHaveBeenLastCalledWith(false);
       jest.useRealTimers();
     });
 
