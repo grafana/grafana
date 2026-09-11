@@ -1027,6 +1027,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
 			enforceSortCapability: enforce,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 	}
 
@@ -1109,6 +1110,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			fields:                resource.StandardSearchFields(),
 			enforceSortCapability: true,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
 		require.Nil(t, errResult)

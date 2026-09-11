@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
+import { TextNGHtmlView } from '../TextNGHtmlView';
 import { catchTemplateError, interpolateTemplate } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
@@ -44,6 +44,8 @@ export interface TextNGEditorProps {
   /** Held by the panel so a frame-count change, which remounts this editor, cannot reset it. */
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
+  /** Mirrors the panel's transparent background option. */
+  transparent?: boolean;
 }
 
 const getLanguageLabels = (): Record<CodeLanguage, string> => ({
@@ -75,9 +77,14 @@ export function TextNGEditor({
   onChange,
   view,
   onViewChange,
+  transparent,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const editorTheme = useMemo(
+    () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
+    [theme, transparent]
+  );
 
   const [draft, setDraft] = useState(content);
   // a blur can fire before React re-renders with the new draft.
@@ -223,15 +230,15 @@ export function TextNGEditor({
 
     return isCode ? (
       <div className={styles.fullHeight} data-testid={testId}>
-        <TextNGCodeView content={interpolatedContent} language={codeLanguage} showLineNumbers={showLineNumbers} />
+        <TextNGCodeView
+          content={interpolatedContent}
+          language={codeLanguage}
+          showLineNumbers={showLineNumbers}
+          transparent={transparent}
+        />
       </div>
     ) : (
-      <DangerouslySetHtmlContent
-        allowRerender
-        html={previewHtml}
-        className={cx('markdown-html', styles.fullHeight)}
-        data-testid={testId}
-      />
+      <TextNGHtmlView html={previewHtml} className={cx('markdown-html', styles.fullHeight)} testId={testId} />
     );
   };
 
@@ -271,11 +278,19 @@ export function TextNGEditor({
               basicSetup={basicSetup}
               height="100%"
               aria-label={t('textng.editor.aria-label-content', 'Text content')}
+              theme={editorTheme}
             />
           </div>
         )}
         {showPreview && (
-          <div className={cx(styles.pane, styles.previewPane, !isCode && styles.htmlPreviewPane)}>
+          <div
+            className={cx(
+              styles.pane,
+              styles.previewPane,
+              !transparent && styles.previewPaneOpaque,
+              !isCode && styles.htmlPreviewPane
+            )}
+          >
             {renderOutput(PREVIEW_TEST_ID)}
           </div>
         )}
