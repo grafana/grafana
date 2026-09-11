@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   DataQueryErrorType,
   FieldType,
@@ -5,10 +7,14 @@ import {
   LoadingState,
   type PanelData,
   type PanelPlugin,
+  standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { SceneDataNode, SceneDataTransformer, sceneGraph, type VizPanel } from '@grafana/scenes';
+import { config, setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -17,6 +23,14 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import {
+  extractLabels,
+  frameWithLabels,
+  mockSystemTransformationPlugins,
+  registerPlugin,
+  systemTransformationPluginImportUtils,
+} from '../../utils/systemTransformationTestUtils';
+import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
 
@@ -48,6 +62,18 @@ jest.mock('../../actions/element/removeElement', () => ({
     props.perform();
   },
 }));
+
+// The provider's activation handler runs before the panel's own plugin load (activateFullSceneTree
+// activates children first), so the synchronous lookup is what has to answer.
+jest.mock('app/features/plugins/importPanelPlugin', () => ({
+  syncGetPanelPlugin: (id: string) => mockSystemTransformationPlugins.get(id),
+  importPanelPlugin: (id: string) => {
+    const plugin = mockSystemTransformationPlugins.get(id);
+    return plugin ? Promise.resolve(plugin) : Promise.reject(new Error(`Plugin ${id} not found`));
+  },
+}));
+
+setPluginImportUtils(systemTransformationPluginImportUtils);
 
 let currentTestScene: unknown;
 
@@ -205,6 +231,33 @@ async function addPanel(
 
 function makePanelData(overrides: Partial<PanelData>): PanelData {
   return { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange(), ...overrides };
+}
+
+/**
+ * A panel whose provider can transform on its own, for the tests that assert what the pipeline does
+ * with the transformations a command writes: the plugin behaviour is attached, and the source is a
+ * data node rather than a query runner so frames are already there to transform.
+ */
+function buildTransformingPanelScene(pluginId: string) {
+  const transformer = new SceneDataTransformer({
+    $data: new SceneDataNode({
+      data: { state: LoadingState.Done, series: [frameWithLabels()], timeRange: getDefaultTimeRange() },
+    }),
+    transformations: [],
+  });
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId,
+    title: 'Logs',
+    $data: transformer,
+    applyPluginTransformations: true,
+  });
+
+  return { scene: buildPanelScene([panel], { 'panel-1': 1 }), panel, transformer };
+}
+
+function outputFieldNames(transformer: SceneDataTransformer) {
+  return transformer.state.data?.series[0]?.fields.map((f) => f.name);
 }
 
 // Attaches a live data provider to an already-added panel so LIST_PANELS can read its runtime status.
@@ -1153,6 +1206,67 @@ describe('Panel mutation commands', () => {
       expect(serialized?.spec.items).toHaveLength(2);
       expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingVariable');
       expect(serialized?.spec.items[1].kind).toBe('ConditionalRenderingTimeRangeSize');
+    });
+
+    describe('and plugin registered transformations', () => {
+      beforeAll(() => {
+        standardTransformersRegistry.setInit(getStandardTransformers);
+      });
+
+      beforeEach(() => {
+        mockSystemTransformationPlugins.clear();
+        setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('keeps the plugin transformations installed when the command sets the user ones', async () => {
+        registerPlugin('logs-table', (plugin) => plugin.setSystemTransformations(() => [extractLabels]));
+
+        const { scene, transformer } = buildTransformingPanelScene('logs-table');
+        activateFullSceneTree(scene.state.body);
+
+        // The plugin's prepended `extractFields` is running before the command lands.
+        await waitFor(() => expect(outputFieldNames(transformer)).toContain('level'));
+        expect(transformer.state.transformations).toEqual([]);
+
+        const client = new DashboardMutationClient(scene);
+        const result = await client.execute({
+          type: 'UPDATE_PANEL',
+          payload: {
+            element: { name: 'panel-1' },
+            panel: {
+              kind: 'Panel',
+              spec: {
+                data: {
+                  kind: 'QueryGroup',
+                  spec: {
+                    transformations: [
+                      {
+                        kind: 'Transformation',
+                        group: 'organize',
+                        spec: { options: { excludeByName: { labels: true }, indexByName: {}, renameByName: {} } },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        expect(result.success).toBe(true);
+
+        // The command's own transformation took effect, so this is not a silently skipped update.
+        await waitFor(() => expect(outputFieldNames(transformer)).not.toContain('labels'));
+
+        // The command owns `state.transformations` outright, and the plugin's are resolved beside it.
+        expect(transformer.state.transformations).toHaveLength(1);
+        // They still run: `level` is only ever produced by the plugin's prepended `extractFields`.
+        expect(outputFieldNames(transformer)).toContain('level');
+      });
     });
   });
 
