@@ -12,8 +12,8 @@ import { type SetFieldConfigOptionsArgs } from './PanelPlugin';
  * @param pluginName - name of the plugin that will use the registry.
  * @internal
  */
-export function createFieldConfigRegistry<TFieldConfigOptions>(
-  config: SetFieldConfigOptionsArgs<TFieldConfigOptions> = {},
+export function createFieldConfigRegistry<TFieldConfigOptions, TContextOptions = unknown>(
+  config: SetFieldConfigOptionsArgs<TFieldConfigOptions, TContextOptions> = {},
   pluginName: string
 ): FieldConfigOptionsRegistry {
   const registry = new FieldConfigOptionsRegistry();
@@ -22,7 +22,7 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
 
   // Add custom options
   if (config.useCustomConfig) {
-    const builder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
+    const builder = new FieldConfigEditorBuilder<TFieldConfigOptions, TContextOptions>();
     config.useCustomConfig(builder);
 
     for (const customProp of builder.getRegistry().list()) {

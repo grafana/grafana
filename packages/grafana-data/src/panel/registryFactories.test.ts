@@ -4,6 +4,7 @@ import {
 } from '../field/standardFieldConfigEditorRegistry';
 import { FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
 
+import { type SetFieldConfigOptionsArgs } from './PanelPlugin';
 import { createFieldConfigRegistry } from './registryFactories';
 
 describe('createFieldConfigRegistry', () => {
@@ -62,6 +63,72 @@ describe('createFieldConfigRegistry', () => {
     const otherPlugin = createFieldConfigRegistry({}, 'Other');
 
     expect(otherPlugin.getIfExists('min')?.showIf).toBeUndefined();
+  });
+
+  describe('typing the editor context to the panel options', () => {
+    interface Options {
+      showUnit: boolean;
+    }
+
+    interface CustomConfig {
+      lineWidth: number;
+    }
+
+    // The context options default to `any`, which would satisfy a plain property access even if the
+    // type stopped being threaded through. Collapsing `any` to `never` makes these tests fail to
+    // compile in that case, which is the regression they exist to catch.
+    type NotAny<T> = 0 extends 1 & T ? never : T;
+
+    it('types context.options for a standard property, so a showIf needs no cast', () => {
+      const showIf = jest.fn().mockReturnValue(true);
+      const config: SetFieldConfigOptionsArgs<CustomConfig, Options> = {
+        standardOptions: {
+          [FieldConfigProperty.Min]: {
+            showIf: (defaults, _data, _annotations, ctx) => {
+              const options: NotAny<NonNullable<typeof ctx>['options']> = ctx?.options;
+              return showIf(defaults, options?.showUnit);
+            },
+          },
+        },
+      };
+
+      const registry = createFieldConfigRegistry(config, 'Test');
+      registry
+        .getIfExists('min')
+        ?.showIf?.({ min: 1 }, undefined, undefined, { data: [], options: { showUnit: true } });
+
+      expect(showIf).toHaveBeenCalledWith({ min: 1 }, true);
+    });
+
+    it('types context.options for a custom property, so a showIf needs no cast', () => {
+      const showIf = jest.fn().mockReturnValue(true);
+      const config: SetFieldConfigOptionsArgs<CustomConfig, Options> = {
+        useCustomConfig: (builder) => {
+          // addCustomEditor rather than addNumberInput, so the test does not depend on the
+          // standard editors registry being initialised
+          builder.addCustomEditor({
+            id: 'lineWidth',
+            path: 'lineWidth',
+            name: 'Line width',
+            editor: jest.fn(),
+            override: jest.fn(),
+            process: (value) => value,
+            shouldApply: () => true,
+            showIf: (custom, _data, _annotations, ctx) => {
+              const options: NotAny<NonNullable<typeof ctx>['options']> = ctx?.options;
+              return showIf(custom.lineWidth, options?.showUnit);
+            },
+          });
+        },
+      };
+
+      const registry = createFieldConfigRegistry(config, 'Test');
+      registry
+        .getIfExists('custom.lineWidth')
+        ?.showIf?.({ lineWidth: 2 }, undefined, undefined, { data: [], options: { showUnit: false } });
+
+      expect(showIf).toHaveBeenCalledWith(2, false);
+    });
   });
 
   it('forwards the editor context to a plugin-supplied showIf', () => {

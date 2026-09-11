@@ -66,9 +66,7 @@ export function getStandardEditorContext({
 /**
  * Whether a field config property should appear in the defaults pane.
  *
- * The property's own `showIf` receives the slice it is registered against - `defaults.custom` for a
- * custom property, `defaults` for a standard one - and the editor context, which carries the panel
- * options and the whole field config so a condition can span both.
+ * `data` is a separate argument for backward compatability, but is also contained in the context
  *
  * Overrides are not filtered here: `hideFromOverrides` is the knob for that side, so hiding a
  * property from the defaults pane never hides an override rule that already configures it.
@@ -77,7 +75,6 @@ export function getStandardEditorContext({
  */
 export function isFieldConfigOptionVisible(
   fieldOption: FieldConfigPropertyItem,
-  fieldConfig: FieldConfigSource,
   data: PanelData | undefined,
   context: StandardEditorContext<unknown, unknown>
 ): boolean {
@@ -89,7 +86,9 @@ export function isFieldConfigOptionVisible(
     return true;
   }
 
-  const currentValue = fieldOption.isCustom ? fieldConfig.defaults.custom : fieldConfig.defaults;
+  // A context built outside the options pane carries no field config
+  const defaults = context.fieldConfig?.defaults ?? {};
+  const currentValue = fieldOption.isCustom ? defaults.custom : defaults;
 
   // showIf is typed `boolean | undefined` and an undefined return has always hidden the option.
   return Boolean(fieldOption.showIf(currentValue, data?.series, data?.annotations, context));
@@ -140,7 +139,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Field options
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (!isFieldConfigOptionVisible(fieldOption, currentFieldConfig, data, context)) {
+    if (!isFieldConfigOptionVisible(fieldOption, data, context)) {
       continue;
     }
 
@@ -286,7 +285,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
 
   // Field options
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (!isFieldConfigOptionVisible(fieldOption, currentFieldConfig, data, context)) {
+    if (!isFieldConfigOptionVisible(fieldOption, data, context)) {
       continue;
     }
 
