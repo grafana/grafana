@@ -35,8 +35,8 @@ export async function addPanelToExistingNotebook(
 ): Promise<AddedToNotebook> {
   const spec = await updateNotebookSpec(uid, (current) => appendPanelToNotebook(current, panel));
 
-  // Reported here rather than in the layout manager: this notebook is not open, so there is no scene
-  // to add the cell to. `appendPanelToNotebook` puts it last, which is where the index comes from.
+  // Reported here, not in the layout manager. The notebook is not open, so no scene holds this cell.
+  // `appendPanelToNotebook` puts the panel last, so the index is the last one.
   NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, spec.layout.spec.cells.length - 1, {
     panel,
     isLibraryPanel,
@@ -70,9 +70,10 @@ export async function createNotebookWithPanel(
 }
 
 /**
- * Why the failure analytics says the attempt failed. Whether the panel was built is the one thing
- * the error cannot answer on its own: a panel that would not serialize and a request that came back
- * 400 both arrive as plain Errors.
+ * Why the attempt failed, for the failure event.
+ *
+ * A panel that would not serialize and a request that came back 400 both arrive as plain Errors. So
+ * the caller has to say whether the panel was built.
  */
 export function addPanelFailureReason(error: unknown, panelWasBuilt: boolean): NotebookAddFailedReason {
   if (!panelWasBuilt) {

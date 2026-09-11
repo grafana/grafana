@@ -40,8 +40,8 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
   public buildPanel = () => buildPanelElementFromDashboard(this.state.panelRef.resolve());
 
   /**
-   * Read off the panel the user opened this on, not off what buildPanel returns: a loaded library
-   * panel is inlined there, so the element it hands back no longer says where it came from.
+   * Read from the panel the user opened this on, not from what buildPanel returns. buildPanel inlines
+   * a loaded library panel, so its element no longer says where the panel came from.
    */
   public isLibraryPanel = () => Boolean(getLibraryPanelBehavior(this.state.panelRef.resolve()));
 }

@@ -220,8 +220,8 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(onDismiss).toHaveBeenCalled();
     });
 
-    // The dashboard inlines a library panel on the way here, so the element cannot be asked. The
-    // caller passes the fact along instead, and it has to survive the trip to the write.
+    // A library panel arrives inlined, so the element cannot be asked. The caller passes the flag
+    // in, and it has to reach the write.
     it('tells the write that the panel came from the library', async () => {
       const { user } = renderModal(undefined, true);
       await chooseExisting(user);
@@ -400,7 +400,7 @@ describe('AddPanelToNotebookModalBody', () => {
       await waitFor(() => expect(createWithPanel).toHaveBeenCalledTimes(1));
     });
 
-    // Same fact as the existing route: the create event describes the panel it was created around.
+    // Same fact as the existing route. The create event describes the panel it was created around.
     it('tells the create that the panel came from the library', async () => {
       const { user } = renderModal(undefined, true);
 
@@ -628,9 +628,11 @@ describe('AddPanelToNotebookModalBody', () => {
     });
   });
   /**
-   * The whole flow has no other failure signal: the success events fire from addPanelToNotebook,
-   * which is never reached when the write fails. Read off the echo service rather than by mocking
-   * the analytics module, so the assertion is the payload that actually goes out.
+   * The flow has no other failure signal. The success events fire inside addPanelToNotebook, which a
+   * failed write never reaches.
+   *
+   * Read from the echo service rather than mocking the analytics module. The test then asserts the
+   * payload that goes out.
    */
   describe('reporting a failed add', () => {
     let failures: Array<Record<string, unknown>>;
@@ -659,7 +661,7 @@ describe('AddPanelToNotebookModalBody', () => {
       );
     });
 
-    // Nothing was created, so there is no uid to report and nothing to join this to.
+    // Nothing was created, so there is no uid to send.
     it('reports a failed create with no notebook uid', async () => {
       createWithPanel.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
@@ -674,7 +676,7 @@ describe('AddPanelToNotebookModalBody', () => {
       );
     });
 
-    // The panel is serialized on submit, so this fails before either write is attempted.
+    // The panel is serialized on submit, so this fails before either write starts.
     it('reports a panel that could not be serialized as a build failure', async () => {
       const buildPanel = jest.fn(async (): Promise<PanelKind> => {
         throw new Error('nothing to serialize');

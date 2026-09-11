@@ -163,9 +163,9 @@ describe('addPanelToExistingNotebook', () => {
     ).rejects.toThrow('notebook is too large');
   });
 
-  // The notebook is not open here, so no layout manager sees this cell. The position is the last
-  // index, because appendPanelToNotebook puts the panel at the end. The panel goes along so the
-  // event can say what was added, which nothing else reports until someone opens the notebook.
+  // The notebook is not open, so no layout manager sees this cell. appendPanelToNotebook puts the
+  // panel at the end, so the position is the last index. The panel goes along so the event can say
+  // what was added.
   it('reports the added cell with the caller entry point, the index it landed on and the panel', async () => {
     captureWrite();
 
@@ -180,8 +180,8 @@ describe('addPanelToExistingNotebook', () => {
     );
   });
 
-  // The caller is the only one that knows: a library panel from a dashboard is inlined before it
-  // gets here, so the element itself reads as an ordinary panel.
+  // Only the caller knows. A library panel from a dashboard is inlined before it gets here, so the
+  // element reads as an ordinary panel.
   it('passes on that the panel came from the library', async () => {
     captureWrite();
 
@@ -312,7 +312,7 @@ describe('addPanelFailureReason', () => {
     expect(addPanelFailureReason(new Error('nothing to serialize'), false)).toBe('build_failed');
   });
 
-  // A conflict is the only failure a retry fixes, so it is not lumped in with the rest.
+  // A conflict is the only failure a retry fixes, so it is reported on its own.
   it('names a conflict on its own', () => {
     expect(addPanelFailureReason(new NotebookConflictError('modified'), true)).toBe('conflict');
   });
