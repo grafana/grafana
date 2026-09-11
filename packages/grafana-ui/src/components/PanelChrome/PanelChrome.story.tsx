@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';

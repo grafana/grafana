@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react-webpack5';
+import { Preview } from '@storybook/react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
