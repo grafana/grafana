@@ -644,9 +644,6 @@
   "packages/grafana-ui/src/components/VizRepeater/VizRepeater.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/VizTooltip/VizTooltip.tsx": {
@@ -657,9 +654,6 @@
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/uPlot/config/UPlotAxisBuilder.ts": {
@@ -842,16 +836,6 @@
       "count": 2
     },
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/OptionsUI/multiSelect.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/OptionsUI/select.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2610,11 +2594,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2727,9 +2706,6 @@
   },
   "public/app/features/inspector/QueryInspector.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2960,9 +2936,6 @@
   "public/app/features/query/components/QueryEditorRows.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/query/components/QueryGroup.tsx": {
@@ -3134,11 +3107,6 @@
   },
   "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/FilterByNameTransformerEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3611,9 +3579,6 @@
   "public/app/plugins/datasource/graphite/configuration/ConfigEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/graphite/datasource.ts": {
