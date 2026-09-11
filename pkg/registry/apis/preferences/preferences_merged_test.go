@@ -11,6 +11,7 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
 func TestMergePreferences(t *testing.T) {
@@ -150,6 +151,47 @@ func TestMergePreferences(t *testing.T) {
 				HomeURL:          new("/a/grafana-setupguide-app/home"),
 				HomeDashboardUID: new("operator-configured-dash"),
 			},
+		},
+		{
+			name: "global home sentinel skips home_page redirect",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(pref.GlobalHomeDashboardUID),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "user global home sentinel beats team dashboard and resolves to config home",
+			defaults: preferences.PreferencesSpec{
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(pref.GlobalHomeDashboardUID),
+				}},
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("team-dash"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+		},
+		{
+			name:     "global home sentinel with empty defaults leaves home unset",
+			defaults: preferences.PreferencesSpec{},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(pref.GlobalHomeDashboardUID),
+				}},
+			},
+			expect: preferences.PreferencesSpec{},
 		},
 	}
 	for _, tt := range tests {
