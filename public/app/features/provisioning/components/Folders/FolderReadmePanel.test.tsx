@@ -20,7 +20,7 @@ jest.mock('../../hooks/useFolderReadme');
 // rendered diagram wiring without pulling in its full runtime.
 jest.mock('mermaid', () => ({
   __esModule: true,
-  default: { initialize: jest.fn(), render: jest.fn() },
+  default: { initialize: jest.fn(), parse: jest.fn().mockResolvedValue(true), render: jest.fn() },
 }));
 
 setupProvisioningMswServer();
@@ -31,7 +31,7 @@ function setResources(items: ResourceListItem[]) {
 }
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
-const mockMermaidRender = mermaid.render as jest.MockedFunction<typeof mermaid.render>;
+const mockMermaidRender = jest.mocked(mermaid.render);
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
@@ -79,7 +79,7 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
-    mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>' } as never);
+    mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>', diagramType: 'flowchart' });
   });
 
   afterEach(() => {
@@ -434,7 +434,7 @@ describe('FolderReadmePanel', () => {
 
       // Both fenced blocks are turned into diagrams. (Render call count isn't asserted:
       // React StrictMode double-invokes the effect, so it can exceed the diagram count.)
-      await waitFor(() => expect(container.querySelectorAll('.markdown-mermaid')).toHaveLength(2));
+      await waitFor(() => expect(container.querySelectorAll('.textng-mermaid')).toHaveLength(2));
     });
 
     it('keeps the source and flags the block when a diagram fails to render', async () => {
@@ -443,7 +443,7 @@ describe('FolderReadmePanel', () => {
 
       const { container } = setup();
 
-      await waitFor(() => expect(container.querySelector('.markdown-mermaid-error')).not.toBeNull());
+      await waitFor(() => expect(container.querySelector('.textng-mermaid-error')).not.toBeNull());
       // A broken diagram leaves its source visible instead of hiding the README.
       expect(screen.getByText(/not a real diagram/)).toBeInTheDocument();
       expect(screen.getByText('Broken')).toBeInTheDocument();
@@ -456,7 +456,7 @@ describe('FolderReadmePanel', () => {
 
       await screen.findByText('Hello');
       expect(mockMermaidRender).not.toHaveBeenCalled();
-      expect(container.querySelector('.markdown-mermaid')).toBeNull();
+      expect(container.querySelector('.textng-mermaid')).toBeNull();
     });
   });
 });

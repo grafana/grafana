@@ -1,5 +1,6 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
@@ -12,17 +13,12 @@ import {
   type ResourceListItem,
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS, renderMermaidDiagrams } from 'app/core/utils/mermaid';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
-import {
-  MERMAID_DIAGRAM_CLASS,
-  MERMAID_ERROR_CLASS,
-  MERMAID_ERROR_NOTICE_CLASS,
-  renderMermaidDiagrams,
-} from '../../utils/mermaid';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -332,27 +328,27 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
-  // The effect owns the container's content instead of dangerouslySetInnerHTML:
-  // mermaid rendering mutates these nodes asynchronously, and if React still
-  // owned them it would re-commit the innerHTML (StrictMode, re-renders) mid-render,
-  // detaching the nodes we're replacing and dropping every diagram. Writing the
-  // HTML here means React never touches it, so our async mutations are safe.
-  // Re-runs (content or theme change) rebuild from `safe`, restoring the source
-  // fences before re-rendering the diagrams in the new theme.
+  // allowRerender rebuilds the DOM on every html change, and a theme flip
+  // redraws the diagrams in place.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) {
       return;
     }
-    el.innerHTML = safe;
-    const signal = { cancelled: false };
-    renderMermaidDiagrams(el, { isDark: theme.isDark, signal });
-    return () => {
-      signal.cancelled = true;
-    };
-  }, [safe, theme.isDark]);
 
-  return <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} />;
+    // Per-diagram failures are already reported in place.
+    const controller = new AbortController();
+    renderMermaidDiagrams(el, theme, controller.signal).catch(() => {});
+
+    return () => controller.abort();
+  }, [safe, theme]);
+
+  return (
+    <div ref={containerRef} className={styles.markdownBody}>
+      {/* An empty README is valid, but DangerouslySetHtmlContent rejects empty html. */}
+      {safe && <DangerouslySetHtmlContent allowRerender html={safe} className="markdown-html" />}
+    </div>
+  );
 }
 
 /**
@@ -453,7 +449,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2),
   }),
   markdownBody: css({
-    [`& .${MERMAID_DIAGRAM_CLASS}`]: {
+    [`.${DIAGRAM_CLASS}`]: {
       display: 'flex',
       justifyContent: 'center',
       margin: theme.spacing(2, 0),
@@ -462,11 +458,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         height: 'auto',
       },
     },
-    // Failed diagram: keep the source visible but signal it couldn't render.
-    [`& .${MERMAID_ERROR_CLASS}`]: {
-      borderLeft: `3px solid ${theme.colors.error.border}`,
-    },
-    [`& .${MERMAID_ERROR_NOTICE_CLASS}`]: {
+    [`.${DIAGRAM_ERROR_CLASS}`]: {
       color: theme.colors.error.text,
       fontSize: theme.typography.bodySmall.fontSize,
       marginBottom: theme.spacing(0.5),
