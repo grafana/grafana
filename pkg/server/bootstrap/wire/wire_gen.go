@@ -887,7 +887,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	routesLoader, err := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	if err != nil {
+		return nil, err
+	}
 	routerService, err := router.ProvideMiddlewareService(featureToggles, routesLoader, registerer)
 	if err != nil {
 		return nil, err
@@ -1659,7 +1662,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	routesLoader, err := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	if err != nil {
+		return nil, err
+	}
 	routerService, err := router.ProvideMiddlewareService(featureToggles, routesLoader, registerer)
 	if err != nil {
 		return nil, err
@@ -2207,7 +2213,10 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoaderWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, clients)
+	routesLoader, err := router.ProvideRoutesLoaderWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, clients)
+	if err != nil {
+		return nil, err
+	}
 	return routesLoader, nil
 }
 
