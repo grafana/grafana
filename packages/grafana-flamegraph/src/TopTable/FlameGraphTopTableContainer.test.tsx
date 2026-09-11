@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -9,7 +9,7 @@ import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
-import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, { buildFilteredTable, getTruncatedSummary } from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -81,6 +81,38 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+});
+
+describe('truncated nodes', () => {
+  const truncatedContainer = () =>
+    new FlameGraphDataContainer(
+      createDataFrame({
+        fields: [
+          { name: 'level', values: [0, 1, 1] },
+          { name: 'value', values: [10, 6, 4] },
+          { name: 'self', values: [0, 6, 4] },
+          { name: 'label', values: ['total', 'a', 'other'], type: FieldType.string },
+        ],
+      }),
+      { collapsing: true }
+    );
+
+  it('keeps truncated nodes out of the symbol ranking', () => {
+    expect(Object.keys(buildFilteredTable(truncatedContainer())).sort()).toEqual(['a', 'total']);
+  });
+
+  it('reports how much self time the truncated nodes hold', () => {
+    expect(getTruncatedSummary(truncatedContainer())).toEqual({ self: 4, count: 1, share: 0.4 });
+  });
+
+  it('reports nothing when the profile is not truncated', () => {
+    const container = textToDataContainer(`
+[0///]
+[1][2]
+    `);
+
+    expect(getTruncatedSummary(container!)).toBeUndefined();
   });
 });
 
