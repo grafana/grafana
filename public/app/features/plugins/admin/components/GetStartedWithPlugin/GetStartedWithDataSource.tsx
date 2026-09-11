@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
-import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
