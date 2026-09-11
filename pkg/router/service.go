@@ -99,7 +99,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // IsDisabled avoids starting the reconcile loop when middleware routing is off.
 func (s *Service) IsDisabled() bool {
-	return !(s.middleware || s.standalone)
+	return !s.middleware && !s.standalone
 }
 
 func (s *Service) starting(ctx context.Context) error {
