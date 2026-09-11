@@ -17,7 +17,9 @@ export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
   const styles = useStyles2(getStyles);
   const { background, text } = getTagColorsFromName(label, theme);
 
-  const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
+  const countLabel = count !== 0 && (
+    <span style={{ marginLeft: visualRefreshEnabled ? undefined : '3px' }}>{`(${count})`}</span>
+  );
 
   return (
     <span
