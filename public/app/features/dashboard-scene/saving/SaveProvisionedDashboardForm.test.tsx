@@ -192,7 +192,7 @@ async function renderForm(dashboard: DashboardScene, changedSaveModel?: Dashboar
   cleanUp();
   cleanUp = dashboard.activate();
   dashboard.onEnterEditMode();
-  dashboard.openSaveDrawer({});
+  await dashboard.openSaveDrawer({});
 
   const drawer = dashboard.state.overlay as SaveDashboardDrawer;
 

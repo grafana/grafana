@@ -110,7 +110,7 @@ func removeDuplicates(strs []string) []string {
 }
 
 func generateNewDatasourceUid(sess *xorm.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid := util.GenerateShortUID()
 
 		exists, err := sess.Table("data_source").Where("uid = ? AND org_id = ?", uid, orgId).Exist()

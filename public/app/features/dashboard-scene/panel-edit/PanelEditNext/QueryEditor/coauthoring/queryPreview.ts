@@ -4,7 +4,7 @@ import { type LoadingState } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
-import { getQueryRunnerFor } from '../../../../utils/utils';
+import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
 
 export interface QueryPreview {
   dispose(): void;

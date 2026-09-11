@@ -114,6 +114,11 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
+  * Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+  * @default false
+  */
+  ['alerting.ruleStatusSync']?: boolean;
+  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -1297,18 +1302,13 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
-  * Enables the new Flame Graph UI containing the Call Tree view
-  * @default false
-  */
-  flameGraphWithCallTree?: boolean;
-  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
+  * @default true
   */
   logsTablePanelNG?: boolean;
   /**

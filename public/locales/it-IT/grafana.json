@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Gestori avvisi",
+        "alert-managers": "",
         "import": "Importa"
       }
     },
@@ -6023,7 +6023,6 @@
       "description": "Una sequenza verticale di pannelli, testo e celle di codice",
       "name": "Notebook",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Ora",
       "title-edit": "",
@@ -6313,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Annotazioni",
         "description": "Descrizione",
@@ -6416,17 +6428,6 @@
           "empty": "(vuoto)",
           "no-title": "<nessun titolo>"
         }
-      },
-      "predefined-variables": {
-        "all": "Tutti",
-        "description": "",
-        "folder": "Cartella",
-        "global": "Globale",
-        "label": "Variabili predefinite",
-        "none": "Nessuna",
-        "pane-header": "Variabili predefinite",
-        "title": "Variabili predefinite",
-        "tooltip": "Scegli quali variabili globali e di cartella riceve questa dashboard"
       },
       "redo": "Ripeti",
       "row": {
@@ -7043,6 +7044,10 @@
       "recommendation": "Una volta che la funzionalità sarà nuovamente abilitata, le dashboard verranno visualizzate normalmente nel formato Dashboard dinamica. Per questo motivo, consigliamo vivamente di non apportare modifiche a queste dashboard fino a quando la funzionalità non viene riattivata, poiché le modifiche apportate in modalità classica potrebbero portare a risultati imprevisti. In alternativa, puoi salvare una copia della dashboard utilizzando l'opzione \"Salva come copia\", nel menu Salva dashboard.",
       "save-warning": "Qualsiasi dashboard creata o convertita in una Dashboard dinamica verrà aperta come una dashboard classica. Il salvataggio della dashboard potrebbe comportare la perdita delle funzionalità Dashboard dinamica già configurate."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opzioni personalizzate",
       "json-values-tooltip": "Fornisci un file JSON che rappresenti una serie di oggetti, in cui ogni oggetto può avere un numero qualsiasi di proprietà.<br/>Consulta <4>la nostra documentazione</4> per ulteriori informazioni.",
@@ -7085,6 +7090,12 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Errore durante il caricamento del dashboard"
     },
     "dashboard-scene": {
@@ -7514,13 +7525,6 @@
       },
       "title-close": "Chiudi"
     },
-    "predefined-variables": {
-      "label-all": "Tutti",
-      "label-custom": "Personalizza",
-      "label-folder": "Cartella",
-      "label-global": "Globale",
-      "label-none": "Nessuna"
-    },
     "provisioned-controls-section": {
       "label": "Con provisioning dall'origine di dati",
       "tooltip": "Aggiunto dal plug-in {{pluginName}}",
@@ -7639,6 +7643,10 @@
       "required": "Obbligatorio"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Modifiche",
         "label-details": "Dettagli",
@@ -9125,6 +9133,7 @@
       "critical-path": "Percorso critico",
       "critical-path-tooltip": "Seleziona gli intervalli nel percorso critico, la sequenza più lunga di attività dipendenti che determina la durata minima della traccia.",
       "duration": "Durata",
+      "error-indicator": "",
       "errors": "Errori",
       "errors-tooltip": "Seleziona gli intervalli in cui lo stato è uguale a errore.",
       "export-started": "Esportazione iniziata",
@@ -9142,11 +9151,17 @@
       "share-export-json": "Esporta in formato JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Ora di inizio",
+      "success-indicator": "",
       "target": "Destinazione",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "ID traccia",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -10655,7 +10670,6 @@
       "ariaLabel-panel-loading": "Barra di caricamento del pannello",
       "ariaLabel-panel-status": "Stato del pannello",
       "errors-and-notices": "Errori e avvisi",
-      "inspect-errors-notices": "Ispeziona",
       "tooltip-cancel": "Annulla query",
       "tooltip-cancel-loading": "Annulla query",
       "tooltip-stop-streaming": "Interrompi streaming",
@@ -10737,9 +10751,13 @@
       "cell-filter-out": "Escludi valore",
       "cell-inspect": "Ispeziona valore",
       "cell-inspect-tooltip": "Ispeziona valore",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copia negli appunti",
       "csv-counts": "Righe: {{rows}}, Colonne: {{columns}}",
       "csv-placeholder": "Inserisci qui il CSV...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Aggiungi tutti i valori visualizzati al filtro",
         "blanks": "(Vuoti)",
@@ -12562,6 +12580,7 @@
       "title": "Crea"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nuova regola di avviso"
     },
     "create-dashboard": {
@@ -13054,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13074,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13125,6 +13142,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13141,6 +13159,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13190,7 +13209,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Cancella impostazioni"
+      "clear-tooltip": "Cancella impostazioni",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Serie di colori per"
@@ -16621,8 +16642,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

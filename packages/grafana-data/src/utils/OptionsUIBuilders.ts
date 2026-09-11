@@ -29,12 +29,19 @@ import { type PanelOptionsEditorConfig, type PanelOptionsEditorItem } from '../t
 /**
  * Fluent API for declarative creation of field config option editors
  */
-export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
+export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> extends OptionsUIRegistryBuilder<
   TOptions,
   StandardEditorProps,
-  FieldConfigPropertyItem<TOptions>
+  // The item type has to carry TContextOptions too: the base class intersects it with the config
+  // type, and if only one side is typed the context degrades. The `any`s keep the item permissive so each add*
+  // method below can narrow value and settings, as before.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  FieldConfigPropertyItem<TOptions, any, any, TContextOptions>,
+  TContextOptions
 > {
-  addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
+  addNumberInput<TSettings>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number, TContextOptions>
+  ) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -46,7 +53,9 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addSliderInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
+  addSliderInput<TSettings>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number, TContextOptions>
+  ) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -58,7 +67,9 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addTextInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string>) {
+  addTextInput<TSettings>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string, TContextOptions>
+  ) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -71,7 +82,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 
   addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
-    config: FieldConfigEditorConfig<TOptions, TSettings, TOption>
+    config: FieldConfigEditorConfig<TOptions, TSettings, TOption, TContextOptions>
   ) {
     return this.addCustomEditor({
       ...config,
@@ -85,7 +96,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addRadio<TOption, TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption>) {
+  addRadio<TOption, TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, TOption, TContextOptions>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -99,7 +110,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addBooleanSwitch<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, boolean>) {
+  addBooleanSwitch<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, boolean, TContextOptions>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -111,7 +122,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addColorPicker<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, string>) {
+  addColorPicker<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings, string, TContextOptions>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -123,7 +134,9 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addUnitPicker<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string>) {
+  addUnitPicker<TSettings>(
+    config: FieldConfigEditorConfig<TOptions, TSettings & UnitFieldConfigSettings, string, TContextOptions>
+  ) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -136,7 +149,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 
   addFieldNamePicker<TSettings>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string>
+    config: FieldConfigEditorConfig<TOptions, TSettings & FieldNamePickerConfigSettings, string, TContextOptions>
   ): this {
     return this.addCustomEditor({
       ...config,
@@ -150,7 +163,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 
   addGenericEditor<TSettings>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & any>, // & any... i give up!
+    config: FieldConfigEditorConfig<TOptions, TSettings & any, unknown, TContextOptions>, // & any... i give up!
     editor: (props: StandardEditorProps<TSettings>) => JSX.Element
   ): this {
     return this.addCustomEditor({
@@ -257,7 +270,8 @@ export function isNestedPanelOptions(item: unknown): item is NestedPanelOptionsB
 export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
   StandardEditorProps,
-  PanelOptionsEditorItem<TOptions>
+  PanelOptionsEditorItem<TOptions>,
+  TOptions
 > {
   addNestedOptions<Sub>(opts: NestedPanelOptions<Sub>) {
     const s = new NestedPanelOptionsBuilder<Sub>(opts);

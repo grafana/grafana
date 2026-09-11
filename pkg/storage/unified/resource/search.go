@@ -458,6 +458,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
 	}
 
+	// Recording sites should not have to check for nil.
+	if indexMetrics == nil {
+		indexMetrics = ProvideIndexMetrics(nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -1604,9 +1609,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
-			if s.indexMetrics != nil {
-				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-			}
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 	}
 	return completeChs
@@ -1637,9 +1640,7 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 			return
 		}
 
-		if s.indexMetrics != nil {
-			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-		}
+		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 
 		s.rebuildIndex(ctx, req)
 	}
@@ -1717,9 +1718,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 			// shouldRebuildIndex against the just-built BuildTime and either run
 			// another rebuild or close the deferred completion channels as a no-op.
 			s.rebuildQueue.Add(*deferred)
-			if s.indexMetrics != nil {
-				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-			}
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 	}()
 
@@ -1935,9 +1934,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	}
 	elapsed := time.Since(start)
 	stats.AddIndexUpdateTime(elapsed)
-	if s.indexMetrics != nil {
-		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
-	}
+	s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	s.log.FromContext(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
 
@@ -1999,14 +1996,36 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 	logger := s.log.New("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
-	builder, err := s.builders.get(ctx, nsr)
-	if err != nil {
-		return nil, err
+	// For dashboards this reads the namespace's usage insights data, and an index
+	// served from a snapshot never calls the callbacks that need it. Kept once
+	// resolved: the cache entry expires while updaterFn keeps running, so asking
+	// again would re-read the insights data.
+	var (
+		builderMu sync.Mutex
+		builder   DocumentBuilder
+	)
+	getBuilder := func(ctx context.Context) (DocumentBuilder, error) {
+		builderMu.Lock()
+		defer builderMu.Unlock()
+		if builder != nil {
+			return builder, nil
+		}
+		b, err := s.builders.get(ctx, nsr)
+		if err != nil {
+			return nil, err
+		}
+		builder = b
+		return builder, nil
 	}
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
+
+		builder, err := getBuilder(ctx)
+		if err != nil {
+			return 0, err
+		}
 
 		phases := newBuildPhaseRecorder(s.indexMetrics, IndexPathBuild, nsr)
 		// Report whatever was accumulated even when the build gives up early, and
@@ -2115,6 +2134,11 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
+
+		builder, err := getBuilder(ctx)
+		if err != nil {
+			return 0, 0, err
+		}
 
 		// If we're calling with the same sinceRV as last time, pass the timestamp
 		// of our last call so the backend can skip the lookback window when safe.
@@ -2289,9 +2313,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	if err != nil {
 		logger.Warn("error getting doc count", "error", err)
 	}
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
-	}
+	s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
 
 	return index, err
 }

@@ -3321,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "警示管理員",
+        "alert-managers": "",
         "import": "匯入"
       }
     },
@@ -5981,7 +5981,6 @@
       "description": "面板、文字和程式碼儲存格的縱向序列",
       "name": "筆記本",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "時間",
       "title-edit": "",
@@ -6270,6 +6269,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "註解",
         "description": "描述",
@@ -6373,17 +6385,6 @@
           "empty": "（空）",
           "no-title": "<無標題>"
         }
-      },
-      "predefined-variables": {
-        "all": "全部",
-        "description": "",
-        "folder": "資料夾",
-        "global": "全球",
-        "label": "預先定義的變數",
-        "none": "無",
-        "pane-header": "預先定義的變數",
-        "title": "預先定義的變數",
-        "tooltip": "選擇此儀表板接收的全域變數和資料夾變數"
       },
       "redo": "重做",
       "row": {
@@ -6998,6 +6999,10 @@
       "recommendation": "再次啟用該功能後，您的儀表板將以動態儀表板格式正常呈現。因此，我們強烈建議在重新啟用該功能之前，不要對這些儀表板進行任何變更，因為在傳統模式下進行的編輯可能會導致意外結果。或者，您可以使用儲存儀表板功能表中的「另存為副本」選項儲存儀表板的副本。",
       "save-warning": "任何建立或轉換為動態儀表板的儀表板，都將以傳統儀表板的形式開啟。儲存儀表板可能會導致已設定的動態儀表板功能遺失。"
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "自訂選項",
       "json-values-tooltip": "提供 JSON 表示物件陣列，其中每個物件可以有任意數量的屬性。<br/>請參閱<4>我們的文件</4>以了解更多資訊。",
@@ -7040,6 +7045,12 @@
       "type": "類型"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "載入控制面板發生錯誤"
     },
     "dashboard-scene": {
@@ -7468,13 +7479,6 @@
       },
       "title-close": "關閉"
     },
-    "predefined-variables": {
-      "label-all": "全部",
-      "label-custom": "自訂",
-      "label-folder": "資料夾",
-      "label-global": "全球",
-      "label-none": "無"
-    },
     "provisioned-controls-section": {
       "label": "由資料來源佈建",
       "tooltip": "由外掛程式 {{pluginName}} 新增",
@@ -7593,6 +7597,10 @@
       "required": "必填"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "變更",
         "label-details": "詳細資訊",
@@ -9072,6 +9080,7 @@
       "critical-path": "關鍵路徑",
       "critical-path-tooltip": "選取關鍵路徑中的跨度，即決定追蹤最短持續時間的最長相依任務序列。",
       "duration": "持續時間",
+      "error-indicator": "",
       "errors": "錯誤",
       "errors-tooltip": "選取狀態等於錯誤的跨度。",
       "export-started": "匯出已開始",
@@ -9089,11 +9098,17 @@
       "share-export-json": "匯出為 JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "開始時間",
+      "success-indicator": "",
       "target": "目標",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "追蹤 ID",
-      "url": "網址"
+      "url": "網址",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -10592,7 +10607,6 @@
       "ariaLabel-panel-loading": "面板載入列",
       "ariaLabel-panel-status": "面板狀態",
       "errors-and-notices": "錯誤和通知",
-      "inspect-errors-notices": "檢測",
       "tooltip-cancel": "取消查詢",
       "tooltip-cancel-loading": "取消查詢",
       "tooltip-stop-streaming": "停止串流",
@@ -10674,9 +10688,13 @@
       "cell-filter-out": "篩選出值",
       "cell-inspect": "檢查值",
       "cell-inspect-tooltip": "檢查值",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "複製到剪貼簿",
       "csv-counts": "列：{{rows}}，欄：{{columns}}",
       "csv-placeholder": "在此處輸入 CSV …",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "將所有顯示的值新增至篩選條件",
         "blanks": "（空白）",
@@ -12474,6 +12492,7 @@
       "title": "建立"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "新的警報規則"
     },
     "create-dashboard": {
@@ -12963,7 +12982,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12983,7 +13001,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13034,6 +13051,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13050,6 +13068,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13097,7 +13116,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "清除所有設定"
+      "clear-tooltip": "清除所有設定",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "系列顏色依據"
@@ -16498,8 +16519,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

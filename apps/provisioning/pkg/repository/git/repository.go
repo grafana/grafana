@@ -24,6 +24,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
+	"github.com/grafana/nanogit/metrics"
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
@@ -54,6 +55,9 @@ type gitRepository struct {
 	writerOptions []nanogit.WriterOption
 	maxBytes      atomic.Int64
 	metrics       *repository.OperationRecorder
+	// clientMetrics is injected into the context nanogit operates on, so its
+	// HTTP/fetch/cache signals are recorded. Nil when no metrics are registered.
+	clientMetrics metrics.Recorder
 }
 
 func NewRepository(
@@ -61,6 +65,7 @@ func NewRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 	metrics *repository.OperationMetrics,
+	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
@@ -98,6 +103,7 @@ func NewRepository(
 		client:        client,
 		writerOptions: writerOptions,
 		metrics:       metrics.Recorder(config.Spec.Type),
+		clientMetrics: clientMetrics.Recorder(config.Spec.Type),
 	}, nil
 }
 
@@ -230,7 +236,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	}
 
 	// Check authorization
-	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
+	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
@@ -767,7 +773,10 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	return branchRef.Hash.String(), nil
 }
 
-func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
+func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (changes []repository.VersionedFileChange, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Compare(start, err) }()
+
 	if base == "" && ref == "" {
 		return nil, fmt.Errorf("base and ref cannot be empty")
 	}
@@ -781,7 +790,6 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	// Resolve base ref to hash
 	var baseHash hash.Hash
 	if base != "" {
-		var err error
 		baseHash, err = r.resolveRefToHash(ctx, base)
 		if err != nil {
 			return nil, fmt.Errorf("resolve base ref: %w", err)
@@ -799,7 +807,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]repository.VersionedFileChange, 0)
+	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
 		switch f.Status {
 		case protocol.FileStatusAdded:
@@ -1114,6 +1122,12 @@ func ensureRetryContext(ctx context.Context) context.Context {
 func (r *gitRepository) withGitContext(ctx context.Context, ref string) (context.Context, logging.Logger) {
 	// Ensure retry logic is configured first, before any early returns
 	ctx = ensureRetryContext(ctx)
+
+	// Report nanogit's HTTP/fetch/cache signals for this repository. Injected
+	// unconditionally so it survives even the early return below.
+	if r.clientMetrics != nil {
+		ctx = metrics.ToContext(ctx, r.clientMetrics)
+	}
 
 	logger := logging.FromContext(ctx)
 

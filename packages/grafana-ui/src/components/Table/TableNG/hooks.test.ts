@@ -7,6 +7,7 @@ import { TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
   useSortedRows,
   useHeaderHeight,
@@ -156,6 +157,241 @@ describe('TableNG hooks', () => {
     });
   });
 
+  describe('useNotifyDisplayedRowIndices', () => {
+    it('reports parent row __index values in display order and skips nested rows', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 2 },
+        { __depth: 1, __index: 2 },
+        { __depth: 0, __index: 0 },
+        { __depth: 1, __index: 0 },
+      ];
+
+      renderHook(() => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange));
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+    });
+
+    it('does not notify again when the index order is unchanged', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when sort order changes', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1, 0]);
+    });
+
+    it('does not notify again when parent order is unchanged even if nested rows are present', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 2 },
+            { __depth: 1, __index: 2 },
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 2 },
+          { __depth: 1, __index: 2 },
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not notify when only nested rows are added, removed, or moved', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([0, 1]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when a parent row is filtered out', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 2]);
+    });
+
+    it('notifies when a parent row is added', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 1, 2]);
+    });
+
+    it('notifies when displayed parent rows become empty', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({ rows: [] });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it('notifies when a single parent index changes and the list length stays the same', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 3 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 3, 2]);
+    });
+
+    it('does not notify when only the callback reference changes', () => {
+      const firstCallback = jest.fn();
+      const secondCallback = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 0 },
+        { __depth: 0, __index: 1 },
+      ];
+      const { rerender } = renderHook(
+        ({ rows, onDisplayedRowIndicesChange }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
+        {
+          initialProps: { rows, onDisplayedRowIndicesChange: firstCallback },
+        }
+      );
+
+      rerender({ rows, onDisplayedRowIndicesChange: secondCallback });
+
+      expect(firstCallback).toHaveBeenCalledTimes(1);
+      expect(firstCallback).toHaveBeenCalledWith([0, 1]);
+      expect(secondCallback).not.toHaveBeenCalled();
+    });
+  });
+
   describe('useSortedRows', () => {
     it('should correctly set up the table with an initial sort', () => {
       const { fields, rows } = setupData();
@@ -258,7 +494,8 @@ describe('TableNG hooks', () => {
     });
 
     it('should handle pagination correctly', () => {
-      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total:
+      // (60 - pagination chrome 38) / rowHeight 10 = 2.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
@@ -417,8 +654,32 @@ describe('TableNG hooks', () => {
       expect(result.current.rows[0].__index).toBe(2);
     });
 
+    it('reserves an extra margin under the controls when the panel has no padding of its own', () => {
+      // The pager only needs a bottom margin when the panel has dropped its padding, and that margin
+      // comes out of the row area: (58 - 38) / 10 = 2 rows with the panel's padding in place, and
+      // (58 - 46) / 10 = 1 without it.
+      const { rows } = setupData();
+      const options = {
+        enabled: true,
+        height: 58,
+        width: 800,
+        rowHeight: 10,
+        headerHeight: 0,
+        footerHeight: 0,
+      };
+
+      const { result: withPanelPadding } = renderHook(() => usePaginatedRows(rows, options));
+      expect(withPanelPadding.current.rowsPerPage).toBe(2);
+
+      const { result: withoutPanelPadding } = renderHook(() =>
+        usePaginatedRows(rows, { ...options, noPanelPadding: true })
+      );
+      expect(withoutPanelPadding.current.rowsPerPage).toBe(1);
+    });
+
     it('should fall back to the height-derived page size when pageSize is not a positive number', () => {
-      // (60 - 38) / 10 = 2 rows per page from height; pageSize: 0 must not override that.
+      // (60 - pagination chrome 38) / 10 = 2 rows per page from height; pageSize: 0 must not
+      // override that.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {

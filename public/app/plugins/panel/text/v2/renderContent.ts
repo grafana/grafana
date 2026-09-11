@@ -17,7 +17,7 @@ import { RenderMode, TextMode } from '../panelcfg.gen';
 import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
 import { transformContent } from './utils';
 
-/** Ceiling for the `maxRows` option, so a typed value cannot hang the panel. */
+/** Hard ceiling on the rows a single render pass may cover, so a large query cannot hang the panel. */
 export const MAX_RENDERED_ROWS = 1000;
 
 /** Render cost follows output size, not row count, and markdown-it degrades superlinearly. */
@@ -26,6 +26,12 @@ export const MAX_RENDERED_CHARS = 100_000;
 /** How far back from the cap a line break is still worth cutting on. */
 const CUT_BACKTRACK_CHARS = 1000;
 
+/** Counted across all frames. */
+export interface RowWindow {
+  start: number;
+  count: number;
+}
+
 /** What to render, built from either the panel options or the editor's draft. */
 export interface TextTemplate {
   content: string;
@@ -33,7 +39,8 @@ export interface TextTemplate {
   series?: DataFrame[];
   renderMode?: RenderMode;
   format?: string;
-  maxRows?: number;
+  /** Per-row renders only. */
+  rowWindow?: RowWindow;
 }
 
 /** A finished render pass, or the error that stopped it. */
@@ -65,21 +72,15 @@ function handlebarsEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
 }
 
-// A cleared or zeroed field falls back to the ceiling.
-function resolveMaxRows(maxRows?: number): number {
-  return maxRows ? Math.max(1, Math.min(Math.floor(maxRows), MAX_RENDERED_ROWS)) : MAX_RENDERED_ROWS;
-}
-
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, mode, series = [], renderMode, format } = template;
-  const maxRows = resolveMaxRows(template.maxRows);
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
     handlebarsEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables, maxRows, compiled);
+    return interpolateEveryRow(template, series, replaceVariables, compiled);
   }
 
   const scopedVars = buildOnceContext(series);
@@ -88,9 +89,9 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
     return replaceVariables(content, scopedVars, format);
   }
 
-  const rendered = replaceVariables(compiled(buildAllRowsContext(series, maxRows)), scopedVars, format);
+  const rendered = replaceVariables(compiled(buildAllRowsContext(series, MAX_RENDERED_ROWS)), scopedVars, format);
 
-  // A Once template emits one string, so the row limit cannot bound its size.
+  // A Once template emits one string, so the row ceiling cannot bound its size.
   return cutToMaxChars(rendered);
 }
 
@@ -150,12 +151,15 @@ function interpolateEveryRow(
   template: TextTemplate,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
-  maxRows: number,
   compiled?: CompiledTemplate
 ): string {
-  const { content, mode, format } = template;
+  const { content, mode, format, rowWindow } = template;
+  const windowStart = rowWindow?.start ?? 0;
+  const maxBlocks = Math.min(rowWindow?.count ?? MAX_RENDERED_ROWS, MAX_RENDERED_ROWS);
   const blocks: string[] = [];
   let renderedChars = 0;
+  // The window spans frames.
+  let skipped = 0;
 
   for (const [frameIndex, frame] of series.entries()) {
     const field = getMacroField(frame);
@@ -163,15 +167,19 @@ function interpolateEveryRow(
       continue;
     }
 
-    const rowCount = Math.min(frame.length, maxRows - blocks.length);
-    const rows = compiled ? buildRows(frame, series, rowCount) : [];
+    const firstRow = Math.min(windowStart - skipped, frame.length);
+    skipped += firstRow;
 
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const rowCount = Math.min(frame.length - firstRow, maxBlocks - blocks.length);
+    const rows = compiled ? buildRows(frame, series, rowCount, firstRow) : [];
+
+    for (let offset = 0; offset < rowCount; offset++) {
+      const rowIndex = firstRow + offset;
       const scopedVars: ScopedVars = {
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      const block = replaceVariables(compiled ? compiled(rows[rowIndex]) : content, scopedVars, format);
+      const block = replaceVariables(compiled ? compiled(rows[offset]) : content, scopedVars, format);
 
       blocks.push(block);
       renderedChars += block.length;
@@ -181,7 +189,7 @@ function interpolateEveryRow(
       }
     }
 
-    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxRows) {
+    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxBlocks) {
       break;
     }
   }
