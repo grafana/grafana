@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import type { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Box } from '@grafana/ui';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -26,6 +27,8 @@ export function OrganizationSwitcher({ children, undocked }: { children?: React.
     }
     // Plain reload to root: the POST above persisted the switch server-side, so re-bootstrap lands in
     // the new org without the ?orgId redirect path, which breaks under gateway/JWT auth
+    // Firefox reports fetches aborted by navigation as errors; cancel them first so nothing renders a failure.
+    getBackendSrv().cancelAllInFlightRequests();
     window.location.assign(`${config.appSubUrl}/`);
   };
   useEffect(() => {
