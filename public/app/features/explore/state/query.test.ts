@@ -596,6 +596,46 @@ describe('importing queries', () => {
       expect(getState().explore.panes.left!.queries[1]).toHaveProperty('datasource.uid', 'ds2');
     });
   });
+
+  describe('when importing queries between incompatible data source types', () => {
+    it('clears the query when switching between incompatible data source types', async () => {
+      const sourceDataSource = {
+        ...datasources[0],
+        meta: { id: 'prometheus', mixed: false } as unknown as DataSourcePluginMeta,
+      } as DataSourceApi;
+
+      const targetDataSource = {
+        ...datasources[1],
+        meta: { id: 'elasticsearch', mixed: false } as unknown as DataSourcePluginMeta,
+      } as DataSourceApi;
+
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: sourceDataSource,
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      const sourceQuery = {
+        datasource: { type: 'postgres', uid: 'ds1' },
+        refId: 'A',
+        expr: 'up{job="grafana"}',
+      };
+
+      await dispatch(importQueries('left', [sourceQuery], sourceDataSource, targetDataSource));
+
+      const importedQueries = getState().explore.panes.left!.queries;
+      expect(importedQueries).toHaveLength(1);
+      expect(importedQueries[0]).toHaveProperty('datasource.uid', 'ds2');
+      expect(importedQueries[0]).toHaveProperty('refId', 'A');
+      expect(importedQueries[0]).not.toHaveProperty('expr');
+    });
+  });
 });
 
 describe('adding new query rows', () => {
