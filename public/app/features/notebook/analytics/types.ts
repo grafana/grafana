@@ -126,6 +126,10 @@ export interface NotebookEditSessionEndedProperties extends EventProperty, Noteb
   cellsRemoved: number;
   /** Cells reordered during the session. */
   cellsMoved: number;
+  /** Undo steps taken during the session. A held key repeats, so this counts steps, not gestures. */
+  undoCount: number;
+  /** Redo steps taken during the session, counted the same way as undoCount. */
+  redoCount: number;
   /** Whether the time range moved during the session, by any control. */
   timeRangeChanged: boolean;
   /** How the session ended. */
