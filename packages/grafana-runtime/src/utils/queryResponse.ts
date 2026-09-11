@@ -61,10 +61,17 @@ export function toDataQueryResponse(
   res:
     | { data: BackendDataSourceResponse | undefined }
     | FetchResponse<BackendDataSourceResponse | undefined>
-    | DataQueryError,
+    | DataQueryError
+    | Error,
   queries?: DataQuery[]
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
+
+  if (res instanceof Error) {
+    rsp.state = LoadingState.Error;
+    rsp.error = toDataQueryError(res);
+    return rsp;
+  }
 
   const traceId = 'traceId' in res ? res.traceId : undefined;
 
