@@ -17,7 +17,7 @@ import (
 )
 
 // ProvideRoutesLoader wires the cloud-router RoutesLoader ahead of the dummy
-// one: when [cloud_router].apiserver_url is configured, that loader wins;
+// one: when [cloud_router].appmanifest_apiserver_url is configured, that loader wins;
 // otherwise this falls back to two dummy API groups for exercising the OSS
 // router target end to end. Plugin manifests will replace the dummy backends
 // in a later iteration.
