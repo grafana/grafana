@@ -2,14 +2,21 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@
 import { type DataQuery } from '@grafana/schema';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
+import {
+  defaultLibraryPanelKind,
+  defaultPanelKind,
+  defaultVisualizationPanelKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type PanelQueryKind,
+} from 'app/features/notebook/types';
 
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 import { setQueryRunnerQueries } from '../scene/layout-notebook/setQueryRunnerQueries';
 
-import { readNotebookShape } from './shape';
+import { readAddedPanelShape, readNotebookShape } from './shape';
 
 function sceneWithCells(cells: NotebookCellItem[]): NotebookScene {
   const manager = new NotebookLayoutManager({
@@ -46,6 +53,45 @@ function panelCell(elementName: string, source: 'user' | 'assistant', queries?: 
   return new NotebookCellItem({ elementName, source, body: panel });
 }
 
+/**
+ * A cell as it comes back from a saved notebook. The deserializer uses buildVizPanelState, which
+ * leaves the datasource on each query rather than on the runner.
+ */
+function deserializedPanelCell(elementName: string, datasourceType: string): NotebookCellItem {
+  const base = defaultVisualizationPanelKind();
+  const panelKind: PanelKind = {
+    ...base,
+    spec: {
+      ...base.spec,
+      id: 1,
+      data: {
+        ...base.spec.data,
+        spec: {
+          ...base.spec.data.spec,
+          queries: [
+            {
+              kind: 'PanelQuery',
+              spec: {
+                refId: 'A',
+                hidden: false,
+                query: {
+                  kind: 'DataQuery',
+                  group: datasourceType,
+                  version: 'v0',
+                  datasource: { name: 'ds1' },
+                  spec: { expr: 'up' },
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  return new NotebookCellItem({ elementName, source: 'user', body: new VizPanel(buildVizPanelState(panelKind, 1)) });
+}
+
 describe('readNotebookShape', () => {
   it('reads counts and types across a mix of cells', () => {
     const scene = sceneWithCells([
@@ -57,7 +103,6 @@ describe('readNotebookShape', () => {
 
     expect(readNotebookShape(scene)).toEqual({
       cellCount: 4,
-      cellsByType: ['markdown', 'code', 'panel', 'markdown'],
       panelCount: 1,
       datasourceTypes: ['prometheus'],
       assistantCellCount: 1,
@@ -74,7 +119,6 @@ describe('readNotebookShape', () => {
 
     expect(readNotebookShape(scene)).toEqual({
       cellCount: 0,
-      cellsByType: [],
       panelCount: 0,
       datasourceTypes: [],
       assistantCellCount: 0,
@@ -110,6 +154,22 @@ describe('readNotebookShape', () => {
     expect(shape.datasourceCount).toBe(1);
   });
 
+  /**
+   * Reading the runner's datasource reported none of this. A panel restored from the spec carries
+   * one only when its queries disagree and it switches to Mixed.
+   *
+   * It also made every panel cell look unconfigured, so a panel cell counted as empty.
+   */
+  it('reads the datasource of a panel restored from a saved notebook', () => {
+    const scene = sceneWithCells([deserializedPanelCell('latency', 'prometheus')]);
+
+    const shape = readNotebookShape(scene);
+    expect(shape.datasourceTypes).toEqual(['prometheus']);
+    expect(shape.datasourceCount).toBe(1);
+    expect(shape.configuredPanelCount).toBe(1);
+    expect(shape.nonEmptyCellCount).toBe(1);
+  });
+
   it('deduplicates datasource types across panels on the same datasource', () => {
     const scene = sceneWithCells([
       panelCell('panel-a', 'user', [{ refId: 'A', datasource: { type: 'prometheus', uid: 'ds1' } }]),
@@ -119,5 +179,83 @@ describe('readNotebookShape', () => {
     const shape = readNotebookShape(scene);
     expect(shape.panelCount).toBe(2);
     expect(shape.datasourceTypes).toEqual(['prometheus']);
+  });
+});
+
+/** A query as the add-panel flow serializes one. The datasource type lands on the query's group. */
+function query(refId: string, datasourceType: string): PanelQueryKind {
+  return {
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        group: datasourceType,
+        version: 'v0',
+        datasource: { name: 'ds1' },
+        spec: {},
+      },
+    },
+  };
+}
+
+function panelWithQueries(queries: PanelQueryKind[]): PanelKind {
+  const base = defaultPanelKind();
+  return {
+    ...base,
+    spec: {
+      ...base.spec,
+      id: 1,
+      title: 'p95 latency',
+      vizConfig: { ...base.spec.vizConfig, group: 'timeseries' },
+      data: { ...base.spec.data, spec: { ...base.spec.data.spec, queries } },
+    },
+  };
+}
+
+function libraryPanel(): LibraryPanelKind {
+  const base = defaultLibraryPanelKind();
+  return {
+    ...base,
+    spec: { ...base.spec, id: 1, title: 'p95 latency', libraryPanel: { name: 'p95 latency', uid: 'lib-1' } },
+  };
+}
+
+describe('readAddedPanelShape', () => {
+  it('reads the visualization type, the queries and the datasources of the panel being sent', () => {
+    const panel = panelWithQueries([query('A', 'prometheus'), query('B', 'loki')]);
+
+    expect(readAddedPanelShape(panel)).toEqual({
+      panelType: 'timeseries',
+      datasourceTypes: ['prometheus', 'loki'],
+      queryCount: 2,
+    });
+  });
+
+  it('deduplicates datasource types across queries on the same datasource', () => {
+    const shape = readAddedPanelShape(panelWithQueries([query('A', 'prometheus'), query('B', 'prometheus')]));
+
+    expect(shape.datasourceTypes).toEqual(['prometheus']);
+    // Both queries still count, only the type list is deduplicated.
+    expect(shape.queryCount).toBe(2);
+  });
+
+  // A query from Explore may never have had a datasource picked. It carries an empty group.
+  it('leaves a query with no datasource out of the datasource types', () => {
+    const shape = readAddedPanelShape(panelWithQueries([query('A', ''), query('B', 'prometheus')]));
+
+    expect(shape.datasourceTypes).toEqual(['prometheus']);
+    expect(shape.queryCount).toBe(2);
+  });
+
+  // Only a library panel that had not loaded is stored as a bare reference. The caller reports
+  // whether the user sent a library panel.
+  it('reports an element that is only a reference with no visualization type and no queries', () => {
+    expect(readAddedPanelShape(libraryPanel())).toEqual({
+      panelType: '',
+      datasourceTypes: [],
+      queryCount: 0,
+    });
   });
 });

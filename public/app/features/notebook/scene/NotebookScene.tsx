@@ -12,6 +12,7 @@ import {
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
+  SceneObjectStateChangedEvent,
   type SceneRefreshPicker,
   type SceneTimePicker,
   type SceneTimeRange,
@@ -26,10 +27,17 @@ import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookEditSession } from '../analytics/editSession';
+import { NotebookAnalytics } from '../analytics/main';
+import {
+  NOTEBOOK_EDIT_SESSION_END_REASON,
+  NOTEBOOK_EDIT_SESSION_SOURCE,
+  type NotebookEditSessionSource,
+} from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
-import { NotebookAutosave } from './NotebookAutosave';
+import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
@@ -59,7 +67,9 @@ export interface NotebookSceneState extends SceneObjectState {
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
-  public readonly editHistory = new NotebookEditHistory();
+  // Declared before `editHistory`, which is handed it: class fields initialise in order.
+  public readonly editSession = new NotebookEditSession();
+  public readonly editHistory = new NotebookEditHistory(this.editSession);
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
@@ -135,12 +145,33 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         }
       });
 
+      // Only while editing. A reader moving the time range is theirs to move, and the notebook
+      // deliberately does not keep it, so it is not something this session did. `start()` clears the
+      // flag on the way into a session as well, but without this the flag would mean "moved since the
+      // last start" rather than "moved during this session".
+      const timeRangeSub = this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+        if (this.state.isEditing && changesTimeSettings(payload, this)) {
+          this.editSession.onTimeRangeChanged();
+        }
+      });
+
       const destroyMutationClient = createMutationClient(this, 'notebook');
       const stopAutosave = this.autosave.start();
 
       return () => {
+        // A toggle-off already ended the session and turned isEditing back off; this only catches
+        // the case where the page itself goes away while a session was still open.
+        if (this.state.isEditing) {
+          NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
+          // Edit mode has to come off with the session. The page caches this scene and hands it back
+          // on the next visit, so a scene left mid-session would report a second end when someone
+          // opens the notebook just to read it, and no start when they open it to edit.
+          this.setState({ isEditing: false });
+          this.state.body.editModeChanged?.(false);
+        }
         stopAutosave();
         destroyMutationClient();
+        timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
         window.__grafanaSceneContext = prevSceneContext;
@@ -167,7 +198,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    * Permission is checked here rather than only where the toggle renders, so no caller — including
    * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
    */
-  public onEnterEditMode = () => {
+  public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
       return;
     }
@@ -175,20 +206,31 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // Asked before editing begins, so not answering leaves the notebook where it already was.
     const changed = this.autosave.viewOnlyVizChanges();
     if (changed.length > 0) {
-      this.askAboutViewOnlyChanges(changed);
+      this.askAboutViewOnlyChanges(changed, source);
       return;
     }
 
-    this.startEditing();
+    this.startEditing(source);
   };
 
-  private startEditing(): void {
+  private startEditing(source: NotebookEditSessionSource): void {
+    const wasEditing = this.state.isEditing;
+
     // Before the state change, because entering edit mode is itself a state change and autosave decides
     // what to write the moment it sees one.
     this.autosave.notifyEditingStarted();
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
+
+    // Only when a session is actually starting. A second event would read as two sessions. And
+    // start() zeroes the counters, so it would throw away the edits counted so far.
+    if (!wasEditing) {
+      this.editSession.start();
+      // No uid means the notebook does not exist yet. That matters more than which control the person clicked.
+      const uid = this.state.uid;
+      NotebookAnalytics.editSessionStarted(uid ?? '', uid ? source : NOTEBOOK_EDIT_SESSION_SOURCE.NEW);
+    }
   }
 
   /**
@@ -201,7 +243,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    * Both answers start editing first, because `notifyEditingStarted` clears what counted as edited and
    * a kept colour has to survive that.
    */
-  private askAboutViewOnlyChanges(changed: string[]): void {
+  private askAboutViewOnlyChanges(changed: string[], source: NotebookEditSessionSource): void {
     // Refusing produces no state change, so nothing would rewrite the url and `?edit=true` would sit
     // there claiming a mode the notebook is not in. NotebookSceneUrlSync cleans it up for the same reason.
     locationService.partial({ [NOTEBOOK_EDIT_PARAM]: null }, true);
@@ -216,12 +258,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
         yesButtonVariant: 'destructive',
         onConfirm: () => {
-          this.startEditing();
+          this.startEditing(source);
           this.autosave.discardVizChanges();
         },
         altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
         onAltAction: () => {
-          this.startEditing();
+          this.startEditing(source);
           this.autosave.keepVizChanges(changed);
         },
         noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
@@ -230,12 +272,21 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   }
 
   public onExitEditMode = () => {
+    // Read before the state change below, which is itself what turns this false.
+    const wasEditing = this.state.isEditing;
+
     this.state.body.commitPendingEdits();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
     // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
     // save still waiting on the debounce would sit there until the page unmounts.
     this.autosave.flush();
+
+    // Only when a session was actually open. Otherwise a call that turns out to be a no-op (already
+    // in view mode) would still end a session that never started.
+    if (wasEditing) {
+      NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.TOGGLE);
+    }
   };
 
   /**
