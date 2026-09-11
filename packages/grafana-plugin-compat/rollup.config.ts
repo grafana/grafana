@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 
-import { entryPoint, esmOutput, plugins } from '../rollup.config.parts';
+import { esmOutput, plugins } from '../rollup.config.parts';
 
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
