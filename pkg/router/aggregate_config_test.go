@@ -16,6 +16,16 @@ func TestCompileGroupPatterns(t *testing.T) {
 	require.False(t, matchesAnyPattern("coordination.k8s.io", patterns))
 }
 
+func TestCompileGroupPatterns_DotsAreLiteral(t *testing.T) {
+	// Regression test: dots in the pattern must match literal dots, not any character.
+	// *.grafana.app should NOT match evilXgrafanaXapp (where X is any non-dot).
+	patterns, err := compileGroupPatterns([]string{"*.grafana.app"})
+	require.NoError(t, err)
+
+	require.True(t, matchesAnyPattern("dashboard.grafana.app", patterns))
+	require.False(t, matchesAnyPattern("evilXgrafanaXapp", patterns), "pattern must not treat . as wildcard")
+}
+
 func TestMatchesAnyPattern_EmptyMeansMatchAll(t *testing.T) {
 	require.True(t, matchesAnyPattern("anything.at.all", nil))
 }
@@ -27,11 +37,11 @@ func TestCompileGroupPatterns_InvalidPattern(t *testing.T) {
 
 func TestParseAggregateTargets(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"baas_apiserver.url":                          "https://baas.example.invalid",
-		"baas_apiserver.group_regex":                  "*.grafana.app, *.grafana.com",
-		"baas_apiserver.audience":                      "baas",
-		"cloud_app_platform_apiserver.url":             "https://cap.example.invalid",
-		"cloud_app_platform_apiserver.audience":        "cloud-app-platform",
+		"baas_apiserver.url":                    "https://baas.example.invalid",
+		"baas_apiserver.group_regex":            "*.grafana.app, *.grafana.com",
+		"baas_apiserver.audience":               "baas",
+		"cloud_app_platform_apiserver.url":      "https://cap.example.invalid",
+		"cloud_app_platform_apiserver.audience": "cloud-app-platform",
 	})
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 

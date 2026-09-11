@@ -56,8 +56,8 @@ func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetCo
 }
 
 // compileGroupPatterns turns glob-style patterns ("*.grafana.app") into
-// anchored regexps. Only "*" is special (translated to ".*"); every other
-// character is included as-is in the regex pattern.
+// anchored regexps. Only "*" is special (translated to ".*"); literal dots
+// are escaped to match literal dots, not any character.
 func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
 	compiled := make([]*regexp.Regexp, 0, len(patterns))
 	for _, p := range patterns {
@@ -65,7 +65,9 @@ func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
 		b.WriteString("^")
 		parts := strings.Split(p, "*")
 		for i, part := range parts {
-			b.WriteString(part)
+			// Escape literal dots to prevent them from matching any character
+			escapedPart := strings.ReplaceAll(part, ".", "\\.")
+			b.WriteString(escapedPart)
 			// Each * in the original pattern becomes .* in the regex
 			if i < len(parts)-1 {
 				b.WriteString(".*")
