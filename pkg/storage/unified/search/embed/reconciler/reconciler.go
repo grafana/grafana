@@ -599,11 +599,17 @@ func (s *Reconciler) processListedEvent(ctx context.Context, builder embed.Build
 	}
 	if state, ok := s.retries[k]; ok {
 		if ev.rv <= state.rv {
+			alreadySeen := state.seen
 			state.seen = true
 			s.retries[k] = state
 			if state.attempts >= maxEventAttempts {
 				s.finishBootstrap(ev)
 				return false, false
+			}
+			// Bootstrap replay and listing can encounter the same failure in one
+			// sweep. Keep the cursor pinned without consuming another attempt.
+			if alreadySeen {
+				return true, false
 			}
 			ev.attempts = state.attempts
 		} else {

@@ -1770,6 +1770,35 @@ func TestReconciler_BootstrapExceptionBatchDoesNotBlockSweep(t *testing.T) {
 	assert.Len(t, vec.upserts, bootstrapBatchSize+4)
 }
 
+func TestReconciler_BootstrapFailureRelisted(t *testing.T) {
+	for _, newer := range []bool{false, true} {
+		t.Run(fmt.Sprintf("newer=%t", newer), func(t *testing.T) {
+			s, st, vec, _ := setupEmbeddingRetry(t, snowflakeRV(50))
+			key := retryKey(dashGroup, dashRes, "ns", "dash")
+			s.bootstrap[key] = bootstrapEvent{key: &st.changes[0].Key, rv: snowflakeRV(40)}
+			calls := 0
+			vec.upsertErrFn = func([]vector.Vector) error {
+				calls++
+				return errBoom
+			}
+			require.False(t, s.processBootstrap(t.Context(), vec.latestRV))
+			if newer {
+				st.changes[0].ResourceVersion = snowflakeRV(110)
+			}
+			proven, complete, failed := s.reconcileSince(t.Context(), dashboard.New(), vec.latestRV, nil)
+			assert.True(t, complete)
+			assert.True(t, failed, "listing must still report the unresolved failure")
+			assert.Less(t, proven, st.changes[0].ResourceVersion)
+			assert.Equal(t, 1, s.retries[key].attempts)
+			if newer {
+				assert.Equal(t, 2, calls, "a newer revision gets its own attempt")
+			} else {
+				assert.Equal(t, 1, calls, "the same revision is attempted once per sweep")
+			}
+		})
+	}
+}
+
 func TestReconciler_BootstrapExceptionRetryCap(t *testing.T) {
 	for _, mode := range []string{"read", "insert", "provider"} {
 		t.Run(mode, func(t *testing.T) {
@@ -1786,6 +1815,7 @@ func TestReconciler_BootstrapExceptionRetryCap(t *testing.T) {
 				st.readErr = errBoom
 			}
 			if mode == "insert" {
+				late.ResourceVersion = snowflakeRV(110) // Also returned by the ordinary sweep.
 				vec.upsertErrFn = func(v []vector.Vector) error {
 					if v[0].UID == "late" {
 						return errBoom
