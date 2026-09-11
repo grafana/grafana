@@ -20,7 +20,7 @@ function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert =
   });
 }
 
-export function updatePluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
+export function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
   if (typeof runtimeUpdateAppPluginSettings === 'function') {
     return runtimeUpdateAppPluginSettings(pluginId, data);
   }

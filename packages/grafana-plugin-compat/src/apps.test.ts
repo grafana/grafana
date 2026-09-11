@@ -4,7 +4,7 @@ import {
   updateAppPluginSettings as runtimeUpdateAppPluginSettings,
 } from '@grafana/runtime/unstable';
 
-import { getPluginSettings, updatePluginSettings } from './apps';
+import { getPluginSettings, updateAppPluginSettings } from './apps';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -37,21 +37,21 @@ describe('getPluginSettings', () => {
   });
 });
 
-describe('updatePluginSettings', () => {
+describe('updateAppPluginSettings', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     mockRuntimeUpdateAppPluginSettings.mockResolvedValue(mockData as PluginMeta);
   });
 
   it('should call correct function when updateAppPluginSettings exists', async () => {
-    await updatePluginSettings('grafana-exploretraces-app', mockData);
+    await updateAppPluginSettings('grafana-exploretraces-app', mockData);
 
     expect(mockRuntimeUpdateAppPluginSettings).toHaveBeenCalled();
     expect(mockRuntimeUpdateAppPluginSettings).toHaveBeenCalledWith('grafana-exploretraces-app', { ...mockData });
   });
 
   it('should return correct response when updateAppPluginSettings exists', async () => {
-    const result = await updatePluginSettings('grafana-exploretraces-app', mockData);
+    const result = await updateAppPluginSettings('grafana-exploretraces-app', mockData);
 
     expect(result).toStrictEqual(mockData);
   });

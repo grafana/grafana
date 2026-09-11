@@ -48,9 +48,6 @@
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
   },
-  "dependencies": {
-    "@grafana/runtime": "workspace:*"
-  },
   "devDependencies": {
     "@grafana/data": "workspace:*",
     "@typescript/native": "npm:typescript@^7.0.2",
@@ -59,5 +56,8 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
+  },
+  "peerDependencies": {
+    "@grafana/runtime": "*"
   }
 }
