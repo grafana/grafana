@@ -30,11 +30,15 @@ import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
+import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState } from './utils';
 
-type SharedPreferencesProps = Props & {
+interface SharedPreferencesProps {
+  resourceUri: string;
+  disabled?: boolean;
+  preferenceType: 'org' | 'team' | 'user';
+  onConfirm?: () => Promise<boolean>;
   legend: ReactNode;
-};
+}
 
 export const SharedPreferences = memo((props: SharedPreferencesProps) => {
   const { resourceUri, preferenceType, legend } = props;
