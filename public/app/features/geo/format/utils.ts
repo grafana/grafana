@@ -1,3 +1,8 @@
+import { type default as OlFeature } from 'ol/Feature';
+import { type default as FeatureFormat } from 'ol/format/Feature';
+import GeoJSON from 'ol/format/GeoJSON';
+import WKB from 'ol/format/WKB';
+import WKT from 'ol/format/WKT';
 import { type Geometry, GeometryCollection, LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
@@ -58,6 +63,62 @@ export function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): 
     values: geo,
     config: hiddenTooltipField,
   };
+}
+
+// Strips a PostGIS EWKT `SRID=<n>;` prefix, which `ol/format/WKT` does not understand.
+// The SRID number is discarded -- the coordinates are assumed to already be WGS84 (EPSG:4326)
+// lon/lat, matching every other geo field builder in this file.
+const ewktSridPrefix = /^SRID=\d+;\s*/i;
+
+// Parses each row of a text field with the given OL feature format (WKT/WKB/GeoJSON all share
+// this readGeometry(source, options) shape) into a Field<Geometry>. A row that fails to parse
+// (malformed input, or -- for WKB -- raw binary mangled into a string upstream of this code,
+// which is unrecoverable) is left undefined rather than throwing, so one bad row never breaks
+// the whole frame.
+function getGeoFieldFromFormat(
+  field: Field<string>,
+  format: FeatureFormat<OlFeature<Geometry>>,
+  preprocess?: (value: string) => string
+): Field<Geometry | undefined> {
+  const count = field.values.length;
+  const geo = new Array<Geometry | undefined>(count);
+  for (let i = 0; i < count; i++) {
+    const value = field.values[i];
+    if (!value) {
+      continue;
+    }
+    try {
+      geo[i] = format.readGeometry(preprocess ? preprocess(value) : value, {
+        featureProjection: 'EPSG:3857',
+        dataProjection: 'EPSG:4326',
+      });
+    } catch (err) {
+      console.warn(`Unable to parse geometry value at row ${i}: ${value}`, err);
+    }
+  }
+  return {
+    name: field.name ?? 'Geometry',
+    type: FieldType.geo,
+    values: geo,
+    config: hiddenTooltipField,
+  };
+}
+
+export function getGeoFieldFromWkt(field: Field<string>): Field<Geometry | undefined> {
+  return getGeoFieldFromFormat(field, new WKT(), (v) => v.replace(ewktSridPrefix, ''));
+}
+
+// Requires a hex string (the default for `ol/format/WKB`, and what PostGIS returns by default
+// for a geography/geometry column, or via `encode(ST_AsBinary(col), 'hex')`). Raw binary cannot
+// be supported here -- by the time a bytea value has been serialized into a data frame's string
+// field, any bytes that aren't valid UTF-8 have already been irreversibly replaced, upstream of
+// this code.
+export function getGeoFieldFromWkb(field: Field<string>): Field<Geometry | undefined> {
+  return getGeoFieldFromFormat(field, new WKB());
+}
+
+export function getGeoFieldFromGeoJson(field: Field<string>): Field<Geometry | undefined> {
+  return getGeoFieldFromFormat(field, new GeoJSON());
 }
 
 export function createGeometryCollection(
