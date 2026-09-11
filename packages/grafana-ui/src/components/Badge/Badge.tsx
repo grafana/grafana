@@ -158,7 +158,5 @@ const getTextStyles = () => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    // flex items default to min-width: auto (their own content size); override so nowrap text can shrink
-    minWidth: 0,
   }),
 });
