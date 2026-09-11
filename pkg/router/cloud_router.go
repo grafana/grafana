@@ -351,6 +351,12 @@ func (l *cloudLoader) combineByName(manifests []v1alpha2.AppManifest, backends [
 			}
 		}
 		if ok {
+			// Operator/Plugin backends, and any Forward backend missing its
+			// config block, have a nil Forward -- not yet supported here.
+			if b.Spec.Forward == nil {
+				slog.Warn("router.NewForwardBackend: route backend has no forward config, skipping", "Group", m.group.Name, "mode", b.Spec.Mode)
+				continue
+			}
 			transportKey := tlsCacheKey{
 				insecure: b.Spec.Forward.Tls.SkipTLSVerify,
 			}

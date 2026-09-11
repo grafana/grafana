@@ -37,6 +37,13 @@ type Service struct {
 
 // ProvideMiddlewareService creates the router service for the full Grafana
 // server. The embedded API server invokes HandleFunc before its existing handler.
+//
+// Unlike the dskit router target (pkg/server's initRouterModule, which checks
+// loader.(services.Service) and runs it alongside the router Service), this
+// does not start a loader's background lifecycle even if it implements
+// services.Service. cloud_router's informer-backed loader is only meant to
+// run as the standalone router module; the monolith path here is expected to
+// stay on the dummy/static loader.
 func ProvideMiddlewareService(features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
@@ -69,7 +76,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 			next = http.NotFoundHandler()
 		}
 		handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			s.router.HandleFunc(w, req, next)
+			s.HandleFunc(w, req, next)
 		})
 		for _, v := range []string{"/apis", "/openapi/v3"} {
 			httpRouter.Handle(v, handler)
