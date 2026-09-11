@@ -9,9 +9,10 @@ import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import { toReduceReducerId } from 'app/features/expressions/schemas/reduce';
 import { toThresholdEvalFunction } from 'app/features/expressions/schemas/threshold';
-import { type ExpressionQuery, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
+import { reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
 import {
   isRangeEvaluator,
   isReducerExpression,

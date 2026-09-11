@@ -2,7 +2,8 @@ import { compact, memoize, reject, uniq } from 'lodash';
 
 import { type Edge, Graph, type Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 /**

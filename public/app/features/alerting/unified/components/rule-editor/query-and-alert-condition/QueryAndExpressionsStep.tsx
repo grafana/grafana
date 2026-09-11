@@ -23,12 +23,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import {
-  ExpressionDatasourceUID,
-  type ExpressionQuery,
-  ExpressionQueryType,
-  expressionTypes,
-} from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {

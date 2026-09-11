@@ -28,9 +28,9 @@ import { type DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { isClassicExpression, isResampleExpression } from './schemas/expressionQuery';
+import { isClassicExpression, isResampleExpression, type ExpressionQuery } from './schemas/expressionQuery';
 import { makeExpression, makeSqlExpression } from './schemas/factories';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionDatasourceUID, ExpressionQueryType } from './types';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
 const SQL_VALUE_FIELD = '__value__';

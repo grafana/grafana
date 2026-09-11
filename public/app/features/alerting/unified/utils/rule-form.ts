@@ -21,9 +21,13 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { encodeExpressionQuery, parseExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import {
+  type ExpressionQuery,
+  encodeExpressionQuery,
+  parseExpressionQuery,
+} from 'app/features/expressions/schemas/expressionQuery';
 import { makeReduceExpression, makeThresholdExpression } from 'app/features/expressions/schemas/factories';
-import { ExpressionDatasourceUID, type ExpressionQuery } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {

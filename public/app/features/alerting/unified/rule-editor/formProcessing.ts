@@ -2,11 +2,15 @@ import { isEmpty, omit } from 'lodash';
 
 import { ReducerID, getNextRefId } from '@grafana/data';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { parseExpressionQuery, validateExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import {
+  type ExpressionQuery,
+  parseExpressionQuery,
+  validateExpressionQuery,
+} from 'app/features/expressions/schemas/expressionQuery';
 import { makeReduceExpression, makeThresholdExpression } from 'app/features/expressions/schemas/factories';
 import { toReduceReducerId } from 'app/features/expressions/schemas/reduce';
 import { toThresholdEvalFunction } from 'app/features/expressions/schemas/threshold';
-import { ExpressionDatasourceUID, type ExpressionQuery } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import {
   isReducerExpression,
   isStrictReducer,

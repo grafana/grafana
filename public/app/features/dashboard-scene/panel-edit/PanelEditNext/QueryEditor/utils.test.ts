@@ -1,6 +1,7 @@
 import { createTheme } from '@grafana/data';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import { makeExpression } from 'app/features/expressions/schemas/factories';
-import { ExpressionQueryType, type ExpressionQuery } from 'app/features/expressions/types';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getExpressionSectionLabel, getHiddenMaskStyles } from './utils';
 

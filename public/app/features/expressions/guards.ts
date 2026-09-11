@@ -1,7 +1,9 @@
 import { isExpressionReference } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-import { type ExpressionQuery, ExpressionQueryType, type ReducerType } from './types';
+import type { ClassicReducerId } from './schemas/common';
+import type { ExpressionQuery } from './schemas/expressionQuery';
+import { ExpressionQueryType } from './types';
 
 export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is ExpressionQuery => {
   if (!dataQuery) {
@@ -20,7 +22,7 @@ export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is Expressio
   return Object.values(ExpressionQueryType).includes(expression.type);
 };
 
-export function isReducerType(value: string): value is ReducerType {
+export function isReducerType(value: string): value is ClassicReducerId {
   return [
     'avg',
     'min',

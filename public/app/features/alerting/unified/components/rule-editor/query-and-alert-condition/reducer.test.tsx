@@ -1,16 +1,12 @@
 import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import {
   changeExpressionType,
   makeClassicExpression,
   makeResampleExpression,
 } from 'app/features/expressions/schemas/factories';
-import {
-  ExpressionDatasourceUID,
-  type ExpressionQuery,
-  ExpressionQueryType,
-  ReducerMode,
-} from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {

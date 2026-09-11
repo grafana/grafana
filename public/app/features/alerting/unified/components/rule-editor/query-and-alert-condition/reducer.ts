@@ -10,9 +10,9 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { isClassicExpression } from 'app/features/expressions/schemas/expressionQuery';
+import { type ExpressionQuery, isClassicExpression } from 'app/features/expressions/schemas/expressionQuery';
 import { makeReduceExpression } from 'app/features/expressions/schemas/factories';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
 import { isReducerExpression, isThresholdExpression } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 

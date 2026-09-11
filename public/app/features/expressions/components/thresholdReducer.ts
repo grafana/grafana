@@ -3,8 +3,12 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
 import type { ThresholdEvalFunction } from '../schemas/common';
-import { type ThresholdCondition, defaultThresholdCondition } from '../schemas/threshold';
-import { ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
+import {
+  defaultThresholdCondition,
+  type ThresholdCondition,
+  type ThresholdExpressionQuery,
+} from '../schemas/threshold';
+import { ExpressionQueryType } from '../types';
 import { isRangeEvaluator } from '../utils/expressionTypes';
 
 export const updateRefId = createAction<string | undefined>('thresold/updateRefId');

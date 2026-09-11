@@ -13,12 +13,12 @@ import { type CombinedRule } from 'app/types/unified-alerting';
 import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import type { ClassicExpressionQuery } from '../../expressions/schemas/classic';
+import type { ExpressionQuery } from '../../expressions/schemas/expressionQuery';
 import type { MathExpressionQuery } from '../../expressions/schemas/math';
 import type { ReduceExpressionQuery } from '../../expressions/schemas/reduce';
 import type { ResampleExpressionQuery } from '../../expressions/schemas/resample';
 import type { ThresholdExpressionQuery } from '../../expressions/schemas/threshold';
 import {
-  type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
   downsamplingTypes,

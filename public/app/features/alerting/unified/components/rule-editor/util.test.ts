@@ -1,8 +1,8 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import type { ClassicExpressionQuery } from 'app/features/expressions/schemas/classic';
+import { type ClassicCondition, type ClassicExpressionQuery } from 'app/features/expressions/schemas/classic';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import type { MathExpressionQuery } from 'app/features/expressions/schemas/math';
 import type { ThresholdExpressionQuery } from 'app/features/expressions/schemas/threshold';
-import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { NEW_REDUCER_REF } from './query-and-alert-condition/reducer';

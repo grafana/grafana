@@ -3,30 +3,12 @@ import { config } from '@grafana/runtime';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
-import type {
-  ClassicCondition as ClassicConditionSchema,
-  ClassicExpressionQuery as ClassicExpressionQuerySchema,
-} from './schemas/classic';
-import type { ClassicReducerId } from './schemas/common';
-import type { ExpressionQuery as ExpressionQuerySchema } from './schemas/expressionQuery';
-import type { MathExpressionQuery as MathExpressionQuerySchema } from './schemas/math';
-import type {
-  ExpressionQuerySettings as ExpressionQuerySettingsSchema,
-  ReduceExpressionQuery as ReduceExpressionQuerySchema,
-} from './schemas/reduce';
-import type { ResampleExpressionQuery as ResampleExpressionQuerySchema } from './schemas/resample';
-import type { SqlExpressionQuery as SqlExpressionQuerySchema } from './schemas/sql';
-import type { ThresholdExpressionQuery as ThresholdExpressionQuerySchema } from './schemas/threshold';
-
 /**
  * MATCHES a constant in DataSourceWithBackend
  */
 export const ExpressionDatasourceUID = '__expr__';
 
-/**
- * The enums live here rather than in `./schemas` because they are runtime values, and this repo
- * does not allow re-exporting a value from another module. The schemas import them from here.
- */
+/** The kinds of server-side expression. The schemas under `./schemas` describe each one. */
 export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
@@ -41,26 +23,6 @@ export enum ReducerMode {
   ReplaceNonNumbers = 'replaceNN',
   DropNonNumbers = 'dropNN',
 }
-
-/**
- * The shapes of each expression type are defined by the schemas under `./schemas`, which also
- * handle reading and writing them. These aliases keep the familiar names available from here.
- *
- * Note that reading a field which only some types have is now a compile error until you narrow by
- * `type` first - use the `is*Expression` helpers in `./schemas/expressionQuery`.
- */
-export type ExpressionQuery = ExpressionQuerySchema;
-export type MathExpressionQuery = MathExpressionQuerySchema;
-export type ReduceExpressionQuery = ReduceExpressionQuerySchema;
-export type ResampleExpressionQuery = ResampleExpressionQuerySchema;
-export type ClassicExpressionQuery = ClassicExpressionQuerySchema;
-export type ThresholdExpressionQuery = ThresholdExpressionQuerySchema;
-export type SqlExpressionQuery = SqlExpressionQuerySchema;
-export type ExpressionQuerySettings = ExpressionQuerySettingsSchema;
-export type ClassicCondition = ClassicConditionSchema;
-
-/** The reducers a classic condition accepts. `reduce` expressions use a different, smaller set. */
-export type ReducerType = ClassicReducerId;
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
   switch (type) {

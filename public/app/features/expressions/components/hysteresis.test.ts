@@ -1,7 +1,7 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import type { ThresholdCondition } from '../schemas/threshold';
-import { ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
+import { type ThresholdCondition, type ThresholdExpressionQuery } from '../schemas/threshold';
+import { ExpressionQueryType } from '../types';
 
 import {
   isInvalid,

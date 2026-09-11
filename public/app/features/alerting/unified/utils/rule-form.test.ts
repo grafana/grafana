@@ -1,6 +1,7 @@
 import { type PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
   type AlertDataQuery,

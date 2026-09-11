@@ -1,6 +1,7 @@
 import { ReducerID } from '@grafana/data';
 import { defaultClassicCondition } from 'app/features/expressions/schemas/classic';
-import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getTimeRangeForExpression } from './timeRange';

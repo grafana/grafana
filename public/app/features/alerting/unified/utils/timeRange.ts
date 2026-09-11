@@ -2,12 +2,13 @@ import { type RelativeTimeRange } from '@grafana/data';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import type { ClassicExpressionQuery } from '../../../expressions/schemas/classic';
+import type { ExpressionQuery } from '../../../expressions/schemas/expressionQuery';
 import type { MathExpressionQuery } from '../../../expressions/schemas/math';
 import type { ReduceExpressionQuery } from '../../../expressions/schemas/reduce';
 import type { ResampleExpressionQuery } from '../../../expressions/schemas/resample';
 import type { SqlExpressionQuery } from '../../../expressions/schemas/sql';
 import type { ThresholdExpressionQuery } from '../../../expressions/schemas/threshold';
-import { type ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';
+import { ExpressionQueryType } from '../../../expressions/types';
 
 const FALL_BACK_TIME_RANGE = { from: 21600, to: 0 };
 

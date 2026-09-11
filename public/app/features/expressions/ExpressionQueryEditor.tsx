@@ -19,8 +19,9 @@ import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
 import { Threshold } from './components/Threshold';
+import type { ExpressionQuery } from './schemas/expressionQuery';
 import { changeExpressionType, getExpressionInput, withExpressionInput } from './schemas/factories';
-import { type ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
+import { ExpressionQueryType, expressionTypes } from './types';
 
 export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 

@@ -6,8 +6,9 @@ import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
+import type { ExpressionQuery } from '../../schemas/expressionQuery';
 import type { SqlExpressionQuery } from '../../schemas/sql';
-import { type ExpressionQuery, ExpressionQueryType } from '../../types';
+import { ExpressionQueryType } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 
 import { SqlEditor } from './SqlEditor/SqlEditor';

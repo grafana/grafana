@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2, Stack, InlineToast, Tooltip, Icon } from '@grafana/ui';
 
-import { type SqlExpressionQuery } from '../types';
+import type { SqlExpressionQuery } from '../schemas/sql';
 
 interface QueryToolboxProps {
   onFormatCode?: () => void;

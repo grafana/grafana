@@ -1,14 +1,16 @@
 import { EvalFunction } from '../../alerting/state/alertDef';
 import { isReducerType } from '../guards';
+import type { ClassicReducerId } from '../schemas/common';
+import type { ExpressionQuery } from '../schemas/expressionQuery';
 import type { ReduceExpressionQuery } from '../schemas/reduce';
 import type { ThresholdExpressionQuery } from '../schemas/threshold';
-import { type ExpressionQuery, ExpressionQueryType, ReducerMode, type ReducerType } from '../types';
+import { ExpressionQueryType, ReducerMode } from '../types';
 
 /**
- * Returns the ReducerType if the value is a valid ReducerType, otherwise undefined
+ * Returns the reducer id if the value is one a classic condition accepts, otherwise undefined
  * @param value string
  */
-export function getReducerType(value: string): ReducerType | undefined {
+export function getReducerType(value: string): ClassicReducerId | undefined {
   if (isReducerType(value)) {
     return value;
   }

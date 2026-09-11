@@ -14,8 +14,9 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
+import type { ExpressionQuery } from './schemas/expressionQuery';
 import { makeMathExpression, makeResampleExpression } from './schemas/factories';
-import { type ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionQueryType } from './types';
 
 const mockGetDatasource = jest.fn();
 
