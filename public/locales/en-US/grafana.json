@@ -8020,6 +8020,7 @@
       "title-label": "Title"
     },
     "json-editor": {
+      "aria-label": "Dashboard JSON model",
       "save-button": "Save changes",
       "save-button-disabled-tooltip": "Fix validation errors before saving",
       "save-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
