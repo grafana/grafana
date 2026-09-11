@@ -2,6 +2,7 @@ package dashboardimport
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -23,10 +24,47 @@ type ImportDashboardRequest struct {
 	Dashboard *simplejson.Json       `json:"dashboard"`
 	Inputs    []ImportDashboardInput `json:"inputs"`
 	// Deprecated: use FolderUID instead
-	FolderId  int64  `json:"folderId"`
-	FolderUid string `json:"folderUid"`
+	FolderId  int64  `json:"folderId,omitempty"`
+	FolderUid string `json:"folderUid,omitempty"`
 
 	User identity.Requester `json:"-"`
+
+	folderIdSet  bool
+	folderUidSet bool
+}
+
+// UnmarshalJSON remembers whether folderId or folderUid were present in the request.
+// An omitted folder means "use the folder from the dashboard resource." An explicit
+// empty folderUid, or folderId: 0, means "save at root." Plain Go zero values cannot
+// tell those cases apart after decoding.
+func (r *ImportDashboardRequest) UnmarshalJSON(data []byte) error {
+	type importDashboardRequest ImportDashboardRequest
+
+	var decoded importDashboardRequest
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*r = ImportDashboardRequest(decoded)
+
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	_, r.folderIdSet = fields["folderId"]
+	_, r.folderUidSet = fields["folderUid"]
+
+	return nil
+}
+
+// HasFolderSelection reports whether the caller chose a folder, including root.
+func (r *ImportDashboardRequest) HasFolderSelection() bool {
+	return r.HasFolderUIDSelection() || r.folderIdSet || r.FolderId != 0
+}
+
+// HasFolderUIDSelection reports whether folderUid chose the folder. An empty
+// folderUid still counts because it means "save at root" and overrides folderId.
+func (r *ImportDashboardRequest) HasFolderUIDSelection() bool {
+	return r.folderUidSet || r.FolderUid != ""
 }
 
 // ImportDashboardResponse response object returned when importing a dashboard.
