@@ -6,6 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS, renderMermaidDiagrams } from './mermaid';
+import { BLOCKS_ATTR } from './pagination';
 
 interface Props {
   html: string;
@@ -37,7 +38,13 @@ export function TextNGHtmlView({ html, className, testId }: Props) {
   return (
     // display:contents so this wrapper adds no box of its own.
     <div ref={ref} className={styles.host}>
-      <DangerouslySetHtmlContent allowRerender html={html} className={className} data-testid={testId} />
+      <DangerouslySetHtmlContent
+        allowRerender
+        html={html}
+        className={className}
+        data-testid={testId}
+        {...{ [BLOCKS_ATTR]: '' }}
+      />
     </div>
   );
 }
