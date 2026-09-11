@@ -16880,6 +16880,10 @@
       "bar-stacked-percent": "Bar chart - stacked by percentage",
       "line": "Line chart"
     },
+    "time-series-panel": {
+      "null-time-value": "A query returned a time field with null values; filter out rows with empty timestamps",
+      "null-time-value-query": "Query {{refId}} returned a time field with null values; filter out rows with empty timestamps"
+    },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
       "tooltip-remove-timezone": "Remove timezone"
