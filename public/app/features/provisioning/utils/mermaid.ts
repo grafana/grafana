@@ -1,4 +1,4 @@
-import { type Mermaid } from 'mermaid';
+import type { Mermaid } from 'mermaid';
 
 import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,13 +19,14 @@ interface RenderOptions {
   signal?: { cancelled: boolean };
 }
 
-// Mermaid is a large dependency, so it's only pulled in (as its own chunk) the
-// first time a README actually contains a mermaid diagram.
+// Mermaid is a large dependency, so it's only pulled in (as a separate chunk) the
+// first time a README actually contains a mermaid diagram. The chunk name matches
+// the text panel's import so both features share one copy.
 let mermaidPromise: Promise<Mermaid> | undefined;
 
 function loadMermaid(): Promise<Mermaid> {
   if (!mermaidPromise) {
-    mermaidPromise = import('mermaid').then((mod) => mod.default);
+    mermaidPromise = import(/* webpackChunkName: "mermaid" */ 'mermaid').then((mod) => mod.default);
     // Don't cache a rejected import: a transient chunk-load failure would
     // otherwise poison the cache and flag every diagram until a full reload.
     mermaidPromise.catch(() => {
