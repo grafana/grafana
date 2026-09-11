@@ -280,6 +280,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.disableLegacyFeatureToggles",
+			Description: "Serve an empty legacy featureToggles map to the frontend, so only OpenFeature flags resolve",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "provisioning.performance",
 			Description: "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
 			Stage:       FeatureStageExperimental,

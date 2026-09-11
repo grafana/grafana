@@ -3107,6 +3107,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.disableLegacyFeatureToggles",
+        "resourceVersion": "1789140399996",
+        "creationTimestamp": "2026-09-11T15:26:39Z"
+      },
+      "spec": {
+        "description": "Serve an empty legacy featureToggles map to the frontend, so only OpenFeature flags resolve",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dynamicTraceToLogs",
         "resourceVersion": "1784712177554",
         "creationTimestamp": "2026-07-22T09:22:57Z"

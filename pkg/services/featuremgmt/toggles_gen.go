@@ -99,6 +99,10 @@ const (
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
 
+	// FlagGrafanaDisableLegacyFeatureToggles
+	// Serve an empty legacy featureToggles map to the frontend, so only OpenFeature flags resolve
+	FlagGrafanaDisableLegacyFeatureToggles = "grafana.disableLegacyFeatureToggles"
+
 	// FlagProvisioningPerformance
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
