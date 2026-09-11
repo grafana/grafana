@@ -110,7 +110,7 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
 
   return (
     <div className={styles.container}>
-      <Stack direction="column" gap={2} grow={1}>
+      <Stack direction="column" gap={2} grow={1} minWidth={0}>
         <div>
           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cannot-be-saved">
             This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
@@ -223,6 +223,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     json: css({
       flexGrow: 1,
+      width: '100%',
+      minWidth: 0,
       minHeight: '300px',
       maxHeight: '800px',
     }),
