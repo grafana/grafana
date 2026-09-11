@@ -3,10 +3,17 @@ import { cloneDeep } from 'lodash';
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
+import { adminNavEntry } from './sections/admin.navEntry';
+import { connectionsNavEntry } from './sections/connections.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
+import { drilldownNavEntry, exploreNavEntry } from './sections/explore.navEntry';
+import { helpNavEntry } from './sections/help.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
+import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
+import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
 import { applyAppSubUrl, buildEntries, type NavEntryBuilder, pruneEmptyNavSections, sortNavTree } from './utils';
 
 /**
@@ -49,8 +56,8 @@ export function getInitialNavTree(): NavModelItem[] {
   }
 
   const staticTree = applyAppSubUrl(buildStaticNavTree());
-  // Empty attachment-parent sections are pruned like the server prunes them
-  // after its enterprise hooks run.
+  // Empty sections (cfg/access without children) are pruned like the server
+  // prunes them after its enterprise hooks run.
   return pruneEmptyNavSections(staticTree);
 }
 
@@ -60,7 +67,19 @@ export function getInitialNavTree(): NavModelItem[] {
  * seeds the tree. The entries are defined in ./sections; this module only
  * composes them.
  */
-const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [dashboardsNavEntry, profileNavEntry];
+const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
+  starredNavEntry,
+  dashboardsNavEntry,
+  exploreNavEntry,
+  drilldownNavEntry,
+  notebooksNavEntry,
+  profileNavEntry,
+  alertingNavEntry,
+  connectionsNavEntry,
+  adminNavEntry,
+  helpNavEntry,
+  bookmarksNavEntry,
+];
 
 /**
  * Builds the static (non-plugin) portion of the nav tree, sorted, with urls

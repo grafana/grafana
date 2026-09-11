@@ -23,9 +23,11 @@ import {
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
   getDefaultTimeRange,
+  getTimeZone,
   type GrafanaTheme2,
   type LinkModel,
   locationUtil,
+  PluginExtensionPoints,
   serializeStateToUrlParam,
   store,
   type TimeRange,
@@ -33,15 +35,17 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
 } from '@grafana/runtime/unstable';
-import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
+import { usePanelContext, useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
+
+const LOGS_DRILLDOWN_APP_ID = 'grafana-lokiexplore-app';
 
 /** Persists which Loki query variation found logs for a given trace + logs datasource pair. */
 const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
@@ -138,6 +142,14 @@ type LogsCheckResult = {
 };
 
 /**
+ * Assume Drilldown when the app is unknown (Traces Drilldown and other plugins).
+ * For other contexts, app will be defined (CoreApp value) or undefined (Explore).
+ */
+export function isDrilldownContext(app?: CoreApp | string): boolean {
+  return app === CoreApp.Unknown;
+}
+
+/**
  * Runs the link's query against its datasource to determine whether
  * any logs exist for the span, so the button can be disabled when there is nothing to link to.
  *
@@ -151,8 +163,10 @@ function useHasLogs(
   traceDatasourceUid?: string
 ): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
+  const { app } = usePanelContext();
+  const inDrilldown = isDrilldownContext(app);
   const [presence, setPresence] = useState<LogsPresence>('loading');
-  const [resolvedLinkModel, setResolvedLinkModel] = useState(linkModel);
+  const [match, setMatch] = useState<LogsCheckMatch | undefined>();
 
   const { query, alternativeQueries, timeRange } = linkModel.interpolatedParams ?? {};
 
@@ -175,10 +189,11 @@ function useHasLogs(
     const queries = Array.isArray(alternativeQueries) ? alternativeQueries : [query];
 
     setPresence('loading');
+    setMatch(undefined);
     const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList, traceDatasourceUid).subscribe({
       next: (result) => {
         if (result.hasLogs && result.match) {
-          setResolvedLinkModel(rewriteLinkForMatch(linkModel, result.match));
+          setMatch(result.match);
           setPresence('present');
           reportPresence('present', result.match.refId);
           return;
@@ -195,7 +210,7 @@ function useHasLogs(
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid]);
+  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid, dynamicTraceToLogsEnabled]);
 
   useEffect(() => {
     if (presence !== 'absent' || !dynamicTraceToLogsEnabled) {
@@ -203,6 +218,34 @@ function useHasLogs(
     }
     reportPresence('absent');
   }, [dynamicTraceToLogsEnabled, presence]);
+
+  const extensionContext = useMemo(() => {
+    if (!inDrilldown || !match) {
+      return undefined;
+    }
+    return {
+      targets: remapQueriesToDatasource([match.query], match.datasourceUid),
+      timeRange: (timeRange ?? getDefaultTimeRange()).raw,
+      timeZone: getTimeZone(),
+    };
+  }, [inDrilldown, match, timeRange]);
+
+  const { links: pluginLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+    context: extensionContext,
+    limitPerPlugin: 1,
+  });
+
+  const resolvedLinkModel = useMemo(() => {
+    if (!match) {
+      return linkModel;
+    }
+    const drilldownPath =
+      inDrilldown && dynamicTraceToLogsEnabled
+        ? pluginLinks.find((link) => link.pluginId === LOGS_DRILLDOWN_APP_ID)?.path
+        : undefined;
+    return rewriteLinkForMatch(linkModel, match, drilldownPath);
+  }, [dynamicTraceToLogsEnabled, inDrilldown, linkModel, match, pluginLinks]);
 
   return { presence, resolvedLinkModel };
 }
@@ -382,10 +425,12 @@ function probeForMatchingQuery(
   );
 }
 
-function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch): LinkModel {
-  // Narrow Explore to the successful query variation (and datasource, when it differs from config).
+function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch, drilldownPath?: string): LinkModel {
+  // Narrow the destination to the successful query variation (and datasource, when it differs from config).
   const matchedQueries = remapQueriesToDatasource([match.query], match.datasourceUid);
-  const href = rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
+  const href = drilldownPath
+    ? locationUtil.assureBaseUrl(drilldownPath)
+    : rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
 
   return {
     ...linkModel,
@@ -395,7 +440,7 @@ function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch): LinkM
       query: matchedQueries[0],
     },
     // Original onClick closes over the configured datasource/queries; replace it so navigation
-    // uses the matched datasource and successful query variation.
+    // uses the matched datasource and successful query variation (or the Logs Drilldown extension path).
     onClick: linkModel.onClick
       ? (event) => {
           if (event?.preventDefault) {

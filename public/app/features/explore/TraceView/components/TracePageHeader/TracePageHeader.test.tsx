@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, getByText, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  CoreApp,
   type IconName,
   type LinkModel,
   MutableDataFrame,
@@ -93,7 +94,8 @@ const createMockExtension = (
 const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
   hideHeaderDetails = false,
-  logsLinkModel?: LinkModel
+  logsLinkModel?: LinkModel,
+  traceOverride = trace
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -103,7 +105,8 @@ const setup = (
 
   const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
-    trace,
+    app: CoreApp.Unknown,
+    trace: traceOverride,
     timeZone: '',
     search: DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
@@ -137,6 +140,27 @@ describe('TracePageHeader test', () => {
     config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
   });
 
+  it('shows the span count next to the other header metadata', () => {
+    const singleSpanTraceId = 'single-span-trace-id';
+    const singleSpanTrace = {
+      ...trace,
+      traceID: singleSpanTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: singleSpanTraceId,
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, singleSpanTrace);
+
+    expect(screen.getByText('Spans').nextElementSibling).toHaveTextContent('1');
+    expect(
+      screen.getByText('Services').compareDocumentPosition(screen.getByText('Spans')) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it('should render the new trace header', () => {
     setup();
 
@@ -146,6 +170,196 @@ describe('TracePageHeader test', () => {
     expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
     expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
     expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
+  });
+
+  it('renders the root service name and operation name separately next to method and status badges', () => {
+    setup();
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('lb HTTP Client');
+    expect(heading).not.toHaveTextContent('lb: HTTP Client');
+    expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+  });
+
+  it('shows a green check when the root request has a 2xx status', () => {
+    setup();
+
+    expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
+    expect(screen.getByText('200')).toBeInTheDocument();
+  });
+
+  it('shows an error indicator when the root request has a 5xx status', () => {
+    const errorTraceId = 'error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '500' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.getByText('POST')).toBeInTheDocument();
+    expect(screen.getByText('500')).toBeInTheDocument();
+    expect(screen.queryByText('200')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trace error banner')).toBeInTheDocument();
+  });
+
+  it('shows an orange warning indicator when the root request has a 4xx status', () => {
+    const warningTraceId = 'warning-trace-id';
+    const warningTrace = {
+      ...trace,
+      traceID: warningTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: warningTraceId,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '404' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, warningTrace);
+
+    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.getByText('404')).toBeInTheDocument();
+    expect(screen.getByLabelText('Trace warning banner')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
+  });
+
+  it('does not show a trace banner when the trace has no errors or client errors', () => {
+    setup();
+
+    expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace warning banner')).not.toBeInTheDocument();
+  });
+
+  it('shows a warning icon when a child span is 4xx even if the root request succeeded', () => {
+    const warningTraceId = 'child-warning-trace-id';
+    const warningTrace = {
+      ...trace,
+      traceID: warningTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: warningTraceId,
+          spanID: 'root-ok',
+          depth: 0,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '200' },
+          ],
+        },
+        {
+          ...trace.spans[1],
+          traceID: warningTraceId,
+          spanID: 'child-404',
+          depth: 1,
+          tags: [{ key: 'http.status_code', type: 'String', value: '404' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, warningTrace);
+
+    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trace warning banner')).toBeInTheDocument();
+  });
+
+  it('shows an error icon when a child span failed even if the root request succeeded', () => {
+    const errorTraceId = 'child-error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-ok',
+          depth: 0,
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.status_code', type: 'String', value: '200' },
+          ],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'child-error',
+          depth: 1,
+          tags: [{ key: 'error', type: 'String', value: 'true' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trace error banner')).toBeInTheDocument();
+  });
+
+  it('highlights the deepest error span and does not list the other error spans', () => {
+    const errorTraceId = 'multi-error-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          process: { ...trace.spans[0].process, serviceName: 'checkout-service' },
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const banner = screen.getByLabelText('Trace error banner');
+    expect(within(banner).getByText('payment-service')).toBeInTheDocument();
+    expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
+    expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
   });
 
   it('should render the trace-level logs link when provided', () => {
@@ -515,6 +729,8 @@ describe('TracePageHeader test', () => {
       expect(screen.getByText('Start time')).toBeInTheDocument();
       expect(screen.getByText('Duration')).toBeInTheDocument();
       expect(screen.getByText('Services')).toBeInTheDocument();
+      expect(screen.getByText('Spans')).toBeInTheDocument();
+      expect(screen.getByText('Spans').nextElementSibling).toHaveTextContent('3');
       expect(screen.getByText('URL')).toBeInTheDocument();
 
       expect(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton)).toBeInTheDocument();
@@ -533,6 +749,22 @@ describe('TracePageHeader test', () => {
       setup({ links: [], isLoading: false }, true);
 
       expect(screen.queryByText('Filters')).not.toBeInTheDocument();
+    });
+
+    it('should hide the trace banner when hideHeaderDetails is true', () => {
+      const errorTrace = {
+        ...trace,
+        spans: [
+          {
+            ...trace.spans[0],
+            tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+          },
+        ],
+      };
+
+      setup({ links: [], isLoading: false }, true, undefined, errorTrace);
+
+      expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
     });
 
     it('should hide plugin extension buttons when hideHeaderDetails is true', () => {

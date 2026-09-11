@@ -177,10 +177,6 @@ func (f *fakeStorage) GetResourceStats(context.Context, resource.NamespacedResou
 	panic("not implemented")
 }
 
-func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	panic("not implemented")
-}
-
 // fakeVector records calls and lets tests preload GetSubresourceContent /
 // stored rows. rows simulates the `embeddings` table (ns|model|resource|uid
 // -> subresource -> stored row) so ContentVersion and the

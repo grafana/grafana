@@ -60,17 +60,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	userID, _ := identity.UserIdentifier(c.GetID())
 
 	c, prefsSpan := hs.injectSpan(c, "api.setIndexViewData.preferences")
-	var prefs *pref.Preference
-	if ofClient.Boolean(c.Req.Context(), featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(c.Req.Context())) {
-		prefs, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
-	} else {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{
-			UserID: userID,
-			OrgID:  c.GetOrgID(),
-			Teams:  c.TeamIDs, // nolint:staticcheck
-		}
-		prefs, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
-	}
+	prefs, err := hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
 	prefsSpan.End()
 	if err != nil {
 		return nil, err
@@ -147,6 +137,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	// The bundlers copy public/img into whichever build directory they write, so these
+	// have to follow the build directory resolved above rather than a fixed path.
+	buildImage := func(name string) template.URL {
+		return template.URL(assets.ContentDeliveryURL + assets.PublicPath + "img/" + name) // #nosec G203 nosemgrep: go.lang.security.audit.net.unescaped-data-in-url.unescaped-data-in-url
+	}
+
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(folder.ActionFoldersCreate)))
 
@@ -189,18 +185,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
-		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
+		FavIcon:                             buildImage("fav32.png"),
+		AppleTouchIcon:                      buildImage("apple-touch-icon.png"),
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
+		LoadingLogo:                         buildImage("grafana_icon.svg"),
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -227,6 +224,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data.NavTree.RemoveEmptyAdminSections()
 	data.NavTree.RemoveEmptyConnectionsSection()
+	data.NavTree.RemoveEmptyDrilldownSection()
 	data.NavTree.Sort()
 
 	return &data, nil

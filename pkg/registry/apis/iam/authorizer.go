@@ -78,6 +78,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = roleBindingsApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = newServiceAccountAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
+	resourceAuthorizer[iamv0.AuthInfoResourceInfo.GetName()] = serviceIdentityAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
 	// The SSOSetting kind had no k8s-API consumers, so no authorizer was ever
 	// registered. Interim: allow authenticated identities; real settings:write
@@ -203,12 +204,12 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 }
 
 // allowSelfAuthorizer allows any authenticated identity to GET the current-user
-// endpoint (users/~). That handler only ever returns the caller's own display
-// info derived from context, so it needs no users:read permission.
+// endpoints (users/~ and users/~/permissions). Those handlers only return data
+// for the caller derived from context, so they need no users:read permission.
 func allowSelfAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		if attr.IsResourceRequest() && attr.GetResource() == iamv0.UserResourceInfo.GetName() &&
-			attr.GetSubresource() == "" && attr.GetName() == display.CurrentUserName &&
+			(attr.GetSubresource() == "" || attr.GetSubresource() == "permissions") && attr.GetName() == display.CurrentUserName &&
 			attr.GetVerb() == utils.VerbGet {
 			if _, ok := authlib.AuthInfoFrom(ctx); ok {
 				return authorizer.DecisionAllow, "", nil

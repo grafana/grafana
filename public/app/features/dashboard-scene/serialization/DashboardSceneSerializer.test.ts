@@ -19,17 +19,12 @@ import {
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import {
-  AnnoKeyDashboardSnapshotOriginalUrl,
-  AnnoKeyIgnorePredefinedVariables,
-  DENY_ALL_PREDEFINED,
-} from 'app/features/apiserver/types';
+import { AnnoKeyDashboardSnapshotOriginalUrl, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -80,6 +75,12 @@ describe('DashboardSceneSerializer', () => {
       expect(result.diffCount).toBe(0);
     });
 
+    it('reports a dashboard as new by its missing identity, not by its version', () => {
+      expect(setup({ uid: '', version: 0 }).getDashboardChanges().isNew).toBe(true);
+      // A previewed repo file carries version 0 but already has a uid: saving it updates the file
+      expect(setup({ version: 0 }).getDashboardChanges().isNew).toBe(false);
+    });
+
     it('Can detect time changed', () => {
       const dashboard = setup();
 
@@ -112,11 +113,11 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect predefined variables denylist change', () => {
+    it('Can detect cross-dashboard variables selection change', () => {
       const dashboard = setup();
       dashboard.onEnterEditMode();
 
-      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const annotation = '{"global":"all","folder":"all"}';
       dashboard.setState({
         meta: {
           ...dashboard.state.meta,
@@ -124,7 +125,7 @@ describe('DashboardSceneSerializer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyIgnorePredefinedVariables]: annotation,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
             },
           },
         },
@@ -555,11 +556,11 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect predefined variables denylist change', () => {
+    it('Can detect cross-dashboard variables selection change', () => {
       const dashboard = setupV2();
       dashboard.onEnterEditMode();
 
-      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const annotation = '{"global":"all","folder":"all"}';
       dashboard.setState({
         meta: {
           ...dashboard.state.meta,
@@ -567,7 +568,7 @@ describe('DashboardSceneSerializer', () => {
             ...dashboard.state.meta.k8s,
             annotations: {
               ...dashboard.state.meta.k8s?.annotations,
-              [AnnoKeyIgnorePredefinedVariables]: annotation,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
             },
           },
         },
