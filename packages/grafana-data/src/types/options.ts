@@ -57,15 +57,15 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any, TCo
    * option, `fieldConfig.defaults.custom` for a custom field config property, and
    * `fieldConfig.defaults` for a standard one.
    *
-   * `context` is the same editor context the editor component receives, so a condition can span
-   * both sides of the pane - `context.options` for the panel options and `context.fieldConfig` for
-   * the whole field config. It is undefined when options are built outside an options pane (for
-   * example while collecting static defaults), so guard before reading it.
+   * `context` is the same editor context the editor component receives. `context.fieldConfig` is
+   * the whole field config, which lets a condition span both sides of the pane. `context.options`
+   * mirrors `currentOptions` rather than adding `addNestedOptions`.
+   * The context is undefined when options are built outside an options pane
    */
-  showIf?: (
+  showIf?(
     currentOptions: TOptions,
     data?: DataFrame[],
     annotations?: DataFrame[],
     context?: StandardEditorContext<TContextOptions>
-  ) => boolean | undefined;
+  ): boolean | undefined;
 }

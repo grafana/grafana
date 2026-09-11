@@ -1,5 +1,6 @@
 import {
   EventBusSrv,
+  type FieldConfig,
   type FieldConfigOptionsRegistry,
   type FieldConfigPropertyItem,
   type FieldConfigSource,
@@ -448,7 +449,9 @@ describe('getVisualizationOptions', () => {
       overrides: [],
     };
 
-    const makeItem = (overrides: Partial<FieldConfigPropertyItem> = {}): FieldConfigPropertyItem => ({
+    const makeItem = <TContextOptions = unknown>(
+      overrides: Partial<FieldConfigPropertyItem<FieldConfig, unknown, {}, TContextOptions>> = {}
+    ): FieldConfigPropertyItem => ({
       id: 'unit',
       path: 'unit',
       name: 'Unit',
@@ -462,45 +465,41 @@ describe('getVisualizationOptions', () => {
     const context = { data: [], options: { showValues: true }, fieldConfig } as StandardEditorContext<unknown, unknown>;
 
     it('shows a property that declares no showIf', () => {
-      expect(isFieldConfigOptionVisible(makeItem(), fieldConfig, undefined, context)).toBe(true);
+      expect(isFieldConfigOptionVisible(makeItem(), undefined, context)).toBe(true);
     });
 
     it('hides a property flagged hideFromDefaults without consulting showIf', () => {
       const showIf = jest.fn().mockReturnValue(true);
 
-      expect(
-        isFieldConfigOptionVisible(makeItem({ hideFromDefaults: true, showIf }), fieldConfig, undefined, context)
-      ).toBe(false);
+      expect(isFieldConfigOptionVisible(makeItem({ hideFromDefaults: true, showIf }), undefined, context)).toBe(false);
       expect(showIf).not.toHaveBeenCalled();
     });
 
     it('hides the property when showIf returns undefined', () => {
       const item = makeItem({ showIf: () => undefined });
 
-      expect(isFieldConfigOptionVisible(item, fieldConfig, undefined, context)).toBe(false);
+      expect(isFieldConfigOptionVisible(item, undefined, context)).toBe(false);
     });
 
     it('passes the standard defaults to a standard property and the custom defaults to a custom one', () => {
       const standardShowIf = jest.fn().mockReturnValue(true);
       const customShowIf = jest.fn().mockReturnValue(true);
 
-      isFieldConfigOptionVisible(makeItem({ showIf: standardShowIf }), fieldConfig, undefined, context);
-      isFieldConfigOptionVisible(makeItem({ isCustom: true, showIf: customShowIf }), fieldConfig, undefined, context);
+      isFieldConfigOptionVisible(makeItem({ showIf: standardShowIf }), undefined, context);
+      isFieldConfigOptionVisible(makeItem({ isCustom: true, showIf: customShowIf }), undefined, context);
 
       expect(standardShowIf.mock.calls[0][0]).toEqual({ unit: 'bytes', custom: { lineWidth: 2 } });
       expect(customShowIf.mock.calls[0][0]).toEqual({ lineWidth: 2 });
     });
 
     it('lets a standard property condition on a panel option via the editor context', () => {
-      const item = makeItem({
-        showIf: (_defaults, _data, _annotations, ctx) =>
-          (ctx?.options as { showValues?: boolean } | undefined)?.showValues === true,
+      // ctx.options is typed here, not unknown - this stops compiling if that regresses
+      const item = makeItem<{ showValues: boolean }>({
+        showIf: (_defaults, _data, _annotations, ctx) => ctx?.options?.showValues === true,
       });
 
-      expect(isFieldConfigOptionVisible(item, fieldConfig, undefined, context)).toBe(true);
-      expect(
-        isFieldConfigOptionVisible(item, fieldConfig, undefined, { ...context, options: { showValues: false } })
-      ).toBe(false);
+      expect(isFieldConfigOptionVisible(item, undefined, context)).toBe(true);
+      expect(isFieldConfigOptionVisible(item, undefined, { ...context, options: { showValues: false } })).toBe(false);
     });
 
     it('lets a custom property condition on the standard defaults via the editor context', () => {
@@ -509,12 +508,17 @@ describe('getVisualizationOptions', () => {
         showIf: (_custom, _data, _annotations, ctx) => ctx?.fieldConfig?.defaults.unit === 'bytes',
       });
 
-      expect(isFieldConfigOptionVisible(item, fieldConfig, undefined, context)).toBe(true);
+      expect(isFieldConfigOptionVisible(item, undefined, context)).toBe(true);
 
       const withoutUnit: FieldConfigSource = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
-      expect(isFieldConfigOptionVisible(item, withoutUnit, undefined, { ...context, fieldConfig: withoutUnit })).toBe(
-        false
-      );
+      expect(isFieldConfigOptionVisible(item, undefined, { ...context, fieldConfig: withoutUnit })).toBe(false);
+    });
+
+    it('hides a property whose showIf needs the field config when the context has none', () => {
+      // transformation editors and canvas inline edit build a context without a field config
+      const item = makeItem({ showIf: (defaults) => defaults.unit === 'bytes' });
+
+      expect(isFieldConfigOptionVisible(item, undefined, { data: [] })).toBe(false);
     });
 
     it('passes the series and annotations through to showIf', () => {
@@ -524,7 +528,6 @@ describe('getVisualizationOptions', () => {
 
       isFieldConfigOptionVisible(
         makeItem({ showIf }),
-        fieldConfig,
         { series, annotations, state: LoadingState.Done, timeRange: getDefaultTimeRange() },
         context
       );
