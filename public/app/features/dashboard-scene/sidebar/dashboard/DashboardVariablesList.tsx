@@ -13,11 +13,10 @@ import { openAddVariablePane } from '../../settings/variables/VariableTypeSelect
 import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
 import { getDefaultTopPlacementLabel, isVariableEditable } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { partitionSceneObjects } from '../../utils/partitionSceneObjects';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { selectSidebarObject, toDraggableListItemActions } from './helpers';
+import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';

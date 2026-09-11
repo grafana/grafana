@@ -1,7 +1,7 @@
 import { VariableHide } from '@grafana/data';
 import { type SceneVariable } from '@grafana/scenes';
 
-import { partitionSceneObjects } from '../../utils/partitionSceneObjects';
+import { partitionSceneObjects } from '../../sidebar/dashboard/helpers';
 
 import { isEditableVariableType } from './utils';
 

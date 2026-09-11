@@ -1,7 +1,7 @@
 import { type SceneDataLayerProvider } from '@grafana/scenes';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { partitionSceneObjects } from '../../utils/partitionSceneObjects';
+import { partitionSceneObjects } from '../../sidebar/dashboard/helpers';
 
 export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerProvider[]) {
   const {
