@@ -239,10 +239,12 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 			case <-time.After(currentInterval):
 				// Poll for new events since lastEmittedRV.
 				// ListSince is inclusive, so skip events at or below lastEmittedRV.
-				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV, SortOrderAsc) {
+				listFailed := false
+				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
-						continue
+						listFailed = true
+						break
 					}
 					if evt.ResourceVersion <= lastEmittedRV {
 						continue
@@ -253,6 +255,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 					}
 					seen[key] = true
 					buffer = append(buffer, evt)
+				}
+
+				// A partial scan may end within a shared RV. Retain the buffer, but
+				// do not advance lastEmittedRV past unread events until a scan succeeds.
+				if listFailed {
+					currentInterval = bo.NextDelay()
+					continue
 				}
 
 				// Sort buffer by RV

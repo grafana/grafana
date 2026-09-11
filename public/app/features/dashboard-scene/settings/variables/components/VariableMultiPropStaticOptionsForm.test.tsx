@@ -35,8 +35,15 @@ function renderForm(props: Partial<VariableMultiPropStaticOptionsFormProps>) {
 
 describe('<VariableMultiPropStaticOptionsForm />', () => {
   describe('Rendering', () => {
-    test('renders a grid with column headers matching the properties and an "Add new option" button', () => {
-      const { getByRole, getAllByRole } = renderForm({ options: [], properties: ['text', 'value', 'color'] });
+    test('renders a grid with column headers matching the properties and an "Add new option" button', async () => {
+      const { container, getByRole, getAllByRole } = renderForm({
+        options: [],
+        properties: ['text', 'value', 'color'],
+      });
+
+      await waitFor(() => {
+        expect(container.querySelector('[data-rfd-droppable-id="static-options-list"]')).toBeInTheDocument();
+      });
 
       const grid = getByRole('grid', { name: 'Static options' });
       expect(grid).toBeInTheDocument();
