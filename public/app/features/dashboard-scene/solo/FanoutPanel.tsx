@@ -20,8 +20,8 @@ export function FanoutPanel({
   fanoutMode,
 }: {
   panel: VizPanel;
-  panelDataIn: PanelData;
-  fanoutMode: string;
+  panelDataIn: PanelData | undefined;
+  fanoutMode: string | undefined;
 }) {
   const theme = useTheme2();
   const viz: VizConfig = {
@@ -80,8 +80,22 @@ interface SplitGroup {
   frames: DataFrame[];
 }
 
-function groupDataByMode(panel: VizPanel, data: PanelData, mode: string, theme: GrafanaTheme2): SplitGroup[] {
+function groupDataByMode(
+  panel: VizPanel,
+  data: PanelData,
+  mode: string | undefined,
+  theme: GrafanaTheme2
+): SplitGroup[] {
   const fieldConfig = panel.state.fieldConfig.defaults;
+
+  if (!mode) {
+    return [
+      {
+        name: panel.state.title,
+        frames: data.series,
+      },
+    ];
+  }
 
   if (mode === bySeriesMode) {
     return data.series.map((frame, index) => {
