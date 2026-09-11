@@ -1672,3 +1672,160 @@ func TestReconciler_EmbeddingRetryCap(t *testing.T) {
 		})
 	}
 }
+
+func TestReconciler_BootstrapExceptions(t *testing.T) {
+	for _, mode := range []string{"latest update", "latest delete", "insert failure", "read failure", "provider cooldown", "seed failure"} {
+		t.Run(mode, func(t *testing.T) {
+			s, st, vec, text := setupEmbeddingRetry(t, 0)
+			late := dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "late", snowflakeRV(90), multiPanelDashboard("late", "Latest", 2))
+			if mode == "latest delete" {
+				late.Action = resourcepb.WatchEvent_DELETED
+			}
+			st.changes = append(st.changes, late)
+			s.observeWrite(&resource.WrittenEvent{Key: &st.changes[0].Key, ResourceVersion: snowflakeRV(100)})
+			injected := false
+			vec.onSetLatestRV = func(rv int64) {
+				if injected {
+					return
+				}
+				injected = true
+				require.Equal(t, snowflakeRV(100)-1, rv)
+				// This notification arrives after the seed was copied but before it persists.
+				delivered := make(chan struct{})
+				go func() {
+					s.observeWrite(&resource.WrittenEvent{Key: &late.Key, ResourceVersion: snowflakeRV(80), Value: []byte("stale watch payload")})
+					s.observeWrite(&resource.WrittenEvent{Key: &late.Key, ResourceVersion: snowflakeRV(85)})
+					close(delivered)
+				}()
+				select {
+				case <-delivered:
+				case <-time.After(time.Second):
+					t.Fatal("watch delivery blocked during seed persistence")
+				}
+				require.Len(t, s.bootstrap, 1, "notifications deduplicate without saving payloads")
+			}
+			switch mode {
+			case "insert failure":
+				vec.upsertErr = errBoom
+			case "read failure":
+				st.readErr = errBoom
+			case "provider cooldown":
+				text.failNext = &embedder.RetryableError{Err: errBoom}
+			case "seed failure":
+				vec.setLatestRVErr = errBoom
+			}
+			s.sweep(t.Context())
+			if mode != "latest update" && mode != "latest delete" {
+				require.Len(t, s.bootstrap, 1, "failure keeps the exception")
+				vec.upsertErr, vec.setLatestRVErr, st.readErr = nil, nil, nil
+				s.embedRetryAt = time.Time{}
+				s.sweep(t.Context())
+			}
+			assert.Empty(t, s.bootstrap)
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+			require.Len(t, vec.backfillJobs, 1)
+			// A failed seed can be retried at the lower RV; otherwise the original
+			// checkpoint must remain covered by the backfill.
+			if mode != "seed failure" {
+				assert.GreaterOrEqual(t, vec.backfillJobs[0].StoppingRV, snowflakeRV(100)-1)
+			}
+			if mode == "latest delete" {
+				require.Len(t, vec.deletes, 1)
+				assert.Equal(t, "late", vec.deletes[0].UID)
+			} else {
+				require.True(t, vec.hasUpsertFor("ns", dashRes, "late"))
+				for _, batch := range vec.upserts {
+					if batch[0].UID == "late" {
+						assert.Len(t, batch, 2, "reads current content instead of replaying the notification")
+						assert.Equal(t, snowflakeRV(90), batch[0].ResourceVersion)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestReconciler_BootstrapExceptionBatchDoesNotBlockSweep(t *testing.T) {
+	s, st, vec, _ := setupEmbeddingRetry(t, 0)
+	st.changes[0].ResourceVersion = snowflakeRV(10000)
+	s.observeWrite(&resource.WrittenEvent{Key: &st.changes[0].Key, ResourceVersion: snowflakeRV(10000)})
+	vec.onSetLatestRV = func(rv int64) {
+		if rv != snowflakeRV(10000)-1 {
+			return
+		}
+		for i := range bootstrapBatchSize + 3 {
+			name := fmt.Sprintf("late-%d", i)
+			item := dashChange(resourcepb.WatchEvent_MODIFIED, "ns", name, snowflakeRV(int64(100+i)), minimalDashboard(name, name))
+			st.changes = append(st.changes, item)
+			s.observeWrite(&resource.WrittenEvent{Key: &item.Key, ResourceVersion: item.ResourceVersion})
+		}
+	}
+	s.sweep(t.Context())
+	assert.Len(t, s.bootstrap, 3)
+	assert.Len(t, vec.upserts, bootstrapBatchSize+1)
+	assert.True(t, vec.hasUpsertFor("ns", dashRes, "dash"), "normal listing still progresses")
+	assert.Equal(t, snowflakeRV(10000), vec.latestRV)
+	s.sweep(t.Context())
+	assert.Empty(t, s.bootstrap)
+	assert.Len(t, vec.upserts, bootstrapBatchSize+4)
+}
+
+func TestReconciler_BootstrapExceptionRetryCap(t *testing.T) {
+	for _, mode := range []string{"read", "insert", "provider"} {
+		t.Run(mode, func(t *testing.T) {
+			s, st, vec, text := setupEmbeddingRetry(t, 0)
+			late := dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "late", snowflakeRV(90), minimalDashboard("late", "Late"))
+			st.changes = append(st.changes, late)
+			s.observeWrite(&resource.WrittenEvent{Key: &st.changes[0].Key, ResourceVersion: snowflakeRV(100)})
+			vec.onSetLatestRV = func(rv int64) {
+				if rv == snowflakeRV(100)-1 {
+					s.observeWrite(&resource.WrittenEvent{Key: &late.Key, ResourceVersion: snowflakeRV(80)})
+				}
+			}
+			if mode == "read" {
+				st.readErr = errBoom
+			}
+			if mode == "insert" {
+				vec.upsertErrFn = func(v []vector.Vector) error {
+					if v[0].UID == "late" {
+						return errBoom
+					}
+					return nil
+				}
+			}
+			for attempt := range maxEventAttempts {
+				if mode == "provider" {
+					text.failNext = &embedder.RetryableError{Err: errBoom}
+				}
+				s.embedRetryAt = time.Time{}
+				s.sweep(t.Context())
+				if attempt < maxEventAttempts-1 {
+					require.Len(t, s.bootstrap, 1)
+					require.Equal(t, attempt+1, s.retries[retryKey(dashGroup, dashRes, "ns", "late")].attempts)
+				}
+			}
+			assert.Empty(t, s.bootstrap, "exhaustion removes the exception")
+			st.readErr, vec.upsertErrFn = nil, nil
+			s.embedRetryAt = time.Time{}
+			s.sweep(t.Context())
+			assert.True(t, vec.hasUpsertFor("ns", dashRes, "dash"))
+			assert.False(t, vec.hasUpsertFor("ns", dashRes, "late"))
+		})
+	}
+}
+
+func TestReconciler_BootstrapExceptionSurvivesOlderLookback(t *testing.T) {
+	s, st, vec, _ := setupEmbeddingRetry(t, snowflakeRV(105))
+	st.changes[0].ResourceVersion = snowflakeRV(90)
+	key := retryKey(dashGroup, dashRes, "ns", "dash")
+	s.bootstrap[key] = bootstrapEvent{key: &st.changes[0].Key, rv: snowflakeRV(90)}
+	older := dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash", snowflakeRV(80), minimalDashboard("dash", "Older"))
+	failed, abort := s.processListedEvent(t.Context(), dashboard.New(), older)
+	require.False(t, failed)
+	require.False(t, abort)
+	require.Len(t, s.bootstrap, 1, "older lookback cannot discharge the newer exception")
+	require.False(t, s.processBootstrap(t.Context(), snowflakeRV(105)))
+	assert.Empty(t, s.bootstrap)
+	require.Len(t, vec.upserts, 2)
+	assert.Equal(t, snowflakeRV(90), vec.upserts[1][0].ResourceVersion)
+}

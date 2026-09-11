@@ -71,6 +71,14 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	if f.readErr != nil {
 		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
 	}
+	if req.Key.Resource == dashRes && req.Key.Group == dashGroup {
+		for _, c := range f.changes {
+			if c.Key.Namespace == req.Key.Namespace && c.Key.Name == req.Key.Name && c.Key.Group == req.Key.Group && c.Key.Resource == req.Key.Resource && c.Action != resourcepb.WatchEvent_DELETED {
+				return &resource.BackendReadResponse{Value: c.Value, ResourceVersion: c.ResourceVersion}
+			}
+		}
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+	}
 	title, ok := f.folders[req.Key.Namespace+"/"+req.Key.Name]
 	if !ok {
 		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
@@ -221,6 +229,7 @@ type fakeVector struct {
 	lockAttempts    int
 	lockReleases    int
 
+	onSetLatestRV    func(int64)
 	setLatestRVCalls int
 	setLatestRVErr   error
 	getLatestRVErr   error
@@ -402,6 +411,9 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	return f.latestRV, nil
 }
 func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
+	if f.onSetLatestRV != nil {
+		f.onSetLatestRV(rv)
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.setLatestRVCalls++

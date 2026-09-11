@@ -1,6 +1,7 @@
 // Package reconciler keeps the vector index in sync by sweeping writes since
 // a durable checkpoint. Watch notifications only seed the initial checkpoint;
-// payloads are read and processed one at a time from storage.
+// payloads are read and processed one at a time from storage. Late bootstrap
+// notifications retain only their identity for catch-up below the initial seed.
 package reconciler
 
 import (
@@ -8,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"sync"
 	"time"
 
@@ -36,6 +38,8 @@ type Backfiller interface {
 
 const DefaultInterval = time.Minute
 
+const bootstrapBatchSize = 100
+
 // maxEventAttempts caps retries so a permanently broken dashboard
 // can't wedge cursor advancement forever. This includes provider errors:
 // providers can misclassify an invalid request as temporarily unavailable.
@@ -49,14 +53,20 @@ const defaultLockRetryInterval = 10 * time.Second
 
 // reconcileEvent is transient: no resource payload survives a sweep iteration.
 type reconcileEvent struct {
-	action    resourcepb.WatchEvent_Type
-	group     string
-	resource  string
-	namespace string
-	name      string
-	value     []byte
-	rv        int64
-	attempts  int
+	action      resourcepb.WatchEvent_Type
+	group       string
+	resource    string
+	namespace   string
+	name        string
+	value       []byte
+	rv          int64
+	attempts    int
+	bootstrapRV int64
+}
+
+type bootstrapEvent struct {
+	key *resourcepb.ResourceKey
+	rv  int64
 }
 
 func retryKey(group, resource, namespace, name string) string {
@@ -109,9 +119,11 @@ type Reconciler struct {
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
-	seedMu sync.Mutex
-	seedRV int64
-	seeded bool
+	seedMu    sync.Mutex
+	seedRV    int64
+	seeded    bool
+	seedingRV int64
+	bootstrap map[string]bootstrapEvent
 
 	// The remaining state is only touched by Run's goroutine.
 	lastSweepSinceRv int64
@@ -161,6 +173,7 @@ func New(opts Options) (*Reconciler, error) {
 		log:                    log.New("embeddings_reconciler"),
 		metrics:                opts.Metrics,
 		retries:                make(map[string]retryState),
+		bootstrap:              make(map[string]bootstrapEvent),
 		ensuredResources:       make(map[string]struct{}),
 		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
@@ -170,7 +183,7 @@ func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEven
 	s.broadcaster = b
 }
 
-// observeWrite remembers only the earliest RV needed to bootstrap a new fleet.
+// observeWrite tracks the seed and exceptions arriving while it is persisted.
 func (s *Reconciler) observeWrite(ev *resource.WrittenEvent) {
 	if ev == nil || ev.Key == nil || ev.Key.Namespace == "" {
 		return
@@ -184,7 +197,21 @@ func (s *Reconciler) observeWrite(ev *resource.WrittenEvent) {
 	}
 	s.seedMu.Lock()
 	defer s.seedMu.Unlock()
-	if !s.seeded && (s.seedRV == 0 || rv < s.seedRV) {
+	if s.seeded {
+		return
+	}
+	// A notification below the in-flight seed cannot be recovered by listing
+	// from that seed. Retain its identity, never its payload.
+	if s.seedingRV > 0 && rv < s.seedingRV {
+		k := retryKey(ev.Key.Group, ev.Key.Resource, ev.Key.Namespace, ev.Key.Name)
+		if old, ok := s.bootstrap[k]; !ok || rv > old.rv {
+			s.bootstrap[k] = bootstrapEvent{
+				key: &resourcepb.ResourceKey{Group: ev.Key.Group, Resource: ev.Key.Resource, Namespace: ev.Key.Namespace, Name: ev.Key.Name},
+				rv:  rv,
+			}
+		}
+	}
+	if s.seedRV == 0 || rv < s.seedRV {
 		s.seedRV = rv
 	}
 }
@@ -388,13 +415,16 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		}
 	}
 	s.seedMu.Lock()
-	s.seeded, s.seedRV = true, 0
+	s.seeded, s.seedRV, s.seedingRV = true, 0, 0
 	s.seedMu.Unlock()
 	for k, state := range s.retries {
 		state.seen = false
 		s.retries[k] = state
 	}
 	defer s.recordRetryCount()
+	if s.processBootstrap(ctx, sinceRv) {
+		return
+	}
 
 	// A repeat sweep at an unchanged cursor lets the backend skip its
 	// lookback window: writes in flight at sinceRv have committed by now.
@@ -437,7 +467,7 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		}
 	}
 	for k, state := range s.retries {
-		if !state.seen && state.rv <= target {
+		if _, pending := s.bootstrap[k]; !pending && !state.seen && state.rv <= target {
 			delete(s.retries, k)
 		}
 	}
@@ -497,6 +527,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 func (s *Reconciler) seedCheckpoint(ctx context.Context) (int64, error) {
 	s.seedMu.Lock()
 	seed := s.seedRV
+	s.seedingRV = seed
 	s.seedMu.Unlock()
 	if seed == 0 {
 		return 0, nil
@@ -505,7 +536,40 @@ func (s *Reconciler) seedCheckpoint(ctx context.Context) (int64, error) {
 	if err := s.vectorBackend.SetLatestRV(ctx, seed-1); err != nil {
 		return 0, err
 	}
+	// Closing capture and publishing completion use the same lock as observeWrite.
+	s.seedMu.Lock()
+	s.seeded, s.seedRV, s.seedingRV = true, 0, 0
+	s.seedMu.Unlock()
 	return seed - 1, nil
+}
+
+// Capture is closed before this runs, so only the sweep goroutine touches
+// bootstrap. A bounded batch lets ordinary sweeps progress during catch-up.
+func (s *Reconciler) processBootstrap(ctx context.Context, sinceRv int64) (abort bool) {
+	processed := 0
+	for _, pending := range s.bootstrap {
+		ev := &reconcileEvent{
+			group: pending.key.Group, resource: pending.key.Resource,
+			namespace: pending.key.Namespace, name: pending.key.Name,
+			rv: pending.rv, bootstrapRV: sinceRv,
+		}
+		_, abort = s.processListedEvent(ctx, s.builders[builderKey(ev.group, ev.resource)], ev)
+		if abort {
+			return true
+		}
+		processed++
+		if processed >= bootstrapBatchSize {
+			break
+		}
+	}
+	return false
+}
+
+func (s *Reconciler) finishBootstrap(ev *reconcileEvent) {
+	k := retryKey(ev.group, ev.resource, ev.namespace, ev.name)
+	if pending, ok := s.bootstrap[k]; ok && ev.rv >= pending.rv {
+		delete(s.bootstrap, k)
+	}
 }
 
 // processListedEvent retains only retry bookkeeping. A newer revision starts
@@ -514,12 +578,31 @@ func (s *Reconciler) processListedEvent(ctx context.Context, builder embed.Build
 	if ctx.Err() != nil {
 		return false, true
 	}
+	var readErr error
+	if ev.bootstrapRV > 0 {
+		response := s.storage.ReadResource(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+			Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name,
+		}})
+		switch {
+		case response.Error == nil:
+			ev.action, ev.value = resourcepb.WatchEvent_MODIFIED, response.Value
+			ev.rv = max(ev.rv, resource.ToSnowflakeRV(response.ResourceVersion))
+		case response.Error.Code == http.StatusNotFound:
+			ev.action = resourcepb.WatchEvent_DELETED
+		default:
+			readErr = fmt.Errorf("read bootstrap resource: %s", response.Error.Message)
+		}
+	}
 	k := retryKey(ev.group, ev.resource, ev.namespace, ev.name)
+	if readErr != nil {
+		ev.rv = max(ev.rv, s.retries[k].rv)
+	}
 	if state, ok := s.retries[k]; ok {
 		if ev.rv <= state.rv {
 			state.seen = true
 			s.retries[k] = state
 			if state.attempts >= maxEventAttempts {
+				s.finishBootstrap(ev)
 				return false, false
 			}
 			ev.attempts = state.attempts
@@ -528,7 +611,12 @@ func (s *Reconciler) processListedEvent(ctx context.Context, builder embed.Build
 		}
 	}
 	ev.attempts++
-	err := s.ensureResourceInitialized(ctx, builder, ev.rv)
+	// An old bootstrap exception must not leave a gap between backfill and
+	// the persisted checkpoint, even when its current resource cannot be read.
+	err := s.ensureResourceInitialized(ctx, builder, max(ev.rv, ev.bootstrapRV))
+	if err == nil {
+		err = readErr
+	}
 	if err == nil {
 		err = s.processEvent(ctx, builder, ev)
 	}
@@ -537,6 +625,7 @@ func (s *Reconciler) processListedEvent(ctx context.Context, builder embed.Build
 	}
 	if err == nil {
 		delete(s.retries, k)
+		s.finishBootstrap(ev)
 		return false, false
 	}
 	var retryErr *embedder.RetryableError
@@ -547,6 +636,7 @@ func (s *Reconciler) processListedEvent(ctx context.Context, builder embed.Build
 	s.retries[k] = retryState{rv: ev.rv, attempts: ev.attempts, seen: true}
 	logger := s.log.FromContext(ctx)
 	if ev.attempts >= maxEventAttempts {
+		s.finishBootstrap(ev)
 		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
 			"namespace", ev.namespace, "name", ev.name, "rv", ev.rv, "err", err)
 		if s.metrics != nil {
