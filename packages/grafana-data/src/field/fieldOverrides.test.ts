@@ -350,6 +350,58 @@ describe('applyFieldOverrides', () => {
       expect(withOverrides[0].fields[1].values[0].fields[1].config.max).toBe(30);
     });
 
+    it('will not write the panel config onto the frames it was given', () => {
+      // The "Time series to table" transformation builds its sparkline frames out of the source
+      // query's own field objects, so the nested frame's config is the same object the query
+      // runner still holds. Applying this panel's config must not reach back into it.
+      const sourceFrame = createDataFrame({
+        name: 'source',
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1752170223000, 1752170224000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+      const nested: DataFrame = {
+        name: 'nested',
+        length: 2,
+        fields: sourceFrame.fields.map((field) => ({ ...field })),
+      };
+
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          { name: 'message', type: FieldType.string, values: ['foo'] },
+          { name: 'frame', type: FieldType.frame, values: [nested] },
+        ],
+      });
+
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: { unit: 'percent' },
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'frame' },
+              properties: [{ id: 'displayName', value: 'Trend' }],
+            },
+          ],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      });
+
+      // the config still reaches the fields inside the frame
+      expect(withOverrides[0].fields[1].values[0].fields[1].config).toMatchObject({
+        unit: 'percent',
+        displayName: 'Trend',
+      });
+      // ...without touching the frames handed in
+      expect(nested.fields[1].config).toEqual({});
+      expect(sourceFrame.fields[1].config).toEqual({});
+    });
+
     it('will not crash when some of the nested frames are undefined', () => {
       const f0 = createDataFrame({
         name: 'A',
