@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { type DateTime } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { useTimeRange } from '@grafana/scenes-react';
 
 import { useAsync } from '../../hooks/useAsync';
@@ -48,7 +48,7 @@ export function useLabelsBreakdown(): {
   const [timeRange] = useTimeRange();
 
   const [{ execute }, state] = useAsync(async (matchSelector: string, start: string, end: string) => {
-    const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
+    const ds = await getDataSourceInstance({ uid: DATASOURCE_UID });
     if (!isPrometheusDatasource(ds)) {
       throw new Error(`Expected a Prometheus datasource but got "${ds.type}"`);
     }

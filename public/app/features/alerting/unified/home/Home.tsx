@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Box, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv } from '../utils/misc';
@@ -15,12 +16,18 @@ import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
 import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
+type HomeTab = 'insights' | 'overview';
+
 function Home() {
   const styles = useStyles2(getStyles);
-  const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
+  const { value: insights, loading } = useAsync(async () => {
+    const enabled = (await insightsIsAvailable()) || isLocalDevEnv();
+    return { enabled, scene: await getInsightsScenes() };
+  }, []);
 
-  const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
-  const insightsScene = getInsightsScenes();
+  // Availability is only known after the async check, so the default tab cannot be useState's initial value.
+  const [selectedTab, setSelectedTab] = useState<HomeTab>();
+  const activeTab = selectedTab ?? (insights?.enabled ? 'insights' : 'overview');
 
   return (
     <AlertingPageWrapper subTitle="Learn about problems in your systems moments after they occur" navId="alerting">
@@ -34,26 +41,32 @@ function Home() {
         </div>
       </Stack>
       <Box marginTop={2}>
-        <TabsBar>
-          {insightsEnabled && (
-            <Tab
-              key="insights"
-              label={t('alerting.home.label-insights', 'Insights')}
-              active={activeTab === 'insights'}
-              onChangeTab={() => setActiveTab('insights')}
-            />
-          )}
-          <Tab
-            key="overview"
-            label={t('alerting.home.label-get-started', 'Get started')}
-            active={activeTab === 'overview'}
-            onChangeTab={() => setActiveTab('overview')}
-          />
-        </TabsBar>
-        <TabContent className={styles.tabContent}>
-          {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
-          {activeTab === 'overview' && <GettingStarted />}
-        </TabContent>
+        {loading ? (
+          <LoadingPlaceholder text={t('alerting.home.text-loading', 'Loading...')} />
+        ) : (
+          <>
+            <TabsBar>
+              {insights?.enabled && (
+                <Tab
+                  key="insights"
+                  label={t('alerting.home.label-insights', 'Insights')}
+                  active={activeTab === 'insights'}
+                  onChangeTab={() => setSelectedTab('insights')}
+                />
+              )}
+              <Tab
+                key="overview"
+                label={t('alerting.home.label-get-started', 'Get started')}
+                active={activeTab === 'overview'}
+                onChangeTab={() => setSelectedTab('overview')}
+              />
+            </TabsBar>
+            <TabContent className={styles.tabContent}>
+              {activeTab === 'insights' && insights && <insights.scene.Component model={insights.scene} />}
+              {activeTab === 'overview' && <GettingStarted />}
+            </TabContent>
+          </>
+        )}
       </Box>
     </AlertingPageWrapper>
   );

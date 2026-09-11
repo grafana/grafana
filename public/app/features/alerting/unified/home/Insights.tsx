@@ -1,6 +1,7 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   EmbeddedScene,
   NestedScene,
@@ -98,28 +99,23 @@ export function overrideToFixedColor(key: keyof typeof SERIES_COLOR_MAPPING) {
 
 export const PANEL_STYLES = { minHeight: 300 };
 
-const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
-
 const namespace = getAPINamespace();
 
 export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
-const getInsightsDataSources = () => {
-  const dataSourceSrv = getDataSourceSrv();
+/** Resolves `settings` on the module-level descriptors that the scene builders below read. */
+async function loadInsightsDataSourceSettings() {
+  await Promise.all(
+    [ashDs, cloudUsageDs, grafanaCloudPromDs].map(async (ds) => {
+      ds.settings = await getDataSourceInstanceSettings(ds.uid);
+    })
+  );
+}
 
-  [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
-    ds.settings = dataSourceSrv.getInstanceSettings(ds.uid);
-  });
-  return [ashDs, cloudUsageDs, grafanaCloudPromDs];
-};
+export const insightsIsAvailable = async () => Boolean(await getDataSourceInstanceSettings(cloudUsageDs.uid));
 
-export const insightsIsAvailable = () => {
-  const [_, cloudUsageDs, __] = getInsightsDataSources();
-  return cloudUsageDs.settings;
-};
-
-export function getInsightsScenes() {
-  const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
+export async function getInsightsScenes() {
+  await loadInsightsDataSourceSettings();
 
   const categories = [];
 
@@ -175,7 +171,7 @@ export function getInsightsScenes() {
   }
 
   return new EmbeddedScene({
-    $timeRange: THIS_WEEK_TIME_RANGE,
+    $timeRange: new SceneTimeRange({ from: 'now-1w', to: 'now' }),
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
