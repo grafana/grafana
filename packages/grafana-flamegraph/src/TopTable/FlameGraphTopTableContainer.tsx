@@ -113,6 +113,11 @@ const FlameGraphTopTableContainer = memo(
                     height={height}
                     tableRefreshEnabled={tableRefreshEnabled}
                     contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+                    // The pane's width is already divided up between the three fixed columns and
+                    // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.
+                    // Symbol truncates to fit instead — its full value is a click away in the flame
+                    // graph, and in a narrow split pane it truncates either way.
+                    preventHorizontalOverflow
                   />
                 </div>
               );
@@ -196,9 +201,10 @@ function buildTableDataFrame(
     config: {
       // TableNG lays its columns out inside `width` minus its own vertical scrollbar, so spelling out
       // a width here that fills `width` overflows by the scrollbar and leaves the grid scrolling
-      // sideways a few pixels. Leaving Symbol unsized instead makes it the one column TableNG hands
-      // the leftover space to, which is the same "fill whatever the fixed columns don't use" intent
-      // without having to know the scrollbar's width. The legacy table has no such notion, so it
+      // sideways a few pixels. Leaving Symbol unsized instead makes it the one column TableNG sizes
+      // itself, which is the same "fill whatever the fixed columns don't use" intent without having
+      // to know the scrollbar's width — see `preventHorizontalOverflow` at the call site, which is
+      // what keeps an unsized Symbol inside the pane. The legacy table has no such notion, so it
       // still gets told exactly how wide to make it.
       custom: useTableNG ? {} : { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
       links: [
