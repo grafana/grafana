@@ -1635,6 +1635,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.apiSearchFieldValueResults",
+        "resourceVersion": "1789021061952",
+        "creationTimestamp": "2026-09-10T06:17:41Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for requests from the /api/search endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.generation",
         "resourceVersion": "1785840164813",
         "creationTimestamp": "2026-08-04T10:42:44Z",
@@ -1673,6 +1686,19 @@
         "codeowner": "@grafana/search-and-storage",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboard.searchFieldValueResults",
+        "resourceVersion": "1788883151754",
+        "creationTimestamp": "2026-09-08T15:59:11Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for dashboard search requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },
@@ -2084,6 +2110,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.gatewayGuardrails",
+        "resourceVersion": "1788974867002",
+        "creationTimestamp": "2026-09-09T17:27:47Z"
+      },
+      "spec": {
+        "description": "Data source query gateway guardrails",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2808,7 +2848,8 @@
       "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-11T17:51:24Z"
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",
@@ -2906,6 +2947,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.addRouterMiddleware",
+        "resourceVersion": "1789044117017",
+        "creationTimestamp": "2026-09-10T12:41:57Z",
+        "deletionTimestamp": "2026-09-10T13:32:56Z"
+      },
+      "spec": {
+        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.  This will fallback to the regular apiserver.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3094,12 +3151,15 @@
     {
       "metadata": {
         "name": "grafana.filterablePanels",
-        "resourceVersion": "1784637166683",
-        "creationTimestamp": "2026-07-21T12:32:46Z"
+        "resourceVersion": "1788952738884",
+        "creationTimestamp": "2026-07-21T12:32:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-09 11:18:58.884919 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -3484,13 +3544,16 @@
     {
       "metadata": {
         "name": "grafana.thresholdsInterpolation",
-        "resourceVersion": "1784639663172",
+        "resourceVersion": "1788952738884",
         "creationTimestamp": "2026-07-21T13:14:23Z",
-        "deletionTimestamp": "2026-07-27T09:35:58Z"
+        "deletionTimestamp": "2026-07-27T09:35:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-09 11:18:58.884919 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables using dashboard variables in panel threshold values",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -3539,6 +3602,24 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.useRouterMiddleware",
+        "resourceVersion": "1789055902588",
+        "creationTimestamp": "2026-09-10T13:32:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-10 15:58:22.588096 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "intercept /apis/... and /openapi/v3/... requests in middleware.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -6136,6 +6217,20 @@
     },
     {
       "metadata": {
+        "name": "saml.gosaml2Provider",
+        "resourceVersion": "1788988020706",
+        "creationTimestamp": "2026-09-09T21:07:00Z"
+      },
+      "spec": {
+        "description": "Use the gosaml2 library instead of the crewjam SAML library for SAML authentication",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "savedQueriesRBAC",
         "resourceVersion": "1784725458981",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -6191,6 +6286,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "search.apiFieldValueResults",
+        "resourceVersion": "1789039361718",
+        "creationTimestamp": "2026-09-10T11:22:41Z"
+      },
+      "spec": {
+        "description": "Uses field-value results for generic resource search API requests",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

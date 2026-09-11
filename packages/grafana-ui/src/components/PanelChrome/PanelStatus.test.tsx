@@ -102,18 +102,17 @@ describe('PanelStatus', () => {
       }
     });
 
-    it('calls onClick (inspect) from the tooltip', async () => {
+    it('calls onClick (inspect) when the trigger icon is clicked', async () => {
       const onClick = jest.fn();
       render(<PanelStatus items={items} onClick={onClick} />);
 
-      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
-      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
 
       expect(onClick).toHaveBeenCalledTimes(1);
     });
 
-    it('does not render an Inspect button when no onClick is provided', async () => {
-      render(<PanelStatus items={items} />);
+    it('never renders an Inspect button in the popover', async () => {
+      render(<PanelStatus items={items} onClick={jest.fn()} />);
 
       await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
       expect(await screen.findByText('Errors and notices')).toBeInTheDocument();

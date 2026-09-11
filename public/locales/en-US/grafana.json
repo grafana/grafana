@@ -6023,7 +6023,6 @@
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
       "tags": "Tags",
-      "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
       "time": "Time",
       "title-edit": "Edit title",
@@ -7091,6 +7090,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "The branch this preview was created on has been deleted, so the pull request can no longer be opened. Your changes only exist in this preview — save them to keep them, or discard them and return to the saved version.",
+      "branch-gone-discard": "Discard changes",
+      "branch-gone-refresh-body": "The branch this preview was created on has been deleted. You are now viewing the saved version of this dashboard.",
+      "branch-gone-save": "Save to a new branch",
+      "branch-gone-save-changes": "Save changes",
+      "branch-gone-title": "This branch no longer exists",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
@@ -7638,6 +7643,10 @@
       "required": "Required"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "The provisioning repository managing this folder no longer exists. Choose a different folder or save at the repository root.",
+      "folder-repo-missing-title": "The selected folder cannot be saved to",
+      "save-to-database": "Save to Grafana database instead",
+      "save-to-git": "Save to Git repository instead",
       "tabs": {
         "label-changes": "Changes",
         "label-details": "Details",
@@ -9147,6 +9156,9 @@
       "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
+      "trace-banner-error": "Trace error banner",
+      "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
+      "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
       "url": "URL",
       "warning-indicator": "Trace has client errors"
@@ -10658,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
       "errors-and-notices": "Errors and notices",
-      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -10740,9 +10751,13 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "column-menu-filter": "Filter values",
+      "column-menu-label": "Column options for {{name}}",
+      "column-menu-update-filter": "Update filter",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
+      "edit-column-filter": "Edit filter on {{name}}",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
@@ -12565,6 +12580,7 @@
       "title": "Create"
     },
     "create-alert": {
+      "subtitle": "Create an alert rule",
       "title": "New alert rule"
     },
     "create-dashboard": {
@@ -12990,7 +13006,7 @@
     "add-block": {
       "code": "Code",
       "heading": "Heading",
-      "label": "Add block",
+      "label": "Click to add below",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
       "visualization": "Visualization"
@@ -13057,7 +13073,6 @@
       "create-name-required": "A notebook name is required",
       "create-name-taken": "A notebook with this name already exists",
       "create-tags": "Tags",
-      "create-tags-custom-value": "Add as a new tag",
       "create-tags-help": "Optional — used for search and filtering",
       "create-tags-placeholder": "Add a tag",
       "created-by-me": "Created by me",
@@ -13077,7 +13092,6 @@
       "submit": "Add to notebook",
       "success": "Panel added to {{title}}",
       "success-link": "View notebook",
-      "tag-label": "Filter by tag",
       "tag-placeholder": "Filter by tag",
       "target-description": "Choose where to add the panel.",
       "target-existing": "Existing notebook",
@@ -13132,6 +13146,7 @@
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
       "empty-title-read-only": "No notebooks available to you",
+      "filter-by-tag": "Filter by tag {{tag}}",
       "load-error": "Failed to load notebooks",
       "loading": "Loading notebooks",
       "new-notebook": "New notebook",
@@ -13148,6 +13163,7 @@
         "title": "Title",
         "updated": "Updated"
       },
+      "tag-filter-placeholder": "Filter by tag",
       "unknown-author": "Anonymous"
     },
     "new": {
@@ -13193,7 +13209,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Clear settings"
+      "clear-tooltip": "Clear settings",
+      "swatch-aria-label": "Pick a color, current selection {{color}}",
+      "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
       "color-by-label": "Color series by"
@@ -16621,8 +16639,6 @@
       "label": "Query"
     },
     "options": {
-      "max-rows": "Row limit",
-      "max-rows-description": "Rows of query data to render. High values can slow the panel, especially with complex HTML.",
       "render-mode": "Render mode"
     },
     "render": {
