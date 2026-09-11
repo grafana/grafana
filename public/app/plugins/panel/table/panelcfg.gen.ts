@@ -47,6 +47,11 @@ export interface Options {
    */
   pageSize?: number;
   /**
+   * Controls whether the column management sidebar starts open. Only applies when the
+   * `table.refresh` feature toggle is enabled, which is what introduces the sidebar.
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;

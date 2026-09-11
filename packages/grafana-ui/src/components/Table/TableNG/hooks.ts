@@ -795,6 +795,8 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  enableColumnReorder?: boolean;
+  canManageColumns?: boolean;
   noPanelPadding?: boolean;
 }
 
@@ -824,6 +826,8 @@ interface UseContentAwareWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  enableColumnReorder?: boolean;
+  canManageColumns?: boolean;
   noPanelPadding?: boolean;
 }
 
@@ -839,6 +843,8 @@ export function useContentAwareWidths({
   getActions,
   tableRefreshEnabled = false,
   filter,
+  enableColumnReorder = false,
+  canManageColumns = false,
   noPanelPadding = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
@@ -862,6 +868,8 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
+            enableColumnReorder,
+            canManageColumns,
             noPanelPadding,
           }
         : undefined,
@@ -873,6 +881,8 @@ export function useContentAwareWidths({
       getActions,
       filter,
       tableRefreshEnabled,
+      enableColumnReorder,
+      canManageColumns,
       noPanelPadding,
     ]
   );
