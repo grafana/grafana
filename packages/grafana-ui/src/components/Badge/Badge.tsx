@@ -53,24 +53,11 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
-  const getTextNode = (text: React.ReactNode, hasTooltip: boolean) => {
-    let textNode = null;
-    if (text != null) {
-      // No feature toggle renders text as usual
-      if (!visualRefreshEnabled) {
-        textNode = text;
-        // If visual refresh enabled
-      } else {
-        // Applies styles to truncate text if needed
-        if (hasTooltip) {
-          textNode = <BadgeText text={text} />;
-        } else {
-          // If no tooltip, shows the same text when truncation is needed
-          textNode = <AutoTruncatingBadgeText text={text} />;
-        }
-      }
+  const getTextNode = (text: React.ReactNode, hasTooltip: boolean, visualRefreshEnabled: boolean) => {
+    if (text == null || !visualRefreshEnabled) {
+      return text;
     }
-    return textNode;
+    return hasTooltip ? <BadgeText text={text} /> : <AutoTruncatingBadgeText text={text} />;
   };
 
   const badge = (
@@ -80,7 +67,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
           <Icon name={icon} size="sm" />
         </span>
       )}
-      {getTextNode(text, Boolean(tooltip))}
+      {getTextNode(text, Boolean(tooltip), Boolean(visualRefreshEnabled))}
     </div>
   );
 
