@@ -1704,7 +1704,7 @@ func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType r
 
 func advanceBookmarkClock() time.Time {
 	// synctest's clock starts before the Snowflake epoch.
-	time.Sleep(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).Sub(time.Now()))
+	time.Sleep(time.Until(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)))
 	return time.Now()
 }
 
