@@ -359,6 +359,7 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
+        let deletedCount = 0;
         for (const folderUID of folderUIDs) {
           if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
             continue;
@@ -372,7 +373,13 @@ export const browseDashboardsAPI = createApi({
           if (!response.error) {
             // Only clear the nav starred entry for folders that were actually deleted
             api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+            deletedCount++;
           }
+        }
+
+        if (deletedCount > 0) {
+          // queryFn always resolves, so do this here rather than in onQueryStarted
+          invalidateVariablesAfterFolderDelete();
         }
 
         return { data: undefined };
@@ -384,7 +391,6 @@ export const browseDashboardsAPI = createApi({
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
-          invalidateVariablesAfterFolderDelete();
         });
       },
     }),

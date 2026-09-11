@@ -278,7 +278,9 @@ describe('browseDashboardsAPI', () => {
         browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
       );
 
-      expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      });
     } finally {
       invalidateVariablesSpy.mockRestore();
     }
@@ -613,7 +615,65 @@ describe('browseDashboardsAPI', () => {
           browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
         );
 
-        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        await waitFor(() => {
+          expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        });
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('does not invalidate the variables list when bulk delete yields no successes', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(
+          http.delete('/api/folders/folder-1', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          ),
+          http.delete('/api/folders/folder-2', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          )
+        );
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('does not invalidate the variables list when bulk delete skips every folder as provisioned', async () => {
+      const store = createTestStore();
+      config.provisioningEnabled = true;
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(
+          http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid', () =>
+            HttpResponse.json({
+              apiVersion: 'folder.grafana.app/v1beta1',
+              kind: 'Folder',
+              metadata: {
+                name: 'folder-1',
+                namespace: 'default',
+                annotations: {
+                  [AnnoKeyManagerKind]: ManagerKind.Repo,
+                },
+              },
+              spec: { title: 'Folder 1' },
+            })
+          ),
+          http.delete('/api/folders/:uid', () => HttpResponse.json({}))
+        );
+
+        await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
+
+        expect(invalidateVariablesSpy).not.toHaveBeenCalled();
       } finally {
         invalidateVariablesSpy.mockRestore();
       }

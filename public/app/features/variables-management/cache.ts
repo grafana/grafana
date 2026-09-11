@@ -19,5 +19,11 @@ export function invalidateAfterVariableMutation() {
   invalidatePredefinedVariableCaches();
 }
 
-/** Folder delete cascades Variables; drop the management-page list cache so it does not stay stale. */
-export const invalidateVariablesAfterFolderDelete = invalidateAfterVariableMutation;
+/**
+ * Folder delete cascades Variables, so the management-page list must refetch.
+ * Unlike variable CRUD, this does not clear dashboard scene caches: dashboards
+ * in the deleted folder are gone, and remaining scenes do not use those folder variables.
+ */
+export function invalidateVariablesAfterFolderDelete() {
+  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
+}
