@@ -120,6 +120,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "grafana.useRouterMiddleware",
+			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -2654,10 +2664,10 @@ var (
 		{
 			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{

@@ -381,6 +381,7 @@
     "lossless-json": "^4.1.1",
     "marked": "16.3.0",
     "memoize-one": "6.0.0",
+    "mermaid": "11.17.0",
     "micro-memoize": "^4.1.2",
     "ml-regression-polynomial": "^3.0.0",
     "ml-regression-simple-linear": "^3.0.0",
@@ -460,7 +461,7 @@
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
     "swagger-ui-react/dompurify": "3.4.15",
-    "socks/ip-address": "10.3.1",
+    "socks/ip-address": "10.7.0",
     "refractor/prismjs": "^1.27.0",
     "@mapbox/jsonlint-lines-primitives": "workspace:*",
     "get-document": "workspace:*",
@@ -485,7 +486,8 @@
     "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
     "axios": "1.20.0",
     "pacote": "21.5.1",
-    "brace-expansion@npm:5.0.6": "^5.0.9"
+    "brace-expansion@npm:5.0.6": "^5.0.9",
+    "@braintree/sanitize-url@npm:^7.0.1": "7.0.1"
   },
   "workspaces": {
     "packages": [
