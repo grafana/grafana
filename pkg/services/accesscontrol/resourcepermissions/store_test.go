@@ -619,60 +619,6 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 	})
 }
 
-func TestIntegrationStore_GetServiceAccountsByUIDs(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	const orgID int64 = 1
-	ctx := context.Background()
-	store, sql, _ := setupTestEnv(t)
-
-	now := time.Now()
-	serviceAccount := &user.User{
-		UID:              "service-account-uid",
-		Login:            "service-account",
-		Email:            "service-account@example.com",
-		IsServiceAccount: true,
-		OrgID:            orgID,
-		Created:          now,
-		Updated:          now,
-	}
-	regularUser := &user.User{
-		UID:     "regular-user-uid",
-		Login:   "regular-user",
-		Email:   "regular-user@example.com",
-		OrgID:   orgID,
-		Created: now,
-		Updated: now,
-	}
-	require.NoError(t, sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := sess.Insert(serviceAccount, regularUser); err != nil {
-			return err
-		}
-		_, err := sess.Insert(
-			&org.OrgUser{OrgID: orgID, UserID: serviceAccount.ID, Role: org.RoleViewer, Created: now, Updated: now},
-			&org.OrgUser{OrgID: orgID, UserID: regularUser.ID, Role: org.RoleViewer, Created: now, Updated: now},
-		)
-		return err
-	}))
-
-	serviceAccounts, err := store.GetServiceAccountsByUIDs(ctx, orgID, []string{
-		serviceAccount.UID,
-		serviceAccount.UID,
-		regularUser.UID,
-		"missing-uid",
-	})
-	require.NoError(t, err)
-	require.Len(t, serviceAccounts, 1)
-	assert.Equal(t, serviceAccount.ID, serviceAccounts[0].ID)
-	assert.Equal(t, serviceAccount.UID, serviceAccounts[0].UID)
-	assert.Equal(t, serviceAccount.Login, serviceAccounts[0].Login)
-	assert.True(t, serviceAccounts[0].IsServiceAccount)
-
-	otherOrg, err := store.GetServiceAccountsByUIDs(ctx, orgID+1, []string{serviceAccount.UID})
-	require.NoError(t, err)
-	assert.Empty(t, otherOrg)
-}
-
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg

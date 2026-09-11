@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -691,19 +692,39 @@ func TestConvertK8sResourcePermissionToDTOChunksTeamLookupsAtUIDFilterLimit(t *t
 		"the searchTeams endpoint rejects more than 100 uid filters per request")
 }
 
+type fakeServiceAccountRetriever struct {
+	serviceAccounts map[string]*serviceaccounts.ServiceAccountProfileDTO
+	calls           int
+	lastUIDs        []string
+}
+
+func (f *fakeServiceAccountRetriever) RetrieveServiceAccount(context.Context, *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return nil, serviceaccounts.ErrServiceAccountNotFound.Errorf("not found")
+}
+
+func (f *fakeServiceAccountRetriever) RetrieveServiceAccountsByUIDs(_ context.Context, _ int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	f.calls++
+	f.lastUIDs = uids
+	result := make([]*serviceaccounts.ServiceAccountProfileDTO, 0, len(uids))
+	for _, uid := range uids {
+		if serviceAccount, ok := f.serviceAccounts[uid]; ok {
+			result = append(result, serviceAccount)
+		}
+	}
+	return result, nil
+}
+
 func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedirect(t *testing.T) {
 	userSvc := &countingUserService{
 		FakeUserService: usertest.NewUserServiceFake(),
 		users:           map[string]*user.User{},
 	}
-	store := &mockResourcePermissionStore{
-		serviceAccounts: map[string]*user.User{
+	serviceAccountRetriever := &fakeServiceAccountRetriever{
+		serviceAccounts: map[string]*serviceaccounts.ServiceAccountProfileDTO{
 			"sa-uid-1": {
-				ID:               1,
-				UID:              "sa-uid-1",
-				Login:            "sa-1",
-				Email:            "sa-1@example.com",
-				IsServiceAccount: true,
+				Id:    1,
+				UID:   "sa-uid-1",
+				Login: "sa-1",
 			},
 		},
 	}
@@ -711,9 +732,10 @@ func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedi
 		cfg:    &setting.Cfg{},
 		logger: log.New("test"),
 		service: &Service{
-			store:       store,
-			userService: userSvc,
-			teamService: teamtest.NewFakeService(),
+			store:                   &mockResourcePermissionStore{},
+			userService:             userSvc,
+			teamService:             teamtest.NewFakeService(),
+			serviceAccountRetriever: serviceAccountRetriever,
 			options: Options{
 				Resource:             "folders",
 				ResourceAttribute:    "uid",
@@ -737,6 +759,8 @@ func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedi
 	require.NoError(t, err)
 	require.Len(t, perms, 1)
 	assert.Zero(t, userSvc.listCalls, "service accounts must not use the redirected user service")
+	assert.Equal(t, 1, serviceAccountRetriever.calls)
+	assert.Equal(t, []string{"sa-uid-1"}, serviceAccountRetriever.lastUIDs)
 	assert.Equal(t, int64(1), perms[0].UserID)
 	assert.Equal(t, "sa-uid-1", perms[0].UserUID)
 	assert.Equal(t, "sa-1", perms[0].UserLogin)
@@ -1535,8 +1559,7 @@ func TestAdminRoleLogic(t *testing.T) {
 
 // mockResourcePermissionStore is a mock implementation of the Store interface for testing
 type mockResourcePermissionStore struct {
-	permissions     []accesscontrol.ResourcePermission
-	serviceAccounts map[string]*user.User
+	permissions []accesscontrol.ResourcePermission
 }
 
 func (m *mockResourcePermissionStore) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
@@ -1597,16 +1620,6 @@ func (m *mockResourcePermissionStore) GetPermissionIDsByRoleNames(ctx context.Co
 			continue
 		}
 		result[roleName] = id
-	}
-	return result, nil
-}
-
-func (m *mockResourcePermissionStore) GetServiceAccountsByUIDs(_ context.Context, _ int64, uids []string) ([]*user.User, error) {
-	result := make([]*user.User, 0, len(uids))
-	for _, uid := range uids {
-		if serviceAccount, ok := m.serviceAccounts[uid]; ok {
-			result = append(result, serviceAccount)
-		}
 	}
 	return result, nil
 }

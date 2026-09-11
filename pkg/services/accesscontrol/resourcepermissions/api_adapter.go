@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -199,12 +200,12 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 				// access without saying who.
 				continue
 			}
-			permDTO.UserID = serviceAccount.ID
+			permDTO.UserID = serviceAccount.Id
 			permDTO.UserUID = serviceAccount.UID
 			permDTO.UserLogin = serviceAccount.Login
-			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, serviceAccount.Email)
+			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, "")
 			permDTO.IsServiceAccount = true
-			permDTO.RoleName = userManagedRoleName(serviceAccount.ID)
+			permDTO.RoleName = userManagedRoleName(serviceAccount.Id)
 			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
 			teamDetails, ok := subjects.teams[name]
@@ -247,7 +248,7 @@ func basicRoleManagedRoleName(role string) string {
 // failed is an error, not a missing key, so the two cannot be confused.
 type resolvedSubjects struct {
 	users           map[string]*user.User
-	serviceAccounts map[string]*user.User
+	serviceAccounts map[string]*serviceaccounts.ServiceAccountProfileDTO
 	teams           map[string]*team.TeamDTO
 	permissionIDs   map[string]int64
 }
@@ -272,7 +273,7 @@ const teamBatchSize = 100
 func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) (*resolvedSubjects, error) {
 	subjects := &resolvedSubjects{
 		users:           make(map[string]*user.User),
-		serviceAccounts: make(map[string]*user.User),
+		serviceAccounts: make(map[string]*serviceaccounts.ServiceAccountProfileDTO),
 		teams:           make(map[string]*team.TeamDTO),
 		permissionIDs:   make(map[string]int64),
 	}
@@ -325,14 +326,14 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 		}
 	}
 
-	if len(serviceAccountUIDs) > 0 && a.service.store != nil {
-		serviceAccounts, err := a.service.store.GetServiceAccountsByUIDs(ctx, orgID, serviceAccountUIDs)
+	if len(serviceAccountUIDs) > 0 && a.service.serviceAccountRetriever != nil {
+		serviceAccounts, err := a.service.serviceAccountRetriever.RetrieveServiceAccountsByUIDs(ctx, orgID, serviceAccountUIDs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve %d service accounts for resource permissions: %w", len(serviceAccountUIDs), err)
 		}
 		for _, serviceAccount := range serviceAccounts {
 			subjects.serviceAccounts[serviceAccount.UID] = serviceAccount
-			roleNames = append(roleNames, userManagedRoleName(serviceAccount.ID))
+			roleNames = append(roleNames, userManagedRoleName(serviceAccount.Id))
 		}
 	}
 

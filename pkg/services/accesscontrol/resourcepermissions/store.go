@@ -191,58 +191,6 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, ro
 	return result, nil
 }
 
-func (s *store) GetServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*user.User, error) {
-	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetServiceAccountsByUIDs")
-	defer span.End()
-
-	if len(uids) == 0 {
-		return []*user.User{}, nil
-	}
-
-	unique := make([]string, 0, len(uids))
-	seen := make(map[string]struct{}, len(uids))
-	for _, uid := range uids {
-		if uid == "" {
-			continue
-		}
-		if _, ok := seen[uid]; ok {
-			continue
-		}
-		seen[uid] = struct{}{}
-		unique = append(unique, uid)
-	}
-
-	serviceAccounts := make([]*user.User, 0, len(unique))
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-		for chunk := range slices.Chunk(unique, permissionIDBatchSize) {
-			args := make([]any, 0, len(chunk)+1)
-			args = append(args, orgID)
-			for _, uid := range chunk {
-				args = append(args, uid)
-			}
-
-			var rows []*user.User
-			if err := sess.SQL(`
-				SELECT u.id, u.uid, u.login, u.email, u.is_service_account
-				FROM `+s.sql.GetDialect().Quote("user")+` u
-				INNER JOIN org_user ou ON ou.user_id = u.id
-				WHERE ou.org_id = ?
-					AND u.is_service_account = `+s.sql.GetDialect().BooleanStr(true)+`
-					AND u.uid IN (?`+strings.Repeat(",?", len(chunk)-1)+`)
-			`, args...).Find(&rows); err != nil {
-				return err
-			}
-			serviceAccounts = append(serviceAccounts, rows...)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return serviceAccounts, nil
-}
-
 func (s *store) SetUserResourcePermission(
 	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd SetResourcePermissionCommand,

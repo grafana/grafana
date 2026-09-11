@@ -119,11 +119,6 @@ func (s *benchStore) GetPermissionIDsByRoleNames(_ context.Context, _ int64, rol
 	return result, nil
 }
 
-func (s *benchStore) GetServiceAccountsByUIDs(_ context.Context, _ int64, _ []string) ([]*user.User, error) {
-	s.db.hit()
-	return nil, nil
-}
-
 // benchFixture is a folder ResourcePermission with n entries plus the fakes that
 // can resolve every subject it references.
 type benchFixture struct {

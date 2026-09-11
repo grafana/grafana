@@ -51,7 +51,8 @@ func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 func ProvideReceiverPermissionsService(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, service accesscontrol.Service,
-	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
+	actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
@@ -76,7 +77,7 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService)
 	if err != nil {
 		return nil, err
 	}
