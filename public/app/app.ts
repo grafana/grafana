@@ -61,6 +61,12 @@ import {
 import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
+// Enterprise frontend entry point. Resolves to public/app/extensions when the enterprise
+// frontend is present, and to a no-op stub otherwise, so this import works in both editions.
+// See scripts/webpack/webpack.common.ts. This is the one place core is allowed to reach into
+// the enterprise frontend, which is why the repo-wide ban is disabled for this line only.
+// eslint-disable-next-line no-restricted-imports
+import * as extensions from 'app/extensions';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
@@ -141,11 +147,6 @@ import { createSystemVariableAdapter } from './features/variables/system/adapter
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
 import { dispatch } from './store/store';
-
-// Enterprise frontend entry point. Resolves to public/app/extensions when the enterprise
-// frontend is present, and to a no-op stub otherwise, so this import works in both
-// editions. See scripts/webpack/webpack.common.ts.
-import * as extensions from 'app/extensions';
 
 export interface AppInitOptions {
   // Preferences fetched during boot (see initPreferences). Passed through so we
