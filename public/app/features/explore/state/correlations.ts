@@ -5,7 +5,7 @@ import {
   generatedAPI as correlationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataLinkTransformationConfig } from '@grafana/data';
-import { type CorrelationData, reportInteraction, config } from '@grafana/runtime';
+import { type CorrelationData, config } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -109,10 +109,6 @@ export function saveCurrentCorrelation(
           dispatch(splitClose(keys[1]));
           await dispatch(reloadCorrelations(keys[0]));
           await dispatch(runQueries({ exploreId: keys[0] }));
-          reportInteraction('grafana_explore_correlation_editor_saved', {
-            sourceDatasourceType: sourceDatasource.type,
-            targetDataSourceType: targetDatasource.type,
-          });
         } else {
           dispatch(
             notifyApp(createErrorNotification('Error creating correlation', getMessageFromError(response.error)))
@@ -138,10 +134,6 @@ export function saveCurrentCorrelation(
             dispatch(splitClose(keys[1]));
             await dispatch(reloadCorrelations(keys[0]));
             await dispatch(runQueries({ exploreId: keys[0] }));
-            reportInteraction('grafana_explore_correlation_editor_saved', {
-              sourceDatasourceType: sourceDatasource.type,
-              targetDataSourceType: targetDatasource.type,
-            });
           })
           .catch((err) => {
             dispatch(notifyApp(createErrorNotification('Error creating correlation', err)));
