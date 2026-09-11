@@ -156,13 +156,17 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			expectActions:   []string{"folder-get", "folder-write"},
 		},
 		{
-			name:            "setPermissions promotes every Can* flag",
-			allowed:         []string{"folder-setperms"},
-			expectCanAdmin:  true,
-			expectCanEdit:   true,
-			expectCanDelete: true,
-			expectCanSave:   true,
-			expectActions:   []string{"folder-setperms"},
+			// Legacy gates CanAdmin on holding both permissions verbs, and does not
+			// promote the other flags from it.
+			name:           "both permissions verbs → CanAdmin only",
+			allowed:        []string{"folder-getperms", "folder-setperms"},
+			expectCanAdmin: true,
+			expectActions:  []string{"folder-getperms", "folder-setperms"},
+		},
+		{
+			name:          "setPermissions without getPermissions is not admin",
+			allowed:       []string{"folder-setperms"},
+			expectActions: []string{"folder-setperms"},
 		},
 		{
 			name:            "delete only → CanDelete true, others false",

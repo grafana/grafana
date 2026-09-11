@@ -278,14 +278,14 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 
 	// Can* mirrors the legacy pkg/api/folder.go newToFolderDto computation:
 	// canEdit / canSave both gate on folders:write, canDelete on folders:delete,
-	// canAdmin on the permissions verbs. CanAdmin implies the other three
-	// because the seeded Admin role bundles those actions.
-	canAdmin := allowed["folder-setperms"]
+	// canAdmin on holding both permissions verbs. The flags are independent —
+	// the seeded Admin role bundles all of these actions, but a custom role
+	// granting only the permissions verbs must not report edit, save or delete.
 	rsp := &foldersV1.FolderAccessInfo{
-		CanAdmin:  canAdmin,
-		CanEdit:   canAdmin || allowed["folder-write"],
-		CanSave:   canAdmin || allowed["folder-write"],
-		CanDelete: canAdmin || allowed["folder-delete"],
+		CanAdmin:  allowed["folder-getperms"] && allowed["folder-setperms"],
+		CanEdit:   allowed["folder-write"],
+		CanSave:   allowed["folder-write"],
+		CanDelete: allowed["folder-delete"],
 	}
 
 	if len(accessControl) > 0 {
