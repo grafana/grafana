@@ -66,6 +66,21 @@ docker_build () {
   fi
 
   grafana_tgz=${GRAFANA_TGZ:-"grafana-latest.linux-${arch}${libc}.tar.gz"}
+  license_tgz=""
+  license_dir=""
+
+  # Enterprise images are distributed under the Grafana Labs License rather than AGPL.
+  # The Enterprise build supplies the license file separately; replace the OSS license
+  # in the release tarball before Docker copies it into /usr/share/grafana/LICENSE.
+  if [ -n "${GRAFANA_LICENSE_FILE:-}" ]; then
+    license_tgz=$(mktemp "./grafana-license.XXXXXX.tar.gz")
+    license_dir=$(mktemp -d)
+    tar xzf "${grafana_tgz}" -C "${license_dir}" --strip-components=1
+    cp "${GRAFANA_LICENSE_FILE}" "${license_dir}/LICENSE"
+    tar czf "${license_tgz}" -C "${license_dir}" .
+    grafana_tgz="${license_tgz}"
+  fi
+
   tag="${_docker_repo}${repo_arch}:${_grafana_version}${TAG_SUFFIX}"
 
   DOCKER_BUILDKIT=1 \
@@ -79,6 +94,11 @@ docker_build () {
     --no-cache=true \
     --file ../../Dockerfile \
     .
+
+  if [ -n "${license_tgz}" ]; then
+    rm -f "${license_tgz}"
+    rm -rf "${license_dir}"
+  fi
 }
 
 docker_tag_linux_amd64 () {
