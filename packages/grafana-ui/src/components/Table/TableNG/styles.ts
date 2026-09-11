@@ -59,6 +59,19 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
 // hair of `background.secondary`, the established "one step off white" surface.
 const HEADER_BACKGROUND_EMPHASIS = 0.04;
 
+// Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
+// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself, and
+// `::after` is free — rdg only takes `::before`, on the grid root, for its Firefox scrollbar fix.
+const headerCornerMask = (radius: string) =>
+  ({
+    content: '""',
+    position: 'absolute',
+    insetBlockStart: 0,
+    inlineSize: radius,
+    blockSize: radius,
+    pointerEvents: 'none',
+  }) as const;
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -89,6 +102,8 @@ export const getGridStyles = memoize(
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
     // other first column — `gridNested` below has to know about it to stay flush with that column.
     const nestedGridExpanderPaddingOffset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
+    // sizes both the masks' boxes and the arc they cut, so the two can't drift
+    const cornerRadius = theme.shape.radius.default;
 
     return {
       grid: css({
@@ -216,13 +231,23 @@ export const getGridStyles = memoize(
           '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
             backgroundColor: 'var(--rdg-header-background-color)',
           },
-          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            borderStartStartRadius: theme.shape.radius.default,
-            overflow: 'hidden',
+          // The header's corners are painted rather than clipped. A corner made by transparency needs
+          // an ancestor clipping at that exact offset: the grid's own radius above is that ancestor
+          // only while the columns reach the panel edge. When every column has a configured width
+          // they can stop short of it (nothing stretches to fill), and the table's real trailing
+          // corner then sits mid-panel with a body cell scrolling under the sticky header behind it.
+          // Filling everything outside the arc with the table's own background — the same colour as
+          // the gap beside the table, and as whatever the table sits on — makes the corner opaque, so
+          // there is nothing left to show through wherever it lands.
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::after`]: {
+            ...headerCornerMask(cornerRadius),
+            insetInlineStart: 0,
+            background: `radial-gradient(circle at 100% 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
-          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
-            borderStartEndRadius: theme.shape.radius.default,
-            overflow: 'hidden',
+          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}::after`]: {
+            ...headerCornerMask(cornerRadius),
+            insetInlineEnd: 0,
+            background: `radial-gradient(circle at 0 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
           // The footer is the last row in the grid, so react-data-grid's per-cell bottom border
           // draws a hairline along the table's own bottom edge with nothing below it to divide.
