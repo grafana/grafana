@@ -42,12 +42,7 @@ export function simplifySchemaName(schemaName: string) {
 // Matches version segments like 'v1', 'v1beta1', 'v0alpha1'.
 const VERSION_REGEX = /^v\d+[a-zA-Z0-9]*$/;
 
-/**
- * The path segments in front of the version, e.g.
- * 'com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults' gives
- * ['com', 'github', ..., 'apis', 'search']. Empty for a name with no version segment,
- * including the short names some groups register by hand.
- */
+/** The path segments in front of the version. Empty for a name with no version segment. */
 function packageSegments(schemaName: string) {
   const segments = unescapeJsonPointer(schemaName).split(/[./]/);
   const versionIndex = segments.findIndex((segment) => VERSION_REGEX.test(segment));
@@ -69,15 +64,11 @@ function isGrafanaPath(schemaName: string) {
 }
 
 /**
- * Whether the schema belongs to the group the document describes, as opposed to being
- * imported from another package. Only the group's own label counts, never the ones it
- * shares with its siblings: 'alerting' appears in the path of every alerting group, so
- * matching on it would make an import from a sibling group look local, and the same
- * imported type would then be published under different names in different clients.
- *
- * The label is looked for anywhere in the path rather than in the package name alone,
- * because the two do not line up exactly - 'correlations.grafana.app' is served from a
- * package called 'correlation', below a directory called 'correlations'.
+ * Whether the schema belongs to the group the document describes, rather than being
+ * imported. Only the group's own label counts: 'alerting' is in the path of every
+ * alerting group, so a shared label would make a sibling's import look local. The label
+ * can sit anywhere in the path, since the two do not line up exactly -
+ * 'correlations.grafana.app' is served from a package called 'correlation'.
  */
 function belongsToGroup(schemaName: string, group: string) {
   const label = group.split('.')[0].toLowerCase();
@@ -86,10 +77,9 @@ function belongsToGroup(schemaName: string, group: string) {
 
 /**
  * A distinct name for a schema that cannot keep its simplified one. Grafana schemas take
- * the package they live in as a prefix ('SearchResults' from the search package becomes
- * 'SearchSearchResults'); a short name registered by hand takes the document's group
- * instead, since it has no package to borrow from. Third-party names spell out the whole
- * path, because a single segment of theirs is not descriptive on its own.
+ * their package as a prefix; a hand-registered short name has no package to borrow from,
+ * so it takes the group. Third-party names spell out the whole path, because one segment
+ * of theirs says little.
  */
 function qualifySchemaName(schemaKey: string, group: string | undefined) {
   const base = simplifySchemaName(schemaKey);
@@ -105,10 +95,9 @@ function qualifySchemaName(schemaKey: string, group: string | undefined) {
 }
 
 /**
- * Decides which schema keeps the plain name when two of them simplify to the same one.
- * A schema imported from a shared package wins, so that a type published to several
- * groups is called the same thing in each of their generated clients, and a name we
- * cannot qualify at all wins over one we can.
+ * Which schema keeps the plain name when two simplify to the same one. An imported
+ * schema wins, so a type published to several groups is named the same in each of their
+ * clients, and a name we cannot qualify wins over one we can.
  */
 function plainNamePriority(schemaKey: string, group: string | undefined) {
   if (packageSegments(schemaKey).length === 0) {
@@ -118,20 +107,17 @@ function plainNamePriority(schemaKey: string, group: string | undefined) {
 }
 
 /**
- * Map each schema key in a document to the name it is published under. Keys are
- * simplified as before, and only where two of them would land on the same name does the
- * loser get a qualified name - so enrolling a group in a shared API renames the clash
- * and nothing else.
+ * Map each schema key in a document to the name it is published under. Only a key that
+ * would land on a name another key already has gets a qualified one, so enrolling a
+ * group in a shared API renames the clash and nothing else.
  *
- * The result depends only on the set of keys and the group, never on the order the keys
- * arrive in, so a reordering of the incoming document cannot move a name from one type
- * to another.
+ * The result depends on the set of keys and the group, never on the order they arrive
+ * in, so reordering the document cannot move a name from one type to another.
  *
  * @param group the API group the document describes, e.g. 'dashboard.grafana.app'
  */
 export function buildSchemaNameMap(schemaKeys: string[], group?: string) {
-  // Compared by code unit rather than by locale, so the output cannot vary between
-  // machines.
+  // Code-unit order, so the result cannot vary by locale.
   const ordered = [...schemaKeys].sort(
     (a, b) => plainNamePriority(a, group) - plainNamePriority(b, group) || (a < b ? -1 : a > b ? 1 : 0)
   );
@@ -144,8 +130,7 @@ export function buildSchemaNameMap(schemaKeys: string[], group?: string) {
 
     if (taken.has(name)) {
       name = qualifySchemaName(schemaKey, group);
-      // Nothing in the documents we process needs this, but a name has to come out
-      // unique whatever goes in.
+      // Not reachable with today's documents, but a name must be unique regardless.
       for (let suffix = 2; taken.has(name); suffix++) {
         name = qualifySchemaName(schemaKey, group) + suffix;
       }

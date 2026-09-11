@@ -13,7 +13,6 @@ function ref(name: string) {
  * A dashboard document that serves the shared search endpoint and, like the real one
  * used to, registers a SearchResults of its own under a short key.
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const specWithClashingNames = () =>
   ({
     openapi: '3.0.0',

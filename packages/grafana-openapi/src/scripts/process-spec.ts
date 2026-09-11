@@ -15,8 +15,8 @@ export function processOpenAPISpec(spec: OpenAPIV3.Document) {
   // Create a deep copy of the spec to avoid mutating the original
   const newSpec = JSON.parse(JSON.stringify(spec));
 
-  // Names are decided up front because the paths are rewritten before the schemas are,
-  // and a $ref has to end up with the same name as the schema it points at.
+  // Decided up front because the paths are rewritten before the schemas are, and a $ref
+  // has to end up with the same name as the schema it points at.
   const schemaNames = buildSchemaNameMap(Object.keys(newSpec.components.schemas), specGroup(newSpec));
 
   // Process 'paths' property
@@ -70,8 +70,7 @@ export function processOpenAPISpec(spec: OpenAPIV3.Document) {
   newSpec.paths = newPaths;
 
   // Process 'components.schemas', i.e., type definitions
-  // Written in the order they arrived in, so that naming changes show up in a diff on
-  // their own rather than alongside a reshuffle of every schema in the document.
+  // Kept in their original order, so a naming change shows up in a diff on its own.
   const newSchemas: Record<string, unknown> = {};
   for (const schemaKey of Object.keys(newSpec.components.schemas)) {
     const schemaObject = newSpec.components.schemas[schemaKey];
@@ -93,7 +92,7 @@ function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject |
 
 /**
  * The group the document describes, taken from a path since that is where it appears
- * literally. `info.title` is the fallback, and is not always a group at all - the quotas
+ * literally. `info.title` is the fallback, and is not always a group - the quotas
  * document calls itself 'Grafana API Server'.
  */
 function specGroup(spec: OpenAPIV3.Document) {
