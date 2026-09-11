@@ -386,6 +386,8 @@ func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
 		s.Message = in.Errors
 	} else if len(in.Warnings) > 0 {
 		s.Message = in.Warnings
+	} else if in.State == JobStateError && in.Message != "" {
+		s.Message = []string{in.Message}
 	}
 
 	return s
