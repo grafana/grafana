@@ -27,7 +27,7 @@ const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) =>
 
   return (
     <div>
-      <div className="page-sub-heading">
+      <div>
         <Text variant="h2" element="h2">
           <Trans i18nKey="user-orgs.title">Organizations</Trans>
         </Text>

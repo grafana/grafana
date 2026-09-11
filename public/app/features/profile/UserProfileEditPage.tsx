@@ -81,14 +81,16 @@ export function UserProfileEditPage({
               }
             />
             <Stack direction="column" gap={6}>
-              {!teamsAreLoading && teams.length > 0 && (
-                <div className="page-sub-heading">
-                  <Text element="h2" variant="h2">
-                    <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
-                  </Text>
-                </div>
+              {(teamsAreLoading || teams.length > 0) && (
+                <section>
+                  {!teamsAreLoading && teams.length > 0 && (
+                    <Text element="h2" variant="h2">
+                      <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
+                    </Text>
+                  )}
+                  <UserTeams isLoading={teamsAreLoading} teams={teams} />
+                </section>
               )}
-              <UserTeams isLoading={teamsAreLoading} teams={teams} />
               <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
               <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
             </Stack>

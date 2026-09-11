@@ -25,7 +25,7 @@ const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) =>
     <div className={styles.wrapper}>
       {sessions.length > 0 && (
         <>
-          <div className="page-sub-heading">
+          <div>
             <Text variant="h2" element="h2">
               <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
             </Text>
