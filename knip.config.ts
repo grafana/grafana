@@ -33,6 +33,9 @@ const config: KnipConfig = {
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
+    // TODO: Remove once Rspack replaces Webpack.
+    'public/app/core/utils/CorsWorker.rspack.ts',
+    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
@@ -94,6 +97,9 @@ const config: KnipConfig = {
       ],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
       },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',

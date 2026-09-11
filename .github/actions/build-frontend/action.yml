@@ -1,0 +1,46 @@
+name: Build frontend
+
+description: Restores or builds the Grafana frontend production assets. Requires Node.js to be set up.
+
+runs:
+  using: composite
+  steps:
+    - name: Hash build action
+      id: action
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        action_hash="$(sha256sum "$ACTION_PATH/action.yml")"
+        echo "hash=${action_hash%% *}" >> "$GITHUB_OUTPUT"
+
+    - name: Restore frontend build
+      id: cache
+      uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
+      with:
+        key: "frontend-build-v1-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc.yml', '.yarn/releases/**', '.yarn/plugins/**', '.yarn/patches/**', '.github/actions/setup-node/**', '.github/actions/yarn-install/**', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', 'scripts/cli/env-util.ts', 'scripts/cli/package.json', 'scripts/tsconfig.base.json', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc', 'Makefile') }}-${{ steps.action.outputs.hash }}"
+        path: |
+          public/build
+          public/build-swagger
+          public/app/plugins/*/*/dist
+
+    - name: Install yarn dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: ./.github/actions/yarn-install
+
+    - name: Build frontend
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        NO_SOURCEMAP: '1'
+      run: make build-js
+
+    - name: Save frontend build
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
+      with:
+        key: ${{ steps.cache.outputs.cache-primary-key }}
+        path: |
+          public/build
+          public/build-swagger
+          public/app/plugins/*/*/dist

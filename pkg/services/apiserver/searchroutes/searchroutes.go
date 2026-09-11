@@ -6,9 +6,10 @@
 package searchroutes
 
 import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
@@ -30,6 +31,14 @@ var enrolledWithoutSearchFields = map[string]bool{
 	"dashboard.grafana.app/notebooks": true,
 }
 
+// trashAllowlist holds the kinds allowed to serve the trash endpoint.
+//
+// Trash grants access to whoever deleted the object, or to folder admins, which
+// only makes sense for kinds that live in folders.
+var trashAllowlist = map[string]bool{
+	"dashboard.grafana.app/dashboards": true,
+}
+
 // enrolled reports whether a kind gets the search endpoints at all.
 //
 // Declared fields stand in for "someone reviewed this kind". Search works
@@ -38,11 +47,15 @@ func enrolled(group, resourceName string, kind app.ManifestVersionKind) bool {
 	return len(kind.SearchFields) > 0 || enrolledWithoutSearchFields[group+"/"+resourceName]
 }
 
+type BuildOptions struct {
+	FieldValueResultsEnabled searchapi.FieldValueResultsEnabled
+}
+
 // Build returns the search and trash routes to mount, or nil when both are off or
 // there is no client to serve them with.
 //
-// The two are switched separately because trash authorizes on a different rule
-// that has not been reviewed yet. See searchapi.ConfigKeyTrash.
+// The two are switched separately because trash grants access differently from
+// search. See trashAllowlist and searchapi.ConfigKeyTrash.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
@@ -54,9 +67,31 @@ func Build(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
+	return BuildWithOptions(searchEnabled, trashEnabled, tracer, index, builders, installers, BuildOptions{})
+}
+
+// BuildWithOptions leaves the result-format decision with the host: embedded
+// Grafana can pass a tenant setting, while a standalone server can pass a
+// process setting.
+func BuildWithOptions(
+	searchEnabled bool,
+	trashEnabled bool,
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	builders []builder.APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+	options BuildOptions,
+) []builder.GroupVersionRoutes {
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
-	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
+	routes, err := BuildForServedGroupVersionsWithOptions(
+		resource.AppManifests(), servedGroupVersions(builders, installers),
+		searchEnabled, trashEnabled, tracer, index, options,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	return routes
 }
 
 // BuildFromManifests is Build with the kind declarations supplied by the caller.
@@ -70,7 +105,7 @@ func Build(
 //
 // Panics on a bad declaration, because in a compiled-in manifest that is a bug.
 func BuildFromManifests(
-	manifests []app.Manifest,
+	manifests []*app.ManifestData,
 	searchEnabled bool,
 	trashEnabled bool,
 	tracer tracing.Tracer,
@@ -99,12 +134,24 @@ func BuildFromManifests(
 // Returns an error rather than panicking, because manifests read at runtime can
 // be malformed without this build being at fault.
 func BuildForServedGroupVersions(
-	manifests []app.Manifest,
+	manifests []*app.ManifestData,
 	served map[schema.GroupVersion]bool,
 	searchEnabled bool,
 	trashEnabled bool,
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
+) ([]builder.GroupVersionRoutes, error) {
+	return BuildForServedGroupVersionsWithOptions(manifests, served, searchEnabled, trashEnabled, tracer, index, BuildOptions{})
+}
+
+func BuildForServedGroupVersionsWithOptions(
+	manifests []*app.ManifestData,
+	served map[schema.GroupVersion]bool,
+	searchEnabled bool,
+	trashEnabled bool,
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	options BuildOptions,
 ) ([]builder.GroupVersionRoutes, error) {
 	// Whether an endpoint is on is read by the caller, because the two servers
 	// that mount them are configured differently: one from an ini file, one from
@@ -113,23 +160,25 @@ func BuildForServedGroupVersions(
 		return nil, nil
 	}
 
-	provider, err := resource.ManifestBackedProvider(manifests)
+	provider, err := resource.ManifestBackedProvider(manifests...)
 	if err != nil {
 		return nil, err
 	}
-	handler := searchapi.NewHandler(index, provider, tracer)
+	handler := searchapi.NewHandlerWithOptions(index, provider, tracer, searchapi.HandlerOptions{
+		FieldValueResultsEnabled: options.FieldValueResultsEnabled,
+	})
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
 
 	for _, m := range manifests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		for _, version := range m.ManifestData.Versions {
+		for _, version := range m.Versions {
 			if !version.Served {
 				continue
 			}
-			gv := schema.GroupVersion{Group: m.ManifestData.Group, Version: version.Name}
+			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
 			if !served[gv] {
 				continue
 			}
@@ -147,7 +196,7 @@ func BuildForServedGroupVersions(
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if trashEnabled && kind.HasTrashEndpoint() {
+				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}

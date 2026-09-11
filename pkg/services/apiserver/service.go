@@ -71,6 +71,11 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+// RequestRouter routes API groups before the embedded API server.
+type RequestRouter interface {
+	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+}
+
 type service struct {
 	services.NamedService
 
@@ -109,6 +114,7 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+	requestRouter           RequestRouter
 
 	// vpRegistry serves the resolved policy consulted by apistore.encode.
 	vpRegistry *versionpolicy.VersionPolicyRegistry
@@ -141,6 +147,7 @@ func ProvideService(
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
+	requestRouter RequestRouter,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -168,6 +175,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
+		requestRouter:                     requestRouter,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -205,7 +213,7 @@ func ProvideService(
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.handler.ServeHTTP(resp, req)
+			s.requestRouter.HandleFunc(resp, req, s.handler)
 		}
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.
@@ -414,8 +422,13 @@ func (s *service) start(ctx context.Context) error {
 	// and the served WebServices, or the endpoint works but is undiscoverable.
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(false)
-	searchRoutes := searchroutes.Build(searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	searchRoutes := searchroutes.BuildWithOptions(
+		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
+			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
+		}},
+	)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -464,7 +477,7 @@ func (s *service) start(ctx context.Context) error {
 			StorageClient:         s.unified,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
-			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
 			SecureValues:          s.secrets,
 			ConfigProvider:        s.restConfigProvider,
 			Metrics:               s.metrics,

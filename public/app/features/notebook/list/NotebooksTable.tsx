@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
-import { memo, type ReactNode, useMemo } from 'react';
+import { css } from '@emotion/css';
+import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
@@ -18,8 +18,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
+import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
+import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
-import { getNeutralTagListStyle } from '../tagColors';
 import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
 
 import { NotebookRowMenu } from './NotebookRowMenu';
@@ -27,6 +29,8 @@ import { type NotebookRow } from './useNotebooksList';
 
 interface Props {
   notebooks: NotebookRow[];
+  /** Adds the clicked tag to the filter. Required, so a row's tags cannot end up inert by omission. */
+  onTagClick: (tag: string) => void;
 }
 
 /**
@@ -38,12 +42,10 @@ interface Props {
  */
 function getColumnLayout() {
   return {
-    // Title is capped so it stops absorbing all the table's slack; tags take the remainder.
     title: {
       id: 'title',
       header: t('notebooks.list.table.title', 'Title'),
-      width: 320,
-      maxWidth: 320,
+      minWidth: 320,
       skeleton: () => <Skeleton width={220} />,
     },
     authorName: {
@@ -56,6 +58,7 @@ function getColumnLayout() {
       id: 'tags',
       header: t('notebooks.list.table.tags', 'Tags'),
       minWidth: 160,
+      maxWidth: 320,
       skeleton: () => <TagList.Skeleton />,
     },
     created: {
@@ -89,8 +92,25 @@ function withoutSkeleton({ skeleton, ...column }: ColumnLayout) {
   return column;
 }
 
-export function NotebooksTable({ notebooks }: Props) {
+export function NotebooksTable({ notebooks, onTagClick }: Props) {
   const styles = useStyles2(getStyles);
+  // Held here rather than in the row menu, which lives in a Dropdown overlay that unmounts as the menu
+  // closes. Only the uid and title, because the rows are flattened and carry no resource envelope.
+  const [toDelete, setToDelete] = useState<{ uid: string; title: string } | undefined>();
+  const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_LIST);
+
+  // Stable, so the memoized rows and the memoized columns below are not rebuilt on every render.
+  const onDelete = useCallback((uid: string, title: string) => setToDelete({ uid, title }), []);
+  const onDismissDelete = useCallback(() => setToDelete(undefined), []);
+  const onConfirmDelete = useCallback(async () => {
+    if (!toDelete) {
+      return;
+    }
+    // Closed either way: the hook reports the failure, and leaving the modal open over a toast that
+    // says it failed just makes it look like the click never landed.
+    await remove(toDelete.uid, toDelete.title);
+    setToDelete(undefined);
+  }, [remove, toDelete]);
 
   // InteractiveTable requires memoized columns, and styles is memoized by useStyles2, so this stays
   // referentially stable and the table doesn't remount.
@@ -113,7 +133,17 @@ export function NotebooksTable({ notebooks }: Props) {
       },
       {
         ...withoutSkeleton(layout.tags),
-        cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} className={styles.tagList} />,
+        cell: ({ row: { original } }) => (
+          <TagList
+            tags={original.tags}
+            displayMax={3}
+            className={styles.tagList}
+            onClick={onTagClick}
+            // A clickable Tag renders a button, whose only accessible name would otherwise be the tag
+            // itself — "cost, button" says nothing about what pressing it does.
+            getAriaLabel={(tag) => t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', { tag })}
+          />
+        ),
       },
       {
         ...withoutSkeleton(layout.created),
@@ -127,23 +157,35 @@ export function NotebooksTable({ notebooks }: Props) {
       },
       {
         ...withoutSkeleton(layout.actions),
-        cell: ({ row: { original } }) => <NotebookRowActions uid={original.uid} />,
+        cell: ({ row: { original } }) => (
+          <NotebookRowActions uid={original.uid} title={original.title} onDelete={onDelete} />
+        ),
       },
     ];
-  }, [styles]);
+  }, [styles, onDelete, onTagClick]);
 
   return (
-    <InteractiveTable
-      columns={columns}
-      data={notebooks}
-      getRowId={(notebook) => notebook.uid}
-      initialSortBy={[{ id: 'updated', desc: true }]}
-      pageSize={ROWS_PER_PAGE}
-      // Deliberately not autoResetPage: it keys on the data reference, and these rows get a new one
-      // every time another cursor page lands or an author name resolves, which would drag a reader
-      // back to page 1 while the list is still filling in. Narrowing the set has to reset the page
-      // too, but that is a change of filters, so the caller remounts this table for it.
-    />
+    <>
+      <InteractiveTable
+        columns={columns}
+        data={notebooks}
+        getRowId={(notebook) => notebook.uid}
+        initialSortBy={[{ id: 'updated', desc: true }]}
+        pageSize={ROWS_PER_PAGE}
+        // Deliberately not autoResetPage: it keys on the data reference, and these rows get a new one
+        // every time another cursor page lands or an author name resolves, which would drag a reader
+        // back to page 1 while the list is still filling in. Narrowing the set has to reset the page
+        // too, but that is a change of filters, so the caller remounts this table for it.
+      />
+      {toDelete && (
+        <DeleteNotebookModal
+          title={toDelete.title}
+          isDeleting={isDeleting}
+          onConfirm={onConfirmDelete}
+          onDismiss={onDismissDelete}
+        />
+      )}
+    </>
   );
 }
 
@@ -217,7 +259,15 @@ const RelativeTime = memo(function RelativeTime({ timestamp }: { timestamp: numb
 });
 
 /** Takes the uid rather than the row for the same reason as RelativeTime: three buttons per row. */
-const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: string }) {
+const NotebookRowActions = memo(function NotebookRowActions({
+  uid,
+  title,
+  onDelete,
+}: {
+  uid: string;
+  title: string;
+  onDelete: (uid: string, title: string) => void;
+}) {
   // Omitted rather than disabled for a user who cannot edit, matching the create button on the page
   // around this table.
   const canEdit = canEditNotebooks();
@@ -232,7 +282,7 @@ const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: stri
       <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
-      <Dropdown overlay={<NotebookRowMenu uid={uid} />} placement="bottom-end">
+      <Dropdown overlay={<NotebookRowMenu uid={uid} onDelete={() => onDelete(uid, title)} />} placement="bottom-end">
         <IconButton
           name="ellipsis-v"
           variant="secondary"
@@ -249,8 +299,8 @@ const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: stri
 
 // Module scope so useStyles2 can memoize — it keys its cache on the function's identity, so an
 // inline arrow would rebuild the styles on every render of every row.
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   // TagList centers its tags by default; in a table column they need to line up with the header.
-  tagList: cx(getNeutralTagListStyle(theme), css({ justifyContent: 'flex-start' })),
+  tagList: css({ justifyContent: 'flex-start' }),
   nowrap: css({ whiteSpace: 'nowrap' }),
 });

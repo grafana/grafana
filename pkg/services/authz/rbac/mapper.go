@@ -494,6 +494,10 @@ func NewMapperRegistry() MapperRegistry {
 			"recordingrules": newAlertRuleTranslation(),
 			"rulesequences":  newAlertRuleTranslation(),
 		},
+		// Assistant-pushed alert-rule embeddings, authorized like the native rule kinds above.
+		"assistant.alertrules.ext.grafana.app": {
+			"alertrules": newAlertRuleTranslation(),
+		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"notebooks":     newNotebookTranslation(),
@@ -788,8 +792,17 @@ func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
 	if _, ok := resources[resource]; ok {
 		return resource, true
 	}
-	for apiResource, t := range resources {
-		if t.Resource() == resource {
+	// Fall back to matching on the translation's scope resource. Iterate in sorted
+	// key order so the result is deterministic when several API resources share the
+	// same scope resource (e.g. rules.alerting.grafana.app alertrules/recordingrules/
+	// rulesequences all map to "alert.rules"); map iteration order must never decide it.
+	apiResources := make([]string, 0, len(resources))
+	for apiResource := range resources {
+		apiResources = append(apiResources, apiResource)
+	}
+	slices.Sort(apiResources)
+	for _, apiResource := range apiResources {
+		if resources[apiResource].Resource() == resource {
 			return apiResource, true
 		}
 	}

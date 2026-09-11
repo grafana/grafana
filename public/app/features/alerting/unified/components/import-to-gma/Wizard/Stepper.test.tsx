@@ -1,34 +1,12 @@
 import { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { Stepper } from './Stepper';
 import { StepperStateProvider, useStepperState } from './StepperState';
-import { StepKey, type WizardFormValues } from './types';
+import { StepKey } from './types';
 
-function FormWrapper({
-  children,
-  autoSyncNotificationsEnabled = false,
-  notificationsSource = 'yaml',
-}: {
-  children: React.ReactNode;
-  autoSyncNotificationsEnabled?: boolean;
-  notificationsSource?: 'yaml' | 'datasource';
-}) {
-  const formAPI = useForm<WizardFormValues>({ defaultValues: { autoSyncNotificationsEnabled, notificationsSource } });
-  return <FormProvider {...formAPI}>{children}</FormProvider>;
-}
-
-const renderWithProvider = (
-  ui: React.ReactElement,
-  initialStep?: StepKey,
-  formValues?: { autoSyncNotificationsEnabled?: boolean; notificationsSource?: 'yaml' | 'datasource' }
-) => {
-  return render(
-    <FormWrapper {...formValues}>
-      <StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>
-    </FormWrapper>
-  );
+const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
+  return render(<StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>);
 };
 
 describe('Stepper', () => {
@@ -232,56 +210,32 @@ describe('Stepper', () => {
     expect(indicator).not.toHaveTextContent('1');
   });
 
-  describe('Rules force-skipped by Auto-sync', () => {
-    it('renders Rules with strikethrough and disabled when Auto-sync is checked for the datasource source', () => {
-      renderWithProvider(<Stepper />, StepKey.Notifications, {
-        autoSyncNotificationsEnabled: true,
-        notificationsSource: 'datasource',
-      });
+  it('keeps Rules gated by completion/skip like any other step, with no force-skip special-case', async () => {
+    // Regression for the auto-sync force-skip bug: Rules used to be permanently disabled,
+    // struck through, and unreachable from the rail whenever Auto-sync was selected. Stepper no
+    // longer knows about Auto-sync at all, so this exercises Rules through the same gating as
+    // any other step.
+    const TestComponent = () => {
+      const { activeStep, setStepCompleted, setVisitedStep } = useStepperState();
+      useEffect(() => {
+        setVisitedStep(StepKey.Notifications);
+        setStepCompleted(StepKey.Notifications, true);
+      }, [setStepCompleted, setVisitedStep]);
+      return (
+        <div>
+          <div data-testid="active-step">{activeStep}</div>
+          <Stepper />
+        </div>
+      );
+    };
 
-      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
-      expect(rulesButton).toBeDisabled();
-      expect(rulesButton).toHaveStyle('text-decoration: line-through');
-    });
+    renderWithProvider(<TestComponent />, StepKey.Notifications);
 
-    it('does not force-skip Rules when Auto-sync is checked but the source is YAML', () => {
-      const TestComponent = () => {
-        const { setStepCompleted, setVisitedStep } = useStepperState();
-        useEffect(() => {
-          setVisitedStep(StepKey.Notifications);
-          setStepCompleted(StepKey.Notifications, true);
-        }, [setStepCompleted, setVisitedStep]);
-        return <Stepper />;
-      };
+    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    expect(rulesButton).toBeEnabled();
+    expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
 
-      renderWithProvider(<TestComponent />, StepKey.Notifications, {
-        autoSyncNotificationsEnabled: true,
-        notificationsSource: 'yaml',
-      });
-
-      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
-      expect(rulesButton).toBeEnabled();
-      expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
-    });
-
-    it('restores Rules to normal once Auto-sync is unchecked', () => {
-      const TestComponent = () => {
-        const { setStepCompleted, setVisitedStep } = useStepperState();
-        useEffect(() => {
-          setVisitedStep(StepKey.Notifications);
-          setStepCompleted(StepKey.Notifications, true);
-        }, [setStepCompleted, setVisitedStep]);
-        return <Stepper />;
-      };
-
-      renderWithProvider(<TestComponent />, StepKey.Notifications, {
-        autoSyncNotificationsEnabled: false,
-        notificationsSource: 'datasource',
-      });
-
-      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
-      expect(rulesButton).toBeEnabled();
-      expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
-    });
+    await user.click(rulesButton);
+    expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Rules);
   });
 });

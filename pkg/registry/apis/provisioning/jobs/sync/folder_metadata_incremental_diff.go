@@ -357,8 +357,7 @@ func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 		return nil, nil, nil
 	}
 
-	var invalidErr *resources.InvalidFolderMetadata
-	if errors.As(err, &invalidErr) {
+	if invalidErr, ok := errors.AsType[*resources.InvalidFolderMetadata](err); ok {
 		return nil, []*resources.InvalidFolderMetadata{invalidErr.WithAction(action)}, nil
 	}
 

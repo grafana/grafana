@@ -14,7 +14,6 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyIgnorePredefinedVariables, DENY_ALL_PREDEFINED } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { consumeDashboardFetchTiming } from 'app/features/dashboard/services/DashboardFetchTiming';
@@ -31,7 +30,6 @@ import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, Dashbo
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
@@ -899,9 +897,9 @@ describe('DashboardScenePageStateManager v2', () => {
         spec: { ...defaultDashboardV2Spec() },
       });
 
-      // Explicit opt-in denylist (`[]` = deny nothing). Absent annotation means opt-out.
+      // Explicit opt-in (`all`/`all`). Absent annotation means not opted in.
       const optedInAnnotations = (extra?: Record<string, string>): Record<string, string> => ({
-        'grafana.app/ignorePredefinedVariables': '[]',
+        'grafana.app/useCrossDashboardVariables': '{"global":"all","folder":"all"}',
         ...extra,
       });
 
@@ -1009,7 +1007,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
           await loader.enrichLoadOptions(
             v2Response({
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
+              'grafana.app/useCrossDashboardVariables': '{"global":"none","folder":"none"}',
             }),
             {
               uid: 'fake-dash',

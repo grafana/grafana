@@ -1,4 +1,4 @@
-import { PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
+import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
@@ -8,8 +8,15 @@ import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
+function newFeaturesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
+}
+
+const showForData = (_options: Options, data?: DataFrame[]) => newFeaturesEnabled() && hasRenderableData(data);
+
 export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   const category = [t('textng.category-text', 'Text')];
+  const dataCategory = [t('textng.category-data', 'Data')];
 
   // Everything is edited in the panel itself, so options are registered here
   // only so their defaults are applied.
@@ -32,7 +39,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   builder.addRadio({
     path: 'renderMode',
     name: t('textng.options.render-mode', 'Render mode'),
-    category: [t('textng.category-data', 'Data')],
+    category: dataCategory,
     defaultValue: defaultOptions.renderMode,
     settings: {
       options: [
@@ -46,12 +53,22 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
         },
       ],
     },
-    showIf: (_options, data) =>
-      getFeatureFlagClient().getBooleanValue('text.newFeatures', false) && hasRenderableData(data),
+    showIf: showForData,
   });
 };
+
+const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([
+  FieldConfigProperty.Mappings,
+  FieldConfigProperty.Thresholds,
+]);
 
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => []);
+
+if (newFeaturesEnabled()) {
+  plugin.useFieldConfig({
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => !SUPPORTED_FIELD_CONFIGS.has(id)),
+  });
+}

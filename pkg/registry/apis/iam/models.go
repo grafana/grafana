@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -54,6 +56,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore            *team.LegacyStore
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	authInfoLegacyStore        *authinfo.LegacyStore
 	ssoLegacyStore             *sso.LegacyStore
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
@@ -95,7 +98,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *display.DisplayHandler
+	display         *display.DisplayHandler
+	userPermissions *userpermissions.Handler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
