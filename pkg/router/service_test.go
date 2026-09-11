@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type testReadyNotifier struct {
@@ -23,13 +22,12 @@ func (n *testReadyNotifier) SetReady()    { n.ready.Store(true) }
 func (n *testReadyNotifier) SetNotReady() { n.ready.Store(false) }
 
 func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
 	features := featuremgmt.WithFeatures()
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, httpRouter, ready)
+	svc, err := ProvideService(features, dummyRoutesLoader{})
 	require.NoError(t, err)
+	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
 
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
@@ -61,26 +59,24 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 }
 
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
-	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
 
-	_, err := ProvideService(nil, features, dummyRoutesLoader{}, mux.NewRouter(), nil)
-	require.ErrorContains(t, err, "configuration is required")
-
-	_, err = ProvideService(cfg, features, nil, mux.NewRouter(), nil)
+	_, err := ProvideService(features, nil)
 	require.ErrorContains(t, err, "routes loader is required")
 
-	_, err = ProvideService(cfg, features, dummyRoutesLoader{}, nil, nil)
+	svc, err := ProvideService(features, dummyRoutesLoader{})
+	require.NoError(t, err)
+	err = svc.RegisterTargetRoutes(nil, nil)
 	require.ErrorContains(t, err, "HTTP router is required")
 }
 
-func TestProvideServiceRegistersStandalonePathPrefixes(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Target = []string{"router"}
+func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	features := featuremgmt.WithFeatures()
 
-	_, err := ProvideService(cfg, features, dummyRoutesLoader{}, httpRouter, nil)
+	svc, err := ProvideService(features, dummyRoutesLoader{})
+	require.NoError(t, err)
+	err = svc.RegisterTargetRoutes(httpRouter, nil)
 	require.NoError(t, err)
 
 	for _, path := range []string{
@@ -95,8 +91,7 @@ func TestProvideServiceRegistersStandalonePathPrefixes(t *testing.T) {
 	}
 }
 
-func TestServiceRoutesUnmatchedRequestsThroughMiddleware(t *testing.T) {
-	cfg := setting.NewCfg()
+func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	httpRouter.HandleFunc("/apis/legacy.grafana.app/v1", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
@@ -106,7 +101,7 @@ func TestServiceRoutesUnmatchedRequestsThroughMiddleware(t *testing.T) {
 	})
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 
-	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, httpRouter, nil)
+	svc, err := ProvideService(features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
@@ -118,7 +113,7 @@ func TestServiceRoutesUnmatchedRequestsThroughMiddleware(t *testing.T) {
 
 	t.Run("router-only group", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil))
+		svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), httpRouter)
 
 		require.Equal(t, http.StatusOK, recorder.Code)
 		require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
@@ -126,27 +121,27 @@ func TestServiceRoutesUnmatchedRequestsThroughMiddleware(t *testing.T) {
 
 	t.Run("existing route falls through", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil))
+		svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
 
 		require.Equal(t, http.StatusNoContent, recorder.Code)
 	})
 
 	t.Run("unknown route preserves not found handler", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil))
+		svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
 
 		require.Equal(t, http.StatusTeapot, recorder.Code)
 	})
 }
 
-func TestProvideMiddlewareServiceHonorsFeatureToggle(t *testing.T) {
+func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	loader := dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}
 
-	enabled, err := ProvideMiddlewareService(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
+	enabled, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
 	require.NoError(t, err)
 	require.False(t, enabled.IsDisabled())
 
-	disabled, err := ProvideMiddlewareService(featuremgmt.WithFeatures(), loader)
+	disabled, err := ProvideService(featuremgmt.WithFeatures(), loader)
 	require.NoError(t, err)
 	require.True(t, disabled.IsDisabled())
 
