@@ -642,6 +642,20 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFoldersError(t *testing.T) {
+	folderErr := &nonEmptyFoldersError{
+		folders: []*provisioning.ResourceListItem{{Name: "folder-1", Title: "Folder one"}},
+	}
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
+		return op["value"] == folderErr.Error()
+	})).Once().Return(nil)
+
+	c := &RepositoryController{statusPatcher: patcher}
+	err := c.updateDeleteStatus(context.Background(), &provisioning.Repository{}, fmt.Errorf("remove finalizers: %w", folderErr))
+	require.NoError(t, err)
+}
+
 func TestShouldUseIncrementalSync(t *testing.T) {
 	versioned := repository.NewMockVersioned(t)
 	obj := &provisioning.Repository{

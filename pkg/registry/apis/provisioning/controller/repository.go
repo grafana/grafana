@@ -473,6 +473,12 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	var folderErr *nonEmptyFoldersError
+	if errors.As(err, &folderErr) {
+		// nonEmptyFoldersError is ready for users; omit internal operation prefixes.
+		err = folderErr
+	}
+
 	// Skip the patch when the recorded error is unchanged: it bumps the
 	// resourceVersion, which the informer's UpdateFunc turns straight back into a
 	// re-enqueue, so rewriting the same deleteError on every failed pass would
