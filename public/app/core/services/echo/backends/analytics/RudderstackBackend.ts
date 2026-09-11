@@ -30,6 +30,10 @@ interface Rudderstack {
       };
       queueOptions?: {
         maxAttempts?: number;
+        batch?: {
+          enabled?: boolean;
+          flushInterval?: number;
+        };
       };
     }
   ) => void;
