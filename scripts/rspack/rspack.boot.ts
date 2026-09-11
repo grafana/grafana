@@ -31,7 +31,11 @@ export default (env: Env = {}): Configuration => ({
     // The main build owns this directory and cleans it, keeping boot.js.
     clean: false,
     // Deliberately no module/chunkFormat/chunkLoading, unlike every other config here.
-    // Classic output is what keeps `iife` on, and the inline <script> is not type="module".
+    // The tag that carries this file is a classic script, not type="module", because a
+    // module is always deferred and this file starts the /bootdata fetch. Classic output is
+    // what keeps `iife` on, which is what stops the declarations becoming globals. A module
+    // has its own top-level scope and would not need the wrapper, but it would also not run
+    // until the document is parsed.
   },
 
   optimization: {
