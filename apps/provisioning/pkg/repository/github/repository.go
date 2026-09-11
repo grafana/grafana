@@ -39,6 +39,7 @@ type GithubRepository interface {
 	repository.RepositoryWithURLs
 	repository.StageableRepository
 	repository.BranchHandler
+	repository.BranchProtectionChecker
 	Owner() string
 	Repo() string
 	Client() Client
@@ -152,10 +153,6 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 		return results, err
 	}
 
-	if result := r.checkBranchProtection(ctx); result != nil {
-		return result, nil
-	}
-
 	return results, nil
 }
 
@@ -199,81 +196,8 @@ func (r *githubRepository) testResultFromGetDefaultBranchError(err error) *provi
 	}
 }
 
-// checkBranchProtection validates that branch protection rules and repository rulesets
-// do not block direct pushes when the write workflow is configured.
-// Returns nil if the check passes or is not applicable.
-func (r *githubRepository) checkBranchProtection(ctx context.Context) *provisioning.TestResults {
-	if !r.hasWriteWorkflow() {
-		return nil
-	}
-
-	var allReasons []string
-
-	// Check classic branch protection rules
-	bp, err := r.gh.GetBranchProtection(ctx, r.GetCurrentBranch())
-	if err != nil {
-		// Failed to check branch protection - return error to user
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", r.config.Spec.Type.String(), "branch").String(),
-				Detail: fmt.Sprintf("failed to check branch protection for branch %q: %v", r.GetCurrentBranch(), err),
-			}},
-		}
-	}
-
-	if bp != nil {
-		if reasons := bp.BlocksDirectPush(); len(reasons) > 0 {
-			allReasons = append(allReasons, reasons...)
-		}
-	}
-
-	// Check repository rulesets
-	rulesets, err := r.gh.GetRulesets(ctx, r.GetCurrentBranch())
-	if err != nil {
-		// Failed to check rulesets - return error to user
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", r.config.Spec.Type.String(), "branch").String(),
-				Detail: fmt.Sprintf("failed to check repository rulesets for branch %q: %v", r.GetCurrentBranch(), err),
-			}},
-		}
-	}
-
-	if rulesets != nil {
-		if reasons := rulesets.BlocksDirectPush(); len(reasons) > 0 {
-			allReasons = append(allReasons, reasons...)
-		}
-	}
-
-	// If any blocking rules were found, return error
-	if len(allReasons) > 0 {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "workflows").String(),
-				Detail: fmt.Sprintf("branch %q has protection rules that prevent direct pushes: %s; the \"write\" workflow is not compatible with this branch", r.GetCurrentBranch(), strings.Join(allReasons, ", ")),
-			}},
-		}
-	}
-
-	return nil
-}
-
-func (r *githubRepository) hasWriteWorkflow() bool {
-	for _, w := range r.config.Spec.Workflows {
-		if w == provisioning.WriteWorkflow {
-			return true
-		}
-	}
-	return false
+func (r *githubRepository) CheckBranchProtection(ctx context.Context, branch string) (bool, error) {
+	return repository.ClientCheckBranchProtection(ctx, r.gh, branch)
 }
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
