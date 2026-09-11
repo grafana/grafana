@@ -74,8 +74,8 @@ export type FieldConfigEditorProps<TValue, TSettings extends {}> = StandardEdito
 /** @deprecated Use StandardEditorProps instead */
 export type FieldOverrideEditorProps<TValue, TSettings extends {}> = StandardEditorProps<TValue, TSettings>;
 
-export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any>
-  extends OptionEditorConfig<TOptions, TSettings, TValue> {
+export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any, TContextOptions = unknown>
+  extends OptionEditorConfig<TOptions, TSettings, TValue, TContextOptions> {
   /**
    * Function that allows specifying whether or not this field config should apply to a given field.
    * @param field
@@ -98,8 +98,12 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
   showIfOverride?: (context: StandardEditorContext<unknown>) => boolean;
 }
 
-export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
-  extends OptionsEditorItem<TOptions, TSettings, StandardEditorProps<TValue, TSettings>, TValue> {
+export interface FieldConfigPropertyItem<
+  TOptions = any,
+  TValue = any,
+  TSettings extends {} = any,
+  TContextOptions = unknown,
+> extends OptionsEditorItem<TOptions, TSettings, StandardEditorProps<TValue, TSettings>, TValue, TContextOptions> {
   // An editor that can be filled in with context info (template variables etc)
   override: ComponentType<StandardEditorProps<TValue, TSettings>>;
 

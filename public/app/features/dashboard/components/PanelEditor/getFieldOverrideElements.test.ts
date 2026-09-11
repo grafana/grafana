@@ -121,6 +121,29 @@ describe('getFieldOverrideCategories', () => {
     });
   });
 
+  describe('field config in the editor context', () => {
+    it('hands the whole panel field config to an override property editor', () => {
+      const registry = makeRegistry([makeItem('custom.lineWidth')]);
+      const fieldConfig: FieldConfigSource = {
+        defaults: { unit: 'bytes', custom: { lineWidth: 2 } },
+        overrides: [
+          { matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'custom.lineWidth', value: 5 }] },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        context: { fieldConfig?: FieldConfigSource; isOverride?: boolean };
+      }>;
+
+      // an editor in an override row can read the defaults it is overriding, not just its own value
+      expect(element.props.context.fieldConfig).toBe(fieldConfig);
+      expect(element.props.context.isOverride).toBe(true);
+    });
+  });
+
   describe('hideFromOverrides', () => {
     it('excludes items with hideFromOverrides:true from the add override property picker', () => {
       const registry = makeRegistry([

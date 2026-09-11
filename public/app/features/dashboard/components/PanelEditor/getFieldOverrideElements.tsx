@@ -103,6 +103,7 @@ export function getFieldOverrideCategories(
     const context: StandardEditorContext<unknown, unknown> = {
       data: overrideData,
       options,
+      fieldConfig: currentFieldConfig,
       getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
       isOverride: true,
     };

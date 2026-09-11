@@ -33,8 +33,12 @@ function getDragHandle(label: string): HTMLElement | null {
 }
 
 describe('DraggableList', () => {
-  it('renders every item via renderItem', () => {
-    renderList();
+  it('renders every item via renderItem', async () => {
+    const { container } = renderList();
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
 
     expect(screen.getByText('Item A')).toBeInTheDocument();
     expect(screen.getByText('Item B')).toBeInTheDocument();

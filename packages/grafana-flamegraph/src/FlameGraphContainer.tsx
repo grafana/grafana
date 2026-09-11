@@ -92,6 +92,27 @@ export type Props = {
    * @deprecated
    */
   enableNewUI?: boolean;
+
+  /**
+   * Set this when the host bounds our height (e.g. a dashboard panel), so the top table sizes itself to the
+   * space actually available instead of a fixed height that can run past the host's bottom edge. Leave it off
+   * for hosts that don't bound us (e.g. Explore, where the page scrolls and the flame graph grows organically):
+   * there is no height to fill, so the table falls back to FLAMEGRAPH_CONTAINER_HEIGHT.
+   */
+  fillHeight?: boolean;
+
+  /**
+   * Render the top table with TableNG instead of the legacy Table.
+   */
+  useTableNG?: boolean;
+
+  /**
+   * Forwarded to the top table's TableNG. This package can't read feature toggles itself, so the flags
+   * TableNG expects (`table.refresh`, `table.autoColumnWidths`) have to come in from the host, otherwise
+   * the top table renders without them while every other TableNG in Grafana has them.
+   */
+  tableRefreshEnabled?: boolean;
+  contentAwareWidthsEnabled?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -109,6 +130,10 @@ const FlameGraphContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
+  fillHeight,
+  useTableNG,
+  tableRefreshEnabled,
+  contentAwareWidthsEnabled,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
 
@@ -155,7 +180,7 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
 
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, Boolean(fillHeight));
   const matchedLabels = useLabelSearch(search, dataContainer);
 
   const effectiveViewMode = canShowSplitView ? viewMode : ViewMode.Single;
@@ -191,6 +216,10 @@ const FlameGraphContainer = ({
     keepFocusOnDataChange,
     focusedItemIndexes,
     setFocusedItemIndexes,
+    useTableNG,
+    tableRefreshEnabled,
+    contentAwareWidthsEnabled,
+    fillHeight,
   };
 
   let body;
@@ -385,7 +414,13 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
   return foundLabels;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+/**
+ * `fillHeight` hosts (e.g. a dashboard panel) bound our height, so the panes take their share of it and the
+ * top table's bottom edge lands on the host's. Hosts that don't bound us (e.g. Explore) have no height to
+ * share out, so those same panes keep the fixed FLAMEGRAPH_CONTAINER_HEIGHT they have always used - a
+ * percentage would resolve against an indefinite ancestor and collapse to the table's header.
+ */
+function getStyles(theme: GrafanaTheme2, fillHeight: boolean) {
   return {
     container: css({
       label: 'container',
@@ -400,11 +435,16 @@ function getStyles(theme: GrafanaTheme2) {
     body: css({
       label: 'body',
       flexGrow: 1,
+      // Without this, a flex item's automatic minimum size is its content's natural size, which lets this
+      // (and the table under it) grow to the flame graph's organic height instead of shrinking to the space
+      // .container actually has.
+      minHeight: 0,
     }),
 
     horizontalContainer: css({
       label: 'horizontalContainer',
       display: 'flex',
+      height: '100%',
       minHeight: 0,
       flexDirection: 'row',
       columnGap: theme.spacing(1),
@@ -415,20 +455,22 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'verticalContainer',
       display: 'flex',
       flexDirection: 'column',
+      height: '100%',
+      minHeight: 0,
     }),
 
     horizontalPaneContainer: css({
       label: 'horizontalPaneContainer',
       flexBasis: '50%',
-      maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT,
       minWidth: 0,
       overflow: 'auto',
+      ...(fillHeight ? { height: '100%', minHeight: 0 } : { maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 
     verticalPaneContainer: css({
       label: 'verticalPaneContainer',
       marginBottom: theme.spacing(1),
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
+      ...(fillHeight ? { flex: '1 1 0', minHeight: 0 } : { height: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
   };
 }
