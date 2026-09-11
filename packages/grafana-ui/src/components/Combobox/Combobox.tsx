@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useState } from 'react';
+import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -194,15 +194,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     resetSearch,
   } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
+  const searchTermRef = useRef('');
 
   useEffect(() => {
     if (isOpenProp === undefined) {
       return;
     }
 
-    if (isOpenProp) {
+    if (isOpenProp && searchTermRef.current === '') {
       updateOptions('');
-    } else {
+    } else if (!isOpenProp) {
+      searchTermRef.current = '';
       resetSearch();
     }
   }, [isOpenProp, resetSearch, updateOptions]);
@@ -253,6 +255,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         }
 
         if (!changes.isOpen) {
+          searchTermRef.current = '';
           resetSearch();
         }
       }
@@ -364,10 +367,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       setShowFocusRing(isKeyboardEvent(type));
 
       switch (type) {
-        case useCombobox.stateChangeTypes.InputChange:
-          updateOptions(newInputValue ?? '');
+        case useCombobox.stateChangeTypes.InputChange: {
+          const searchTerm = newInputValue ?? '';
+          searchTermRef.current = searchTerm;
+          updateOptions(searchTerm);
 
           break;
+        }
         default:
           break;
       }
