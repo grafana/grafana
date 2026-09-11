@@ -20,6 +20,7 @@ import {
 } from '../types';
 
 import { ConfirmModal } from './ConfirmModal';
+import { DatabaseSelector } from './DatabaseSelector';
 import { DatasetSelector } from './DatasetSelector';
 import { TableSelector } from './TableSelector';
 
@@ -103,14 +104,21 @@ export function QueryHeader({
     onChange(next);
   };
 
-  const onDatasetChange = (e: SelectableValue) => {
-    if (e.value === query.dataset) {
+  const onDatabaseChange = (e: SelectableValue | null) => {
+    const value = e?.value ?? undefined;
+    if (value === query.database) {
       return;
     }
 
-    const next = {
+    if (editorMode === EditorMode.Code) {
+      onChange({ ...query, database: value });
+      return;
+    }
+
+    const next: SQLQuery = {
       ...query,
-      dataset: e.value,
+      database: value,
+      dataset: undefined,
       table: undefined,
       sql: undefined,
       rawSql: '',
@@ -119,14 +127,32 @@ export function QueryHeader({
     onChange(next);
   };
 
-  const onTableChange = (e: SelectableValue) => {
-    if (e.value === query.table) {
+  const onDatasetChange = (e: SelectableValue | null) => {
+    const value = e?.value ?? undefined;
+    if (value === query.dataset) {
+      return;
+    }
+
+    const next = {
+      ...query,
+      dataset: value,
+      table: undefined,
+      sql: undefined,
+      rawSql: '',
+    };
+
+    onChange(next);
+  };
+
+  const onTableChange = (e: SelectableValue | null) => {
+    const value = e?.value ?? undefined;
+    if (value === query.table) {
       return;
     }
 
     const next: SQLQuery = {
       ...query,
-      table: e.value,
+      table: value,
       sql: undefined,
       rawSql: '',
     };
@@ -323,18 +349,44 @@ export function QueryHeader({
         />
       </EditorHeader>
 
+      {editorMode === EditorMode.Code && !!db.databases && (
+        <>
+          <Space v={0.5} />
+          <EditorRow>
+            <EditorField label={db.labels?.get('database') ?? t('grafana-sql.components.query-header.label-database', 'Database')} width={25}>
+              <DatabaseSelector
+                db={db}
+                inputId={`sql-database-${htmlId}`}
+                database={query.database}
+                onChange={onDatabaseChange}
+              />
+            </EditorField>
+          </EditorRow>
+        </>
+      )}
+
       {editorMode === EditorMode.Builder && (
         <>
           <Space v={0.5} />
           <EditorRow>
+            {!!db.databases && (
+              <EditorField label={db.labels?.get('database') ?? t('grafana-sql.components.query-header.label-database', 'Database')} width={25}>
+                <DatabaseSelector
+                  db={db}
+                  inputId={`sql-database-${htmlId}`}
+                  database={query.database}
+                  onChange={onDatabaseChange}
+                />
+              </EditorField>
+            )}
             {datasetDropdownIsAvailable() && (
-              <EditorField label={t('grafana-sql.components.query-header.label-dataset', 'Dataset')} width={25}>
+              <EditorField label={db.labels?.get('dataset') ?? t('grafana-sql.components.query-header.label-dataset', 'Dataset')} width={25}>
                 <DatasetSelector
                   db={db}
                   inputId={`sql-dataset-${htmlId}`}
                   dataset={query.dataset}
-                  dialect={dialect}
-                  preconfiguredDataset={preconfiguredDataset}
+                  database={query.database}
+                  preconfiguredDataset={(db.databases || dialect === 'postgres') ? '' : preconfiguredDataset}
                   onChange={onDatasetChange}
                 />
               </EditorField>
@@ -343,7 +395,8 @@ export function QueryHeader({
               <TableSelector
                 db={db}
                 inputId={`sql-tableselect-${htmlId}`}
-                dataset={query.dataset || preconfiguredDataset}
+                dataset={query.dataset || ((db.databases || dialect === 'postgres') ? undefined : preconfiguredDataset)}
+                database={query.database}
                 table={query.table}
                 onChange={onTableChange}
               />
