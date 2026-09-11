@@ -127,3 +127,76 @@ ruleTester.run('zod-import-namespace', zodImportNamespaceRule, {
     },
   ],
 });
+
+const featureTogglesRule = noRestrictedSyntax.rules['no-config-feature-toggles'];
+ruleTester.run('no-config-feature-toggles', featureTogglesRule, {
+  valid: [
+    {
+      name: 'OpenFeature hook',
+      code: `const enabled = useFlagFoldersAppPlatformAPI();`,
+    },
+    {
+      name: 'OpenFeature client outside React',
+      code: `const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, false);`,
+    },
+    {
+      name: 'keyof FeatureToggles type reference',
+      code: `function f(flags: Array<keyof FeatureToggles>) {}`,
+    },
+    {
+      name: 'featureToggles as an object literal key',
+      code: `const cfg = { featureToggles: { someFlag: true } };`,
+    },
+    {
+      name: 'unrelated config property',
+      code: `const url = config.appSubUrl;`,
+    },
+  ],
+  invalid: [
+    {
+      name: 'direct dot access',
+      code: `if (config.featureToggles.someFlag) {}`,
+      errors: 1,
+    },
+    {
+      name: 'bracket access with a string literal (dotted flag name)',
+      code: `const on = config.featureToggles['alerting.rulesAPIV2'];`,
+      errors: 1,
+    },
+    {
+      name: 'bracket access with a variable key',
+      code: `const on = config.featureToggles[BATCH_API_FLAG];`,
+      errors: 1,
+    },
+    {
+      name: 'aliased receiver from an aliased import',
+      code: `const on = grafanaConfig.featureToggles.vizActionsAuth;`,
+      errors: 1,
+    },
+    {
+      name: 'renamed local binding',
+      code: `if (cfg.featureToggles.alertingNavigationV2) {}`,
+      errors: 1,
+    },
+    {
+      name: 'namespace import receiver',
+      code: `if (runtime.config.featureToggles.someFlag) {}`,
+      errors: 1,
+    },
+    {
+      name: 'optional chaining',
+      code: `const on = config.featureToggles?.alertingJiraIntegration;`,
+      errors: 1,
+    },
+    {
+      name: 'optional chaining on both links',
+      code: `const on = config?.featureToggles?.sqlExpressions;`,
+      errors: 1,
+    },
+    {
+      name: 'aliasing the whole map',
+      code: `const featureToggles = config.featureToggles || {};`,
+      errors: 1,
+    },
+  ],
+});
