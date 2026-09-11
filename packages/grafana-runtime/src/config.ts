@@ -334,7 +334,7 @@ function blankAndReportLegacyFeatureToggles(featureToggles: FeatureToggles): Fea
 
         // The stack makes the call site findable.
         console.warn(
-          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated and now resolves to undefined. Use OpenFeature instead.`,
+          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated and now resolves to undefined. Use OpenFeature instead, or remove the legacy toggle entirely.`,
           new Error().stack
         );
 
@@ -343,7 +343,10 @@ function blankAndReportLegacyFeatureToggles(featureToggles: FeatureToggles): Fea
         try {
           getAppEvents().publish({
             type: AppEvents.alertWarning.name,
-            payload: [`Legacy feature toggle read: "${property}"`, 'Use OpenFeature instead.'],
+            payload: [
+              `Legacy feature toggle read: "${property}"`,
+              'Use OpenFeature instead, or remove the legacy toggle entirely.',
+            ],
           });
         } catch {}
       }

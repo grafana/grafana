@@ -68,11 +68,17 @@ describe('GrafanaBootConfig', () => {
       expect(publishSpy).toHaveBeenCalledTimes(2);
       expect(publishSpy).toHaveBeenNthCalledWith(1, {
         type: AppEvents.alertWarning.name,
-        payload: ['Legacy feature toggle read: "panelTitleSearch"', 'Use OpenFeature instead.'],
+        payload: [
+          'Legacy feature toggle read: "panelTitleSearch"',
+          'Use OpenFeature instead, or remove the legacy toggle entirely.',
+        ],
       });
       expect(publishSpy).toHaveBeenNthCalledWith(2, {
         type: AppEvents.alertWarning.name,
-        payload: ['Legacy feature toggle read: "lokiExperimentalStreaming"', 'Use OpenFeature instead.'],
+        payload: [
+          'Legacy feature toggle read: "lokiExperimentalStreaming"',
+          'Use OpenFeature instead, or remove the legacy toggle entirely.',
+        ],
       });
     });
 
