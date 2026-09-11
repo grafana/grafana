@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 
 import { DataFrameType, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 
-import { createLogLineLinks } from '../logParser';
+import { type FieldDef, createLogLineLinks } from '../logParser';
+import { groupOTelAttributes, type GroupedOTelAttributes } from '../otel/details';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { type LabelWithLinks } from './LogLineDetailsFields';
@@ -70,12 +71,25 @@ export const LogLineDetailsOTelComponent = ({
     [fieldsWithLinks.links, fieldsWithLinks.linksFromVariableMap]
   );
 
-  return <LogLineDetailsOTelComponentBody />;
+  // Datasources expose attributes as either dataframe fields or labels, not both.
+  const groupedAttributes = useMemo(
+    () =>
+      fieldsWithoutLinks.length > 0
+        ? groupOTelAttributes(fieldsWithoutLinks, (field) => field.keys[0] ?? '')
+        : groupOTelAttributes(labelsWithLinks, (label) => label.key),
+    [fieldsWithoutLinks, labelsWithLinks]
+  );
+
+  return <LogLineDetailsOTelComponentBody groupedAttributes={groupedAttributes} />;
 };
 
-interface LogLineDetailsOTelComponentBodyProps {}
+interface LogLineDetailsOTelComponentBodyProps {
+  groupedAttributes: Array<GroupedOTelAttributes<FieldDef>> | Array<GroupedOTelAttributes<LabelWithLinks>>;
+}
 
-const LogLineDetailsOTelComponentBody = ({}) => {
+const LogLineDetailsOTelComponentBody = ({
+  groupedAttributes: _groupedAttributes,
+}: LogLineDetailsOTelComponentBodyProps) => {
   return <div>Todo</div>;
 };
 
