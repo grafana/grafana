@@ -1,5 +1,5 @@
 // Libraries
-import { type ComponentType, memo, useEffect, useState } from 'react';
+import { type ComponentType, memo } from 'react';
 
 // Components
 import {
@@ -14,7 +14,7 @@ import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/u
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-import { ExpressionDatasourceRef } from './../utils/expressionRef';
+import { ExpressionDatasourceRef, isExpressionReference } from './../utils/expressionRef';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -54,6 +54,38 @@ export interface DataSourcePickerProps {
 type DataSourcePickerComponentType = ComponentType<DataSourcePickerProps>;
 
 let DataSourcePickerComponent: DataSourcePickerComponentType | undefined;
+
+type DataSourcePickerSelection = string | DataSourceRef | DataSourceInstanceSettings | null | undefined;
+
+/**
+ * Config/provisioning can set a data source the UI picker would never offer
+ * (e.g. Tempo in a Prometheus-only field). Callers should pass `resolved` as
+ * undefined when `noDefault` is set and nothing is selected, so a fallback
+ * default is not treated as the current value.
+ *
+ * @internal
+ */
+export function isDataSourceCompatibleWithPicker(
+  selected: DataSourcePickerSelection,
+  resolved: DataSourceInstanceSettings | undefined,
+  allowed: DataSourceInstanceSettings[]
+): boolean {
+  // Expressions are valid query datasources but are not returned by getList().
+  if (isExpressionReference(selected) || isExpressionReference(resolved)) {
+    return true;
+  }
+  if (!resolved) {
+    // Only null/undefined mean "nothing selected". An empty string is an unresolved uid.
+    return selected == null;
+  }
+  // Template refs keep the variable string as uid (`$ds`, `${ds}`, `logs-${stage}-loki`)
+  // and the concrete datasource in rawRef. Match only the interpolated uid: getList({ variables: true })
+  // injects `${name}` after type filters, so matching the wrapper uid would treat a Tempo-backed
+  // ${ds} as valid in a Prometheus field. `$name`, interpolated names, and section-scoped refs
+  // are also absent from that injected list.
+  const uidToMatch = resolved.rawRef?.uid ?? resolved.uid;
+  return allowed.some((ds) => ds.uid === uidToMatch);
+}
 
 /**
  * Used to bootstrap the DataSourcePicker during application start, so the
@@ -115,14 +147,21 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
   isLoading = false,
 }: DataSourcePickerProps) {
   const dataSourceSrv = getDataSourceSrv();
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const dsSettings = dataSourceSrv.getInstanceSettings(current);
-    if (!dsSettings) {
-      setError('Could not find data source ' + current);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const currentSettings = !current && noDefault ? undefined : dataSourceSrv.getInstanceSettings(current);
+  const allowed = dataSourceSrv.getList({
+    alerting,
+    tracing,
+    metrics,
+    logs,
+    dashboard,
+    mixed,
+    variables,
+    annotations,
+    pluginId,
+    filter,
+    type,
+  });
+  const isCurrentCompatible = isDataSourceCompatibleWithPicker(current, currentSettings, allowed);
 
   function handleChange(item: SelectableValue<string>, actionMeta: ActionMeta) {
     if (actionMeta.action === 'clear' && onClear) {
@@ -132,7 +171,6 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     const dsSettings = dataSourceSrv.getInstanceSettings(item.value);
     if (dsSettings) {
       onChange(dsSettings);
-      setError(undefined);
     }
   }
 
@@ -140,14 +178,13 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     if (!current && noDefault) {
       return;
     }
-    const ds = dataSourceSrv.getInstanceSettings(current);
-    if (ds) {
+    if (currentSettings) {
       return {
-        label: ds.name,
-        value: ds.uid,
-        imgUrl: ds.meta.info.logos.small,
+        label: currentSettings.name,
+        value: currentSettings.uid,
+        imgUrl: currentSettings.meta.info.logos.small,
         hideText: hideTextValue,
-        meta: ds.meta,
+        meta: currentSettings.meta,
       };
     }
     const uid = getDataSourceUID(current);
@@ -162,20 +199,15 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     };
   }
 
-  function getDataSourceOptions() {
-    return dataSourceSrv
-      .getList({ alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type })
-      .map((ds) => ({
-        value: ds.uid,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
-  }
-
-  const options = getDataSourceOptions();
+  const options = allowed.map((ds) => ({
+    value: ds.uid,
+    label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+    imgUrl: ds.meta.info.logos.small,
+    meta: ds.meta,
+  }));
   const value = getCurrentValue();
   const isClearable = typeof onClear === 'function';
+  const isInvalid = Boolean(invalid) || !isCurrentCompatible;
 
   return (
     <div aria-label="Data source picker select container" data-testid={selectors.components.DataSourcePicker.container}>
@@ -183,6 +215,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
         isLoading={isLoading}
         disabled={disabled}
         aria-label={'Select a data source'}
+        aria-invalid={isInvalid}
         data-testid={selectors.components.DataSourcePicker.inputV2}
         inputId={inputId || 'data-source-picker'}
         className="ds-picker select-container"
@@ -199,7 +232,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
         placeholder={placeholder}
         noOptionsMessage="No datasources found"
         value={value ?? null}
-        invalid={Boolean(error) || Boolean(invalid)}
+        invalid={isInvalid}
         getOptionLabel={(o) => {
           if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
             return (
