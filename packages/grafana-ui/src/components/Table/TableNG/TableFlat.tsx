@@ -16,6 +16,7 @@ import { ColumnVisibilitySidePanel } from './components/ColumnVisibilitySidePane
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
 import {
   useColumnResize,
+  useColumnViewState,
   useColWidths,
   useContentAwareWidths,
   useFlatRowHeight,
@@ -53,7 +54,6 @@ import {
   getVisibleFields,
   markEdgeColumns,
   orderFieldsByDisplayNames,
-  orderFieldsByPinnedColumns,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -101,7 +101,13 @@ export function TableFlat(props: TableNGProps) {
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    tableRefreshNewFeaturesEnabled = false,
     showColumnsSidebar = false,
+    columnOrder: columnOrderProp,
+    onColumnOrderChange,
+    hiddenColumns: hiddenColumnsProp,
+    onHiddenColumnsChange,
+    columnCatalog,
   } = props;
 
   const theme = useTheme2();
@@ -135,20 +141,21 @@ export function TableFlat(props: TableNGProps) {
     [hasFooter, visibleFields]
   );
 
-  // `table.refresh`: ephemeral column order/visibility/pinning from the header column menu and
-  // sidebar. `undefined` means "use field order/config as-is". Reset whenever the query
-  // structurally changes, same as the column-width reset below — state pointing at columns that no
-  // longer exist would be confusing rather than helpful.
-  const [columnOrder, setColumnOrder] = useState<string[]>();
-  const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(() => new Set());
-  const [pinnedColumns, setPinnedColumns] = useState<string[]>();
+  // `table.refreshNewFeatures`: the column order and visibility the header menu and sidebar act on.
+  // Either an owner outside the table holds it — a panel backing it with ad-hoc transformations —
+  // or the table keeps it locally and drops it whenever the query structure changes.
+  const { columnOrder, hiddenColumns, setColumnOrder, setHiddenColumns, isControlled } = useColumnViewState({
+    columnOrder: columnOrderProp,
+    onColumnOrderChange,
+    hiddenColumns: hiddenColumnsProp,
+    onHiddenColumnsChange,
+    structureRev,
+  });
+
   const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
   const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    setColumnOrder(undefined);
-    setHiddenColumns(new Set());
-    setPinnedColumns(undefined);
     setSettlingColumnKeys(new Set());
   }, [structureRev]);
 
@@ -162,25 +169,27 @@ export function TableFlat(props: TableNGProps) {
     settleTimeoutRef.current = setTimeout(() => setSettlingColumnKeys(new Set()), COLUMN_SETTLE_MS);
   }, []);
 
+  // Always emits the whole order, not just the moved column: a partial order is ambiguous about
+  // where an unmentioned column belongs, and the ad-hoc encoding writes a complete index map anyway.
   const handleColumnsReorder = useCallback(
     (sourceColumnKey: string, targetColumnKey: string) => {
-      setColumnOrder((current) => {
-        const next = [...(current ?? visibleFields.map(getDisplayName))];
-        const sourceIndex = next.indexOf(sourceColumnKey);
-        const targetIndex = next.indexOf(targetColumnKey);
-        if (sourceIndex < 0 || targetIndex < 0) {
-          return current;
-        }
-        next.splice(targetIndex, 0, next.splice(sourceIndex, 1)[0]);
-        return next;
-      });
+      const next = [...(columnOrder ?? columnCatalog ?? visibleFields.map(getDisplayName))];
+      const sourceIndex = next.indexOf(sourceColumnKey);
+      const targetIndex = next.indexOf(targetColumnKey);
+
+      if (sourceIndex < 0 || targetIndex < 0) {
+        return;
+      }
+
+      next.splice(targetIndex, 0, next.splice(sourceIndex, 1)[0]);
+      setColumnOrder(next);
       markColumnsSettling([sourceColumnKey, targetColumnKey]);
     },
-    [markColumnsSettling, visibleFields]
+    [columnOrder, columnCatalog, markColumnsSettling, setColumnOrder, visibleFields]
   );
 
   // only reorder when the flag is on, so a bug here can't affect the flag-off table at all.
-  const orderedVisibleFields = tableRefreshEnabled
+  const orderedVisibleFields = tableRefreshNewFeaturesEnabled
     ? orderFieldsByDisplayNames(preparedFields, columnOrder)
     : preparedFields;
 
@@ -199,27 +208,18 @@ export function TableFlat(props: TableNGProps) {
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
   useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
-  // `frozenColumns` is the persisted baseline pin count from field config — a column pinned
-  // through the header menu/sidebar is layered on top of it as ephemeral state, so the baseline is
-  // still respected until the user explicitly changes it.
-  const configuredPinnedColumns = useMemo(
-    () => orderedVisibleFields.slice(0, _frozenColumns).map(getDisplayName),
-    [orderedVisibleFields, _frozenColumns]
-  );
-  const pinnedColumnSet = useMemo(
-    () => new Set(pinnedColumns ?? configuredPinnedColumns),
-    [pinnedColumns, configuredPinnedColumns]
-  );
+  // Controlled, the hidden columns are already gone from `data`, so what is left on screen is the
+  // count that matters. Uncontrolled, they are still in the fields and have to be discounted.
+  const canHideAnotherColumn = isControlled
+    ? orderedVisibleFields.length > 1
+    : orderedVisibleFields.length - hiddenColumns.size > 1;
 
   const handleHideColumn = useCallback(
     (displayName: string) => {
-      setHiddenColumns((current) => {
-        // never hide the last remaining visible column
-        if (orderedVisibleFields.length - current.size <= 1) {
-          return current;
-        }
-        return new Set(current).add(displayName);
-      });
+      // never hide the last remaining visible column
+      if (canHideAnotherColumn) {
+        setHiddenColumns(new Set(hiddenColumns).add(displayName));
+      }
       setFilter((current) => {
         if (!(displayName in current)) {
           return current;
@@ -230,7 +230,7 @@ export function TableFlat(props: TableNGProps) {
       });
       setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
     },
-    [orderedVisibleFields, setFilter, setSortColumns]
+    [canHideAnotherColumn, hiddenColumns, setFilter, setHiddenColumns, setSortColumns]
   );
 
   // The header menu can only hide a column; re-showing one happens from the column-visibility
@@ -241,37 +241,26 @@ export function TableFlat(props: TableNGProps) {
         handleHideColumn(displayName);
         return;
       }
-      setHiddenColumns((current) => {
-        const next = new Set(current);
-        next.delete(displayName);
-        return next;
-      });
+      const next = new Set(hiddenColumns);
+      next.delete(displayName);
+      setHiddenColumns(next);
     },
-    [handleHideColumn]
+    [handleHideColumn, hiddenColumns, setHiddenColumns]
   );
 
-  const handleTogglePin = useCallback(
-    (displayName: string) => {
-      setPinnedColumns((current) => {
-        const effective = current ?? configuredPinnedColumns;
-        return effective.includes(displayName)
-          ? effective.filter((column) => column !== displayName)
-          : [...effective, displayName];
-      });
-      markColumnsSettling([displayName]);
-    },
-    [configuredPinnedColumns, markColumnsSettling]
-  );
+  // only filter when the flag is on, so a bug here can't affect the flag-off table at all. A
+  // controlling owner has usually removed the hidden fields already, but filtering again is what
+  // keeps the table consistent in the tick between the view changing and the new data arriving.
+  const displayedFields = tableRefreshNewFeaturesEnabled
+    ? filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns)
+    : orderedVisibleFields;
 
-  // only filter/pin when the flag is on, so a bug here can't affect the flag-off table at all.
-  // `pinnedOrderedVisibleFields` keeps hidden columns in — the sidebar needs to list them so they
-  // can be re-shown — while `displayedFields` (what actually reaches the grid) filters them out.
-  const pinnedOrderedVisibleFields = tableRefreshEnabled
-    ? orderFieldsByPinnedColumns(orderedVisibleFields, pinnedColumnSet)
-    : orderedVisibleFields;
-  const displayedFields = tableRefreshEnabled
-    ? filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns)
-    : orderedVisibleFields;
+  // What the sidebar lists. The catalog is the only source that still has the hidden columns in it
+  // once a controlling owner has removed their fields, which is what lets them be brought back.
+  const sidebarColumns = useMemo(
+    () => columnCatalog ?? orderedVisibleFields.map(getDisplayName),
+    [columnCatalog, orderedVisibleFields]
+  );
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   // Follow the panel option whenever it changes, so toggling it while editing the panel opens and
@@ -345,7 +334,7 @@ export function TableFlat(props: TableNGProps) {
   // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out —
   // as does the column-visibility sidebar, while it's open.
   const columnVisibilityPanelAllocation =
-    tableRefreshEnabled && isColumnVisibilityPanelOpen
+    tableRefreshNewFeaturesEnabled && isColumnVisibilityPanelOpen
       ? columnVisibilityPanelWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH
       : 0;
   const availableWidth = useMemo(
@@ -358,10 +347,7 @@ export function TableFlat(props: TableNGProps) {
 
   const typographyCtx = useTypographyCtx(theme);
 
-  const displayedPinnedColumnCount = tableRefreshEnabled
-    ? displayedFields.filter((field) => pinnedColumnSet.has(getDisplayName(field))).length
-    : 0;
-  const frozenColumns = tableRefreshEnabled ? displayedPinnedColumnCount : _frozenColumns;
+  const frozenColumns = _frozenColumns;
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -384,8 +370,8 @@ export function TableFlat(props: TableNGProps) {
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
-    enableColumnReorder: tableRefreshEnabled,
-    canManageColumns: tableRefreshEnabled,
+    enableColumnReorder: tableRefreshNewFeaturesEnabled,
+    canManageColumns: tableRefreshNewFeaturesEnabled,
     noPanelPadding,
   });
 
@@ -481,12 +467,14 @@ export function TableFlat(props: TableNGProps) {
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
-      enableColumnReorder: tableRefreshEnabled,
+      enableColumnReorder: tableRefreshNewFeaturesEnabled,
       settlingColumnKeys,
-      onHideColumn: tableRefreshEnabled ? handleHideColumn : undefined,
-      onTogglePin: tableRefreshEnabled ? handleTogglePin : undefined,
-      onOpenColumnPanel: tableRefreshEnabled ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
-      pinnedColumns: tableRefreshEnabled ? pinnedColumnSet : undefined,
+      onHideColumn: tableRefreshNewFeaturesEnabled ? handleHideColumn : undefined,
+      // Pinning is not part of this stage: it is half a reorder and half a panel option, so it
+      // needs a way to carry both, which the ad-hoc stage does not have yet.
+      onTogglePin: undefined,
+      onOpenColumnPanel: tableRefreshNewFeaturesEnabled ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
+      pinnedColumns: undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
@@ -508,10 +496,9 @@ export function TableFlat(props: TableNGProps) {
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      tableRefreshNewFeaturesEnabled,
       settlingColumnKeys,
       handleHideColumn,
-      handleTogglePin,
-      pinnedColumnSet,
       noPanelPadding,
     ]
   );
@@ -542,7 +529,7 @@ export function TableFlat(props: TableNGProps) {
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
-      onColumnsReorder={tableRefreshEnabled ? handleColumnsReorder : undefined}
+      onColumnsReorder={tableRefreshNewFeaturesEnabled ? handleColumnsReorder : undefined}
       onCellClick={onCellClick}
       onCellKeyDown={({ column, row }, event) => {
         if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
@@ -586,7 +573,7 @@ export function TableFlat(props: TableNGProps) {
   // The sidebar only ever mounts once the flag is on, there's a header to attach it to, and the
   // user has actually opened it — so the common case (closed, or flag off) renders the grid alone,
   // identical to before this feature existed.
-  if (!tableRefreshEnabled || !hasHeader || !isColumnVisibilityPanelOpen) {
+  if (!tableRefreshNewFeaturesEnabled || !hasHeader || !isColumnVisibilityPanelOpen) {
     return dataGrid;
   }
 
@@ -614,11 +601,9 @@ export function TableFlat(props: TableNGProps) {
         }}
       >
         <ColumnVisibilitySidePanel
-          fields={pinnedOrderedVisibleFields}
+          columns={sidebarColumns}
           hiddenColumns={hiddenColumns}
-          pinnedColumns={pinnedColumnSet}
           onToggleColumn={handleToggleColumnVisibility}
-          onTogglePin={handleTogglePin}
           onColumnsReorder={handleColumnsReorder}
           onClose={() => setIsColumnVisibilityPanelOpen(false)}
           willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}

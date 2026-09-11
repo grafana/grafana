@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { type ComponentProps } from 'react';
 import * as uwrap from 'uwrap';
 
 import {
@@ -123,6 +124,24 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           type: FieldType.string,
           values,
           config: { ...stdCellConfig, displayName },
+          display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const createSingleColumnDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
           display: displayString,
           ...stdField,
         },
@@ -1090,7 +1109,7 @@ describe('TableNG', () => {
     });
   });
 
-  describe('Column reordering', () => {
+  describe('table.refreshNewFeatures column reordering', () => {
     // jsdom has no native DataTransfer; react-data-grid's column drag only reads/writes a few
     // members of it, so a minimal stub is enough to drive the drag/drop event sequence.
     function createDataTransfer() {
@@ -1111,6 +1130,7 @@ describe('TableNG', () => {
           width={800}
           height={600}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
         />
       );
 
@@ -1149,7 +1169,7 @@ describe('TableNG', () => {
     });
   });
 
-  describe('table.refresh column hide/pin', () => {
+  describe('table.refreshNewFeatures column hide', () => {
     const headerText = (container: HTMLElement) =>
       Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
 
@@ -1161,6 +1181,7 @@ describe('TableNG', () => {
           width={800}
           height={600}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
         />
       );
       expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
@@ -1177,24 +1198,200 @@ describe('TableNG', () => {
       expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
     });
 
-    it('pins a column from the column menu, moving it to the front and freezing it', async () => {
+    // Pinning is not part of this stage. It is half a reorder and half a panel option (the frozen
+    // column count), so it needs a way to carry both, which comes with its own follow-up.
+    it('does not offer pinning, and leaves the frozen columns to the panel option', async () => {
       const { container } = render(
         <TableNG
           enableVirtualization={false}
           data={createThreeColumnDataFrame()}
           width={800}
           height={600}
+          frozenColumns={1}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
         />
       );
 
       await userEvent.click(screen.getByLabelText('Column options for Column C'));
-      await userEvent.click(await screen.findByText('Pin column left'));
+      await screen.findByText('Hide column');
 
-      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+      expect(screen.queryByText('Pin column left')).not.toBeInTheDocument();
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+
       const headers = container.querySelectorAll('[role="columnheader"]');
       expect(headers[0]).toHaveClass('rdg-cell-frozen');
       expect(headers[1]).not.toHaveClass('rdg-cell-frozen');
+    });
+  });
+
+  describe('table.refreshNewFeatures controlled column state', () => {
+    const headerText = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+    function renderControlled(props: Partial<ComponentProps<typeof TableNG>> = {}) {
+      const onColumnOrderChange = jest.fn();
+      const onHiddenColumnsChange = jest.fn();
+
+      const view = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
+          columnCatalog={['Column A', 'Column B', 'Column C']}
+          hiddenColumns={new Set()}
+          onColumnOrderChange={onColumnOrderChange}
+          onHiddenColumnsChange={onHiddenColumnsChange}
+          {...props}
+        />
+      );
+
+      return { ...view, onColumnOrderChange, onHiddenColumnsChange };
+    }
+
+    it('renders the order the owner passes rather than the field order', () => {
+      const { container } = renderControlled({ columnOrder: ['Column C', 'Column A', 'Column B'] });
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+    });
+
+    it('reports a reorder as the whole order and leaves the render to the owner', () => {
+      const { container, onColumnOrderChange } = renderControlled();
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[2], { dataTransfer });
+      fireEvent.dragOver(headers[2], { dataTransfer });
+      fireEvent.drop(headers[2], { dataTransfer });
+
+      // The full order, so the owner never has to guess where an unmentioned column belongs
+      expect(onColumnOrderChange).toHaveBeenCalledWith(['Column B', 'Column C', 'Column A']);
+      // And nothing moves until the owner says so
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+    });
+
+    it('reports a hide instead of applying it', async () => {
+      const { container, onHiddenColumnsChange } = renderControlled();
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+
+      expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set(['Column B']));
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+    });
+
+    it('lists a column the owner has already removed from the data, and can show it again', async () => {
+      // What the owner's stage produces once "Column C" is hidden: the field is gone from the frame,
+      // and only the catalog still knows about it.
+      const { onHiddenColumnsChange } = renderControlled({
+        data: createBasicDataFrame(),
+        hiddenColumns: new Set(['Column C']),
+        showColumnsSidebar: true,
+      });
+
+      const sidebar = screen.getByRole('complementary', { name: 'Column visibility' });
+
+      expect(sidebar).toHaveTextContent('Column C');
+
+      await userEvent.click(screen.getByLabelText('Show Column C'));
+
+      expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set());
+    });
+
+    it('will not report hiding the last column that is left', async () => {
+      const { onHiddenColumnsChange } = renderControlled({
+        data: createSingleColumnDataFrame(),
+        columnCatalog: ['Column A'],
+      });
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+      expect(onHiddenColumnsChange).not.toHaveBeenCalled();
+    });
+
+    // A hide changes the field count, which is itself a structure change — so dropping the view here
+    // would erase the action that caused it on the very tick it landed.
+    it('keeps the owner’s view across a structure change', () => {
+      const { container, rerender } = renderControlled({
+        columnOrder: ['Column C', 'Column A', 'Column B'],
+        structureRev: 1,
+      });
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
+          columnCatalog={['Column A', 'Column B', 'Column C']}
+          columnOrder={['Column C', 'Column A', 'Column B']}
+          hiddenColumns={new Set()}
+          onColumnOrderChange={jest.fn()}
+          onHiddenColumnsChange={jest.fn()}
+          structureRev={2}
+        />
+      );
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+    });
+
+    it('still drops a locally held view across a structure change', () => {
+      const data = createThreeColumnDataFrame();
+      const { container, rerender } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={data}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
+          structureRev={1}
+        />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText(container)).toEqual(['Column B', 'Column A', 'Column C']);
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          data={data}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
+          structureRev={2}
+        />
+      );
+
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
     });
   });
 
@@ -3094,7 +3291,7 @@ describe('TableNG', () => {
     });
   });
 
-  describe('table.refresh columns sidebar option', () => {
+  describe('table.refreshNewFeatures columns sidebar option', () => {
     const sidebarLabel = 'Column visibility';
 
     it('starts closed by default and open when showColumnsSidebar is set', () => {
@@ -3102,6 +3299,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
           data={createBasicDataFrame()}
           width={800}
           height={600}
@@ -3114,6 +3312,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={createBasicDataFrame()}
           width={800}
@@ -3126,7 +3325,14 @@ describe('TableNG', () => {
     it('follows the option when it changes, so editing the panel option opens and closes it', () => {
       const data = createBasicDataFrame();
       const { rerender } = render(
-        <TableNG enableVirtualization={false} tableRefreshEnabled data={data} width={800} height={600} />
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
+          data={data}
+          width={800}
+          height={600}
+        />
       );
       expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
 
@@ -3134,6 +3340,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={data}
           width={800}
@@ -3146,6 +3353,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
           showColumnsSidebar={false}
           data={data}
           width={800}
@@ -3161,6 +3369,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={data}
           width={800}
@@ -3176,6 +3385,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={data}
           width={800}

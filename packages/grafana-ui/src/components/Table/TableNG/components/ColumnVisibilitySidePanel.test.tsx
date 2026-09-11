@@ -2,8 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { FieldType, toDataFrame } from '@grafana/data';
-
 import { ColumnVisibilitySidePanel } from './ColumnVisibilitySidePanel';
 
 function createDataTransfer() {
@@ -16,12 +14,7 @@ function createDataTransfer() {
   };
 }
 
-const fields = toDataFrame({
-  fields: [
-    { name: 'Column A', type: FieldType.string, values: ['a'] },
-    { name: 'Column B', type: FieldType.string, values: ['b'] },
-  ],
-}).fields;
+const columns = ['Column A', 'Column B'];
 
 // Mirrors how TableFlat owns this state: the panel itself holds none of it.
 function Harness({
@@ -38,7 +31,7 @@ function Harness({
 
   return (
     <ColumnVisibilitySidePanel
-      fields={fields}
+      columns={columns}
       hiddenColumns={hiddenColumns}
       pinnedColumns={pinnedColumns}
       onToggleColumn={(displayName, visible) => {
@@ -125,7 +118,7 @@ describe('ColumnVisibilitySidePanel', () => {
 
   it('dims its contents while the splitter is dragged narrow enough to close it', () => {
     const props = {
-      fields,
+      columns,
       hiddenColumns: new Set<string>(),
       pinnedColumns: new Set<string>(),
       onToggleColumn: jest.fn(),
@@ -147,7 +140,7 @@ describe('ColumnVisibilitySidePanel', () => {
     const onClose = jest.fn();
     render(
       <ColumnVisibilitySidePanel
-        fields={fields}
+        columns={columns}
         hiddenColumns={new Set()}
         pinnedColumns={new Set()}
         onToggleColumn={jest.fn()}

@@ -28,13 +28,18 @@ describe('addTableCustomPanelOptions', () => {
   });
 
   describe('showColumnsSidebar', () => {
-    it('is offered when table.refresh is enabled', () => {
-      setTestFlags({ [FlagKeys.TableRefresh]: true });
+    it('is offered when both table.refresh and table.refreshNewFeatures are enabled', () => {
+      setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
       expect(optionAt('showColumnsSidebar').showIf?.(options, [])).toBe(true);
     });
 
-    it('is hidden without table.refresh, which is what introduces the sidebar', () => {
-      setTestFlags({ [FlagKeys.TableRefresh]: false });
+    it('is hidden without table.refresh, which is what introduces the header the sidebar hangs off', () => {
+      setTestFlags({ [FlagKeys.TableRefresh]: false, [FlagKeys.TableRefreshNewFeatures]: true });
+      expect(optionAt('showColumnsSidebar').showIf?.(options, [])).toBe(false);
+    });
+
+    it('is hidden without table.refreshNewFeatures, which is what the sidebar itself is behind', () => {
+      setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: false });
       expect(optionAt('showColumnsSidebar').showIf?.(options, [])).toBe(false);
     });
   });

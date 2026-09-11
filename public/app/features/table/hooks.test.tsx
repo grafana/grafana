@@ -201,6 +201,8 @@ describe('useCommonTableProps', () => {
       disableSanitizeHtml: false,
       contentAwareWidthsEnabled: false,
       tableRefreshEnabled: false,
+      tableRefreshNewFeaturesEnabled: false,
+      showColumnsSidebar: undefined,
     });
   });
 
@@ -209,6 +211,31 @@ describe('useCommonTableProps', () => {
     const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
     expect(result.current.tableRefreshEnabled).toBe(true);
+  });
+
+  // The new column interactions live in the refreshed header, so the toggle for them is ANDed with
+  // table.refresh rather than standing on its own.
+  it('does not report the new column features without the refreshed table', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current.tableRefreshNewFeaturesEnabled).toBe(false);
+  });
+
+  it('reports the new column features once both flags are on', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current.tableRefreshNewFeaturesEnabled).toBe(true);
+  });
+
+  it('withholds the sidebar option until the new column features are on', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, showColumnsSidebar: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.showColumnsSidebar).toBeUndefined();
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

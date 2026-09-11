@@ -5,6 +5,7 @@ import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Box, Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  useAdHocColumnState,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
@@ -50,6 +51,11 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 
+  // Column order and visibility come from the panel's ad-hoc transformation stage when the host has
+  // one, so the view survives a refresh and stays out of the saved dashboard. Undefined leaves the
+  // table keeping it locally, which is what happens outside a dashboard.
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, !!commonTableProps.tableRefreshNewFeaturesEnabled);
+
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
   let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
@@ -72,6 +78,7 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
+      {...adHocColumns}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}

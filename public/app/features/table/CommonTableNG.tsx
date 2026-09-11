@@ -1,11 +1,15 @@
 import { type ComponentProps } from 'react';
 
-import { useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
+import {
+  useFlagTableAutoColumnWidths,
+  useFlagTableRefresh,
+  useFlagTableRefreshNewFeatures,
+} from '@grafana/runtime/internal';
 import { TableNG } from '@grafana/ui/unstable';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled'
+  'tableRefreshEnabled' | 'tableRefreshNewFeaturesEnabled' | 'contentAwareWidthsEnabled'
 >;
 
 /**
@@ -16,12 +20,14 @@ export type CommonTableNGProps = Omit<
  */
 export function CommonTableNG(props: CommonTableNGProps) {
   const tableRefreshEnabled = useFlagTableRefresh();
+  const tableRefreshNewFeaturesEnabled = useFlagTableRefreshNewFeatures() && tableRefreshEnabled;
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
 
   return (
     <TableNG
       {...props}
       tableRefreshEnabled={tableRefreshEnabled}
+      tableRefreshNewFeaturesEnabled={tableRefreshNewFeaturesEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
     />
   );

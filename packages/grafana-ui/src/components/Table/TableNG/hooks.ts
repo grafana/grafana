@@ -1092,3 +1092,73 @@ export const useReducerEntries = (
     });
   }, [field, rows, displayName, colIdx]);
 };
+
+interface ColumnViewStateOptions {
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  structureRev?: number;
+}
+
+interface ColumnViewState {
+  columnOrder?: string[];
+  hiddenColumns: ReadonlySet<string>;
+  setColumnOrder: (columnOrder: string[]) => void;
+  setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
+  /** Whether an owner outside the table holds the view. */
+  isControlled: boolean;
+}
+
+const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
+
+/**
+ * The column order and visibility the table should render, from whichever side owns it.
+ *
+ * Controlled-ness is decided on the change handlers being present, not the values: an owner backing
+ * this with transformations legitimately has no order yet and no hidden columns, and keying on the
+ * values would flip the table between modes as the user hides and shows columns.
+ *
+ * Uncontrolled, the view is dropped whenever the query structure changes, since it can only point at
+ * columns of the frame it was built against. A controlling owner is expected to reconcile instead —
+ * and must, because removing a column *is* a structure change, so dropping the view here would
+ * erase the action that caused it.
+ */
+export function useColumnViewState({
+  columnOrder,
+  onColumnOrderChange,
+  hiddenColumns,
+  onHiddenColumnsChange,
+  structureRev,
+}: ColumnViewStateOptions): ColumnViewState {
+  const isControlled = onColumnOrderChange != null && onHiddenColumnsChange != null;
+
+  const [localColumnOrder, setLocalColumnOrder] = useState<string[]>();
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
+
+  useEffect(() => {
+    if (!isControlled) {
+      setLocalColumnOrder(undefined);
+      setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureRev]);
+
+  const setColumnOrder = useCallback(
+    (next: string[]) => (onColumnOrderChange ? onColumnOrderChange(next) : setLocalColumnOrder(next)),
+    [onColumnOrderChange]
+  );
+
+  const setHiddenColumns = useCallback(
+    (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
+    [onHiddenColumnsChange]
+  );
+
+  return {
+    columnOrder: isControlled ? columnOrder : localColumnOrder,
+    hiddenColumns: (isControlled ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setColumnOrder,
+    setHiddenColumns,
+    isControlled,
+  };
+}

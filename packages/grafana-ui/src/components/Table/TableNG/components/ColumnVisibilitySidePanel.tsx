@@ -2,21 +2,27 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { useState } from 'react';
 
-import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Checkbox } from '../../../Forms/Checkbox';
 import { Icon } from '../../../Icon/Icon';
 import { IconButton } from '../../../IconButton/IconButton';
-import { getDisplayName } from '../utils';
+
+const NO_PINNED_COLUMNS: ReadonlySet<string> = new Set();
 
 interface ColumnVisibilitySidePanelProps {
-  fields: Field[];
+  /**
+   * Every column that can be listed, in display order, by display name. Includes hidden ones: the
+   * panel exists to bring those back, and hiding a column removes its field from the frame.
+   */
+  columns: string[];
   hiddenColumns: ReadonlySet<string>;
-  pinnedColumns: ReadonlySet<string>;
+  pinnedColumns?: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
-  onTogglePin: (displayName: string) => void;
+  /** Omit to leave pinning out of the panel entirely. */
+  onTogglePin?: (displayName: string) => void;
   onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
   onClose: () => void;
   /**
@@ -34,9 +40,9 @@ interface ColumnVisibilitySidePanelProps {
  * same handlers the header menu uses, so the two stay in sync automatically.
  */
 export function ColumnVisibilitySidePanel({
-  fields,
+  columns,
   hiddenColumns,
-  pinnedColumns,
+  pinnedColumns = NO_PINNED_COLUMNS,
   onToggleColumn,
   onTogglePin,
   onColumnsReorder,
@@ -44,7 +50,7 @@ export function ColumnVisibilitySidePanel({
   willCloseOnRelease = false,
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles);
-  const visibleCount = fields.length - hiddenColumns.size;
+  const visibleCount = columns.length - hiddenColumns.size;
 
   // Drag state is purely local to the panel's own reorder UI — the reorder itself is delegated to
   // `onColumnsReorder`, the same handler the grid's own header-drag reorder uses.
@@ -68,8 +74,7 @@ export function ColumnVisibilitySidePanel({
         />
       </div>
       <div className={styles.columnList}>
-        {fields.map((field) => {
-          const displayName = getDisplayName(field);
+        {columns.map((displayName) => {
           const isVisible = !hiddenColumns.has(displayName);
           const isPinned = pinnedColumns.has(displayName);
           const isLastVisible = isVisible && visibleCount <= 1;
@@ -134,19 +139,21 @@ export function ColumnVisibilitySidePanel({
                 onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
               />
               <span className={styles.columnName}>{displayName}</span>
-              <button
-                type="button"
-                className={styles.pinButton}
-                aria-pressed={isPinned}
-                aria-label={
-                  isPinned
-                    ? t('grafana-ui.table.unpin-column-label', 'Unpin {{columnName}}', { columnName: displayName })
-                    : t('grafana-ui.table.pin-column-label', 'Pin {{columnName}}', { columnName: displayName })
-                }
-                onClick={() => onTogglePin(displayName)}
-              >
-                <Icon name="gf-pin" aria-hidden="true" />
-              </button>
+              {onTogglePin && (
+                <button
+                  type="button"
+                  className={styles.pinButton}
+                  aria-pressed={isPinned}
+                  aria-label={
+                    isPinned
+                      ? t('grafana-ui.table.unpin-column-label', 'Unpin {{columnName}}', { columnName: displayName })
+                      : t('grafana-ui.table.pin-column-label', 'Pin {{columnName}}', { columnName: displayName })
+                  }
+                  onClick={() => onTogglePin(displayName)}
+                >
+                  <Icon name="gf-pin" aria-hidden="true" />
+                </button>
+              )}
             </div>
           );
         })}

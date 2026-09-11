@@ -47,7 +47,9 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       category,
       // The sidebar only exists under `table.refresh`, so the option that controls it is only
       // offered there.
-      showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false),
+      showIf: () =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
     })
     .addNumberInput({
       path: 'maxRowHeight',
