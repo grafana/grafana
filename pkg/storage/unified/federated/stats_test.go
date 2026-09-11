@@ -325,7 +325,7 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
-			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, `key`, value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
+			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
 				migratedKVNamespace, alertRuleResource, migratedKVValue, time.Now(), time.Now())
 			require.NoError(t, err)
 
