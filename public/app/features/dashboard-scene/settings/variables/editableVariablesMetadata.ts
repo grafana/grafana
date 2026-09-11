@@ -1,8 +1,7 @@
-import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
-import { type EditableVariableType } from './utils';
+import { type EditableVariableType, type VariableTypeSelectOptionsArgs } from './utils';
 
 export interface EditableVariableMetadata {
   name: string;
@@ -88,28 +87,6 @@ export function getEditableVariableMetadata(type: string): EditableVariableMetad
   return entry;
 }
 
-export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
-  'query',
-  'custom',
-  'textbox',
-  'constant',
-  'datasource',
-  'interval',
-  'adhoc',
-  'switch',
-  'groupby',
-];
-
-export interface VariableTypeSelectOptionsArgs {
-  /**
-   * True when the type selector renders outside a dashboard (e.g. the variables
-   * management page). Standalone contexts have no dedicated "Filter and Group by"
-   * entry point, so with unified drilldown controls the adhoc type stays selectable
-   * and is relabeled accordingly.
-   */
-  standalone?: boolean;
-}
-
 /**
  * Display label for a variable type, shared by the type selector and any list
  * views so the same variable is never called two different things. Under
@@ -124,39 +101,4 @@ export function getVariableTypeLabel(
     return t('dashboard.sidebar.add.filters.label', 'Filter and Group by');
   }
   return getEditableVariablesMetadata()[variableType].name;
-}
-
-export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectOptionsArgs = {}): Array<
-  SelectableValue<EditableVariableType>
-> {
-  const metadata = getEditableVariablesMetadata();
-  const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
-
-  const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
-    (variableType): SelectableValue<EditableVariableType> => ({
-      label: getVariableTypeLabel(variableType, { standalone }),
-      value: variableType,
-      description:
-        variableType === 'adhoc' && unifiedDrilldown && standalone
-          ? t(
-              'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
-              'Add key/value filters and group by keys on the fly'
-            )
-          : metadata[variableType].description,
-    })
-  );
-
-  return results.filter((option) => {
-    // Legacy standalone groupby is experimental/deprecated; leave it gated only
-    // by groupByVariable and focus new work on the unified adhoc path.
-    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
-      return false;
-    }
-    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
-      // Dashboards have a dedicated "Filter and Group by" entry point instead.
-      return false;
-    }
-
-    return true;
-  });
 }

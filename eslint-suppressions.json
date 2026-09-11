@@ -2108,7 +2108,7 @@
   },
   "public/app/features/dashboard-scene/settings/variables/editableVariablesMetadata.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/editors/AdHocFiltersVariableEditor.tsx": {
@@ -2123,7 +2123,7 @@
   },
   "public/app/features/dashboard-scene/settings/variables/utils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
+      "count": 3
     }
   },
   "public/app/features/dashboard-scene/sharing/ExportButton/ExportAsCode.tsx": {

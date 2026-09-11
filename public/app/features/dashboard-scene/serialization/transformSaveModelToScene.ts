@@ -16,6 +16,7 @@ import {
   type VizPanelState,
   type SceneGridItemLike,
   type SceneDataLayerProvider,
+  UserActionEvent,
   type SceneObjectState,
   LocalValueVariable,
 } from '@grafana/scenes';
@@ -56,10 +57,10 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
-import { registerPanelInteractionsReporter } from '../scene/registerPanelInteractionsReporter';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
@@ -565,6 +566,19 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
+  });
+}
+
+export function registerPanelInteractionsReporter(scene: DashboardScene) {
+  scene.subscribeToEvent(UserActionEvent, (event) => {
+    switch (event.payload.interaction) {
+      case 'panel-status-message-clicked':
+        DashboardInteractions.panelStatusMessageClicked();
+        break;
+      case 'panel-cancel-query-clicked':
+        DashboardInteractions.panelCancelQueryClicked();
+        break;
+    }
   });
 }
 

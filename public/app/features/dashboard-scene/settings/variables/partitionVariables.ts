@@ -1,40 +1,28 @@
 import { VariableHide } from '@grafana/data';
 import { type SceneVariable } from '@grafana/scenes';
 
-import { isEditableVariableType, isVariableEditable } from './utils';
+import { partitionSceneObjects } from '../../sidebar/dashboard/helpers';
 
-export function partitionVariablesByEditability(variables: SceneVariable[]) {
-  const editable: SceneVariable[] = [];
-  const nonEditable: SceneVariable[] = [];
-
-  for (const variable of variables) {
-    (isVariableEditable(variable) ? editable : nonEditable).push(variable);
-  }
-
-  return { editable, nonEditable };
-}
+import { isEditableVariableType } from './utils';
 
 export function partitionVariablesByDisplay(variables: SceneVariable[]) {
-  const visible: SceneVariable[] = [];
-  const controlsMenu: SceneVariable[] = [];
-  const hidden: SceneVariable[] = [];
-
-  for (const variable of variables) {
-    if (!isEditableVariableType(variable.state.type)) {
-      continue;
+  const {
+    visible = [],
+    controlsMenu = [],
+    hidden = [],
+  } = partitionSceneObjects(variables, (v) => {
+    if (!isEditableVariableType(v.state.type)) {
+      return null;
     }
 
-    switch (variable.state.hide) {
+    switch (v.state.hide) {
       case VariableHide.hideVariable:
-        hidden.push(variable);
-        break;
+        return 'hidden';
       case VariableHide.inControlsMenu:
-        controlsMenu.push(variable);
-        break;
+        return 'controlsMenu';
       default:
-        visible.push(variable);
+        return 'visible';
     }
-  }
-
+  });
   return { visible, controlsMenu, hidden };
 }

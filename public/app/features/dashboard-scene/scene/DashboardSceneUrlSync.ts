@@ -3,7 +3,6 @@ import { type Unsubscribable } from 'rxjs';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
-import { loadDashboardEditView } from '../settings/loadDashboardEditView';
 import { loadShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
@@ -12,6 +11,14 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type DashboardSceneState } from './types/dashboard';
+
+async function loadDashboardEditView(editview: string) {
+  const { createDashboardEditViewFor } = await import(
+    /* webpackChunkName: "dashboard-settings" */ '../settings/createDashboardEditViewFor'
+  );
+
+  return createDashboardEditViewFor(editview);
+}
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**

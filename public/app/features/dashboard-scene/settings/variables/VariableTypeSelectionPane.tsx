@@ -22,8 +22,13 @@ import { getDashboardSceneLike, type DashboardSceneLike } from '../../scene/type
 import { type DashboardSidebarPane } from '../../sidebar/types';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { getVariableTypeSelectOptions } from './editableVariablesMetadata';
-import { type EditableVariableType, getNextAvailableId, getVariableNamePrefix, getVariableScene } from './utils';
+import {
+  type EditableVariableType,
+  getNextAvailableId,
+  getVariableNamePrefix,
+  getVariableScene,
+  getVariableTypeSelectOptions,
+} from './utils';
 
 export function openAddVariablePane(dashboard: DashboardSceneLike) {
   dashboard.state.sidebar.openPane(new VariableAddPane({ sectionOwner: dashboard.getRef() }));

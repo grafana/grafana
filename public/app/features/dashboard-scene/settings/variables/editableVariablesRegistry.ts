@@ -15,7 +15,7 @@ import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/Switch
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 import { type EditableVariableType } from './utils';
 
-export interface EditableVariableConfig {
+interface EditableVariableConfig {
   name: string;
   description: string;
   editor: React.ComponentType<any>; // eslint-disable-line @typescript-eslint/no-explicit-any

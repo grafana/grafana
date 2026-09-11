@@ -1,6 +1,7 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
+import type { DashboardLink } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,6 +11,7 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import {
   LinkBooleanSwitch,
@@ -19,8 +21,24 @@ import {
   LinkTextInput,
   LinkTypeSelect,
 } from './LinkBasicOptions';
-import { duplicateLink, type LinkEdit } from './LinkEdit';
+import { duplicateLink, LinkEdit, linkSelectionId } from './LinkEdit';
 import { linkEditActions } from './actions';
+import { NEW_LINK } from './utils';
+
+// Default to dropdown for new links because if a dashboard has a lot of links,
+// the side pane will be pushed down the page and be unscrollable
+export function createDefaultLink(): DashboardLink {
+  return { ...NEW_LINK, asDropdown: true };
+}
+
+export function openAddLinkPane(dashboard: DashboardSceneLike) {
+  const newLink = createDefaultLink();
+  const linkIndex = (dashboard.state.links ?? []).length;
+  const selectionId = linkSelectionId(linkIndex);
+  const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
+
+  linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
+}
 
 function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   const dashboard = linkEdit.state.dashboardRef.resolve();

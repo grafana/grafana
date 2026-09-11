@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { t } from '@grafana/i18n';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
-import { openAddLinkPane } from '../../settings/links/LinkEdit';
+import { openAddLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { AddButton } from './AddButton';

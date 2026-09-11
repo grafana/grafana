@@ -7,8 +7,8 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { LinkEditEditableElement } from './LinkAddEditableElement';
-import { LinkEdit, linkSelectionId, openAddLinkPane } from './LinkEdit';
+import { LinkEditEditableElement, openAddLinkPane } from './LinkAddEditableElement';
+import { LinkEdit, linkSelectionId } from './LinkEdit';
 import { NEW_LINK } from './utils';
 
 const createTestLink = (overrides: Partial<DashboardLink> = {}): DashboardLink => ({

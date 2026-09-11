@@ -25,7 +25,6 @@ import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
-import { openDashboardCodePane } from './openDashboardCodePane';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
 
@@ -53,6 +52,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const onOpenAddPane = useCallback(async () => {
     const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
     sidebar.openPane(new AddNewPane({}));
+  }, [sidebar]);
+
+  const onOpenCodePane = useCallback(async () => {
+    const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
+    sidebar.openPane(new DashboardCodePane({}));
   }, [sidebar]);
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -119,7 +123,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => openDashboardCodePane(sidebar)}
+              onClick={onOpenCodePane}
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
