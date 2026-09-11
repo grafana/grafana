@@ -9,18 +9,25 @@ import (
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"k8s.io/client-go/dynamic"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -75,8 +82,10 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
-	if options.K8sActionFormat && options.APIGroup == "" {
-		return nil, fmt.Errorf("APIGroup is required when K8sActionFormat is enabled")
+	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
+	// is configured.
+	if options.APIGroup == "" && requiresAPIGroup(context.Background(), options.Resource, options.K8sActionFormat) {
+		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission redirect)", options.Resource)
 	}
 
 	permissions := make([]string, 0, len(options.PermissionsToActions))
@@ -102,6 +111,7 @@ func New(cfg *setting.Cfg,
 	s := &Service{
 		ac:           ac,
 		features:     features,
+		cfg:          cfg,
 		store:        NewStore(cfg, sqlStore, features),
 		options:      options,
 		license:      license,
@@ -114,6 +124,7 @@ func New(cfg *setting.Cfg,
 		userService:  userService,
 		actionSetSvc: actionSetService,
 	}
+	s.dynamicClient = s.dynamicClientForContext
 
 	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
 
@@ -135,6 +146,7 @@ type Service struct {
 	api      *api
 	license  licensing.Licensing
 
+	cfg          *setting.Cfg
 	log          log.Logger
 	options      Options
 	permissions  []string
@@ -143,6 +155,10 @@ type Service struct {
 	teamService  team.Service
 	userService  user.Service
 	actionSetSvc ActionSetService
+
+	// dynamicClient builds the K8s client the teams membership redirect writes
+	// through. A field rather than a direct call so tests can inject a fake client.
+	dynamicClient func(ctx context.Context) (dynamic.Interface, error)
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -229,6 +245,36 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
+	// Teams-specific redirect: write the membership to Team.Spec.Members via the
+	// K8s API. It lives here rather than in api.setUserPermission so that every
+	// caller shares it — HTTP requests reach it through this method, and so do the
+	// in-process callers (SCIM, team-sync, the team-members API) that never touch the
+	// handler. In unified-authoritative modes (Mode4/5) the legacy team_member table
+	// has no row to write, so we must not fall back to it.
+	redirectRemovedMember := false
+	if s.teamsMembershipRedirectEnabled(ctx) {
+		removed, k8sErr := s.setTeamMemberViaK8s(ctx, orgID, resourceID, user.ID, permission, user.IsExternal)
+		if errors.Is(k8sErr, ErrExternalTeamMember) {
+			return nil, k8sErr
+		}
+		if k8sErr == nil {
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", s.options.Resource, "success").Inc()
+		}
+		if unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String()) {
+			if k8sErr != nil {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", s.options.Resource, "error").Inc()
+				return nil, k8sErr
+			}
+			s.clearUserPermissionCache(orgID, user.ID)
+			return &accesscontrol.ResourcePermission{Actions: actions, UserID: user.ID}, nil
+		}
+		if k8sErr != nil {
+			s.log.Warn("Failed to set team member via k8s API, falling back to legacy", "error", k8sErr, "resourceID", resourceID)
+		} else {
+			redirectRemovedMember = removed
+		}
+	}
+
 	var datasourceType string
 	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
 		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
@@ -236,14 +282,32 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		}
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
+	// When the redirect already removed the member, it also removed the legacy
+	// team_member row (dual-write). Skip the legacy membership hook: re-running it
+	// would fail with ErrTeamMemberNotFound and roll back the RBAC permission write
+	// in the same transaction, leaving the user with stale permissions. Adds and
+	// no-op removals keep the hook, so a genuinely-absent member still surfaces the
+	// not-found error.
+	onSetUser := s.options.OnSetUser
+	if redirectRemovedMember {
+		onSetUser = nil
+	}
+
+	result, err := s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
 		DatasourceType:    datasourceType,
-	}, s.options.OnSetUser)
+	}, onSetUser)
+	if err != nil {
+		return nil, err
+	}
+
+	s.clearUserPermissionCache(orgID, user.ID)
+
+	return result, nil
 }
 
 func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
@@ -368,11 +432,125 @@ func (s *Service) SetPermissions(
 		})
 	}
 
-	return s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
-		User:        s.options.OnSetUser,
+	// Teams-specific redirect: reconcile the batch of memberships through
+	// Team.Spec.Members via the K8s API (see SetUserPermission for the rationale).
+	// Team permissions only support user assignments (see Assignments in
+	// ProvideTeamPermissions), so only user commands are routed. The batch is
+	// applied in a single Team update so it succeeds or fails atomically, matching
+	// the all-or-nothing semantics of the legacy SQL transaction below.
+	redirectRemovedMember := false
+	if s.teamsMembershipRedirectEnabled(ctx) {
+		removed, k8sErr := s.setTeamMembersViaK8s(ctx, orgID, resourceID, commands)
+		if errors.Is(k8sErr, ErrExternalTeamMember) {
+			return nil, k8sErr
+		}
+		if k8sErr == nil {
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", s.options.Resource, "success").Inc()
+		}
+		if unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String()) {
+			if k8sErr != nil {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", s.options.Resource, "error").Inc()
+				return nil, k8sErr
+			}
+			s.clearUserPermissionCaches(orgID, commands)
+			return []accesscontrol.ResourcePermission{}, nil
+		}
+		if k8sErr != nil {
+			s.log.Warn("Failed to set team members via k8s API, falling back to legacy", "error", k8sErr, "resourceID", resourceID)
+		} else {
+			redirectRemovedMember = removed
+		}
+	}
+
+	// See SetUserPermission: when the redirect removed a member it also removed the
+	// legacy team_member row, so skip the membership hook to avoid rolling back the
+	// RBAC permission writes. The batch is all-or-nothing, so this covers the whole
+	// batch; the adds in it already have their team_member row from the dual-write.
+	userHook := s.options.OnSetUser
+	if redirectRemovedMember {
+		userHook = nil
+	}
+
+	result, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
+		User:        userHook,
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.clearUserPermissionCaches(orgID, commands)
+
+	return result, nil
+}
+
+// clearUserPermissionCaches clears the permission cache of every user assigned by
+// the given commands.
+func (s *Service) clearUserPermissionCaches(orgID int64, commands []accesscontrol.SetResourcePermissionCommand) {
+	clearedUsers := make(map[int64]bool)
+	for _, cmd := range commands {
+		if cmd.UserID != 0 && !clearedUsers[cmd.UserID] {
+			s.clearUserPermissionCache(orgID, cmd.UserID)
+			clearedUsers[cmd.UserID] = true
+		}
+	}
+}
+
+// teamsMembershipRedirectEnabled reports whether team membership writes for this
+// service should be routed to Team.Spec.Members via the K8s API instead of the
+// legacy team_member table. It is the only gate on that redirect: the HTTP handlers
+// no longer check the toggle themselves, so every caller enters through here.
+func (s *Service) teamsMembershipRedirectEnabled(ctx context.Context) bool {
+	return s.options.Resource == "teams" &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// teamsRedirectOwnsWrites reports whether the teams membership redirect is the sole
+// writer (redirect enabled and unified storage authoritative). When true the legacy
+// store is never written, so handlers must not count a legacy write in the metrics.
+func (s *Service) teamsRedirectOwnsWrites(ctx context.Context) bool {
+	return s.teamsMembershipRedirectEnabled(ctx) &&
+		unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String())
+}
+
+// dynamicClientForContext builds the K8s client the teams membership redirect
+// writes through, using the ReqContext the contexthandler middleware stored on
+// ctx. Callers with no request context (background jobs) cannot reach the K8s
+// APIs, so they get ErrRestConfigNotAvailable and fall back to legacy wherever
+// that is still allowed. Mirrors teamk8s.TeamK8sService.getDynamicClient.
+func (s *Service) dynamicClientForContext(ctx context.Context) (dynamic.Interface, error) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, ErrRestConfigNotAvailable
+	}
+	return newDynamicClient(s.options.RestConfigProvider, reqCtx)
+}
+
+// setTeamMemberViaK8s writes a single team membership to Team.Spec.Members via the
+// K8s API, deriving the namespace from orgID the same way the team K8s service does.
+// external marks the caller as team-sync. The bool reports whether an existing member
+// was removed.
+func (s *Service) setTeamMemberViaK8s(ctx context.Context, orgID int64, resourceID string, userID int64, permission string, external bool) (bool, error) {
+	dynamicClient, err := s.dynamicClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
+	return s.setTeamMember(ctx, dynamicClient, orgID, namespace, resourceID, userID, permission, external)
+}
+
+// setTeamMembersViaK8s is the batch counterpart of setTeamMemberViaK8s: it applies
+// every user command in the batch to Team.Spec.Members in one read-modify-write. Only
+// the single-member path has a team-sync caller, so the batch is never external.
+// The bool reports whether any existing member was removed.
+func (s *Service) setTeamMembersViaK8s(ctx context.Context, orgID int64, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
+	dynamicClient, err := s.dynamicClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
+	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, commands, false)
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
@@ -389,6 +567,21 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 		Resource:          s.scopeResource(),
 		ResourceAttribute: s.options.ResourceAttribute,
 		ResourceID:        resourceID,
+	})
+}
+
+// clearUserPermissionCache invalidates the RBAC permission cache for a user.
+// It clears both regular user and service account cache keys since we don't
+// know the identity type from just the user ID.
+func (s *Service) clearUserPermissionCache(orgID int64, userID int64) {
+	s.service.ClearUserPermissionCache(&user.SignedInUser{
+		OrgID:  orgID,
+		UserID: userID,
+	})
+	s.service.ClearUserPermissionCache(&user.SignedInUser{
+		OrgID:            orgID,
+		UserID:           userID,
+		IsServiceAccount: true,
 	})
 }
 
@@ -416,6 +609,17 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		actions = append(actions, s.options.GetActionSetName(permission))
 
 		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.EvaluationContext{})
+		if onlyActionSets {
+			return actions, nil
+		}
+	}
+
+	// Write action set token for datasources. Granular actions are also written until
+	// FlagIamOnlyStoreDatasourceActionSets is enabled (after the backfill migration has run).
+	if s.options.Resource == datasources.ScopeRoot {
+		actions = append(actions, s.options.GetActionSetName(permission))
+
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(), featuremgmt.FlagIamOnlyStoreDatasourceActionSets, false, openfeature.EvaluationContext{})
 		if onlyActionSets {
 			return actions, nil
 		}
@@ -499,15 +703,22 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 	return nil
 }
 
-func (s *Service) declareFixedRoles() error {
-	scopeAll := s.options.GetScope("*")
+// FixedRoleRegistrations returns the templated reader/writer fixed-role
+// registrations derived from the given Options (fixed:{resource}.permissions:reader
+// and :writer). It is the single source of truth for how per-resource permission
+// management roles are generated, shared by the live service ([Service.declareFixedRoles])
+// and the GlobalRole seeder aggregation so the two cannot drift. Only the
+// role-identity fields of Options are read (Resource, APIGroup, K8sActionFormat,
+// ReaderRoleName, WriterRoleName, RoleGroup); the runtime closures are ignored.
+func FixedRoleRegistrations(o Options) []accesscontrol.RoleRegistration {
+	scopeAll := o.GetScope("*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("reader"),
-			DisplayName: s.options.ReaderRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("reader"),
+			DisplayName: o.ReaderRoleName,
+			Group:       o.RoleGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: s.options.GetAction("read"), Scope: scopeAll},
+				{Action: o.GetAction("read"), Scope: scopeAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -515,17 +726,21 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("writer"),
-			DisplayName: s.options.WriterRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("writer"),
+			DisplayName: o.WriterRoleName,
+			Group:       o.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: s.options.GetAction("write"), Scope: scopeAll},
+				{Action: o.GetAction("write"), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return s.service.DeclareFixedRoles(readerRole, writerRole)
+	return []accesscontrol.RoleRegistration{readerRole, writerRole}
+}
+
+func (s *Service) declareFixedRoles() error {
+	return s.service.DeclareFixedRoles(FixedRoleRegistrations(s.options)...)
 }
 
 type ActionSetService interface {
@@ -656,9 +871,11 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
+		strings.HasPrefix(action, notebooks.ScopeNotebooksRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
 		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
-		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot)
+		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot) ||
+		strings.HasPrefix(action, datasources.ScopeRoot)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.
@@ -669,4 +886,38 @@ func (s *Service) scopeResource() string {
 		return fmt.Sprintf("%s/%s", s.options.APIGroup, s.options.Resource)
 	}
 	return s.options.Resource
+}
+
+// requiresAPIGroup reports whether a resource-permission service must have an
+// APIGroup configured, since it can no longer be guessed (see getAPIGroup). It is
+// required for any Kubernetes-native flow:
+//   - K8sActionFormat is enabled (K8s-format actions/scopes), or
+//   - the resource-permission redirect is enabled for a resource that routes
+//     through the generic K8s adapter.
+//
+// The redirect gate is read through the same OpenFeature helper used at runtime
+// (k8sResourcePermissionRedirectEnabled), so this startup check stays aligned with
+// when getAPIGroup is actually exercised. Called at construction with a background
+// context, so it sees the global flag values; per-tenant overrides are still
+// guarded at runtime by getAPIGroup.
+func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool) bool {
+	if k8sActionFormat {
+		return true
+	}
+
+	// These resources never resolve a single static APIGroup via getAPIGroup, so
+	// they are exempt from the redirect requirement:
+	//   - teams use the Team.Spec.Members path: the `Resource != "teams"` guards in
+	//     api.go dispatch to the member helpers in api_adapter.go, which never
+	//     resolve an APIGroup.
+	//   - datasources resolve a per-plugin group at request time (the group is a
+	//     wildcard, e.g. loki.datasource.grafana.app, configured in
+	//     pkg/extensions/accesscontrol/permission_services.go), so there is no
+	//     single value.
+	switch resource {
+	case iamv0.TeamResourceInfo.GetName(), datasources.ScopeRoot:
+		return false
+	}
+
+	return k8sResourcePermissionRedirectEnabled(ctx)
 }

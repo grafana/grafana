@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
-	cfg := &api.PostableUserConfig{}
+func Load(rawConfig []byte) (*v1.AMConfigV1, error) {
+	cfg := &v1.AMConfigDB{}
 
 	if err := json.Unmarshal(rawConfig, cfg); err != nil {
 		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
 	}
 
-	return cfg, nil
+	return v1.ToModel(cfg), nil
 }

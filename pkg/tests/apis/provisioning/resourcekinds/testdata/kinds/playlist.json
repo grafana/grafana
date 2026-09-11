@@ -1,0 +1,18 @@
+{
+  "folderScoped": false,
+  "featureFlags": ["playlistsRBAC"],
+  "manifest": {
+    "apiVersion": "playlist.grafana.app/v1",
+    "kind": "Playlist",
+    "metadata": {
+      "name": "placeholder"
+    },
+    "spec": {
+      "title": "placeholder",
+      "interval": "5m",
+      "items": [
+        { "type": "dashboard_by_tag", "value": "provisioning" }
+      ]
+    }
+  }
+}

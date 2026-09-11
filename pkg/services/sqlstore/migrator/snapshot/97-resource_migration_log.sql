@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
 -- Server version	8.4.5
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
@@ -50,7 +50,16 @@ INSERT INTO `resource_migration_log` (`migration_id`, `sql`, `success`, `error`,
   ('drop my_row_id and add primary key with columns group,resource to table resource_version if my_row_id exists (auto-generated mysql column)','\n	  ALTER TABLE resource_version\n	  DROP PRIMARY KEY,\n	  DROP COLUMN my_row_id,\n	  DROP INDEX UQE_resource_version_group_resource,\n	  ADD PRIMARY KEY (`group`,`resource`);\n	',1,'','2022-01-01 00:00:00'),
   ('drop unique index UQE_resource_version_group_resource from resource_version table if it exists (mysql)','ALTER TABLE resource_version DROP INDEX UQE_resource_version_group_resource',1,'','2022-01-01 00:00:00'),
   ('add primary key with columns group,resource to table resource_version if it doesn\'t exist (mysql)','ALTER TABLE resource_version ADD PRIMARY KEY (`group`,`resource`)',1,'','2022-01-01 00:00:00'),
-  ('add primary key with columns group,resource to table resource_version (postgres and sqlite)','',1,'','2022-01-01 00:00:00');
+  ('add primary key with columns group,resource to table resource_version (postgres and sqlite)','',1,'','2022-01-01 00:00:00'),
+  ('Change key_path collation of resource_history in postgres','',1,'','2022-01-01 00:00:00'),
+  ('Change key_path collation of resource_events in postgres','',1,'','2022-01-01 00:00:00'),
+  ('resource_history key_path backfill','resource_history key_path backfill code migration',1,'','2022-01-01 00:00:00'),
+  ('Add index to resource_history for garbage collection','CREATE INDEX `IDX_resource_history_resource_action_version_name` ON `resource_history` (`group`,`resource`,`action`,`resource_version`,`name`);',1,'','2022-01-01 00:00:00'),
+  ('Fix small resource versions','fix small resource versions code migration',1,'','2022-01-01 00:00:00'),
+  ('create table pending_tenant_deletions','CREATE TABLE IF NOT EXISTS `pending_tenant_deletions` (\n`key_path` VARCHAR(2048) CHARACTER SET latin1 COLLATE latin1_bin PRIMARY KEY NOT NULL\n, `value` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
+  ('Change key_path collation of pending_tenant_deletions in postgres','',1,'','2022-01-01 00:00:00'),
+  ('create table kv_leases','CREATE TABLE IF NOT EXISTS `kv_leases` (\n`key_path` VARCHAR(2048) CHARACTER SET latin1 COLLATE latin1_bin PRIMARY KEY NOT NULL\n, `value` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
+  ('Change key_path collation of kv_leases in postgres','',1,'','2022-01-01 00:00:00');
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

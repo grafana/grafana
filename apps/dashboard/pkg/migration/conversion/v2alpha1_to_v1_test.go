@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -226,9 +225,8 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:          1,
-					Title:       "Test Panel",
-					Description: "",
+					Id:    1,
+					Title: "Test Panel",
 					Data: dashv2alpha1.DashboardQueryGroupKind{
 						Kind: "QueryGroup",
 						Spec: dashv2alpha1.DashboardQueryGroupSpec{
@@ -304,9 +302,8 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:          1,
-					Title:       "Test Panel",
-					Description: "",
+					Id:    1,
+					Title: "Test Panel",
 					Data: dashv2alpha1.DashboardQueryGroupKind{
 						Kind: "QueryGroup",
 						Spec: dashv2alpha1.DashboardQueryGroupSpec{
@@ -335,7 +332,7 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 								{
 									Kind: "TabsLayoutTab",
 									Spec: dashv2alpha1.DashboardTabsLayoutTabSpec{
-										Title: ptr.To("Tab 1"),
+										Title: new("Tab 1"),
 										Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
 											GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 												Kind: "GridLayout",
@@ -431,9 +428,8 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 			PanelKind: &dashv2alpha1.DashboardPanelKind{
 				Kind: "Panel",
 				Spec: dashv2alpha1.DashboardPanelSpec{
-					Id:          id,
-					Title:       name,
-					Description: "",
+					Id:    id,
+					Title: name,
 					Data: dashv2alpha1.DashboardQueryGroupKind{
 						Kind: "QueryGroup",
 						Spec: dashv2alpha1.DashboardQueryGroupSpec{
@@ -469,7 +465,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 								{
 									Kind: "RowsLayoutRow",
 									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
-										Title: ptr.To("Row A"),
+										Title: new("Row A"),
 										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
 											GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 												Kind: "GridLayout",
@@ -497,7 +493,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 								{
 									Kind: "RowsLayoutRow",
 									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
-										Title: ptr.To("Row B"),
+										Title: new("Row B"),
 										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
 											GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 												Kind: "GridLayout",
@@ -585,7 +581,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 								{
 									Kind: "RowsLayoutRow",
 									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
-										Title: ptr.To("Empty Row"),
+										Title: new("Empty Row"),
 										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
 											AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
 												Kind: "AutoGridLayout",
@@ -600,7 +596,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 								{
 									Kind: "RowsLayoutRow",
 									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
-										Title: ptr.To("Row With Panel"),
+										Title: new("Row With Panel"),
 										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
 											AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
 												Kind: "AutoGridLayout",

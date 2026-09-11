@@ -18,6 +18,7 @@ var (
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
 	ErrTeamMemberAlreadyAdded               = errors.New("user is already added to this team")
 	ErrMultipleTeamsFound                   = errors.New("multiple teams found with same deprecated internal ID")
+	ErrTeamUpdateConflict                   = errors.New("team update conflict: resource version does not match")
 )
 
 // Team model

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2, locationUtil, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Checkbox, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
@@ -102,26 +102,24 @@ const CreateTeam = (): JSX.Element => {
                   placeholder="email@test.com"
                 />
               </Field>
-              {config.featureToggles.teamFolders && (
-                <Field
-                  noMargin
-                  label={t('teams.create-team.label-create-team-folder', 'Team folder')}
-                  description={t(
-                    'teams.create-team.description-create-team-folder',
-                    'This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.'
+              <Field
+                noMargin
+                label={t('teams.create-team.label-create-team-folder', 'Team folder')}
+                description={t(
+                  'teams.create-team.description-create-team-folder',
+                  'This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.'
+                )}
+              >
+                <Checkbox
+                  value={autocreateTeamFolder}
+                  label={t(
+                    'teams.create-team.checkbox-text-create-team-folder-team-folder',
+                    'Auto-create a team folder'
                   )}
-                >
-                  <Checkbox
-                    value={autocreateTeamFolder}
-                    label={t(
-                      'teams.create-team.checkbox-text-create-team-folder-team-folder',
-                      'Auto-create a team folder'
-                    )}
-                    onChange={(event) => setAutocreateTeamFolder(event.currentTarget.checked)}
-                    disabled={formDisabled}
-                  />
-                </Field>
-              )}
+                  onChange={(event) => setAutocreateTeamFolder(event.currentTarget.checked)}
+                  disabled={formDisabled}
+                />
+              </Field>
             </Stack>
           </FieldSet>
           <Button type="submit" variant="primary" disabled={formDisabled}>

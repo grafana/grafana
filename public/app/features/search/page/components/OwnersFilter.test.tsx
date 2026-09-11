@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/react';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { getSearchTeamsErrorHandler, getSearchTeamsHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -11,7 +11,7 @@ import { OwnersFilter } from './OwnersFilter';
 
 setBackendSrv(backendSrv);
 setupMockServer();
-comboboxTestSetup();
+mockComboboxRect();
 
 describe('OwnersFilter', () => {
   beforeEach(() => {

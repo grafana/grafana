@@ -21,6 +21,7 @@ import {
   type RowPanel,
   type VariableType,
 } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -32,12 +33,12 @@ import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { type DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
-import { getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
 import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -48,6 +49,7 @@ import rowsAfterFreePanels from './testfiles/rows_after_free_panels.json';
 import {
   createDashboardSceneFromDashboardModel,
   buildGridItemForPanel,
+  createV2RowsLayout,
   transformSaveModelToScene,
   convertOldSnapshotToScenesSnapshot,
 } from './transformSaveModelToScene';
@@ -153,6 +155,30 @@ describe('transformSaveModelToScene', () => {
 
       const liveNowTimer = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
       expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
+    });
+
+    it('should leave preload undefined when the dashboard JSON omits it', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test',
+        uid: 'test-uid',
+      };
+      const oldModel = new DashboardModel(dash);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+
+      // Unset preload must stay undefined so a later save does not pin an explicit `false` onto a
+      // dashboard that never expressed a preference.
+      expect(scene.state.preload).toBeUndefined();
+    });
+
+    it('should preserve an explicit preload value from the dashboard JSON', () => {
+      const dashOff = { ...defaultDashboard, title: 'off', uid: 'off', preload: false };
+      const sceneOff = createDashboardSceneFromDashboardModel(new DashboardModel(dashOff), dashOff);
+      expect(sceneOff.state.preload).toBe(false);
+
+      const dashOn = { ...defaultDashboard, title: 'on', uid: 'on', preload: true };
+      const sceneOn = createDashboardSceneFromDashboardModel(new DashboardModel(dashOn), dashOn);
+      expect(sceneOn.state.preload).toBe(true);
     });
 
     it('should initialize the Dashboard Scene with empty template variables', () => {
@@ -654,6 +680,7 @@ describe('transformSaveModelToScene', () => {
         type: 'test-plugin',
         timeFrom: '2h',
         timeShift: '1d',
+        timeCompare: '1d',
       };
 
       const { vizPanel } = buildGridItemForTest(panel);
@@ -662,6 +689,20 @@ describe('transformSaveModelToScene', () => {
       expect(timeRange).toBeInstanceOf(PanelTimeRange);
       expect(timeRange.state.timeFrom).toBe('2h');
       expect(timeRange.state.timeShift).toBe('1d');
+      expect(timeRange.state.compareWith).toBe('1d');
+    });
+
+    it('should set PanelTimeRange when only timeCompare is present', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeCompare: '1w',
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+      const timeRange = vizPanel.state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.compareWith).toBe('1w');
     });
 
     it('should handle a dashboard query data source', () => {
@@ -824,9 +865,11 @@ describe('transformSaveModelToScene', () => {
     beforeEach(() => {
       // set feature flag to true
       config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
     });
     afterEach(() => {
       config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({});
     });
 
     it('Should convert legacy rows to new rows', () => {
@@ -867,6 +910,26 @@ describe('transformSaveModelToScene', () => {
       const lastRowPanel = lastRowgridItem.state.body as VizPanel;
       expect(lastRowPanel.state.pluginId).toBe('text');
     });
+
+    it.each([true, false])(
+      'should persist custom grid as the default layout preference when migrating an old-schema dashboard (auto grid flag: %s)',
+      (autoGridDefault) => {
+        setTestFlags({ 'grafana.dashboardAutoGridDefault': autoGridDefault });
+        const dashboard = {
+          ...defaultDashboard,
+          title: 'Legacy dashboard',
+          uid: 'test-uid',
+          time: { from: 'now-6h', to: 'now' },
+        };
+
+        const scene = transformSaveModelToScene({ dashboard, meta: {} }, undefined, {
+          createLayout: createV2RowsLayout,
+          targetVersion: 'v2',
+        });
+
+        expect(scene.state.preferences?.defaultLayoutTemplate).toBeInstanceOf(DefaultGridLayoutManager);
+      }
+    );
 
     it('Should convert legacy rows to new rows with free panels before first row', () => {
       const scene = transformSaveModelToScene(

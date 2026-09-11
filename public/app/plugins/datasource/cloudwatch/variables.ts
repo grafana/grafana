@@ -71,8 +71,8 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
         logGroupNamePrefix: interpolatedPrefix,
         listAllLogGroups: true,
       })
-      .then((logGroups) =>
-        logGroups.map((lg) => {
+      .then((response) =>
+        response.results.map((lg) => {
           return {
             text: lg.value.name,
             value: lg.value.arn,

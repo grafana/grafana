@@ -20,8 +20,8 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 		ctx := createTestContext(t)
 		maxInactiveLifetime, _ := time.ParseDuration("168h")
 		maxLifetime, _ := time.ParseDuration("720h")
-		ctx.tokenService.cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
-		ctx.tokenService.cfg.LoginMaxLifetime = maxLifetime
+		ctx.cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
+		ctx.cfg.LoginMaxLifetime = maxLifetime
 		return ctx
 	}
 
@@ -43,12 +43,12 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 		from := now.Add(-168 * time.Hour)
 
 		// insert three old tokens that should be deleted
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			insertToken(ctx, fmt.Sprintf("oldA%d", i), fmt.Sprintf("oldB%d", i), from.Unix(), from.Unix())
 		}
 
 		// insert three active tokens that should not be deleted
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			from = from.Add(time.Second)
 			insertToken(ctx, fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), from.Unix())
 		}
@@ -64,12 +64,12 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 		fromRotate := now.Add(-time.Second)
 
 		// insert three old tokens that should be deleted
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			insertToken(ctx, fmt.Sprintf("oldA%d", i), fmt.Sprintf("oldB%d", i), from.Unix(), fromRotate.Unix())
 		}
 
 		// insert three active tokens that should not be deleted
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			from = from.Add(time.Second)
 			insertToken(ctx, fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), fromRotate.Unix())
 		}

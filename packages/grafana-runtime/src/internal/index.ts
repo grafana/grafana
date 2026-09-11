@@ -10,11 +10,12 @@
  *
  */
 
+export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
-export { ExpressionDatasourceRef } from '../utils/DataSourceWithBackend';
+export { ExpressionDatasourceRef } from '../utils/expressionRef';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 
 export {
@@ -28,7 +29,12 @@ export {
 
 export { UserStorage, useUserStorage } from '../utils/userStorage';
 
-export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+export {
+  initOpenFeature,
+  getFeatureFlagClient,
+  getLocalStorageProvider,
+  getOFREPWebProvider,
+} from '../internal/openFeature';
 export * from '../internal/openFeature/openfeature.gen';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
@@ -50,9 +56,15 @@ export {
   usePanelPluginMetasMap,
 } from '../services/pluginMeta/hooks';
 export type { AppPluginMetas, DatasourcePluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
-export { getCachedPromise, getCachedPromiseWithArgs, invalidateCache } from '../utils/getCachedPromise';
-export { defineFeatureEvents } from './analyticsFramework/main';
-export type { EventProperty, Event } from './analyticsFramework/types';
+export {
+  getCachedPromise,
+  getCachedPromiseWithArgs,
+  invalidateCachedPromisesCache,
+  invalidateCachedPromise,
+  replaceCachedPromise,
+  getCacheKeyFromPromise,
+} from '../utils/getCachedPromise';
+export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
@@ -64,3 +76,13 @@ export {
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
+export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
+export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
+
+export {
+  initDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
+} from '../services/dataSource/settings';
+export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';

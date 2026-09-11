@@ -1,15 +1,8 @@
 import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { type IconName } from '@grafana/ui';
 
 import { type ResourceTableItem } from './types';
 
 export type ResourceTypeId = ResourceTableItem['type'];
-
-export interface ResourceType {
-  id: ResourceTypeId;
-  name: string;
-  icon: IconName;
-}
 
 export function buildDependencyMaps(resourceDependencies: ResourceDependencyDto[]) {
   const dependencyMap = new Map<ResourceTypeId, ResourceTypeId[]>();

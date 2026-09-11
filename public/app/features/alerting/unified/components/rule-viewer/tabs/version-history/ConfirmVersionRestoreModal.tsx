@@ -84,7 +84,7 @@ export const ConfirmVersionRestoreModal = ({
       isOpen={isOpen}
       title={title}
       confirmText={confirmText}
-      confirmButtonVariant={!error ? 'destructive' : 'primary'}
+      confirmVariant={!error ? 'destructive' : 'primary'}
       body={
         <Stack direction="column" gap={2}>
           {!error && (

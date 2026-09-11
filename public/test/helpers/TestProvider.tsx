@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { type Store } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { Provider } from 'react-redux';
@@ -7,6 +8,7 @@ import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { locationService } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { ModalRoot } from '@grafana/ui';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
@@ -35,14 +37,16 @@ export function TestProvider(props: Props) {
 
   return (
     <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <ModalsContextProvider>
-          <CompatRouter>
-            <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
-            <ModalRoot />
-          </CompatRouter>
-        </ModalsContextProvider>
-      </Router>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <Router history={locationService.getHistory()}>
+          <ModalsContextProvider>
+            <CompatRouter>
+              <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
+              <ModalRoot />
+            </CompatRouter>
+          </ModalsContextProvider>
+        </Router>
+      </OpenFeatureProvider>
     </Provider>
   );
 }

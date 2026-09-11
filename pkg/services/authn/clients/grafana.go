@@ -87,7 +87,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 	}
 
 	if v, ok := additional[proxyFieldGroups]; ok {
-		identity.Groups = util.SplitString(v)
+		identity.ExternalGroups = util.SplitString(v)
 	}
 
 	identity.ClientParams.LookUpParams.Email = &identity.Email

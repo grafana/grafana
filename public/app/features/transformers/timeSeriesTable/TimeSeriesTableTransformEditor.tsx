@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 
 import {
-  type TransformerRegistryItem,
   type TransformerUIProps,
   ReducerID,
   isReducerID,
@@ -13,14 +12,7 @@ import {
 import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
-import darkImage from '../images/dark/timeSeriesTable.svg';
-import lightImage from '../images/light/timeSeriesTable.svg';
-
-import {
-  getTimeSeriesTableTransformer,
-  type TimeSeriesTableTransformerOptions,
-  getRefData,
-} from './timeSeriesTableTransformer';
+import { type TimeSeriesTableTransformerOptions, getRefData } from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
@@ -122,17 +114,3 @@ export function TimeSeriesTableTransformEditor({
 
   return <>{configRows}</>;
 }
-
-export const getTimeSeriesTableTransformRegistryItem: () => TransformerRegistryItem<TimeSeriesTableTransformerOptions> =
-  () => {
-    const timeSeriesTableTransformer = getTimeSeriesTableTransformer();
-    return {
-      id: timeSeriesTableTransformer.id,
-      editor: TimeSeriesTableTransformEditor,
-      transformation: timeSeriesTableTransformer,
-      name: timeSeriesTableTransformer.name,
-      description: timeSeriesTableTransformer.description,
-      imageDark: darkImage,
-      imageLight: lightImage,
-    };
-  };

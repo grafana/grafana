@@ -69,6 +69,14 @@ const (
 	ReasonCompletedWithWarnings = "CompletedWithWarnings"
 	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
 	ReasonResourceInvalid = "ResourceInvalid"
+	// ReasonResourceManagedByOther indicates an old resource could not be deleted
+	// during a replace because another file in the repository now owns its UID.
+	// The user must resolve the duplicate-UID misconfiguration; the sync completes
+	// with a warning rather than failing.
+	ReasonResourceManagedByOther = "ResourceManagedByOther"
+	// ReasonResourceTooLarge indicates a resource file exceeded the maximum size
+	// the repository will read.
+	ReasonResourceTooLarge = "ResourceTooLarge"
 	// ReasonMissingFolderMetadata indicates the pull completed but some folders are missing
 	// _folder.json metadata files; their UIDs are unstable and may change on re-sync.
 	ReasonMissingFolderMetadata = "MissingFolderMetadata"
@@ -90,6 +98,29 @@ const (
 	// ReasonFolderOrphaned indicates the folder exists in the cluster but
 	// no longer in the git repository.
 	ReasonFolderOrphaned = "FolderOrphaned"
+	// ReasonFolderDepthExceeded indicates that creating the folder would exceed
+	// the maximum folder depth enforced by the folder API. The repository
+	// owner must shorten the offending path; provisioning cannot recover
+	// automatically and will not retry the failed write.
+	ReasonFolderDepthExceeded = "FolderDepthExceeded"
+	// ReasonFolderManagedByOther indicates a target folder is already managed
+	// by a different manager (another repository, a plugin, etc.). The user
+	// must resolve the conflict; provisioning cannot recover automatically
+	// and will not retry the failed write.
+	ReasonFolderManagedByOther = "FolderManagedByOther"
+	// ReasonFolderUIDTooLong indicates that a folder UID derived from a
+	// repository path or _folder.json metadata exceeds the 40-character
+	// limit enforced by the folder API. The repository owner must shorten
+	// the offending path/UID; provisioning cannot recover automatically and
+	// will not retry the failed write.
+	ReasonFolderUIDTooLong = "FolderUIDTooLong"
+	// ReasonFolderValidationFailed indicates that the folder API rejected a
+	// write with a validation 4xx the more specific reasons above did not
+	// claim (illegal-uid-chars, reserved-uid, future folder validations).
+	// Like the more specific folder reasons, the rejection is permanent
+	// without user action, so provisioning surfaces it as a warning rather
+	// than retrying the failed write.
+	ReasonFolderValidationFailed = "FolderValidationFailed"
 )
 
 // Condition reasons for the Quota condition

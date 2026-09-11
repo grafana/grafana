@@ -25,8 +25,8 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { measureText } from '../../../utils/measureText';
 import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../Sparkline/Sparkline';
+import { getAlignmentFactor, getCellOptions } from '../cellUtils';
 import { type TableCellProps } from '../types';
-import { getAlignmentFactor, getCellOptions } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,
@@ -78,6 +78,7 @@ export const SparklineCell = (props: TableCellProps) => {
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: field.config.color,
+    thresholds: field.config.thresholds,
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,

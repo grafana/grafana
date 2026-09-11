@@ -12,10 +12,10 @@ export interface ExtensionRegistriesContextType {
 }
 
 // Using a different context for each registry to avoid unnecessary re-renders
-export const AddedLinksRegistryContext = createContext<AddedLinksRegistry | undefined>(undefined);
-export const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
-export const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
-export const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
+const AddedLinksRegistryContext = createContext<AddedLinksRegistry | undefined>(undefined);
+const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
+const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
+const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
 
 export function useAddedLinksRegistry(): AddedLinksRegistry {
   const context = useContext(AddedLinksRegistryContext);

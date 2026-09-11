@@ -7,7 +7,6 @@ import { DashboardInitPhase } from 'app/types/dashboard';
 
 import { configureStore } from '../../../../../store/configureStore';
 import { type DashboardModel } from '../../../state/DashboardModel';
-import { PanelModel } from '../../../state/PanelModel';
 import { createDashboardModelFixture } from '../../../state/__fixtures__/dashboardFixtures';
 import { ShareModal } from '../ShareModal';
 
@@ -17,10 +16,6 @@ import { type PublicDashboard, PublicDashboardShareType } from './SharePublicDas
 export const mockDashboard: DashboardModel = createDashboardModelFixture({
   uid: 'mockDashboardUid',
   timezone: 'utc',
-});
-
-export const mockPanel = new PanelModel({
-  id: 'mockPanelId',
 });
 
 export const pubdashResponse: sharePublicDashboardUtils.PublicDashboard = {

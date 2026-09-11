@@ -127,14 +127,6 @@ const UserListAdminPageUnConnected = ({
 
 export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
 
-export function UserListAdminPage() {
-  return (
-    <Page navId="global-users">
-      <UserListAdminPageContent />
-    </Page>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     filter: css({
@@ -167,5 +159,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export default UserListAdminPage;

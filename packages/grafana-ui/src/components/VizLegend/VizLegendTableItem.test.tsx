@@ -26,9 +26,14 @@ describe('LegendTableItem', () => {
     expect(screen.getByRole('button')).toHaveAttribute('title', 'CPU usage');
   });
 
-  it('shows "(right y-axis)" indicator for yAxis 2', () => {
-    renderInTable({ item: makeItem({ yAxis: 2 }) });
+  it('shows "(right y-axis)" indicator for yAxis 2 when hasMixedAxes is true', () => {
+    renderInTable({ item: makeItem({ yAxis: 2 }), hasMixedAxes: true });
     expect(screen.getByText('(right y-axis)')).toBeInTheDocument();
+  });
+
+  it('does not show "(right y-axis)" indicator when hasMixedAxes is false', () => {
+    renderInTable({ item: makeItem({ yAxis: 2 }), hasMixedAxes: false });
+    expect(screen.queryByText('(right y-axis)')).not.toBeInTheDocument();
   });
 
   it('renders stat values from getDisplayValues', () => {
@@ -63,5 +68,23 @@ describe('LegendTableItem', () => {
     expect(screen.getByRole('button')).toBeDisabled();
     await userEvent.click(screen.getByRole('button'));
     expect(onLabelClick).not.toHaveBeenCalled();
+  });
+
+  describe('overflow', () => {
+    it('keeps the label on a single line (nowrap) by default', () => {
+      renderInTable();
+      expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'nowrap' });
+    });
+
+    it('keeps the label on a single line (nowrap) when overflow is "ellipsis"', () => {
+      renderInTable({ overflow: 'ellipsis' });
+      expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'nowrap' });
+    });
+
+    it('allows the label to wrap (normal) when overflow is "wrap"', () => {
+      renderInTable({ overflow: 'wrap' });
+      expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'normal' });
+      expect(screen.getByRole('button')).toHaveStyle({ overflowWrap: 'break-word' });
+    });
   });
 });

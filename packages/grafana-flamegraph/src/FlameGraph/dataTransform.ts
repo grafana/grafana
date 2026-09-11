@@ -219,7 +219,7 @@ export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
   return '';
 }
 
-export type CheckFieldsResult = {
+type CheckFieldsResult = {
   wrongTypeFields: Array<{ name: string; expectedTypes: FieldType[]; type: FieldType }>;
   missingFields: string[];
 };

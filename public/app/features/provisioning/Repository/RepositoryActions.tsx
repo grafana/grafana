@@ -1,13 +1,16 @@
-import { t, Trans } from '@grafana/i18n';
+import { textUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
+import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
+import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -17,18 +20,30 @@ interface RepositoryActionsProps {
 
 export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
-  const repoHref = getRepoHrefForProvider(repository.spec);
+  const rawRepoHref = getRepoHrefForProvider(repository.spec);
+  const repoHref = rawRepoHref ? textUtil.sanitizeUrl(rawRepoHref) : undefined;
   const connectionName = repository.spec?.connection?.name;
 
   const repoType = repository.spec?.type;
   const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
   const providerIcon = repoConfig?.icon || 'external-link-alt';
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
+  // The repository's resources are contained in a folder named after it.
+  const isFolderContained = repository.spec?.sync.target === 'folder';
 
   return (
-    <Stack wrap="wrap">
-      {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
+    <Stack wrap="wrap" alignItems="center">
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <StatusBadge repo={repository} displayOnly />
+      {isFolderContained && (
+        <LinkButton
+          variant="secondary"
+          icon="folder-open"
+          href={getRepositoryRoute(resourceKindInfos.folder, repository)}
+        >
+          <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
+        </LinkButton>
+      )}
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>
           <Trans i18nKey="provisioning.repository-actions.source-code">Source code</Trans>

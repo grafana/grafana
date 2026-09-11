@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "数据集选择器"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "错误"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

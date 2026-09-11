@@ -13,7 +13,6 @@ import { Registry } from '../utils/Registry';
 import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
 import { fieldValueMatcherInfo } from './matchers/fieldValueMatcher';
 import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
-import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
 import { getRefIdMatchers } from './matchers/refIdMatcher';
 import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
@@ -29,7 +28,6 @@ import { getSubstringValueMatchers } from './matchers/valueMatchers/substringMat
  */
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [
-    ...getFieldPredicateMatchers(), // Predicates
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
     ...getSimpleFieldMatchers(), // first
@@ -43,7 +41,6 @@ export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
  */
 export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
   return [
-    ...getFramePredicateMatchers(), // Predicates
     ...getFrameNameMatchers(), // by name
     ...getRefIdMatchers(), // by query refId
   ];

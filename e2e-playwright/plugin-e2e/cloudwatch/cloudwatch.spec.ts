@@ -8,7 +8,7 @@ test(
   async ({ createDataSourceConfigPage, page }) => {
     await createDataSourceConfigPage({ type: 'cloudwatch' });
 
-    await expect(await page.getByText('Type: CloudWatch', { exact: true })).toBeVisible();
+    await expect(await page.getByText(/^Type\s*CloudWatch$/, { exact: true })).toBeVisible();
     await expect(await page.getByRole('heading', { name: 'Connection Details', exact: true })).toBeVisible();
   }
 );

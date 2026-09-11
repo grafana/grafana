@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -160,9 +163,11 @@ func NewFolderManifest(uid, title string, gvk schema.GroupVersionKind) *folders.
 	return f
 }
 
-// marshalFolderManifest serializes a Folder resource to JSON.
+// marshalFolderManifest serializes a Folder resource to pretty-printed JSON so
+// the _folder.json written to the repository matches the formatting of other
+// resource files (see ParsedResource.ToSaveBytes).
 func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
-	data, err := json.Marshal(folder)
+	data, err := json.MarshalIndent(folder, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshal folder manifest: %w", err)
 	}
@@ -170,7 +175,26 @@ func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
 }
 
 // ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource and its file hash.
-func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, string, error) {
+func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (_ *folders.Folder, _ string, err error) {
+	ctx, span := tracing.Start(ctx, "provisioning.resources.read_folder_metadata",
+		attribute.String("path", folderPath),
+		attribute.String("ref", ref),
+	)
+	start := time.Now()
+	defer func() {
+		outcome := folderReadOutcome(err)
+		span.SetAttributes(attribute.String("outcome", outcome))
+		// A missing _folder.json is an expected state, not a failure, so it does
+		// not mark the span as errored — only a malformed or otherwise unreadable
+		// file does. tracing.Error (not RecordError) sets the span status to
+		// codes.Error so these show up in status-based trace queries.
+		if outcome == folderReadOutcomeInvalid || outcome == folderReadOutcomeError {
+			_ = tracing.Error(span, err)
+		}
+		span.End()
+		folderMetadataMetrics.recordRead(repo, start, err)
+	}()
+
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
 	info, err := repo.Read(ctx, metadataPath, ref)
 	if err != nil {

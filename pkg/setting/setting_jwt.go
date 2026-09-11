@@ -22,8 +22,10 @@ type AuthJWTSettings struct {
 	JWKSetBearerTokenFile   string
 	CacheTTL                time.Duration
 	KeyFile                 string
+	KeyValue                string
 	KeyID                   string
 	JWKSetFile              string
+	JWKSetValue             string
 	AutoSignUp              bool
 	RoleAttributePath       string
 	RoleAttributeStrict     bool
@@ -69,8 +71,10 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.JWKSetBearerTokenFile = valueAsString(authJWT, "jwk_set_bearer_token_file", "")
 	jwtSettings.CacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	jwtSettings.KeyFile = valueAsString(authJWT, "key_file", "")
+	jwtSettings.KeyValue = valueAsString(authJWT, "key_value", "")
 	jwtSettings.KeyID = authJWT.Key("key_id").MustString("")
 	jwtSettings.JWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+	jwtSettings.JWKSetValue = valueAsString(authJWT, "jwk_set_value", "")
 	jwtSettings.AutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 	jwtSettings.RoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
 	jwtSettings.RoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)

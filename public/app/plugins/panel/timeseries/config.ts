@@ -146,7 +146,6 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         .addRadio({
           path: 'gradientMode',
           name: t('timeseries.config.get-graph-field-config.name-gradient-mode', 'Gradient mode'),
-          description: 'This is my description',
           category: categoryStyles,
           defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {

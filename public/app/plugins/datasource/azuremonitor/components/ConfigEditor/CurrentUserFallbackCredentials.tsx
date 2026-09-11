@@ -198,5 +198,3 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     </ConfigSection>
   );
 };
-
-export default CurrentUserFallbackCredentials;

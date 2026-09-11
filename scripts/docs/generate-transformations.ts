@@ -96,6 +96,8 @@ refs:
 
 const templateIntroContent = `# Transform data
 
+> **Note:** The screenshots and steps on this page reflect the classic, generally available panel query editor. For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
@@ -109,7 +111,7 @@ For users that rely on multiple views of the same dataset, transformations offer
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
 
-> Sometimes the system cannot graph transformed data. When that happens, click the \`Table view\` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
+> **Note:** Sometimes the system cannot graph transformed data. When that happens, click the \`Table view\` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
 
 ## Transformation types
 

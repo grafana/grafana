@@ -15,13 +15,14 @@ labels:
 menuTitle: PostgreSQL
 title: PostgreSQL data source
 weight: 1200
+review_date: 2026-08-10
 ---
 
 # PostgreSQL data source
 
-Grafana includes a built-in PostgreSQL data source plugin, enabling you to query and visualize data from any PostgreSQL-compatible database. You don't need to install a plugin to add the PostgreSQL data source to your Grafana instance.
+Query and visualize data from any PostgreSQL-compatible database. Build dashboards with the visual query builder or raw SQL, explore tables in real time, overlay annotations, and create alerts from the same connection. The data source works with self-managed PostgreSQL and managed services such as Amazon RDS, Amazon Aurora, Azure Database for PostgreSQL, and Google Cloud SQL.
 
-Grafana offers several configuration options for this data source as well as a visual and code-based query editor.
+Grafana ships with the PostgreSQL data source out of the box. It's preinstalled in Grafana OSS and Enterprise, so you don't need to install a plugin to add it. The data source is packaged as a standalone plugin that can update independently of Grafana releases.
 
 ## Supported databases
 
@@ -41,30 +42,78 @@ The PostgreSQL data source supports:
 
 - **Time series queries:** Visualize metrics over time using built-in time grouping macros.
 - **Table queries:** Display query results in table format for any valid SQL query.
-- **Template variables:** Create dynamic dashboards with variable-driven queries.
+- **EXPLAIN queries:** Inspect query execution plans directly in the query editor.
+- **Template variables:** Create dynamic dashboards with variable-driven queries using the built-in variable query editor.
 - **Annotations:** Overlay events from PostgreSQL on your dashboard panels.
 - **Alerting:** Create alerts based on PostgreSQL query results (time series format only).
 - **Macros:** Simplify queries with built-in macros for time filtering and grouping.
 
-## Get started with the PostgreSQL data source
+## Supported PostgreSQL data types
 
-The following documents will help you get started with the PostgreSQL data source in Grafana:
+The PostgreSQL plugin uses the [PGX driver](https://github.com/jackc/pgx) for database connectivity. The following PostgreSQL data types are supported:
 
-- [Configure the PostgreSQL data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/)
-- [PostgreSQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/)
-- [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/)
-- [PostgreSQL annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/annotations/)
-- [PostgreSQL alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/alerting/)
-- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/troubleshooting/)
+- **Numeric types:** `int2`, `int4`, `int8`, `float4`, `float8`, `numeric`
+- **String types:** `text`, `varchar`, `char`, `bpchar`
+- **Date/time types:** `timestamp`, `timestamptz`, `date`, `time`, `timetz`, `interval`
+- **Boolean:** `bool`
+- **JSON types:** `json`, `jsonb`
+- **Enumerated types:** Custom `enum` types are returned as string values.
+- **Other types:** Types not explicitly mapped (such as arrays, composites, or custom domains) are returned as string values.
 
-After you configure the data source, you can:
+## Get started
 
-- Create a variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
-- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/annotations/) to overlay events on your panels
-- Use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/) for dynamic dashboards
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/alerting/) with time series queries (time series format only)
-- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
+The following documents help you get started with the PostgreSQL data source:
 
-View a PostgreSQL overview on Grafana Play:
+- [Configure the PostgreSQL data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/) - Set up authentication and connect to PostgreSQL.
+- [PostgreSQL query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/) - Create and edit queries with time series, table, and EXPLAIN formats.
+- [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/) - Create dynamic dashboards with PostgreSQL variables.
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/annotations/) - Overlay PostgreSQL events on your dashboard graphs.
+- [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/alerting/) - Create alerts based on PostgreSQL query results.
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/troubleshooting/) - Solve common configuration and query errors.
+
+## Additional features
+
+After you configure the PostgreSQL data source, you can:
+
+- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/annotations/) to overlay PostgreSQL events on your graphs.
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/alerting/) rules based on your time series queries.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate your PostgreSQL data without building a dashboard.
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
+
+To see the PostgreSQL data source in action, explore the demo dashboard on Grafana Play:
 
 {{< docs/play title="PostgreSQL Overview" url="https://play.grafana.org/d/ddvpgdhiwjvuod/postgresql-overview" >}}
+
+## Plugin updates
+
+Starting with Grafana v13.2, the PostgreSQL data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
+
+To adjust this behavior:
+
+- **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
+- **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
+
+The standalone plugin requires Grafana 12.3.0 or later. The PostgreSQL data source bundled with Grafana 13.1 and earlier continues to work as before. These versions are unaffected by the externalization.
+
+Users running Grafana 12.3.x through 13.1.x can install the standalone plugin from the plugin catalog if they want the latest features before upgrading to Grafana 13.2. To use the standalone plugin with Grafana 12.3.x through 13.1.x, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
+
+```ini
+[plugin.grafana-postgresql-datasource]
+as_external = true
+
+[plugins]
+; Install the latest version on startup:
+preinstall_sync = grafana-postgresql-datasource
+; Or install a specific version:
+; preinstall_sync = grafana-postgresql-datasource@<version>
+```
+
+## Related data sources
+
+The following databases use the PostgreSQL wire protocol and may work with this data source:
+
+- [TimescaleDB](https://www.timescale.com/). Enable the **TimescaleDB** toggle in the data source settings for `time_bucket` support.
+- [CockroachDB](https://www.cockroachlabs.com/)
+- [Amazon Redshift](https://aws.amazon.com/redshift/). Grafana also offers a dedicated [Amazon Redshift data source](https://grafana.com/grafana/plugins/grafana-redshift-datasource/) with additional features.
+- [CrateDB](https://cratedb.com/)
+- [YugabyteDB](https://www.yugabyte.com/)

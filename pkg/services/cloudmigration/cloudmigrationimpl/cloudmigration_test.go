@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -437,12 +439,13 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, status, snapshot.Status)
 
-		// then we wait for the sync to complete before the next status.
+		// The status is persisted before the sync releases its service-wide guard.
 		require.Eventually(
 			t,
 			func() bool {
-				cms, _ := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
-				return cms.Status == cloudmigration.SnapshotStatusFinished
+				cms, err := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
+				return err == nil && cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished &&
+					atomic.LoadInt32(&s.isSyncSnapshotStatusFromGMSRunning) == 0
 			},
 			5*time.Second,
 			100*time.Millisecond,
@@ -949,10 +952,11 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
-		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, quotatest.New(false, nil),
+		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
-		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		nil, // clientGenerator
 	)
 	require.NoError(t, err)
 
@@ -968,7 +972,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 					"name": "email receiver",
 					"type": "email",
 					"settings": {
-						"addresses": "<example@email.com>"
+						"addresses": "<example@example.com>"
 					}
 				}]
 			}]

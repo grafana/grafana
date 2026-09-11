@@ -36,7 +36,7 @@ interface CreatePublicDashboarBaseProps {
   hasError?: boolean;
 }
 
-export const CreatePublicDashboardBase = ({
+const CreatePublicDashboardBase = ({
   unsupportedDatasources = [],
   unsupportedTemplateVariables = false,
   dashboard,

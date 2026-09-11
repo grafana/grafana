@@ -217,7 +217,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()), gen.WithUpdatedBy(util.Pointer(models.UserUID("test-user"))))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()), gen.WithUpdatedBy(new(models.UserUID("test-user"))))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
@@ -336,9 +336,9 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := make([]*models.AlertRule, 0)
-		for i := 0; i < 10; i++ {
-			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(util.Pointer(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
+		expectedRules := make([]*models.AlertRule, 0, 100)
+		for range 10 {
+			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(new(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
 		}
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
@@ -449,7 +449,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 				},
 				{
 					desc:             "just UID if user is not found",
-					UpdatedBy:        util.Pointer(models.UserUID("test-uid")),
+					UpdatedBy:        new(models.UserUID("test-uid")),
 					User:             nil,
 					UserServiceError: nil,
 					UserServiceCalls: []usertest.ListUsersByIdOrUidCall{{Uids: []string{"test-uid"}, Ids: []int64{}}},
@@ -459,7 +459,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 				},
 				{
 					desc:             "just UID if error",
-					UpdatedBy:        util.Pointer(models.UserUID("test-uid")),
+					UpdatedBy:        new(models.UserUID("test-uid")),
 					UserServiceError: errors.New("error"),
 					UserServiceCalls: []usertest.ListUsersByIdOrUidCall{{Uids: []string{"test-uid"}, Ids: []int64{}}},
 					Expected: &apimodels.UserInfo{
@@ -468,7 +468,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 				},
 				{
 					desc:      "login if it's known user",
-					UpdatedBy: util.Pointer(models.UserUID("test-uid")),
+					UpdatedBy: new(models.UserUID("test-uid")),
 					User: &user.User{
 						UID:   "test-uid",
 						Login: "Test",
@@ -701,7 +701,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			group2Key := models.GenerateGroupKey(orgID)
 			group2Key.NamespaceUID = folder2.UID
 
-			ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+			ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
 
 			group1 := gen.With(gen.WithGroupKey(group1Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
 			group2 := gen.With(gen.WithGroupKey(group2Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
@@ -733,6 +733,37 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("should query only the namespaces visible to the user", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+		folders := []*folder.Folder{randFolder(), randFolder(), randFolder()}
+		ruleStore.Folders[orgID] = folders
+
+		rules := make([]*models.AlertRule, 0, len(folders))
+		expected := make([]string, 0, len(folders))
+		for _, f := range folders {
+			groupKey := models.GenerateGroupKey(orgID)
+			groupKey.NamespaceUID = f.UID
+			rules = append(rules, gen.With(gen.WithGroupKey(groupKey)).GenerateRef())
+			expected = append(expected, f.UID)
+		}
+		ruleStore.PutRule(context.Background(), rules...)
+
+		req := createRequestContextWithPerms(orgID, createPermissionsForRules(rules, orgID), nil)
+		response := createService(ruleStore, usertest.NewUserServiceFake()).RouteGetRulesConfig(req)
+		require.Equal(t, http.StatusOK, response.Status())
+
+		queries := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			q, ok := cmd.(models.ListAlertRulesQuery)
+			return q, ok
+		})
+		require.Len(t, queries, 1)
+
+		// make([]string, len(m)) followed by append would pad this with as many
+		// empty UIDs as there are folders, doubling the IN list in SQL.
+		require.ElementsMatch(t, expected, queries[0].(models.ListAlertRulesQuery).NamespaceUIDs)
+	})
+
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
@@ -741,7 +772,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+		ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
 
 		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -858,7 +889,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+		ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
 
 		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -1206,7 +1237,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(true),
+			IsPaused: new(true),
 		}, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1250,7 +1281,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(false),
+			IsPaused: new(false),
 		}, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1282,7 +1313,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		// Create request to unpause rules (they are already unpaused)
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(false),
+			IsPaused: new(false),
 		}, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1303,7 +1334,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(true),
+			IsPaused: new(true),
 		}, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1323,7 +1354,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(true),
+			IsPaused: new(true),
 		}, "non-existent-folder-uid")
 
 		require.Equal(t, http.StatusNotFound, response.Status())
@@ -1344,7 +1375,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(true),
+			IsPaused: new(true),
 		}, folder.UID)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1378,7 +1409,7 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 
 		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
 		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
-			IsPaused: util.Pointer(true),
+			IsPaused: new(true),
 		}, managedFolder.UID)
 
 		require.Equal(t, http.StatusBadRequest, response.Status())

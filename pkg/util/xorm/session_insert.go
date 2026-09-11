@@ -47,7 +47,7 @@ func (session *Session) Insert(beans ...any) (int64, error) {
 			}
 			affected += cnt
 		case []map[string]any:
-			for i := 0; i < len(bean); i++ {
+			for i := range bean {
 				cnt, err := session.insertMapInterface(bean[i])
 				if err != nil {
 					return affected, err
@@ -61,7 +61,7 @@ func (session *Session) Insert(beans ...any) (int64, error) {
 			}
 			affected += cnt
 		case []map[string]string:
-			for i := 0; i < len(bean); i++ {
+			for i := range bean {
 				cnt, err := session.insertMapString(bean[i])
 				if err != nil {
 					return affected, err
@@ -83,7 +83,7 @@ func (session *Session) Insert(beans ...any) (int64, error) {
 					}
 					affected += cnt
 				} else {
-					for i := 0; i < size; i++ {
+					for i := range size {
 						cnt, err := session.innerInsert(sliceValue.Index(i).Interface())
 						if err != nil {
 							return affected, err
@@ -157,7 +157,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 	var colMultiPlaces []string
 	var args []any
 	size := sliceValue.Len()
-	for i := 0; i < size; i++ {
+	for i := range size {
 		v := sliceValue.Index(i)
 		vv := reflect.Indirect(v)
 		elemValue := v.Interface()
@@ -231,7 +231,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 	}
 
 	lenAfterClosures := len(session.afterClosures)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		elemValue := reflect.Indirect(sliceValue.Index(i)).Addr().Interface()
 
 		// handle AfterInsertProcessor
@@ -269,6 +269,8 @@ func (session *Session) InsertMulti(rowsSlicePtr any) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
+
+	defer session.resetStatement()
 
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 	if sliceValue.Kind() != reflect.Slice {
@@ -565,6 +567,8 @@ func (session *Session) InsertOne(bean any) (int64, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	return session.innerInsert(bean)
 }
 
@@ -615,7 +619,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 				if len(fieldValue.String()) == 0 {
 					continue
 				}
-			case reflect.Ptr:
+			case reflect.Pointer:
 				if fieldValue.Pointer() == 0 {
 					continue
 				}

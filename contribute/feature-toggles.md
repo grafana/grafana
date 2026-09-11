@@ -7,7 +7,7 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 ## Steps to adding a feature flag
 
 1. Define the feature flag in [registry.go](../pkg/services/featuremgmt/registry.go).
-   - New flags must by named with a component, seperated by a dot. e.g `grafana.newPreferencesPage`.
+   - New flags must be named with a prefix, separated by a dot. e.g `grafana.newPreferencesPage`. The prefix is the name of the standalone service that owns this feature flag. For flags that are single-tenant Grafana-only, with no plans for a standalone deployment in the future, use `grafana.` as a prefix.
    - Set the `Generate` field to control which clients are generated for your flag (see [Generation targets](#generation-targets) below).
    - To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go).
    - If you are a community member, use the [CODEOWNERS](../.github/CODEOWNERS) file to determine which team owns the package you are updating.
@@ -18,12 +18,12 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 
 The `Generate` field on a `FeatureFlag` controls which clients are generated. The available targets are:
 
-| Target                   | Description                                                                                                             |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `GenerateLegacyGo`       | Generates a Go constant in `toggles_gen.go`, skipping new name requirements (legacy, prefer `GenerateGo` for new flags) |
-| `GenerateLegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `GenerateReact` for new flags)               |
-| `GenerateGo`             | Generates a Go constant in `toggles_gen.go`                                                                             |
-| `GenerateReact`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                            |
+| Target           | Description                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| `LegacyGo`       | Generates a Go constant in `toggles_gen.go`, skipping new name requirements (legacy, prefer `Go` for new flags) |
+| `LegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `React` for new flags)               |
+| `Go`             | Generates a Go constant in `toggles_gen.go`                                                                     |
+| `React`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                    |
 
 e.g.
 
@@ -32,11 +32,44 @@ e.g.
     Name:        "grafana.newPreferencesPage",
     Description: "Whether to use the new SharedPreferences functional component",
     Stage:       FeatureStageExperimental,
-    Generate:    []GenerateTarget{GenerateGo, GenerateReact},
+    Generate:    Generate{Go: true, React: true},
     Owner:       grafanaFrontendPlatformSquad,
     Expression:  "false",
 },
 ```
+
+## Migrating an existing legacy flag to OpenFeature
+
+Reading a flag from `config.featureToggles` is blocked by the `@grafana/no-config-feature-toggles`
+lint rule. That map is a static bootData snapshot, and the multi-tenant frontend service serves it
+empty — so every flag read through it resolves to `false` there, including flags that are GA and
+enabled by default.
+
+If you hit that rule on a flag that already exists as a legacy toggle, add `React: true` **alongside**
+its existing `LegacyFrontend`:
+
+```go
+Generate: Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+```
+
+Do **not** rename the flag to the `component.flagName` convention as part of this. The name is the
+OFREP key, and it is also the key used in `custom.ini` under `[feature_toggles]` and in any Cloud
+per-stack override, so renaming it silently drops those. Keeping either legacy target set also keeps
+the naming check satisfied. Then run `make gen-feature-toggles` and move the frontend reads over to
+the generated hook or the client.
+
+Existing reads can be migrated incrementally — a flag can have both targets while some call sites are
+still legacy.
+
+Two things to watch when you migrate the reads:
+
+- **The evaluation default changes for default-on flags.** The generated `useFlagXxx` hook bakes the
+  registry `Expression` in as its default, so a flag with `Expression: "true"` starts resolving to
+  `true` where the legacy read gave `false` (jest starts with an empty `config.featureToggles`).
+  That is the correct behaviour, but it can flip unrelated test suites onto the new code path.
+- **Tests need `setTestFlags`.** `testWithFeatureToggles` only writes `config.featureToggles`, so it
+  no longer gates a migrated read. Use `setTestFlags` from `@grafana/test-utils/unstable` instead,
+  and reset it in `afterEach` wrapped in `act` — it fires OpenFeature events into mounted components.
 
 ## How to use the flag in your code
 
@@ -159,12 +192,12 @@ If using non-boolean flags (a unique feature of the new feature flag system), ex
 
 For advanced, non-React contexts (utilities, class methods, callbacks), you can use the OpenFeature client directly.
 
-However, because this is seperate from the React render loop there are important caveats you must be aware of:
+However, because this is separate from the React render loop there are important caveats you must be aware of:
 
 - Flag values are loaded asynchronously, so you cannot call `getBooleanValue()` just at the top-level of a module. You must wait until `app.ts` has initialised until you call a flag otherwise you will only get the default value
 - Flag values can change over the lifetime of the session, so do not store or cache the result. Always evaluate flags just in time when you use them, preferably in the if statement, for example.
 
-It is strongly preferred to use the React hooks instead of getting the client.
+It's strongly preferred to use the React hooks instead of getting the client.
 
 ```ts
 import { getFeatureFlagClient, FlagKeys } from '@grafana/runtime/internal';
@@ -197,6 +230,29 @@ class FooSrv {
     }
   }
 }
+```
+
+#### In tests
+
+When writing tests, use `setTestFlags` from `@grafana/test-utils/unstable` to set the feature flags for the duration of the test.
+
+If you're testing a component that uses the feature flag React hooks, you may need to use the `render` function from `test/test-utils` to ensure the React context is set up correctly.
+
+```ts
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { render } from 'test/test-utils';
+
+beforeAll(() => {
+  setTestFlags({
+    [FlagKeys.GrafanaNewPreferencesPage]: true,
+  });
+})
+
+test("The new page works", () => {
+  render(<MyComponent />);
+  // ...
+});
 ```
 
 ## Enabling toggles in development

@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -18,14 +20,23 @@ const (
 	errMsgRequestTooLarge = "request body too large"
 )
 
-// readBody reads the request body and limits the size
+// readBody reads the request body and limits the size. A non-positive
+// maxSize disables the limit.
 func readBody(r *http.Request, maxSize int64) ([]byte, error) {
+	if maxSize <= 0 {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return nil, fmt.Errorf("error reading request body: %w", err)
+		}
+		return body, nil
+	}
 	limitedBody := http.MaxBytesReader(nil, r.Body, maxSize)
 	body, err := io.ReadAll(limitedBody)
 	if err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
-			return nil, fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return nil, apierrors.NewRequestEntityTooLargeError(
+				fmt.Sprintf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize),
+			)
 		}
 		return nil, fmt.Errorf("error reading request body: %w", err)
 	}
@@ -52,8 +63,7 @@ func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(v); err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
 		}
 		if err == io.EOF {

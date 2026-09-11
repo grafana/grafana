@@ -3,6 +3,8 @@ import {
   type EchoMeta,
   type EchoEvent,
   type EchoSrv,
+  type InteractionEchoEventPayload,
+  EchoEventType,
   MAX_PAGE_URL_LENGTH,
   TRUNCATION_MARKER,
 } from '@grafana/runtime';
@@ -30,6 +32,8 @@ export class Echo implements EchoSrv {
   };
 
   private backends: EchoBackend[] = [];
+  // Per-interaction-name subscriber sets for CUJ journey tracking
+  private interactionSubscribers = new Map<string, Set<(properties: Record<string, unknown>) => void>>();
   // meta data added to every event collected
 
   constructor(config?: Partial<EchoConfig>) {
@@ -61,6 +65,29 @@ export class Echo implements EchoSrv {
       },
     };
 
+    // Dispatch to onInteraction subscribers first (used by CUJ journey tracking)
+    // Subscribers always fire, even for silent events.
+    if (event.type === EchoEventType.Interaction) {
+      const payload: InteractionEchoEventPayload = event.payload;
+      if (payload.interactionName) {
+        const subscribers = this.interactionSubscribers.get(payload.interactionName);
+        if (subscribers) {
+          for (const cb of subscribers) {
+            try {
+              cb(payload.properties ?? {});
+            } catch (err) {
+              console.error(`[Echo] onInteraction subscriber error for "${payload.interactionName}":`, err);
+            }
+          }
+        }
+      }
+
+      // Silent interactions skip backends and debug logging
+      if (payload.silent) {
+        return;
+      }
+    }
+
     for (const backend of this.backends) {
       if (backend.supportedEvents.length === 0 || backend.supportedEvents.indexOf(_event.type) > -1) {
         backend.addEvent(_event);
@@ -71,6 +98,22 @@ export class Echo implements EchoSrv {
       ...event.payload,
       meta: _event.meta,
     });
+  };
+
+  onInteraction = (name: string, callback: (properties: Record<string, unknown>) => void): (() => void) => {
+    let subscribers = this.interactionSubscribers.get(name);
+    if (!subscribers) {
+      subscribers = new Set();
+      this.interactionSubscribers.set(name, subscribers);
+    }
+    subscribers.add(callback);
+
+    return () => {
+      subscribers!.delete(callback);
+      if (subscribers!.size === 0) {
+        this.interactionSubscribers.delete(name);
+      }
+    };
   };
 
   getMeta = (): EchoMeta => {

@@ -19,7 +19,7 @@ import TreeNode from '../utils/TreeNode';
 
 import { getSpanId } from './span';
 
-export const getTraceSpans = (trace: TraceResponse) => trace.spans;
+const getTraceSpans = (trace: TraceResponse) => trace.spans;
 
 export const getTraceSpansAsMap = createSelector(getTraceSpans, (spans) =>
   spans.reduce((map, span: TraceSpanData) => map.set(getSpanId(span), span), new Map())

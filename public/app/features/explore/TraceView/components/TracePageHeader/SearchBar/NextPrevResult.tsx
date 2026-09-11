@@ -25,7 +25,7 @@ import { Button, Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/
 import { type Trace } from '../../types/trace';
 import { getServiceDisplayName } from '../../utils/service-name';
 
-export type NextPrevResultProps = {
+type NextPrevResultProps = {
   trace: Trace;
   spanFilterMatches: Set<string> | undefined;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;

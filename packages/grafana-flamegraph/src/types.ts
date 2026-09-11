@@ -1,9 +1,5 @@
 import { type LevelItem } from './FlameGraph/dataTransform';
 
-export { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
-
-export { type ExtraContextMenuButton } from './FlameGraph/FlameGraphContextMenu';
-
 export type ClickedItemData = {
   posX: number;
   posY: number;
@@ -15,12 +11,6 @@ export enum SampleUnit {
   Bytes = 'bytes',
   Short = 'short',
   Nanoseconds = 'ns',
-}
-
-export enum SelectedView {
-  TopTable = 'topTable',
-  FlameGraph = 'flameGraph',
-  Both = 'both',
 }
 
 export enum ViewMode {

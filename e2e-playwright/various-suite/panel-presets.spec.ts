@@ -18,12 +18,6 @@ const PANELS_WITHOUT_PRESETS = [
   { id: '24', name: 'Pie chart' },
 ];
 
-test.use({
-  featureToggles: {
-    vizPresets: true,
-  },
-});
-
 function getPanelStylesSection(page: Page) {
   return page.getByTestId('data-testid Options group panel-styles');
 }
@@ -220,6 +214,43 @@ test.describe(
       });
 
       await expect(getPanelStylesSection(page), 'panel styles section should be hidden for table').toBeHidden();
+    });
+  }
+);
+
+test.describe(
+  'Panel presets - Preview interaction',
+  {
+    tag: ['@various', '@presets'],
+  },
+  () => {
+    test('hovering a preset card should not show the previewed panel tooltip', async ({
+      gotoPanelEditPage,
+      selectors,
+      page,
+    }) => {
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
+
+      const preset = getPresetCard(page, 'Lines with points');
+      await expect(preset, 'preset card is visible').toBeVisible({ timeout: 10000 });
+
+      const box = (await preset.boundingBox())!;
+      const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+
+      // checking hit-testing instead of the tooltip, which uPlot opens and dismisses on its
+      // own timing. no pointer events also rules out the crosshair and one-click data links
+      const pointerReachesPreview = await page.evaluate(
+        ({ x, y }) => document.elementFromPoint(x, y)?.closest('.uplot') != null,
+        center
+      );
+      expect(pointerReachesPreview, 'previewed panel should not receive pointer events').toBe(false);
+
+      await page.mouse.move(center.x, center.y);
+      await expect(
+        page.getByTestId(selectors.components.Tooltip.container),
+        'card tooltip shows the preset name'
+      ).toContainText('Lines with points');
     });
   }
 );

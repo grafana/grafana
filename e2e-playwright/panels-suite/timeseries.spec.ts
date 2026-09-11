@@ -22,7 +22,9 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
       queryParams: new URLSearchParams({ editPanel: '19' }),
     });
 
-    const timeseriesUplot = page.locator('.uplot');
+    const timeseriesUplot = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.content)
+      .locator('.uplot');
     await expect(timeseriesUplot, 'uplot is rendered').toBeVisible();
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
@@ -118,12 +120,6 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
 
     await expect(legendItem, 'A-series legend item is visible').toBeVisible();
   });
-});
-
-test.use({
-  featureToggles: {
-    timeRangePan: true,
-  },
 });
 
 test.describe('Panels test: TimeSeries X-axis panning', { tag: ['@panels', '@timeseries'] }, () => {

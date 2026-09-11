@@ -60,6 +60,20 @@ export const ConnectStep = memo(function ConnectStep() {
     }
   }, [defaultBranch, getValues, setValue]);
 
+  // Capture-phase mousedown so the typed path is committed to form state before
+  // Combobox's blur sequence wipes it (e.g. clicking the wizard submit button
+  // without first pressing Enter on the typed value).
+  useEffect(() => {
+    const commitTypedPath = () => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement && active.id === 'repository.path' && active.value) {
+        setValue('repository.path', active.value, { shouldDirty: true });
+      }
+    };
+    document.addEventListener('mousedown', commitTypedPath, { capture: true });
+    return () => document.removeEventListener('mousedown', commitTypedPath, { capture: true });
+  }, [setValue]);
+
   return (
     <Stack direction="column" gap={2}>
       {gitFields && (
@@ -105,6 +119,7 @@ export const ConnectStep = memo(function ConnectStep() {
               rules={gitFields.pathConfig.validation}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
+                  id="repository.path"
                   invalid={!!errors?.repository?.path?.message}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.pathConfig.placeholder}

@@ -15,6 +15,7 @@ import (
 func TestService_resolveScopeMap(t *testing.T) {
 	tests := []struct {
 		name     string
+		action   string
 		scopeMap map[string]bool
 		ns       types.NamespaceInfo
 		cache    map[string]map[int64]string // Namespace: team ID -> UID cache
@@ -140,6 +141,59 @@ func TestService_resolveScopeMap(t *testing.T) {
 				"teams:id:1": true,
 			},
 		},
+		{
+			// delegate resolved to "*" (roles resource) and scope retained for SkipWildcard exact-match on permissions resource.
+			name:   "permissions:type:delegate on a role-management action resolves to wildcard and retains literal scope",
+			action: "roles:write",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+			want: map[string]bool{
+				"*":                         true,
+				"permissions:type:delegate": true,
+			},
+		},
+		{
+			// a delegate grant on an ordinary action only gates delegation checks;
+			// expanding it would grant the action itself on every resource.
+			name:   "permissions:type:delegate on a non-role action stays literal",
+			action: "dashboards:read",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+			want: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+		},
+		{
+			// escalate resolves to "" (no expansion), stays literal; "*" from a delegate holder is ignored by SkipWildcard.
+			name:   "permissions:type:escalate stays as literal scope",
+			action: "roles:write",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:escalate": true,
+			},
+			want: map[string]bool{
+				"permissions:type:escalate": true,
+			},
+		},
+		{
+			// delegate resolution to "*" cannot satisfy the escalate exact-scope check (SkipWildcard).
+			name:   "delegate cannot satisfy escalate check — no privilege escalation",
+			action: "roles:write",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+				"permissions:type:escalate": true,
+			},
+			want: map[string]bool{
+				"*":                         true,
+				"permissions:type:delegate": true,
+				"permissions:type:escalate": true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -153,7 +207,7 @@ func TestService_resolveScopeMap(t *testing.T) {
 					s.teamIDCache.Set(context.Background(), teamIDsCacheKey(ns), cache)
 				}
 			}
-			got, err := s.resolveScopeMap(context.Background(), tt.ns, tt.scopeMap)
+			got, err := s.resolveScopeMap(context.Background(), tt.ns, tt.action, tt.scopeMap)
 			require.NoError(t, err)
 
 			require.Len(t, got, len(tt.want))

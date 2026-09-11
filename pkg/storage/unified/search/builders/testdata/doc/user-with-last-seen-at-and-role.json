@@ -1,4 +1,6 @@
 {
+    "apiVersion": "iam.grafana.app/v0alpha1",
+    "kind": "User",
     "metadata": {
         "name": "with-last-seen-at-and-role",
         "namespace": "default"

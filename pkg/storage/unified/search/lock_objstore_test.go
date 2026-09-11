@@ -117,6 +117,28 @@ func TestObjectStorageLock_LostChannel(t *testing.T) {
 	}
 }
 
+func TestObjectStorageLock_LostChannelStableAcrossAcquire(t *testing.T) {
+	backend := newFakeBackend(newConditionalBucket())
+	lock := newTestLock(t, backend, "test-lock", "instance-1", 100*time.Millisecond, 50*time.Millisecond)
+
+	lost := lock.Lost()
+	require.Equal(t, lost, lock.Lost())
+
+	ctx := t.Context()
+	require.NoError(t, lock.Acquire(ctx))
+	require.Equal(t, lost, lock.Lost())
+
+	// Delete the lock to simulate external loss. The channel obtained before
+	// Acquire should be the one that signals the loss.
+	require.NoError(t, backend.Delete(ctx, "test-lock", "instance-1"))
+
+	select {
+	case <-lost:
+	case <-time.After(1 * time.Second):
+		t.Fatal("expected pre-Acquire Lost channel to be signaled")
+	}
+}
+
 func TestNewObjectStorageLock_Validation(t *testing.T) {
 	backend := newFakeBackend(newConditionalBucket())
 	validKey := "test-lock"
@@ -156,6 +178,16 @@ func TestNewObjectStorageLock_Validation(t *testing.T) {
 			name:    "TTL less than 2x HeartbeatInterval",
 			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: 100 * time.Millisecond, HeartbeatInterval: 75 * time.Millisecond},
 			wantErr: "at least 2x HeartbeatInterval",
+		},
+		{
+			name:    "negative HeartbeatUpdateTimeout",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: time.Second, HeartbeatInterval: 100 * time.Millisecond, HeartbeatUpdateTimeout: -1 * time.Millisecond},
+			wantErr: "HeartbeatUpdateTimeout must be positive",
+		},
+		{
+			name:    "negative ReleaseDeleteTimeout",
+			cfg:     objectStorageLockConfig{Backend: backend, Key: validKey, Owner: "instance-1", TTL: time.Second, HeartbeatInterval: 100 * time.Millisecond, ReleaseDeleteTimeout: -1 * time.Millisecond},
+			wantErr: "ReleaseDeleteTimeout must be positive",
 		},
 	}
 	for _, tc := range tests {
@@ -286,11 +318,74 @@ func TestObjectStorageLock_ReleaseWaitsForInFlightUpdate(t *testing.T) {
 	}
 }
 
+// TestObjectStorageLock_HeartbeatLossDetectedBeforeTTL asserts that with all
+// heartbeats failing transiently, lostCh fires before the lease expires
+// server-side. See the maxFailures comment in runHeartbeat for the rationale.
+func TestObjectStorageLock_HeartbeatLossDetectedBeforeTTL(t *testing.T) {
+	backend := &failingUpdateBackend{
+		lockBackend: newFakeBackend(newConditionalBucket()),
+		failAfterN:  0,
+	}
+
+	// 3:1 ratio mirrors the production default (180s/60s). Absolute times are
+	// scaled up so scheduler jitter and GC pauses on slow CI runners don't eat
+	// the safety margin we're trying to assert.
+	ttl := 900 * time.Millisecond
+	hbi := 300 * time.Millisecond
+	lock := newTestLock(t, backend, "test-lock", "instance-1", ttl, hbi)
+
+	ctx := context.Background()
+	require.NoError(t, lock.Acquire(ctx))
+	start := time.Now()
+
+	select {
+	case <-lock.Lost():
+	case <-time.After(ttl + 300*time.Millisecond):
+		t.Fatal("expected lock loss")
+	}
+
+	elapsed := time.Since(start)
+	// Loss should fire ~one heartbeat before TTL (~600ms here, vs the 900ms lease).
+	require.Less(t, elapsed, ttl-hbi/2, "loss should be detected with safety margin before TTL (got %s, ttl=%s)", elapsed, ttl)
+}
+
+// The two ask opposite things: keep waiting, or stop work under a lock that is gone.
+// Returning one where the other is meant spins forever or drops a live lock.
+func TestLockBackendSeparatesHeldFromNotOwned(t *testing.T) {
+	require.NotErrorIs(t, errLockHeld, errLockNotOwned)
+	require.NotErrorIs(t, errLockNotOwned, errLockHeld)
+
+	for name, newBackend := range map[string]func(t *testing.T) lockBackend{
+		"local": func(*testing.T) lockBackend { return newLocalLockBackend() },
+		"cdk":   func(t *testing.T) lockBackend { return testBackend(t) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			backend := newBackend(t)
+			key := testKey(t)
+			require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+			// Nothing below releases it: the key is derived from the test name, so against
+			// a real bucket a rerun inside the TTL would fail the Create above.
+			t.Cleanup(func() { _ = backend.Delete(context.Background(), key, "owner-1") })
+
+			// Someone else got there first.
+			require.ErrorIs(t, backend.Create(ctx, key, newLockInfo("owner-2", time.Minute)), errLockHeld)
+
+			// Ours to begin with, no longer.
+			require.ErrorIs(t, backend.Update(ctx, key, newLockInfo("owner-2", time.Minute)), errLockNotOwned)
+			require.ErrorIs(t, backend.Delete(ctx, key, "owner-2"), errLockNotOwned)
+
+			// Still owner-1's after those refusals, so it can release it.
+			require.NoError(t, backend.Delete(ctx, key, "owner-1"))
+		})
+	}
+}
+
 func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	backend := &failingUpdateBackend{
 		lockBackend:   newFakeBackend(newConditionalBucket()),
 		failAfterN:    0,
-		updateErrFunc: func() error { return errLockHeld },
+		updateErrFunc: func() error { return errLockNotOwned },
 	}
 
 	lock := newTestLock(t, backend, "test-lock", "instance-1", 5*time.Second, 50*time.Millisecond)
@@ -301,8 +396,62 @@ func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	select {
 	case <-lock.Lost():
 	case <-time.After(500 * time.Millisecond):
-		t.Fatal("expected immediate lock loss on errLockHeld, but it was not detected")
+		t.Fatal("expected immediate lock loss on errLockNotOwned, but it was not detected")
 	}
+}
+
+// TestObjectStorageLock_HeartbeatUpdateTimeoutHonored asserts that the
+// configured HeartbeatUpdateTimeout caps each heartbeat Update call. Without
+// a configurable knob this defaulted to 30s, which made Release block up to
+// 30s on shutdown if a heartbeat tick was in flight.
+func TestObjectStorageLock_HeartbeatUpdateTimeoutHonored(t *testing.T) {
+	inner := newFakeBackend(newConditionalBucket())
+	backend := &ctxRespectingBlockingBackend{
+		lockBackend:    inner,
+		updateDuration: make(chan time.Duration, 1),
+	}
+
+	configuredTimeout := 100 * time.Millisecond
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
+		Backend:                backend,
+		Key:                    "test-lock",
+		Owner:                  "instance-1",
+		TTL:                    1 * time.Second,
+		HeartbeatInterval:      50 * time.Millisecond,
+		HeartbeatUpdateTimeout: configuredTimeout,
+	})
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	require.NoError(t, lock.Acquire(ctx))
+	t.Cleanup(func() { _ = lock.Release() })
+
+	select {
+	case d := <-backend.updateDuration:
+		// Heartbeat Update returned within the configured timeout, not the 30s default.
+		require.GreaterOrEqual(t, d, configuredTimeout-20*time.Millisecond)
+		require.Less(t, d, configuredTimeout+200*time.Millisecond)
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected heartbeat Update to return within configured timeout")
+	}
+}
+
+// ctxRespectingBlockingBackend blocks Update on ctx.Done() and reports the
+// elapsed time on updateDuration. Used to verify that callers honor the
+// timeout context they pass in.
+type ctxRespectingBlockingBackend struct {
+	lockBackend
+	updateDuration chan time.Duration
+}
+
+func (b *ctxRespectingBlockingBackend) Update(ctx context.Context, _ string, _ lockInfo) error {
+	start := time.Now()
+	<-ctx.Done()
+	select {
+	case b.updateDuration <- time.Since(start):
+	default:
+	}
+	return ctx.Err()
 }
 
 // failingUpdateBackend wraps a lockBackend and fails Update calls

@@ -32,7 +32,7 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
           setBasicLogsAckOpen(false);
           onChange(setBasicLogsQuery(query, false));
         }}
-        confirmButtonVariant="primary"
+        confirmVariant="primary"
       />
       <InlineField
         label={t('components.logs-management.label-logs', 'Logs')}

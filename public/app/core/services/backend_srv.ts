@@ -24,9 +24,8 @@ import {
   tap,
   throwIfEmpty,
 } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning, generateUUID } from '@grafana/data';
 import {
   type BackendSrv as BackendService,
   type BackendSrvRequest,
@@ -36,7 +35,7 @@ import {
 } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
+import { getSessionExpiry, hasRotatableSession } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardSearchItem } from 'app/features/search/types';
@@ -81,6 +80,7 @@ export class BackendSrv implements BackendService {
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
+  private _loginPingInProgress?: Observable<FetchResponse> | null = null;
   private deviceID?: string | null = null;
 
   private dependencies: BackendSrvDependencies = {
@@ -126,7 +126,7 @@ export class BackendSrv implements BackendService {
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
-    const id = uuidv4();
+    const id = generateUUID();
     const fetchQueue = this.fetchQueue;
 
     return new Observable((observer) => {
@@ -266,11 +266,6 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    if (!!this.deviceID) {
-      options.headers = options.headers ?? {};
-      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
-    }
-
     return parseUrlFromOptions(options).pipe(
       this.getFromFetchStream<T>(options),
       this.handleStreamResponse<T>(options),
@@ -301,6 +296,11 @@ export class BackendSrv implements BackendService {
       if (orgId) {
         options.headers = options.headers ?? {};
         options.headers['X-Grafana-Org-Id'] = orgId;
+      }
+
+      if (!!this.deviceID) {
+        options.headers = options.headers ?? {};
+        options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
       }
 
       if (options.url.startsWith('/')) {
@@ -488,8 +488,6 @@ export class BackendSrv implements BackendService {
   }
 
   private handleStreamError<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
-    const { isSignedIn } = this.dependencies.contextSrv.user;
-
     return (inputStream) =>
       inputStream.pipe(
         retryWhen((attempts) =>
@@ -497,7 +495,12 @@ export class BackendSrv implements BackendService {
             mergeMap((error, i) => {
               const firstAttempt = i === 0 && options.retry === 0;
 
-              if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
+              if (
+                error.status === 401 &&
+                isLocalUrl(options.url) &&
+                firstAttempt &&
+                this.dependencies.contextSrv.user.isSignedIn
+              ) {
                 if (error.data?.error?.id === 'ERR_TOKEN_REVOKED') {
                   this.dependencies.appEvents.publish(
                     new ShowModalReactEvent({
@@ -512,7 +515,7 @@ export class BackendSrv implements BackendService {
                 }
 
                 let authChecker = this.loginPing();
-                if (hasSessionExpiry()) {
+                if (hasRotatableSession(this.dependencies.contextSrv.user.authenticatedBy)) {
                   const expired = getSessionExpiry() * 1000 < Date.now();
                   if (expired) {
                     authChecker = this.rotateToken();
@@ -522,10 +525,10 @@ export class BackendSrv implements BackendService {
                 return from(authChecker).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
-                      this.dependencies.logout();
-                      return throwError(err);
+                      // Rethrow the original per-request error instead so each caller gets its own config/traceId
+                      return throwError(() => error);
                     }
-                    return throwError(err);
+                    return throwError(() => err);
                   })
                 );
               }
@@ -616,6 +619,14 @@ export class BackendSrv implements BackendService {
     }
 
     this._tokenRotationInProgress = this.fetch({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 }).pipe(
+      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
+      // no matter how many requests are waiting on this same rotation.
+      catchError((err) => {
+        if (err.status === 401) {
+          this.dependencies.logout();
+        }
+        return throwError(() => err);
+      }),
       finalize(() => {
         this._tokenRotationInProgress = null;
       }),
@@ -626,7 +637,26 @@ export class BackendSrv implements BackendService {
   }
 
   loginPing() {
-    return this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 });
+    if (this._loginPingInProgress) {
+      return this._loginPingInProgress;
+    }
+
+    this._loginPingInProgress = this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 }).pipe(
+      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
+      // no matter how many requests are waiting on this same ping.
+      catchError((err) => {
+        if (err.status === 401) {
+          this.dependencies.logout();
+        }
+        return throwError(() => err);
+      }),
+      finalize(() => {
+        this._loginPingInProgress = null;
+      }),
+      share()
+    );
+
+    return this._loginPingInProgress;
   }
 
   /** @deprecated */

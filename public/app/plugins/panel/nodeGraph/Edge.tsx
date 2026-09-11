@@ -7,7 +7,7 @@ import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
 import { type EdgeDatumLayout, type NodeDatum } from './types';
 import { shortenLine } from './utils';
 
-export const defaultHighlightedEdgeColor = '#a00';
+const defaultHighlightedEdgeColor = '#a00';
 export const defaultEdgeColor = '#999';
 
 interface Props {

@@ -70,6 +70,7 @@ posts:
       - whats-new/2026-03-26-legacy-alertmanager-configuration-api-endpoints-changed.md
       - whats-new/2026-04-07-twinmaker-sceneviewer-panel-unavailable.md
       - whats-new/2026-04-08-removal-deprecated-components-from-grafana-ui.md
+      - whats-new/2026-05-05-whats-new-rbac-behavior-changes-with-grafana-13.md
 whats_new_grafana_version: 13.0
 weight: -54
 ---

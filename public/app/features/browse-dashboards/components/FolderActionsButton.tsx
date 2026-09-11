@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
@@ -13,13 +13,13 @@ import { BulkMoveProvisionedResource } from 'app/features/provisioning/component
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
-import { ManagerKind } from '../../apiserver/types';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -50,7 +50,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     canSetPermissions,
   } = getFolderPermissions(folder);
 
-  const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
+  const isProvisionedFolder = isItemManagedByRepository(folder);
   const isProvisionedRootFolder = isProvisionedFolder && !isProvisionedInstance && folder.parentUid === undefined;
   // Can only move folders when the folder is not provisioned
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
@@ -147,10 +147,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   // If user can set permissions for the folder and read teams, they can manage folder owners
   const showManageOwners =
-    config.featureToggles.teamFolders &&
-    canSetPermissions &&
-    contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) &&
-    !isProvisionedFolder;
+    canSetPermissions && contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) && !isProvisionedFolder;
 
   const menu = (
     <Menu>

@@ -1,0 +1,59 @@
+{
+  "ref": "refs/heads/main",
+  "commits": [
+    {
+      "message": "Bulk import dashboards",
+      "author": {
+        "name": "Test User",
+        "email": "test@example.com",
+        "username": "testuser"
+      },
+      "url": "https://github.com/grafana/git-ui-sync-demo/commit/abc123",
+      "distinct": true,
+      "id": "abc123def456",
+      "tree_id": "tree123",
+      "timestamp": "2024-12-09T08:58:00+03:00",
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "username": "web-flow"
+      },
+      "added": [
+        "dashboards/d-001.json",
+        "dashboards/d-002.json",
+        "dashboards/d-003.json",
+        "dashboards/d-004.json",
+        "dashboards/d-005.json",
+        "dashboards/d-006.json"
+      ],
+      "modified": [
+        "README.md"
+      ]
+    }
+  ],
+  "before": "6c86a0cdfd220c2fe3518cfaa4a4babf030d9a7a",
+  "after": "abc123def456",
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "compare": "https://github.com/grafana/git-ui-sync-demo/compare/6c86a0cdfd22...abc123def456",
+  "repository": {
+    "id": 888020043,
+    "node_id": "R_kgDONO4cSw",
+    "name": "git-ui-sync-demo",
+    "full_name": "grafana/git-ui-sync-demo",
+    "owner": {
+      "login": "grafana",
+      "id": 7195757
+    },
+    "private": true
+  },
+  "head_commit": {
+    "message": "Bulk import dashboards",
+    "id": "abc123def456"
+  },
+  "pusher": {
+    "name": "testuser",
+    "email": "test@example.com"
+  }
+}

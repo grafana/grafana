@@ -252,6 +252,19 @@ describe('CheckboxCell', () => {
     expect(screen.getByRole('checkbox')).toBeDisabled();
   });
 
+  it('renders a disabled checkbox for provisioned items when only non-provisioned items are selected', () => {
+    const item = { ...dashboardItem, item: { ...dashboardItem.item, uid: 'dash-provisioned' } };
+    mockUseSelectionRepoValidation.mockReturnValue({
+      selectedItemsRepoUID: undefined,
+      isInLockedRepo: () => false,
+      isCrossRepo: false,
+      isUidInReadOnlyRepo: () => false,
+    });
+    setup(item);
+
+    expect(screen.getByRole('checkbox')).toBeDisabled();
+  });
+
   it('renders a spacer for root provisioned folders when instance is not provisioned ', () => {
     const item = {
       ...folderItem,

@@ -1,4 +1,5 @@
 import uFuzzy from '@leeoniya/ufuzzy';
+import { Range } from 'semver';
 
 import { PluginSignatureStatus, dateTimeParse, type PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
@@ -110,6 +111,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     versionSignatureType,
     versionSignedByOrgName,
     url,
+    category,
   } = plugin;
 
   const isDisabled = !!error;
@@ -150,13 +152,10 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     latestVersion: plugin.version,
     url,
     managed: {
-      enabled: managedPluginsV2Enabled ? Boolean(plugin.managed?.enabled) : isManagedPlugin(id),
-      strategy: managedPluginsV2Enabled
-        ? plugin.managed?.strategy
-        : isManagedPlugin(id)
-          ? PluginUpdateStrategy.Assigned
-          : undefined,
+      enabled: managedPluginsV2Enabled ? Boolean(plugin.managed?.enabled) : false,
+      strategy: managedPluginsV2Enabled ? plugin.managed?.strategy : undefined,
     },
+    category,
     distributionType: plugin.versionDistributionType,
   };
 }
@@ -174,12 +173,10 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     accessControl,
     angularDetected,
+    category,
   } = plugin;
 
   const isDisabled = !!error;
-  const managedPluginsV2Enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.ManagedPluginsV2, false);
-  const isV1Managed = !managedPluginsV2Enabled && isManagedPlugin(id);
-
   return {
     description,
     downloads: 0,
@@ -211,9 +208,10 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
     managed: {
-      enabled: isV1Managed,
-      strategy: isV1Managed ? PluginUpdateStrategy.Assigned : undefined,
+      enabled: false,
+      strategy: undefined,
     },
+    category,
   };
 }
 
@@ -226,8 +224,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const keywords = remote?.keywords || local?.info.keywords || [];
 
   let logos = {
-    small: `/public/build/img/icn-${type}.svg`,
-    large: `/public/build/img/icn-${type}.svg`,
+    small: `${window.__grafana_build_path__}img/icn-${type}.svg`,
+    large: `${window.__grafana_build_path__}img/icn-${type}.svg`,
   };
 
   if (remote) {
@@ -280,13 +278,10 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
     managed: {
-      enabled: managedPluginsV2Enabled ? Boolean(remote?.managed?.enabled) : isManagedPlugin(id),
-      strategy: managedPluginsV2Enabled
-        ? remote?.managed?.strategy
-        : isManagedPlugin(id)
-          ? PluginUpdateStrategy.Assigned
-          : undefined,
+      enabled: managedPluginsV2Enabled ? Boolean(remote?.managed?.enabled) : false,
+      strategy: managedPluginsV2Enabled ? remote?.managed?.strategy : undefined,
     },
+    category: remote?.category || local?.category || '',
     distributionType: remote?.versionDistributionType,
   };
 }
@@ -305,10 +300,12 @@ export enum Sorters {
   downloads = 'downloads',
 }
 
+const nameCollator = new Intl.Collator();
+
 export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
-    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
-    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
+    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => nameCollator.compare(a.name.trim(), b.name.trim()),
+    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => nameCollator.compare(b.name.trim(), a.name.trim()),
     updated: (a: CatalogPlugin, b: CatalogPlugin) =>
       dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
     published: (a: CatalogPlugin, b: CatalogPlugin) =>
@@ -397,18 +394,6 @@ function isNotHiddenByConfig(id: string) {
   const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
 
   return !pluginCatalogHiddenPlugins.includes(id);
-}
-
-/**
- * isManagedPlugin checks if the plugin is managed according to the instances config
- * this will be removed when managed plugins v2 is fully enabled
- * @param id - The plugin ID
- * @returns True if the plugin is managed
- */
-export function isManagedPlugin(id: string) {
-  const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
-
-  return pluginCatalogManagedPlugins?.includes(id);
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
@@ -505,6 +490,48 @@ export function isNonAngularVersion(version?: Version) {
 
 export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
   return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
+}
+
+/**
+ * Formats a semver range string (e.g. ">= 8.5.20 < 9 || >= 9.1.0")
+ * into a human-readable string (e.g. "8.5.20 – 9.0.0, 9.1.0 or later").
+ */
+export function formatGrafanaDependency(dependency: string | null): string {
+  if (!dependency) {
+    return 'N/A';
+  }
+
+  try {
+    const range = new Range(dependency);
+    const parts: string[] = [];
+
+    for (const comparators of range.set) {
+      const lowerBound = comparators.find((c) => c.operator === '>=');
+      const upperBound = comparators.find((c) => c.operator === '<');
+
+      if (lowerBound && upperBound) {
+        const from = formatVersion(lowerBound.semver.major, lowerBound.semver.minor, lowerBound.semver.patch);
+        const to = formatVersion(upperBound.semver.major, upperBound.semver.minor, upperBound.semver.patch);
+        parts.push(`${from} – ${to}`);
+      } else if (lowerBound) {
+        const from = formatVersion(lowerBound.semver.major, lowerBound.semver.minor, lowerBound.semver.patch);
+        parts.push(`${from} or later`);
+      } else if (upperBound) {
+        const to = formatVersion(upperBound.semver.major, upperBound.semver.minor, upperBound.semver.patch);
+        parts.push(`before ${to}`);
+      } else {
+        return dependency;
+      }
+    }
+
+    return parts.join(', ');
+  } catch {
+    return dependency;
+  }
+}
+
+function formatVersion(major: number, minor: number, patch: number): string {
+  return `${major}.${minor}.${patch}`;
 }
 
 export function mergeCloudState(

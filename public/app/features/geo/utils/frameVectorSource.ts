@@ -6,8 +6,6 @@ import { type DataFrame } from '@grafana/data';
 
 import { getGeometryField, type LocationFieldMatchers } from './location';
 
-export interface FrameVectorSourceOptions {}
-
 // Helper function to create properly typed Features
 function createFeature<T extends Geometry>(properties: {
   frame: DataFrame;

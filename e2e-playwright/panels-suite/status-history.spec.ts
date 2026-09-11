@@ -96,12 +96,6 @@ test.describe('Panels test: StatusHistory', { tag: ['@panels', '@status-history'
   });
 });
 
-test.use({
-  featureToggles: {
-    timeRangePan: true,
-  },
-});
-
 test.describe('Panels test: Status History X-axis panning', { tag: ['@panels', '@status-history'] }, () => {
   test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
     let centerX: number;

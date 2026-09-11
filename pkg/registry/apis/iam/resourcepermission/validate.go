@@ -36,13 +36,25 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 	}
 
 	// Check that the group/resource is registered and enabled
-	if !mappers.IsEnabled(schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
+	groupResource := schema.GroupResource{Group: grn.Group, Resource: grn.Resource}
+	if !mappers.IsEnabled(groupResource) {
 		return apierrors.NewBadRequest(fmt.Sprintf("unknown or disabled group/resource %s/%s", grn.Group, grn.Resource))
 	}
 
-	// Check for duplicate entities (same kind and name should appear only once)
+	mapper, ok := mappers.Get(groupResource)
+	if !ok {
+		return apierrors.NewBadRequest(fmt.Sprintf("mapper not found for group/resource %s/%s", grn.Group, grn.Resource))
+	}
+
+	// Check for duplicate entities and validate kind/verb per permission
 	seen := make(map[string]bool)
 	for _, perm := range v0ResourcePerm.Spec.Permissions {
+		if !mapper.AllowsKind(perm.Kind) {
+			return apierrors.NewBadRequest(fmt.Sprintf("assignment kind %q is not allowed for resource %q: %s", perm.Kind, grn.Resource, errInvalidSpec))
+		}
+		if _, err := mapper.ActionSet(perm.Verb); err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("verb %q is not valid for resource %q: %s", perm.Verb, grn.Resource, errInvalidSpec))
+		}
 		key := fmt.Sprintf("%s:%s", perm.Kind, perm.Name)
 		if seen[key] {
 			return apierrors.NewBadRequest(fmt.Sprintf("duplicate entity found: kind=%s, name=%s (each entity can only appear once per resource): %s", perm.Kind, perm.Name, errInvalidSpec))

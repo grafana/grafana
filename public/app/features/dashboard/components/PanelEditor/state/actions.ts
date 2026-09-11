@@ -1,6 +1,5 @@
 import { pick } from 'lodash';
 
-import { store } from '@grafana/data';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
@@ -9,14 +8,7 @@ import { type ThunkResult } from 'app/types/store';
 import { type DashboardModel } from '../../../state/DashboardModel';
 import { type PanelModel } from '../../../state/PanelModel';
 
-import {
-  closeEditor,
-  PANEL_EDITOR_UI_STATE_STORAGE_KEY,
-  type PanelEditorUIState,
-  setDiscardChanges,
-  setPanelEditorUIState,
-  updateEditorInitState,
-} from './reducers';
+import { closeEditor, updateEditorInitState } from './reducers';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
@@ -31,18 +23,7 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   };
 }
 
-export function discardPanelChanges(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const { getPanel } = getStore().panelEditor;
-    getPanel().configRev = 0;
-    dispatch(setDiscardChanges(true));
-  };
-}
-
-export function updateDuplicateLibraryPanels(
-  modifiedPanel: PanelModel,
-  dashboard: DashboardModel | null
-): ThunkResult<void> {
+function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: DashboardModel | null): ThunkResult<void> {
   return (dispatch) => {
     if (modifiedPanel.libraryPanel?.uid === undefined || !dashboard) {
       return;
@@ -162,16 +143,4 @@ export function exitPanelEditor(): ThunkResult<void> {
 
 function hasPanelChangedInPanelEdit(panel: PanelModel) {
   return panel.hasChanged || panel.hasSavedPanelEditChange;
-}
-
-export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const nextState = { ...getStore().panelEditor.ui, ...uiState };
-    dispatch(setPanelEditorUIState(nextState));
-    try {
-      store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 }

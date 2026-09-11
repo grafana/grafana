@@ -2,8 +2,8 @@ import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type ExternalDashboard } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { type ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
 import { type LibraryElementDTO } from '../library-panels/types';
 
 // Dashboard JSON type for import
@@ -70,10 +70,18 @@ export interface DashboardInput {
   info: string;
   value: string;
   type: InputType;
+  /** Layout path for V2 section-scoped constants (`/rows/0`). Undefined for dashboard-level. */
+  path?: string;
+  /** Human-readable section breadcrumb for import UI (e.g. `Row: Servers`). */
+  scopeLabel?: string;
 }
 
 export interface DataSourceInput extends DashboardInput {
   pluginId: string;
+  // A datasource on the importing instance whose name matches the original
+  // exported datasource name. Used to pre-select the import picker so users
+  // don't have to manually pick a same-named datasource.
+  matchedDatasource?: DatasourceSelection;
 }
 
 export interface LibraryPanelInput {

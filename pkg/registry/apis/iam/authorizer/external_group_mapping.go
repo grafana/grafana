@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/util"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type ExternalGroupMappingAuthorizer struct {
@@ -124,6 +124,12 @@ func (r *ExternalGroupMappingAuthorizer) beforeWrite(ctx context.Context, obj ru
 		)
 	}
 	return nil
+}
+
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering using Compile or BatchCheck.
+func (r *ExternalGroupMappingAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
 }
 
 // FilterList implements ResourceStorageAuthorizer.

@@ -1,11 +1,28 @@
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { BulkActionsBar } from './BulkActionsBar';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const mockReportInteraction = jest.mocked(reportInteraction);
+
+// jsdom does no layout, so offsetWidth/clientWidth are always 0 (content always "fits" and the
+// bar renders full labels). The compact-mode tests drive the overflow measurement by mocking
+// the prototype getters the bar reads: offsetWidth for the measured content row, clientWidth
+// for the container it must fit into.
+function mockMeasuredWidths({ contentWidth, containerWidth }: { contentWidth: number; containerWidth: number }) {
+  jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(contentWidth);
+  jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(containerWidth);
+}
 
 // Replace DataSourceModal with a minimal test double to avoid loading its full dep tree.
 jest.mock('app/features/datasources/components/picker/DataSourceModal', () => ({
@@ -48,88 +65,142 @@ function renderBar(overrides: Parameters<typeof renderWithQueryEditorProvider>[1
 }
 
 describe('BulkActionsBar', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('visibility', () => {
-    it('renders nothing when fewer than 2 queries are selected', () => {
+    it('renders nothing when multi-select mode is off', () => {
+      // Bulk arrays may linger; the bar is gated on the explicit multi-select mode.
       const { container } = renderBar({
-        uiStateOverrides: { selectedQueryRefIds: ['A'] },
+        uiStateOverrides: { multiSelectMode: false, selectedQueryRefIds: ['A', 'B'] },
       });
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders nothing when fewer than 2 transformations are selected', () => {
-      const { container } = renderBar({
-        uiStateOverrides: { selectedTransformationIds: ['tx-0'] },
+    it('renders the bar with an exit control and a hint, but no action buttons, when multi-select mode is on but nothing is selected', () => {
+      // An empty selection is a valid multi-select state: the bar stays so the user can exit, but
+      // there is nothing to act on so only the hint is shown.
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: [], selectedTransformationIds: [] },
       });
-      expect(container).toBeEmptyDOMElement();
-    });
-
-    it('renders nothing when no selection at all', () => {
-      const { container } = renderBar({
-        uiStateOverrides: { selectedQueryRefIds: [], selectedTransformationIds: [] },
-      });
-      expect(container).toBeEmptyDOMElement();
-    });
-
-    it('renders the toolbar when 2+ queries are selected', () => {
-      renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByText('Select items to apply actions')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /exit multi-select/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /hide/i })).not.toBeInTheDocument();
     });
 
-    it('renders the toolbar when 2+ transformations are selected', () => {
-      renderBar({ uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] } });
+    it('renders the query action buttons when at least one query is selected in multi-select mode', () => {
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A'] },
+      });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /hide/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /data source/i })).toBeInTheDocument();
+    });
+
+    it('renders the transformation action buttons when at least one transformation is selected in multi-select mode', () => {
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0'] },
+      });
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable/i })).toBeInTheDocument();
     });
   });
 
-  describe('clear selection', () => {
-    it('calls clearSelection when the clear button is clicked', async () => {
-      const clearSelection = jest.fn();
+  describe('clear button', () => {
+    it('exits multi-select mode when the clear button is clicked', async () => {
+      const setMultiSelectMode = jest.fn();
       const { user } = renderBar({
-        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], clearSelection },
+        uiStateOverrides: {
+          multiSelectMode: true,
+          selectedQueryRefIds: ['A', 'B'],
+          setMultiSelectMode,
+        },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
-      expect(clearSelection).toHaveBeenCalledTimes(1);
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
+
+      expect(setMultiSelectMode).toHaveBeenCalledWith(false);
+    });
+
+    it('tracks an interaction when the clear button is clicked', async () => {
+      const { user } = renderBar({
+        uiStateOverrides: {
+          multiSelectMode: true,
+          selectedQueryRefIds: ['A', 'B'],
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+        action: 'toggle_multi_select',
+        direction: 'exit',
+      });
     });
   });
 
   describe('query bulk actions', () => {
     describe('delete', () => {
       it('opens a confirmation modal when Delete is clicked', async () => {
-        const { user } = renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+        const { user } = renderBar({
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+        });
 
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
 
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
 
-      it('calls bulkDeleteQueries and clearSelection after confirming delete', async () => {
-        const bulkDeleteQueries = jest.fn();
-        const clearSelection = jest.fn();
+      it('lists only the selected query refIds in the confirmation modal', async () => {
         const { user } = renderBar({
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], clearSelection },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+        const dialog = screen.getByRole('dialog');
+
+        expect(within(dialog).getByText('A')).toBeInTheDocument();
+        expect(within(dialog).getByText('B')).toBeInTheDocument();
+        expect(within(dialog).queryByText('C')).not.toBeInTheDocument();
+      });
+
+      it('calls bulkDeleteQueries and exits multi-select mode after confirming delete', async () => {
+        const bulkDeleteQueries = jest.fn();
+        const setMultiSelectMode = jest.fn();
+        const { user } = renderBar({
+          uiStateOverrides: {
+            multiSelectMode: true,
+            selectedQueryRefIds: ['A', 'B'],
+            setMultiSelectMode,
+          },
           actionsOverrides: { bulkDeleteQueries },
         });
 
-        // Open modal
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
-        // Confirm inside the dialog
         const dialog = screen.getByRole('dialog');
         await user.click(within(dialog).getByRole('button', { name: /delete/i }));
 
         expect(bulkDeleteQueries).toHaveBeenCalledWith(['A', 'B']);
-        expect(clearSelection).toHaveBeenCalled();
+        expect(setMultiSelectMode).toHaveBeenCalledWith(false);
       });
 
       it('does NOT call bulkDeleteQueries when the modal is dismissed', async () => {
         const bulkDeleteQueries = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
           actionsOverrides: { bulkDeleteQueries },
         });
 
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
-        // Dismiss the dialog
         const dialog = screen.getByRole('dialog');
         await user.click(within(dialog).getByRole('button', { name: /cancel/i }));
 
@@ -139,16 +210,19 @@ describe('BulkActionsBar', () => {
     });
 
     describe('hide / show', () => {
-      it('calls bulkToggleQueriesHide(refIds, true) when no queries are hidden', async () => {
+      it('calls bulkToggleQueriesHide(refIds, true) and stays in multi-select mode when no queries are hidden', async () => {
         const bulkToggleQueriesHide = jest.fn();
+        const setMultiSelectMode = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'], setMultiSelectMode },
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
         // None of the selected queries have hide:true so the button says "Hide"
         await user.click(screen.getByRole('button', { name: /hide/i }));
         expect(bulkToggleQueriesHide).toHaveBeenCalledWith(['A', 'B'], true);
+        // Hide/Show is an in-place toggle — the selection stays so the user can keep acting on it.
+        expect(setMultiSelectMode).not.toHaveBeenCalled();
       });
 
       it('calls bulkToggleQueriesHide(refIds, false) when all selected queries are hidden', async () => {
@@ -156,7 +230,7 @@ describe('BulkActionsBar', () => {
         const hiddenQueries = [{ refId: 'A', hide: true }, { refId: 'B', hide: true }, { refId: 'C' }];
         const { user } = renderBar({
           queries: hiddenQueries,
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
@@ -168,7 +242,7 @@ describe('BulkActionsBar', () => {
 
     describe('change datasource', () => {
       it('shows the datasource button when all selected queries are non-expression', () => {
-        renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+        renderBar({ uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] } });
         expect(screen.getByRole('button', { name: /data source/i })).toBeInTheDocument();
       });
 
@@ -179,23 +253,31 @@ describe('BulkActionsBar', () => {
         ];
         renderBar({
           queries: expressionQueries,
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
         });
         expect(screen.queryByRole('button', { name: /data source/i })).not.toBeInTheDocument();
       });
 
       it('opens the DataSourceModal when the button is clicked', async () => {
-        const { user } = renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+        const { user } = renderBar({
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+        });
 
         await user.click(screen.getByRole('button', { name: /data source/i }));
         expect(screen.getByTestId('datasource-modal')).toBeInTheDocument();
       });
 
-      it('calls bulkChangeDataSource and clearSelection when a DS is chosen', async () => {
+      it('calls bulkChangeDataSource and stays in multi-select mode when a DS is chosen', async () => {
+        // Data source change is an in-place modification — the selection stays valid, so the
+        // toolbar and multi-select mode persist for further bulk actions. Only Delete exits.
         const bulkChangeDataSource = jest.fn();
-        const clearSelection = jest.fn();
+        const setMultiSelectMode = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], clearSelection },
+          uiStateOverrides: {
+            multiSelectMode: true,
+            selectedQueryRefIds: ['A', 'B'],
+            setMultiSelectMode,
+          },
           actionsOverrides: { bulkChangeDataSource },
         });
 
@@ -203,11 +285,13 @@ describe('BulkActionsBar', () => {
         await user.click(screen.getByRole('button', { name: /select ds/i }));
 
         expect(bulkChangeDataSource).toHaveBeenCalledWith(['A', 'B'], expect.objectContaining({ uid: 'new-ds' }));
-        expect(clearSelection).toHaveBeenCalled();
+        expect(setMultiSelectMode).not.toHaveBeenCalled();
       });
 
       it('closes the DataSourceModal after selecting a datasource', async () => {
-        const { user } = renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+        const { user } = renderBar({
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+        });
 
         await user.click(screen.getByRole('button', { name: /data source/i }));
         await user.click(screen.getByRole('button', { name: /select ds/i }));
@@ -218,7 +302,7 @@ describe('BulkActionsBar', () => {
       it('closes the DataSourceModal without calling bulkChangeDataSource when dismissed', async () => {
         const bulkChangeDataSource = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
           actionsOverrides: { bulkChangeDataSource },
         });
 
@@ -235,18 +319,45 @@ describe('BulkActionsBar', () => {
     describe('delete', () => {
       it('opens a confirmation modal when Delete is clicked', async () => {
         const { user } = renderBar({
-          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] },
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
         });
 
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
 
-      it('calls bulkDeleteTransformations and clearSelection after confirming', async () => {
-        const bulkDeleteTransformations = jest.fn();
-        const clearSelection = jest.fn();
+      it('lists transformation names in the confirmation modal, falling back to the transform id', async () => {
+        const transformations: Transformation[] = [
+          {
+            transformId: 'tx-0',
+            registryItem: { name: 'Organize fields' } as Transformation['registryItem'],
+            transformConfig: { id: 'organize', options: {} },
+          },
+          { transformId: 'tx-1', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
+        ];
         const { user } = renderBar({
-          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'], clearSelection },
+          transformations,
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+        const dialog = screen.getByRole('dialog');
+
+        // Uses the registry display name when present...
+        expect(within(dialog).getByText('Organize fields')).toBeInTheDocument();
+        // ...and falls back to the transform config id when there is no registry item.
+        expect(within(dialog).getByText('reduce')).toBeInTheDocument();
+      });
+
+      it('calls bulkDeleteTransformations and exits multi-select mode after confirming', async () => {
+        const bulkDeleteTransformations = jest.fn();
+        const setMultiSelectMode = jest.fn();
+        const { user } = renderBar({
+          uiStateOverrides: {
+            multiSelectMode: true,
+            selectedTransformationIds: ['tx-0', 'tx-1'],
+            setMultiSelectMode,
+          },
           actionsOverrides: { bulkDeleteTransformations },
         });
 
@@ -255,13 +366,13 @@ describe('BulkActionsBar', () => {
         await user.click(within(dialog).getByRole('button', { name: /delete/i }));
 
         expect(bulkDeleteTransformations).toHaveBeenCalledWith(['tx-0', 'tx-1']);
-        expect(clearSelection).toHaveBeenCalled();
+        expect(setMultiSelectMode).toHaveBeenCalledWith(false);
       });
 
       it('does NOT call bulkDeleteTransformations when the modal is dismissed', async () => {
         const bulkDeleteTransformations = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] },
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
           actionsOverrides: { bulkDeleteTransformations },
         });
 
@@ -274,16 +385,19 @@ describe('BulkActionsBar', () => {
     });
 
     describe('enable / disable', () => {
-      it('calls bulkToggleTransformationsDisabled(ids, true) when all are enabled', async () => {
+      it('calls bulkToggleTransformationsDisabled(ids, true) and stays in multi-select mode when all are enabled', async () => {
         const bulkToggleTransformationsDisabled = jest.fn();
+        const setMultiSelectMode = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] },
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'], setMultiSelectMode },
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // Transformations are enabled (no disabled flag), so button says "Disable all"
-        await user.click(screen.getByRole('button', { name: /disable all/i }));
+        // Transformations are enabled (no disabled flag), so button says "Disable"
+        await user.click(screen.getByRole('button', { name: /disable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
+        // Enable/Disable is an in-place toggle — the selection persists.
+        expect(setMultiSelectMode).not.toHaveBeenCalled();
       });
 
       it('calls bulkToggleTransformationsDisabled(ids, false) when all are disabled', async () => {
@@ -302,14 +416,83 @@ describe('BulkActionsBar', () => {
         ];
         const { user } = renderBar({
           transformations: disabledTransformations,
-          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] },
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // All selected are disabled — button says "Enable all"
-        await user.click(screen.getByRole('button', { name: /enable all/i }));
+        // All selected are disabled — button says "Enable"
+        await user.click(screen.getByRole('button', { name: /enable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], false);
       });
+    });
+  });
+
+  describe('compact mode', () => {
+    it('shows button labels when the full-label content fits the available space', () => {
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 400 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+
+      expect(screen.getByRole('button', { name: 'Data source' })).toHaveTextContent('Data source');
+    });
+
+    it('keeps labels when the content exactly fits the container', () => {
+      // The boundary: collapse requires strict overflow, so an exact fit stays full.
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 300 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+
+      expect(screen.getByRole('button', { name: 'Data source' })).toHaveTextContent('Data source');
+    });
+
+    it('drops button labels but keeps accessible names when the full-label content overflows', () => {
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 200 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+
+      // Icon-only, but still named for screen readers via aria-label.
+      const datasourceButton = screen.getByRole('button', { name: 'Data source' });
+      expect(datasourceButton).not.toHaveTextContent('Data source');
+      expect(screen.getByRole('button', { name: 'Delete' })).not.toHaveTextContent('Delete');
+    });
+
+    it('applies the same compact decision to both sections at once', () => {
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 200 });
+      renderBar({
+        uiStateOverrides: {
+          multiSelectMode: true,
+          selectedQueryRefIds: ['A'],
+          selectedTransformationIds: ['tx-0'],
+        },
+      });
+
+      expect(screen.getByRole('button', { name: 'Hide' })).not.toHaveTextContent('Hide');
+      expect(screen.getByRole('button', { name: 'Disable' })).not.toHaveTextContent('Disable');
+    });
+
+    it('restores button labels once the container grows past the width the full labels needed', () => {
+      // Capture ResizeObserver callbacks so the test can replay a container resize.
+      const resizeCallbacks: VoidFunction[] = [];
+      jest.spyOn(globalThis, 'ResizeObserver').mockImplementation((callback: ResizeObserverCallback) => {
+        const observer: ResizeObserver = { observe: jest.fn(), unobserve: jest.fn(), disconnect: jest.fn() };
+        resizeCallbacks.push(() => callback([], observer));
+        return observer;
+      });
+
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 200 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+      expect(screen.getByRole('button', { name: 'Data source' })).not.toHaveTextContent('Data source');
+
+      // Widen the container past the remembered full-label width (300) and notify the observer.
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 400 });
+      act(() => resizeCallbacks.forEach((notify) => notify()));
+
+      expect(screen.getByRole('button', { name: 'Data source' })).toHaveTextContent('Data source');
     });
   });
 });

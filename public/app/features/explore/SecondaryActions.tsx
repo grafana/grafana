@@ -1,26 +1,28 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagQueryHistoryRecentQueriesUI } from '@grafana/runtime/internal';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
-import { type OnSelectQueryType } from './QueryLibrary/types';
+import { type OnSelectQueriesType, type OnSelectQueryType } from './QueryLibrary/types';
+import { hasSavedQueryReadPermissions } from './QueryLibrary/utils/identity';
+import { RecentQueriesModal } from './RecentQueries/RecentQueriesModal';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
-  richHistoryRowButtonHidden?: boolean;
   queryInspectorButtonActive?: boolean;
 
   onClickAddQueryRowButton: () => void;
   onClickQueryInspectorButton: () => void;
   onSelectQueryFromLibrary: OnSelectQueryType;
+  onSelectQueriesFromLibrary: OnSelectQueriesType;
+  onReplaceQueriesFromLibrary: OnSelectQueriesType;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -40,15 +42,17 @@ export function SecondaryActions({
   onClickAddQueryRowButton,
   onClickQueryInspectorButton,
   onSelectQueryFromLibrary,
+  onSelectQueriesFromLibrary,
+  onReplaceQueriesFromLibrary,
   queryInspectorButtonActive,
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
-  const canReadQueries = config.featureToggles.savedQueriesRBAC
-    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-    : contextSrv.isSignedIn;
+  const recentQueriesUI = useFlagQueryHistoryRecentQueriesUI();
+  const [recentQueriesOpen, setRecentQueriesOpen] = useState(false);
+  const canReadQueries = hasSavedQueryReadPermissions();
 
   return (
     <div className={styles.containerMargin}>
@@ -56,6 +60,7 @@ export function SecondaryActions({
         <>
           <ToolbarButton
             variant="canvas"
+            data-testid={selectors.pages.Explore.General.addQueryRow}
             aria-label={t('explore.secondary-actions.query-add-button-aria-label', 'Add query')}
             onClick={onClickAddQueryRowButton}
             disabled={addQueryRowButtonDisabled}
@@ -71,17 +76,38 @@ export function SecondaryActions({
               onClick={() =>
                 openQueryLibraryDrawer({
                   onSelectQuery: onSelectQueryFromLibrary,
+                  onSelectQueries: onSelectQueriesFromLibrary,
                   options: { context: CoreApp.Explore },
                 })
               }
-              icon="plus"
+              icon={recentQueriesUI ? 'book-open' : 'plus'}
               disabled={addQueryRowButtonDisabled}
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from saved queries</Trans>
             </ToolbarButton>
           )}
+
+          {!queryLibraryEnabled && recentQueriesUI && (
+            <>
+              <ToolbarButton
+                variant="canvas"
+                aria-label={t('explore.secondary-actions.recent-queries-button-aria-label', 'Recent queries')}
+                onClick={() => setRecentQueriesOpen(true)}
+                icon="history"
+              >
+                <Trans i18nKey="explore.secondary-actions.recent-queries-button">Recent queries</Trans>
+              </ToolbarButton>
+              <RecentQueriesModal
+                isOpen={recentQueriesOpen}
+                onClose={() => setRecentQueriesOpen(false)}
+                onSelectQuery={onReplaceQueriesFromLibrary}
+              />
+            </>
+          )}
         </>
       )}
+      {/* Keep the separate Query history entry point available during the deprecation period,
+          even when the recentQueriesUI flag is enabled. */}
       <ToolbarButton
         key="query-history"
         variant={drawerOpened ? 'active' : 'canvas'}
@@ -96,6 +122,7 @@ export function SecondaryActions({
         variant={queryInspectorButtonActive ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}
         onClick={onClickQueryInspectorButton}
+        data-testid={Components.QueryTab.queryInspectorButton}
         icon="info-circle"
       >
         <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>

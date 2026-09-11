@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 
-import { standardTransformersRegistry, TransformerCategory } from '@grafana/data';
+import { DataTransformerID, standardTransformersRegistry, TransformerCategory } from '@grafana/data';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { useTransformationSearchAndFilter } from './useTransformationSearchAndFilter';
@@ -30,7 +30,9 @@ describe('useTransformationSearchAndFilter', () => {
 
     // Should return all transformations from the registry
     const allTransformers = standardTransformersRegistry.list();
-    expect(result.current.filteredTransformations.length).toBe(allTransformers.length);
+    const visibleTransformers = allTransformers.filter(({ excludeFromPicker }) => !excludeFromPicker);
+    expect(allTransformers.length).toBeGreaterThan(visibleTransformers.length);
+    expect(result.current.filteredTransformations.length).toBe(visibleTransformers.length);
   });
 
   describe('filtering', () => {
@@ -61,6 +63,14 @@ describe('useTransformationSearchAndFilter', () => {
       act(() => result.current.setSearch('zzzznonexistent12345'));
 
       expect(result.current.filteredTransformations).toHaveLength(0);
+    });
+
+    it('finds transformations by tag', () => {
+      const { result } = renderHook(() => useTransformationSearchAndFilter(mockOnSelect));
+
+      act(() => result.current.setSearch('pivot'));
+
+      expect(result.current.filteredTransformations.map(({ id }) => id)).toContain(DataTransformerID.transpose);
     });
 
     it('clears filter when search is cleared', () => {

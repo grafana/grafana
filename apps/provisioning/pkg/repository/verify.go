@@ -37,7 +37,7 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 //
 // This validator enforces the following rules:
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
-// - You cannot create a folder sync repository if an instance repository already exists in the namespace.
+// - You cannot create a non-instance (folder or folderless) sync repository if an instance repository already exists in the namespace.
 // - Git repositories must not have duplicate or overlapping paths with existing repositories.
 // - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
@@ -61,11 +61,11 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 			}
 		}
 	} else {
-		// Folder sync cannot be created if an instance repository exists
+		// Folder and folderless sync cannot be created if an instance repository exists
 		for _, v := range all {
 			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
 				return field.ErrorList{field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Cannot create folder repository when instance repository exists: "+v.Name)}
+					"Cannot create repository when instance repository exists: "+v.Name)}
 			}
 		}
 	}
@@ -79,9 +79,8 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 			if cfg.Name == v.Name {
 				continue
 			}
-			if v.URL() == cfg.URL() {
-				// Allow duplicate paths only when both paths are empty (repository root)
-				if v.Path() == cfg.Path() && cfg.Path() != "" {
+			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
+				if v.Path() == cfg.Path() {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
@@ -107,7 +106,20 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	// Get quota status for the namespace
 	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
 	if err != nil {
-		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		isExistingRepo := false
+		for i := range all {
+			if all[i].Name == cfg.Name {
+				quotaStatus = all[i].Status.Quota
+				isExistingRepo = true
+				break
+			}
+		}
+
+		// A repository is new only when it is absent from storage. ObservedGeneration may remain zero
+		// when the first reconciliation fails after caching quota.
+		if !isExistingRepo {
+			return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		}
 	}
 
 	// Check repository limit (0 = unlimited, > 0 = use value).

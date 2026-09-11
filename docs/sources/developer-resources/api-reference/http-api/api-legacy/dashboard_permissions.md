@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/dashboard_permissions/ # /docs/grafana/next/http_api/dashboard_permissions/
-  - ../../../http_api/dashboardpermissions/ # /docs/grafana/next/http_api/dashboardpermissions/
-  - ../../../developers/http_api/dashboard_permissions/ # /docs/grafana/next/developers/http_api/dashboard_permissions/
+  - ../../../../http_api/dashboard_permissions/ # /docs/grafana/next/http_api/dashboard_permissions/
+  - ../../../../http_api/dashboardpermissions/ # /docs/grafana/next/http_api/dashboardpermissions/
+  - ../../../../developers/http_api/dashboard_permissions/ # /docs/grafana/next/developers/http_api/dashboard_permissions/
   - ../../../../developer-resources/api-reference/http-api/dashboard_permissions/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/dashboard_permissions/
 description: Grafana Dashboard Permissions HTTP API
@@ -62,7 +62,7 @@ See note in the [introduction](#dashboard-permission-api) for an explanation.
 GET /api/dashboards/uid/dHEquNzGz/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**
@@ -144,7 +144,7 @@ See note in the [introduction](#dashboard-permission-api) for an explanation.
 POST /api/dashboards/uid/dHEquNzGz/permissions
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "items": [

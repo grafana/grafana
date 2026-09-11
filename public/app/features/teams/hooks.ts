@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { config } from '@grafana/runtime';
+import { useFlagKubernetesTeamsApi } from '@grafana/runtime/internal';
 import {
   API_GROUP,
   API_VERSION,
@@ -134,7 +134,7 @@ export const useDeleteTeam = () => {
 /**
  * Transform a legacy TeamDto to the IAM Team (k8s) shape.
  */
-export function teamDtoToTeam(dto: TeamDto): Team {
+function teamDtoToTeam(dto: TeamDto): Team {
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Team',
@@ -156,17 +156,15 @@ export function teamDtoToTeam(dto: TeamDto): Team {
 /**
  * Transform legacy TeamDto[] to IAM search hit shape.
  */
-export function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
+function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
   return teams.map((t) => ({ title: t.name, name: t.uid }));
 }
-
-const appPlatformIamEnabled = () => Boolean(config.featureToggles.kubernetesTeamsApi);
 
 /**
  * Facade hook: get a team by UID, using IAM or legacy endpoint based on feature toggle.
  */
 export function useGetTeamByUidQuery(args: GetTeamApiArg | typeof skipToken) {
-  const enabled = appPlatformIamEnabled();
+  const enabled = useFlagKubernetesTeamsApi();
 
   const iamResult = useGetTeamQueryIam(enabled ? args : skipToken);
   const legacyResult = useGetTeamByIdQuery(!enabled && args !== skipToken ? { teamId: args.name } : skipToken);
@@ -185,7 +183,7 @@ export function useGetTeamByUidQuery(args: GetTeamApiArg | typeof skipToken) {
  * Calls either the IAM or legacy get team by UID endpoint based on the feature toggle.
  */
 export function useLazyGetTeamByUidQuery() {
-  const enabled = appPlatformIamEnabled();
+  const enabled = useFlagKubernetesTeamsApi();
   const [iamTrigger, iamResult] = useLazyGetTeamQueryIam();
   const [legacyTrigger, legacyResult] = useLazyGetTeamByIdQueryLegacy();
 
@@ -220,7 +218,7 @@ export function useLazyGetTeamByUidQuery() {
  * Calls either the IAM or legacy search teams endpoint based on the feature toggle.
  */
 export function useLazySearchTeamsQuery() {
-  const enabled = appPlatformIamEnabled();
+  const enabled = useFlagKubernetesTeamsApi();
   const [iamTrigger, iamResult] = useLazyGetSearchTeamsQueryIam();
   const [legacyTrigger, legacyResult] = useLazySearchTeamsQueryLegacy();
 

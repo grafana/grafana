@@ -32,6 +32,8 @@ func TestValidation(t *testing.T) {
 			name: "ok",
 			input: []string{
 				"hello",
+				"trash", // reserved for new resources, but still a readable name
+				"search",
 				strings.Repeat("0", 253), // very long starts with number
 				"hello-world",
 				"hello.world",
@@ -133,7 +135,7 @@ func TestValidation(t *testing.T) {
 		}{{
 			name:   "too long",
 			expect: []string{"group is too long"},
-			input:  []string{strings.Repeat("0", 61)},
+			input:  []string{strings.Repeat("0", 129)},
 		}, {
 			name:   "too short",
 			expect: []string{"group is too short"},
@@ -142,8 +144,8 @@ func TestValidation(t *testing.T) {
 			name: "ok",
 			input: []string{
 				"hello",
-				strings.Repeat("a", 60), // long... alpha
-				"dashboards.grafana.app",
+				strings.Repeat("a", 128), // long... alpha
+				"dashboard.grafana.app",
 				"prometheus-datasource",
 				"1234", // just a numbers
 				"aaa",
@@ -151,7 +153,7 @@ func TestValidation(t *testing.T) {
 		}, {
 			name: "bad input",
 			expect: []string{
-				"group must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'dashboards.grafana.app',  or 'grafana-loki-datasource', regex used for validation is '^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$')",
+				"group must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'dashboard.grafana.app',  or 'grafana-loki-datasource', regex used for validation is '^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$')",
 			},
 			input: []string{
 				"_bad_input", // starts with non-alpha
@@ -228,4 +230,18 @@ func TestValidation(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestIsReservedName(t *testing.T) {
+	for _, name := range []string{"search", "TRASH", "History", "QuErY"} {
+		require.Equal(t, []string{"name is reserved"}, validation.IsReservedName(name), "input: %s", name)
+	}
+
+	for _, name := range []string{"hello", "trash-old", "searching", "my.query", ""} {
+		require.Nil(t, validation.IsReservedName(name), "input: %s", name)
+	}
+
+	// Reserved names have to stay valid so data already saved under them can
+	// still be read, moved or deleted.
+	require.Nil(t, validation.IsValidGrafanaName("trash"))
 }

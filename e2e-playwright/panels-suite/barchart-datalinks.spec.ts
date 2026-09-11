@@ -2,17 +2,23 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { getUPlotCenterPosition } from './barchart-utils';
 
-const DASHBOARD_UID = 'panel-tests-barchart';
+const DASHBOARD_UID = 'ea33320b-bd97-4fe1-a27c-24bc61a48b41';
 
 test.use({
   viewport: { width: 1280, height: 2000 },
+  // The gdev dashboard is dashboard.grafana.app/v2; panels-suite defaults dashboardNewLayouts off,
+  // which renders v2 dashboards via the legacy path where tooltip actions don't wire up. Enable it
+  // so the configured action button renders.
+  featureToggles: {
+    dashboardNewLayouts: true,
+  },
 });
 
 test.describe('Panels test: BarChart data links', { tag: ['@panels', '@barchart'] }, () => {
   test('shows data links in pinned tooltip', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '5' }),
+      queryParams: new URLSearchParams({ editPanel: '12' }),
     });
 
     // wait for chart to render

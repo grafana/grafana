@@ -1,6 +1,6 @@
 import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
-import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 import { type Label } from '../matchers/types';
 import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
@@ -8,7 +8,7 @@ import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
 import { type Route, type RouteWithID } from './types';
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
-export type InheritableKeys = typeof INHERITABLE_KEYS;
+type InheritableKeys = typeof INHERITABLE_KEYS;
 export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
 // Represents matching information for a single route in the traversal path

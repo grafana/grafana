@@ -1,20 +1,29 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import {
+  clearButtonStyles,
+  ClipboardButton,
+  Icon,
+  Tooltip,
+  useElementSelection,
+  usePointerDistance,
+  useStyles2,
+} from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { useSoloPanelContext } from '../SoloPanelContext';
 import { SectionVariableControls } from '../VariableControls';
+import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
@@ -30,6 +39,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     key,
     repeatSourceKey,
   } = model.useState();
+  const contentId = useId();
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
@@ -45,7 +55,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
-  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
   const rowVariablesSet = model.state.$variables;
 
   const myIndex = rows.findIndex((row) => row === model);
@@ -57,6 +66,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+  const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
 
@@ -139,6 +149,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               className={cx(styles.rowHeader, 'dashboard-row-header')}
               onMouseEnter={isSelectable ? onHeaderEnter : undefined}
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+              data-dashboard-element-key={key}
+              data-dashboard-element-type="row"
               {...dragProvided.dragHandleProps}
             >
               <button
@@ -147,6 +159,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   onClearSelection?.();
                 }}
                 className={cx(clearStyles, styles.rowTitleButton)}
+                aria-expanded={!isCollapsed}
+                aria-controls={contentId}
                 aria-label={
                   isCollapsed
                     ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
@@ -158,12 +172,25 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
+              {!isEditing && (
+                <ClipboardButton
+                  icon="link"
+                  size="sm"
+                  fill="text"
+                  variant="secondary"
+                  className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
+                  aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                  tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                  getText={() => model.getUrl()}
+                />
+              )}
+              {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
           {!isCollapsed && (
-            <div>
-              {sectionVariablesEnabled && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+            <div className={styles.rowLayoutWrapper} id={contentId}>
+              {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
               <layout.Component model={layout} />
             </div>
           )}
@@ -181,15 +208,20 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
       marginBottom: theme.spacing(1),
 
       '& .dashboard-row-header-drag-handle': css({
         opacity: 0,
+        // Keep the drag handle at the far right now that the header is left-aligned.
+        marginLeft: 'auto',
 
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: 'opacity 0.25s',
         },
+      }),
+      '& .layout-indicator': css({
+        display: 'none',
       }),
 
       '&:hover': css({
@@ -207,6 +239,17 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
       gap: theme.spacing(1),
     }),
+    copyLinkButton: css({
+      opacity: 0,
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.25s',
+      },
+
+      '&:focus-visible': {
+        opacity: 1,
+      },
+    }),
     rowTitle: css({
       display: 'flex',
       alignItems: 'center',
@@ -217,7 +260,8 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '100%',
-      flexGrow: 1,
+      flexGrow: 0,
+      flexShrink: 1,
       minWidth: 0,
     }),
     rowTitleHidden: css({
@@ -253,6 +297,15 @@ function getStyles(theme: GrafanaTheme2) {
       },
       // Re-enable for the specific nested row being hovered
       '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+      // Reveal this row's layout indicator when hovering or focusing anywhere on the row
+      '&:hover > .dashboard-row-header .layout-indicator, &:focus-within > .dashboard-row-header .layout-indicator': {
+        display: 'inline-block',
+      },
+      // Reveal this row's copy link button when hovering anywhere on the row
+      // (child selector so hovering an outer row does not reveal nested rows' buttons)
+      '&:hover > .dashboard-row-header .dashboard-row-header-copy-link': {
         opacity: 1,
       },
     }),
@@ -297,6 +350,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       paddingLeft: theme.spacing(1),
+    }),
+    rowLayoutWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      minHeight: 0,
+      height: '100%',
     }),
   };
 }

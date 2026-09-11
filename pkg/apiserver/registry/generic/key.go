@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/validation/path"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -130,7 +130,7 @@ func NamespaceKeyFunc(gr schema.GroupResource) func(ctx context.Context, name st
 		if len(name) == 0 {
 			return "", apierrors.NewBadRequest("Name parameter required.")
 		}
-		if msgs := path.IsValidPathSegmentName(name); len(msgs) != 0 {
+		if msgs := content.IsPathSegmentName(name); len(msgs) != 0 {
 			return "", apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(msgs, ";")))
 		}
 		key := &Key{
@@ -150,7 +150,7 @@ func ClusterScopedKeyFunc(gr schema.GroupResource) func(ctx context.Context, nam
 		if len(name) == 0 {
 			return "", apierrors.NewBadRequest("Name parameter required.")
 		}
-		if msgs := path.IsValidPathSegmentName(name); len(msgs) != 0 {
+		if msgs := content.IsPathSegmentName(name); len(msgs) != 0 {
 			return "", apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(msgs, ";")))
 		}
 		key := &Key{
@@ -168,7 +168,7 @@ func NoNamespaceKeyFunc(ctx context.Context, prefix string, gr schema.GroupResou
 	if len(name) == 0 {
 		return "", apierrors.NewBadRequest("Name parameter required.")
 	}
-	if msgs := path.IsValidPathSegmentName(name); len(msgs) != 0 {
+	if msgs := content.IsPathSegmentName(name); len(msgs) != 0 {
 		return "", apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(msgs, ";")))
 	}
 	key := &Key{

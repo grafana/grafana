@@ -71,7 +71,6 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 
 	for refId, graphiteReq := range graphiteQueries {
 		_, span := tracing.DefaultTracer().Start(ctx, "graphite query")
-		defer span.End()
 		targetStr := strings.Join(graphiteReq.formData["target"], ",")
 		span.SetAttributes(
 			attribute.String("refId", refId),
@@ -88,6 +87,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
+			span.End()
 			result.Responses[refId] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
 			return result, nil
 		}
@@ -103,11 +103,13 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
+			span.End()
 			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
 			return result, nil
 		}
 
 		frames = append(frames, queryFrames...)
+		span.End()
 	}
 
 	for _, f := range frames {
@@ -248,15 +250,24 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 }
 
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, backend.DownstreamError(err)
-	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
+
+	// Bound the /render response so a large or adversarial upstream body cannot
+	// force unbounded heap allocation. Read one extra byte to distinguish a
+	// body that exactly fills the cap from one that overflows it.
+	maxBytes := s.caps.renderResponse()
+	body, err := io.ReadAll(io.LimitReader(res.Body, maxBytes+1))
+	if err != nil {
+		return nil, backend.DownstreamError(err)
+	}
+	if int64(len(body)) > maxBytes {
+		s.logger.Error("Graphite /render response exceeded the configured cap", "max_bytes", maxBytes)
+		return nil, backend.DownstreamError(fmt.Errorf("response from Graphite /render exceeded %d bytes", maxBytes))
+	}
 
 	if res.StatusCode/100 != 2 {
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))

@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	grafanaAlertmanagerConfigPath    = "/api/v1/grafana/config"
-	grafanaAlertmanagerReceiversPath = "/api/v1/grafana/receivers"
+	grafanaAlertmanagerConfigPath       = "/api/v1/grafana/config"
+	grafanaAlertmanagerConfigStatusPath = "/api/v1/grafana/config/status"
+	grafanaAlertmanagerReceiversPath    = "/api/v1/grafana/receivers"
 )
 
 type GrafanaAlertmanagerConfig struct {
@@ -41,6 +42,30 @@ type UserGrafanaConfig struct {
 	ExternalURL               string                    `json:"external_url"`
 	SmtpConfig                SmtpConfig                `json:"smtp_config"`
 	RuntimeConfig             RuntimeConfig             `json:"runtime_config"`
+}
+
+type GrafanaAlertmanagerConfigStatus struct {
+	Hash      string `json:"configuration_hash"`
+	CreatedAt int64  `json:"created"`
+}
+
+func (mc *Mimir) GetGrafanaAlertmanagerConfigStatus(ctx context.Context) (*GrafanaAlertmanagerConfigStatus, error) {
+	status := &GrafanaAlertmanagerConfigStatus{}
+	response := successResponse{
+		Data: status,
+	}
+	// nolint:bodyclose
+	// closed within `do`
+	_, err := mc.do(ctx, grafanaAlertmanagerConfigStatusPath, http.MethodGet, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
+	}
+
+	return status, nil
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {

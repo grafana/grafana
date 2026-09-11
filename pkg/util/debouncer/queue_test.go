@@ -3,7 +3,7 @@ package debouncer
 import (
 	"context"
 	"errors"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"testing"
 	"time"
@@ -69,8 +69,6 @@ func TestQueueConcurrency(t *testing.T) {
 	const writeConcurrency = 50
 	const readConcurrency = 25
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
 	totalWrittenSum := atomic.NewInt64(0)
 	totalReadSum := atomic.NewInt64(0)
 	addCalls := atomic.NewInt64(0)
@@ -78,25 +76,20 @@ func TestQueueConcurrency(t *testing.T) {
 
 	// We will add some numbers to the queue.
 	writesWG := sync.WaitGroup{}
-	for i := 0; i < writeConcurrency; i++ {
-		writesWG.Add(1)
-		go func() {
-			defer writesWG.Done()
-			for j := 0; j < numbers; j++ {
-				v := r.Int63n(100) // Generate small number, so that we have a chance for combining some numbers.
+	for range writeConcurrency {
+		writesWG.Go(func() {
+			for range numbers {
+				v := rand.Int64N(100) // Generate small number, so that we have a chance for combining some numbers.
 				q.Add(v)
 				addCalls.Inc()
 				totalWrittenSum.Add(v)
 			}
-		}()
+		})
 	}
 
 	readsWG := sync.WaitGroup{}
-	for i := 0; i < readConcurrency; i++ {
-		readsWG.Add(1)
-		go func() {
-			defer readsWG.Done()
-
+	for range readConcurrency {
+		readsWG.Go(func() {
 			for {
 				v, err := q.Next(context.Background())
 				if errors.Is(err, ErrClosed) {
@@ -107,7 +100,7 @@ func TestQueueConcurrency(t *testing.T) {
 				nextCalls.Inc()
 				totalReadSum.Add(v)
 			}
-		}()
+		})
 	}
 
 	writesWG.Wait()
@@ -130,12 +123,10 @@ func TestQueueCloseUnblocksReaders(t *testing.T) {
 	})
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		time.Sleep(50 * time.Millisecond)
 		q.Close()
-	}()
+	})
 
 	_, err := q.Next(context.Background())
 	require.ErrorIs(t, err, ErrClosed)

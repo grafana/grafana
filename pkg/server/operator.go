@@ -1,8 +1,11 @@
 package server
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/urfave/cli/v2"
@@ -15,13 +18,14 @@ type OperatorDependencies struct {
 	Config         *setting.Cfg
 	Registerer     prometheus.Registerer
 	HealthNotifier *HealthNotifier
+	Tracer         tracing.Tracer
 }
 
 // Operator represents an app operator that is available in the Grafana binary
 type Operator struct {
 	Name        string
 	Description string
-	RunFunc     func(deps OperatorDependencies) error
+	RunFunc     func(ctx context.Context, deps OperatorDependencies) error
 }
 
 var operatorsRegistry []Operator

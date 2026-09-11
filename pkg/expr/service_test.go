@@ -33,7 +33,7 @@ import (
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{new(2.0)}),
 	)
 
 	resp := map[string]backend.DataResponse{
@@ -71,12 +71,15 @@ func TestService(t *testing.T) {
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("B", data.Labels{"test": "label"}, []*float64{fp(4)}))
+		data.NewField("B", data.Labels{"test": "label"}, []*float64{new(4.0)}))
 	bDF.RefID = "B"
 	bDF.SetMeta(&data.FrameMeta{
 		Type:        data.FrameTypeTimeSeriesMulti,
 		TypeVersion: data.FrameTypeVersion{0, 1},
 	})
+
+	// The service labels each result's frames with its refID, so A's frame is returned as "A".
+	dsDF.RefID = "A"
 
 	expect := &backend.QueryDataResponse{
 		Responses: backend.Responses{
@@ -147,7 +150,7 @@ func TestDSQueryError(t *testing.T) {
 	require.ErrorContains(t, res.Responses["A"].Error, "womp womp")
 	require.ErrorAs(t, res.Responses["B"].Error, &utilErr)
 	require.ErrorIs(t, utilErr, DependencyError)
-	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
+	require.Equal(t, new(42.0), res.Responses["C"].Frames[0].Fields[0].At(0))
 }
 
 func TestParseError(t *testing.T) {
@@ -235,10 +238,6 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 	}
 }
 
-func fp(f float64) *float64 {
-	return &f
-}
-
 type mockEndpoint struct {
 	Responses map[string]backend.DataResponse
 }
@@ -296,7 +295,7 @@ func newMockQueryServiceWithMetricsRegistry(
 func TestTransformDataDegradedPipeline(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{new(2.0)}),
 	)
 
 	t.Run("returns partial results for broken expressions", func(t *testing.T) {
@@ -409,7 +408,7 @@ func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{new(2.0)}),
 	)
 
 	me := &mockEndpoint{

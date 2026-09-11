@@ -39,7 +39,7 @@ export interface DataSourceSrv {
   /**
    * Reloads the DataSourceSrv
    */
-  reload(): void;
+  reload(): Promise<void>;
 
   /**
    * Registers a runtime data source. Make sure your data source uid is unique.

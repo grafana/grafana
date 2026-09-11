@@ -1,26 +1,32 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
+import { InspectTab } from 'app/features/inspector/types';
 
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
-  context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
-  dashboard.subscribeToState((state) => {
-    if (state.editPanel) {
-      context.app = CoreApp.PanelEditor;
-    } else {
-      context.app = CoreApp.Dashboard;
-    }
+  // Read on access. The panel context is built once and cached on the VizPanel, but deactivating the
+  // dashboard clears its event bus, so a subscription here would be dropped and never re-established.
+  Object.defineProperty(context, 'app', {
+    enumerable: true,
+    configurable: true,
+    get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
   context.canAddAnnotations = () => {
@@ -70,7 +76,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await annotationServer().save(anno);
+    await annotationServer().save(anno, getCurrentScopeNames(vizPanel));
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -92,7 +98,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await annotationServer().update(anno);
+    await annotationServer().update(anno, getCurrentScopeNames(vizPanel));
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -120,14 +126,14 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
     // we need to resolve it to a full datasource
     if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      const datasourceToLoad = await getDataSourceInstance(datasource);
       datasource = {
         uid: datasourceToLoad.uid,
         type: datasourceToLoad.type,
       };
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    const filterVar = await getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
@@ -176,14 +182,22 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
     // we need to resolve it to a full datasource
     if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      const datasourceToLoad = await getDataSourceInstance(datasource);
       datasource = {
         uid: datasourceToLoad.uid,
         type: datasourceToLoad.type,
       };
     }
-    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    const filterVar = await getAdHocFilterVariableFor(dashboard, datasource);
     bulkUpdateAdHocFiltersVariable(filterVar, items);
+
+    if (items.length > 0) {
+      const isFilterOut = items.every((item) => item.operator === FILTER_OUT_OPERATOR);
+      reportInteraction(
+        isFilterOut ? 'grafana_unified_drilldown_tooltip_filter_out' : 'grafana_unified_drilldown_tooltip_filter_for',
+        { filtersCount: items.length }
+      );
+    }
   };
 
   context.canExecuteActions = () => {
@@ -196,6 +210,22 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
   };
+
+  // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
+  // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
+  // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  if (isNewPanelQueryErrorsUIEnabled()) {
+    context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+  }
+}
+
+/**
+ * Reads the current scope names from the scene graph so they can be persisted alongside
+ * a manually created/updated annotation, mirroring how `SceneQueryRunner` propagates
+ * `request.scopes` to panel queries.
+ */
+function getCurrentScopeNames(sceneObject: VizPanel): string[] {
+  return sceneGraph.getScopes(sceneObject)?.map((scope) => scope.metadata.name) ?? [];
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {
@@ -250,7 +280,13 @@ function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | n
   return null;
 }
 
-export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+export async function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  // Resolve plugin meta before scanning so no await sits between the read and the
+  // setState write. Overlapping "Filter for value" actions would otherwise both
+  // miss the existing-variable scan and append a second Filters variable.
+  const pluginId = ds?.type ?? (await getDataSourceInstanceSettings(ds))?.type ?? '';
+  const supportsMultiValueOperators = Boolean((await getDatasourcePluginMeta(pluginId))?.multiValueFilterOperators);
+
   const variables = sceneGraph.getVariables(scene);
 
   for (const variable of variables.state.variables) {
@@ -265,7 +301,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
-    supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
+    supportsMultiValueOperators,
     useQueriesAsFilterForOptions: true,
   });
 
@@ -286,14 +322,17 @@ function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilt
   let hasChanges = false;
 
   for (const newFilter of newFilters) {
-    const filterToReplaceIndex = updatedFilters.findIndex(
-      (filter) =>
-        filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+    const existingFilterIndex = updatedFilters.findIndex(
+      (filter) => filter.key === newFilter.key && filter.value === newFilter.value
     );
 
-    if (filterToReplaceIndex >= 0) {
-      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
-      hasChanges = true;
+    if (existingFilterIndex >= 0) {
+      // An identical filter is already applied, adding it again would duplicate it in the filter bar.
+      // Update is only required when the operator changed (key1 = value1 -> key1 != value1).
+      if (updatedFilters[existingFilterIndex].operator !== newFilter.operator) {
+        updatedFilters.splice(existingFilterIndex, 1, newFilter);
+        hasChanges = true;
+      }
       continue;
     }
 

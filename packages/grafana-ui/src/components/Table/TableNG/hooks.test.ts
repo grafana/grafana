@@ -6,6 +6,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 import { TABLE } from './constants';
 import {
   useFilteredRows,
+  useNestedColWidths,
   usePaginatedRows,
   useSortedRows,
   useHeaderHeight,
@@ -13,6 +14,8 @@ import {
   useReducerEntries,
   useManagedSort,
   useNestedRows,
+  useColWidths,
+  useRowCompiler,
 } from './hooks';
 import { type TableRow } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
@@ -205,7 +208,10 @@ describe('TableNG hooks', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(
+        frame.fields.map((f) => f.name),
+        'nested'
+      );
       const rows = frameToRecords(frame);
       const { result } = renderHook(() =>
         useSortedRows(rows, frame.fields, fields, {
@@ -252,7 +258,8 @@ describe('TableNG hooks', () => {
     });
 
     it('should handle pagination correctly', () => {
-      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total:
+      // (60 - pagination chrome 38) / rowHeight 10 = 2.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
@@ -326,7 +333,10 @@ describe('TableNG hooks', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(
+        frame.fields.map((f) => f.name),
+        'nested'
+      );
       const rows = frameToRecords(frame);
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
@@ -376,6 +386,136 @@ describe('TableNG hooks', () => {
       expect(result.current.pageRangeEnd).toBe(5);
       expect(result.current.rowsPerPage).toBe(2);
     });
+
+    it('should use pageSize for rowsPerPage instead of deriving it from the panel height', () => {
+      // height alone would fit all 3 rows on one page ((300 - 38) / 10 = 26 rows); pageSize must win.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 300,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 2,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.numPages).toBe(2);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.rows.length).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].__index).toBe(2);
+    });
+
+    it('reserves an extra margin under the controls when the panel has no padding of its own', () => {
+      // The pager only needs a bottom margin when the panel has dropped its padding, and that margin
+      // comes out of the row area: (58 - 38) / 10 = 2 rows with the panel's padding in place, and
+      // (58 - 46) / 10 = 1 without it.
+      const { rows } = setupData();
+      const options = {
+        enabled: true,
+        height: 58,
+        width: 800,
+        rowHeight: 10,
+        headerHeight: 0,
+        footerHeight: 0,
+      };
+
+      const { result: withPanelPadding } = renderHook(() => usePaginatedRows(rows, options));
+      expect(withPanelPadding.current.rowsPerPage).toBe(2);
+
+      const { result: withoutPanelPadding } = renderHook(() =>
+        usePaginatedRows(rows, { ...options, noPanelPadding: true })
+      );
+      expect(withoutPanelPadding.current.rowsPerPage).toBe(1);
+    });
+
+    it('should fall back to the height-derived page size when pageSize is not a positive number', () => {
+      // (60 - pagination chrome 38) / 10 = 2 rows per page from height; pageSize: 0 must not
+      // override that.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 60,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 0,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.numPages).toBe(2);
+    });
+
+    it('should clamp a fractional pageSize in (0, 1) to one row per page instead of flooring to 0', () => {
+      // pageSize 0.5 is positive but floors to 0; without a guard that yields numPages = Infinity and crashes Pagination.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 300,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 0.5,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(1);
+      expect(result.current.numPages).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+    });
+
+    it('should clamp the page to the last valid page when pageSize grows and drops the page count', () => {
+      // 3 rows. pageSize 1 -> 3 pages (indices 0..2); land on the last page.
+      const { rows } = setupData();
+      const { result, rerender } = renderHook(
+        ({ pageSize }) =>
+          usePaginatedRows(rows, {
+            enabled: true,
+            height: 300,
+            width: 800,
+            rowHeight: 10,
+            headerHeight: 0,
+            footerHeight: 0,
+            pageSize,
+          }),
+        { initialProps: { pageSize: 1 } }
+      );
+
+      expect(result.current.numPages).toBe(3);
+
+      act(() => {
+        result.current.setPage(2);
+      });
+      expect(result.current.page).toBe(2);
+
+      // pageSize 2 -> 2 pages (indices 0..1). page 2 now overflows and must snap to the last valid page,
+      // rather than sitting on an empty page with a broken range summary.
+      rerender({ pageSize: 2 });
+
+      expect(result.current.numPages).toBe(2);
+      expect(result.current.page).toBe(1);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].__index).toBe(2);
+    });
   });
 
   describe('useNestedRows', () => {
@@ -388,7 +528,10 @@ describe('TableNG hooks', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(
+        frame.fields.map((f) => f.name),
+        'nested'
+      );
       const parentRows = frameToRecords(frame);
       const { result } = renderHook(() =>
         useNestedRows(
@@ -400,7 +543,17 @@ describe('TableNG hooks', () => {
           []
         )
       );
-      expect(result.current).toMatchSnapshot();
+      expect(result.current[0].raw[0].name).toBe('Alice');
+      expect(result.current[0].raw[0].age).toBe(30);
+      expect(result.current[0].raw[0].active).toBe(true);
+
+      expect(result.current[0].raw[1].name).toBe('Bob');
+      expect(result.current[0].raw[1].age).toBe(25);
+      expect(result.current[0].raw[1].active).toBe(false);
+
+      expect(result.current[0].raw[2].name).toBe('Charlie');
+      expect(result.current[0].raw[2].age).toBe(35);
+      expect(result.current[0].raw[2].active).toBe(true);
     });
 
     it('should apply sorting and filtering', () => {
@@ -412,7 +565,10 @@ describe('TableNG hooks', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(
+        frame.fields.map((f) => f.name),
+        'nested'
+      );
 
       // parentIndex must be set on the filter entry — this is how the UI always scopes filters
       // for nested tables. Without it the filter is silently skipped (regression test).
@@ -445,7 +601,6 @@ describe('TableNG hooks', () => {
           columnWidths: [],
           enabled: false,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(0);
@@ -459,7 +614,6 @@ describe('TableNG hooks', () => {
           columnWidths: [],
           enabled: true,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
@@ -488,7 +642,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
-          sortColumns: [],
         });
       });
 
@@ -523,12 +676,13 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65,
+      // floor - 1 = 64.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 64, modifiedFields[0], -1, 22);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -554,12 +708,12 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21, floor - 1 = 20.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 20, modifiedFields[0], -1, 22);
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
@@ -570,7 +724,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100, 100],
           enabled: true,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
@@ -607,7 +760,10 @@ describe('TableNG hooks', () => {
       it('returns 0 if the parent row is not expanded', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
-        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const frameToRecords = compileFrameToRecords(
+          frame.fields.map((f) => f.name),
+          'nested'
+        );
         const nestedRows = frameToRecords(frame);
 
         expect(
@@ -639,7 +795,10 @@ describe('TableNG hooks', () => {
       it('returns a static height if there are no rows in the nested frame', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
-        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const frameToRecords = compileFrameToRecords(
+          frame.fields.map((f) => f.name),
+          'nested'
+        );
         const nestedRows = frameToRecords(frame);
 
         expect(
@@ -672,10 +831,83 @@ describe('TableNG hooks', () => {
         ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2);
       });
 
+      it('includes nestedFooterHeight in expanded row height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const defaultHeight = 40;
+        const nestedFooterHeight = 34; // equivalent to 1 reducer: LINE_HEIGHT + CELL_PADDING * 2
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight,
+              defaultNestedHeight: defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [3],
+              nestedFooterHeight,
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __index: 0, __depth: 1, data: frame });
+          }).result.current
+          // 3 nested rows + header + footer + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
+      });
+
+      it('includes nestedFooterHeight in the no-data expanded row height', () => {
+        const { fields } = setupData();
+        const frame = createDataFrame({ fields });
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
+        const nestedRows = frameToRecords(frame);
+        const nestedFooterHeight = 34;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              nestedData: [frame],
+              fields: [
+                { name: 'id', type: FieldType.string, values: ['1'], config: {} },
+                { name: 'nested', type: FieldType.nestedFrames, values: [frame], config: {} },
+              ],
+              columnWidths: [100],
+              defaultHeight: 40,
+              defaultNestedHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
+              nestedFields: fields,
+              nestedColWidths: [100, 100, 100],
+              visibleNestedRowCounts: [0],
+              nestedFooterHeight,
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __depth: 1, data: undefined, __index: 0 });
+          }).result.current
+        ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight);
+      });
+
       it('calculates the height to return using default height', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
-        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
         const nestedRows = frameToRecords(frame);
         const defaultHeight = 40;
 
@@ -706,13 +938,14 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + padding + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
-        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
         const nestedRows = frameToRecords(frame);
         const defaultNonNestedHeight = 60;
         const defaultNestedHeight = 40;
@@ -744,13 +977,14 @@ describe('TableNG hooks', () => {
             });
           }).result.current
           // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + 16);
+        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
-        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
         const nestedRows = frameToRecords(frame);
 
         expect(
@@ -778,7 +1012,8 @@ describe('TableNG hooks', () => {
       it('removes the header if configured', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields, meta: { custom: { noHeader: true } } });
-        const frameToRecords = compileFrameToRecords(frame, 'nested');
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
         const nestedRecords = frameToRecords(frame);
         const defaultHeight = 40;
 
@@ -884,7 +1119,8 @@ describe('TableNG hooks', () => {
       it('adjusts the width of the columns based on the cell padding and border', () => {
         fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
         const frame = createDataFrame({ fields: fieldsWithWrappedText });
-        const frameToRecords = compileFrameToRecords(frame);
+        const fieldNames = frame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(fieldNames, 'nested');
         rows = frameToRecords(frame);
 
         const measureHeightFn = jest.fn(() => 40);
@@ -931,10 +1167,12 @@ describe('TableNG hooks', () => {
             },
           ],
         });
-        const frameToRecords = compileFrameToRecords(topFrame, 'nested');
+        const topFrameFieldNames = topFrame.fields.map((f) => f.name);
+        const frameToRecords = compileFrameToRecords(topFrameFieldNames, 'nested');
         rows = frameToRecords(topFrame);
         const nestedFrame = createDataFrame({ fields: fieldsWithWrappedText });
-        const nestedFrameToRecords = compileFrameToRecords(nestedFrame, 'nested');
+        const nestedFrameFieldNames = nestedFrame.fields.map((f) => f.name);
+        const nestedFrameToRecords = compileFrameToRecords(nestedFrameFieldNames, 'nested');
         const nestedRows = nestedFrameToRecords(nestedFrame, 0);
 
         const measureHeightFn = jest.fn(() => 40);
@@ -995,7 +1233,8 @@ describe('TableNG hooks', () => {
           ],
         });
         const nestedFrame = createDataFrame({ fields: nestedFieldsWithTime });
-        const nestedFrameToRecords = compileFrameToRecords(nestedFrame, 'nested');
+        const fieldNames = nestedFrame.fields.map((f) => f.name);
+        const nestedFrameToRecords = compileFrameToRecords(fieldNames, 'nested');
         const nestedRows = nestedFrameToRecords(nestedFrame, 0);
 
         const measureHeightFn = jest.fn(() => 40);
@@ -1170,6 +1409,324 @@ describe('TableNG hooks', () => {
         [reducerId, '3'],
         [ReducerID.first, '30 years'],
       ]);
+    });
+  });
+
+  describe('useNestedColWidths', () => {
+    function makeFields(names: string[], width = 100): Field[] {
+      return names.map((name) => ({
+        name,
+        type: FieldType.string,
+        config: { custom: { width } },
+        values: [],
+      }));
+    }
+
+    it('initializes nestedFieldWidths and nestedColWidths from schema', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));
+
+      expect(result.current.nestedFieldWidths).toEqual([100, 100]);
+      expect(result.current.nestedColWidths.get('a')).toEqual({ type: 'resized', width: 100 });
+      expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 100 });
+    });
+
+    it('re-flows auto (unconfigured) column widths when the panel width changes', () => {
+      const fields: Field[] = ['a', 'b'].map((name) => ({ name, type: FieldType.string, config: {}, values: [] }));
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      const before = [...result.current.nestedFieldWidths];
+      rerender({ availableWidth: 600 });
+      const after = result.current.nestedFieldWidths;
+
+      // widening the panel widens the auto-sized nested columns (previously they stayed put until a
+      // structure change, so they ignored panel resize).
+      expect(after[0]).toBeGreaterThan(before[0]);
+      expect(after[1]).toBeGreaterThan(before[1]);
+    });
+
+    it('preserves a manual nested resize across a panel resize before it persists to config', () => {
+      const fields = makeFields(['a', 'b']); // configured width 100 each
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      // user drags column 'a' — local widths update immediately; config persists later on pointer-up.
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(new Map([['a', { type: 'resized', width: 250 }]]));
+      });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
+
+      // a panel resize lands before the drag persists — it must not overwrite the in-progress resize.
+      rerender({ availableWidth: 600 });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
+    });
+
+    it('handleNestedColumnWidthsChange updates nestedFieldWidths and nestedColWidths', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));
+
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 150 }],
+          ])
+        );
+      });
+
+      expect(result.current.nestedFieldWidths).toEqual([200, 150]);
+      expect(result.current.nestedColWidths.get('a')).toEqual({ type: 'resized', width: 200 });
+      expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 150 });
+    });
+
+    it('handleNestedColumnWidthsChange preserves existing width for missing columns', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));
+
+      act(() => {
+        // only update 'a', leave 'b' absent from the map
+        result.current.handleNestedColumnWidthsChange(new Map([['a', { type: 'resized', width: 250 }]]));
+      });
+
+      expect(result.current.nestedFieldWidths).toEqual([250, 100]);
+    });
+
+    it('resets to schema widths when field schema changes', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ nestedVisibleFields, structureRev }: { nestedVisibleFields: Field[]; structureRev: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth: 300, structureRev }),
+        { initialProps: { nestedVisibleFields: fields, structureRev: 1 } }
+      );
+
+      // simulate a user drag
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 200 }],
+          ])
+        );
+      });
+      expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+
+      // now the field schema changes (different configured width) — structureRev bumped to signal the change
+      const newFields = makeFields(['a', 'b'], 120);
+      rerender({ nestedVisibleFields: newFields, structureRev: 2 });
+
+      expect(result.current.nestedFieldWidths).toEqual([120, 120]);
+    });
+
+    it('resets when a new field is added', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ nestedVisibleFields, structureRev }: { nestedVisibleFields: Field[]; structureRev: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth: 300, structureRev }),
+        { initialProps: { nestedVisibleFields: fields, structureRev: 1 } }
+      );
+
+      // simulate a user drag on the original columns
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 200 }],
+          ])
+        );
+      });
+
+      const fieldsWithExtra = makeFields(['a', 'b', 'c']);
+      rerender({ nestedVisibleFields: fieldsWithExtra, structureRev: 2 });
+
+      expect(result.current.nestedFieldWidths).toHaveLength(3);
+      expect(result.current.nestedFieldWidths).toEqual([100, 100, 100]);
+    });
+
+    it('does not reset on re-render if schema is unchanged (stable between drags)', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ nestedVisibleFields, availableWidth }: { nestedVisibleFields: Field[]; availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields, availableWidth }),
+        { initialProps: { nestedVisibleFields: fields, availableWidth: 300 } }
+      );
+
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(
+          new Map([
+            ['a', { type: 'resized', width: 200 }],
+            ['b', { type: 'resized', width: 200 }],
+          ])
+        );
+      });
+      expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+
+      // rerender with same fields reference — state must be preserved
+      rerender({ nestedVisibleFields: fields, availableWidth: 300 });
+
+      expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+    });
+  });
+
+  describe('useColWidths', () => {
+    function makeFields(names: string[]): Field[] {
+      return names.map((name) => ({
+        name,
+        type: FieldType.string,
+        config: {},
+        values: [],
+      }));
+    }
+
+    it('recomputes widths when reset key changes without new field objects', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ resetKey }: { resetKey?: symbol }) => useColWidths(fields, 600, undefined, resetKey),
+        { initialProps: { resetKey: undefined as symbol | undefined } }
+      );
+
+      expect(result.current[0]).toEqual([300, 300]);
+
+      fields[0].config.custom = { width: 100 };
+      rerender({ resetKey: Symbol() });
+      expect(result.current[0]).toEqual([100, 500]);
+
+      fields[0].config.custom = {};
+      rerender({ resetKey: Symbol() });
+
+      expect(result.current[0]).toEqual([300, 300]);
+    });
+  });
+
+  describe('useRowCompiler', () => {
+    it('returns a converter that maps a frame to rows with column getters and metadata', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.number, values: [1, 2] },
+          { name: 'value', type: FieldType.string, values: ['a', 'b'] },
+        ],
+      });
+
+      const { result } = renderHook(() => useRowCompiler(frame));
+      const rows = result.current(frame);
+
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 'a' });
+      expect(rows[1]).toMatchObject({ __depth: 0, __index: 1, time: 2, value: 'b' });
+    });
+
+    it('resolves column keys from the display name rather than the raw field name', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'raw', type: FieldType.number, values: [1] }],
+      });
+      // getDisplayName reads field.state.displayName; set it directly since
+      // createDataFrame does not derive it from config here.
+      frame.fields[0].state = { displayName: 'Display' };
+
+      const { result } = renderHook(() => useRowCompiler(frame));
+      const rows = result.current(frame);
+
+      expect(rows[0].Display).toBe(1);
+    });
+
+    it('emits an expander placeholder row for non-empty nested frames and hides the nested column', () => {
+      const child = createDataFrame({
+        fields: [{ name: 'inner', type: FieldType.number, values: [10] }],
+      });
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['x', 'y'] },
+          { name: 'nested', type: FieldType.nestedFrames, values: [[child], undefined] },
+        ],
+      });
+
+      const { result } = renderHook(() => useRowCompiler(frame, 'nested'));
+      const rows = result.current(frame);
+
+      // 'x' has a nested frame -> data row + expander placeholder; 'y' has none -> data row only.
+      expect(rows).toHaveLength(3);
+      expect(rows[0]).toMatchObject({ __depth: 0, __index: 0, id: 'x' });
+      expect(rows[1]).toMatchObject({ __depth: 1, __index: 0 });
+      expect(rows[2]).toMatchObject({ __depth: 0, __index: 1, id: 'y' });
+      // the nested-frames column is not exposed as a data key.
+      expect(rows[0].nested).toBeUndefined();
+    });
+
+    it('tags rows with __parentIndex when a nested row index is passed to the converter', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1, 2] }],
+      });
+
+      const { result } = renderHook(() => useRowCompiler(frame));
+      const rows = result.current(frame, 7);
+
+      expect(rows[0].__parentIndex).toBe(7);
+      expect(rows[1].__parentIndex).toBe(7);
+    });
+
+    it('returns a stable converter across re-renders when field names are unchanged', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+      });
+
+      const { result, rerender } = renderHook(() => useRowCompiler(frame));
+      const first = result.current;
+      rerender();
+
+      expect(result.current).toBe(first);
+    });
+
+    it('keeps the same converter when the frame identity changes but field names do not', () => {
+      const makeFrame = () => createDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [1] }] });
+
+      const { result, rerender } = renderHook(({ frame }) => useRowCompiler(frame), {
+        initialProps: { frame: makeFrame() },
+      });
+      const first = result.current;
+
+      rerender({ frame: makeFrame() });
+
+      expect(result.current).toBe(first);
+    });
+
+    it('returns a new converter when the field display names change', () => {
+      const frameA = createDataFrame({
+        fields: [{ name: 'a', type: FieldType.number, values: [1] }],
+      });
+      const frameB = createDataFrame({
+        fields: [{ name: 'b', type: FieldType.number, values: [1] }],
+      });
+
+      const { result, rerender } = renderHook(({ frame }) => useRowCompiler(frame), {
+        initialProps: { frame: frameA },
+      });
+      const first = result.current;
+
+      rerender({ frame: frameB });
+
+      expect(result.current).not.toBe(first);
+    });
+
+    it('returns a new converter when nestedFramesFieldName changes', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+      });
+
+      const { result, rerender } = renderHook(
+        ({ nestedName }: { nestedName?: string }) => useRowCompiler(frame, nestedName),
+        { initialProps: { nestedName: undefined as string | undefined } }
+      );
+      const first = result.current;
+
+      rerender({ nestedName: 'nested' });
+
+      expect(result.current).not.toBe(first);
     });
   });
 });

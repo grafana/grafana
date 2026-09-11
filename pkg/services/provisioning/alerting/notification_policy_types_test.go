@@ -13,6 +13,7 @@ import (
 
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 func TestNotificationPolicy(t *testing.T) {
@@ -63,7 +64,7 @@ func TestNotificationPolicyExportSnapshots(t *testing.T) {
 					assert.NoError(t, policy.Policy.Validate())
 
 					cOpt := cmpopts.IgnoreUnexported(apimodels.Route{}, labels.Matcher{})
-					if !cmp.Equal(policy.Policy, *expected, cOpt) {
+					if !cmp.Equal(policy.Policy, *notifier.RouteToAPI(expected), cOpt) {
 						assert.Fail(t, fmt.Sprintf("Not equal: \nexpected: %#v\nactual  : %#v\n\nDiff:\n%s",
 							*expected, policy.Policy, cmp.Diff(policy.Policy, *expected, cOpt)))
 					}

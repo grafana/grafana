@@ -5,6 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
@@ -43,6 +44,7 @@ const MemoizedCell = memo(function Cell(props: CellProps) {
           }}
           role="button"
           tabIndex={0}
+          data-testid={selectors.components.ResourcePicker.card}
         >
           {card.imgUrl.endsWith('.svg') ? (
             <SanitizedSVG src={card.imgUrl} className={styles.img} />
@@ -108,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingTop: '6px',
     ':hover': {
       borderColor: theme.colors.action.hover,
-      boxShadow: theme.shadows.z2,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z1 : theme.shadows.z2,
     },
   }),
   selected: css({

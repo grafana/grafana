@@ -21,8 +21,8 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean) => {
-  const instanceSettings = createMockInstanceSetttings();
+const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean, cloudName?: string) => {
+  const instanceSettings = createMockInstanceSetttings(cloudName ? { jsonData: { cloudName } } : undefined);
   const azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
   const postResource = jest.fn();
   responses.forEach((res) => {
@@ -659,6 +659,117 @@ describe('AzureMonitor resourcePickerData', () => {
         }
       }
     });
+
+    it('uses US Government regions when cloud is AzureUSGovernment', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+            name: 'vmName',
+            type: 'microsoft.compute/virtualmachines',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'usgovvirginia',
+          },
+        ],
+      };
+      const { resourcePickerData, mockDatasource } = createResourcePickerData(
+        [mockSubscriptionsResponse, mockResponse],
+        false,
+        'govazuremonitor'
+      );
+      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        { resourceUri: '/subscriptions/1' },
+        false,
+        'usgovvirginia'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        { resourceUri: '/subscriptions/1' },
+        false,
+        'usgovarizona'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'westeurope'
+      );
+    });
+
+    it('uses China regions when cloud is AzureChinaCloud', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+            name: 'vmName',
+            type: 'microsoft.compute/virtualmachines',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'chinanorth3',
+          },
+        ],
+      };
+      const { resourcePickerData, mockDatasource } = createResourcePickerData(
+        [mockSubscriptionsResponse, mockResponse],
+        false,
+        'chinaazuremonitor'
+      );
+      await resourcePickerData.search('vmname', 'metrics', emptyFilters);
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        { resourceUri: '/subscriptions/1' },
+        false,
+        'chinanorth3'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        { resourceUri: '/subscriptions/1' },
+        false,
+        'chinaeast3'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'westeurope'
+      );
+    });
+
+    it('falls back to predefined namespaces when a region fetch throws', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+            name: 'vmName',
+            type: 'microsoft.compute/virtualmachines',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const instanceSettings = createMockInstanceSetttings();
+      const azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+      const postResource = jest.fn();
+      [mockSubscriptionsResponse, mockResponse].forEach((res) => {
+        postResource.mockResolvedValueOnce(res);
+      });
+      azureResourceGraphDatasource.postResource = postResource;
+      const mockDatasource = createMockDatasource({ azureResourceGraphDatasource });
+      mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
+        .fn()
+        .mockRejectedValue(new Error('region not available'));
+
+      const resourcePickerData = new ResourcePickerData(
+        instanceSettings,
+        mockDatasource.azureMonitorDatasource,
+        mockDatasource.azureResourceGraphDatasource
+      );
+
+      await expect(resourcePickerData.search('vmname', 'metrics', emptyFilters)).resolves.not.toThrow();
+      const namespaces = resourcePickerData.supportedMetricNamespaces;
+      expect(namespaces.length).toBeGreaterThan(0);
+    });
   });
 
   describe('fetchInitialRows', () => {
@@ -747,6 +858,30 @@ describe('AzureMonitor resourcePickerData', () => {
       });
       expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(1);
       expect(resourcePickerData.getResourcesForResourceGroup).toBeCalledTimes(1);
+    });
+
+    it('fetches resource groups for distinct subscriptions in parallel', async () => {
+      const { resourcePickerData } = createResourcePickerData([createMockARGSubscriptionResponse()]);
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+      resourcePickerData.getResourceGroupsBySubscriptionId = jest.fn().mockImplementation(async (subId: string) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        inFlight--;
+        return [{ id: `rg-${subId}`, uri: `/subscriptions/${subId}/resourceGroups/rg-${subId}` }];
+      });
+      resourcePickerData.getResourcesForResourceGroup = jest.fn().mockResolvedValue([]);
+
+      await resourcePickerData.fetchInitialRows('logs', [
+        { subscription: '1', resourceGroup: 'rg-1', metricNamespace: 'Microsoft.Compute/virtualMachines' },
+        { subscription: '2', resourceGroup: 'rg-2', metricNamespace: 'Microsoft.Compute/virtualMachines' },
+        { subscription: '3', resourceGroup: 'rg-3', metricNamespace: 'Microsoft.Compute/virtualMachines' },
+      ]);
+
+      expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(3);
+      expect(maxInFlight).toBeGreaterThan(1);
     });
   });
 

@@ -34,6 +34,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     ...jest.requireActual('app/features/dashboard-scene/utils/interactions').DashboardInteractions,
     sharingTabChanged: jest.fn(),
   },

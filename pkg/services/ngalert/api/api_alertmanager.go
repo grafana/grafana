@@ -60,16 +60,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return ErrResp(http.StatusInternalServerError, err, "failed to get status for the Alertmanager")
 	}
 
-	if !c.HasRole(org.RoleAdmin) {
-		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
-	}
-
 	return response.JSON(http.StatusOK, status)
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	canSeeAutogen := c.HasRole(org.RoleAdmin)
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen, false)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -152,12 +148,10 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 
 	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.GetOrgID(), confId)
 	if err != nil {
-		var unknownReceiverError notifier.UnknownReceiverError
-		if errors.As(err, &unknownReceiverError) {
+		if unknownReceiverError, ok := errors.AsType[notifier.UnknownReceiverError](err); ok {
 			return ErrResp(http.StatusBadRequest, unknownReceiverError, "")
 		}
-		var configRejectedError notifier.AlertmanagerConfigRejectedError
-		if errors.As(err, &configRejectedError) {
+		if configRejectedError, ok := errors.AsType[notifier.AlertmanagerConfigRejectedError](err); ok {
 			return ErrResp(http.StatusBadRequest, configRejectedError, "")
 		}
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {

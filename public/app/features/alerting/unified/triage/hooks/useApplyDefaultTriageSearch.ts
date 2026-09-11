@@ -12,11 +12,10 @@ import { loadDefaultTriageSavedSearch, trackTriageSavedSearchAutoApply } from '.
 const SESSION_VISITED_KEY = 'grafana.alerting.triagePage.visited';
 
 /**
- * Check if the triage page has active filters, groupBy, or non-default time range.
+ * Check if the triage page has active filters (including groupBy entries) or non-default time range.
  *
  * This uses the URL parameters to determine if filters are active:
- * - var-filters: Ad-hoc filters
- * - var-groupBy: Group by selection
+ * - var-filters: Ad-hoc filters and groupBy selections (unified into one param)
  *
  * Time range (from/to) is not considered when checking for active filters,
  * since the default time range is always applied.
@@ -31,11 +30,8 @@ function hasActiveTriageFilters(): boolean {
 
   const params = new URLSearchParams(currentState);
 
-  // Check for filters or groupBy - these indicate user has active selections
-  const hasFilters = params.has('var-filters');
-  const hasGroupBy = params.has('var-groupBy') && params.get('var-groupBy') !== '';
-
-  return hasFilters || hasGroupBy;
+  // var-filters contains both regular filters and groupBy entries (key|groupBy format)
+  return params.has('var-filters');
 }
 
 /**

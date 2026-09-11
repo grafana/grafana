@@ -24,7 +24,7 @@ const mockTransformationInfo: DataTransformerInfo = {
 const mockRegistryItem: TransformerRegistryItem = {
   id: 'test-transform',
   name: 'Test Transform',
-  transformation: mockTransformationInfo,
+  transformation: () => Promise.resolve(mockTransformationInfo),
   editor: () => null,
   imageDark: '',
   imageLight: '',

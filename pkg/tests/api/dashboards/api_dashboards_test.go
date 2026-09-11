@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,11 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -48,6 +49,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous:     true,
 		UnifiedStorageConfig: unifiedConfig,
+		EnableFeatureToggles: []string{featuremgmt.FlagDashboardApiSearchFieldValueResults},
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -75,6 +77,40 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
 	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
 	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
+
+	t.Run("searches dashboards and folders with field-value results", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			u := fmt.Sprintf("http://admin:admin@%s/api/search?query=Saved", grafanaListedAddr)
+			resp, err := http.Get(u) // nolint:gosec
+			if !assert.NoError(collect, err) {
+				return
+			}
+			defer resp.Body.Close() // nolint:errcheck
+			if !assert.Equal(collect, http.StatusOK, resp.StatusCode) {
+				return
+			}
+
+			var results model.HitList
+			if !assert.NoError(collect, json.NewDecoder(resp.Body).Decode(&results)) {
+				return
+			}
+			byUID := make(map[string]*model.Hit, len(results))
+			for _, hit := range results {
+				byUID[hit.UID] = hit
+			}
+			if assert.Contains(collect, byUID, savedFolder.UID) {
+				assert.Equal(collect, model.DashHitFolder, byUID[savedFolder.UID].Type)
+				assert.NotZero(collect, byUID[savedFolder.UID].ID)
+			}
+			if assert.Contains(collect, byUID, savedDashInFolder.UID) {
+				assert.Equal(collect, savedFolder.UID, byUID[savedDashInFolder.UID].FolderUID)
+				assert.NotZero(collect, byUID[savedDashInFolder.UID].ID)
+			}
+			if assert.Contains(collect, byUID, savedDashInGeneralFolder.UID) {
+				assert.NotZero(collect, byUID[savedDashInGeneralFolder.UID].ID)
+			}
+		}, 10*time.Second, 25*time.Millisecond)
+	})
 
 	t.Run("When saving a dashboard with non-existing id in org A", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
@@ -226,46 +262,20 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	dashboardWithDuplicatedLegacyAnnotation := "new-uid"
 	t.Run("When saving a dashboard with an already used legacy ID", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   dashboardWithDuplicatedLegacyAnnotation,
+				"uid":   "new-uid",
 				"title": "Updated title",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
-	})
-
-	t.Run("When updating a dashboard with legacy ID in multiple dashboards", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
-				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   savedDashInGeneralFolder.UID,
-				"title": "Updated title",
-			},
-			"folderUid": savedDashInFolder.FolderUID,
-			"overwrite": true,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		err = resp.Body.Close()
-		require.NoError(t, err)
-		// Delete the dashboard with duplicated legacy ID annotation
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, dashboardWithDuplicatedLegacyAnnotation)
-		req, err := http.NewRequest("DELETE", u, nil)
-		require.NoError(t, err)
-		resp, err = http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		err = resp.Body.Close()
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("When updating a dashboard already using that uid", func(t *testing.T) {
@@ -415,7 +425,7 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
 	provDashboardsCfg := filepath.Join(provDashboardsDir, "dev.yaml")
-	blob := []byte(fmt.Sprintf(`
+	blob := fmt.Appendf(nil, `
 apiVersion: 1
 
 providers:
@@ -423,13 +433,13 @@ providers:
   type: file
   allowUiUpdates: false
   options:
-   path: %s`, provDashboardsDir))
+   path: %s`, provDashboardsDir)
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
 	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
-	err = os.WriteFile(provDashboardFile, input, 0644)
+	err = os.WriteFile(provDashboardFile, input, 0644) // #nosec G703 -- test writes to caller-provided temp dir
 	require.NoError(t, err)
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
@@ -712,10 +722,6 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	return f
 }
 
-func intPtr(n int) *int {
-	return &n
-}
-
 func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -723,7 +729,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
-	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
+	schemaVersions := []*int{new(1), new(36), new(40), nil}
 	for _, schemaVersion := range schemaVersions {
 		var title string
 		if schemaVersion == nil {

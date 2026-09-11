@@ -13,11 +13,13 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
       value={{
         openDrawer: jest.fn(),
         closeDrawer: jest.fn(),
+        clearCloseGuard: jest.fn(),
         isDrawerOpen: false,
         renderSavedQueryButtons: jest.fn(),
         renderQueryLibraryEditingHeader: jest.fn(),
         queryLibraryEnabled: Boolean(props.queryLibraryEnabled),
         context: 'explore',
+        setContext: jest.fn(),
         triggerAnalyticsEvent: jest.fn(),
         setNewQuery: jest.fn(),
         onSelectQuery: jest.fn(),
@@ -37,6 +39,7 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         setCloseGuard: jest.fn(),
         templateVariableOverrides: {},
         setTemplateVariableOverrides: jest.fn(),
+        openedToSaveQuery: false,
       }}
     >
       {props.children}

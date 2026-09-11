@@ -104,3 +104,12 @@ func RequestStatusFromProtoQueryDataResponse(res *pluginv2.QueryDataResponse, er
 
 	return status
 }
+
+// RequestStatusFromHTTPStatus maps an HTTP status code to a RequestStatus.
+// It returns RequestStatusError for 4xx and 5xx codes, otherwise RequestStatusOK.
+func RequestStatusFromHTTPStatus(statusCode int) RequestStatus {
+	if statusCode >= 400 {
+		return RequestStatusError
+	}
+	return RequestStatusOK
+}

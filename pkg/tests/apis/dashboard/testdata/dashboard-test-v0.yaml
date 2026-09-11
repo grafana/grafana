@@ -6,3 +6,6 @@ spec:
   title: Test dashboard. Created at v0
   uid: test-v0 # will be removed by mutation hook
   version: 1234567 # will be removed by mutation hook
+  tags:
+    - aaa
+    - bbb

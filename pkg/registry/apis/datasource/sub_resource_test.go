@@ -133,11 +133,17 @@ func TestResourceRequest(t *testing.T) {
 			expectedPath: "test",
 			expectedURL:  "test?k1=v1&k2=v2",
 		},
+		{
+			desc:         "forwarded sub path itself contains /resources",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/resources/list",
+			expectedPath: "api/resources/list",
+			expectedURL:  "api/resources/list",
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.url, nil)
-			clonedReq, err := resourceRequest(req)
+			clonedReq, err := resourceRequest(req, "abc")
 
 			if tc.error {
 				require.Error(t, err)
@@ -300,7 +306,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 				handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
 				require.NoError(t, err)
 
-				req := httptest.NewRequest(method, "http://localhost/apis/test/resources/path", nil)
+				req := httptest.NewRequest(method, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
 				recorder := httptest.NewRecorder()
 				handler.ServeHTTP(recorder, req)
 
@@ -333,7 +339,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resources/path", nil)
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 
@@ -371,7 +377,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		require.NoError(t, err)
 
 		requestBody := `{"key": "value", "nested": {"foo": "bar"}}`
-		req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test/resources/path", bytes.NewBufferString(requestBody))
+		req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test/datasources/test-ds/resources/path", bytes.NewBufferString(requestBody))
 
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
@@ -407,7 +413,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resources/path", nil)
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 
@@ -444,7 +450,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resources/api/endpoint?foo=bar&baz=qux", nil)
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/api/endpoint?foo=bar&baz=qux", nil)
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 

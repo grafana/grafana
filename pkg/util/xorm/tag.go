@@ -225,7 +225,7 @@ func ExtendsTagHandler(ctx *tagContext) error {
 	var fieldValue = ctx.fieldValue
 	var isPtr = false
 	switch fieldValue.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		f := fieldValue.Type().Elem()
 		if f.Kind() == reflect.Struct {
 			fieldPtr := fieldValue

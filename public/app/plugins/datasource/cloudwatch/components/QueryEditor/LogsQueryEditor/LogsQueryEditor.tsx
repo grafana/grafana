@@ -29,7 +29,7 @@ const logsModeOptions: Array<SelectableValue<LogsMode>> = [
   { label: 'Log Anomalies', value: LogsMode.Anomalies },
 ];
 
-export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
+const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
   const { query, data, datasource, onChange, extraHeaderElementLeft } = props;
 
   const [isQueryNew, setIsQueryNew] = useState(true);

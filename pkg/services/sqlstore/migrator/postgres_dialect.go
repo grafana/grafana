@@ -183,8 +183,7 @@ func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
 }
 
 func (db *PostgresDialect) isThisError(err error, errcode string) bool {
-	var driverErr *pq.Error
-	if errors.As(err, &driverErr) {
+	if driverErr, ok := errors.AsType[*pq.Error](err); ok {
 		if string(driverErr.Code) == errcode {
 			return true
 		}
@@ -194,8 +193,7 @@ func (db *PostgresDialect) isThisError(err error, errcode string) bool {
 }
 
 func (db *PostgresDialect) ErrorMessage(err error) string {
-	var driverErr *pq.Error
-	if errors.As(err, &driverErr) {
+	if driverErr, ok := errors.AsType[*pq.Error](err); ok {
 		return driverErr.Message
 	}
 	return ""
@@ -263,7 +261,7 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	separatorVar = separator
 	nextPlaceHolder := 1
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if i == count-1 {
 			separatorVar = ""
 		}
@@ -292,6 +290,10 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	)
 
 	return s, nil
+}
+
+func (db *PostgresDialect) SupportsAdvisoryLocks() bool {
+	return true
 }
 
 func (db *PostgresDialect) Lock(cfg LockCfg) error {
@@ -346,7 +348,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 
 func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
-		parsedDSN, err := pq.ParseURL(dsn)
+		parsedDSN, err := pq.ParseURL(dsn) // nolint:staticcheck
 		if err != nil {
 			return "", err
 		}

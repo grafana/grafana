@@ -191,22 +191,6 @@ export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string
 
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
-// 1. gets remote equivalents from the store (if there are any)
-// 2. merges the remote equivalents with the local plugins
-// 3. updates the store with the updated CatalogPlugin objects
-export const addLocalPlugins = createAction<LocalPlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
-
-// 1. gets local equivalents from the store (if there are any)
-// 2. merges the local equivalents with the remote plugins
-// 3. updates the store with the updated CatalogPlugin objects
-export const addRemotePlugins = createAction<RemotePlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
-
-// 1. merges the local and remote plugins
-// 2. updates the store with the CatalogPlugin objects
-export const addLocalAndRemotePlugins = createAction<{ local: LocalPlugin[]; remote: RemotePlugin[] }>(
-  `${STATE_PREFIX}/addLocalPlugins`
-);
-
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<
   Update<CatalogPlugin, string>,

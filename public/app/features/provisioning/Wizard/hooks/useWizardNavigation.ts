@@ -5,6 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { PROVISIONING_URL } from '../../constants';
 import { getWorkflows } from '../../utils/data';
+import { isGitHubBased } from '../../utils/repositoryTypes';
 import { type Step } from '../Stepper';
 import { type RepoType, type StepStatusInfo, type WizardFormData, type WizardStep } from '../types';
 
@@ -83,7 +84,7 @@ export function useWizardNavigation({
         repositoryType: repoType,
         target: syncTarget,
         workflowsEnabled: getWorkflows(formData.repository),
-        ...(repoType === 'github' && { githubAuthType }),
+        ...(isGitHubBased(repoType) && { githubAuthType }),
       });
       // Navigate to repository status page instead of listing page
       const repoName = formData.repositoryName;

@@ -11,7 +11,7 @@ import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
 
-import { type DataLinksActionsTooltipCoords } from './utils';
+import { type DataLinksActionsTooltipCoords } from './cellUtils';
 
 interface Props {
   links: LinkModel[];
@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       maxHeight: `calc(100vh - ${theme.spacing(4)})`,
       overflowX: 'hidden',
       userSelect: 'text',

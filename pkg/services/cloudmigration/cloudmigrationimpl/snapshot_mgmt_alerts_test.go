@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -50,7 +51,7 @@ func TestGetAlertMuteTimings(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, muteTimeIntervals)
 		require.Len(t, muteTimeIntervals, 1)
-		require.Equal(t, createdMuteTiming.Name, muteTimeIntervals[0].Name)
+		require.Equal(t, createdMuteTiming.Title, muteTimeIntervals[0].Name)
 	})
 }
 
@@ -73,7 +74,7 @@ func TestGetNotificationTemplates(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, notificationTemplates)
 		require.Len(t, notificationTemplates, 1)
-		require.Equal(t, createdTemplate.Name, notificationTemplates[0].Name)
+		require.Equal(t, createdTemplate.Title, notificationTemplates[0].Name)
 	})
 }
 
@@ -152,12 +153,12 @@ func TestGetNotificationPolicies(t *testing.T) {
 		}}
 
 		muteTiming := createMuteTiming(t, ctx, s, user)
-		require.NotEmpty(t, muteTiming.Name)
+		require.NotEmpty(t, muteTiming.Title)
 
 		contactPoints := createContactPoints(t, ctx, s, user)
 		require.GreaterOrEqual(t, len(contactPoints), 1)
 
-		updateNotificationPolicyTree(t, ctx, s, user, contactPoints[0].Name, muteTiming.Name)
+		updateNotificationPolicyTree(t, ctx, s, user, contactPoints[0].Name, muteTiming.Title)
 
 		notificationPolicies, err := s.getNotificationPolicies(ctx, user)
 		require.NoError(t, err)
@@ -295,7 +296,7 @@ func TestGetAlertRuleGroups(t *testing.T) {
 	})
 }
 
-func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.MuteTimeInterval {
+func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) v1.TimeInterval {
 	t.Helper()
 
 	muteTiming := `{
@@ -315,18 +316,19 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user 
 	var mt definitions.MuteTimeInterval
 	require.NoError(t, json.Unmarshal([]byte(muteTiming), &mt))
 
-	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, mt, user.GetOrgID())
+	interval := v1.NewTimeInterval(mt.Name, mt.TimeIntervals, models.ProvenanceNone)
+	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, interval, user.GetOrgID())
 	require.NoError(t, err)
 
 	return createdTiming
 }
 
-func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.NotificationTemplate {
+func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) v1.TemplateGroup {
 	t.Helper()
 
-	tmpl := definitions.NotificationTemplate{
-		Name:     "MyTestNotificationTemplate",
-		Template: "This is a test template\n{{ .ExternalURL }}",
+	tmpl := v1.TemplateGroup{
+		Title:   "MyTestNotificationTemplate",
+		Content: "This is a test template\n{{ .ExternalURL }}",
 	}
 
 	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)
@@ -439,7 +441,7 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 		ExecErrState:    models.OkErrState,
 	}
 
-	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, "")
+	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 	require.NoError(t, err)
 
 	return createdRule
@@ -468,7 +470,7 @@ func createAlertRuleGroup(t *testing.T, ctx context.Context, service *Service, u
 		Rules:     rules,
 	}
 
-	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, "", "")
+	err := service.ngAlert.Api.AlertRules.ReplaceRuleGroup(ctx, user, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 	require.NoError(t, err)
 
 	return group

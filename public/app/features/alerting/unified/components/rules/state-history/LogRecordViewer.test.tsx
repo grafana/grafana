@@ -32,7 +32,7 @@ describe('LogRecordViewerByTimestamp', () => {
     expect(entry2).toHaveTextContent('severity=warning');
   });
 
-  it('renders error row only when current state is Error and shows message', () => {
+  it('renders error row when error field is present', () => {
     const ts = 1681739700000;
     const records: LogRecord[] = [
       {
@@ -49,16 +49,22 @@ describe('LogRecordViewerByTimestamp', () => {
           error: 'explicit message',
         },
       },
+      {
+        timestamp: ts,
+        line: { current: 'Alerting (Error)', previous: 'Normal', labels: { foo: 'qux' }, error: 'datasource timeout' },
+      },
     ];
 
     render(<LogRecordViewerByTimestamp records={records} commonLabels={[]} />);
 
     const errorRows = screen.getAllByTestId('state-history-error');
-    expect(errorRows).toHaveLength(2);
+    expect(errorRows).toHaveLength(3);
     expect(within(errorRows[0]).getByText(/Error message:/)).toBeInTheDocument();
     expect(within(errorRows[0]).getByText(/timeout/)).toBeInTheDocument();
     expect(within(errorRows[1]).getByText(/Error message:/)).toBeInTheDocument();
     expect(within(errorRows[1]).getByText(/explicit message/)).toBeInTheDocument();
+    expect(within(errorRows[2]).getByText(/Error message:/)).toBeInTheDocument();
+    expect(within(errorRows[2]).getByText(/datasource timeout/)).toBeInTheDocument();
   });
 
   describe('Numeric Value Formatting', () => {

@@ -29,8 +29,10 @@ export function NotificationHeader({ notification }: NotificationHeaderProps) {
           ·
         </Text>
         <Text variant="bodySmall" color="secondary">
-          {t('alerting.notification-detail.alert-count-inline', '{{count}} alert(s)', {
+          {t('alerting.notification-detail.alert-count-inline', '', {
             count: notification.alertCount,
+            defaultValue_one: '{{count}} alert(s)',
+            defaultValue_other: '{{count}} alert(s)',
           })}
         </Text>
       </Stack>

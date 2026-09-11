@@ -109,6 +109,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteTeamMembersByTeam := func(q *DeleteTeamMembersByTeamCommand) sqltemplate.SQLTemplate {
+		v := newDeleteTeamMembersByTeam(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	createTeamMembersBulk := func(q *CreateTeamMembersBulkCommand) sqltemplate.SQLTemplate {
 		v := newCreateTeamMembersBulk(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -141,6 +147,12 @@ func TestIdentityQueries(t *testing.T) {
 
 	listServiceAccountTokens := func(q *ListServiceAccountTokenQuery) sqltemplate.SQLTemplate {
 		v := newListServiceAccountTokens(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateServiceAccount := func(cmd *UpdateServiceAccountCommand) sqltemplate.SQLTemplate {
+		v := newUpdateServiceAccount(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -189,6 +201,12 @@ func TestIdentityQueries(t *testing.T) {
 
 	deleteServiceAccountToken := func(cmd *DeleteServiceAccountTokenCommand) sqltemplate.SQLTemplate {
 		v := newDeleteServiceAccountToken(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	deleteServiceAccountTokens := func(cmd *deleteServiceAccountTokensCommand) sqltemplate.SQLTemplate {
+		v := newDeleteServiceAccountTokens(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -355,7 +373,7 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
-						External: boolPtr(true),
+						External: new(true),
 					}),
 				},
 				{
@@ -416,6 +434,15 @@ func TestIdentityQueries(t *testing.T) {
 					Data: deleteTeamMembersBulk(&DeleteTeamMembersBulkCommand{
 						OrgID: 1,
 						UIDs:  []string{"team-member-1", "team-member-2", "team-member-3"},
+					}),
+				},
+			},
+			sqlDeleteTeamMembersByTeamQuery: {
+				{
+					Name: "delete_team_members_by_team",
+					Data: deleteTeamMembersByTeam(&DeleteTeamMembersByTeamCommand{
+						OrgID:  1,
+						TeamID: 1,
 					}),
 				},
 			},
@@ -752,6 +779,30 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlUpdateServiceAccountTemplate: {
+				{
+					Name: "update_service_account_basic",
+					Data: updateServiceAccount(&UpdateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Renamed Service Account",
+						Role:       "Editor",
+						IsDisabled: false,
+						OrgID:      1,
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+					}),
+				},
+				{
+					Name: "update_service_account_disabled",
+					Data: updateServiceAccount(&UpdateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Disabled Service Account",
+						Role:       "None",
+						IsDisabled: true,
+						OrgID:      2,
+						Updated:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
+					}),
+				},
+			},
 			sqlUpdateUserTemplate: {
 				{
 					Name: "update_user_basic",
@@ -867,10 +918,15 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlDeleteServiceAccountTokensTemplate: {
+				{
+					Name: "delete_service_account_tokens",
+					Data: deleteServiceAccountTokens(&deleteServiceAccountTokensCommand{
+						OrgID:            1,
+						ServiceAccountID: 42,
+					}),
+				},
+			},
 		},
 	})
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

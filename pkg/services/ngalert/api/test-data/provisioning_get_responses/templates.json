@@ -1,0 +1,17 @@
+[
+ {
+  "name": "templateA",
+  "template": "{{ define \"templateA\" }}A{{ end }}",
+  "version": "56c3bf8694f8bc13"
+ },
+ {
+  "name": "templateB",
+  "template": "{{ define \"templateB\" }}B{{ end }}",
+  "version": "cc7504a0d378ada1"
+ },
+ {
+  "name": "templateC",
+  "template": "{{ define \"templateC\" }}C{{ end }}",
+  "version": "c33db93d456137c7"
+ }
+]

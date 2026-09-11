@@ -1,7 +1,9 @@
 package frontend
 
 import (
+	"context"
 	"embed"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"html/template"
@@ -10,8 +12,11 @@ import (
 	"path/filepath"
 	"syscall"
 
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,7 +33,11 @@ type IndexProvider struct {
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
 	license      licensing.Licensing
-	bootScript   template.JS
+	previewCfg   fswebassets.PreviewAssetsConfig
+
+	// bootScripts is keyed by build directory, read at startup so the per-request
+	// lookup never touches disk.
+	bootScripts map[string]template.JS
 }
 
 type IndexViewData struct {
@@ -39,10 +48,14 @@ type IndexViewData struct {
 	AppTitle  string // TODO: remove and get from request config?
 	AppSubUrl string // TODO: remove and get from request config?
 
-	Settings FSFrontendSettings
+	Settings     FSFrontendSettings
+	FullSettings *dtos.FrontendSettingsDTO // used behind feature flag instead of Settings
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
 	DefaultUser dtos.CurrentUser
+
+	// Set when Assets come from a preview build (see preview_assets.go).
+	PreviewAssetsFolder string
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
@@ -52,33 +65,65 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
+	// Feature flag for selecting the Luxon-backed date-time implementation
+	UseLuxon bool
+
+	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
+	MeticulousAIEnabled                   bool
+	MeticulousAIRecordingToken            string
+	MeticulousAIProductionEnvironmentFlag bool
+
 	BootScript template.JS
 
 	// Feature flag for enabling SRI checks on Grafana assets
 	AssetSriChecksEnabled bool
+
+	// Feature flag for reducing the usage of Bootdata
+	ReduceBootdataAPI bool
+
+	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
+	LegacyAPIMode string
+
+	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
+	OFREPRootUrlEnabled bool
+
+	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
+	// matching <script type>.
+	ESModuleAssetsEnabled bool
 }
 
 // Templates setup.
 var (
-	//go:embed *.html
+	//go:embed index.html
 	templatesFS embed.FS
 
 	// templates
-	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
+	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `index.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewCfg fswebassets.PreviewAssetsConfig) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
 	}
 
-	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
-	if err != nil {
-		bootScriptRaw = []byte{}
-	}
-
 	logger := logging.DefaultLogger.With("logger", "index-provider")
+
+	// Either build may be absent; selecting one that is fails the request, not startup.
+	bootScripts := make(map[string]template.JS, 2)
+	for _, dir := range []string{webassets.BuildDir, webassets.RspackBuildDir} {
+		//nolint:gosec
+		raw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, dir, "boot.js"))
+		if err != nil {
+			logger.Info("no boot script for build directory, skipping", "dir", dir, "err", err)
+			continue
+		}
+		//nolint:gosec
+		bootScripts[dir] = template.JS(raw)
+	}
+	if len(bootScripts) == 0 {
+		return nil, fmt.Errorf("no boot script found under %s", filepath.Join(cfg.StaticRootPath, webassets.BuildDir))
+	}
 
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
@@ -89,8 +134,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
-		//nolint:gosec
-		bootScript: template.JS(bootScriptRaw),
+		previewCfg:   previewCfg,
+		bootScripts:  bootScripts,
 	}, nil
 }
 
@@ -110,7 +155,15 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	buildDir := webassets.ResolveBuildDir(ctx)
+	bootScript, ok := p.bootScripts[buildDir]
+	if !ok {
+		p.log.Error("no boot script for the selected build directory", "dir", buildDir)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	assetsManifest, previewFolder, err := p.resolveAssets(ctx, request, buildDir)
 	if err != nil {
 		p.log.Error("unable to get web assets", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
@@ -124,42 +177,58 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
-	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
+	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
+	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
+	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
+	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
+	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
+	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
-		AppTitle:                   "Grafana",
-		AppSubUrl:                  p.config.AppSubURL,
-		IsDevelopmentEnv:           p.config.Env == setting.Dev,
-		Assets:                     assetsManifest,
-		DefaultUser:                dtos.CurrentUser{},
-		Nonce:                      reqCtx.RequestNonce,
-		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
-		Settings:                   fsSettings,
-		RenderBindingSupported:     renderBindingSupported,
-		AssetSriChecksEnabled:      grafanaAssetSriChecks,
+		AppTitle:                              "Grafana",
+		AppSubUrl:                             p.config.AppSubURL,
+		IsDevelopmentEnv:                      p.config.Env == setting.Dev,
+		Assets:                                assetsManifest,
+		PreviewAssetsFolder:                   previewFolder,
+		DefaultUser:                           dtos.CurrentUser{},
+		Nonce:                                 reqCtx.RequestNonce,
+		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
+		Settings:                              fsSettings,
+		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
+		RenderBindingSupported:                renderBindingSupported,
+		UseLuxon:                              useLuxon,
+		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
+		MeticulousAIEnabled:                   meticulousAIEnabled,
+		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
+		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
+		ReduceBootdataAPI:                     reduceBootdataAPI,
+		BootScript:                            bootScript,
+		LegacyAPIMode:                         legacyAPIMode,
+		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
+		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 
-	if compiledBootScript {
-		data.BootScript = p.bootScript
-		if p.bootScript == "" {
-			p.log.Error("compiledBootScript feature flag enabled but boot.js not found — falling back to inline boot script.")
-		}
-	}
-
-	// TODO -- reevaluate with mt authnz
-	// Check for login_error cookie and set a generic error message.
-	// The backend sets an encrypted cookie on oauth login failures that we can't read
-	// so we just show a generic error if the cookie is present.
+	// Check for login_error cookie. Two writers exist:
+	//  1. OSS HTTPServer writes hex-encoded encrypted values (trySetEncryptedCookie).
+	//  2. The multi-tenant authn-service writes plain-text error messages.
+	// If the value is valid hex, it's the encrypted form and we can't decrypt it here,
+	// so we fall back to the generic OAuthLoginErrorMessage. Otherwise, use the
+	// plain-text value directly.
 	if cookie, err := request.Cookie("login_error"); err == nil && cookie.Value != "" {
 		p.log.Info("request has login_error cookie")
-		// Defaults to a translation key that the frontend will resolve to a localized message
-		data.Settings.LoginError = p.config.OAuthLoginErrorMessage // TODO: get from request config
+		if _, hexErr := hex.DecodeString(cookie.Value); hexErr != nil {
+			data.Settings.LoginError = cookie.Value
+		} else {
+			data.Settings.LoginError = p.config.OAuthLoginErrorMessage
+		}
 
 		cookiePath := "/"
 		if p.config.AppSubURL != "" {
 			cookiePath = data.AppSubUrl
 		}
+		// #nosec G124 -- HttpOnly/Secure/SameSite are explicitly set above
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "login_error",
 			Value:    "",
@@ -184,15 +253,39 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	}
 }
 
+// resolveAssets returns the preview build's assets when a valid preview cookie is
+// present, falling back to the default assets so a stale cookie can't break the page.
+func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request, buildDir string) (dtos.EntryPointAssets, string, error) {
+	// The cookie only takes effect on stacks that have opted in.
+	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
+		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+			if err == nil {
+				p.log.Info("resolved preview assets", "folder", cookie.Value)
+				return assets, cookie.Value, nil
+			}
+			p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
+		}
+	}
+
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, buildDir)
+	return assets, "", err
+}
+
 func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data *IndexViewData) {
 	// Create a dummy struct to pass to the hooks, and then extract the data back out from it
 	legacyIndexViewData := dtos.IndexViewData{
 		Settings: &dtos.FrontendSettingsDTO{
 			BuildInfo: data.Settings.BuildInfo,
+			Licensing: &dtos.FrontendSettingsLicensingDTO{},
 		},
 	}
 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+
+	if data.FullSettings != nil {
+		data.FullSettings.Licensing = legacyIndexViewData.Settings.Licensing
+	}
 }

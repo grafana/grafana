@@ -23,6 +23,16 @@ func (qb *queryBuilder) buildGetQuery(keyPath string) (string, []interface{}) {
 	return query, []interface{}{keyPath}
 }
 
+func (qb *queryBuilder) buildExistsQuery(keyPath string) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"SELECT 1 FROM %s WHERE %s = %s",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"),
+		qb.dialect.Placeholder(1),
+	)
+	return query, []interface{}{keyPath}
+}
+
 // buildKeysQuery generates SELECT query for listing keys
 func (qb *queryBuilder) buildKeysQuery(startKey, endKey string, sortAsc bool, limit int64) (string, []interface{}) {
 	order := "ASC"
@@ -109,16 +119,22 @@ func (qb *queryBuilder) buildBatchGetQuery(keyPaths []string) (string, []interfa
 	argIdx := 1
 
 	for i, kp := range keyPaths {
+		idxPlaceholder := qb.dialect.Placeholder(argIdx)
+		if qb.dialect.Name() == "postgres" {
+			// PostgreSQL otherwise infers the untyped UNION column as text, which
+			// makes the requested indexes sort lexicographically.
+			idxPlaceholder = fmt.Sprintf("CAST(%s AS BIGINT)", idxPlaceholder)
+		}
 		if i == 0 {
 			unionParts = append(unionParts, fmt.Sprintf(
 				"SELECT %s AS idx, %s AS key_path",
-				qb.dialect.Placeholder(argIdx),
+				idxPlaceholder,
 				qb.dialect.Placeholder(argIdx+1),
 			))
 		} else {
 			unionParts = append(unionParts, fmt.Sprintf(
 				"UNION ALL SELECT %s, %s",
-				qb.dialect.Placeholder(argIdx),
+				idxPlaceholder,
 				qb.dialect.Placeholder(argIdx+1),
 			))
 		}

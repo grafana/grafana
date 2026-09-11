@@ -5,6 +5,7 @@ import { ToolbarButton } from '@grafana/ui';
 import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverviewDrawer } from './DashboardFiltersOverviewDrawer';
+import { reportFiltersOverviewInteraction } from './interactions';
 
 interface Props {
   dashboard: DashboardScene;
@@ -15,6 +16,7 @@ export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
   const tooltip = t('dashboards.filters-overview.open', 'Filters overview');
 
   const onClick = () => {
+    reportFiltersOverviewInteraction('opened');
     dashboard.showModal(new DashboardFiltersOverviewDrawer({}));
   };
 

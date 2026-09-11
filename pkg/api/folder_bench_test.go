@@ -46,8 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/star/startest"
+	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -55,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -161,21 +161,21 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
-	db, cfg := sqlstore.InitTestDB(b)
+	db, cfg := sqlstore.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
 	quotaService := quotatest.New(false, nil)
 
-	teamSvc, err := teamimpl.ProvideService(db, cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(b, err)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(b, err)
 
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil,
 	)
 	require.NoError(b, err)
@@ -289,7 +289,7 @@ func setupDB(b testing.TB) benchScenario {
 		signedInUser.Permissions[orgID][folder.ActionFoldersRead] = append(signedInUser.Permissions[orgID][folder.ActionFoldersRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
-		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
+		for j := range LEVEL0_DASHBOARD_NUM {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
@@ -312,12 +312,12 @@ func setupDB(b testing.TB) benchScenario {
 			})
 		}
 
-		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
+		for j := range LEVEL1_FOLDER_NUM {
 			f1, d1 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 
-			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
+			for k := range LEVEL1_DASHBOARD_NUM {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
@@ -340,12 +340,12 @@ func setupDB(b testing.TB) benchScenario {
 				})
 			}
 
-			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
+			for k := range LEVEL2_FOLDER_NUM {
 				f2, d2 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 
-				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
+				for l := range LEVEL2_DASHBOARD_NUM {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
@@ -442,7 +442,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		nil,
 		nil,
 		dualwrite.ProvideTestService(),
-		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
+		serverlock.ProvideService(legacysql.NewDatabaseProvider(sc.db), tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			sc.cfg,
@@ -461,8 +461,8 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
-	starSvc := startest.NewStarServiceFake()
-	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[string]bool)}
+	starClient := starapi.NewMockK8sClients(b)
+	starClient.On("GetStars", mock.Anything).Return([]string{}, nil).Maybe()
 
 	hs := &HTTPServer{
 		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),
@@ -470,7 +470,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starClient, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}

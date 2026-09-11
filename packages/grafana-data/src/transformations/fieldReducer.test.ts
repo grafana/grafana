@@ -1,6 +1,7 @@
 import { difference } from 'lodash';
 
-import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { guessFieldTypeFromValue } from '../dataframe/guessFieldType';
+import { createDataFrame } from '../dataframe/processDataFrame';
 import { NullValueMode } from '../types/data';
 import { type Field, FieldType } from '../types/dataFrame';
 

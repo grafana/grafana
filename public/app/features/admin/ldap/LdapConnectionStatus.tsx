@@ -79,7 +79,7 @@ interface LdapConnectionErrorProps {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
-export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
+const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
   const hasError = ldapConnectionInfo.some((info) => info.error);
   if (!hasError) {
     return null;

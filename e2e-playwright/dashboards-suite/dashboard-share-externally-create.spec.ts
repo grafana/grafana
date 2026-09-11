@@ -2,19 +2,29 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 
 const DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 const DASHBOARD_UID_2 = 'edediimbjhdz4b';
 
-test.skip(
+test.describe(
   'Shared dashboards',
   {
     tag: ['@dashboards'],
   },
   () => {
+    test.beforeEach(async ({ request }) => {
+      const existingResponse = await request.get(`/api/dashboards/uid/${DASHBOARD_UID_2}/public-dashboards`);
+      if (existingResponse.ok()) {
+        const existing = await existingResponse.json();
+        if (existing?.uid) {
+          await request.delete(`/api/dashboards/uid/${DASHBOARD_UID_2}/public-dashboards/${existing.uid}`);
+        }
+      }
+    });
+
     test('Close share externally drawer', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
@@ -45,6 +55,10 @@ test.skip(
       selectors,
       request,
     }) => {
+      // This flow chains several backend round-trips (create, read, disable, read) under a single
+      // test, so give it more headroom than the 30s default to avoid timing out on a loaded runner.
+      test.setTimeout(60_000);
+
       const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID_2 });
 
       // Open share externally drawer
@@ -95,7 +109,7 @@ test.skip(
       ).toBeEnabled();
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareExternally.Creation.willBePublicCheckbox)
-        .click({ force: true });
+        .check({ force: true });
 
       // Create shared dashboard
       const createResponse = page.waitForResponse(
@@ -117,9 +131,13 @@ test.skip(
       let response = await createResponse;
       let publicDashboard = await response.json();
 
-      // Test API access with the created dashboard
-      let apiResponse = await request.get(`/api/public/dashboards/${publicDashboard.accessToken}`);
-      expect(apiResponse.status()).toBe(200);
+      // Test API access with the created dashboard. Poll because the public dashboard read view can
+      // lag slightly behind the create response, which would make a single request flake.
+      await expect
+        .poll(async () => (await request.get(`/api/public/dashboards/${publicDashboard.accessToken}`)).status(), {
+          message: 'public dashboard should become readable after creation',
+        })
+        .toBe(200);
 
       // These elements shouldn't be rendered after creating public dashboard
       await expect(
@@ -182,9 +200,13 @@ test.skip(
 
       publicDashboard = await response.json();
 
-      // Test that API access is now forbidden
-      apiResponse = await request.get(`/api/public/dashboards/${publicDashboard.accessToken}`);
-      expect(apiResponse.status()).toBe(403);
+      // Test that API access is now forbidden. Poll because disabling can take a moment to propagate
+      // to the public dashboard read path.
+      await expect
+        .poll(async () => (await request.get(`/api/public/dashboards/${publicDashboard.accessToken}`)).status(), {
+          message: 'public dashboard should be forbidden after disabling',
+        })
+        .toBe(403);
     });
   }
 );

@@ -321,7 +321,7 @@ func (session *Session) row2Slice(rows *core.Rows, fields []string, bean any) ([
 	}
 
 	scanResults := make([]any, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		var cell any
 		scanResults[i] = &cell
 	}
@@ -425,7 +425,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 
 		if _, ok := fieldValue.Interface().(core.Conversion); ok {
 			if data, err := value2Bytes(&rawValue); err == nil {
-				if fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil() {
+				if fieldValue.Kind() == reflect.Pointer && fieldValue.IsNil() {
 					fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
 				}
 				fieldValue.Interface().(core.Conversion).FromDB(data)
@@ -647,7 +647,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 					}
 				}
 			}
-		case reflect.Ptr:
+		case reflect.Pointer:
 			// !nashtsai! TODO merge duplicated codes above
 			switch fieldType {
 			// following types case matching ptr's native type, therefore assign ptr directly

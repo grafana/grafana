@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAnnotations(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
@@ -202,7 +202,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can batch-insert annotations", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				items[i] = annotations.Item{
 					OrgID: 100,
 					Type:  "batch",
@@ -228,7 +228,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
 			count := 10
 			items := make([]annotations.Item, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				items[i] = annotations.Item{
 					OrgID: 101,
 					Type:  "batch",
@@ -620,6 +620,47 @@ func TestIntegrationAnnotations(t *testing.T) {
 			require.Equal(t, int64(1), result.Tags[1].Count)
 		})
 
+		t.Run("Should filter tags by annotation type", func(t *testing.T) {
+			alertAnnotation := &annotations.Item{
+				OrgID:   1,
+				UserID:  1,
+				AlertID: 1, // alert_id > 0 is what makes a row an alert annotation
+				Text:    "alerting",
+				Epoch:   30,
+				Tags:    []string{"alert-only", "server:server-1"},
+			}
+			require.NoError(t, store.Add(context.Background(), alertAnnotation))
+			t.Cleanup(func() {
+				require.NoError(t, store.Delete(context.Background(),
+					&annotations.DeleteParams{ID: alertAnnotation.ID, OrgID: 1}))
+			})
+
+			byTag := func(query annotations.TagsQuery) map[string]int64 {
+				result, err := store.GetTags(context.Background(), query)
+				require.NoError(t, err)
+				counts := map[string]int64{}
+				for _, tag := range result.Tags {
+					counts[tag.Tag] = tag.Count
+				}
+				return counts
+			}
+
+			alertTags := byTag(annotations.TagsQuery{OrgID: 1, Type: "alert"})
+			assert.Equal(t, int64(1), alertTags["alert-only"])
+			assert.Equal(t, int64(1), alertTags["server:server-1"], "only the alert row contributes")
+			assert.NotContains(t, alertTags, "deploy", "org annotations are excluded")
+
+			userTags := byTag(annotations.TagsQuery{OrgID: 1, Type: "annotation"})
+			assert.NotContains(t, userTags, "alert-only")
+			assert.Contains(t, userTags, "deploy")
+
+			allTags := byTag(annotations.TagsQuery{OrgID: 1})
+			for tag, count := range allTags {
+				assert.Equal(t, count, alertTags[tag]+userTags[tag],
+					"alert and annotation counts should sum to the unfiltered count for %q", tag)
+			}
+		})
+
 		t.Run("Should not find tags in other org", func(t *testing.T) {
 			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 0,
@@ -637,6 +678,30 @@ func TestIntegrationAnnotations(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, result.Tags, 0)
 		})
+
+		t.Run("insertTagsIgnoringConflicts tolerates duplicate annotation_tag rows", func(t *testing.T) {
+			annotation := &annotations.Item{
+				OrgID:  1,
+				UserID: 1,
+				Text:   "test duplicate tags",
+				Epoch:  10,
+				Tags:   []string{"alertname:cpu", "severity:critical"},
+			}
+			err := store.Add(t.Context(), annotation)
+			require.NoError(t, err)
+
+			var existingTags []annotationTag
+			err = sql.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
+				return sess.SQL("SELECT annotation_id, tag_id FROM annotation_tag WHERE annotation_id = ?", annotation.ID).Find(&existingTags)
+			})
+			require.NoError(t, err)
+			require.Len(t, existingTags, 2)
+
+			err = sql.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
+				return store.insertTagsIgnoringConflicts(sess, existingTags)
+			})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -649,7 +714,7 @@ func BenchmarkFindTags_100k(b *testing.B) {
 }
 
 func benchmarkFindTags(b *testing.B, numAnnotations int) {
-	sql := db.InitTestDB(b)
+	sql := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
@@ -662,7 +727,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	newAnnotations := make([]annotations.Item, 0, numAnnotations)
 	newTags := make([]tag.Tag, 0, numAnnotations)
 	newAnnotationTags := make([]annotationTag, 0, numAnnotations)
-	for i := 0; i < numAnnotations; i++ {
+	for i := range numAnnotations {
 		newAnnotations = append(newAnnotations, annotations.Item{
 			ID:          int64(i),
 			OrgID:       1,
@@ -686,7 +751,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		batchSize := 1000
 		numOfBatches := numAnnotations / batchSize
-		for i := 0; i < numOfBatches; i++ {
+		for i := range numOfBatches {
 			_, err := sess.Insert(newAnnotations[i*batchSize : (i+1)*batchSize-1])
 			require.NoError(b, err)
 

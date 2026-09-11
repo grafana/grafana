@@ -1,35 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
-import { type UpdatePrefsCmd } from 'app/api/clients/legacy';
-import { LOCALES } from 'app/core/internationalization/locales';
-
-export interface Props {
-  resourceUri: string;
-  disabled?: boolean;
-  /** @deprecated No used in the new functional component */
-  preferenceType: 'org' | 'team' | 'user';
-  onConfirm?: () => Promise<boolean>;
-}
-
-export type State = UserPreferencesDTO & {
-  isLoading: boolean;
-  isSubmitting: boolean;
-};
 
 export type PrefsState = UserPreferencesDTO;
 
-export const toUpdatePrefsCmd = (state: PrefsState): UpdatePrefsCmd => ({
-  ...state,
-  // generated UpdatePrefsCmd['theme'] is narrower than the actual API; backend accepts any string
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  theme: state.theme as UpdatePrefsCmd['theme'],
-});
-
-export const compareStrings = (() => {
+const compareStrings = (() => {
   let collator: Intl.Collator | undefined;
 
   return (a: string, b: string) => {
@@ -71,24 +49,6 @@ export const getLanguageOptions = (): ComboboxOption[] => {
     ...languageOptions,
   ];
 
-  return options;
-};
-
-export const getRegionalFormatOptions = (): ComboboxOption[] => {
-  const localeOptions = LOCALES.map((v) => ({
-    value: v.code,
-    label: v.name,
-  })).sort((a, b) => {
-    return compareStrings(a.label, b.label);
-  });
-
-  const options = [
-    {
-      value: '',
-      label: t('common.locale.default', 'Default'),
-    },
-    ...localeOptions,
-  ];
   return options;
 };
 

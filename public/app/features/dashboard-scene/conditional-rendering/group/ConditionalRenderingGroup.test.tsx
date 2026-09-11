@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomVariable, SceneVariableSet, ScopesVariable, type SceneVariable } from '@grafana/scenes';
+import { mockComboboxRect } from '@grafana/test-utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -130,7 +130,7 @@ describe('ConditionalRenderingGroupRenderer', () => {
 
   describe('variable name options in the variable condition Combobox', () => {
     beforeAll(() => {
-      comboboxTestSetup();
+      mockComboboxRect();
     });
 
     it('lists only user-defined variables — not system variables — as selectable options', async () => {
@@ -150,6 +150,24 @@ describe('ConditionalRenderingGroupRenderer', () => {
 
       expect(await screen.findByRole('option', { name: 'myVar' })).toBeInTheDocument();
       expect(screen.queryByRole('option', { name: '__scopes' })).not.toBeInTheDocument();
+    });
+
+    it('falls back to the variable name when the variable has no label', async () => {
+      const user = userEvent.setup({ applyAccept: false });
+
+      const condition = ConditionalRenderingVariable.createEmpty('instance');
+      const model = buildSceneWithCondition(
+        [new CustomVariable({ name: 'instance', label: '', query: 'a,b' })],
+        condition
+      );
+
+      render(<ConditionalRenderingGroup.Component model={model} />);
+
+      await user.click(
+        screen.getByTestId(selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection)
+      );
+
+      expect(await screen.findByRole('option', { name: 'instance' })).toBeInTheDocument();
     });
   });
 });

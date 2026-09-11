@@ -6,6 +6,7 @@ import {
   type CreateNotificationqueryNotificationStatus,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -309,8 +310,10 @@ function NotificationStatusGroup({
   const receiverLabel =
     uniqueReceivers.length === 1
       ? uniqueReceivers[0]
-      : t('alerting.instance-details.timeline-n-uniqueReceivers', '{{count}} uniqueReceivers', {
+      : t('alerting.instance-details.timeline-n-uniqueReceivers', '', {
           count: uniqueReceivers.length,
+          defaultValue_one: '{{count}} uniqueReceivers',
+          defaultValue_other: '{{count}} uniqueReceivers',
         });
 
   let deliveryLabel: string | undefined;
@@ -343,6 +346,7 @@ function NotificationStatusGroup({
         type="button"
         aria-expanded={expanded}
         aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
+        data-testid={selectors.pages.Alerting.Triage.notificationToggleButton}
       >
         <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
           <StateTag state={isFiring ? 'bad' : 'good'} size="sm">

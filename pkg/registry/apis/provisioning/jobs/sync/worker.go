@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -42,6 +41,10 @@ type SyncWorker struct {
 	tracer tracing.Tracer
 
 	maxSyncWorkers int
+
+	// maxFileSize caps the size in bytes of files read from the repository
+	// during sync. <=0 disables the check.
+	maxFileSize int64
 }
 
 func NewSyncWorker(
@@ -52,6 +55,7 @@ func NewSyncWorker(
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	maxFileSize int64,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -61,6 +65,7 @@ func NewSyncWorker(
 		metrics:             metrics,
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
+		maxFileSize:         maxFileSize,
 	}
 }
 
@@ -84,11 +89,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	)
 	defer span.End()
 
-	start := time.Now()
 	outcome := utils.ErrorOutcome
 	totalChangesMade := 0
 	defer func() {
-		r.metrics.RecordJob(string(provisioning.JobActionPull), outcome, totalChangesMade, time.Since(start).Seconds())
 		span.SetAttributes(
 			attribute.String("outcome", outcome),
 			attribute.Int("changes_made", totalChangesMade),
@@ -99,6 +102,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	if !ok {
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
 		return tracing.Error(span, err)
+	}
+	if r.maxFileSize > 0 {
+		if m, ok := rw.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(r.maxFileSize)
+		}
 	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)

@@ -19,13 +19,11 @@ export const addTagTypes = [
   'health',
   'folders',
   'permissions',
-  'group_attribute_sync',
   'library_elements',
   'licensing',
   'saml',
   'org',
   'invites',
-  'preferences',
   'orgs',
   'query_history',
   'recording_rules',
@@ -35,6 +33,7 @@ export const addTagTypes = [
   'signing_keys',
   'teams',
   'sync_team_groups',
+  'preferences',
   'signed_in_user',
   'user',
   'users',
@@ -366,6 +365,7 @@ const injectedRtkApi = api
             from: queryArg['from'],
             to: queryArg.to,
             userId: queryArg.userId,
+            userUID: queryArg.userUid,
             alertId: queryArg.alertId,
             alertUID: queryArg.alertUid,
             dashboardId: queryArg.dashboardId,
@@ -886,34 +886,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['folders', 'permissions'],
       }),
-      getMappedGroups: build.query<GetMappedGroupsApiResponse, GetMappedGroupsApiArg>({
-        query: () => ({ url: `/groupsync/groups` }),
-        providesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      deleteGroupMappings: build.mutation<DeleteGroupMappingsApiResponse, DeleteGroupMappingsApiArg>({
-        query: (queryArg) => ({ url: `/groupsync/groups/${queryArg.groupId}`, method: 'DELETE' }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      createGroupMappings: build.mutation<CreateGroupMappingsApiResponse, CreateGroupMappingsApiArg>({
-        query: (queryArg) => ({
-          url: `/groupsync/groups/${queryArg.groupId}`,
-          method: 'POST',
-          body: queryArg.groupAttributes,
-        }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      updateGroupMappings: build.mutation<UpdateGroupMappingsApiResponse, UpdateGroupMappingsApiArg>({
-        query: (queryArg) => ({
-          url: `/groupsync/groups/${queryArg.groupId}`,
-          method: 'PUT',
-          body: queryArg.groupAttributes,
-        }),
-        invalidatesTags: ['group_attribute_sync', 'enterprise'],
-      }),
-      getGroupRoles: build.query<GetGroupRolesApiResponse, GetGroupRolesApiArg>({
-        query: (queryArg) => ({ url: `/groupsync/groups/${queryArg.groupId}/roles` }),
-        providesTags: ['group_attribute_sync', 'enterprise'],
-      }),
       getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
         query: () => ({ url: `/health` }),
         providesTags: ['health'],
@@ -1017,18 +989,6 @@ const injectedRtkApi = api
       revokeInvite: build.mutation<RevokeInviteApiResponse, RevokeInviteApiArg>({
         query: (queryArg) => ({ url: `/org/invites/${queryArg.invitationCode}/revoke`, method: 'DELETE' }),
         invalidatesTags: ['org', 'invites'],
-      }),
-      getOrgPreferences: build.query<GetOrgPreferencesApiResponse, GetOrgPreferencesApiArg>({
-        query: () => ({ url: `/org/preferences` }),
-        providesTags: ['org', 'preferences'],
-      }),
-      patchOrgPreferences: build.mutation<PatchOrgPreferencesApiResponse, PatchOrgPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/org/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
-        invalidatesTags: ['org', 'preferences'],
-      }),
-      updateOrgPreferences: build.mutation<UpdateOrgPreferencesApiResponse, UpdateOrgPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/org/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
-        invalidatesTags: ['org', 'preferences'],
       }),
       getCurrentOrgQuota: build.query<GetCurrentOrgQuotaApiResponse, GetCurrentOrgQuotaApiArg>({
         query: () => ({ url: `/org/quotas` }),
@@ -1584,14 +1544,6 @@ const injectedRtkApi = api
         query: () => ({ url: `/user/email/update` }),
         providesTags: ['user'],
       }),
-      clearHelpFlags: build.query<ClearHelpFlagsApiResponse, ClearHelpFlagsApiArg>({
-        query: () => ({ url: `/user/helpflags/clear` }),
-        providesTags: ['signed_in_user'],
-      }),
-      setHelpFlag: build.mutation<SetHelpFlagApiResponse, SetHelpFlagApiArg>({
-        query: (queryArg) => ({ url: `/user/helpflags/${queryArg.flagId}`, method: 'PUT' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
       getSignedInUserOrgList: build.query<GetSignedInUserOrgListApiResponse, GetSignedInUserOrgListApiArg>({
         query: () => ({ url: `/user/orgs` }),
         providesTags: ['signed_in_user'],
@@ -1600,32 +1552,12 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/user/password`, method: 'PUT', body: queryArg.changeUserPasswordCommand }),
         invalidatesTags: ['signed_in_user'],
       }),
-      getUserPreferences: build.query<GetUserPreferencesApiResponse, GetUserPreferencesApiArg>({
-        query: () => ({ url: `/user/preferences` }),
-        providesTags: ['signed_in_user', 'preferences'],
-      }),
-      patchUserPreferences: build.mutation<PatchUserPreferencesApiResponse, PatchUserPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/user/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
-        invalidatesTags: ['signed_in_user', 'preferences'],
-      }),
-      updateUserPreferences: build.mutation<UpdateUserPreferencesApiResponse, UpdateUserPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/user/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
-        invalidatesTags: ['signed_in_user', 'preferences'],
-      }),
       getUserQuotas: build.query<GetUserQuotasApiResponse, GetUserQuotasApiArg>({
         query: () => ({ url: `/user/quotas` }),
         providesTags: ['quota', 'signed_in_user'],
       }),
       revokeUserAuthToken: build.mutation<RevokeUserAuthTokenApiResponse, RevokeUserAuthTokenApiArg>({
         query: (queryArg) => ({ url: `/user/revoke-auth-token`, method: 'POST', body: queryArg.revokeAuthTokenCmd }),
-        invalidatesTags: ['signed_in_user'],
-      }),
-      unstarDashboardByUid: build.mutation<UnstarDashboardByUidApiResponse, UnstarDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/user/stars/dashboard/uid/${queryArg.dashboardUid}`, method: 'DELETE' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
-      starDashboardByUid: build.mutation<StarDashboardByUidApiResponse, StarDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/user/stars/dashboard/uid/${queryArg.dashboardUid}`, method: 'POST' }),
         invalidatesTags: ['signed_in_user'],
       }),
       getSignedInUserTeamList: build.query<GetSignedInUserTeamListApiResponse, GetSignedInUserTeamListApiArg>({
@@ -1809,7 +1741,7 @@ export type SetRoleAssignmentsApiArg = {
   roleUid: string;
   setRoleAssignmentsCommand: SetRoleAssignmentsCommand;
 };
-export type GetAccessControlStatusApiResponse = /** status 200 (empty) */ Status;
+export type GetAccessControlStatusApiResponse = /** status 200 (empty) */ AccessControlStatus;
 export type GetAccessControlStatusApiArg = void;
 export type ListTeamsRolesApiResponse = /** status 200 (empty) */ {
   [key: string]: RoleDto[];
@@ -2012,6 +1944,8 @@ export type GetAnnotationsApiArg = {
   to?: number;
   /** Limit response to annotations created by specific user. */
   userId?: number;
+  /** Limit response to annotations created by a specific user, identified by UID. */
+  userUid?: string;
   /** Find annotations for a specified alert rule by its ID.
     deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead. */
   alertId?: number;
@@ -2027,7 +1961,10 @@ export type GetAnnotationsApiArg = {
   limit?: number;
   /** Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags. */
   tags?: string[];
-  /** Return alerts or user created annotations */
+  /** Return alerts or user created annotations
+    Description:
+    - `alert`
+    - `annotation` */
   type?: 'alert' | 'annotation';
   /** Match any or all tags */
   matchAny?: boolean;
@@ -2386,29 +2323,33 @@ export type CallDatasourceResourceWithUidApiArg = {
   datasourceProxyRoute: string;
   uid: string;
 };
-export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type GetDataSourceCacheConfigApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
 };
-export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type SetDataSourceCacheConfigApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
-export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type CleanDataSourceCacheApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type CleanDataSourceCacheApiArg = {
   dataSourceUid: string;
 };
-export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type DisableDataSourceCacheApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
 };
-export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type EnableDataSourceCacheApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
@@ -2423,37 +2364,21 @@ export type UpdateFolderPermissionsApiArg = {
   folderUid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type GetMappedGroupsApiResponse = /** status 200 (empty) */ GetGroupsResponse;
-export type GetMappedGroupsApiArg = void;
-export type DeleteGroupMappingsApiResponse =
-  /** status 204 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type DeleteGroupMappingsApiArg = {
-  groupId: string;
-};
-export type CreateGroupMappingsApiResponse = /** status 201 (empty) */ MessageResponse;
-export type CreateGroupMappingsApiArg = {
-  groupId: string;
-  groupAttributes: GroupAttributes;
-};
-export type UpdateGroupMappingsApiResponse = /** status 201 (empty) */ MessageResponse;
-export type UpdateGroupMappingsApiArg = {
-  groupId: string;
-  groupAttributes: GroupAttributes;
-};
-export type GetGroupRolesApiResponse = /** status 200 (empty) */ RoleDto[];
-export type GetGroupRolesApiArg = {
-  groupId: string;
-};
-export type GetHealthApiResponse = /** status 200 healthResponse */ HealthResponse;
+export type GetHealthApiResponse = /** status 200 OK */ HealthResponse;
 export type GetHealthApiArg = void;
 export type GetLibraryElementsApiResponse =
   /** status 200 (empty) */ LibraryElementSearchResponseIsAResponseStructForLibraryElementSearchResult;
 export type GetLibraryElementsApiArg = {
   /** Part of the name or description searched for. */
   searchString?: string;
-  /** Kind of element to search for. */
+  /** Kind of element to search for.
+    Description:
+    - 1 - library panels */
   kind?: 1;
-  /** Sort order of elements. */
+  /** Sort order of elements.
+    Description:
+    - alpha-asc: ascending
+    - alpha-desc: descending */
   sortDirection?: 'alpha-asc' | 'alpha-desc';
   /** A comma separated list of types to filter the elements by */
   typeFilter?: string;
@@ -2500,7 +2425,7 @@ export type GetLibraryElementConnectionsApiResponse =
 export type GetLibraryElementConnectionsApiArg = {
   libraryElementUid: string;
 };
-export type GetStatusApiResponse = unknown;
+export type GetStatusApiResponse = /** status 200 (empty) */ boolean;
 export type GetStatusApiArg = void;
 export type RefreshLicenseStatsApiResponse = /** status 200 (empty) */ ActiveUserStats;
 export type RefreshLicenseStatsApiArg = void;
@@ -2514,7 +2439,7 @@ export type PostLicenseTokenApiResponse = /** status 200 (empty) */ Token;
 export type PostLicenseTokenApiArg = {
   deleteTokenCommand: DeleteTokenCommand;
 };
-export type PostRenewLicenseTokenApiResponse = unknown;
+export type PostRenewLicenseTokenApiResponse = /** status 200 (empty) */ boolean;
 export type PostRenewLicenseTokenApiArg = {
   body: object;
 };
@@ -2543,18 +2468,6 @@ export type RevokeInviteApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RevokeInviteApiArg = {
   invitationCode: string;
-};
-export type GetOrgPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
-export type GetOrgPreferencesApiArg = void;
-export type PatchOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchOrgPreferencesApiArg = {
-  patchPrefsCmd: PatchPrefsCmd;
-};
-export type UpdateOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateOrgPreferencesApiArg = {
-  updatePrefsCmd: UpdatePrefsCmd;
 };
 export type GetCurrentOrgQuotaApiResponse = /** status 200 (empty) */ QuotaDto[];
 export type GetCurrentOrgQuotaApiArg = void;
@@ -2814,7 +2727,10 @@ export type SearchApiArg = {
   query?: string;
   /** List of tags to search for */
   tag?: string[];
-  /** Type to search for, dash-folder or dash-db */
+  /** Type to search for, dash-folder or dash-db
+    Description:
+    - `dash-folder` - Search for folder
+    - `dash-db` - Seatch for dashboard */
   type?: 'dash-folder' | 'dash-db';
   /** List of dashboard id’s to search for
     This is deprecated: users should use the `dashboardUIDs` query parameter instead */
@@ -2823,7 +2739,9 @@ export type SearchApiArg = {
   dashboardUiDs?: string[];
   /** List of folder id’s to search in for dashboards
     If it's `0` then it will query for the top level folders
-    This is deprecated: users should use the `folderUIDs` query parameter instead */
+    This is deprecated: users should use the `folderUIDs` query parameter instead
+    
+    Deprecated: use FolderUIDs instead */
   folderIds?: number[];
   /** List of folder UID’s to search in for dashboards
     If it's an empty string then it will query for the top level folders */
@@ -2931,7 +2849,7 @@ export type DeleteDashboardSnapshotApiResponse =
 export type DeleteDashboardSnapshotApiArg = {
   key: string;
 };
-export type GetDashboardSnapshotApiResponse = unknown;
+export type GetDashboardSnapshotApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type GetDashboardSnapshotApiArg = {
   key: string;
 };
@@ -3049,18 +2967,6 @@ export type GetUserAuthTokensApiResponse = /** status 200 (empty) */ UserToken[]
 export type GetUserAuthTokensApiArg = void;
 export type UpdateUserEmailApiResponse = unknown;
 export type UpdateUserEmailApiArg = void;
-export type ClearHelpFlagsApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type ClearHelpFlagsApiArg = void;
-export type SetHelpFlagApiResponse = /** status 200 (empty) */ {
-  helpFlags1?: number;
-  message?: string;
-};
-export type SetHelpFlagApiArg = {
-  flagId: string;
-};
 export type GetSignedInUserOrgListApiResponse = /** status 200 (empty) */ UserOrgDto[];
 export type GetSignedInUserOrgListApiArg = void;
 export type ChangeUserPasswordApiResponse =
@@ -3069,34 +2975,12 @@ export type ChangeUserPasswordApiArg = {
   /** To change the email, name, login, theme, provide another one. */
   changeUserPasswordCommand: ChangeUserPasswordCommand;
 };
-export type GetUserPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
-export type GetUserPreferencesApiArg = void;
-export type PatchUserPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchUserPreferencesApiArg = {
-  patchPrefsCmd: PatchPrefsCmd;
-};
-export type UpdateUserPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateUserPreferencesApiArg = {
-  updatePrefsCmd: UpdatePrefsCmd;
-};
 export type GetUserQuotasApiResponse = /** status 200 (empty) */ QuotaDto[];
 export type GetUserQuotasApiArg = void;
 export type RevokeUserAuthTokenApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RevokeUserAuthTokenApiArg = {
   revokeAuthTokenCmd: RevokeAuthTokenCmd;
-};
-export type UnstarDashboardByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UnstarDashboardByUidApiArg = {
-  dashboardUid: string;
-};
-export type StarDashboardByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type StarDashboardByUidApiArg = {
-  dashboardUid: string;
 };
 export type GetSignedInUserTeamListApiResponse = /** status 200 (empty) */ TeamDto[];
 export type GetSignedInUserTeamListApiArg = void;
@@ -3316,7 +3200,9 @@ export type SetRoleAssignmentsCommand = {
   teams?: number[];
   users?: number[];
 };
-export type Status = number;
+export type AccessControlStatus = {
+  enabled?: boolean;
+};
 export type RolesSearchQuery = {
   includeHidden?: boolean;
   orgId?: number;
@@ -4265,6 +4151,7 @@ export type FrameIsAColumnarDataStructureWhereEachColumnIsAField = {
   RefID?: string;
 };
 export type FramesIsASliceOfFramePointers = FrameIsAColumnarDataStructureWhereEachColumnIsAField[];
+export type Status = number;
 export type DataResponseContainsTheResultsFromADataQuery = {
   /** Error is a property to be set if the corresponding DataQuery has an error. */
   Error?: string;
@@ -4290,29 +4177,15 @@ export type MetricRequest = {
   /** To End time in epoch timestamps in milliseconds or relative using Grafana time units. */
   to: string;
 };
-export type PermissionType = number;
+export type DashboardaccessPermissionType = number;
 export type DashboardAclUpdateItem = {
-  permission?: PermissionType;
+  permission?: DashboardaccessPermissionType;
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   teamId?: number;
   userId?: number;
 };
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
-};
-export type Group = {
-  groupID?: string;
-  mappings?: any;
-};
-export type GetGroupsResponse = {
-  groups?: Group[];
-  total?: number;
-};
-export type MessageResponse = {
-  message?: string;
-};
-export type GroupAttributes = {
-  roles?: string[];
 };
 export type HealthResponse = {
   apiserver?: string;
@@ -4343,7 +4216,7 @@ export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   id?: number;
   kind?: number;
   meta?: LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto;
-  model?: object;
+  model?: any;
   name?: string;
   orgId?: number;
   schemaVersion?: number;
@@ -4372,7 +4245,7 @@ export type CreateLibraryElementCommand = {
   folderUid?: string;
   /** Kind of element to create, Use 1 for library panels or 2 for c.
     Description:
-    1 - library panels */
+    - 1 - library panels */
   kind?: 1;
   /** The JSON model for the library element. */
   model?: object;
@@ -4392,10 +4265,10 @@ export type PatchLibraryElementCommand = {
   folderUid?: string;
   /** Kind of element to create, Use 1 for library panels or 2 for c.
     Description:
-    1 - library panels */
+    - 1 - library panels */
   kind?: 1;
   /** The JSON model for the library element. */
-  model?: object;
+  model?: any;
   /** Name of the library element. */
   name?: string;
   uid?: string;
@@ -4497,62 +4370,6 @@ export type AddInviteForm = {
   name?: string;
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
-};
-export type PreferencesNavbarPreference = {
-  bookmarkUrls?: string[];
-};
-export type PreferencesQueryHistoryPreference = {
-  /** one of: '' | 'query' | 'starred'; */
-  homeTab?: string;
-};
-export type PreferencesSpec = {
-  /** UID for the home dashboard */
-  homeDashboardUID?: string;
-  /** Selected language (beta) */
-  language?: string;
-  navbar?: PreferencesNavbarPreference;
-  queryHistory?: PreferencesQueryHistoryPreference;
-  /** Selected locale (beta) */
-  regionalFormat?: string;
-  /** light, dark, empty is default */
-  theme?: string;
-  /** The timezone selection
-    TODO: this should use the timezone defined in common */
-  timezone?: string;
-  /** day of the week (sunday, monday, etc) */
-  weekStart?: string;
-};
-export type NavbarPreference = {
-  bookmarkUrls?: string[];
-};
-export type QueryHistoryPreference = {
-  homeTab?: string;
-};
-export type PatchPrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
-  homeDashboardUID?: string;
-  language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
-  theme?: 'light' | 'dark';
-  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
-  timezone?: string;
-  weekStart?: string;
-};
-export type UpdatePrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
-  homeDashboardUID?: string;
-  language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
-  regionalFormat?: string;
-  theme?: 'light' | 'dark' | 'system';
-  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
-  timezone?: string;
-  weekStart?: string;
 };
 export type OrgUserDto = {
   accessControl?: {
@@ -4765,7 +4582,7 @@ export type ReportTimeRange = {
 };
 export type ReportDashboard = {
   dashboard?: ReportDashboardId;
-  reportVariables?: object;
+  reportVariables?: any;
   timeRange?: ReportTimeRange;
 };
 export type Type = string;
@@ -4788,6 +4605,10 @@ export type ReportSchedule = {
   workdaysOnly?: boolean;
 };
 export type State = string;
+export type ReportUrlItem = {
+  title?: string;
+  url?: string;
+};
 export type Report = {
   created?: string;
   dashboards?: ReportDashboard[];
@@ -4807,6 +4628,7 @@ export type Report = {
   subject?: string;
   uid?: string;
   updated?: string;
+  urls?: ReportUrlItem[];
   userId?: number;
 };
 export type CreateOrUpdateReport = {
@@ -4823,6 +4645,7 @@ export type CreateOrUpdateReport = {
   schedule?: ReportSchedule;
   state?: State;
   subject?: string;
+  urls?: ReportUrlItem[];
 };
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */
@@ -4973,6 +4796,7 @@ export type AttributeTypeAndValue = {
   Value?: any;
 };
 export type Name = {
+  CommonName?: string;
   Country?: string[];
   /** ExtraNames contains attributes to be copied, raw, into any marshaled
     distinguished names. Values override any attributes with the same OID.
@@ -4984,6 +4808,10 @@ export type Name = {
     by this package. When marshaling to RDNSequences, the Names field is
     ignored, see ExtraNames. */
   Names?: AttributeTypeAndValue[];
+  Organization?: string[];
+  OrganizationalUnit?: string[];
+  PostalCode?: string[];
+  Province?: string[];
   SerialNumber?: string;
   StreetAddress?: string[];
 };
@@ -5085,6 +4913,7 @@ export type ACertificateRepresentsAnX509Certificate = {
     maximum path length of zero. Otherwise, that combination is
     interpreted as MaxPathLen not being set. */
   MaxPathLenZero?: boolean;
+  NotAfter?: string;
   NotBefore?: string;
   /** RFC 5280, 4.2.2.1 (Authority Information Access) */
   OCSPServer?: string[];
@@ -5138,7 +4967,7 @@ export type ACertificateRepresentsAnX509Certificate = {
     interpreted as an actual maximum path length of zero. Otherwise, that
     combination is interpreted as InhibitAnyPolicy not being set. */
   RequireExplicitPolicyZero?: boolean;
-  SerialNumber?: string;
+  SerialNumber?: number;
   Signature?: number[];
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
@@ -5168,13 +4997,13 @@ export type JsonWebKey = {
   CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
-    ed25519.PublicKey
-    ed25519.PrivateKey
-    ecdsa.PublicKey
-    ecdsa.PrivateKey
-    rsa.PublicKey
-    rsa.PrivateKey
-    []byte (a symmetric key)
+    - ed25519.PublicKey
+    - ed25519.PrivateKey
+    - *ecdsa.PublicKey
+    - *ecdsa.PrivateKey
+    - *rsa.PublicKey
+    - *rsa.PrivateKey
+    - []byte (a symmetric key)
     
     When marshaling this JSONWebKey into JSON, the "kty" header parameter
     will be automatically set based on the type of this field. */
@@ -5195,8 +5024,7 @@ export type CreateDashboardSnapshotCommand = {
   /** APIVersion defines the versioned schema of this representation of an object.
     Servers should convert recognized schemas to the latest internal value, and
     may reject unrecognized values.
-    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-    +optional */
+    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   dashboard: Unstructured;
   /** Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`. */
@@ -5212,8 +5040,7 @@ export type CreateDashboardSnapshotCommand = {
     Servers may infer this from the endpoint the client submits requests to.
     Cannot be updated.
     In CamelCase.
-    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-    +optional */
+    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Snapshot name */
   name?: string;
@@ -5222,6 +5049,7 @@ export type CreateTeamCommand = {
   email?: string;
   name: string;
 };
+export type TeamPermissionType = number;
 export type TeamDto = {
   accessControl?: {
     [key: string]: boolean;
@@ -5235,7 +5063,7 @@ export type TeamDto = {
   memberCount: number;
   name: string;
   orgId: number;
-  permission?: PermissionType;
+  permission?: TeamPermissionType;
   uid: string;
 };
 export type SearchTeamQueryResult = {
@@ -5249,6 +5077,7 @@ export type TeamGroupDto = {
   orgId?: number;
   teamId?: number;
   teamUid?: string;
+  /** Deprecated: always empty; no per-entry id. */
   uid?: string;
 };
 export type TeamGroupMapping = {
@@ -5272,7 +5101,7 @@ export type TeamMemberDto = {
   login?: string;
   name?: string;
   orgId?: number;
-  permission?: PermissionType;
+  permission?: TeamPermissionType;
   teamId?: number;
   teamUID?: string;
   uid?: string;
@@ -5287,7 +5116,49 @@ export type SetTeamMembershipsCommand = {
   members?: string[];
 };
 export type UpdateTeamMemberCommand = {
-  permission?: PermissionType;
+  permission?: TeamPermissionType;
+};
+export type PreferencesNavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type PreferencesQueryHistoryPreference = {
+  /** one of: '' | 'query' | 'starred'; */
+  homeTab?: string;
+};
+export type PreferencesSpec = {
+  /** UID for the home dashboard */
+  homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
+  /** Selected language */
+  language?: string;
+  navbar?: PreferencesNavbarPreference;
+  queryHistory?: PreferencesQueryHistoryPreference;
+  /** user interface theme */
+  theme?: string;
+  /** The timezone selection */
+  timezone?: string;
+  /** day of the week (sunday, monday, etc) */
+  weekStart?: string;
+};
+export type NavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type QueryHistoryPreference = {
+  homeTab?: string;
+};
+export type UpdatePrefsCmd = {
+  /** The numerical :id of a favorited dashboard
+    Deprecated: Use HomeDashboardUID instead */
+  homeDashboardId?: number;
+  homeDashboardUID?: string;
+  language?: string;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
+  theme?: 'light' | 'dark' | 'system';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
+  weekStart?: string;
 };
 export type UserProfileDto = {
   accessControl?: {
@@ -5327,6 +5198,9 @@ export type ChangeUserPasswordCommand = {
   oldPassword?: Password;
 };
 export type UserSearchHitDto = {
+  accessControl?: {
+    [key: string]: boolean;
+  };
   authLabels?: string[];
   avatarUrl?: string;
   created?: string;
@@ -5339,6 +5213,7 @@ export type UserSearchHitDto = {
   lastSeenAtAge?: string;
   login?: string;
   name?: string;
+  role?: string;
   uid?: string;
 };
 export type SearchUserQueryResult = {
@@ -5647,13 +5522,6 @@ export const {
   useEnableDataSourceCacheMutation,
   useQueryMetricsWithExpressionsMutation,
   useUpdateFolderPermissionsMutation,
-  useGetMappedGroupsQuery,
-  useLazyGetMappedGroupsQuery,
-  useDeleteGroupMappingsMutation,
-  useCreateGroupMappingsMutation,
-  useUpdateGroupMappingsMutation,
-  useGetGroupRolesQuery,
-  useLazyGetGroupRolesQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useGetLibraryElementsQuery,
@@ -5686,10 +5554,6 @@ export const {
   useLazyGetPendingOrgInvitesQuery,
   useAddOrgInviteMutation,
   useRevokeInviteMutation,
-  useGetOrgPreferencesQuery,
-  useLazyGetOrgPreferencesQuery,
-  usePatchOrgPreferencesMutation,
-  useUpdateOrgPreferencesMutation,
   useGetCurrentOrgQuotaQuery,
   useLazyGetCurrentOrgQuotaQuery,
   useGetOrgUsersForCurrentOrgQuery,
@@ -5817,21 +5681,12 @@ export const {
   useLazyGetUserAuthTokensQuery,
   useUpdateUserEmailQuery,
   useLazyUpdateUserEmailQuery,
-  useClearHelpFlagsQuery,
-  useLazyClearHelpFlagsQuery,
-  useSetHelpFlagMutation,
   useGetSignedInUserOrgListQuery,
   useLazyGetSignedInUserOrgListQuery,
   useChangeUserPasswordMutation,
-  useGetUserPreferencesQuery,
-  useLazyGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-  useUpdateUserPreferencesMutation,
   useGetUserQuotasQuery,
   useLazyGetUserQuotasQuery,
   useRevokeUserAuthTokenMutation,
-  useUnstarDashboardByUidMutation,
-  useStarDashboardByUidMutation,
   useGetSignedInUserTeamListQuery,
   useLazyGetSignedInUserTeamListQuery,
   useUserSetUsingOrgMutation,

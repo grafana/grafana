@@ -24,6 +24,10 @@ type DisplayList struct {
 	Items []Display `json:"display"`
 }
 
+func (DisplayList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DisplayList"
+}
+
 type Display struct {
 	Identity IdentityRef `json:"identity"`
 
@@ -36,6 +40,15 @@ type Display struct {
 	// InternalID is the legacy numeric id for identity,
 	// Deprecated: use the identityRef where possible
 	InternalID int64 `json:"internalId,omitempty"`
+
+	// Role is the org role of the identity in the active organization
+	// (Admin/Editor/Viewer/None). Only populated for the current-user
+	// ("users/~") endpoint.
+	Role string `json:"role,omitempty"`
+}
+
+func (Display) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Display"
 }
 
 type IdentityRef struct {
@@ -45,6 +58,10 @@ type IdentityRef struct {
 
 	// Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.
 	Name string `json:"name"`
+}
+
+func (IdentityRef) OpenAPIModelName() string {
+	return OpenAPIPrefix + "IdentityRef"
 }
 
 func (i *IdentityRef) String() string {

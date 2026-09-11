@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/dataplane/examples"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPassThroughDataplaneExamples(t *testing.T) {
@@ -33,7 +32,7 @@ func TestPassThroughDataplaneExamples(t *testing.T) {
 
 	validExamples, err := es.Filter(examples.FilterOptions{
 		Version: data.FrameTypeVersion{0, 1},
-		Valid:   util.Pointer(true),
+		Valid:   new(true),
 	})
 	require.NoError(t, err)
 
@@ -165,7 +164,7 @@ func TestShouldUseDataplane(t *testing.T) {
 
 		validExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   util.Pointer(true),
+			Valid:   new(true),
 		})
 		require.NoError(t, err)
 
@@ -187,9 +186,9 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		validNoDataNumericExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   util.Pointer(true),
+			Valid:   new(true),
 			Kind:    data.KindNumeric,
-			NoData:  util.Pointer(true),
+			NoData:  new(true),
 		})
 		require.NoError(t, err)
 
@@ -208,9 +207,9 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		numericExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   util.Pointer(true),
+			Valid:   new(true),
 			Kind:    data.KindNumeric,
-			NoData:  util.Pointer(false),
+			NoData:  new(false),
 		})
 		require.NoError(t, err)
 
@@ -231,9 +230,9 @@ func TestHandleDataplaneTS(t *testing.T) {
 
 		validNoDataTSExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   util.Pointer(true),
+			Valid:   new(true),
 			Kind:    data.KindTimeSeries,
-			NoData:  util.Pointer(true),
+			NoData:  new(true),
 		})
 		require.NoError(t, err)
 
@@ -251,9 +250,9 @@ func TestHandleDataplaneTS(t *testing.T) {
 
 		tsExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   util.Pointer(true),
+			Valid:   new(true),
 			Kind:    data.KindTimeSeries,
-			NoData:  util.Pointer(false),
+			NoData:  new(false),
 		})
 		require.NoError(t, err)
 

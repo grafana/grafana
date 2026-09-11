@@ -10,13 +10,13 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type AuthorizeFromName struct {
-	AccessClient authlib.AccessClient
-	OKNames      []string
-	Resource     map[string][]ResourceOwner // may include unknown
+	AccessClient  authlib.AccessClient
+	AllowOrgAdmin bool
+	OKNames       []string
+	Resource      map[string][]ResourceOwner // may include unknown
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -46,6 +46,13 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 			"permissions", len(res.Permissions),
 		)
 		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
+	}
+	if res.ServiceCall { // request is from an access policy with explicit permissions
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	if a.AllowOrgAdmin && user.GetOrgRole() == identity.RoleAdmin {
+		return authorizer.DecisionAllow, "", nil
 	}
 
 	if attr.GetName() == "" {
@@ -83,27 +90,25 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "your are not the owner of the resource", nil
 
 	case TeamResourceOwner:
-		if !attr.IsReadOnly() {
-			rsp, err := a.AccessClient.Check(ctx, user, authlib.CheckRequest{
-				Verb:      utils.VerbUpdate,
-				Group:     "iam.grafana.app",
-				Resource:  "teams",
-				Namespace: user.GetNamespace(),
-				Name:      info.Identifier,
-			}, "")
-			if err != nil {
-				return authorizer.DecisionDeny, "error fetching team permissions", err
-			}
-			if rsp.Allowed {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "no edit permissions for the team", nil
-		}
-
-		if slices.Contains(user.GetGroups(), info.Identifier) {
+		// Being able to view a team is not sufficient to view Permission resources - you must
+		// be a member of the team instead.
+		if attr.IsReadOnly() && slices.Contains(user.GetGroups(), info.Identifier) {
 			return authorizer.DecisionAllow, "", nil
 		}
-		return authorizer.DecisionDeny, "you are not a member of the referenced team", err
+		rsp, err := a.AccessClient.Check(ctx, user, authlib.CheckRequest{
+			Verb:      attr.GetVerb(),
+			Group:     "iam.grafana.app",
+			Resource:  "teams",
+			Namespace: user.GetNamespace(),
+			Name:      info.Identifier,
+		}, "")
+		if err != nil {
+			return authorizer.DecisionDeny, "error fetching team permissions", err
+		}
+		if rsp.Allowed {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "no edit permissions for the team", nil
 
 	case UnknownResourceOwner:
 		return authorizer.DecisionAllow, "", nil

@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../../panels-visualizations/query-transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/
   - ../../../panels-visualizations/query-transform-data/expression-queries/ # /docs/grafana/next/panels-visualizations/query-transform-data/expression-queries/
   - ../../../panels/query-a-data-source/use-expressions-to-manipulate-data/ # /docs/grafana/next/panels/query-a-data-source/use-expressions-to-manipulate-data/
   - ../../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/ # /docs/grafana/next/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
@@ -240,6 +239,11 @@ Resample changes the time stamps in each time series to have a consistent time i
   - **fillna** to fill empty sample windows with NaNs
 
 ## Write an expression
+
+{{< admonition type="note" >}}
+The steps in this section describe the classic, generally available panel query editor.
+For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+{{< /admonition >}}
 
 If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
 

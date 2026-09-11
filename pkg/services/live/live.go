@@ -90,7 +90,14 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	}
 
 	if cfg.LiveHAPrefix != "" {
-		g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
+		// Once this is deployed across all waves in grafana cloud, we can remove the configured LiveHAPrefix
+		// This is OK because the channel prefix now starts with the full stack identifier
+		// Removing the prefix means we can implement an MT live apiserver, while watching events sent from ST
+		// nolint:staticcheck // not yet migrated to OpenFeature
+		keepPrefix := cfg.StackID == "" || toggles.IsEnabledGlobally(featuremgmt.FlagLiveKeepHAPrefixInCloud)
+		if keepPrefix {
+			g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
+		}
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -117,12 +124,19 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	g.node = node
 
 	redisHealthy := false
+	var redisOptions *redis.Options
 	if g.IsHA() {
-		// Configure HA with Redis. In this case Centrifuge nodes
-		// will be connected over Redis PUB/SUB. Presence will work
-		// globally since kept inside Redis.
-		err := setupRedisLiveEngine(g, node)
+		// Parse ha_engine_address for the frame cache client before anything
+		// else touches it: redisClientOptions sanitizes parse errors, so a
+		// malformed URL (which may embed credentials) is never handed to the
+		// Centrifuge engine, whose own parse errors quote the raw URL.
+		var err error
+		redisOptions, err = redisClientOptions(g.Cfg)
 		if err != nil {
+			logger.Error("live engine failed to parse ha_engine_address, proceeding without Live HA", "error", err)
+		} else if err := setupRedisLiveEngine(g, node); err != nil {
+			// Configure HA with Redis: Centrifuge nodes connect over Redis
+			// PUB/SUB, and presence is kept in Redis.
 			logger.Error("failed to setup redis live engine", "error", err)
 		} else {
 			redisHealthy = true
@@ -134,13 +148,10 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	var managedStreamRunner *managedstream.Runner
 	var redisClient *redis.Client
 	if g.IsHA() && redisHealthy {
-		redisClient = redis.NewClient(&redis.Options{
-			Addr:     g.Cfg.LiveHAEngineAddress,
-			Password: g.Cfg.LiveHAEnginePassword,
-		})
+		redisClient = redis.NewClient(redisOptions)
 		cmd := redisClient.Ping(context.Background())
 		if _, err := cmd.Result(); err != nil {
-			logger.Error("live engine failed to ping redis, proceeding without live ha", "error", err)
+			logger.Error("live engine failed to ping redis, proceeding with in-memory frame cache", "error", err)
 			redisClient = nil
 		}
 	}
@@ -398,7 +409,45 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	return g, nil
 }
 
+// redisClientOptions builds the options for the frame cache Redis client from
+// the Live HA settings. ha_engine_address accepts a plain "host:port" address
+// or a redis:// / rediss:// connection URL (rediss:// enables TLS), the same
+// forms the Centrifuge Redis engine accepts in setupRedisLiveEngine.
+func redisClientOptions(cfg *setting.Cfg) (*redis.Options, error) {
+	address := cfg.LiveHAEngineAddress
+	if !strings.HasPrefix(address, "redis://") && !strings.HasPrefix(address, "rediss://") {
+		return &redis.Options{Addr: address, Password: cfg.LiveHAEnginePassword}, nil
+	}
+
+	options, err := redis.ParseURL(address)
+	if err != nil {
+		// Parse errors can quote the URL or fragments of it (including
+		// credentials), so never propagate them: return a static error.
+		return nil, errors.New("invalid redis connection URL in ha_engine_address")
+	}
+
+	// go-redis's URL parser accepts ?skip_verify=true (InsecureSkipVerify);
+	// certificate verification always stays on for Live HA, so reject it.
+	if options.TLSConfig != nil && options.TLSConfig.InsecureSkipVerify {
+		return nil, errors.New("skip_verify is not supported in ha_engine_address")
+	}
+
+	// Mirror the Centrifuge engine's credential precedence: a password set in
+	// the URL wins, even an explicitly empty one; ha_engine_password applies
+	// only when the URL carries no password. go-redis cannot tell an absent
+	// URL password from an empty one, so inspect the URL's userinfo directly
+	// (redis.ParseURL accepted the address, so url.Parse cannot fail here).
+	if u, err := url.Parse(address); err == nil {
+		if _, ok := u.User.Password(); !ok {
+			options.Password = cfg.LiveHAEnginePassword
+		}
+	}
+	return options, nil
+}
+
 func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
+	// Centrifuge parses redis:// and rediss:// (TLS) connection URLs in
+	// Address natively, so ha_engine_address is passed through as-is.
 	redisAddress := g.Cfg.LiveHAEngineAddress
 	redisPassword := g.Cfg.LiveHAEnginePassword
 	redisShardConfigs := []centrifuge.RedisShardConfig{
@@ -451,7 +500,7 @@ type GrafanaLive struct {
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
 
-	keyPrefix string // HA prefix for grafana cloud (since the org is always 1)
+	keyPrefix string
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -585,6 +634,15 @@ func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, orig
 
 var clientConcurrency = 12
 
+// errorExpiredTemporary mirrors centrifuge.ErrorExpired but sets Temporary so
+// clients retry the operation with backoff after a server-side token refresh,
+// instead of treating the error as fatal and tearing down the subscription.
+var errorExpiredTemporary = &centrifuge.Error{
+	Code:      centrifuge.ErrorExpired.Code,
+	Message:   centrifuge.ErrorExpired.Message,
+	Temporary: true,
+}
+
 func (g *GrafanaLive) IsHA() bool {
 	return g.Cfg != nil && g.Cfg.LiveHAEngine != ""
 }
@@ -616,9 +674,10 @@ func (g *GrafanaLive) checkIDTokenExpirationAndRefresh(user identity.Requester, 
 	err := g.node.Refresh(client.UserID(), centrifuge.WithRefreshExpired(true))
 	if err != nil {
 		logger.Error("Failed to refresh expired ID token", "user", client.UserID(), "client", client.ID(), "error", err)
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (g *GrafanaLive) HandleDatasourceDelete(orgID int64, dsUID string) {
@@ -654,7 +713,7 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.RPCReply{}, centrifuge.ErrorExpired
+		return centrifuge.RPCReply{}, errorExpiredTemporary
 	}
 
 	// RPC events not available
@@ -672,7 +731,7 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorExpired
+		return centrifuge.SubscribeReply{}, errorExpiredTemporary
 	}
 
 	// See a detailed comment for StripK8sNamespace about orgID management in Live.
@@ -782,7 +841,7 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.PublishReply{}, centrifuge.ErrorExpired
+		return centrifuge.PublishReply{}, errorExpiredTemporary
 	}
 
 	// See a detailed comment for StripK8sNamespace about orgID management in Live.

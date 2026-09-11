@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { RuleFormType } from 'app/features/alerting/unified/types/rule-form';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
@@ -142,10 +142,6 @@ export const alertingAlertRuleFormSchema = z.object({
   // Navigation
   returnTo: z.string().optional().describe('Optional URL to return to after creating the alert'),
 });
-
-// Export types for use in plugins
-export type AlertingAlertRuleFormSchemaType = z.infer<typeof alertingAlertRuleFormSchema>;
-export type AlertingModelSchemaType = z.infer<typeof alertingModelSchema>;
 
 // Simple API that only exposes the navigate to alert rule form schema
 export const alertingAlertRuleFormSchemaApi = {

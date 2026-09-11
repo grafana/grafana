@@ -190,4 +190,27 @@ func TestRepositoryStatusPatcher_Patch_RetriesOnConflict(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, int32(1), atomic.LoadInt32(&calls), "non-conflict errors should not be retried")
 	})
+
+	t.Run("transient SQLITE_BUSY is retried and succeeds", func(t *testing.T) {
+		var calls int32
+		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
+		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
+			n := atomic.AddInt32(&calls, 1)
+			if n == 1 {
+				// Mimics the wrapped error returned by the unified storage SQL
+				// backend when SQLite write contention bubbles up through the
+				// apiserver as an internal error.
+				return true, nil, apierrors.NewInternalError(fmt.Errorf(
+					"transactional operation: resource update: resource_update.sql: " +
+						"Exec with 10 input arguments and 0 output destination arguments: " +
+						"database is locked (5) (SQLITE_BUSY); query: UPDATE \"resource\" SET ...",
+				))
+			}
+			return true, &provisioning.Repository{}, nil
+		})
+
+		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
+		require.NoError(t, err)
+		require.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should retry once after SQLITE_BUSY")
+	})
 }

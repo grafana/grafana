@@ -214,7 +214,3 @@ export function initializeScenePerformanceLogger(): ScenePerformanceLogger {
   }
   return scenePerformanceLogger;
 }
-
-export function getScenePerformanceLogger(): ScenePerformanceLogger {
-  return initializeScenePerformanceLogger();
-}

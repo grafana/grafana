@@ -21,7 +21,7 @@ var (
 					return "", errors.New("provided object must be of type *ExternalGroupMapping")
 				}
 
-				return cast.Spec.TeamRef.Name, nil
+				return string(cast.Spec.TeamRef.Name), nil
 			},
 		},
 			{
@@ -32,7 +32,7 @@ var (
 						return "", errors.New("provided object must be of type *ExternalGroupMapping")
 					}
 
-					return cast.Spec.ExternalGroupId, nil
+					return string(cast.Spec.ExternalGroupId), nil
 				},
 			},
 		}))

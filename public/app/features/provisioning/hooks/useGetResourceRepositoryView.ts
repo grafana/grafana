@@ -1,17 +1,23 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { type RepoType } from '../Wizard/types';
+import { getManagerIdentity, isManagedByRepository } from '../utils/managedResource';
 import { getIsReadOnlyRepo } from '../utils/repository';
 
 interface GetResourceRepositoryArgs {
-  name?: string; // the repository name
+  /**
+   * The repository name. Given with folderName or includeFolderless it is a hint that yields to
+   * them when the repository is gone
+   */
+  name?: string;
   folderName?: string; // folder we are targeting
   skipQuery?: boolean;
+  includeInstance?: boolean;
+  includeFolderless?: boolean;
 }
 
 export enum RepoViewStatus {
@@ -22,7 +28,7 @@ export enum RepoViewStatus {
   Orphaned = 'orphaned',
 }
 
-interface RepositoryViewData {
+export interface RepositoryViewData {
   repository?: RepositoryView;
   repoType?: RepoType;
   folder?: Folder;
@@ -32,16 +38,39 @@ interface RepositoryViewData {
   isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
+  /**
+   * True when loading has settled and no repository could be resolved.
+   * Consumers gating forms (e.g. ProvisionedFormGate) should use this
+   * instead of re-deriving it from isLoading/repository.
+   */
+  isMissingRepo: boolean;
 }
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
-export const useGetResourceRepositoryView = ({
+export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): RepositoryViewData => {
+  const data = useResourceRepositoryViewData(args);
+  return {
+    ...data,
+    // Derived here so every resolution path reports it; the name and folderName branches used to
+    // return undefined, which read as a Git repo to consumers picking the read-only tooltip copy
+    repoType: data.repository?.type,
+    isMissingRepo: !data.isLoading && !data.repository,
+  };
+};
+
+const useResourceRepositoryViewData = ({
   name,
   folderName,
   skipQuery,
-}: GetResourceRepositoryArgs): RepositoryViewData => {
-  const provisioningEnabled = config.featureToggles.provisioning;
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName);
+  includeInstance,
+  includeFolderless,
+}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo' | 'repoType'> => {
+  const provisioningEnabled = config.provisioningEnabled;
+  // Skip when caller has no target. This query is shared across many
+  // components, so a failing fetch would cycle all of them through retries.
+  // `includeInstance`/`includeFolderless` override the skip for root-level lookups.
+  const shouldSkipSettings =
+    !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance && !includeFolderless);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
@@ -51,11 +80,18 @@ export const useGetResourceRepositoryView = ({
   } = useGetFrontendSettingsQuery(settingsQueryArg);
 
   const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery;
+  // currentData, not data: RTK keeps `data` from the last successful arg, so once a folder has
+  // been fetched it would leak into every later resolution, including root-level ones where the
+  // query is skipped.
   const {
-    data: folder,
-    isLoading: isFolderLoading,
+    currentData: folder,
+    isLoading: isFolderQueryLoading,
+    isFetching: isFolderFetching,
     error: folderError,
   } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
+  // RTK also reports isLoading false while fetching a new folderName, because it is still
+  // holding the previous folder's data, so count "fetching with nothing for this arg" as loading.
+  const isFolderLoading = isFolderQueryLoading || (isFolderFetching && !folder);
 
   if (!provisioningEnabled) {
     return {
@@ -76,6 +112,21 @@ export const useGetResourceRepositoryView = ({
   }
 
   if (settingsError || folderError) {
+    // 403 = caller lacks provisioning.settings:read (e.g. folder Admin with no basic
+    // role). If the target folder's own annotations show it is not repo-managed,
+    // provisioning is irrelevant to this user — treat as "not provisioned" instead of
+    // failing closed and blocking unrelated flows like dashboard import.
+    // Repo-annotated folders and name-based lookups stay fail-closed: git-sync flows
+    // cannot proceed without the settings data anyway.
+    if (
+      isFetchError(settingsError) &&
+      settingsError.status === 403 &&
+      !name &&
+      !folderError &&
+      !(folder && isManagedByRepository(folder))
+    ) {
+      return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
+    }
     return {
       isLoading: false,
       isInstanceManaged: false,
@@ -87,7 +138,7 @@ export const useGetResourceRepositoryView = ({
 
   const items = settingsData?.items ?? [];
 
-  // Check for orphaned resource first: name specified but no matching repo
+  // A name resolves the repository directly
   if (name) {
     const repository = items.find((repo) => repo.name === name);
     const instanceRepo = items.find((repo) => repo.target === 'instance');
@@ -101,14 +152,17 @@ export const useGetResourceRepositoryView = ({
       };
     }
 
-    // When name specified but no matching repository found = orphaned resource
-    return {
-      folder,
-      isInstanceManaged: Boolean(instanceRepo),
-      isReadOnlyRepo: false,
-      status: RepoViewStatus.Orphaned,
-      orphanedRepoName: name,
-    };
+    // Alone, a missing name is the orphaned dead end. With a folder target the name was only where a
+    // previewed or copied file came from, so the folder resolution below decides instead
+    if (!folderName && !includeFolderless) {
+      return {
+        folder,
+        isInstanceManaged: Boolean(instanceRepo),
+        isReadOnlyRepo: false,
+        status: RepoViewStatus.Orphaned,
+        orphanedRepoName: name,
+      };
+    }
   }
 
   if (!items.length) {
@@ -135,9 +189,8 @@ export const useGetResourceRepositoryView = ({
     // For nested folders we need to see what the folder thinks.
     // Only treat as repo-managed if the manager kind is explicitly 'repo' —
     // folders managed by plugins, terraform, kubectl, etc. should not be matched against provisioning repos.
-    const annotatedManagerKind = folder?.metadata?.annotations?.[AnnoKeyManagerKind];
-    const annotatedFolderName = folder?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-    if (annotatedFolderName && annotatedManagerKind === ManagerKind.Repo) {
+    const annotatedFolderName = folder ? getManagerIdentity(folder) : undefined;
+    if (annotatedFolderName && folder && isManagedByRepository(folder)) {
       repository = items.find((repo) => repo.name === annotatedFolderName);
       if (repository) {
         return {
@@ -160,12 +213,18 @@ export const useGetResourceRepositoryView = ({
     }
   }
 
+  // Only root-level lookups may fall back to a folderless repo: a targeted folder that
+  // matched nothing above is not managed by it.
+  // Known limitation: with multiple folderless repos configured, the first one wins
+  const folderlessRepo =
+    includeFolderless && !folderName ? items.find((repo) => repo.target === 'folderless') : undefined;
+  const repository = instanceRepo ?? folderlessRepo;
+
   return {
-    repository: instanceRepo,
+    repository,
     folder,
     isInstanceManaged,
-    isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
-    repoType: instanceRepo?.type,
+    isReadOnlyRepo: getIsReadOnlyRepo(repository),
     status: RepoViewStatus.Ready,
   };
 };

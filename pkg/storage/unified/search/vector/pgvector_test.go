@@ -1,0 +1,412 @@
+package vector
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"strings"
+	"testing"
+	"unicode/utf8"
+
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+func TestVector_Validate(t *testing.T) {
+	ok := Vector{Namespace: "ns", Model: "m", Resource: "r", UID: "u", Title: "t"}
+	require.NoError(t, ok.Validate())
+
+	cases := []struct {
+		name    string
+		mutate  func(*Vector)
+		wantErr string
+	}{
+		{"empty namespace", func(v *Vector) { v.Namespace = "" }, "namespace must not be empty"},
+		{"empty model", func(v *Vector) { v.Model = "" }, "model must not be empty"},
+		{"empty resource", func(v *Vector) { v.Resource = "" }, "resource must not be empty"},
+		{"empty uid", func(v *Vector) { v.UID = "" }, "uid must not be empty"},
+		{"empty title", func(v *Vector) { v.Title = "" }, "title must not be empty"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			v := ok
+			tc.mutate(&v)
+			err := v.Validate()
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
+}
+
+func TestValidateResource(t *testing.T) {
+	// Partition keys with a catalog row pass; anything else is rejected.
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+	require.NoError(t, b.validateResource(ctx, "dashboards"))
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+	require.ErrorContains(t, b.validateResource(ctx, "folders"), "unsupported resource")
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+	require.ErrorContains(t, b.validateResource(ctx, ""), "unsupported resource")
+
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_Upsert_EmptySlice(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.Upsert(ctx, nil))
+	require.NoError(t, backend.Upsert(ctx, []Vector{}))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	err := backend.Upsert(ctx, []Vector{
+		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Content: "x", Embedding: []float32{0.1}},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "uid must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+// emptyCatalogRows is a zero-row embedding_collections result for sqlmock.
+func emptyCatalogRows() *sqlmock.Rows {
+	return sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"})
+}
+
+// seededCatalogRows mirrors the migration's dashboards seed row.
+func seededCatalogRows() *sqlmock.Rows {
+	return emptyCatalogRows().AddRow("dashboard.grafana.app", "dashboards", "dashboards", false)
+}
+
+func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
+	// Unknown resource has no catalog row; validation happens before the
+	// transaction opens, so no Begin/Rollback is expected — only the
+	// catalog lookup.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+
+	err := backend.Upsert(ctx, []Vector{
+		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_EmptySlice(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, nil, []string{}))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *testing.T) {
+	// Validate() runs before any DB work, so no Begin/Rollback expected.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+
+	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{
+		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
+	}, nil, []string{"panel/1"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "uid must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *testing.T) {
+	// Unknown resource is rejected before any DB work; no tx is opened.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+
+	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "folders", "x", []Vector{
+		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
+	}, nil, []string{"panel/1"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_DeleteRows_EmptyModel_Rejected(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	_, _, err := backend.DeleteRows(ctx, "ns", "", "dashboards", DeleteSelector{UIDs: []string{"dash-1"}})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "model must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_DeleteSubresources_EmptySlice_NoOp(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboards", "dash-1", nil))
+	require.NoError(t, backend.DeleteSubresources(ctx, "ns", "m", "dashboards", "dash-1", []string{}))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_GetLatestRV(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT latest_rv FROM vector_latest_rv").
+		WillReturnRows(rdb.SQLMock.NewRows([]string{"latest_rv"}).AddRow(int64(42)))
+
+	rv, err := backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	require.Equal(t, int64(42), rv)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_SetLatestRV_NonPositive_NoOp(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.SetLatestRV(ctx, 0))
+	require.NoError(t, backend.SetLatestRV(ctx, -1))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_SetLatestRV_Positive_Updates(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectExec("UPDATE vector_latest_rv").
+		WithArgs(int64(42)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	require.NoError(t, backend.SetLatestRV(ctx, 42))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT latest_rv FROM vector_latest_rv").
+		WillReturnError(sql.ErrNoRows)
+
+	rv, err := backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), rv)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_ContentVersion(t *testing.T) {
+	t.Run("returns MIN across the uid's rows", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+			rdb.SQLMock.NewRows([]string{"min_version"}).AddRow(int64(2)))
+
+		version, exists, err := backend.ContentVersion(ctx, "ns", "m", "dashboards", "dash-1")
+		require.NoError(t, err)
+		require.True(t, exists)
+		require.Equal(t, 2, version)
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("absent uid returns exists=false", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+		// MIN() over zero matching rows still returns one row, with NULL.
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+			rdb.SQLMock.NewRows([]string{"min_version"}).AddRow(nil))
+
+		version, exists, err := backend.ContentVersion(ctx, "ns", "m", "dashboards", "nonexistent")
+		require.NoError(t, err)
+		require.False(t, exists)
+		require.Equal(t, 0, version)
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("unknown resource rejected before querying embeddings", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+
+		_, _, err := backend.ContentVersion(ctx, "ns", "m", "folders", "dash-1")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported resource")
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+}
+
+func TestPgvectorBackend_UpdateContentVersion(t *testing.T) {
+	t.Run("updates content_version for every row of the uid", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+		rdb.SQLMock.ExpectExec("UPDATE embeddings").WillReturnResult(sqlmock.NewResult(0, 2))
+
+		require.NoError(t, backend.UpdateContentVersion(ctx, "ns", "m", "dashboards", "dash-1", 2))
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("empty model rejected", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		err := backend.UpdateContentVersion(ctx, "ns", "", "dashboards", "dash-1", 2)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "model must not be empty")
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("unknown resource rejected before touching embeddings", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+
+		err := backend.UpdateContentVersion(ctx, "ns", "m", "folders", "dash-1", 2)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported resource")
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+}
+
+func TestPartialHNSWName(t *testing.T) {
+	require.Equal(t, "dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
+	require.Equal(t, "dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
+	require.Equal(t, "dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
+
+	// Names past Postgres's 63-char identifier limit collapse the namespace
+	// to a bounded hash — still deterministic, still unique per namespace.
+	longRes := strings.Repeat("r", maxPartitionKeyLen)
+	a := partialHNSWName(longRes, "stacks-111111111111111111")
+	b := partialHNSWName(longRes, "stacks-111111111111111112")
+	require.LessOrEqual(t, len(a), pgMaxIdentifierLen)
+	require.Equal(t, a, partialHNSWName(longRes, "stacks-111111111111111111"))
+	require.NotEqual(t, a, b)
+}
+
+func TestFitEmbedding(t *testing.T) {
+	t.Run("exact size returns input unchanged", func(t *testing.T) {
+		in := []float32{1, 2, 3, 4}
+		got, err := fitEmbedding(in, 4)
+		require.NoError(t, err)
+		require.Equal(t, in, got)
+	})
+
+	t.Run("shorter is zero-padded to dim", func(t *testing.T) {
+		got, err := fitEmbedding([]float32{1, 2, 3}, 6)
+		require.NoError(t, err)
+		require.Equal(t, []float32{1, 2, 3, 0, 0, 0}, got)
+	})
+
+	t.Run("padding does not mutate caller's slice", func(t *testing.T) {
+		in := []float32{1, 2, 3}
+		got, err := fitEmbedding(in, 5)
+		require.NoError(t, err)
+		// Mutate the result; original must be untouched.
+		got[0] = 99
+		require.Equal(t, []float32{1, 2, 3}, in)
+	})
+
+	t.Run("longer than dim returns error", func(t *testing.T) {
+		_, err := fitEmbedding([]float32{1, 2, 3, 4, 5}, 3)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "5 dims")
+		require.Contains(t, err.Error(), "at most 3")
+	})
+
+	t.Run("empty input pads to dim of zeros", func(t *testing.T) {
+		got, err := fitEmbedding(nil, 4)
+		require.NoError(t, err)
+		require.Equal(t, []float32{0, 0, 0, 0}, got)
+	})
+
+	t.Run("dim of zero rejects any non-empty input", func(t *testing.T) {
+		_, err := fitEmbedding([]float32{1}, 0)
+		require.Error(t, err)
+	})
+}
+
+func TestTruncateRunes(t *testing.T) {
+	t.Run("short string is unchanged", func(t *testing.T) {
+		require.Equal(t, "hello", truncateRunes("hello", 1024))
+	})
+
+	t.Run("truncates and marks with ellipsis, staying within max", func(t *testing.T) {
+		got := truncateRunes("abcdefghij", 6)
+		require.Equal(t, "abc...", got)
+		require.Equal(t, 6, utf8.RuneCountInString(got))
+	})
+
+	t.Run("does not split a multi-byte rune", func(t *testing.T) {
+		// Each "é" / "—" is multi-byte; the kept prefix must stay valid
+		// UTF-8 and the whole result must fit within max runes.
+		got := truncateRunes("é—éxyz", 5)
+		require.Equal(t, "é—...", got)
+		require.True(t, utf8.ValidString(got))
+		require.Equal(t, 5, utf8.RuneCountInString(got))
+	})
+}
+
+func TestEnsureResourcePartition_RejectsOverlongResource(t *testing.T) {
+	// 63-byte Postgres identifier limit minus len("embeddings_") minus
+	// len("_metadata_idx") = 39. Postgres would silently truncate a longer
+	// name, breaking the existence fast-path forever.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	ok39 := strings.Repeat("a", 39)
+	bad40 := strings.Repeat("a", 40)
+
+	err := backend.EnsureResourcePartition(ctx, bad40)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "too long")
+
+	// 39 passes the length guard (then hits the DB check — mock it minimally).
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnError(errors.New("stop here"))
+	err = backend.EnsureResourcePartition(ctx, ok39)
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), "too long")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}

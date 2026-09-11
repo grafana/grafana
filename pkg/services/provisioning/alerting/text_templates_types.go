@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -13,20 +15,27 @@ type TemplateV1 struct {
 	Template definitions.NotificationTemplate `json:",inline" yaml:",inline"`
 }
 
-func (v1 *TemplateV1) mapToModel() Template {
-	orgID := v1.OrgID.Value()
+func (t *TemplateV1) mapToModel() Template {
+	orgID := t.OrgID.Value()
 	if orgID < 1 {
 		orgID = 1
 	}
 	return Template{
-		Data:  v1.Template,
+		Data: v1.TemplateGroup{
+			Title:   t.Template.Name,
+			Content: t.Template.Template,
+			Kind:    v1.TemplateKindGrafana,
+			ResourceMetadata: v1.ResourceMetadata{
+				Provenance: alerting_models.ProvenanceFile,
+			},
+		},
 		OrgID: orgID,
 	}
 }
 
 type Template struct {
 	OrgID int64
-	Data  definitions.NotificationTemplate
+	Data  v1.TemplateGroup
 }
 
 type DeleteTemplateV1 struct {

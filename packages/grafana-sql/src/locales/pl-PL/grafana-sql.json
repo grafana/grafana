@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "Selektor zbioru danych"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "Błąd"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

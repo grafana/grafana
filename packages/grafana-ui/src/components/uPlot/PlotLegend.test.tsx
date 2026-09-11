@@ -46,13 +46,15 @@ const defaultProps: React.ComponentProps<typeof PlotLegend> = {
 
 function renderWithContext(overrides: Partial<React.ComponentProps<typeof PlotLegend>> = {}) {
   const toggle = jest.fn();
+  const onPinnedToSidebarChange = jest.fn();
   return {
     toggle,
+    onPinnedToSidebarChange,
     ...render(
       <PanelContextProvider
         value={{ eventsScope: 'test', eventBus: { publish: jest.fn() } as never, onToggleSeriesVisibility: toggle }}
       >
-        <PlotLegend {...defaultProps} {...overrides} />
+        <PlotLegend {...defaultProps} onPinnedToSidebarChange={onPinnedToSidebarChange} {...overrides} />
       </PanelContextProvider>
     ),
   };
@@ -75,11 +77,19 @@ describe('PlotLegend faceted filter', () => {
     expect(toggle).toHaveBeenCalledWith(expect.any(Array), SeriesVisibilityChangeMode.SetExactly);
   });
 
-  it('docks filter, shows clear all when active, and resets on clear', async () => {
-    const { toggle } = renderWithContext();
+  it('fires onPinnedToSidebarChange(true) when "Pin to sidebar" is clicked', async () => {
+    const { onPinnedToSidebarChange } = renderWithContext();
 
     await userEvent.click(screen.getByTestId('faceted-labels-filter-toggle'));
     await userEvent.click(within(screen.getByTestId('toggletip-content')).getByText('Pin to sidebar'));
+
+    expect(onPinnedToSidebarChange).toHaveBeenCalledWith(true);
+  });
+
+  it('renders the docked layout when facetedFilterPinned is true and supports clear-all', async () => {
+    const { toggle } = renderWithContext({ facetedFilterPinned: true });
+
+    expect(screen.queryByTestId('faceted-labels-filter-toggle')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Unpin')).toBeInTheDocument();
 
     await userEvent.click(screen.getByLabelText('cpu'));
@@ -87,5 +97,13 @@ describe('PlotLegend faceted filter', () => {
 
     await userEvent.click(screen.getByLabelText('Clear all'));
     expect(toggle).toHaveBeenCalledWith(null, SeriesVisibilityChangeMode.SetExactly);
+  });
+
+  it('fires onPinnedToSidebarChange(false) when "Unpin" is clicked in the docked layout', async () => {
+    const { onPinnedToSidebarChange } = renderWithContext({ facetedFilterPinned: true });
+
+    await userEvent.click(screen.getByLabelText('Unpin'));
+
+    expect(onPinnedToSidebarChange).toHaveBeenCalledWith(false);
   });
 });

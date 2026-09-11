@@ -110,13 +110,6 @@ export function appendDimensionFilter(
   ]);
 }
 
-export function removeDimensionFilter(query: AzureMonitorQuery, indexToRemove: number): AzureMonitorQuery {
-  const existingFilters = query.azureMonitor?.dimensionFilters ?? [];
-  const newFilters = [...existingFilters];
-  newFilters.splice(indexToRemove, 1);
-  return setDimensionFilters(query, newFilters);
-}
-
 export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
   query: AzureMonitorQuery,
   index: number,

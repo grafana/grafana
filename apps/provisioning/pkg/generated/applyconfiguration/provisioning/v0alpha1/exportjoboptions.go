@@ -7,7 +7,9 @@ package v0alpha1
 // ExportJobOptionsApplyConfiguration represents a declarative configuration of the ExportJobOptions type for use
 // with apply.
 type ExportJobOptionsApplyConfiguration struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message *string `json:"message,omitempty"`
 	// The source folder (or empty) to export
 	Folder *string `json:"folder,omitempty"`
@@ -22,6 +24,12 @@ type ExportJobOptionsApplyConfiguration struct {
 	// are exported — the folder hierarchy is still emitted so parent paths resolve.
 	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. Use this to produce a portable export that creates
+	// new folders on a subsequent sync rather than taking over the originals.
+	// Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 // ExportJobOptionsApplyConfiguration constructs a declarative configuration of the ExportJobOptions type for use with
@@ -72,5 +80,13 @@ func (b *ExportJobOptionsApplyConfiguration) WithResources(values ...*ResourceRe
 		}
 		b.Resources = append(b.Resources, *values[i])
 	}
+	return b
+}
+
+// WithGenerateNewFolderIDs sets the GenerateNewFolderIDs field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GenerateNewFolderIDs field is set to the value of the last call.
+func (b *ExportJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *ExportJobOptionsApplyConfiguration {
+	b.GenerateNewFolderIDs = &value
 	return b
 }

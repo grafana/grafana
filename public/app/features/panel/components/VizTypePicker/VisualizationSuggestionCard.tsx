@@ -4,6 +4,7 @@ import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
@@ -44,9 +45,9 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
       suggestion.cardOptions.previewModifier(preview);
     }
 
-    const maxSeries = cardOptions.maxSeries;
+    const maxSeries = Math.min(cardOptions.maxSeries ?? Infinity, config.panelSeriesLimit || Infinity);
     const maxRows = cardOptions.maxRows;
-    let previewData = maxSeries ? { ...data, series: data.series.slice(0, maxSeries) } : data;
+    let previewData = Number.isFinite(maxSeries) ? { ...data, series: data.series.slice(0, maxSeries) } : data;
 
     if (maxRows && previewData.series.some((frame) => frame.length > maxRows)) {
       previewData = {
@@ -65,8 +66,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
     content = (
       <div {...commonButtonProps}>
-        {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
-        <div style={innerStyles} className={styles.renderContainer} {...{ inert: '' }}>
+        <div style={innerStyles} className={styles.renderContainer} inert>
           <PanelRenderer
             title=""
             data={previewData}
@@ -86,13 +86,10 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    selectedSuggestion: css({
-      filter: `blur(1px) ${theme.isDark ? 'brightness(0.5)' : 'opacity(0.3)'}`,
-    }),
     vizBox: css({
       position: 'relative',
       background: 'none',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       cursor: 'pointer',
       border: `1px solid ${theme.colors.border.medium}`,
 
@@ -104,11 +101,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.background.secondary,
-        borderColor: theme.colors.primary.border,
+        borderColor: theme.colors.accent.main,
       },
     }),
     selected: css({
-      borderColor: theme.colors.primary.border,
+      borderColor: theme.colors.accent.main,
       background: theme.colors.background.secondary,
     }),
     imgBox: css({
@@ -143,6 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+      // disable interactions in the preview card
+      pointerEvents: 'none',
       '&& *': { scrollbarWidth: 'none' },
     }),
   };

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/annotations/ # /docs/grafana/next/http_api/annotations/
-  - ../../../developers/http_api/annotations/ # /docs/grafana/next/developers/http_api/annotations/
+  - ../../../../http_api/annotations/ # /docs/grafana/next/http_api/annotations/
+  - ../../../../developers/http_api/annotations/ # /docs/grafana/next/developers/http_api/annotations/
   - ../../../../developer-resources/api-reference/http-api/api-legacy/annotations/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/annotations/
 description: Grafana Annotations HTTP API
@@ -235,7 +235,7 @@ See note in the [introduction](#annotations-api) for an explanation.
 ```http
 PUT /api/annotations/1141 HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 Content-Type: application/json
 
 {
@@ -281,7 +281,7 @@ See note in the [introduction](#annotations-api) for an explanation.
 ```http
 PATCH /api/annotations/1145 HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 Content-Type: application/json
 
 {
@@ -324,7 +324,7 @@ See note in the [introduction](#annotations-api) for an explanation.
 DELETE /api/annotations/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

@@ -35,6 +35,21 @@ describe('statPresetsSupplier', () => {
     expect(statPresetsSupplier({ dataSummary: summary })).toEqual([]);
   });
 
+  it('all presets include cardOptions with maxSeries', () => {
+    const summary = getPanelDataSummary([
+      createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+        ],
+      }),
+    ]);
+    const result = statPresetsSupplier({ dataSummary: summary });
+    for (const preset of result!) {
+      expect(preset.cardOptions?.maxSeries).toBeDefined();
+    }
+  });
+
   it('returns presets for a single series with number fields', () => {
     const summary = getPanelDataSummary([
       createDataFrame({

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';

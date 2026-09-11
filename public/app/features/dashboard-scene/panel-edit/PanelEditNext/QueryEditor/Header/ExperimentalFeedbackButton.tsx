@@ -3,15 +3,17 @@ import { useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaPanelEditNextFeedbackEvent } from '@grafana/runtime/internal';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { startIntercomSurvey } from '../../tracking';
+import { startFeedbackSurvey } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function ExperimentalFeedbackButton() {
   const { showVersionBanner } = useQueryEditorUIContext();
   const { onSwitchToClassic } = useActionsContext();
   const styles = useStyles2(getStyles);
+  const feedbackEventEnabled = useFlagGrafanaPanelEditNextFeedbackEvent();
 
   // Track whether the banner was visible when this component first mounted.
   // If it was, the user dismissed it - animate the button in.
@@ -25,16 +27,18 @@ export function ExperimentalFeedbackButton() {
 
   const menu = (
     <Menu>
-      <Menu.Item
-        label={t('query-editor-next.experimental-button.give-feedback', 'Give feedback')}
-        icon="comment-alt-message"
-        onClick={() => startIntercomSurvey()}
-      />
+      {feedbackEventEnabled && (
+        <Menu.Item
+          label={t('query-editor-next.experimental-button.give-feedback', 'Give feedback')}
+          icon="comment-alt-message"
+          onClick={() => startFeedbackSurvey()}
+        />
+      )}
       <Menu.Item
         label={t('query-editor-next.experimental-button.back-to-classic', 'Go back to classic editor')}
         icon="arrow-left"
         onClick={() => {
-          startIntercomSurvey();
+          startFeedbackSurvey();
           onSwitchToClassic?.();
         }}
       />

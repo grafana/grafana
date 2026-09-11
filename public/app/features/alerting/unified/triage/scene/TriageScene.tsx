@@ -1,7 +1,6 @@
 import { DashboardCursorSync } from '@grafana/data';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneControlsSpacer,
   SceneFlexLayout,
   SceneReactObject,
@@ -14,8 +13,6 @@ import {
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 import { useTheme2 } from '@grafana/ui';
-
-import { DATASOURCE_UID } from '../constants';
 
 import { TriageSavedSearchesControl } from './TriageSavedSearchesControl';
 import { WorkbenchSceneObject } from './Workbench';
@@ -48,30 +45,24 @@ export const triageScene = new EmbeddedSceneWithContext({
       new AdHocFiltersVariable({
         name: 'filters',
         label: 'Filters',
-        datasource: {
-          type: 'prometheus',
-          uid: DATASOURCE_UID,
-        },
+        // Deliberately unset. Scenes merges every ad-hoc filters variable it finds in a query runner's
+        // ancestry into `DataQueryRequest.filters` whenever the datasource UIDs match, ignoring applyMode,
+        // and Prometheus then appends those matchers to the query expression. That leaked these filters
+        // into the alert rule queries rendered by the instance details drawer, and double-applied them to
+        // the queries below. Nothing needs the ref: the tag providers resolve the datasource themselves.
+        datasource: null,
         applyMode: 'manual', // we will construct the label matchers for the PromQL queries ourselves
         allowCustomValue: true,
         useQueriesAsFilterForOptions: true,
         supportsMultiValueOperators: true,
+        enableGroupBy: true,
+        groupByInputPlaceholder: 'Group by',
         filters: [],
         baseFilters: [],
         expressionBuilder: prometheusExpressionBuilder,
         getTagKeysProvider: getAdHocTagKeysProvider,
         getTagValuesProvider: getAdHocTagValuesProvider,
-      }),
-      new GroupByVariable({
-        name: 'groupBy',
-        label: 'Group by',
-        datasource: {
-          type: 'prometheus',
-          uid: DATASOURCE_UID,
-        },
-        allowCustomValue: true,
-        applyMode: 'manual',
-        getTagKeysProvider: getGroupByTagKeysProvider,
+        getGroupByKeysProvider: getGroupByTagKeysProvider,
       }),
     ],
   }),

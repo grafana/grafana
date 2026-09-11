@@ -49,21 +49,26 @@ async function typeIntoTokenField(user: UserEvent, placeholder: string, value: s
 
 async function navigateToConnectionStep(
   user: UserEvent,
-  type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
+  type: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'local' | 'git',
   data?: {
     token?: string;
     tokenUser?: string;
     url?: string;
   }
 ) {
-  if (type === 'github') {
-    // Select PAT option (GitHub App is the default)
+  if (type !== 'local' && type !== 'git') {
+    // App-based radios appear only after frontend settings load; wait so the PAT click isn't racing them
+    const appRadioName =
+      type === 'github' || type === 'githubEnterprise' ? /Connect with GitHub App/i : /Connect with OAuth App/i;
+    await screen.findByRole('radio', { name: appRadioName });
+    // Select PAT option (app-based auth is the default)
     await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
   }
 
   if (type !== 'local' && data?.token) {
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      githubEnterprise: 'ghp_xxxxxxxxxxxxxxxxxxxx',
       gitlab: 'glpat-xxxxxxxxxxxxxxxxxxx',
       bitbucket: 'ATATTxxxxxxxxxxxxxxxx',
       git: 'token or password',
@@ -93,7 +98,7 @@ async function navigateToConnectionStep(
 
 async function fillConnectionForm(
   user: UserEvent,
-  type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
+  type: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'local' | 'git',
   data: {
     token?: string;
     tokenUser?: string;
@@ -238,10 +243,8 @@ describe('ProvisioningWizard', () => {
 
       // Wait for async operations (useConnectionOptions fetches) to settle
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Use a personal access token to authenticate/i })).toBeInTheDocument();
-      expect(
-        screen.getByRole('radio', { name: /Use a GitHub App for enhanced security and team colla/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
@@ -249,6 +252,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Fill required fields on authType step
@@ -285,6 +289,32 @@ describe('ProvisioningWizard', () => {
       // Verify that the sync step (step 3) would be skipped in the button text logic
       const nextButton = screen.getByRole('button', { name: /Choose additional settings/i });
       expect(nextButton).toBeInTheDocument();
+    });
+
+    it('should keep the sync step when instance resources exist and the repository is empty', async () => {
+      // Resources to migrate with an empty remote — folder/folderless must not skip
+      // the synchronize step (otherwise the migrate option is never shown).
+      server.use(
+        http.get(`${BASE}/stats`, () =>
+          HttpResponse.json({
+            instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }],
+          })
+        ),
+        http.get(`${BASE}/repositories/:name/files/`, () => HttpResponse.json({ items: [] }))
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await fillConnectionForm(user, 'github', {
+        token: 'test-token',
+        url: 'https://github.com/test/repo',
+      });
+
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Synchronize with external storage/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Choose additional settings/i })).not.toBeInTheDocument();
     });
   });
 
@@ -392,10 +422,11 @@ describe('ProvisioningWizard', () => {
   });
 
   describe('Form Validation', () => {
-    it('should validate required fields on connection step', async () => {
+    it('should disable next button until a branch is selected on connection step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option (GitHub App is the default)
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'test-token');
@@ -411,11 +442,29 @@ describe('ProvisioningWizard', () => {
       const clearButtons = screen.getAllByTitle(/Clear value/i);
       await user.click(clearButtons[0]); // Clear the branch combobox
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeDisabled();
 
-      // Should still be on connection step due to validation
-      expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
-      expect(screen.getByText(/Branch is required/i)).toBeInTheDocument();
+      const branchCombobox = screen.getAllByRole('combobox')[0];
+      await user.click(branchCombobox);
+      await user.paste('main');
+      await user.keyboard('{Enter}');
+
+      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeEnabled();
+    });
+
+    it('blocks submit with a connection error when the connection list fails to load', async () => {
+      server.use(http.get(`${BASE}/connections`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      const mockSubmitData = setupMockSubmitData();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // Defaults: GitHub App auth with "Choose an existing app" mode.
+      expect(await screen.findByText('Failed to load connections')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+
+      expect(await screen.findByText('Connection is required')).toBeInTheDocument();
+      expect(mockSubmitData).not.toHaveBeenCalled();
     });
   });
 
@@ -677,8 +726,70 @@ describe('ProvisioningWizard', () => {
   });
 
   describe('Different Repository Types', () => {
+    it('should render choose auth type step initially for GitHub Enterprise', async () => {
+      setup(<ProvisioningWizard type="githubEnterprise" />);
+
+      // GitHub Enterprise shares GitHub's auth flow: both PAT and GitHub App options
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
+    });
+
+    it('should render GitHub Enterprise-specific fields', async () => {
+      const { user } = setup(<ProvisioningWizard type="githubEnterprise" />);
+
+      // Select PAT option (GitHub App is the default)
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
+
+      // Auth step fields: GHE uses the GitHub PAT placeholder and a GHE-specific URL placeholder
+      expect(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(
+          'https://your-enterprise-url.com/owner/repository or https://<slug>.ghe.com/owner/repository'
+        )
+      ).toBeInTheDocument();
+
+      await navigateToConnectionStep(user, 'githubEnterprise', {
+        token: 'ghp_testtoken',
+        url: 'https://ghe.example.com/test/repo',
+      });
+
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    });
+
+    it('should skip sync step when there are no resources for GitHub Enterprise', async () => {
+      const { user } = setup(<ProvisioningWizard type="githubEnterprise" />);
+
+      await fillConnectionForm(user, 'githubEnterprise', {
+        token: 'ghp_testtoken',
+        url: 'https://ghe.example.com/test/repo',
+      });
+
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Choose additional settings/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Synchronize with external storage/i })).not.toBeInTheDocument();
+    });
+
+    it('should render choose auth type step initially for GitLab', async () => {
+      setup(<ProvisioningWizard type="gitlab" />);
+
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with OAuth App/i })).toBeChecked();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: /Connect with GitHub App/i })).not.toBeInTheDocument();
+    });
+
     it('should render GitLab-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
+
+      // Select PAT option (OAuth App is the default)
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('Project Access Token *')).toBeInTheDocument();
@@ -695,6 +806,10 @@ describe('ProvisioningWizard', () => {
 
     it('should render Bitbucket-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
+
+      // Select PAT option (OAuth App is the default)
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('API Token *')).toBeInTheDocument();
@@ -745,6 +860,8 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
       await typeIntoTokenField(user, 'ATATTxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
@@ -769,5 +886,26 @@ describe('ProvisioningWizard', () => {
 
       expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
     });
+  });
+
+  it('commits typed path text without Enter when user clicks Choose what to synchronize', async () => {
+    const mockSubmitData = setupMockSubmitData();
+    const { user } = setup(<ProvisioningWizard type="github" />);
+
+    await navigateToConnectionStep(user, 'github', {
+      token: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      url: 'https://github.com/test/repo',
+    });
+
+    const pathCombobox = screen.getAllByRole('combobox')[1];
+    await user.click(pathCombobox);
+    await user.type(pathCombobox, 'docs/dashboards');
+    // No Enter — this is the bug scenario: typed text should survive the blur.
+
+    await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+    await waitFor(() => expect(mockSubmitData).toHaveBeenCalledTimes(2));
+    const connectionSubmitSpec = mockSubmitData.mock.calls[1][0];
+    expect(connectionSubmitSpec.github).toMatchObject({ path: 'docs/dashboards' });
   });
 });

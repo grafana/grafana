@@ -98,12 +98,6 @@ test.describe('Panels test: StateTimeine', { tag: ['@panels', '@state-timeline']
   });
 });
 
-test.use({
-  featureToggles: {
-    timeRangePan: true,
-  },
-});
-
 test.describe('Panels test: State Timeline X-axis panning', { tag: ['@panels', '@state-timeline'] }, () => {
   test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
     let centerX: number;

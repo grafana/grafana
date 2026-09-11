@@ -1,15 +1,23 @@
-import { type CompletionSource } from '@codemirror/autocomplete';
-import { action } from '@storybook/addon-actions';
-import { type Meta, type StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
+import { action } from 'storybook/actions';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
-import { type CodeEditorLanguage } from './languageLoader';
+import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './types';
 
-const languageOptions: CodeEditorLanguage[] = ['sql', 'json'];
+const languageOptions: CodeMirrorEditorLanguage[] = [
+  'go',
+  'html',
+  'json',
+  'markdown',
+  'sql',
+  'typescript',
+  'xml',
+  'yaml',
+];
 
-const keywordCompletionSource: CompletionSource = (context) => {
+const keywordCompletionSource: CodeMirrorCompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);
 
   if (!word || (word.from === word.to && !context.explicit)) {
@@ -37,7 +45,7 @@ const meta: Meta<typeof CodeEditor> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onChange', 'completionSources', 'extensions'],
+      exclude: ['onChange', 'onBlur', 'onSave', 'completionSources', 'extensions'],
     },
   },
   argTypes: {
@@ -80,6 +88,8 @@ const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
         setValue(nextValue);
         action('onChange')(nextValue);
       }}
+      onBlur={(currentValue) => action('onBlur')(currentValue)}
+      onSave={(currentValue) => action('onSave')(currentValue)}
     />
   );
 };

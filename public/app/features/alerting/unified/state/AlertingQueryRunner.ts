@@ -1,7 +1,6 @@
 import { reject } from 'lodash';
 import { type Observable, type OperatorFunction, ReplaySubject, type Unsubscribable, of } from 'rxjs';
-import { catchError, map, share } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
+import { catchError, finalize, map, share } from 'rxjs/operators';
 
 import {
   type DataFrameJSON,
@@ -9,6 +8,7 @@ import {
   type PanelData,
   type TimeRange,
   dataFrameFromJSON,
+  generateUUID,
   getDefaultTimeRange,
   preProcessPanelData,
   rangeUtil,
@@ -25,7 +25,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 import { type LinkError, createDAGFromQueriesSafe, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
-export interface AlertingQueryResult {
+interface AlertingQueryResult {
   error?: string;
   status?: number; // HTTP status error
   frames: DataFrameJSON[];
@@ -51,7 +51,7 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  async run(queries: AlertQuery[], condition: string) {
+  async run(queries: AlertQuery[], condition: string): Promise<void> {
     const queriesToRun = await this.prepareQueries(queries);
 
     // if we don't have any queries to run we just bail
@@ -64,28 +64,32 @@ export class AlertingQueryRunner {
     const isConditionAvailable = queriesToRun.some((query) => query.refId === condition);
     const ruleCondition = isConditionAvailable ? condition : '';
 
-    this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition).subscribe({
-      next: (dataPerQuery) => {
-        const nextResult = applyChange(dataPerQuery, (refId, data) => {
-          const previous = this.lastResult[refId];
-          const preProcessed = preProcessPanelData(data, previous);
-          return setStructureRevision(preProcessed, previous);
+    return new Promise<void>((resolve) => {
+      this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition)
+        .pipe(finalize(resolve))
+        .subscribe({
+          next: (dataPerQuery) => {
+            const nextResult = applyChange(dataPerQuery, (refId, data) => {
+              const previous = this.lastResult[refId];
+              const preProcessed = preProcessPanelData(data, previous);
+              return setStructureRevision(preProcessed, previous);
+            });
+
+            // add link errors to the panelData and mark them as errors
+            const [_, linkErrors] = createDAGFromQueriesSafe(queries);
+            linkErrors.forEach((linkError) => {
+              nextResult[linkError.source] = createLinkErrorPanelData(linkError);
+            });
+
+            this.lastResult = nextResult;
+            this.subject.next(this.lastResult);
+          },
+
+          error: (error: Error) => {
+            this.lastResult = mapErrorToPanelData(this.lastResult, error);
+            this.subject.next(this.lastResult);
+          },
         });
-
-        // add link errors to the panelData and mark them as errors
-        const [_, linkErrors] = createDAGFromQueriesSafe(queries);
-        linkErrors.forEach((linkError) => {
-          nextResult[linkError.source] = createLinkErrorPanelData(linkError);
-        });
-
-        this.lastResult = nextResult;
-        this.subject.next(this.lastResult);
-      },
-
-      error: (error: Error) => {
-        this.lastResult = mapErrorToPanelData(this.lastResult, error);
-        this.subject.next(this.lastResult);
-      },
     });
   }
 
@@ -177,7 +181,7 @@ const runRequest = (
     data: { data: queries, condition },
     url: '/api/v1/eval',
     method: 'POST',
-    requestId: uuidv4(),
+    requestId: generateUUID(),
   };
 
   return withLoadingIndicator({

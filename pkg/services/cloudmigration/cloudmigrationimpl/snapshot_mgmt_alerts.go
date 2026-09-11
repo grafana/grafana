@@ -37,9 +37,9 @@ func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.Si
 
 	for _, muteTiming := range muteTimings {
 		muteTimeIntervals = append(muteTimeIntervals, muteTimeInterval{
-			UID: muteTiming.UID,
+			UID: string(muteTiming.UID),
 			MuteTimeInterval: config.MuteTimeInterval{
-				Name:          muteTiming.Name,
+				Name:          muteTiming.Title,
 				TimeIntervals: muteTiming.TimeIntervals,
 			},
 		})
@@ -64,9 +64,9 @@ func (s *Service) getNotificationTemplates(ctx context.Context, signedInUser *us
 
 	for _, template := range templates {
 		notificationTemplates = append(notificationTemplates, notificationTemplate{
-			UID:      template.UID,
-			Name:     template.Name,
-			Template: template.Template,
+			UID:      string(template.UID),
+			Name:     template.Title,
+			Template: template.Content,
 		})
 	}
 

@@ -26,6 +26,10 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 		defer session.Close()
 	}
 
+	// Sessions are shared between callers, so the statement must be cleared even when
+	// we return before running the query, otherwise the next query reuses this table and columns.
+	defer session.resetStatement()
+
 	if session.statement.lastError != nil {
 		return 0, session.statement.lastError
 	}
@@ -147,7 +151,7 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 			} else {
 				ct := reflect.TypeOf(condiBean[0])
 				k := ct.Kind()
-				if k == reflect.Ptr {
+				if k == reflect.Pointer {
 					k = ct.Elem().Kind()
 				}
 				if k == reflect.Struct {
@@ -335,7 +339,7 @@ func (session *Session) genUpdateColumns(bean any) ([]string, []any, error) {
 				if len(fieldValue.String()) == 0 {
 					continue
 				}
-			case reflect.Ptr:
+			case reflect.Pointer:
 				if fieldValue.Pointer() == 0 {
 					continue
 				}

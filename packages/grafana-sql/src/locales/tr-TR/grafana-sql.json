@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "Veri kümesi seçici"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "Hata"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

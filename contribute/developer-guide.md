@@ -6,10 +6,10 @@ This guide helps you get started developing Grafana.
 
 Make sure you have the following dependencies installed before setting up your developer environment:
 
-- [Git](https://git-scm.com/)
+- [Git](https://git-scm.com/) (The Grafana organization requires signed commits. See the [Github docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) on how to set this up, if it is not already.)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
-- [GCC](https://gcc.gnu.org/) (optional, not recommded; enables CGO for smaller, dynamically linked binaries)
+- [GCC](https://gcc.gnu.org/) (optional, not recommended; enables CGO for smaller, dynamically linked binaries)
 
 ### macOS
 
@@ -63,6 +63,20 @@ make lefthook-uninstall
 
 > We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
 
+### Knip
+
+We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:
+
+```sh
+yarn knip
+```
+
+In some cases, fixes can be automatically applied:
+
+```sh
+yarn knip:fix
+```
+
 ## Build Grafana
 
 When building Grafana, be aware that it consists of two components:
@@ -92,21 +106,50 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 
 > **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
 
+#### Hot module replacement with rspack
+
+Grafana is migrating its frontend build from webpack to rspack. The rspack build supports hot
+module replacement and React Fast Refresh, so editing a component updates the running page
+without a reload and without losing app state.
+
+Start the frontend and the backend in two terminals:
+
+```
+yarn start:rspack
+RSPACK=1 make run
+```
+
+`RSPACK=1` turns on the `grafana.rspackBuild` feature toggle, which is what makes the backend
+read the rspack build instead of the webpack one.
+
+Keep using `http://localhost:3000`. The rspack dev server holds the bundles in memory and
+listens on the port named by `[frontend_dev] server_url`. Grafana treats it as a CDN: the
+`index.html` it renders points the browser straight at the dev server for frontend assets, and
+the hot-update websocket connects there too. When a module cannot be hot-applied, rspack
+reloads the page.
+
+Some consequences of this setup:
+
+- Nothing is written to `public/build/rspack`. Serving the build from a static file server, as
+  `make frontend-service` does, needs `yarn start:rspack:noHmr` instead.
+- If the dev server is not running, Grafana falls back to whatever the last build left on disk.
+  A stale page usually means the dev server stopped.
+- Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy
+  will not let the page load assets from another origin, so Grafana logs a line and serves the
+  build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs
+  in development mode.
+- Blanking `server_url` in a config file does not turn the dev server off, and leaves the two
+  halves disagreeing: `yarn start:rspack` refuses to start, while Grafana ignores empty values in
+  `custom.ini` and still points the browser at the dev server. To build without one, run
+  `yarn start:rspack:noHmr`. To stop Grafana looking for one, pass
+  `cfg:frontend_dev.server_url=` on the command line.
+
 #### Plugins
 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
 
 - azuremonitor
-- cloud-monitoring
-- grafana-postgresql-datasource
-- grafana-pyroscope-datasource
 - grafana-testdata-datasource
-- jaeger
-- mysql
-- parca
-- tempo
-- zipkin
-- loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
@@ -114,7 +157,8 @@ To build and watch all these plugins you can run the following command. Note thi
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>`
+with the plugins name field found in its package.json. e.g. `@grafana-plugins/awesome_plugin`.
 
 ```
 yarn workspace <name_of_plugin> dev
@@ -123,7 +167,7 @@ yarn workspace <name_of_plugin> dev
 If you want to run multiple specific plugins, you can use the following command.
 
 ```
-yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
+yarn nx run-many -t dev --projects="@grafana-plugins/<name_of_plugin>,@grafana-plugins/<name_of_plugin>"
 ```
 
 If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
@@ -193,7 +237,7 @@ make build
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
 
-Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
+Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
 ## Test Grafana
 
@@ -290,7 +334,7 @@ Installing and configuring databases can be a tricky business. Grafana uses [Doc
 In the root directory of your Grafana repository, run the following command:
 
 ```
-make devenv sources=influxdb,loki
+make devenv sources=influxdb
 ```
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.

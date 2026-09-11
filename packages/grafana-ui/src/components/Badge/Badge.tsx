@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
-import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
@@ -13,7 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent } from '../Tooltip/types';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey' | 'brand';
+export type BadgeColor = keyof GrafanaTheme2['components']['badge'];
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text?: React.ReactNode;
@@ -26,7 +25,11 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
   const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {icon && <Icon name={icon} size="sm" />}
+      {icon && (
+        <span className={styles.iconWrap}>
+          <Icon name={icon} size="sm" />
+        </span>
+      )}
       {text}
     </div>
   );
@@ -61,40 +64,50 @@ const getSkeletonStyles = () => ({
 });
 
 const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
-  let sourceColor = theme.visualization.getColorByName(color);
-  let borderColor = '';
-  let bgColor = '';
-  let textColor = '';
+  let badgeColor = theme.components.badge[color];
 
-  if (theme.isDark) {
-    bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
-    textColor = tinycolor(sourceColor).lighten(15).toString();
-  } else {
-    bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
-    textColor = tinycolor(sourceColor).darken(25).toString();
+  // the color prop is typed, but callers ignoring the typings would otherwise crash the whole tree
+  if (!badgeColor) {
+    const message = `Badge: unknown color '${color}', falling back to 'darkgrey'`;
+    console.warn(message);
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error(message);
+    }
+
+    badgeColor = theme.components.badge.darkgrey;
   }
 
-  if (color === 'brand') {
-    bgColor = theme.colors.gradients.brandHorizontal;
-    borderColor = 'transparent';
-    textColor = theme.colors.primary.contrastText;
-  }
+  const { background, border, text } = badgeColor;
 
   return {
-    wrapper: css({
+    wrapper: css(
+      {
+        display: 'inline-flex',
+        padding: '1px 4px',
+        borderRadius: theme.shape.radius.sm,
+        background,
+        border: `1px solid ${border}`,
+        color: text,
+        fontWeight: theme.typography.fontWeightRegular,
+        gap: theme.spacing(0.5),
+        fontSize: theme.typography.bodySmall.fontSize,
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        alignItems: 'flex-start',
+        '&:focus-visible': {
+          outline: `2px solid ${theme.colors.accent.main}`,
+          outlineOffset: '-2px',
+        },
+      },
+      theme.flags.visualDesignRefresh && {
+        padding: '1px 6px',
+        borderRadius: theme.shape.radius.pill,
+      }
+    ),
+    iconWrap: css({
       display: 'inline-flex',
-      padding: '1px 4px',
-      borderRadius: theme.shape.radius.sm,
-      background: bgColor,
-      border: `1px solid ${borderColor}`,
-      color: textColor,
-      fontWeight: theme.typography.fontWeightRegular,
-      gap: theme.spacing(0.5),
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'center',
+      height: '1lh',
     }),
   };
 };

@@ -7,24 +7,27 @@ import * as api from '../api';
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
 import { useDataSourceInfo } from '../components/useDataSourceInfo';
-import { useDataSourceRights } from '../state/hooks';
-import { setDataSourceName } from '../state/reducers';
+import { useDataSource, useDataSourceRights } from '../state/hooks';
+import { setNameAndVersion } from '../state/reducers';
 
-export interface Props {
+interface Props {
   uid: string;
   pageId: string | null;
 }
 
-export function DataSourceTabPage({ uid, pageId }: Props) {
+function DataSourceTabPage({ uid, pageId }: Props) {
   const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
-  const { datasourceFailureByUID } = useDatasourceFailureByUID();
+  const { datasourceFailureByUID, hasCheck: advisorChecked } = useDatasourceFailureByUID();
 
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
+    alertingLoading: dataSourceHeader.alertingLoading,
     failure: datasourceFailureByUID.get(uid),
+    advisorChecked,
   });
 
+  const dataSource = useDataSource(uid);
   const rights = useDataSourceRights(uid);
   const editable = rights.hasWriteRights && !rights.readOnly;
 
@@ -32,9 +35,17 @@ export function DataSourceTabPage({ uid, pageId }: Props) {
 
   const onEditTitle = async (value: string) => {
     // Make manual API calls to avoid pre-emptively saving other changes from the EditDataSource form
+    // Use the original version from the Redux state to ensure we don't overwrite other name changes
     const ds = await api.getDataSourceByUid(uid);
-    await api.updateDataSource({ ...ds, name: value });
-    dispatch(setDataSourceName(value));
+    const up = await api.updateDataSource({ ...ds, name: value, version: dataSource.version });
+
+    // Update the Redux state with the new name and version to allow the EditDataSource form to submit
+    dispatch(
+      setNameAndVersion({
+        name: up.name,
+        version: up.version,
+      })
+    );
   };
 
   return (

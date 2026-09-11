@@ -14,9 +14,6 @@ export function buildDefaultLogLevelValueMap(): ValueMap {
       continue;
     }
     options[level] = { color: LogLevelColor[canonicLevel] };
-    if (level !== canonicLevel) {
-      options[level].text = canonicLevel;
-    }
   }
 
   return {

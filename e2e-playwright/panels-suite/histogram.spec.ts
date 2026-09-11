@@ -42,7 +42,7 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
 
       await expect(legendVisibilitySwitch, 'legend is enabled by default').toBeChecked();
 
-      const legend = page.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
+      const legend = page.getByTestId(selectors.components.VizLegend.legend);
       await expect(legend, 'legend is rendered in histogram panel').toBeVisible();
 
       await legendVisibilityClickableLabel.click();

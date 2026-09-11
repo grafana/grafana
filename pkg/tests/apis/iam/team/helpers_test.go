@@ -14,10 +14,3 @@ func createTeamObject(helper *apis.K8sTestHelper, teamName string, title string,
 
 	return teamObj
 }
-
-func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
-	obj := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
-	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
-	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
-	return obj
-}

@@ -9,8 +9,15 @@ interface Props {
   onSelect: (interval: string) => void;
 }
 
-export function getPendingPeriodQuickOptions(groupEvaluationInterval: string): string[] {
+function getPendingPeriodQuickOptions(groupEvaluationInterval: string): string[] {
   const groupEvaluationIntervalMillis = safeParsePrometheusDuration(groupEvaluationInterval);
+
+  // Guard against invalid or incomplete interval strings (e.g. "3" typed mid-keystroke).
+  // safeParsePrometheusDuration returns 0 for anything it can't parse, which would make
+  // all five multiples equal to 0 and produce duplicate "None" pills in the UI.
+  if (groupEvaluationIntervalMillis === 0) {
+    return [formatPrometheusDuration(0)];
+  }
 
   // we generate the quick selection based on the group's evaluation interval
   const options: number[] = [
@@ -50,6 +57,6 @@ export function DurationQuickPick({ selectedDuration, groupEvaluationInterval, o
   );
 }
 
-export function stringifyPendingPeriod(duration: string): string {
+function stringifyPendingPeriod(duration: string): string {
   return duration === '0s' ? t('alerting.duration-quick-pick.none', 'None') : duration;
 }

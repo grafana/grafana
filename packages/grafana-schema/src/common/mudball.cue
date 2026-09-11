@@ -239,6 +239,8 @@ TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(kind="enum")
 // TODO docs
 SortOrder: "asc" | "desc" | "none" @cuetsy(kind="enum",memberNames="Ascending|Descending|None")
 
+LegendOverflow: "ellipsis" | "wrap" @cuetsy(kind="type")
+
 // TODO docs
 GraphFieldConfig: {
 	LineConfig
@@ -258,15 +260,17 @@ GraphFieldConfig: {
 
 // TODO docs
 VizLegendOptions: {
-	displayMode: LegendDisplayMode
-	placement:   LegendPlacement
-	showLegend:  bool
-	asTable?:    bool
-	isVisible?:  bool
-	sortBy?:     string
-	sortDesc?:   bool
-	width?:      number
-	limit?:      number
+	displayMode?: LegendDisplayMode
+	placement:    LegendPlacement
+	overflow?:    LegendOverflow
+	showLegend:   bool
+	// @deprecated Use LegendDisplayMode.Table
+	asTable?:   bool
+	isVisible?: bool
+	sortBy?:    string
+	sortDesc?:  bool
+	width?:     number | string
+	limit?:     number
 	calcs: [...string]
 } @cuetsy(kind="interface")
 

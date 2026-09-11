@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -29,6 +30,18 @@ import (
 
 const folderSearchLimit = 100000
 const folderListLimit = 100000
+
+// descendantsBatchSize bounds how many parent UIDs are sent in a single
+// multi-value `In` Search when walking a subtree in GetDescendants. K=100
+// keeps per-call latency on the same order as a single-parent Search while
+// reducing the call count for non-trivial subtrees by ~100x.
+const descendantsBatchSize = 100
+
+// searchPageSize bounds the per-page hit count when searchChildren paginates
+// internally. At ~100 bytes per hit this keeps each response well under the
+// default 4 MiB gRPC max receive size, so a high-fanout search is split into
+// multiple round-trips instead of failing with ResourceExhausted.
+const searchPageSize = 10000
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
@@ -219,7 +232,7 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			URI:         "db/" + slug,
 			URL:         dashboards.GetFolderURL(item.Name, slug),
 			Type:        model.DashHitFolder,
-			FolderUID:   item.Folder,
+			FolderUID:   folder.ToLegacyFolderUID(item.Folder),
 			Description: item.Description,
 		}
 	}
@@ -335,7 +348,8 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 	}
 
 	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
-	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+	// The apistore now writes "general" (canonical) for root parents while older entries still carry the legacy empty string; both denote the root.
+	for parentUID == nil && len(hits.Hits) > 0 && !folder.IsRootFolderUID(hits.Hits[0].Folder) {
 		hits.Hits = hits.Hits[1:]
 	}
 
@@ -495,6 +509,43 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	return folder, nil
 }
 
+func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	ctx, span := s.tracer.Start(ctx, "folder.deleteVariablesInFolders")
+	defer span.End()
+
+	// Search is GET-scoped to the requester. Run as the service so leftover
+	// variables are found and deleted even when grafana.dashboardGlobalVariables
+	// is off (user-facing APIs deny) or the user cannot see every child.
+	ctx = identity.WithServiceIdentityContext(ctx, orgID)
+
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Labels: []*resourcepb.Requirement{},
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.In),
+					Values:   folderUIDs,
+				},
+			},
+		},
+		Limit: folderSearchLimit}
+
+	hits, err := dashboardsearch.SearchAll(ctx, orgID, request, s.variableK8sClient.Search)
+	if err != nil {
+		return folder.ErrInternal.Errorf("failed to fetch variables: %w", err)
+	}
+
+	for _, hit := range hits.Hits {
+		variableUID := hit.Name
+		err = s.variableK8sClient.Delete(ctx, variableUID, orgID, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return folder.ErrInternal.Errorf("failed to delete variable %s: %w", variableUID, err)
+		}
+	}
+	return nil
+}
+
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	ctx, span := s.tracer.Start(ctx, "folder.Delete")
 	defer span.End()
@@ -507,14 +558,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
-	}
-
-	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return toFolderError(err)
-		}
-		return folder.ErrAccessDenied
 	}
 
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)
@@ -597,6 +640,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}
+	}
+
+	if err := s.deleteVariablesInFolders(ctx, cmd.OrgID, folders); err != nil {
+		return err
 	}
 
 	err = s.unifiedStore.Delete(ctx, folders, cmd.OrgID)

@@ -17,9 +17,15 @@ KeeperSpec: {
 #AWSConfig: {
 	region:      string
 	assumeRole?: #AWSAssumeRole
+	kmsKeyId?:   string
 }
 
 #AWSAssumeRole: {
 	assumeRoleArn: string
 	externalID:    string
+}
+
+KeeperStatus: {
+	// True when the keeper is the current active keeper
+	active: bool
 }

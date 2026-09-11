@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -189,40 +188,4 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		forceCreate := call.args[5].(bool)
 		require.True(t, forceCreate, "Mode3 dry-run should set forceAllowCreate=true")
 	})
-}
-
-func TestDryRun_DeleteCollection(t *testing.T) {
-	modes := []struct {
-		name string
-		mode rest.DualWriterMode
-	}{
-		{"Mode1", rest.Mode1},
-		{"Mode2", rest.Mode2},
-		{"Mode3", rest.Mode3},
-	}
-
-	for _, m := range modes {
-		t.Run(m.name+" should not delete collection in legacy storage when dry-run is set", func(t *testing.T) {
-			ls := &fakeStorage{}
-			us := &fakeStorage{}
-
-			// Only unified storage should be called
-			us.onDeleteCollection(exampleList, nil)
-
-			dw, err := newStorage(kind, m.mode, ls, us)
-			require.NoError(t, err)
-
-			obj, err := dw.DeleteCollection(context.Background(),
-				func(ctx context.Context, obj runtime.Object) error { return nil },
-				&metav1.DeleteOptions{DryRun: dryRunAll},
-				&metainternalversion.ListOptions{})
-			require.NoError(t, err)
-			require.Equal(t, exampleList, obj)
-
-			// Legacy storage should NOT have been called
-			require.Empty(t, ls.deleteCollectionCalls)
-			// Unified storage should have been called
-			require.NotEmpty(t, us.deleteCollectionCalls)
-		})
-	}
 }

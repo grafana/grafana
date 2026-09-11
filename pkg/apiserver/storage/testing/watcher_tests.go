@@ -31,7 +31,6 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	utilflowcontrol "k8s.io/apiserver/pkg/util/flowcontrol"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
@@ -1198,7 +1197,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 // In that case we expect a watch request to be established.
 func RunSendInitialEventsBackwardCompatibility(ctx context.Context, t *testing.T, store storage.Interface) {
 	opts := storage.ListOptions{Predicate: storage.Everything}
-	opts.SendInitialEvents = ptr.To(true)
+	opts.SendInitialEvents = new(true)
 	w, err := store.Watch(ctx, KeyFunc("", ""), opts)
 	require.NoError(t, err)
 	w.Stop()

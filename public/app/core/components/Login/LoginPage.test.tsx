@@ -1,44 +1,40 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 
-import * as runtimeMock from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { customLoginHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import LoginPage from './LoginPage';
 
-const postMock = jest.fn();
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  __esModule: true,
-  getBackendSrv: () => ({
-    post: postMock,
-  }),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    auth: {
-      disableLogin: false,
-    },
-    loginError: false,
-    buildInfo: {
-      version: 'v1.0',
-      commit: '1',
-      env: 'production',
-      edition: 'Open Source',
-    },
-    licenseInfo: {
-      stateInfo: '',
-      licenseUrl: '',
-    },
-    appSubUrl: '',
-    verifyEmailEnabled: false,
-  },
-}));
+setBackendSrv(backendSrv);
+setupMockServer();
+
+const originalOauth = config.oauth;
+const originalLoginError = config.loginError;
+
+const mockLocationAssign = jest.fn();
+const originalLocation = window.location;
+
+beforeAll(() => {
+  jest.spyOn(window, 'location', 'get').mockReturnValue({ ...originalLocation, assign: mockLocationAssign });
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
+afterEach(() => {
+  mockLocationAssign.mockClear();
+  config.oauth = originalOauth;
+  config.loginError = originalLoginError;
+});
 
 describe('Login Page', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
   it('renders correctly', () => {
     render(<LoginPage />);
 
@@ -78,26 +74,21 @@ describe('Login Page', () => {
   });
 
   it('should navigate to default url if credentials is valid', async () => {
-    Object.defineProperty(window, 'location', {
-      value: {
-        assign: jest.fn(),
-      },
-    });
-    postMock.mockResolvedValueOnce({ message: 'Logged in' });
+    const capture = captureRequests((r) => r.url.includes('/login') && r.method === 'POST');
     render(<LoginPage />);
 
     await userEvent.type(screen.getByLabelText('Email or username'), 'admin');
     await userEvent.type(screen.getByLabelText('Password'), 'test');
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
-    await waitFor(() =>
-      expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }, { showErrorAlert: false })
-    );
-    expect(window.location.assign).toHaveBeenCalledWith('/');
+    await waitFor(() => expect(mockLocationAssign).toHaveBeenCalledWith('/'));
+
+    const [loginRequest] = await capture;
+    expect(await loginRequest.clone().json()).toEqual({ user: 'admin', password: 'test' });
   });
 
   it('renders social logins correctly', () => {
-    runtimeMock.config.oauth = {
+    config.oauth = {
       okta: {
         name: 'Okta Test',
         icon: 'signin',
@@ -110,7 +101,7 @@ describe('Login Page', () => {
   });
 
   it('shows oauth errors', async () => {
-    runtimeMock.config.loginError = 'Oh no there was an error :(';
+    config.loginError = 'Oh no there was an error :(';
 
     render(<LoginPage />);
 
@@ -120,15 +111,14 @@ describe('Login Page', () => {
   });
 
   it('shows an error with incorrect password', async () => {
-    postMock.mockRejectedValueOnce({
-      data: {
-        message: 'Invalid username or password',
-        messageId: 'password-auth.failed',
-        statusCode: 400,
-      },
-      status: 400,
-      statusText: 'Bad Request',
-    });
+    server.use(
+      customLoginHandler(() =>
+        HttpResponse.json(
+          { message: 'Invalid username or password', messageId: 'password-auth.failed' },
+          { status: 400 }
+        )
+      )
+    );
 
     render(<LoginPage />);
 
@@ -142,15 +132,14 @@ describe('Login Page', () => {
   });
 
   it('shows a different error with failed login attempts', async () => {
-    postMock.mockRejectedValueOnce({
-      data: {
-        message: 'Invalid username or password',
-        messageId: 'login-attempt.blocked',
-        statusCode: 401,
-      },
-      status: 401,
-      statusText: 'Unauthorized',
-    });
+    server.use(
+      customLoginHandler(() =>
+        HttpResponse.json(
+          { message: 'Invalid username or password', messageId: 'login-attempt.blocked' },
+          { status: 401 }
+        )
+      )
+    );
 
     render(<LoginPage />);
 

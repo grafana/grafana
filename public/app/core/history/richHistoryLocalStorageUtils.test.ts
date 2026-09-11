@@ -2,7 +2,7 @@ import { type DataQuery } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
-import { filterAndSortQueries } from './richHistoryLocalStorageUtils';
+import { filterAndSortQueries, sortQueries } from './richHistoryLocalStorageUtils';
 
 interface MockQuery extends DataQuery {
   expr: string;
@@ -36,6 +36,37 @@ const storedHistory: Array<RichHistoryQuery<MockQuery>> = [
   },
 ];
 
+const now = Date.now();
+const historyWithMixedStarred: Array<RichHistoryQuery<MockQuery>> = [
+  {
+    id: 'old-starred',
+    createdAt: now - 30 * 24 * 60 * 60 * 1000, // 30 days ago
+    comment: '',
+    datasourceUid: 'ds1',
+    datasourceName: 'datasource 1',
+    queries: [{ expr: 'old query', refId: '1' }],
+    starred: true,
+  },
+  {
+    id: 'old-unstarred',
+    createdAt: now - 30 * 24 * 60 * 60 * 1000, // 30 days ago
+    comment: '',
+    datasourceUid: 'ds1',
+    datasourceName: 'datasource 1',
+    queries: [{ expr: 'old unstarred query', refId: '1' }],
+    starred: false,
+  },
+  {
+    id: 'recent',
+    createdAt: now - 1 * 24 * 60 * 60 * 1000, // 1 day ago
+    comment: '',
+    datasourceUid: 'ds1',
+    datasourceName: 'datasource 1',
+    queries: [{ expr: 'recent query', refId: '1' }],
+    starred: false,
+  },
+];
+
 describe('filterQueries', () => {
   it('should include all entries for empty filters', () => {
     const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], '');
@@ -64,5 +95,44 @@ describe('filterQueries', () => {
   it('should include queries based on comments', () => {
     const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], 'comment 2');
     expect(filteredQueries).toMatchObject([expect.objectContaining({ id: '2' })]);
+  });
+  it('should include starred queries outside time filter but exclude unstarred ones', () => {
+    const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+    const filteredQueries = filterAndSortQueries(historyWithMixedStarred, SortOrder.Descending, [], '', [
+      fourteenDaysAgo,
+      now,
+    ]);
+    expect(filteredQueries).toHaveLength(2);
+    expect(filteredQueries).toMatchObject([
+      expect.objectContaining({ id: 'recent' }),
+      expect.objectContaining({ id: 'old-starred' }),
+    ]);
+  });
+});
+
+describe('sortQueries by datasource name', () => {
+  // Fresh array per call because `sortQueries` sorts in place.
+  const makeQueries = (): Array<RichHistoryQuery<MockQuery>> =>
+    ['beta', 'alpha', 'gamma'].map((datasourceName, index) => ({
+      id: `${index}`,
+      createdAt: index,
+      comment: '',
+      datasourceUid: `${datasourceName}-uid`,
+      datasourceName,
+      queries: [{ expr: 'query', refId: '1' }],
+      starred: false,
+    }));
+
+  // Regression test (2026-07-02 DataPro code audit, finding #12): the Datasource A-Z / Z-A
+  // comparators were swapped in the localStorage backend, so the sort direction was inverted
+  // relative to the IndexedDB backend. Sort direction here must match `RichHistoryIndexedDBStorage`.
+  it('DatasourceAZ sorts datasource names ascending (A-Z)', () => {
+    const sorted = sortQueries(makeQueries(), SortOrder.DatasourceAZ).map((q) => q.datasourceName);
+    expect(sorted).toEqual(['alpha', 'beta', 'gamma']);
+  });
+
+  it('DatasourceZA sorts datasource names descending (Z-A)', () => {
+    const sorted = sortQueries(makeQueries(), SortOrder.DatasourceZA).map((q) => q.datasourceName);
+    expect(sorted).toEqual(['gamma', 'beta', 'alpha']);
   });
 });

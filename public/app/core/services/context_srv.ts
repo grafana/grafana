@@ -10,11 +10,14 @@ import {
   userHasAnyPermission,
 } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
-import { getSessionExpiry } from 'app/core/utils/auth';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { canRotateSessionToken, getSessionExpiry } from 'app/core/utils/auth';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 import { type CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
+
+import { loadUserPermissions } from './userPermissions';
 
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
@@ -38,9 +41,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  regionalFormat: string;
   language: string;
-  helpFlags1: number;
   hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
   analytics: AnalyticsSettings;
@@ -60,12 +61,10 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.orgCount = 0;
     this.timezone = '';
     this.fiscalYearStartMonth = 0;
-    this.helpFlags1 = 0;
     this.theme = 'dark';
     this.hasEditPermissionInFolders = false;
     this.email = '';
     this.name = '';
-    this.regionalFormat = '';
     this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';
@@ -107,6 +106,16 @@ export class ContextSrv {
   }
 
   async fetchUserPermissions() {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)) {
+      // Null means the request failed; keep the permissions we already have rather
+      // than downgrading the session to "no permissions"
+      const permissions = await loadUserPermissions();
+      if (permissions) {
+        this.user.permissions = permissions;
+      }
+      return;
+    }
+
     try {
       this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
         reloadcache: true,
@@ -226,6 +235,11 @@ export class ContextSrv {
   private canScheduleRotation() {
     // skip if user is not signed in, this happens on login page or when using anonymous auth
     if (!this.isSignedIn) {
+      return false;
+    }
+
+    // skip if the request was authenticated without a session e.g. JWT
+    if (!canRotateSessionToken(this.user.authenticatedBy)) {
       return false;
     }
 

@@ -1,5 +1,3 @@
-import { type WithAccessControlMetadata } from '@grafana/data';
-
 import { type ManagerKind } from '../apiserver/types';
 
 import { type QueryResponse } from './service/types';
@@ -8,30 +6,6 @@ export enum DashboardSearchItemType {
   DashDB = 'dash-db',
   DashHome = 'dash-home',
   DashFolder = 'dash-folder',
-}
-
-/**
- * @deprecated Use DashboardSearchItem and use UIDs instead of IDs
- * DTO type for search API result items, but with deprecated IDs
- * This type was previously also used heavily for views, so contains lots of
- * extraneous properties
- */
-export interface DashboardSearchHit extends WithAccessControlMetadata {
-  /** @deprecated use folderUid */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  id?: number;
-  tags: string[];
-  title: string;
-  type: DashboardSearchItemType;
-  uid: string;
-  url: string;
-  sortMeta?: number;
-  sortMetaName?: string;
-  isDeleted?: boolean;
-  permanentlyDeleteDate?: string;
 }
 
 /**
@@ -62,6 +36,7 @@ export interface DashboardViewItem {
   kind: DashboardViewItemKind;
   uid: string;
   title: string;
+  description?: string;
   url?: string;
   tags?: string[];
 
@@ -81,6 +56,8 @@ export interface DashboardViewItem {
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
+  /** Identity of the managing system (`grafana.app/managerId`), e.g. the repository name. */
+  managerId?: string;
 
   ownerReference?: {
     kind: string;

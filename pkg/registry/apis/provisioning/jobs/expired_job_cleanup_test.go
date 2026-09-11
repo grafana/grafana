@@ -11,7 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestNewJobCleanupController(t *testing.T) {
@@ -173,6 +175,39 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		assert.NoError(t, err)
 		store.AssertExpectations(t)
 		historyWriter.AssertExpectations(t)
+	})
+
+	t.Run("treats NotFound on complete as already cleaned up", func(t *testing.T) {
+		store := &MockStore{}
+
+		historyWriter := &MockHistoryWriter{}
+
+		controller := NewJobCleanupController(store, historyWriter, 30*time.Second)
+		ctx := context.Background()
+
+		job := &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-job",
+				Namespace: "test-ns",
+				Labels:    map[string]string{LabelJobClaim: "123"},
+			},
+			Spec: provisioning.JobSpec{
+				Repository: "test-repo",
+				Action:     provisioning.JobActionPull,
+			},
+		}
+
+		notFound := apierrors.NewNotFound(schema.GroupResource{Group: "provisioning.grafana.app", Resource: "jobs"}, "test-job")
+
+		store.On("ListExpiredJobs", mock.Anything, mock.Anything, 100).Return([]*provisioning.Job{job}, nil)
+		store.On("Complete", mock.Anything, mock.Anything).Return(notFound)
+
+		err := controller.Cleanup(ctx)
+
+		// Another instance already reaped it: no error, and we must not re-archive.
+		assert.NoError(t, err)
+		store.AssertExpectations(t)
+		historyWriter.AssertNotCalled(t, "WriteJob")
 	})
 
 	t.Run("continues on history write error", func(t *testing.T) {

@@ -10,13 +10,14 @@ import {
   AppPlugin,
   OrgRole,
 } from '@grafana/data';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { pluginImporter } from './importer/pluginImporter';
 import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
 
-jest.mock('app/features/plugins/pluginSettings', () => ({
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
 }));
 
@@ -120,9 +121,7 @@ describe('pluginPreloader', () => {
 
       await preloadPlugins([appConfig]);
 
-      expect(getPluginSettingsMock).toHaveBeenCalledWith('test-plugin', {
-        showErrorAlert: true,
-      });
+      expect(getPluginSettingsMock).toHaveBeenCalledWith('test-plugin', true);
       expect(importAppPluginMock).toHaveBeenCalledWith(mockPluginMeta);
     });
 
@@ -158,12 +157,8 @@ describe('pluginPreloader', () => {
       await preloadPlugins(appConfigs);
 
       expect(getPluginSettingsMock).toHaveBeenCalledTimes(2);
-      expect(getPluginSettingsMock).toHaveBeenNthCalledWith(1, 'plugin-1', {
-        showErrorAlert: true,
-      });
-      expect(getPluginSettingsMock).toHaveBeenNthCalledWith(2, 'plugin-2', {
-        showErrorAlert: true,
-      });
+      expect(getPluginSettingsMock).toHaveBeenNthCalledWith(1, 'plugin-1', true);
+      expect(getPluginSettingsMock).toHaveBeenNthCalledWith(2, 'plugin-2', true);
       expect(importAppPluginMock).toHaveBeenCalledTimes(2);
       expect(importAppPluginMock).toHaveBeenNthCalledWith(1, mockPluginMeta1);
       expect(importAppPluginMock).toHaveBeenNthCalledWith(2, mockPluginMeta2);
@@ -292,9 +287,7 @@ describe('pluginPreloader', () => {
 
       await preloadPlugins([appConfig]);
 
-      expect(getPluginSettingsMock).toHaveBeenCalledWith('test-plugin', {
-        showErrorAlert: false,
-      });
+      expect(getPluginSettingsMock).toHaveBeenCalledWith('test-plugin', false);
       expect(importAppPluginMock).toHaveBeenCalledWith(mockPluginMeta);
     });
 

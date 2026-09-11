@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +18,6 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -107,7 +105,11 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 
 	// For non-Terraform managers, identity changes are also blocked.
 	// Remove the old manager first, then add a new one with a different identity.
-	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
+	//
+	// Classic shim kinds are exempt: their identity is absent or unstable (e.g. a
+	// file-provisioning reader name, or empty for API/converted-Prometheus origins),
+	// so it is not a user-defined stable ID and must not be treated as immutable.
+	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && !managerNew.Kind.IsClassic() && managerNew.Identity != managerOld.Identity {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusForbidden,
@@ -192,13 +194,16 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		return nil // not managed
 
 	case utils.ManagerKindRepo:
-		if auth.GetUID() == "access-policy:provisioning" || slices.Contains(auth.GetAudience(), provisioning.GROUP) {
+		if identity.IsProvisioningServiceIdentity(auth) {
 			return nil // OK!
 		}
 		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
-	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
+	case utils.ManagerKindPlugin,
+		utils.ManagerKindClassicFP,                  // nolint:staticcheck
+		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 
@@ -217,37 +222,60 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	return nil
 }
 
+// managedResourceCommitMessage returns the git commit message to use when
+// forwarding a managed-resource write to the provisioning files endpoint. It
+// prefers the caller-supplied grafana.app/message annotation and falls back to
+// an action-specific message so the downstream nanogit commit always has a
+// non-empty subject.
+func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resourcepb.WatchEvent_Type) string {
+	if msg := obj.GetMessage(); msg != "" {
+		return msg
+	}
+	switch action {
+	case resourcepb.WatchEvent_ADDED:
+		return fmt.Sprintf("Create %s", obj.GetName())
+	case resourcepb.WatchEvent_DELETED:
+		return fmt.Sprintf("Delete %s", obj.GetName())
+	default:
+		return fmt.Sprintf("Update %s", obj.GetName())
+	}
+}
+
+// handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
+// files endpoint. cleanupSafe reports whether the write definitely did not persist (so a caller may
+// safely delete secrets it created for it): true only when the provisioning request was never sent,
+// false once it is sent because the endpoint may have committed the file even when it returns an error.
 func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	err error,
 	action resourcepb.WatchEvent_Type,
 	key string,
 	orig runtime.Object,
 	rsp runtime.Object,
-) error {
+) (cleanupSafe bool, _ error) {
 	if !errors.Is(err, errResourceIsManagedInRepository) || s.configProvider == nil {
-		return err
+		return true, err // not routed: the write was never attempted
 	}
 	obj, err := utils.MetaAccessor(orig)
 	if err != nil {
-		return err
+		return true, err
 	}
 	repo, ok := obj.GetManagerProperties()
 	if !ok {
-		return fmt.Errorf("expected managed resource")
+		return true, fmt.Errorf("expected managed resource")
 	}
 	if repo.Kind != utils.ManagerKindRepo {
 		if !repo.AllowsEdits {
-			return fmt.Errorf("managed resource does not allow edits")
+			return true, fmt.Errorf("managed resource does not allow edits")
 		}
 	}
 	src, ok := obj.GetSourceProperties()
 	if !ok || src.Path == "" {
-		return fmt.Errorf("managed resource is missing source path annotation")
+		return true, fmt.Errorf("managed resource is missing source path annotation")
 	}
 
 	cfg, err := s.configProvider.GetRestConfig(ctx)
 	if err != nil {
-		return err
+		return true, err
 	}
 	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 	cfg.GroupVersion = &schema.GroupVersion{
@@ -256,21 +284,22 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	}
 	client, err := rest.RESTClientFor(cfg)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	if action == resourcepb.WatchEvent_DELETED {
 		// TODO? can we copy orig into rsp without a full get?
 		if err = s.Get(ctx, key, storage.GetOptions{}, rsp); err != nil { // COPY?
-			return err
+			return true, err
 		}
 		result := client.Delete().
 			Namespace(obj.GetNamespace()).
 			Resource("repositories").
 			Name(repo.Identity).
 			Suffix("files", src.Path).
+			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
-		return result.Error()
+		return false, result.Error()
 	}
 
 	var req *rest.Request
@@ -280,22 +309,29 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	case resourcepb.WatchEvent_MODIFIED:
 		req = client.Put()
 	default:
-		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
+		return true, fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
 	}
 
-	// Execute the change
+	// Execute the change. The provisioning files endpoint reads the commit
+	// message from the `message` query parameter only — it does not inspect
+	// the body's grafana.app/message annotation. Forward the annotation here
+	// (with a sensible fallback) so writes through this fallback path produce
+	// a non-empty git commit message.
 	result := req.Namespace(obj.GetNamespace()).
 		Resource("repositories").
 		Name(repo.Identity).
 		Suffix("files", src.Path).
 		Body(orig).
 		Param("skipDryRun", "true").
+		Param("message", managedResourceCommitMessage(obj, action)).
 		Do(ctx)
-	err = result.Error()
-	if err != nil {
-		return err
+	if err = result.Error(); err != nil {
+		// The files endpoint may commit the repository file before returning an error
+		// (e.g. a 409 after the write), so any post-send failure is ambiguous: keep the
+		// secret rather than orphan a committed reference.
+		return false, err
 	}
 
-	// return the updated value
-	return s.Get(ctx, key, storage.GetOptions{}, rsp)
+	// The write persisted; keep any secrets even if the read-back fails.
+	return false, s.Get(ctx, key, storage.GetOptions{}, rsp)
 }

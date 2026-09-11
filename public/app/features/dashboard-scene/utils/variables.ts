@@ -1,5 +1,6 @@
 import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -19,6 +20,7 @@ import {
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -27,18 +29,61 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 
 const DEFAULT_DATASOURCE = 'default';
 
+// Keep dashboard-load construction synchronous while the instance-settings lookup is async.
+function applySupportsMultiValueOperators(variable: AdHocFiltersVariable, datasourceType?: string) {
+  void getDataSourceInstanceSettings({ type: datasourceType })
+    .then((settings) => {
+      const supports = Boolean(settings?.meta.multiValueFilterOperators);
+      if (variable.state.supportsMultiValueOperators !== supports) {
+        variable.setState({ supportsMultiValueOperators: supports });
+      }
+    })
+    .catch((e) => console.warn('Failed to resolve multi-value operator support', datasourceType, e));
+}
+
 export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+
+/**
+ * Collects the user-defined variables visible from `model` by walking up the
+ * scene graph, so that both section-level (tab/row) and dashboard-level
+ * variables are returned. When the same name is defined at multiple levels the
+ * nearest definition wins, matching how `sceneGraph.lookupVariable` resolves a
+ * variable at evaluation time. Internal system variables (e.g. ScopesVariable)
+ * are excluded.
+ */
+function collectInScopeUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const byName = new Map<string, SceneVariable>();
+
+  let current: SceneObject | undefined = model;
+  while (current) {
+    const variableSet = current.state.$variables;
+
+    if (variableSet) {
+      for (const variable of variableSet.state.variables) {
+        if (keepOnlyUserDefinedVariables(variable) && !byName.has(variable.state.name)) {
+          byName.set(variable.state.name, variable);
+        }
+      }
+    }
+
+    current = current.parent;
+  }
+
+  return Array.from(byName.values());
+}
 
 /**
  * Excludes internal system variables (e.g. ScopesVariable)
  */
 export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
-  return sceneGraph.getVariables(model).state.variables.filter(keepOnlyUserDefinedVariables);
+  return collectInScopeUserDefinedVariables(model);
 }
 
 export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
-  const { variables } = sceneGraph.getVariables(model).useState();
-  return variables.filter(keepOnlyUserDefinedVariables);
+  // Subscribe to the closest variable set so the list reacts to variables being
+  // added or removed; the returned list still spans the whole parent chain.
+  sceneGraph.getVariables(model).useState();
+  return collectInScopeUserDefinedVariables(model);
 }
 
 export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
@@ -83,7 +128,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
       try {
         // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
         if (v.type === 'adhoc') {
-          return new AdHocFiltersVariable({
+          const adhocVariable = new AdHocFiltersVariable({
             name: v.name,
             label: v.label,
             readOnly: true,
@@ -97,11 +142,12 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
             applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-            supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
-            ),
+            supportsMultiValueOperators: false,
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
+            $behaviors: [new ReportInteractionBehavior({})],
           });
+          applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
+          return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable
         return createSnapshotVariable(v);
@@ -120,7 +166,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.type === 'interval') {
@@ -182,7 +228,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     const filters: AdHocVariableFilter[] = [];
     variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
 
-    return new AdHocFiltersVariable({
+    const adhocVariable = new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.description,
       skipUrlSync: variable.skipUrlSync,
@@ -196,16 +242,16 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled:
-        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
-      supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
-      ),
+      supportsMultiValueOperators: false,
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.enableGroupBy ?? false)
         : false,
+      $behaviors: [new ReportInteractionBehavior({})],
     });
+    applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
+    return adhocVariable;
   }
   // Custom variable
   if (variable.type === 'custom') {
@@ -333,8 +379,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled:
-        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

@@ -81,7 +81,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
 TextLink.displayName = 'TextLink';
 
-export const getLinkStyles = (
+const getLinkStyles = (
   theme: GrafanaTheme2,
   inline: boolean,
   variant?: keyof ThemeTypographyVariantTypes,

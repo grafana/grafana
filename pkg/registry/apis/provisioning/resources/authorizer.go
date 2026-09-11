@@ -102,6 +102,12 @@ type Authorizer interface {
 	// folder. For instance-scoped repositories the check runs against the root folder.
 	AuthorizeCreateAllSupported(ctx context.Context) error
 
+	// AuthorizeDeleteAllSupported checks if the current user has delete permission
+	// on every supported provisioning resource type at the root level. This is used
+	// before operations that remove all resources (e.g. a full migration, which
+	// deletes the migrated resources from the instance).
+	AuthorizeDeleteAllSupported(ctx context.Context) error
+
 	// AuthorizeUpdateFolder checks if the current user has permission to update
 	// the folder at the specified path. This checks folders:update permission using
 	// the folder's own ID as the authorization context.
@@ -114,6 +120,19 @@ type Authorizer interface {
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
+
+	// AuthorizeReadRawFile checks if the user has permission to read a raw
+	// (non-resource) file at the given path.
+	//
+	// Raw files such as README.md are returned as bytes rather than parsed as
+	// k8s resources, so we cannot derive a per-resource verb. We instead gate
+	// access on the read permission of the file's containing folder. For files
+	// at the repository root, the check uses the repository's root folder.
+	//
+	// Permissions on a parent folder grant at least that level of access to
+	// all children, so a user who can read the parent folder can read raw
+	// files inside it.
+	AuthorizeReadRawFile(ctx context.Context, path string) error
 }
 
 // ProvisioningAuthorizer implements Authorizer for provisioning operations.
@@ -121,15 +140,18 @@ type ProvisioningAuthorizer struct {
 	repo                  *provisioning.Repository
 	reader                repository.Reader
 	access                auth.AccessChecker
+	clients               ResourceClients
 	folderMetadataEnabled bool
 }
 
-// NewAuthorizer creates a new ProvisioningAuthorizer.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool) Authorizer {
+// NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
+// supported resources to authorize against.
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folderMetadataEnabled bool) Authorizer {
 	return &ProvisioningAuthorizer{
 		repo:                  repo,
 		reader:                reader,
 		access:                access,
+		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
@@ -138,22 +160,28 @@ func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, acce
 // verb on the given resource.
 //
 // Authorization Model:
-//   - For new resources: Uses the folder from the file metadata
-//   - For existing resources: Uses the folder where the resource currently exists
+//   - For new resources: checks the destination folder (derived from the file path).
+//   - For existing resources where the folder is unchanged: checks that single folder.
+//   - For existing resources where the folder changes (cross-folder move): checks both
+//     the current DB location AND the destination. The user must have the required verb
+//     on both to prevent moving resources into folders they cannot access.
 //
-// This distinction is important because the file content is user-controlled, while the
-// existing resource location comes from the database. Checking against the actual location
-// prevents users from bypassing folder permissions by declaring a different folder in their file.
+// The destination folder is always derived from the file path (parser.go), never from
+// user-supplied JSON body content, so it cannot be spoofed.
 //
 // Example - Creating a new dashboard:
-//   - File declares: folder="team-a"
-//   - Checks: create permission on "team-a" (user must be Editor or Admin)
+//   - File path resolves to: folder="team-a"
+//   - Checks: create permission on "team-a"
 //
-// Example - Updating existing dashboard:
-//   - File declares: folder="public" (user is Editor)
-//   - Actual location: folder="team-a" (user is Reader - no edit access)
-//   - Checks: update permission on "team-a" (actual location)
-//   - Result: DENIED (prevents permission bypass)
+// Example - Updating a dashboard without changing its folder:
+//   - File path resolves to: folder="team-a" (same as DB)
+//   - Checks: update permission on "team-a"
+//
+// Example - Moving a dashboard to a restricted folder:
+//   - File path resolves to: folder="team-b" (user has no access)
+//   - Actual DB location: folder="team-a" (user has Editor access)
+//   - Checks: update on "team-a" (passes) AND update on "team-b" (fails)
+//   - Result: DENIED
 func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
 	// Determine the resource name for the authorization check
 	var name string
@@ -163,23 +191,36 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		name = parsed.Obj.GetName()
 	}
 
-	// Determine the folder for the authorization check.
-	// For new resources, use the folder from the file metadata.
-	// For existing resources, use the folder where the resource actually exists.
-	folder := parsed.Meta.GetFolder()
+	// metaFolder is the destination folder derived from the file path (not from
+	// user-controlled JSON content — see parser.go:222-236). It is always checked.
+	metaFolder := parsed.Meta.GetFolder()
+
+	// For existing resources, also check the current DB location when it differs
+	// from the destination. This prevents a user from moving a resource out of a
+	// folder they can write to and into one they cannot, by simply writing the file
+	// to a different path. Both source and destination must be authorised.
 	if parsed.Existing != nil {
 		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
-			folder = meta.GetFolder()
+			existingFolder := meta.GetFolder()
+			if existingFolder != metaFolder {
+				if err := a.access.Check(ctx, authlib.CheckRequest{
+					Group:    parsed.GVR.Group,
+					Resource: parsed.GVR.Resource,
+					Name:     name,
+					Verb:     verb,
+				}, existingFolder); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
-	// Perform the authorization check
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    parsed.GVR.Group,
 		Resource: parsed.GVR.Resource,
 		Name:     name,
 		Verb:     verb,
-	}, folder)
+	}, metaFolder)
 }
 
 // getFolderID resolves the folder ID for the given path, always reading
@@ -208,11 +249,18 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
 	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	for _, gvr := range SupportedProvisioningResources {
-		if gvr == FolderResource {
+	// Match on group AND kind: resources can share a group (e.g. dashboards and library
+	// panels both live in dashboard.grafana.app), so matching on group alone would
+	// mis-authorize one as the other. The plural resource is resolved via discovery.
+	for _, supported := range a.clients.SupportedResources() {
+		if supported.GroupKind == FolderKind.GroupKind() {
 			continue
 		}
-		if gvr.Group == gvk.Group {
+		if supported.Group == gvk.Group && supported.Kind == gvk.Kind {
+			_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
+			if err != nil {
+				return schema.GroupVersionResource{}, fmt.Errorf("resolve client for %s/%s: %w", supported.Group, supported.Kind, err)
+			}
 			return gvr, nil
 		}
 	}
@@ -459,10 +507,14 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 // AuthorizeReadAllSupported checks if the current user has read (get) permission
 // on every supported provisioning resource type at the root level.
 func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
-	for _, kind := range SupportedProvisioningResources {
+	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
 			Verb:     utils.VerbGet,
 		}, ""); err != nil {
 			return err
@@ -477,12 +529,35 @@ func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) 
 func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
 	targetFolder := RootFolder(a.repo)
 
-	for _, kind := range SupportedProvisioningResources {
+	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
 			Verb:     utils.VerbCreate,
 		}, targetFolder); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// AuthorizeDeleteAllSupported checks if the current user has delete permission
+// on every supported provisioning resource type at the root level.
+func (a *ProvisioningAuthorizer) AuthorizeDeleteAllSupported(ctx context.Context) error {
+	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
+			Verb:     utils.VerbDelete,
+		}, ""); err != nil {
 			return err
 		}
 	}
@@ -493,4 +568,32 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context
 // This delegates to the repository's write authorization logic.
 func (a *ProvisioningAuthorizer) AuthorizeWrite(ctx context.Context, ref string) error {
 	return repository.IsWriteAllowed(a.repo, ref)
+}
+
+// AuthorizeReadRawFile checks if the user has read permission on the folder
+// containing a raw (non-resource) file.
+//
+// Folder IDs are resolved from the configured branch (ref="") for the same
+// reasons documented on the Authorizer interface — caller-supplied refs can
+// be used to spoof folder UIDs.
+func (a *ProvisioningAuthorizer) AuthorizeReadRawFile(ctx context.Context, path string) error {
+	parentPath := safepath.Dir(path)
+
+	var folderID string
+	if parentPath == "" {
+		folderID = RootFolder(a.repo)
+	} else {
+		id, err := a.getFolderID(ctx, parentPath)
+		if err != nil {
+			return fmt.Errorf("get parent folder ID for %q: %w", path, err)
+		}
+		folderID = id
+	}
+
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     folderID,
+		Verb:     utils.VerbGet,
+	}, folderID)
 }

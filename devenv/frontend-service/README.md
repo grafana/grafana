@@ -17,6 +17,24 @@ To start the stack, from the root of the Grafana project run `make frontend-serv
 
 Quitting the process will stop the service from running.
 
+### Building with rspack
+
+By default the stack builds the frontend with webpack. To build with rspack instead:
+
+```
+RSPACK=1 make frontend-service
+```
+
+This switches the build to `yarn start:rspack:noHmr` and turns on the
+`grafana.rspackBuild` feature flag so both backends read the manifest from
+`public/build/rspack`. The CDN mount is unchanged, because rspack writes inside the
+webpack output directory. Hot module replacement is off here on purpose: the CDN serves
+assets from disk, so the build has to write files instead of holding them in a dev server. The flag reaches the two backends by
+different routes: grafana-api reads it from static config, the frontend-service reads
+it from GOFF (`goff-flags.rspack.yaml`).
+
+Switching between the two requires a full restart, not just a Tilt reload.
+
 ### Grafana config
 
 The Grafana API and frontend-service containers are configured in two places:

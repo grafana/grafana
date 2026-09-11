@@ -206,15 +206,13 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for _, testServer := range testServers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
 				require.NoError(t, err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -249,7 +247,7 @@ func getDistributorResponse[Req any, Resp any](t *testing.T, req *Req, fn func(c
 
 func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 	go func() {
-		// this next line is to avoid double registration, as both InitializeDocumentBuilders as well as ProvideUnifiedStorageGrpcService
+		// this next line is to avoid double registration, as both InitializeSearchSupport as well as ProvideUnifiedStorageGrpcService
 		// are hard-coded to use prometheus.DefaultRegisterer
 		// the alternative would be to get the registry from wire, in which case the tests would receive a new
 		// registry automatically, but that _may_ change metric names
@@ -367,7 +365,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil, nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -393,13 +391,14 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.EnableSearch = true
 	features := featuremgmt.WithFeatures()
-	docBuilders, err := InitializeDocumentBuilders(cfg)
+	support, err := InitializeSearchSupport(cfg, features, tracing.InitializeTracerForTest(), prometheus.NewRegistry())
 	require.NoError(t, err)
-	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, support.DocBuilders, nil, nil, nil)
 	require.NoError(t, err)
 	cfg.DisablePruner = dbType == "sqlite3"
-	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, false)
+	eDB, err := sql.ProvideResourceDB(cfg, nil)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, nil, nil, false, nil, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
@@ -443,7 +442,7 @@ func generatePlaylistPayload(ns string) *resourcepb.CreateRequest {
 	name := "playlist" + strconv.Itoa(counter)
 	counter += 1
 	return &resourcepb.CreateRequest{
-		Value: []byte(fmt.Sprintf(`{
+		Value: fmt.Appendf(nil, `{
     		"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
@@ -466,7 +465,7 @@ func generatePlaylistPayload(ns string) *resourcepb.CreateRequest {
 					}
 				]
 			}
-		}`, name, ns)),
+		}`, name, ns),
 		Key: &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "aoeuaeou",

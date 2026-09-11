@@ -46,13 +46,9 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import {
-  calculateGridItemDimensions,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { calculateGridItemDimensions, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
@@ -756,7 +752,7 @@ function flattenRowItemToPanels(row: RowItem, panelsArray: Panel[], isSnapshot =
  * @param currentY - The current absolute Y position in the dashboard
  * @returns The next Y position after this tab's content
  */
-export function tabItemToSaveModel(
+function tabItemToSaveModel(
   tab: TabItem,
   panelsArray: Array<Panel | RowPanel>,
   isSnapshot = false,

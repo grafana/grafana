@@ -41,6 +41,10 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				target = m.Spec.Local.Path
 			case GitHubRepositoryType:
 				target = m.Spec.GitHub.URL
+			case GitHubEnterpriseRepositoryType:
+				if m.Spec.GitHubEnterprise != nil {
+					target = m.Spec.GitHubEnterprise.URL
+				}
 			case GitRepositoryType:
 				target = m.Spec.Git.URL
 			case BitbucketRepositoryType:
@@ -139,10 +143,15 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			case GithubConnectionType:
 				appID = m.Spec.GitHub.AppID
 				installationID = m.Spec.GitHub.InstallationID
-			case BitbucketConnectionType:
-				clientID = m.Spec.Bitbucket.ClientID
-			case GitlabConnectionType:
-				clientID = m.Spec.Gitlab.ClientID
+			case GithubEnterpriseConnectionType:
+				if m.Spec.GitHubEnterprise != nil {
+					appID = m.Spec.GitHubEnterprise.AppID
+					installationID = m.Spec.GitHubEnterprise.InstallationID
+				}
+			default:
+			}
+			if m.Spec.OAuth != nil {
+				clientID = m.Spec.OAuth.ClientID
 			}
 
 			return []interface{}{
@@ -188,6 +197,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&FileList{},
 		&HistoryList{},
 		&TestResults{},
+		&ConnectionAuthorizeRequest{},
 		&ResourceList{},
 		&ResourceStats{},
 		&Job{},

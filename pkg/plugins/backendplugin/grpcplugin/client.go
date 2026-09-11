@@ -1,6 +1,7 @@
 package grpcplugin
 
 import (
+	"maps"
 	"os"
 	"os/exec"
 	"runtime"
@@ -8,15 +9,14 @@ import (
 	"github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/go-plugin/runner"
-	"github.com/hashicorp/go-secure-stdlib/plugincontainer"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
+	appgrpcplugin "github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -32,18 +32,21 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-// pluginSet is list of plugins supported on v2.
-var pluginSet = map[int]goplugin.PluginSet{
-	grpcplugin.ProtocolVersion: {
+// pluginSet is the set of services Grafana can dispense from a backend plugin:
+// the plugin-sdk (v2) services plus the app-sdk (v3) ones. Any given plugin
+// implements only a subset.
+var pluginSet = func() map[int]goplugin.PluginSet {
+	services := goplugin.PluginSet{
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
 		"data":        &grpcplugin.DataGRPCPlugin{},
 		"stream":      &grpcplugin.StreamGRPCPlugin{},
 		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
 		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
-		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
-	},
-}
+	}
+	maps.Copy(services, appgrpcplugin.ClientPluginSet())
+	return map[int]goplugin.PluginSet{grpcplugin.ProtocolVersion: services}
+}()
 
 type clientTracerProvider struct {
 	tracer trace.Tracer
@@ -62,10 +65,6 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	executablePath := descriptor.executablePath
 	skipHostEnvVars := descriptor.skipHostEnvVars
 	versionedPlugins := descriptor.versionedPlugins
-
-	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
-		return containerClientConfig(executablePath, descriptor.containerMode.image, descriptor.containerMode.tag, logger, versionedPlugins, skipHostEnvVars, tracer), nil
-	}
 	cfg := &goplugin.ClientConfig{
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
@@ -102,33 +101,6 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	return cfg, nil
 }
 
-func containerClientConfig(executablePath, containerImage, containerTag string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
-	logger.Info("Using container mode", "executable", executablePath, "image", containerImage, "tag", containerTag)
-	return &goplugin.ClientConfig{
-		RunnerFunc: func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error) {
-			logger.Info("Creating container runner", "executablePath", executablePath, "tmpDir", tmpDir)
-			config := &plugincontainer.Config{
-				Image: containerImage,
-				Tag:   containerTag,
-				Env:   cmd.Env,
-			}
-
-			return config.NewContainerRunner(l, cmd, tmpDir)
-		},
-		HandshakeConfig:  handshake,
-		VersionedPlugins: versionedPlugins,
-		SkipHostEnv:      skipHostEnvVars,
-		Logger:           logWrapper{Logger: logger},
-		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
-		GRPCDialOptions: []grpc.DialOption{
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
-		},
-	}
-}
-
-// StartRendererFunc callback function called when a renderer plugin is started.
-type StartRendererFunc func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error
-
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
 	pluginID         string
@@ -136,16 +108,8 @@ type PluginDescriptor struct {
 	executableArgs   []string
 	skipHostEnvVars  bool
 	managed          bool
-	containerMode    containerModeOpts
 	runnerFunc       func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
 	versionedPlugins map[int]goplugin.PluginSet
-	startRendererFn  StartRendererFunc
-}
-
-type containerModeOpts struct {
-	enabled bool
-	image   string
-	tag     string
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
@@ -167,16 +131,5 @@ func newBackendPlugin(pluginID, executablePath string, managed bool, skipHostEnv
 		skipHostEnvVars:  skipHostEnvVars,
 		managed:          managed,
 		versionedPlugins: pluginSet,
-	})
-}
-
-// NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
-func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFunc) backendplugin.PluginFactoryFunc {
-	return newPlugin(PluginDescriptor{
-		pluginID:         pluginID,
-		executablePath:   executablePath,
-		managed:          false,
-		versionedPlugins: pluginSet,
-		startRendererFn:  startFn,
 	})
 }

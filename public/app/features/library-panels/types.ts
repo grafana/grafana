@@ -9,7 +9,7 @@ export enum LibraryElementKind {
   Panel = 1,
 }
 
-export enum LibraryElementConnectionKind {
+enum LibraryElementConnectionKind {
   Dashboard = 1,
 }
 

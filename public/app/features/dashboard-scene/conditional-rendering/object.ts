@@ -11,31 +11,31 @@ export type ObjectsWithConditionalRendering = 'panel' | 'row' | 'tab' | 'element
 
 const translatedObjectTypes = {
   get panel() {
-    return t('dashboard.edit-pane.elements.panel', 'Panel');
+    return t('dashboard.sidebar.elements.panel', 'Panel');
   },
   get row() {
-    return t('dashboard.edit-pane.elements.row', 'Row');
+    return t('dashboard.sidebar.elements.row', 'Row');
   },
   get tab() {
-    return t('dashboard.edit-pane.elements.tab', 'Tab');
+    return t('dashboard.sidebar.elements.tab', 'Tab');
   },
   get element() {
-    return t('dashboard.edit-pane.elements.element', 'Element');
+    return t('dashboard.sidebar.elements.element', 'Element');
   },
 } as const;
 
 const translatedObjectTypesLower: Record<ObjectsWithConditionalRendering, string> = {
   get panel() {
-    return lowerCase(t('dashboard.edit-pane.elements.panel', 'Panel'));
+    return lowerCase(t('dashboard.sidebar.elements.panel', 'Panel'));
   },
   get row() {
-    return lowerCase(t('dashboard.edit-pane.elements.row', 'Row'));
+    return lowerCase(t('dashboard.sidebar.elements.row', 'Row'));
   },
   get tab() {
-    return lowerCase(t('dashboard.edit-pane.elements.tab', 'Tab'));
+    return lowerCase(t('dashboard.sidebar.elements.tab', 'Tab'));
   },
   get element() {
-    return lowerCase(t('dashboard.edit-pane.elements.element', 'Element'));
+    return lowerCase(t('dashboard.sidebar.elements.element', 'Element'));
   },
 } as const;
 

@@ -95,7 +95,7 @@ function showConfirmModal({ payload }: ShowConfirmModalEvent, setState: (state: 
 
   const props: ConfirmModalProps = {
     confirmText: yesText,
-    confirmButtonVariant: yesButtonVariant,
+    confirmVariant: yesButtonVariant,
     confirmationText: confirmText,
     title,
     body: text,

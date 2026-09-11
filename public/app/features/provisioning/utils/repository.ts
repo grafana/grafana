@@ -1,10 +1,11 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { type RepoWorkflows } from '../types';
+
+import { isItemManagedByRepository } from './managedResource';
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)
@@ -29,7 +30,7 @@ export function getItemRepositoryUid(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
 ): string {
   // For root provisioned folders, the UID is the repository name
-  if (item.managedBy === ManagerKind.Repo && !item.parentUID && item.kind === 'folder') {
+  if (isItemManagedByRepository(item) && !item.parentUID && item.kind === 'folder') {
     return item.uid;
   }
 
@@ -41,7 +42,7 @@ export function getItemRepositoryUid(
       break;
     }
 
-    if (parent.managedBy === ManagerKind.Repo && !parent.parentUID) {
+    if (isItemManagedByRepository(parent) && !parent.parentUID) {
       return currentItem.parentUID;
     }
 

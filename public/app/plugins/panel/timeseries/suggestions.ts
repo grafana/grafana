@@ -21,6 +21,17 @@ const MAX_BARS = 100;
 const MAX_PREVIEW_SERIES = 8;
 const MAX_PREVIEW_BAR_ROWS = 30;
 
+export const TIMESERIES_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
+  maxSeries: MAX_PREVIEW_SERIES,
+  previewModifier: (s) => {
+    s.options!.disableKeyboardEvents = true;
+    s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
+    if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+      s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
+    }
+  },
+};
+
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> =>
@@ -31,16 +42,7 @@ const withDefaults = (
       },
       overrides: [],
     },
-    cardOptions: {
-      maxSeries: MAX_PREVIEW_SERIES,
-      previewModifier: (s) => {
-        s.options!.disableKeyboardEvents = true;
-        s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
-        if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-          s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
-        }
-      },
-    },
+    cardOptions: TIMESERIES_CARD_OPTIONS,
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
 const areaChart = (name: string, stacking?: StackingMode) => ({

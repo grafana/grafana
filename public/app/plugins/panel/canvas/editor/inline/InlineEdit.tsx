@@ -74,7 +74,7 @@ export function InlineEdit({ onClose, id, scene }: Props) {
   return (
     <Portal>
       <div className={styles.draggableWrapper}>
-        <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }}>
+        <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }} nodeRef={ref}>
           <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
             <div
               className={styles.inlineEditorContainer}
@@ -113,7 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     background: theme.components.panel.background,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     zIndex: 1000,
     opacity: 1,
     minWidth: '400px',

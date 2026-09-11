@@ -120,7 +120,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
 
 ValueMappingsEditor.displayName = 'ValueMappingsEditor';
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
     width: '980px',
   }),

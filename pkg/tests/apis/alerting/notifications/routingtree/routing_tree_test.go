@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -18,22 +18,22 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -47,10 +47,10 @@ import (
 
 var defaultTreeIdentifier = resource.Identifier{
 	Namespace: apis.DefaultNamespace,
-	Name:      v1beta1.UserDefinedRoutingTreeName,
+	Name:      models.DefaultRoutingTreeName,
 }
 
-var defaultPolicy = definitions.Route{
+var defaultPolicy = v1model.Route{
 	Receiver:   "empty",
 	GroupByStr: models.DefaultNotificationSettingsGroupBy,
 }
@@ -60,34 +60,7 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
-		},
-	})
-}
-
-func TestIntegrationNotAllowedMethods(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
-	})
-
-	client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	route := &v1beta1.RoutingTree{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
-		Spec: v1beta1.RoutingTreeSpec{},
-	}
-	_, err = client.Create(ctx, route, resource.CreateOptions{})
-	var statusErr *errors.StatusError
-	assert.ErrorAs(t, err, &statusErr)
-	require.Equalf(t, int32(501), statusErr.Status().Code, "Expected NotImplemented (501) but got %s (%d)", statusErr.Status().Status, statusErr.Status().Code)
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
@@ -250,7 +223,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
 					require.Len(t, list.Items, 1)
-					require.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[0].Name)
+					require.Equal(t, models.DefaultRoutingTreeName, list.Items[0].Name)
 				})
 
 				t.Run("should be able to read routing trees by resource identifier", func(t *testing.T) {
@@ -565,11 +538,11 @@ func TestIntegrationDataConsistency(t *testing.T) {
 
 	receiver := "empty"
 	timeInterval := "test-time-interval"
-	createRoute := func(t *testing.T, route definitions.Route) {
+	createRoute := func(t *testing.T, route v1model.Route) {
 		t.Helper()
 		routeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
-		managedRoute := legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &route)
+		managedRoute := legacy_storage.NewManagedRoute(models.DefaultRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
 		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
@@ -599,9 +572,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 
 	t.Run("all matchers are handled", func(t *testing.T) {
 		t.Run("can read all legacy matchers", func(t *testing.T) {
-			route := definitions.Route{
+			route := v1model.Route{
 				Receiver: receiver,
-				Routes: []*definitions.Route{
+				Routes: []*v1model.Route{
 					{
 						Match: map[string]string{
 							"label_match": "test-123",
@@ -612,7 +585,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 						Matchers: config.Matchers{
 							ensureMatcher(t, labels.MatchRegexp, "label_matchers", "test-321"),
 						},
-						ObjectMatchers: definitions.ObjectMatchers{
+						ObjectMatchers: v1model.ObjectMatchers{
 							ensureMatcher(t, labels.MatchNotRegexp, "object-label-matchers", "test-456"),
 						},
 					},
@@ -646,9 +619,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 		})
 		t.Run("should save into ObjectMatchers", func(t *testing.T) {
-			route := definitions.Route{
+			route := v1model.Route{
 				Receiver: receiver,
-				Routes: []*definitions.Route{
+				Routes: []*v1model.Route{
 					{
 						Match: map[string]string{
 							"oldmatch": "123",
@@ -665,7 +638,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 						},
 					},
 					{
-						ObjectMatchers: definitions.ObjectMatchers{
+						ObjectMatchers: v1model.ObjectMatchers{
 							ensureMatcher(t, labels.MatchEqual, "t2", "v2"),
 						},
 					},
@@ -698,15 +671,15 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		})
 	})
 
-	route := definitions.Route{
+	route := v1model.Route{
 		Receiver:       receiver,
 		GroupByStr:     []string{"test-123", "test-456"},
-		GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
-		GroupInterval:  util.Pointer(model.Duration(1 * time.Minute)),
-		RepeatInterval: util.Pointer(model.Duration(24 * time.Hour)),
-		Routes: []*definitions.Route{
+		GroupWait:      new(model.Duration(30 * time.Second)),
+		GroupInterval:  new(model.Duration(1 * time.Minute)),
+		RepeatInterval: new(model.Duration(24 * time.Hour)),
+		Routes: []*v1model.Route{
 			{
-				ObjectMatchers: definitions.ObjectMatchers{
+				ObjectMatchers: v1model.ObjectMatchers{
 					ensureMatcher(t, labels.MatchNotEqual, "m", "1"),
 					ensureMatcher(t, labels.MatchEqual, "n", "1"),
 					ensureMatcher(t, labels.MatchRegexp, "o", "1"),
@@ -714,9 +687,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 				},
 				Receiver:            receiver,
 				GroupByStr:          []string{"test-789"},
-				GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
-				GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
-				RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+				GroupWait:           new(model.Duration(2 * time.Minute)),
+				GroupInterval:       new(model.Duration(5 * time.Minute)),
+				RepeatInterval:      new(model.Duration(30 * time.Hour)),
 				MuteTimeIntervals:   []string{timeInterval},
 				ActiveTimeIntervals: []string{timeInterval},
 				Continue:            true,
@@ -731,18 +704,18 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		assert.Equal(t, v1beta1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
 			GroupBy:        []string{"test-123", "test-456"},
-			GroupWait:      util.Pointer("30s"),
-			GroupInterval:  util.Pointer("1m"),
-			RepeatInterval: util.Pointer("1d"),
+			GroupWait:      new("30s"),
+			GroupInterval:  new("1m"),
+			RepeatInterval: new("1d"),
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
 		assert.Equal(t, v1beta1.RoutingTreeRoute{
 			Continue:            true,
-			Receiver:            util.Pointer(receiver),
+			Receiver:            new(receiver),
 			GroupBy:             []string{"test-789"},
-			GroupWait:           util.Pointer("2m"),
-			GroupInterval:       util.Pointer("5m"),
-			RepeatInterval:      util.Pointer("1d6h"),
+			GroupWait:           new("2m"),
+			GroupInterval:       new("5m"),
+			RepeatInterval:      new("1d6h"),
 			MuteTimeIntervals:   []string{timeInterval},
 			ActiveTimeIntervals: []string{timeInterval},
 			Matchers: []v1beta1.RoutingTreeMatcher{
@@ -788,9 +761,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	})
 
 	t.Run("unicode support in groupBy and matchers", func(t *testing.T) {
-		route := definitions.Route{
+		route := v1model.Route{
 			Receiver: receiver,
-			Routes: []*definitions.Route{
+			Routes: []*v1model.Route{
 				{
 					GroupByStr: []string{"foo🙂"},
 					Matchers: config.Matchers{{
@@ -810,7 +783,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 						Name:  "corge",
 						Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
 					}},
-					ObjectMatchers: definitions.ObjectMatchers{{
+					ObjectMatchers: v1model.ObjectMatchers{{
 						Type:  labels.MatchEqual,
 						Name:  "Προμηθέας", // Prometheus in Greek
 						Value: "Prom",
@@ -867,7 +840,6 @@ receivers:
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "external-system",
-		"X-Grafana-Alerting-Merge-Matchers":    "imported=true",
 	}
 
 	// Post the configuration to Grafana
@@ -876,28 +848,20 @@ receivers:
 	}, headers)
 	require.Equal(t, "success", response.Status)
 
-	current, err := client.Get(ctx, defaultTreeIdentifier)
-	require.NoError(t, err)
-	updated := current.Copy().(*v1beta1.RoutingTree)
-	updated.Spec.Routes = append(updated.Spec.Routes, v1beta1.RoutingTreeRoute{
-		Matchers: []v1beta1.RoutingTreeMatcher{
-			{
-				Label: "imported",
-				Type:  v1beta1.RoutingTreeMatcherTypeEqual,
-				Value: "true",
-			},
-		},
-	})
-
-	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+	// The imported route is named after its identifier. Creating a managed route
+	// with the same name must fail while the import exists.
+	_, err = client.Create(ctx, k8sRoute(t, "external-system", &v1model.Route{Receiver: "empty"}), resource.CreateOptions{})
 	require.Error(t, err)
-	require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s", err)
+	require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
 
-	// Now delete extra config
+	// After removing the imported config the name is free.
 	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
 
-	// and try again
-	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
+	created, err := client.Create(ctx, k8sRoute(t, "external-system", &v1model.Route{Receiver: "empty"}), resource.CreateOptions{})
+	require.NoError(t, err)
+
+	// Clean up.
+	err = client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: created.Name}, resource.DeleteOptions{})
 	require.NoError(t, err)
 }
 
@@ -927,13 +891,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	createTimeIntervalStubs(t, admin, cfg.SortedTimeIntervals())
 
 	// Sanity check there aren't any existing managed routes other than the default.
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
-	require.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[0].Name)
+	require.Equal(t, models.DefaultRoutingTreeName, list.Items[0].Name)
 
 	validateGetErr := func(t *testing.T, name string, expectedErrReason v1.StatusReason) {
 		t.Helper()
@@ -984,12 +948,12 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 		t.Run("Create default policy fails", func(t *testing.T) {
 			// Attempting to create a route with name UserDefinedRoutingTreeName fails.
-			_, err = adminClient.Create(ctx, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy), resource.CreateOptions{})
+			_, err = adminClient.Create(ctx, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy), resource.CreateOptions{})
 			require.Error(t, err)
 		})
 
 		t.Run("Get Default Policy", func(t *testing.T) {
-			validateGetEqual(t, v1beta1.UserDefinedRoutingTreeName, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy))
+			validateGetEqual(t, models.DefaultRoutingTreeName, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
 		})
 	})
 
@@ -997,11 +961,11 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Helper()
 		// Delete/reset any remaining routes.
 		for name := range cfg.ManagedRoutes {
-			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "") // Just in case it was provisioned.
+			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
 			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
-		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &definitions.Route{}), org1.OrgID, "")
-		_ = adminClient.Delete(ctx, nameToIdentifier(v1beta1.UserDefinedRoutingTreeName), resource.DeleteOptions{})
+		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(models.DefaultRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
+		_ = adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
 		created := make(map[string]*v1beta1.RoutingTree, len(cfg.ManagedRoutes))
@@ -1015,10 +979,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	t.Run("Provisioned Get should include provenance", func(t *testing.T) {
 		allCreatedRoutes := resetPolicies(t)
-		allCreatedRoutes[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)
+		allCreatedRoutes[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
-			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
@@ -1041,7 +1005,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for _, route := range allCreatedRoutes {
 				expectedRoutes = append(expectedRoutes, *route)
 			}
-			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy))
+			expectedRoutes = append(expectedRoutes, *k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
 
 			for i := range expectedRoutes {
 				expectedRoutes[i].TypeMeta = v1.TypeMeta{
@@ -1052,13 +1016,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			assert.ElementsMatch(t, expectedRoutes, list.Items)
 		})
 		t.Run("Default policy last", func(t *testing.T) {
-			assert.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
+			assert.Equal(t, models.DefaultRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
 		})
 	})
 
 	t.Run("Update", func(t *testing.T) {
 		policies := resetPolicies(t)
-		policies[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, policy_exports.Legacy())
+		policies[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, policy_exports.Legacy())
 
 		// Update all policies to the same definition.
 		currentVersion := ""
@@ -1102,7 +1066,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.NoError(t, err)
@@ -1113,7 +1077,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	t.Run("Delete", func(t *testing.T) {
 		policies := resetPolicies(t)
-		policies[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)
+		policies[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
 
 		for name, route := range policies {
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
@@ -1124,21 +1088,21 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 
 				t.Run("Delete provisioned should fail", func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					assert.Error(t, err)
 					assert.ErrorContains(t, err, "provenance")
 
 					// Reset provenance.
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, ""))
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: route.ResourceVersion}})
 					require.NoError(t, err)
-					if name == v1beta1.UserDefinedRoutingTreeName {
-						validateGetEqual(t, name, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
+					if name == models.DefaultRoutingTreeName {
+						validateGetEqual(t, name, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
@@ -1150,8 +1114,8 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				t.Run("Empty ResourceVersion should succeed", func(t *testing.T) {
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					require.NoError(t, err)
-					if name == v1beta1.UserDefinedRoutingTreeName {
-						validateGetEqual(t, name, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
+					if name == models.DefaultRoutingTreeName {
+						validateGetEqual(t, name, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
@@ -1341,11 +1305,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				for _, k := range allACMetadata {
 					key := v1beta1.AccessControlAnnotation(k)
 					var expected bool
-					for _, exp := range tc.expACMetadata {
-						if exp == k {
-							expected = true
-							break
-						}
+					if slices.Contains(tc.expACMetadata, k) {
+						expected = true
 					}
 					if expected {
 						assert.Equalf(t, "true", annotations[key], "expected annotation %s to be set", key)
@@ -1454,24 +1415,25 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	receivers := createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	timeIntervals := createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	sortedIntervals := cfg.SortedTimeIntervals()
+	timeIntervals := createTimeIntervalStubs(t, admin, sortedIntervals)
 
 	recv0 := cfg.AlertmanagerConfig.Receivers[0].Name
 	recv1 := cfg.AlertmanagerConfig.Receivers[1].Name
-	ti0 := cfg.AlertmanagerConfig.TimeIntervals[0].Name
-	ti1 := cfg.AlertmanagerConfig.TimeIntervals[1].Name
+	ti0 := sortedIntervals[0].Title
+	ti1 := sortedIntervals[1].Title
 
 	// Create routes that reference the receivers and time intervals.
-	routeDef := definitions.Route{
+	routeDef := v1model.Route{
 		Receiver: recv0,
-		Routes: []*definitions.Route{{
+		Routes: []*v1model.Route{{
 			Receiver:            recv1,
 			MuteTimeIntervals:   []string{ti0},
 			ActiveTimeIntervals: []string{ti1},
 		}},
 	}
 	// Default route.
-	_, err = adminClient.Update(ctx, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &routeDef), resource.UpdateOptions{})
+	_, err = adminClient.Update(ctx, k8sRoute(t, models.DefaultRoutingTreeName, &routeDef), resource.UpdateOptions{})
 	require.NoError(t, err)
 
 	// Named route.
@@ -1544,7 +1506,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	})
 }
 
-func k8sRoute(t *testing.T, name string, r *definitions.Route) *v1beta1.RoutingTree {
+func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree {
 	err := r.Validate()
 	require.NoError(t, err)
 	managedRoute := legacy_storage.NewManagedRoute(name, r)
@@ -1561,7 +1523,7 @@ func k8sRoute(t *testing.T, name string, r *definitions.Route) *v1beta1.RoutingT
 	return v1Route
 }
 
-func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver) map[string]*v1beta1.Receiver {
+func createReceiverStubs(t *testing.T, user apis.User, receivers []*v1model.PostableApiReceiver) map[string]*v1beta1.Receiver {
 	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 
@@ -1577,7 +1539,7 @@ func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.
 	return res
 }
 
-func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []config.TimeInterval) map[string]*v1beta1.TimeInterval {
+func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []v1model.TimeInterval) map[string]*v1beta1.TimeInterval {
 	timeIntervalClient, err := v1beta1.NewTimeIntervalClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 
@@ -1585,10 +1547,10 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []confi
 	for _, ti := range timeIntervals {
 		created, err := timeIntervalClient.Create(context.Background(), &v1beta1.TimeInterval{
 			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Name},
+			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Title},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
-		res[ti.Name] = created
+		res[ti.Title] = created
 	}
 	return res
 }

@@ -1,13 +1,13 @@
 import { parseAtomFeed } from './atom';
 import { parseRSSFeed } from './rss';
 
-export async function fetchFeedText(url: string) {
+async function fetchFeedText(url: string) {
   const rsp = await fetch(url);
   const txt = await rsp.text();
   return txt;
 }
 
-export function isAtomFeed(txt: string) {
+function isAtomFeed(txt: string) {
   const domParser = new DOMParser();
   const doc = domParser.parseFromString(txt, 'text/xml');
   return doc.querySelector('feed') !== null;

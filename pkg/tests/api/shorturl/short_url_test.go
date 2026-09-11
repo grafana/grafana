@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -82,7 +83,7 @@ func TestShortURL(t *testing.T) {
 		_ = res.Body.Close()
 	}()
 	assert.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
-	assert.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
+	assert.Equal(t, http.StatusTemporaryRedirect, res.StatusCode)
 
 	// Create a client that does not have authentication.
 	notLoggedInClient := client(grafanaListedAddr, "", "")
@@ -113,11 +114,11 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(db), cfgProvider)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

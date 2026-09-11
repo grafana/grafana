@@ -2,7 +2,6 @@ package foldermetadata
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -23,7 +23,6 @@ import (
 // The fix falls back to reading from the configured branch.
 func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "update-folder-metadata-branch"
 	helper.CreateGitRepo(t, repoName, nil, "write", "branch")
@@ -34,9 +33,9 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder on default branch should succeed: %s", string(body))
 
-	originalUID := readFolderFieldOnRef(t, helper, ctx, repoName, "rename-target/_folder.json", "", "metadata", "name")
+	originalUID := readFolderFieldOnRef(t, helper, repoName, "rename-target/_folder.json", "", "metadata", "name")
 	require.NotEmpty(t, originalUID, "setup: folder should have a UID")
-	originalTitle := readFolderFieldOnRef(t, helper, ctx, repoName, "rename-target/_folder.json", "", "spec", "title")
+	originalTitle := readFolderFieldOnRef(t, helper, repoName, "rename-target/_folder.json", "", "spec", "title")
 	require.NotEmpty(t, originalTitle, "setup: folder should have a title")
 
 	t.Run("rename folder on new branch succeeds", func(t *testing.T) {
@@ -50,17 +49,17 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "PUT to rename folder on new branch should succeed: %s", string(body))
 
 		// The _folder.json on the new branch must have the updated title.
-		newTitle := readFolderFieldOnRef(t, helper, ctx, repoName,
+		newTitle := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/_folder.json", newBranch, "spec", "title")
 		require.Equal(t, "Renamed Title", newTitle, "title should be updated on the new branch")
 
 		// The UID must be preserved.
-		newUID := readFolderFieldOnRef(t, helper, ctx, repoName,
+		newUID := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/_folder.json", newBranch, "metadata", "name")
 		require.Equal(t, originalUID, newUID, "UID must not change after rename")
 
 		// The default branch must be untouched.
-		defaultTitle := readFolderFieldOnRef(t, helper, ctx, repoName,
+		defaultTitle := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/_folder.json", "", "spec", "title")
 		require.Equal(t, originalTitle, defaultTitle, "default branch title must not change")
 	})
@@ -84,11 +83,11 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "second rename on existing branch should succeed: %s", string(body))
 
-		title := readFolderFieldOnRef(t, helper, ctx, repoName,
+		title := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/_folder.json", branch, "spec", "title")
 		require.Equal(t, "Second Rename", title, "title should reflect the second rename")
 
-		uid := readFolderFieldOnRef(t, helper, ctx, repoName,
+		uid := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/_folder.json", branch, "metadata", "name")
 		require.Equal(t, originalUID, uid, "UID must not change after multiple renames")
 	})
@@ -100,7 +99,7 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed: %s", string(body))
 
-		childUID := readFolderFieldOnRef(t, helper, ctx, repoName,
+		childUID := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/child/_folder.json", "", "metadata", "name")
 		require.NotEmpty(t, childUID, "child folder should have a UID")
 
@@ -113,14 +112,73 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 		_ = resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "PUT to rename nested folder should succeed: %s", string(body))
 
-		title := readFolderFieldOnRef(t, helper, ctx, repoName,
+		title := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/child/_folder.json", nestedBranch, "spec", "title")
 		require.Equal(t, "Renamed Child", title, "nested folder title should be updated on the branch")
 
-		uid := readFolderFieldOnRef(t, helper, ctx, repoName,
+		uid := readFolderFieldOnRef(t, helper, repoName,
 			"rename-target/child/_folder.json", nestedBranch, "metadata", "name")
 		require.Equal(t, childUID, uid, "nested folder UID must not change")
 	})
+}
+
+// TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermissions
+// verifies that an editor with granular folder-scoped permissions can create a
+// dashboard on a new PR branch. Before the fix, the parser read _folder.json from
+// the target branch (which didn't exist yet), fell back to a hash-based folder UID,
+// and the RBAC ancestor walk failed because the hash-based UID wasn't in the folder tree.
+func TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermissions(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "editor-new-branch-granular-perms"
+	helper.CreateGitRepo(t, repoName, nil, "write", "branch")
+
+	// Create a subfolder on the default branch (writes _folder.json with stable UID).
+	resp := postFolderViaFilesAPI(t, helper, repoName, "team-a/", "", "Create team-a folder")
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode, "folder creation should succeed: %s", string(body))
+
+	folderUID := readFolderFieldOnRef(t, helper, repoName, "team-a/_folder.json", "", "metadata", "name")
+	require.NotEmpty(t, folderUID, "team-a should have a stable UID from _folder.json")
+
+	// Grant editor granular permissions scoped to the repo root folder only.
+	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        repoName,
+		},
+	})
+
+	// Editor creates a dashboard inside team-a/ on a new branch.
+	const branchName = "editor/add-dashboard"
+	dashboardContent := common.DashboardJSON("editor-dash-1", "Editor Dashboard 1", 1)
+
+	result := helper.EditorREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "team-a", "editor-dashboard.json").
+		Param("ref", branchName).
+		Param("message", "Add dashboard on new branch").
+		Body(dashboardContent).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context())
+
+	require.NoError(t, result.Error(),
+		"editor with granular folder permissions should be able to create a dashboard on a new branch")
+
+	// Verify the file was actually created on the branch.
+	getResult := helper.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "team-a", "editor-dashboard.json").
+		Param("ref", branchName).
+		Do(t.Context())
+	require.NoError(t, getResult.Error(), "dashboard file should exist on the new branch")
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -164,7 +222,7 @@ func putFolderViaFilesAPI(t *testing.T, helper *common.GitTestHelper, repoName, 
 // branch. fields is the JSON path under "resource" → "file", e.g.
 // ("metadata", "name") or ("spec", "title").
 func readFolderFieldOnRef(
-	t *testing.T, helper *common.GitTestHelper, ctx context.Context,
+	t *testing.T, helper *common.GitTestHelper,
 	repoName, filePath, ref string, fields ...string,
 ) string {
 	t.Helper()
@@ -180,7 +238,7 @@ func readFolderFieldOnRef(
 		req = req.Param("ref", ref)
 	}
 
-	result := req.Do(ctx)
+	result := req.Do(t.Context())
 	require.NoError(t, result.Error(), "%s (ref=%q): should be readable via the files endpoint", filePath, ref)
 
 	wrapObj := &unstructured.Unstructured{}

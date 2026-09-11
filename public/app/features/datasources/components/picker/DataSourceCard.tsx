@@ -5,7 +5,7 @@ import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
-  onClick: () => void;
+  onClick?: () => void;
   selected: boolean;
   description?: string;
   isFavorite?: boolean;
@@ -62,24 +62,31 @@ export function DataSourceCard({
 
 // Get styles for the component
 function getStyles(theme: GrafanaTheme2, builtIn = false) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    card: css({
-      cursor: 'pointer',
-      backgroundColor: 'transparent',
-      padding: theme.spacing(1),
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: 'none',
-      },
+    card: css(
+      {
+        cursor: 'pointer',
+        backgroundColor: 'transparent',
+        padding: theme.spacing(1),
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'none',
+        },
 
-      '&:hover': {
-        backgroundColor: theme.colors.action.hover,
+        '&:hover': {
+          backgroundColor: theme.colors.action.hover,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        border: 'none',
+      }
+    ),
     heading: css({
       width: '100%',
       overflow: 'hidden',
       // This is needed to enable ellipsis when text overflows
-      '> button': {
+      // (the heading renders a button when the card is clickable, a span otherwise)
+      '> button, > span': {
         width: '100%',
       },
     }),

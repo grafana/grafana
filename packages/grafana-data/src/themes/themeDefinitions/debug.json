@@ -5,6 +5,7 @@
     "mode": "dark",
     "background": {
       "canvas": "#000033",
+      "page": "#00003C",
       "primary": "#000044",
       "secondary": "#000055",
       "elevated": "#000055"
@@ -22,6 +23,12 @@
       "strong": "#ff0000ff"
     },
     "primary": {
+      "border": "#ff000088",
+      "text": "#cccc00",
+      "contrastText": "#ffff00",
+      "shade": "#9900dd"
+    },
+    "accent": {
       "border": "#ff000088",
       "text": "#cccc00",
       "contrastText": "#ffff00",

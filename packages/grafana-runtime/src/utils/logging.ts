@@ -2,8 +2,6 @@ import { faro, type LogContext, LogLevel } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 
-export { LogLevel };
-
 /**
  * Log a message at INFO level
  * @public

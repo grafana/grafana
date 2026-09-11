@@ -367,7 +367,7 @@ func StateTransitionToLokiEntry(rule history_model.RuleMeta, state state.StateTr
 		RuleUID:        rule.UID,
 		InstanceLabels: sanitizedLabels,
 	}
-	if state.State.State == eval.Error && state.Error != nil {
+	if state.Error != nil {
 		entry.Error = state.Error.Error()
 	}
 	return entry

@@ -15,7 +15,7 @@ import (
 type SecretsKVStoreSQL struct {
 	log             log.Logger
 	sqlStore        db.DB
-	secretsService  secrets.Service
+	secretsService  secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	decryptionCache decryptionCache
 }
 
@@ -31,7 +31,10 @@ type cachedDecrypted struct {
 
 var b64 = base64.RawStdEncoding
 
-func NewSQLSecretsKVStore(sqlStore db.DB, secretsService secrets.Service, logger log.Logger) *SecretsKVStoreSQL {
+func NewSQLSecretsKVStore(sqlStore db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	logger log.Logger,
+) *SecretsKVStoreSQL {
 	return &SecretsKVStoreSQL{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,

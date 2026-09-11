@@ -82,7 +82,7 @@ export const LogGroupsField = ({
       )
         .then((results) => {
           const logGroups = results.flatMap((r) =>
-            r.map((lg) => ({
+            r.results.map((lg) => ({
               arn: lg.value.arn,
               name: lg.value.name,
               accountId: lg.accountId,
@@ -101,7 +101,7 @@ export const LogGroupsField = ({
     <Stack direction="column" gap={1}>
       <LogGroupsSelector
         fetchLogGroups={async (params: Partial<DescribeLogGroupsRequest>) =>
-          datasource?.resources.getLogGroups({ region: region, ...params }) ?? []
+          datasource?.resources.getLogGroups({ region: region, ...params }) ?? { results: [] }
         }
         onChange={onChange}
         accountOptions={accountState.value}

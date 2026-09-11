@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"slices"
 	"strings"
 
 	"os"
@@ -16,12 +17,14 @@ import (
 
 type Module struct {
 	Name     string
+	Path     string
+	Version  string
 	Owners   []string
 	Indirect bool
 }
 
 func parseModule(mod *modfile.Require) Module {
-	m := Module{Name: mod.Mod.String()}
+	m := Module{Name: mod.Mod.String(), Path: mod.Mod.Path, Version: mod.Mod.Version}
 
 	// For each require, access the comment.
 	for _, comment := range mod.Syntax.Comments.Suffix {
@@ -129,7 +132,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 }
 
 // Print dependencies for a given owner. Can specify one or more owners.
-// An example CLI command to list all direct dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-release-guild,@grafana/identity-access-team go.mod`
+// An example CLI command to list all direct dependencies owned by Backend Services and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-backend-services-squad,@grafana/identity-access-team go.mod`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies")
@@ -162,6 +165,95 @@ func hasCommonElement(a []string, b []string) bool {
 	return false
 }
 
+func teamSlug(owner string) (string, bool) {
+	owner = strings.TrimLeft(owner, "/@")
+	const prefix = "grafana/"
+	if !strings.HasPrefix(owner, prefix) {
+		return "", false
+	}
+	slug := strings.TrimPrefix(owner, prefix)
+	if slug == "" || strings.Contains(slug, "/") {
+		return "", false
+	}
+	return slug, true
+}
+
+func indexDirect(mods []Module) map[string]Module {
+	byPath := make(map[string]Module, len(mods))
+	for _, mod := range mods {
+		if mod.Indirect {
+			continue
+		}
+		byPath[mod.Path] = mod
+	}
+	return byPath
+}
+
+func sameOwners(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	as := append([]string(nil), a...)
+	bs := append([]string(nil), b...)
+	slices.Sort(as)
+	slices.Sort(bs)
+	return slices.Equal(as, bs)
+}
+
+func changedReviewers(oldMods, newMods []Module) []string {
+	oldByPath := indexDirect(oldMods)
+	newByPath := indexDirect(newMods)
+	slugs := map[string]struct{}{}
+	add := func(mods ...Module) {
+		for _, mod := range mods {
+			for _, owner := range mod.Owners {
+				if slug, ok := teamSlug(owner); ok {
+					slugs[slug] = struct{}{}
+				}
+			}
+		}
+	}
+	for path, neu := range newByPath {
+		old, ok := oldByPath[path]
+		if !ok {
+			add(neu)
+			continue
+		}
+		if old.Version != neu.Version || !sameOwners(old.Owners, neu.Owners) {
+			add(old, neu)
+		}
+	}
+	for path, old := range oldByPath {
+		if _, ok := newByPath[path]; !ok {
+			add(old)
+		}
+	}
+	out := make([]string, 0, len(slugs))
+	for slug := range slugs {
+		out = append(out, slug)
+	}
+	slices.Sort(out)
+	return out
+}
+
+func reviewers(fileSystem fs.FS, logger *log.Logger, args []string) error {
+	if len(args) != 2 {
+		return errors.New("usage: modowners reviewers <old-go.mod> <new-go.mod>")
+	}
+	oldMods, err := parseGoMod(fileSystem, args[0])
+	if err != nil {
+		return err
+	}
+	newMods, err := parseGoMod(fileSystem, args[1])
+	if err != nil {
+		return err
+	}
+	for _, slug := range changedReviewers(oldMods, newMods) {
+		logger.Println(slug)
+	}
+	return nil
+}
+
 func main() {
 	log.SetFlags(0)
 	log.SetOutput(os.Stdout)
@@ -170,7 +262,7 @@ func main() {
 		os.Exit(1)
 	}
 	type CmdFunc func(fs.FS, *log.Logger, []string) error
-	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
+	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules, "reviewers": reviewers}
 	if f, ok := cmds[os.Args[1]]; !ok {
 		log.Fatal("invalid command")
 	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {

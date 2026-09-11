@@ -8,12 +8,14 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bwmarrin/snowflake"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -147,6 +149,66 @@ func TestExecWithRV_transactionContextRegression(t *testing.T) {
 	})
 }
 
+// TestExecBatch_RetriesOnSQLiteBusy guards the retry path added to absorb
+// transient SQLITE_BUSY errors during provisioning sync, where the unified
+// storage layer would otherwise surface "database is locked" through the
+// resource_insert.sql write and fail the whole sync job.
+func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	t.Run("retries until success", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		// First attempt: insert returns BUSY, transaction rolled back.
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.ErrTestBusy)
+		dbp.SQLMock.ExpectRollback()
+
+		// Second attempt: clean run, including RV bookkeeping that ExecWithRV does.
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnResult(sqlmock.NewResult(1, 1))
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		key := &resourcepb.ResourceKey{Group: "retry-busy", Resource: "res"}
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(200), rv)
+	})
+
+	t.Run("non-busy errors do not retry", func(t *testing.T) {
+		dbp := test.NewDBProviderMatchWords(t)
+		dialect := sqltemplate.DialectForDriver(dbp.DB.DriverName())
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: dialect,
+		})
+		require.NoError(t, err)
+
+		boom := errors.New("not a busy error")
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectExec("insert resource").WillReturnError(boom)
+		dbp.SQLMock.ExpectRollback()
+
+		key := &resourcepb.ResourceKey{Group: "no-retry", Resource: "res"}
+		_, err = manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "insert resource")
+			return "guid-1", err
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, boom)
+	})
+}
+
 func TestBatchTransactionTimeout_explicitOverride(t *testing.T) {
 	dbp := test.NewDBProviderMatchWords(t)
 	m, err := NewResourceVersionManager(ResourceManagerOptions{
@@ -206,4 +268,35 @@ func TestBulkSnowflakeRoundtrip(t *testing.T) {
 				counter, snowflakeID, microRV, roundtripped)
 		}
 	})
+}
+
+func TestNewMetricsRegistersOnGivenRegistry(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := newMetrics(reg)
+
+	// Touch every collector so the registry has series to gather.
+	m.writeDuration.WithLabelValues("g", "r", "ok").Observe(1)
+	m.execBatchDuration.WithLabelValues("g", "r", "ok").Observe(1)
+	m.execBatchPhaseDuration.WithLabelValues("g", "r", "write_ops").Observe(1)
+	m.inflightWrites.WithLabelValues("g", "r").Inc()
+	m.batchSize.WithLabelValues("g", "r").Observe(1)
+
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+
+	names := make([]string, 0, len(mfs))
+	for _, mf := range mfs {
+		names = append(names, mf.GetName())
+	}
+	require.ElementsMatch(t, []string{
+		"grafana_rvmanager_write_duration_seconds",
+		"grafana_rvmanager_exec_batch_duration_seconds",
+		"grafana_rvmanager_exec_batch_phase_duration_seconds",
+		"grafana_rvmanager_inflight_writes",
+		"grafana_rvmanager_batch_size",
+	}, names)
+}
+
+func TestNewMetricsWithNilRegistry(t *testing.T) {
+	require.NotNil(t, newMetrics(nil))
 }

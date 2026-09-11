@@ -14,7 +14,7 @@ export interface AuthProviderInfo {
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
 // Settings types common to the provider settings data when working with the API and forms
-export type SSOProviderSettingsBase = {
+type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
   allowSignUp?: boolean;
   apiUrl?: string;
@@ -48,6 +48,7 @@ export type SSOProviderSettingsBase = {
   tlsClientKey?: string;
   tlsSkipVerify?: boolean;
   tokenUrl?: string;
+  tokenExchangeTimeout?: string;
   type: string;
   usePkce?: boolean;
   useRefreshToken?: boolean;
@@ -138,7 +139,7 @@ export type FieldData = {
 };
 
 /** Configuration for conditionally disabling a field based on another field's value */
-export type DisabledWhenConfig = {
+type DisabledWhenConfig = {
   /** The field name to watch */
   field: keyof SSOProviderDTO;
   /** The value that triggers the disabled state */

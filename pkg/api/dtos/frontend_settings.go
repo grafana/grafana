@@ -91,7 +91,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsAnalyticsDTO struct {
-	Enabled bool `json:"enabled"`
+	Enabled                    bool `json:"enabled"`
+	PresenceIndicatorsDisabled bool `json:"presenceIndicatorsDisabled,omitempty"`
 }
 
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
@@ -195,6 +196,8 @@ type FrontendSettingsDTO struct {
 	NewsFeedEnabled     bool `json:"newsFeedEnabled"`
 	QueryHistoryEnabled bool `json:"queryHistoryEnabled"`
 
+	AnnotationAppPlatformEnabled bool `json:"annotationAppPlatformEnabled"`
+
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId"`
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id"`
 	GoogleAnalytics4SendManualPageViews bool   `json:"GoogleAnalytics4SendManualPageViews"`
@@ -206,10 +209,16 @@ type FrontendSettingsDTO struct {
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
-	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
+	PostHogToken string `json:"postHogToken"`
+	PostHogHost  string `json:"postHogHost"`
 
-	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
-	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
+	AnalyticsConsoleReporting     bool     `json:"analyticsConsoleReporting"`
+	PluginImportTelemetryPackages []string `json:"pluginImportTelemetryPackages"`
+
+	DashboardPerformanceMetrics  []string `json:"dashboardPerformanceMetrics"`
+	PanelSeriesLimit             int      `json:"panelSeriesLimit"`
+	DashboardDefaultPreload      bool     `json:"dashboardDefaultPreload"`
+	ReportRenderQueryGracePeriod int      `json:"reportRenderQueryGracePeriodMs"`
 
 	FeedbackLinksEnabled                 bool                `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString  string              `json:"applicationInsightsConnectionString"`
@@ -312,6 +321,8 @@ type FrontendSettingsDTO struct {
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
+
+	ProvisioningEnabled bool `json:"provisioningEnabled"`
 	// Experimental Scope settings
 	ListScopesEndpoint          string            `json:"listScopesEndpoint"`
 	ListDashboardScopesEndpoint string            `json:"listDashboardScopesEndpoint"`

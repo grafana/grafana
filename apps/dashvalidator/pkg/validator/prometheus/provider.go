@@ -28,7 +28,7 @@ func NewPrometheusProvider(ttl time.Duration) *PrometheusProvider {
 // It fetches available metrics from Prometheus and returns them with the provider's TTL.
 func (p *PrometheusProvider) GetMetrics(ctx context.Context, datasourceUID, datasourceURL string,
 	client *http.Client) (*cache.MetricsResult, error) {
-	metrics, err := p.fetcher.FetchMetrics(ctx, datasourceURL, client)
+	metrics, err := p.fetcher.FetchMetrics(ctx, datasourceUID, datasourceURL, client)
 	if err != nil {
 		return nil, err
 	}

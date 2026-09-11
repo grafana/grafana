@@ -1,31 +1,25 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import {
-  Box,
   Button,
   type ButtonVariant,
-  ButtonGroup,
-  Dropdown,
-  EmptyState,
   Icon,
   type IconName,
-  Menu,
-  Stack,
   Text,
   useElementSelection,
   usePanelContext,
   useStyles2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { AccessControlAction } from 'app/types/accessControl';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
@@ -42,28 +36,13 @@ import {
   textFrames,
   useViewPhase,
 } from '../utils/unconfiguredPanelUtils';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
+import { findVizPanelByKey } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 
 export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
-
-function hasSavedQueryReadPermissions(): boolean {
-  return config.featureToggles.savedQueriesRBAC
-    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-    : contextSrv.isSignedIn;
-}
-
-// Delegates to NewUnconfiguredPanelComp (animated hover-reveal buttons) when the
-// newUnconfiguredPanel feature toggle is on, otherwise falls back to LegacyUnconfiguredPanelComp
-// (ButtonGroup + dropdown). Two separate components avoid React hooks-in-conditionals violations.
-export function UnconfiguredPanelComp(props: PanelProps) {
-  if (config.featureToggles.newUnconfiguredPanel) {
-    return <NewUnconfiguredPanelComp {...props} />;
-  }
-  return <LegacyUnconfiguredPanelComp {...props} />;
-}
 
 // PanelPlugin components receive PanelProps and have no SceneObject parent reference,
 // so window.__grafanaSceneContext is the only available mechanism to reach the DashboardScene.
@@ -84,7 +63,7 @@ function useUnconfiguredPanelDashboard(): { dashboard: DashboardScene | null; is
   return { dashboard, isEditing };
 }
 
-function NewUnconfiguredPanelComp(props: PanelProps) {
+export function UnconfiguredPanelComp(props: PanelProps) {
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
   const { openDrawer, queryLibraryEnabled = false } = useQueryLibraryContext();
@@ -163,11 +142,10 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
+    DashboardInteractions.panelActionClicked('use_library_panel', props.id, 'panel');
   };
 
-  const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
-
-  if (showEmptyState) {
+  if (panelContext.app === CoreApp.PanelEditor) {
     return (
       <div className={styles.emptyStateWrapper}>
         <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
@@ -205,7 +183,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     },
   ];
 
-  if (queryLibraryEnabled && config.featureToggles.newVizSuggestions && hasSavedQueryReadPermissions()) {
+  if (queryLibraryEnabled && hasSavedQueryReadPermissions()) {
     buttons.splice(1, 0, {
       key: 'saved-query',
       icon: 'book-open',
@@ -256,7 +234,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
           <div
             className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
             aria-hidden={!isButtonsVisible}
-            {...(!isButtonsVisible ? { inert: '' } : {})}
+            inert={!isButtonsVisible}
           >
             {buttons.map((button, i) => (
               <div
@@ -273,9 +251,21 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
                 }
               >
                 {isCompact ? (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} tooltip={button.label} />
+                  <Button
+                    icon={button.icon}
+                    variant={button.variant}
+                    onClick={button.onClick}
+                    tooltip={button.label}
+                    data-testid={selectors.components.UnconfiguredPanel.actionButton(button.key)}
+                  />
                 ) : (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
+                  <Button
+                    icon={button.icon}
+                    variant={button.variant}
+                    onClick={button.onClick}
+                    fullWidth
+                    data-testid={selectors.components.UnconfiguredPanel.actionButton(button.key)}
+                  >
                     {button.label}
                   </Button>
                 )}
@@ -297,102 +287,6 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
   );
 }
 
-function LegacyUnconfiguredPanelComp(props: PanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const panelContext = usePanelContext();
-  const styles = useStyles2(getStyles);
-
-  const onMenuClick = useCallback(
-    (isOpen: boolean) => {
-      if (isOpen) {
-        DashboardInteractions.panelActionClicked('configure_dropdown', props.id, 'panel');
-      }
-      setIsOpen(isOpen);
-    },
-    [props.id]
-  );
-
-  const onConfigure = () => {
-    locationService.partial({ editPanel: props.id });
-    DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
-  };
-
-  const { dashboard, isEditing } = useUnconfiguredPanelDashboard();
-  const panel = dashboard ? findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(props.id)) : null;
-
-  const onUseLibraryPanel = () => {
-    if (!dashboard) {
-      return;
-    }
-
-    if (!panel) {
-      return;
-    }
-
-    dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
-  };
-
-  const MenuActions = () => (
-    <Menu>
-      <Menu.Item
-        icon="pen"
-        label={t('dashboard.new-panel.menu-open-panel-editor', 'Configure')}
-        onClick={onConfigure}
-      ></Menu.Item>
-      <Menu.Item
-        icon="library-panel"
-        label={t('dashboard.new-panel.menu-use-library-panel', 'Use library panel')}
-        onClick={onUseLibraryPanel}
-      ></Menu.Item>
-    </Menu>
-  );
-
-  const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
-
-  if (showEmptyState) {
-    const defaultContent = (
-      <Trans i18nKey="dashboard.new-panel.empty-state-message">
-        Run a query to visualize it here or go to all visualizations to add other panel types
-      </Trans>
-    );
-
-    return (
-      <div className={styles.emptyStateWrapper}>
-        <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />
-        <Text element="p" textAlignment="center" color="secondary">
-          {defaultContent}
-        </Text>
-      </div>
-    );
-  }
-
-  return (
-    <Stack direction={'row'} alignItems={'center'} height={'100%'} justifyContent={'center'}>
-      <Box paddingBottom={2}>
-        {isEditing ? (
-          <ButtonGroup>
-            <Button icon="sliders-v-alt" onClick={onConfigure}>
-              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
-            </Button>
-            <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-              <Button
-                aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
-                icon={isOpen ? 'angle-up' : 'angle-down'}
-              />
-            </Dropdown>
-          </ButtonGroup>
-        ) : (
-          <EmptyState
-            variant="call-to-action"
-            message={t('dashboard.new-panel.missing-config', 'Missing panel configuration')}
-            hideImage
-          />
-        )}
-      </Box>
-    </Stack>
-  );
-}
-
 sceneUtils.registerRuntimePanelPlugin({
   pluginId: UNCONFIGURED_PANEL_PLUGIN_ID,
   plugin: UnconfiguredPanel,
@@ -411,10 +305,11 @@ function getStyles(theme: GrafanaTheme2) {
         content: '""',
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${emptyPanelSvg})`,
-        backgroundSize: '100% auto',
-        backgroundPosition: 'bottom',
-        backgroundRepeat: 'no-repeat',
+        maskImage: `url(${emptyPanelSvg})`,
+        maskSize: '100% auto',
+        maskPosition: 'bottom',
+        maskRepeat: 'no-repeat',
+        backgroundColor: theme.colors.text.primary,
         opacity: 0.08,
         pointerEvents: 'none',
       },

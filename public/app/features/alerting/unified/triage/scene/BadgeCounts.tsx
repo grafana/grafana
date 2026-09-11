@@ -27,12 +27,3 @@ export function PendingCount({ count }: { count: number }) {
     </Text>
   );
 }
-
-export function LabelBadgeCounts({ firing, pending }: { firing: number; pending: number }) {
-  return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <FiringCount count={firing} />
-      <PendingCount count={pending} />
-    </Stack>
-  );
-}

@@ -33,12 +33,28 @@ func (m *storageService) getStorageMode(ctx context.Context, gr schema.GroupReso
 	return mode
 }
 
+// storageModeToDualWriterMode maps a StorageMode to a representative DualWriterMode value
+// for metric consistency: Legacy→Mode0, DualWrite→Mode1, Unified→Mode5.
+func storageModeToDualWriterMode(mode unifiedmigrations.StorageMode) rest.DualWriterMode {
+	switch mode {
+	case unifiedmigrations.StorageModeUnified:
+		return rest.Mode5
+	case unifiedmigrations.StorageModeDualWrite:
+		return rest.Mode1
+	default:
+		return rest.Mode0
+	}
+}
+
 // NewStorage creates a storage instance based on the 3-mode concept:
 //   - ModeLegacy    → return legacy
 //   - ModeDualWrite → dualWriter that checks mode dynamically on every request
 //   - ModeUnified   → return unified
 func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
-	switch m.getStorageMode(context.Background(), gr) {
+	initialMode := m.getStorageMode(context.Background(), gr)
+	m.metrics.currentMode.WithLabelValues(gr.Resource, gr.Group).Set(float64(storageModeToDualWriterMode(initialMode)))
+
+	switch initialMode {
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
@@ -48,6 +64,7 @@ func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage
 			unified: unified,
 			getMode: func(ctx context.Context) (bool, bool) {
 				mode := m.getStorageMode(ctx, gr)
+				m.metrics.currentMode.WithLabelValues(gr.Resource, gr.Group).Set(float64(storageModeToDualWriterMode(mode)))
 				return mode == unifiedmigrations.StorageModeUnified,
 					mode == unifiedmigrations.StorageModeDualWrite
 			},
@@ -57,6 +74,36 @@ func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage
 	default:
 		return legacy, nil
 	}
+}
+
+// ValidateServedVersions guards against serving unified storage while migrated data
+// carries an apiVersion the apiserver no longer registers. served must be the versions
+// for this specific resource, not the whole group.
+func (m *storageService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
+	if m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeLegacy || m.statusReader == nil {
+		return nil
+	}
+	floor, ok := m.statusReader.GetFloorVersion(gr)
+	if !ok {
+		return nil
+	}
+	for _, gv := range served {
+		if gv.Version == floor {
+			return nil
+		}
+	}
+	return fmt.Errorf(
+		"resource %q may hold unified-storage objects at apiVersion %q, but that version is not registered for the resource in the apiserver scheme (served versions: %v)",
+		gr.String(), floor, servedVersionStrings(served),
+	)
+}
+
+func servedVersionStrings(served []schema.GroupVersion) []string {
+	out := make([]string, 0, len(served))
+	for _, gv := range served {
+		out = append(out, gv.Version)
+	}
+	return out
 }
 
 // storageModeFromConfigMode maps a DualWriterMode config value to a StorageMode.

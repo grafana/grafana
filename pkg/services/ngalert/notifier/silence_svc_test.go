@@ -21,15 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestWithAccessControlMetadata(t *testing.T) {
 	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
 	silencesWithMetadata := []*models.SilenceWithMetadata{
-		{Silence: util.Pointer(models.SilenceGen()())},
-		{Silence: util.Pointer(models.SilenceGen()())},
-		{Silence: util.Pointer(models.SilenceGen()())},
+		{Silence: new(models.SilenceGen()())},
+		{Silence: new(models.SilenceGen()())},
+		{Silence: new(models.SilenceGen()())},
 	}
 	randPerm := func() models.SilencePermissionSet {
 		return models.SilencePermissionSet{
@@ -80,9 +79,9 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		silencesWithMetadata := []*models.SilenceWithMetadata{
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
@@ -114,10 +113,10 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		silencesWithMetadata := []*models.SilenceWithMetadata{
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen()())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen()())},
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
@@ -153,9 +152,9 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		silencesWithMetadata := []*models.SilenceWithMetadata{
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
-			{Silence: util.Pointer(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
+			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
@@ -241,7 +240,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 
 	createSilenceStore := func(existingCount int) *ngfakes.FakeSilenceStore {
 		silences := make(map[string]*models.Silence, existingCount)
-		for i := 0; i < existingCount; i++ {
+		for range existingCount {
 			silence := models.SilenceGen()()
 			silences[*silence.ID] = &silence
 		}
@@ -465,7 +464,7 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 		silences := make(map[string]*models.Silence, 100)
 		existingSilence := models.SilenceGen()()
 		silences[*existingSilence.ID] = &existingSilence
-		for i := 0; i < 99; i++ {
+		for range 99 {
 			silence := models.SilenceGen()()
 			silences[*silence.ID] = &silence
 		}

@@ -15,7 +15,7 @@ export function getDirectionDimension(
   return getDirectionDimensionForField(findField(frame, config.field), config);
 }
 
-export function getDirectionDimensionForField(
+function getDirectionDimensionForField(
   field: Field | undefined,
   config: DirectionDimensionConfig
 ): DimensionSupplier<ConnectionDirection> {

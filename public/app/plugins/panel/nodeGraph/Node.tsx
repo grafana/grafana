@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { type MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -12,7 +12,7 @@ import { type NodeDatum } from './types';
 import { statToString } from './utils';
 
 export const nodeR = 40;
-export const highlightedNodeColor = '#a00';
+const highlightedNodeColor = '#a00';
 
 const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   mainGroup: css({

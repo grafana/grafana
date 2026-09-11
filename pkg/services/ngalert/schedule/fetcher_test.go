@@ -9,16 +9,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// chainGroupName builds the expected padded sentinel for a given chain UID.
+// sequenceGroupName builds the expected padded sentinel for a given sequence UID.
 // It fails the test immediately on invalid UIDs so setup failures are visible.
-func chainGroupName(t *testing.T, chainUID string) string {
+func sequenceGroupName(t *testing.T, sequenceUID string) string {
 	t.Helper()
-	g, err := models.NewRuleChainGroup(chainUID)
+	g, err := models.NewRuleSequenceGroup(sequenceUID)
 	require.NoError(t, err)
 	return g.String()
 }
 
-func TestEnrichRulesWithChainMembership(t *testing.T) {
+func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	gen := models.RuleGen.With(
 		models.RuleGen.WithNamespaceUID("ns1"),
 		models.RuleGen.WithGroupName("original-group"),
@@ -26,14 +26,14 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		models.RuleGen.WithGroupIndex(99),
 	)
 
-	t.Run("chain members get correct synthetic group, index, and interval", func(t *testing.T) {
+	t.Run("sequence members get correct synthetic group, index, and interval", func(t *testing.T) {
 		rec1 := gen.With(models.RuleGen.WithUID("rec-1")).GenerateRef()
 		rec2 := gen.With(models.RuleGen.WithUID("rec-2")).GenerateRef()
 		alert1 := gen.With(models.RuleGen.WithUID("alert-1")).GenerateRef()
 
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-abc",
+				UID:               "seq-abc",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rec-1", "rec-2"},
 				AlertRuleRefs:     []string{"alert-1"},
@@ -41,9 +41,9 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{rec1, rec2, alert1}
-		models.EnrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithSequenceMembership(rules, sequences)
 
-		expected := chainGroupName(t, "chain-abc")
+		expected := sequenceGroupName(t, "seq-abc")
 		assert.Equal(t, expected, rec1.RuleGroup)
 		assert.Equal(t, 1, rec1.RuleGroupIndex)
 		assert.Equal(t, int64(30), rec1.IntervalSeconds)
@@ -61,9 +61,9 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		alert1 := gen.With(models.RuleGen.WithUID("alert-1")).GenerateRef()
 		rec1 := gen.With(models.RuleGen.WithUID("rec-1")).GenerateRef()
 
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-order",
+				UID:               "seq-order",
 				IntervalSeconds:   10,
 				RecordingRuleRefs: []string{"rec-1"},
 				AlertRuleRefs:     []string{"alert-1"},
@@ -71,7 +71,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{alert1, rec1}
-		models.EnrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithSequenceMembership(rules, sequences)
 
 		// Recording rule should have a lower index than alerting rule,
 		// regardless of the order they appear in the rules slice.
@@ -80,39 +80,39 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		assert.Equal(t, 2, alert1.RuleGroupIndex)
 	})
 
-	t.Run("non-chain rules are unchanged", func(t *testing.T) {
+	t.Run("non-sequence rules are unchanged", func(t *testing.T) {
 		standalone := gen.With(models.RuleGen.WithUID("standalone")).GenerateRef()
-		chainRule := gen.With(models.RuleGen.WithUID("chain-rule")).GenerateRef()
+		seqRule := gen.With(models.RuleGen.WithUID("seq-rule")).GenerateRef()
 
 		originalGroup := standalone.RuleGroup
 		originalIndex := standalone.RuleGroupIndex
 		originalInterval := standalone.IntervalSeconds
 
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-xyz",
+				UID:               "seq-xyz",
 				IntervalSeconds:   15,
-				RecordingRuleRefs: []string{"chain-rule"},
+				RecordingRuleRefs: []string{"seq-rule"},
 			},
 		}
 
-		rules := []*models.AlertRule{standalone, chainRule}
-		models.EnrichRulesWithChainMembership(rules, chains)
+		rules := []*models.AlertRule{standalone, seqRule}
+		models.EnrichRulesWithSequenceMembership(rules, sequences)
 
 		assert.Equal(t, originalGroup, standalone.RuleGroup)
 		assert.Equal(t, originalIndex, standalone.RuleGroupIndex)
 		assert.Equal(t, originalInterval, standalone.IntervalSeconds)
 
-		// chain-rule should be enriched
-		assert.Equal(t, chainGroupName(t, "chain-xyz"), chainRule.RuleGroup)
+		// seq-rule should be enriched
+		assert.Equal(t, sequenceGroupName(t, "seq-xyz"), seqRule.RuleGroup)
 	})
 
-	t.Run("rule in chain but not in fetched rules is a no-op", func(t *testing.T) {
+	t.Run("rule in sequence but not in fetched rules is a no-op", func(t *testing.T) {
 		rule := gen.With(models.RuleGen.WithUID("existing")).GenerateRef()
 
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-ghost",
+				UID:               "seq-ghost",
 				IntervalSeconds:   10,
 				RecordingRuleRefs: []string{"non-existent-uid"},
 				AlertRuleRefs:     []string{"also-missing"},
@@ -121,61 +121,61 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 
 		rules := []*models.AlertRule{rule}
 		originalGroup := rule.RuleGroup
-		models.EnrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithSequenceMembership(rules, sequences)
 
-		assert.Equal(t, originalGroup, rule.RuleGroup, "rule not in any chain should be unchanged")
+		assert.Equal(t, originalGroup, rule.RuleGroup, "rule not in any sequence should be unchanged")
 	})
 
-	t.Run("empty chains produces no changes", func(t *testing.T) {
+	t.Run("empty sequences produces no changes", func(t *testing.T) {
 		rule := gen.With(models.RuleGen.WithUID("lonely")).GenerateRef()
 		originalGroup := rule.RuleGroup
 		originalIndex := rule.RuleGroupIndex
 		originalInterval := rule.IntervalSeconds
 
 		rules := []*models.AlertRule{rule}
-		models.EnrichRulesWithChainMembership(rules, nil)
+		models.EnrichRulesWithSequenceMembership(rules, nil)
 
 		assert.Equal(t, originalGroup, rule.RuleGroup)
 		assert.Equal(t, originalIndex, rule.RuleGroupIndex)
 		assert.Equal(t, originalInterval, rule.IntervalSeconds)
 	})
 
-	t.Run("empty rules with chains is a no-op", func(t *testing.T) {
-		chains := []models.SchedulableRuleChain{
+	t.Run("empty rules with sequences is a no-op", func(t *testing.T) {
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-no-rules",
+				UID:               "seq-no-rules",
 				IntervalSeconds:   10,
 				RecordingRuleRefs: []string{"rec-1"},
 			},
 		}
 
 		// Should not panic.
-		models.EnrichRulesWithChainMembership(nil, chains)
+		models.EnrichRulesWithSequenceMembership(nil, sequences)
 	})
 
-	t.Run("multiple chains enrich independently", func(t *testing.T) {
+	t.Run("multiple sequences enrich independently", func(t *testing.T) {
 		rule1 := gen.With(models.RuleGen.WithUID("r1")).GenerateRef()
 		rule2 := gen.With(models.RuleGen.WithUID("r2")).GenerateRef()
 		rule3 := gen.With(models.RuleGen.WithUID("r3")).GenerateRef()
 
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-A",
+				UID:               "seq-A",
 				IntervalSeconds:   10,
 				RecordingRuleRefs: []string{"r1"},
 				AlertRuleRefs:     []string{"r2"},
 			},
 			{
-				UID:             "chain-B",
+				UID:             "seq-B",
 				IntervalSeconds: 20,
 				AlertRuleRefs:   []string{"r3"},
 			},
 		}
 
 		rules := []*models.AlertRule{rule1, rule2, rule3}
-		models.EnrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithSequenceMembership(rules, sequences)
 
-		expectedA := chainGroupName(t, "chain-A")
+		expectedA := sequenceGroupName(t, "seq-A")
 		assert.Equal(t, expectedA, rule1.RuleGroup)
 		assert.Equal(t, int64(10), rule1.IntervalSeconds)
 		assert.Equal(t, 1, rule1.RuleGroupIndex)
@@ -184,35 +184,35 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		assert.Equal(t, int64(10), rule2.IntervalSeconds)
 		assert.Equal(t, 2, rule2.RuleGroupIndex)
 
-		expectedB := chainGroupName(t, "chain-B")
+		expectedB := sequenceGroupName(t, "seq-B")
 		assert.Equal(t, expectedB, rule3.RuleGroup)
 		assert.Equal(t, int64(20), rule3.IntervalSeconds)
 		assert.Equal(t, 1, rule3.RuleGroupIndex)
 	})
 
-	t.Run("rule referenced by multiple chains uses last chain", func(t *testing.T) {
+	t.Run("rule referenced by multiple sequences uses last sequence", func(t *testing.T) {
 		// This shouldn't happen in practice (admission prevents it),
 		// but test the defensive behavior: last-write-wins from map insertion.
 		rule := gen.With(models.RuleGen.WithUID("shared")).GenerateRef()
 
-		chains := []models.SchedulableRuleChain{
+		sequences := []models.SchedulableRuleSequence{
 			{
-				UID:               "chain-first",
+				UID:               "seq-first",
 				IntervalSeconds:   10,
 				RecordingRuleRefs: []string{"shared"},
 			},
 			{
-				UID:             "chain-second",
+				UID:             "seq-second",
 				IntervalSeconds: 20,
 				AlertRuleRefs:   []string{"shared"},
 			},
 		}
 
 		rules := []*models.AlertRule{rule}
-		models.EnrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithSequenceMembership(rules, sequences)
 
-		// The second chain overwrites the first in the lookup map.
-		assert.Equal(t, chainGroupName(t, "chain-second"), rule.RuleGroup)
+		// The second sequence overwrites the first in the lookup map.
+		assert.Equal(t, sequenceGroupName(t, "seq-second"), rule.RuleGroup)
 		assert.Equal(t, int64(20), rule.IntervalSeconds)
 	})
 }

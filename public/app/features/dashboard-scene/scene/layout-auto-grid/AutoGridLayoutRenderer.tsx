@@ -2,13 +2,14 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import { useDashboardState } from '../../utils/utils';
-import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -17,7 +18,7 @@ import { type AutoGridLayout, type AutoGridLayoutState } from './AutoGridLayout'
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
-  const { children, isHidden } = model.useState();
+  const { children, isHidden, draggedChildren } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const {
     layoutOrchestrator,
@@ -25,8 +26,11 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     meta: { isEmbedded },
   } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { fillScreen, dropPosition } = layoutManager.useState();
+  const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
+  const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
+  // Off => align items to the top so a tall fit panel doesn't stretch its row siblings.
+  const noStretchSiblings = autoHeightPanelsEnabled && matchRowHeights === false;
 
   if (isHidden || !layoutOrchestrator) {
     return null;
@@ -38,21 +42,23 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return children.map((item) => <item.Component key={item.state.key} model={item} />);
   }
 
+  const displayChildren = draggedChildren ?? children;
+
   // Build children with placeholder inserted at dropPosition
   const renderChildren = () => {
     if (dropPosition === null || dropPosition === undefined) {
-      return children.map((item) => <item.Component key={item.state.key} model={item} />);
+      return displayChildren.map((item) => <item.Component key={item.state.key} model={item} />);
     }
 
     const result: React.ReactNode[] = [];
-    const insertPosition = Math.min(dropPosition, children.length);
+    const insertPosition = Math.min(dropPosition, displayChildren.length);
 
-    for (let i = 0; i <= children.length; i++) {
+    for (let i = 0; i <= displayChildren.length; i++) {
       if (i === insertPosition) {
         result.push(<DropPlaceholder key="drop-placeholder" styles={styles} />);
       }
-      if (i < children.length) {
-        const item = children[i];
+      if (i < displayChildren.length) {
+        const item = displayChildren[i];
         result.push(<item.Component key={item.state.key} model={item} />);
       }
     }
@@ -63,7 +69,12 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   return (
     <div
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
-      className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
+      className={cx(
+        styles.container,
+        fillScreen && styles.containerFillScreen,
+        noStretchSiblings && styles.containerNoStretch,
+        isEditing && styles.containerEditing
+      )}
       ref={model.containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}
     >
@@ -104,6 +115,7 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     ...dashboardCanvasAddButtonHoverStyles,
   }),
   containerFillScreen: css({ flexGrow: 1 }),
+  containerNoStretch: css({ alignItems: 'start' }),
   containerEditing: css({ paddingBottom: theme.spacing(5), position: 'relative' }),
   dropPlaceholder: css({
     border: `1px dashed ${theme.colors.primary.main}`,

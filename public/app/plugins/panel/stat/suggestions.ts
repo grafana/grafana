@@ -7,6 +7,17 @@ import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { type Options } from './panelcfg.gen';
 
+export const MAX_STAT_PREVIEW_SERIES = 6;
+
+export const STAT_CARD_OPTIONS: VisualizationSuggestion<Options>['cardOptions'] = {
+  maxSeries: MAX_STAT_PREVIEW_SERIES,
+  previewModifier: (s) => {
+    if (s.options?.reduceOptions?.values) {
+      s.options.reduceOptions.limit = 1;
+    }
+  },
+};
+
 const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(s, {
     fieldConfig: {
@@ -16,14 +27,7 @@ const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggest
       },
       overrides: [],
     },
-    cardOptions: {
-      maxSeries: 6,
-      previewModifier: (s) => {
-        if (s.options?.reduceOptions?.values) {
-          s.options.reduceOptions.limit = 1;
-        }
-      },
-    },
+    cardOptions: STAT_CARD_OPTIONS,
   } satisfies VisualizationSuggestion<Options>);
 
 const MAX_STATS = 50;

@@ -4,6 +4,8 @@ import XYZ from 'ol/source/XYZ';
 
 import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 
+import { getTileSource } from '../test-utils';
+
 import { xyzTiles, type XYZConfig } from './generic';
 
 const replaceMock = jest.fn((text: string) => text);
@@ -53,11 +55,13 @@ describe('XYZ tile layer', () => {
 
     const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
     const layer = result.init();
-    const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+    const source = getTileSource(layer, XYZ);
 
     expect(replaceMock).toHaveBeenCalledWith(rawUrl);
     expect(replaceMock).toHaveBeenCalledWith(rawAttr);
     expect(source.getUrls()).toContain(interpolatedUrl);
+    // attribution and url are normalized before use
+    expect(source.getAttributions()).toBeDefined();
   });
 
   describe('noRepeat functionality', () => {
@@ -76,7 +80,7 @@ describe('XYZ tile layer', () => {
       const layer = result.init();
 
       expect(layer).toBeInstanceOf(TileLayer);
-      const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+      const source = getTileSource(layer, XYZ);
       expect(source).toBeInstanceOf(XYZ);
       expect(source.getWrapX()).toBe(false);
     });
@@ -95,7 +99,7 @@ describe('XYZ tile layer', () => {
       const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
       const layer = result.init();
 
-      const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+      const source = getTileSource(layer, XYZ);
       expect(source.getWrapX()).toBe(true);
     });
 
@@ -111,7 +115,7 @@ describe('XYZ tile layer', () => {
 
       const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
       const layer = result.init();
-      const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+      const source = getTileSource(layer, XYZ);
       expect(source.getWrapX()).toBe(true);
     });
   });
@@ -130,7 +134,7 @@ describe('XYZ tile layer', () => {
 
       const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
       const layer = result.init();
-      const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+      const source = getTileSource(layer, XYZ);
 
       expect(layer.getMinZoom()).toBe(4);
       expect(source.getTileGrid()?.getMinZoom()).toBe(4);
@@ -149,7 +153,7 @@ describe('XYZ tile layer', () => {
 
       const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
       const layer = result.init();
-      const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+      const source = getTileSource(layer, XYZ);
 
       expect(layer.getMaxZoom()).toBe(Infinity);
       expect(source.getTileGrid()?.getMaxZoom()).toBe(18);
@@ -167,7 +171,7 @@ describe('XYZ tile layer', () => {
 
       const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
       const layer = result.init();
-      const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+      const source = getTileSource(layer, XYZ);
 
       expect(layer.getMinZoom()).toBe(-Infinity);
       expect(layer.getMaxZoom()).toBe(Infinity);

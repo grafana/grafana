@@ -10,7 +10,7 @@ export type UsePluginComponentsResult<Props = {}> = {
   isLoading: boolean;
 };
 
-export type UsePluginComponents<Props extends object = {}> = (
+type UsePluginComponents<Props extends object = {}> = (
   options: UsePluginComponentsOptions
 ) => UsePluginComponentsResult<Props>;
 

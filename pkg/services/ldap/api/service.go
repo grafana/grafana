@@ -120,7 +120,7 @@ func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.Enabled {
+	if !s.ldapService.Enabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -167,7 +167,7 @@ func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.Enabled {
+	if !s.ldapService.Enabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -248,7 +248,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.Enabled {
+	if !s.ldapService.Enabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -323,7 +323,7 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 		IsGrafanaAdmin:  user.IsGrafanaAdmin,
 		AuthenticatedBy: user.AuthModule,
 		AuthID:          user.AuthId,
-		Groups:          user.Groups,
+		ExternalGroups:  user.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:     true,
 			SyncTeams:    true,

@@ -20,7 +20,7 @@ export interface MapMeasure extends SelectableValue<MeasureAction> {
   getUnit: (v?: string) => MapUnit;
 }
 
-export interface MapUnit extends SelectableValue<string> {
+interface MapUnit extends SelectableValue<string> {
   format: (si: number) => FormattedValue;
 }
 

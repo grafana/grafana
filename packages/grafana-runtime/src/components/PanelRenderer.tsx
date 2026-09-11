@@ -29,9 +29,7 @@ export interface PanelRendererProps<P extends object = {}, F extends object = {}
  *
  * @internal
  */
-export type PanelRendererType<P extends object = {}, F extends object = {}> = React.ComponentType<
-  PanelRendererProps<P, F>
->;
+type PanelRendererType<P extends object = {}, F extends object = {}> = React.ComponentType<PanelRendererProps<P, F>>;
 
 /**
  * PanelRenderer component that will be set via the {@link setPanelRenderer} function

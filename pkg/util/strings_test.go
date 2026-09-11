@@ -3,6 +3,7 @@ package util
 import (
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -354,6 +355,32 @@ func TestStripBOMFromInterface(t *testing.T) {
 	}
 }
 
+func TestTruncateUTF8(t *testing.T) {
+	tests := []struct {
+		name     string
+		s        string
+		n        int
+		expected string
+	}{
+		{name: "shorter than n is untouched", s: "hello", n: 10, expected: "hello"},
+		{name: "exactly n is untouched", s: "hello", n: 5, expected: "hello"},
+		{name: "ascii is truncated to n bytes", s: "hello world", n: 5, expected: "hello"},
+		{name: "does not split a multi-byte rune", s: "héllo", n: 2, expected: "h"}, // 'é' is 2 bytes, byte 2 is mid-rune
+		{name: "n=0 returns empty string", s: "hello", n: 0, expected: ""},
+		{name: "negative n returns empty string instead of panicking", s: "hello", n: -1, expected: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := TruncateUTF8(tc.s, tc.n)
+			assert.Equal(t, tc.expected, result)
+			if tc.n >= 0 {
+				assert.LessOrEqual(t, len(result), tc.n)
+			}
+			assert.True(t, utf8.ValidString(result))
+		})
+	}
+}
+
 func TestStripBOMFromStruct(t *testing.T) {
 	type SimpleStruct struct {
 		Title       string
@@ -394,7 +421,7 @@ func TestStripBOMFromStruct(t *testing.T) {
 			name: "struct with pointer string fields",
 			input: &ComplexStruct{
 				Title:       "\ufeffTitle",
-				Description: stringPtr("Description\ufeff"),
+				Description: new("Description\ufeff"),
 			},
 			check: func(t *testing.T, input any) {
 				s := input.(*ComplexStruct)
@@ -463,7 +490,7 @@ func TestStripBOMFromStruct(t *testing.T) {
 			name: "complex nested structure",
 			input: &ComplexStruct{
 				Title:       "\ufeffMain Title",
-				Description: stringPtr("Main Description\ufeff"),
+				Description: new("Main Description\ufeff"),
 				Tags:        []string{"\ufefftag1", "tag2\ufeff"},
 				Metadata: map[string]string{
 					"author": "\ufeffJohn Doe",
@@ -510,11 +537,6 @@ func TestStripBOMFromStruct(t *testing.T) {
 	}
 }
 
-// Helper function for tests
-func stringPtr(s string) *string {
-	return &s
-}
-
 // Benchmark StripBOMFromStruct performance
 func BenchmarkStripBOMFromStruct(b *testing.B) {
 	type SmallStruct struct {
@@ -553,7 +575,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 	b.Run("medium struct", func(b *testing.B) {
 		s := &MediumStruct{
 			Title:       "\ufeffTitle",
-			Description: stringPtr("Description\ufeff"),
+			Description: new("Description\ufeff"),
 			Tags:        []string{"\ufefftag1", "tag2\ufeff", "tag3"},
 			Metadata: map[string]string{
 				"key1": "\ufeffvalue1",
@@ -569,7 +591,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 	b.Run("large nested struct", func(b *testing.B) {
 		s := &LargeStruct{
 			Title:       "\ufeffTitle",
-			Description: stringPtr("Description\ufeff"),
+			Description: new("Description\ufeff"),
 			Tags:        []string{"\ufefftag1", "tag2\ufeff", "tag3", "tag4", "tag5"},
 			Categories:  []string{"\ufeffcat1", "cat2\ufeff", "cat3", "cat4"},
 			Metadata: map[string]string{
@@ -582,7 +604,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 			},
 			Nested: &MediumStruct{
 				Title:       "\ufeffNested Title",
-				Description: stringPtr("Nested Description\ufeff"),
+				Description: new("Nested Description\ufeff"),
 				Tags:        []string{"\ufefftag1", "tag2\ufeff"},
 				Metadata: map[string]string{
 					"nested": "\ufeffvalue",

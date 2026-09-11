@@ -106,7 +106,7 @@ myOldFunction(name: string) {
 
 ### Communicate
 
-Reach out to `@grafana/plugins-platform-frontend` to help find which plugins are using the code that is just about to change, so we try making it smoother by communicating it to the developers.
+Reach out to `@grafana/grafana-catalog` to help find which plugins are using the code that is just about to change, so we try making it smoother by communicating it to the developers.
 
 ---
 
@@ -114,4 +114,4 @@ Reach out to `@grafana/plugins-platform-frontend` to help find which plugins are
 
 We are here to help.
 
-Please either ping us in the pull request by using the `@grafana/plugins-platform-frontend` handle or reach out to us on the internal Slack in `#grafana-plugins-platform`.
+Please either ping us in the pull request by using the `@grafana/grafana-catalog` handle or reach out to us on the internal Slack in `#grafana-plugins-platform`.

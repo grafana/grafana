@@ -3,7 +3,9 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 
+import { logPluginMetaError } from './logging';
 import type { PluginMetasResponse } from './types';
+import { type Meta } from './types/meta/meta_object_gen';
 import { type Plugin } from './types/plugin/plugin_object_gen';
 import { defaultSpec } from './types/plugin/types.spec.gen';
 
@@ -11,15 +13,26 @@ function getApiVersion(): string {
   return 'v0alpha1';
 }
 
+export function getPluginMetasUrl(): string {
+  return `apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`;
+}
+
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const result = { items: [] };
     return result;
   }
 
-  const metas = await fetch(`apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`);
+  const requestUrl = getPluginMetasUrl();
+  const metas = await fetch(requestUrl);
   if (!metas.ok) {
-    throw new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
+    const error = new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
+    logPluginMetaError('PluginMeta: failed to load plugin metas', error, {
+      requestUrl,
+      status: String(metas.status),
+      statusText: metas.statusText,
+    });
+    throw error;
   }
 
   const result = await metas.json();
@@ -27,7 +40,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
 
@@ -48,12 +61,18 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
   });
 
   if (!result.ok) {
-    throw new Error(`Failed to install plugin ${pluginId} ${result.status}:${result.statusText}`);
+    const error = new Error(`Failed to install plugin ${pluginId} ${result.status}:${result.statusText}`);
+    logPluginMetaError('PluginMeta: failed to install plugin', error, {
+      pluginId,
+      status: String(result.status),
+      statusText: result.statusText,
+    });
+    throw error;
   }
 }
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
 
@@ -65,14 +84,43 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   );
 
   if (!result.ok) {
-    throw new Error(`Failed to uninstall plugin ${pluginId} ${result.status}:${result.statusText}`);
+    const error = new Error(`Failed to uninstall plugin ${pluginId} ${result.status}:${result.statusText}`);
+    logPluginMetaError('PluginMeta: failed to uninstall plugin', error, {
+      pluginId,
+      status: String(result.status),
+      statusText: result.statusText,
+    });
+    throw error;
   }
 }
 
-export function initPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
+export function initPluginMetas(): Promise<PluginMetasResponse | null> {
+  return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, { defaultValue: null });
 }
 
-export function refetchPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] }, invalidate: true });
+export function refetchPluginMetas(): Promise<PluginMetasResponse | null> {
+  return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, {
+    defaultValue: null,
+    invalidate: true,
+  });
+}
+
+export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | null> {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    return null;
+  }
+
+  const metas = await initPluginMetas();
+  const meta = metas?.items.find((i) => i.spec.pluginJson.id === pluginId);
+  return meta ? structuredClone(meta) : null;
+}
+
+export async function refetchPluginMeta(pluginId: string): Promise<Meta | null> {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    return null;
+  }
+
+  const metas = await refetchPluginMetas();
+  const meta = metas?.items.find((i) => i.spec.pluginJson.id === pluginId);
+  return meta ? structuredClone(meta) : null;
 }

@@ -241,6 +241,12 @@ describe('getVisualizationOptions', () => {
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -303,6 +309,12 @@ describe('getVisualizationOptions', () => {
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -371,6 +383,9 @@ describe('getVisualizationOptions', () => {
             },
           ],
         },
+        currentOptions: {},
+        currentFieldConfig: fieldConfig,
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -401,6 +416,9 @@ describe('getVisualizationOptions', () => {
             },
           ],
         },
+        currentOptions: {},
+        currentFieldConfig: fieldConfig,
+        reportInteractionUI: 'panel-edit',
       });
 
       expect(vizOptions.length).toEqual(1);

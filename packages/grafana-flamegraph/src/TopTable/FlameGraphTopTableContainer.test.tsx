@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -10,8 +11,15 @@ import { ColorScheme } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
+// AutoSizer needs a measurable rect, and react-data-grid additionally sizes its virtualized viewport
+// from the client box - jsdom reports 0 for both.
+function mockTableSize({ width, height }: { width: number; height: number } = { width: 500, height: 500 }) {
+  mockBoundingClientRect({ width, height });
+  mockClientSize({ width, height });
+}
+
 describe('FlameGraphTopTableContainer', () => {
-  const setup = () => {
+  const setup = (props?: { useTableNG?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -24,6 +32,7 @@ describe('FlameGraphTopTableContainer', () => {
         onSearch={onSearch}
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
+        useTableNG={props?.useTableNG}
       />
     );
 
@@ -31,13 +40,7 @@ describe('FlameGraphTopTableContainer', () => {
   };
 
   it('should render correctly', async () => {
-    // Needed for AutoSizer to work in test
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 500,
-        height: 500,
-      })),
-    });
+    mockTableSize();
 
     setup();
     const rows = screen.getAllByRole('row');
@@ -85,6 +88,150 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+});
+
+describe('FlameGraphTopTableContainer with useTableNG', () => {
+  const setup = (props?: { tableRefreshEnabled?: boolean }) => {
+    const flameGraphData = createDataFrame(data);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+    const onSearch = jest.fn();
+    const onSandwich = jest.fn();
+
+    const renderResult = render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={onSearch}
+        onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+        tableRefreshEnabled={props?.tableRefreshEnabled}
+      />
+    );
+
+    return { renderResult, mocks: { onSearch, onSandwich } };
+  };
+
+  it('should render correctly', async () => {
+    mockTableSize();
+
+    setup();
+
+    // Columns: an actions column followed by Symbol / Self / Total.
+    const columnHeaders = screen.getAllByRole('columnheader');
+    expect(columnHeaders).toHaveLength(4);
+    // The actions column sets hideHeader: true - its label should be blank, not the literal text "actions".
+    expect(columnHeaders[0].textContent).toEqual('');
+    expect(columnHeaders[1].textContent).toEqual('Symbol');
+    expect(columnHeaders[2].textContent).toEqual('Self');
+    expect(columnHeaders[3].textContent).toEqual('Total');
+
+    // Sample rows render with their (unique) symbol names + self/total values. Content-based assertions since
+    // react-data-grid's virtualized role="grid" doesn't have the same fixed row/cell counts as TableRT.
+    expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+    expect(screen.getByText('net/http.(*conn).serve')).toBeInTheDocument();
+    expect(screen.getAllByText('31.7 K').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5.58 Bil').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
+  });
+
+  // The refreshed header lifts the sort arrow out of the label button so a long title can ellipsize
+  // without clipping it. Asserting the arrow's placement is the observable proof that
+  // tableRefreshEnabled actually reaches TableNG, since this package can't read the toggle itself.
+  it.each([
+    { tableRefreshEnabled: undefined, placement: 'inside' },
+    { tableRefreshEnabled: true, placement: 'outside' },
+  ])(
+    'with tableRefreshEnabled=$tableRefreshEnabled renders the sort arrow $placement the header label',
+    async ({ tableRefreshEnabled }) => {
+      mockTableSize();
+
+      setup({ tableRefreshEnabled });
+
+      // The top table sorts by Self descending by default, so that header owns the arrow.
+      const selfHeader = screen.getAllByRole('columnheader')[2];
+      const label = selfHeader.querySelector('button');
+
+      expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
+      expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+    }
+  );
+
+  it('should render search and sandwich buttons', async () => {
+    // Needed for AutoSizer to work in test
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 500,
+        height: 500,
+        left: 0,
+      })),
+    });
+
+    const { mocks } = setup();
+
+    const searchButtons = screen.getAllByLabelText(/Search for symbol/);
+    expect(searchButtons.length > 0).toBeTruthy();
+    await userEvents.click(searchButtons[0]);
+
+    expect(mocks.onSearch).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+
+    const sandwichButtons = screen.getAllByLabelText(/Show in sandwich view/);
+    expect(sandwichButtons.length > 0).toBeTruthy();
+    await userEvents.click(sandwichButtons[0]);
+
+    expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+
+  it('should sort by column header and call onTableSort', async () => {
+    mockTableSize();
+    const onTableSort = jest.fn();
+    const flameGraphData = createDataFrame(data);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        onTableSort={onTableSort}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+      />
+    );
+
+    const totalHeader = screen.getByRole('columnheader', { name: 'Total' });
+    await userEvents.click(totalHeader);
+
+    // First click on a column that isn't already sorted sorts ascending.
+    expect(onTableSort).toHaveBeenCalledWith('Total_asc');
+  });
+
+  it('does not sort when the actions column header is clicked', async () => {
+    mockTableSize();
+    const onTableSort = jest.fn();
+    const flameGraphData = createDataFrame(data);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        onTableSort={onTableSort}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+      />
+    );
+
+    // The actions column sets sortable: false and has a blank header (hideHeader), so it's the first
+    // columnheader with no accessible name.
+    const actionsHeader = screen.getAllByRole('columnheader')[0];
+    await userEvents.click(actionsHeader);
+
+    expect(onTableSort).not.toHaveBeenCalled();
   });
 });
 
@@ -192,6 +339,70 @@ describe('buildFilteredTable', () => {
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 0, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+});
+
+describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
+  const GRID_WIDTH = 500;
+  const SCROLLBAR_WIDTH = 11;
+
+  // jsdom does no layout, so the grid's own vertical scrollbar has to be faked: TableNG derives it
+  // from offsetWidth - clientWidth on the grid element and lays the columns out inside what is left.
+  // Without it the space available to the columns always equals the width the table is handed, and a
+  // set of column widths that overflows by exactly the scrollbar looks fine.
+  const mockedSizes = [
+    { property: 'offsetWidth', target: HTMLElement.prototype, gridValue: GRID_WIDTH },
+    { property: 'clientWidth', target: Element.prototype, gridValue: GRID_WIDTH - SCROLLBAR_WIDTH },
+  ] as const;
+
+  const originalDescriptors = mockedSizes.map(({ property, target }) => ({
+    property,
+    target,
+    descriptor: Object.getOwnPropertyDescriptor(target, property)!,
+  }));
+
+  const mockGridScrollbar = () => {
+    for (const { property, target, gridValue } of mockedSizes) {
+      Object.defineProperty(target, property, {
+        configurable: true,
+        get(this: Element) {
+          return this.classList.contains('rdg') ? gridValue : 0;
+        },
+      });
+    }
+  };
+
+  afterEach(() => {
+    for (const { property, target, descriptor } of originalDescriptors) {
+      Object.defineProperty(target, property, descriptor);
+    }
+  });
+
+  it('fits the columns in the space the scrollbar leaves rather than the full width', async () => {
+    mockTableSize({ width: GRID_WIDTH, height: GRID_WIDTH });
+    mockGridScrollbar();
+
+    const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+      />
+    );
+
+    await waitFor(() => {
+      const grid = document.querySelector<HTMLElement>('.rdg')!;
+      // The wrapper the TableNG branch sizes, i.e. the width the table was handed.
+      const handedWidth = parseFloat(grid.parentElement!.style.width);
+      const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
+
+      expect(columnWidths).toHaveLength(4);
+      expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(handedWidth - SCROLLBAR_WIDTH);
     });
   });
 });

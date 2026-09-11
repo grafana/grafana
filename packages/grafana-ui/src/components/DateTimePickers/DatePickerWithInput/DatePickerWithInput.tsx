@@ -9,7 +9,7 @@ import { getPositioningMiddleware } from '../../../utils/floating';
 import { type Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 
-export const formatDate = (date: Date | string) => dateTime(date).format('L');
+const formatDate = (date: Date | string) => dateTime(date).format('L');
 
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'value' | 'onChange'> {

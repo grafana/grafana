@@ -91,7 +91,7 @@ describe('VizLegendTable', () => {
     expect(screen.queryByText(/show all/)).not.toBeInTheDocument();
   });
 
-  it('renders filterAction in the Name column header', () => {
+  it('renders filterAction in the first column header', () => {
     render(
       <VizLegendTable
         placement="bottom"
@@ -100,16 +100,22 @@ describe('VizLegendTable', () => {
         isSortable
       />
     );
-    expect(within(screen.getByText('Name').closest('th')!).getByTestId('filter')).toBeInTheDocument();
+    const [iconHeader, nameHeader] = screen.getAllByRole('columnheader');
+    expect(within(iconHeader).getByTestId('filter')).toBeInTheDocument();
+    expect(within(nameHeader).queryByTestId('filter')).not.toBeInTheDocument();
   });
 
   it('applies sr-only to headers when not sortable', () => {
     render(
       <VizLegendTable placement="bottom" items={[makeItem('A', [{ title: 'min', numeric: 1 }])]} isSortable={false} />
     );
-    screen.getAllByRole('columnheader').forEach((th) => {
-      expect(th.className).toContain('sr-only');
-    });
+    screen
+      .getAllByRole('columnheader')
+      // skip placeholder th for icon
+      .slice(1)
+      .forEach((th) => {
+        expect(th.className).toContain('sr-only');
+      });
   });
 
   it('uses custom itemRenderer when provided', () => {
@@ -121,4 +127,19 @@ describe('VizLegendTable', () => {
     render(<VizLegendTable placement="bottom" items={[makeItem('X')]} itemRenderer={itemRenderer} />);
     expect(screen.getByText('X-custom')).toBeInTheDocument();
   });
+});
+
+it('shows (right y-axis) when items have mixed axes', () => {
+  const items = [makeItem('Left'), makeItem('Right', [{ title: 'min', numeric: 1 }])];
+  items[1].yAxis = 2;
+  render(<VizLegendTable placement="bottom" items={items} />);
+  expect(screen.getByText('(right y-axis)')).toBeInTheDocument();
+});
+
+it('does not show (right y-axis) when all items use the right axis', () => {
+  const items = [makeItem('A', [{ title: 'min', numeric: 1 }]), makeItem('B', [{ title: 'min', numeric: 2 }])];
+  items[0].yAxis = 2;
+  items[1].yAxis = 2;
+  render(<VizLegendTable placement="bottom" items={items} />);
+  expect(screen.queryByText('(right y-axis)')).not.toBeInTheDocument();
 });

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { standardTransformersRegistry } from '@grafana/data';
+import { DataTransformerID, standardTransformersRegistry } from '@grafana/data';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { SqlExpressionCard } from './SqlExpressionCard';
@@ -17,7 +17,7 @@ describe('TransformationCard', () => {
   });
 
   it('renders transformation name and description', () => {
-    const transform = standardTransformersRegistry.get('organize');
+    const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     render(<TransformationCard transform={transform} onClick={onClick} />);
 
     expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
@@ -26,7 +26,7 @@ describe('TransformationCard', () => {
 
   it('calls onClick with transformation id when clicked', async () => {
     const user = userEvent.setup();
-    const transform = standardTransformersRegistry.get('organize');
+    const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     render(<TransformationCard transform={transform} onClick={onClick} />);
 
     const card = screen.getByText('Organize fields by name').closest('button');
@@ -36,7 +36,7 @@ describe('TransformationCard', () => {
   });
 
   it('shows illustration when showIllustrations is true', () => {
-    const transform = standardTransformersRegistry.get('organize');
+    const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     const { container } = render(<TransformationCard transform={transform} onClick={onClick} showIllustrations />);
 
     const img = container.querySelector('img');
@@ -45,7 +45,7 @@ describe('TransformationCard', () => {
   });
 
   it('hides illustration when showIllustrations is false', () => {
-    const transform = standardTransformersRegistry.get('organize');
+    const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     const { container } = render(
       <TransformationCard transform={transform} onClick={onClick} showIllustrations={false} />
     );
@@ -54,7 +54,7 @@ describe('TransformationCard', () => {
   });
 
   it('hides plugin state when showPluginState is false', () => {
-    const transform = standardTransformersRegistry.get('organize');
+    const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     const { container } = render(
       <TransformationCard transform={transform} onClick={onClick} showPluginState={false} />
     );
@@ -63,7 +63,7 @@ describe('TransformationCard', () => {
   });
 
   it('hides tags when showTags is false', () => {
-    const transform = standardTransformersRegistry.get('organize');
+    const transform = standardTransformersRegistry.get(DataTransformerID.organize);
     const { container } = render(<TransformationCard transform={transform} onClick={onClick} showTags={false} />);
 
     expect(container.querySelector('[class*="tagsWrapper"]')).not.toBeInTheDocument();

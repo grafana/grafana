@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaEnableScopesFirstMode } from '@grafana/runtime/internal';
 import { getInputStyles, Icon, LinkButton, Spinner, Tooltip, useStyles2, Text, Stack } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
@@ -34,6 +35,7 @@ export function ScopesInput({
   const firstScope = appliedScopes[0];
   const scope = scopes[firstScope?.scopeId];
   const styles = useStyles2(getStyles);
+  const scopesFirstMode = useFlagGrafanaEnableScopesFirstMode();
 
   // Prefer scopeNodeId from defaultPath if available (most reliable source)
   let scopeNodeId: string | undefined;
@@ -53,9 +55,8 @@ export function ScopesInput({
     // Extract parentNodeId from the second-to-last element of defaultPath
     parentNodeId = scope.spec.defaultPath[scope.spec.defaultPath.length - 2];
   } else {
-    // Fallback to parent from scope node or recent scopes
-    const parentNodeIdFromRecentScopes = firstScope?.parentNodeId;
-    parentNodeId = scopeNode?.spec.parentName ?? parentNodeIdFromRecentScopes;
+    // Fallback to parent from scope node
+    parentNodeId = scopeNode?.spec.parentName;
   }
 
   const { node: parentNode, isLoading: parentNodeLoading } = useScopeNode(parentNodeId);
@@ -70,7 +71,7 @@ export function ScopesInput({
       nodes={nodes}
       scopes={scopes}
       appliedScopes={appliedScopes}
-      onRemoveAllClick={onRemoveAllClick}
+      onRemoveAllClick={scopesFirstMode ? undefined : onRemoveAllClick}
       disabled={disabled}
     />
   );
@@ -157,7 +158,7 @@ export interface ScopesTooltipProps {
   onRemoveAllClick?: () => void;
 }
 
-function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
+export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
   if (appliedScopes.length === 0) {
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
@@ -178,7 +179,7 @@ function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disable
   return (
     <Stack direction="column" gap={1} justifyContent="center" alignItems={'center'}>
       <span>{parentPaths + scopeNames.join(', ')}</span>
-      {!disabled && (
+      {!disabled && onRemoveAllClick && (
         <LinkButton
           onClick={onRemoveAllClick}
           aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}

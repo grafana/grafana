@@ -11,6 +11,7 @@ import (
 // +k8s:openapi-gen=true
 type GetUserTeamsResponse struct {
 	metav1.TypeMeta  `json:",inline"`
+	metav1.ListMeta  `json:"metadata"`
 	GetUserTeamsBody `json:",inline"`
 }
 
@@ -31,6 +32,7 @@ func (o *GetUserTeamsResponse) DeepCopyObject() runtime.Object {
 func (o *GetUserTeamsResponse) DeepCopyInto(dst *GetUserTeamsResponse) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ListMeta.DeepCopyInto(&dst.ListMeta)
 	o.GetUserTeamsBody.DeepCopyInto(&dst.GetUserTeamsBody)
 }
 

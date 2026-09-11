@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
 -- Server version	8.4.5
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
@@ -47,7 +47,9 @@ INSERT INTO `secret_migration_log` (`migration_id`, `sql`, `success`, `error`, `
   ('drop my_row_id and add primary key with columns namespace,name,version to table secret_encrypted_value if my_row_id exists (auto-generated mysql column)','\n	  ALTER TABLE secret_encrypted_value\n	  DROP PRIMARY KEY,\n	  DROP COLUMN my_row_id,\n	  DROP INDEX UQE_secret_encrypted_value_namespace_name_version,\n	  ADD PRIMARY KEY (`namespace`,`name`,`version`);\n	',1,'','2022-01-01 00:00:00'),
   ('drop unique index UQE_secret_encrypted_value_namespace_name_version from secret_encrypted_value table if it exists (mysql)','ALTER TABLE secret_encrypted_value DROP INDEX UQE_secret_encrypted_value_namespace_name_version',1,'','2022-01-01 00:00:00'),
   ('add primary key with columns namespace,name,version to table secret_encrypted_value if it doesn\'t exist (mysql)','ALTER TABLE secret_encrypted_value ADD PRIMARY KEY (`namespace`,`name`,`version`)',1,'','2022-01-01 00:00:00'),
-  ('add primary key with columns namespace,name,version to table secret_encrypted_value (postgres and sqlite)','',1,'','2022-01-01 00:00:00');
+  ('add primary key with columns namespace,name,version to table secret_encrypted_value (postgres and sqlite)','',1,'','2022-01-01 00:00:00'),
+  ('add gc_attempts to secret_secure_value table','alter table `secret_secure_value` ADD COLUMN `gc_attempts` INT NOT NULL DEFAULT 0 ',1,'','2022-01-01 00:00:00'),
+  ('add lease_duration to secret_secure_value table','alter table `secret_secure_value` ADD COLUMN `lease_duration` INTEGER NOT NULL DEFAULT 0 ',1,'','2022-01-01 00:00:00');
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

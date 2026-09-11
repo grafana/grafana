@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -293,77 +294,6 @@ func TestMode1_Delete(t *testing.T) {
 	}
 }
 
-func TestMode1_DeleteCollection(t *testing.T) {
-	type testCase struct {
-		input          *metav1.DeleteOptions
-		setupLegacyFn  func(s *fakeStorage)
-		setupStorageFn func(s *fakeStorage)
-		name           string
-		wantErr        bool
-	}
-	tests :=
-		[]testCase{
-			{
-				name:  "should succeed when deleting a collection from LegacyStorage",
-				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
-				setupLegacyFn: func(s *fakeStorage) {
-					s.onDeleteCollection(exampleObj, nil)
-				},
-				setupStorageFn: func(s *fakeStorage) {
-					s.onDeleteCollection(exampleObj, nil)
-				},
-			},
-			{
-				name:  "should error when deleting a collection from LegacyStorage fails",
-				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
-				setupLegacyFn: func(s *fakeStorage) {
-					s.onDeleteCollection(nil, errors.New("error"))
-				},
-				setupStorageFn: func(s *fakeStorage) {
-					s.onDeleteCollection(exampleObj, nil)
-				},
-				wantErr: true,
-			},
-			{
-				name:  "should not error when deleting a collection from UnifiedStorage fails",
-				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
-				setupLegacyFn: func(s *fakeStorage) {
-					s.onDeleteCollection(exampleObj, nil)
-				},
-				setupStorageFn: func(s *fakeStorage) {
-					s.onDeleteCollection(nil, errors.New("error"))
-				},
-			},
-		}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ls := &fakeStorage{}
-			us := &fakeStorage{}
-
-			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls)
-			}
-			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us)
-			}
-
-			dw, err := newStorage(kind, rest.Mode1, ls, us)
-			require.NoError(t, err)
-
-			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
-
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-
-			require.Equal(t, obj, exampleObj)
-			require.NotEqual(t, obj, anotherObj)
-		})
-	}
-}
-
 func TestMode1_Update(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(s *fakeStorage)
@@ -429,4 +359,88 @@ func TestMode1_Update(t *testing.T) {
 			require.NotEqual(t, obj, anotherObj)
 		})
 	}
+}
+
+func TestMode1_UpdateBackgroundOutlivesRequest(t *testing.T) {
+	legacy := &fakeStorage{}
+	legacy.onUpdate(exampleObj, nil)
+
+	unified := &blockingUpdateStorage{
+		fakeStorage: &fakeStorage{},
+		started:     make(chan struct{}),
+		release:     make(chan struct{}),
+		result:      make(chan backgroundUpdateResult, 1),
+	}
+
+	dw, err := newStorage(kind, rest.Mode1, legacy, unified)
+	require.NoError(t, err)
+
+	requestCtx := context.WithValue(context.Background(), backgroundUpdateContextKey{}, "fake-request-value")
+	requestCtx, cancelRequest := context.WithCancel(requestCtx)
+
+	obj, _, err := dw.Update(
+		requestCtx,
+		"foo",
+		updatedObjInfoObj{},
+		func(context.Context, runtime.Object) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object) error { return nil },
+		false,
+		&metav1.UpdateOptions{},
+	)
+	require.NoError(t, err)
+	require.Equal(t, exampleObj, obj)
+
+	select {
+	case <-unified.started:
+	case <-time.After(time.Second):
+		t.Fatal("background unified update did not start")
+	}
+
+	cancelRequest()
+	close(unified.release)
+
+	select {
+	case got := <-unified.result:
+		require.NoError(t, got.contextErr)
+		require.NoError(t, got.updateErr)
+		require.Equal(t, "fake-request-value", got.contextValue)
+	case <-time.After(time.Second):
+		t.Fatal("background unified update did not complete")
+	}
+}
+
+type backgroundUpdateContextKey struct{}
+
+type blockingUpdateStorage struct {
+	*fakeStorage
+	started chan struct{}
+	release chan struct{}
+	result  chan backgroundUpdateResult
+}
+
+type backgroundUpdateResult struct {
+	contextErr   error
+	updateErr    error
+	contextValue any
+}
+
+func (s *blockingUpdateStorage) Update(
+	ctx context.Context,
+	_ string,
+	objInfo k8srest.UpdatedObjectInfo,
+	_ k8srest.ValidateObjectFunc,
+	_ k8srest.ValidateObjectUpdateFunc,
+	_ bool,
+	_ *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	close(s.started)
+	<-s.release
+
+	_, err := objInfo.UpdatedObject(ctx, exampleObj)
+	s.result <- backgroundUpdateResult{
+		contextErr:   ctx.Err(),
+		updateErr:    err,
+		contextValue: ctx.Value(backgroundUpdateContextKey{}),
+	}
+	return anotherObj, false, err
 }

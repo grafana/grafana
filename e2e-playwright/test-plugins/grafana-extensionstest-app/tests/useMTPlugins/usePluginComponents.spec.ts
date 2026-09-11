@@ -3,12 +3,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 import pluginJson from '../../plugin.json';
 import { testIds } from '../../testIds';
 
-test.use({ openFeature: { flags: { useMTPlugins: true } } });
+test.use({ openFeature: { flags: { 'plugins.useMTPlugins': true } } });
 
 test.describe(
   'grafana-extensionstest-app',
   {
-    tag: ['@plugins', '@useMTPlugins'],
+    tag: ['@plugins', '@plugins.useMTPlugins'],
   },
   () => {
     test('should render component with usePluginComponents hook', async ({ page }) => {

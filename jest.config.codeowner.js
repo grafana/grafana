@@ -3,7 +3,7 @@ const open = require('open').default;
 const path = require('path');
 
 const baseConfig = require('./jest.config.js');
-const { CODEOWNER_KIND, getCodeownerKind, createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
+const { buildCodeownerDirectoryPath } = require('./scripts/codeowners-manifest/utils.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
@@ -13,7 +13,7 @@ if (!codeownerName) {
   process.exit(1);
 }
 
-const outputDir = `./coverage/by-team/${createCodeownerDirectory(codeownerName)}`;
+const outputDir = path.join('./coverage/by-team', buildCodeownerDirectoryPath(codeownerName));
 const COVERAGE_SUMMARY_OUTPUT_PATH = './coverage-summary.json';
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
@@ -147,6 +147,19 @@ function writeCoverageSummaryArtifact(coverageResults) {
     return;
   }
 
+  const files = {};
+  if (coverageResults.files) {
+    for (const file of coverageResults.files) {
+      const relativePath = file.sourcePath.replace(process.cwd() + '/', '');
+      files[relativePath] = {
+        lines: { pct: file.summary.lines.pct },
+        statements: { pct: file.summary.statements.pct },
+        functions: { pct: file.summary.functions.pct },
+        branches: { pct: file.summary.branches.pct },
+      };
+    }
+  }
+
   const summary = {
     team: codeownerName,
     commit: process.env.GITHUB_SHA || 'unknown',
@@ -157,6 +170,7 @@ function writeCoverageSummaryArtifact(coverageResults) {
       functions: { pct: coverageResults.summary.functions.pct },
       branches: { pct: coverageResults.summary.branches.pct },
     },
+    files,
   };
 
   try {
@@ -165,24 +179,6 @@ function writeCoverageSummaryArtifact(coverageResults) {
   } catch (err) {
     console.error(`Failed to write coverage summary: ${err}`);
   }
-}
-
-/**
- * Creates a directory path for coverage reports grouped by codeowner kind
- * @param {string} codeowner - CODEOWNERS codeowner
- * @returns {string} Directory path relative to coverage/by-team/
- */
-function createCodeownerDirectory(codeowner) {
-  const kind = getCodeownerKind(codeowner);
-
-  if (kind === CODEOWNER_KIND.UNKNOWN) {
-    throw new Error(
-      `Invalid codeowner format: "${codeowner}". Must be a GitHub team (@org/team), user (@username), or email (email@domain.tld)`
-    );
-  }
-
-  const slug = createCodeownerSlug(codeowner);
-  return `${kind}s/${slug}`;
 }
 
 /**

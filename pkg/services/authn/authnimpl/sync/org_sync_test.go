@@ -2,11 +2,14 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -15,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -86,11 +90,11 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					Name:           "test",
 					Email:          "test",
 					OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
-					IsGrafanaAdmin: ptrBool(false),
+					IsGrafanaAdmin: new(false),
 					ClientParams: authn.ClientParams{
 						SyncOrgRoles: true,
 						LookUpParams: login.UserLookupParams{
-							Email: ptrString("test"),
+							Email: new("test"),
 							Login: nil,
 						},
 					},
@@ -104,11 +108,11 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				Email:          "test",
 				OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 				OrgID:          1, // set using org
-				IsGrafanaAdmin: ptrBool(false),
+				IsGrafanaAdmin: new(false),
 				ClientParams: authn.ClientParams{
 					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
-						Email: ptrString("test"),
+						Email: new("test"),
 						Login: nil,
 					},
 				},
@@ -122,6 +126,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				userService:   tt.fields.userService,
 				orgService:    tt.fields.orgService,
 				accessControl: tt.fields.accessControl,
+				cfg:           setting.NewCfg(),
 				log:           tt.fields.log,
 				tracer:        tracing.InitializeTracerForTest(),
 			}
@@ -130,6 +135,80 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 			}
 
 			assert.EqualValues(t, tt.wantID, tt.args.id)
+		})
+	}
+}
+
+func TestOrgSync_SyncOrgRolesHook_SkipsWhenSingleOrgAndKubernetesUsersRedirect(t *testing.T) {
+	tests := []struct {
+		name                    string
+		singleOrg               bool
+		kubernetesUsersRedirect bool
+		expectSkip              bool
+	}{
+		{
+			name:                    "skips when both single-org and k8s users redirect are enabled",
+			singleOrg:               true,
+			kubernetesUsersRedirect: true,
+			expectSkip:              true,
+		},
+		{
+			name:                    "does not skip when only single-org is enabled",
+			singleOrg:               true,
+			kubernetesUsersRedirect: false,
+			expectSkip:              false,
+		},
+		{
+			name:                    "does not skip when only k8s users redirect is enabled",
+			singleOrg:               false,
+			kubernetesUsersRedirect: true,
+			expectSkip:              false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			orgService := &orgtest.MockService{}
+			if !tt.expectSkip {
+				// Return an error so the hook exits cleanly after we've
+				// observed GetUserOrgList was called (proves we didn't skip).
+				orgService.On("GetUserOrgList", mock.Anything, mock.Anything).Return([]*org.UserOrgDTO(nil), errors.New("forced exit"))
+			}
+
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = tt.singleOrg
+
+			s := &OrgSync{
+				userService:   &usertest.FakeUserService{},
+				orgService:    orgService,
+				accessControl: &actest.FakeService{},
+				cfg:           cfg,
+				log:           log.NewNopLogger(),
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			id := &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				Login:    "test",
+				OrgRoles: map[int64]identity.RoleType{1: org.RoleEditor},
+				ClientParams: authn.ClientParams{
+					SyncOrgRoles: true,
+				},
+			}
+
+			err := s.SyncOrgRolesHook(context.Background(), id, nil)
+			require.NoError(t, err)
+
+			if tt.expectSkip {
+				orgService.AssertNotCalled(t, "GetUserOrgList", mock.Anything, mock.Anything)
+			} else {
+				orgService.AssertCalled(t, "GetUserOrgList", mock.Anything, mock.Anything)
+			}
 		})
 	}
 }

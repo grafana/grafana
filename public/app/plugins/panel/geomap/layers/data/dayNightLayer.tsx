@@ -1,5 +1,4 @@
 import Feature from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import Point from 'ol/geom/Point';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -9,13 +8,7 @@ import { Fill, Stroke, Style, Circle } from 'ol/style';
 import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData } from '@grafana/data';
 
 export enum ShowTime {
   From = 'from',
@@ -35,15 +28,7 @@ const defaultConfig: DayNightConfig = {
   nightColor: '#a7a6ba4D',
 };
 
-export const DAY_NIGHT_LAYER_ID = 'dayNight';
-
-// Used by default when nothing is configured
-export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
-  type: DAY_NIGHT_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultConfig,
-  tooltip: true,
-};
+const DAY_NIGHT_LAYER_ID = 'dayNight';
 
 /**
  * Map layer configuration for circle overlay
@@ -60,7 +45,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultConfig,
@@ -153,7 +138,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
-
 
     return {
       init: () => layer,

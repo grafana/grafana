@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash';
 import { type ReactElement, useId, useMemo } from 'react';
 
-import { type DataFrame, type MatcherConfig, type SelectableValue } from '@grafana/data';
+import { type DataFrame, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
@@ -79,11 +79,6 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
     </InlineFieldRow>
   );
 }
-
-export type FilterConfig = {
-  fieldName: string;
-  config: MatcherConfig;
-};
 
 type LogFilterOptions = {
   pluginIds: Array<SelectableValue<string>>;

@@ -10,7 +10,7 @@ import (
 )
 
 func docker(args []string) {
-	cmd := exec.Command("docker", args...)
+	cmd := exec.Command("docker", args...) // #nosec G204 -- build script invoking docker with hard-coded args from main
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

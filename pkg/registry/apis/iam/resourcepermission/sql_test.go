@@ -101,7 +101,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupBackend(t *testing.T) *ResourcePermSqlBackend {
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	sqlHelper := &legacysql.LegacyDatabaseHelper{
 		DB:    store,
@@ -403,7 +403,7 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -724,7 +724,7 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 		name      string
 		namespace string
 		subject   string
-		wantPerms []v0alpha1.PermissionSpec // action → scope
+		wantPerms []v0alpha1.PermissionSpec
 		wantNil   bool
 	}{
 		{
@@ -790,6 +790,45 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 			require.Equal(t, want, got)
 		})
 	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject_SAMapper(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	backend := ProvideStorageBackend(dbProvider, saMapper())
+	backend.identityStore = NewFakeIdentityStore(t)
+	setupTestRoles(t, store)
+
+	// Seed a serviceaccounts:id:3 permission onto user-1's role.
+	// The backend should resolve it to serviceaccounts:uid:sa-1 on read.
+	sess := store.GetSqlxSession()
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated) VALUES (?, ?, ?, ?, ?)`,
+		1, "serviceaccounts:admin", "serviceaccounts:id:3", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	result, err := backend.ListDirectPermissionsForSubject(context.Background(), "default", "user-1")
+	require.NoError(t, err)
+
+	got := make(map[string]string, len(result))
+	for _, p := range result {
+		got[p.Action] = p.Scope
+	}
+	require.Equal(t, map[string]string{
+		"folders:view":          "folders:uid:fold1",
+		"dashboards:edit":       "dashboards:uid:dash1",
+		"serviceaccounts:admin": "serviceaccounts:uid:sa-1",
+	}, got)
 }
 
 func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {

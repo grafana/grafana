@@ -15,13 +15,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -29,15 +29,7 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*DashboardStarsStorage)(nil)
-	_ rest.SingularNameProvider = (*DashboardStarsStorage)(nil)
-	_ rest.Getter               = (*DashboardStarsStorage)(nil)
-	_ rest.Lister               = (*DashboardStarsStorage)(nil)
-	_ rest.Storage              = (*DashboardStarsStorage)(nil)
-	_ rest.Creater              = (*DashboardStarsStorage)(nil)
-	_ rest.Updater              = (*DashboardStarsStorage)(nil)
-	_ rest.GracefulDeleter      = (*DashboardStarsStorage)(nil)
-	_ rest.CollectionDeleter    = (*DashboardStarsStorage)(nil)
+	_ grafanarest.Storage = (*DashboardStarsStorage)(nil)
 )
 
 func NewDashboardStarsStorage(
@@ -195,7 +187,7 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *collections.Star
 		return &collections.Stars{ObjectMeta: metav1.ObjectMeta{
 			Name:              obj.Name,
 			Namespace:         obj.Namespace,
-			DeletionTimestamp: ptr.To(metav1.Now()),
+			DeletionTimestamp: new(metav1.Now()),
 		}}, err
 	}
 
@@ -291,11 +283,6 @@ func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteV
 		return nil, false, err
 	}
 	return obj, true, err
-}
-
-// DeleteCollection implements rest.CollectionDeleter.
-func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented")
 }
 
 func asStarsResource(ns string, v *dashboardStars) collections.Stars {

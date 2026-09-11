@@ -24,6 +24,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
+import { isKeyboardEvent } from './utils';
 
 interface MultiComboboxBaseProps<T extends string | number>
   extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange' | 'isClearable'> {
@@ -64,6 +65,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
+  const [showFocusRing, setShowFocusRing] = useState(false);
 
   const fieldContext = useFieldContext();
   const id = idProp ?? fieldContext.id;
@@ -126,6 +128,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     [selectedItems]
   );
 
+  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    // Synchronously update inputValue so it is batched with downshift's dispatch
+    // in a single React render. See onStateChange InputChange case for details.
+    setInputValue(event.target.value);
+  }, []);
+
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
       selectedItems, // initially selected items,
@@ -172,12 +180,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       },
     });
 
-  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps } = useCombobox({
+  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps, getToggleButtonProps } = useCombobox({
     items: options,
     itemToString,
     inputId: id,
     inputValue,
     selectedItem: null,
+    defaultHighlightedIndex: 0,
     isItemDisabled: (item) => !!item?.infoOption,
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
@@ -216,6 +225,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
 
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+      setShowFocusRing(isKeyboardEvent(type));
+
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
@@ -251,11 +262,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
+
           break;
         case useCombobox.stateChangeTypes.InputChange:
-          setInputValue(newInputValue ?? '');
+          // setInputValue is intentionally NOT called here. It is called synchronously in the
+          // input's onChange handler instead, so that it is batched with downshift's dispatch
+          // in a single React render.
           updateOptions(newInputValue ?? '');
-
           break;
         default:
           break;
@@ -332,6 +345,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               'aria-describedby': ariaDescribedBy, // Description should be handled with the Field component
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
+              onChange: handleInputChange,
               onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
                 // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
                 // so that only the dropdown menu closes, not the parent.
@@ -361,7 +375,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 }}
               />
             )}
-            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+            <SuffixIcon
+              isLoading={loading || false}
+              isOpen={isOpen}
+              {...getToggleButtonProps({ disabled, role: 'button' })}
+            />
           </div>
         </span>
       </div>
@@ -380,6 +398,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               loading={loading}
               options={options}
               highlightedIndex={highlightedIndex}
+              showFocusRing={showFocusRing}
               selectedItems={selectedItems}
               scrollRef={scrollRef}
               getItemProps={getItemProps}

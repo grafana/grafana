@@ -2,7 +2,7 @@
   "key": {
     "namespace": "default",
     "group": "iam.grafana.app",
-    "resource": "searchTeams",
+    "resource": "teams",
     "name": "with-email-and-external-uid"
   },
   "name": "with-email-and-external-uid",

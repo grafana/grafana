@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -8,35 +8,27 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = '5SdHCadmz/panel-tests-graph';
-
 test.describe(
   'Dashboard',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test('can toggle transparent background switch', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can toggle transparent background switch', async ({ gotoDashboardPage, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: '5SdHCadmz/panel-tests-graph' });
+      await controls.enterEditMode();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      const panelTitle = 'No Data Points Warning';
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-        .filter({ hasText: /^No Data Points Warning$/ })
-        .first()
-        .click();
+      const panelContainer = panels.getPanel(panelTitle);
 
-      const panelTitle = dashboardPage.getByGrafanaSelector(
-        selectors.components.Panels.Panel.title('No Data Points Warning')
-      );
-
-      const initialBackground = await panelTitle.evaluate((el) => getComputedStyle(el).background);
+      const initialBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
       expect(initialBackground).not.toMatch(/rgba\(0, 0, 0, 0\)/);
 
-      await page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });
+      await panels.selectByTitle(panelTitle);
+      await sidebar.panelOptions.toggleTransparentBackground();
 
-      const transparentBackground = await panelTitle.evaluate((el) => getComputedStyle(el).background);
+      const transparentBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
       expect(transparentBackground).toMatch(/rgba\(0, 0, 0, 0\)/);
     });
   }

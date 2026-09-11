@@ -95,6 +95,13 @@ describe('timeseriesPresetsSupplier', () => {
     }
   });
 
+  it('all presets include cardOptions with maxSeries', () => {
+    const result = getPresets({ dataSummary: makeSummary(1, 3) });
+    for (const preset of result) {
+      expect(preset.cardOptions?.maxSeries).toBeDefined();
+    }
+  });
+
   describe('previewModifier', () => {
     const result = getPresets({ dataSummary: makeSummary(1, 3) });
 

@@ -18,7 +18,7 @@ export interface ScopeDashboardBinding {
 }
 
 export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match' | 'one-of' | 'not-one-of';
-export type EqualityOrMultiOperator = Extract<ScopeFilterOperator, 'equals' | 'not-equals' | 'one-of' | 'not-one-of'>;
+type EqualityOrMultiOperator = Extract<ScopeFilterOperator, 'equals' | 'not-equals' | 'one-of' | 'not-one-of'>;
 
 export function isEqualityOrMultiOperator(value: string): value is EqualityOrMultiOperator {
   const operators = new Set(['equals', 'not-equals', 'one-of', 'not-one-of']);

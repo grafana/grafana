@@ -40,7 +40,7 @@ export let getFooterLinks = (): FooterLink[] => {
   ];
 };
 
-export function getVersionMeta(version: string) {
+function getVersionMeta(version: string) {
   const isBeta = version.includes('-beta');
 
   return {
@@ -49,7 +49,7 @@ export function getVersionMeta(version: string) {
   };
 }
 
-export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
+function getVersionLinks(hideEdition?: boolean): FooterLink[] {
   const { buildInfo, licenseInfo } = config;
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';

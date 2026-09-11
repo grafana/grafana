@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -273,12 +274,7 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 	}
 
 	var contain = func(arr []string, s string) bool {
-		for _, item := range arr {
-			if item == s {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(arr, s)
 	}
 
 	for _, a := range targetActions {
@@ -410,6 +406,7 @@ const (
 	ScopeSettingsAll  = "settings:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 	ScopeSettingsSCIM = "settings:auth.scim:*"
+	ScopeSettingsSMTP = "settings:smtp:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -505,6 +502,14 @@ const (
 	ActionAlertingRoutesPermissionsRead  = AlertingRoutesKind + ":set_permissions"
 	ActionAlertingRoutesPermissionsWrite = AlertingRoutesKind + ":get_permissions"
 
+	// Alerting alertmanager import actions (scoped per import identifier, feature-flagged)
+	AlertingAlertmanagerImportsResource     = "alertmanagerimports"
+	AlertingAlertmanagerImportsKind         = AlertingNotificationsApiGroup + "/" + AlertingAlertmanagerImportsResource
+	ActionAlertingAlertmanagerImportsCreate = AlertingAlertmanagerImportsKind + ":create"
+	ActionAlertingAlertmanagerImportsRead   = AlertingAlertmanagerImportsKind + ":get"
+	ActionAlertingAlertmanagerImportsWrite  = AlertingAlertmanagerImportsKind + ":update"
+	ActionAlertingAlertmanagerImportsDelete = AlertingAlertmanagerImportsKind + ":delete"
+
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
 	ActionAlertingRuleExternalRead  = "alert.rules.external:read"
@@ -529,6 +534,19 @@ const (
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
+	// Config k8s resource actions, scoped per-resource. Reads are exposed to
+	// viewers; updates are gated to admins.
+	AlertingConfigResource     = "configs"
+	AlertingConfigKind         = AlertingNotificationsApiGroup + "/" + AlertingConfigResource
+	ActionAlertingConfigRead   = AlertingConfigKind + ":get"
+	ActionAlertingConfigUpdate = AlertingConfigKind + ":update"
+	// ActionAlertingConfigStatusUpdate gates writes to the /status
+	// subresource. Granted only to the in-process service identity (see
+	// pkg/apimachinery/identity/context.go). NOT registered in any fixed
+	// role — humans should never write status directly; the sync worker
+	// owns it.
+	ActionAlertingConfigStatusUpdate = AlertingConfigKind + "/status:update"
+
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"
@@ -538,6 +556,12 @@ const (
 	ActionLibraryPanelsRead   = "library.panels:read"
 	ActionLibraryPanelsWrite  = "library.panels:write"
 	ActionLibraryPanelsDelete = "library.panels:delete"
+
+	// Variable actions (dashboard.grafana.app/variables — stack-wide and folder-scoped)
+	ActionVariablesCreate = "variables:create"
+	ActionVariablesRead   = "variables:read"
+	ActionVariablesWrite  = "variables:write"
+	ActionVariablesDelete = "variables:delete"
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"

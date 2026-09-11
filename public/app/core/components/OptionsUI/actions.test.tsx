@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ActionType, HttpRequestMethod, type Action, VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
@@ -14,15 +14,21 @@ const makeAction = (title: string): Action => ({
 });
 
 describe('ActionsValueEditor', () => {
-  it('renders the actions editor container and add button', () => {
-    render(<ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+  it('renders the actions editor container and add button', async () => {
+    const { container } = render(
+      <ActionsValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-rfd-droppable-id="sortable-links"]')).toBeInTheDocument();
+    });
 
     expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add action/i })).toBeInTheDocument();
   });
 
-  it('displays existing action titles in the list', () => {
-    render(
+  it('displays existing action titles in the list', async () => {
+    const { container } = render(
       <ActionsValueEditor
         value={[makeAction('Send Alert'), makeAction('Open Dashboard')]}
         onChange={jest.fn()}
@@ -30,6 +36,10 @@ describe('ActionsValueEditor', () => {
         item={editorItem}
       />
     );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
 
     expect(screen.getByText('Send Alert')).toBeInTheDocument();
     expect(screen.getByText('Open Dashboard')).toBeInTheDocument();

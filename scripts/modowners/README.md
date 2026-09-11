@@ -4,9 +4,9 @@
 
 Modowners is a way to ensure that each Go dependency has at least one team responsible for maintaining and upgrading it.
 
-The `validate-modfile` drone step checks `go.mod` and will pass if every dependency has an owner. When adding a new dependency, add the responsible team in a line comment.
+The Backend Code Checks workflow runs `modowners check`. It fails if a direct dependency has no owner. When adding a new dependency, add the responsible team in a line comment.
 
-Currently `validate-modfile` is non-blocking, but will eventually become a blocking step. All newly added dependencies will require an assigned owner.
+Pull requests that change `go.mod` get review requests for the teams on the changed require lines. That is the `reviewers` command, run by `.github/workflows/modowners-reviewers.yml`. GitHub CODEOWNERS does not own `go.mod`.
 
 ### Example of ownership assignment
 
@@ -35,13 +35,13 @@ Example CLI command to get a list of all owners with a count of the number of de
 Example output:
 
 ```
-@grafana/grafana-release-guild 5
+@grafana/grafana-backend-services-squad 5
 @grafana/grafana-bi-squad 2
 @grafana/grafana-app-platform-squad 13
 @grafana/observability-metrics 4
 @grafana/observability-traces-and-profiling 6
 @grafana/alerting-squad-backend 22
-@grafana/plugins-platform-backend 7
+@grafana/grafana-catalog 7
 @grafana/grafana-operator-experience-squad 3
 @grafana/dataviz-squad 1
 @grafana/grafana-backend-group 75
@@ -60,13 +60,28 @@ Example output:
 @grafana/grafana-backend-group
 ```
 
+### `reviewers`
+
+Print GitHub team slugs that should review a `go.mod` diff. Compares two files and prints one slug per line. Indirect requires are ignored. Owners must be `@grafana/<team-slug>`.
+
+Example CLI command:
+
+`go run scripts/modowners/modowners.go reviewers go.mod.base go.mod`
+
+Example output:
+
+```
+alerting-backend
+grafana-backend-services-squad
+```
+
 ### `module`
 
 List all dependencies of given owner(s).
 
-Example CLI command to list all direct dependencies owned by Delivery and Authnz:
+Example CLI command to list all direct dependencies owned by Backend Services and Authnz:
 
-`go run scripts/modowners/modowners.go modules -o @grafana/grafana-release-guild,@grafana/identity-access-team go.mod`
+`go run scripts/modowners/modowners.go modules -o @grafana/grafana-backend-services-squad,@grafana/identity-access-team go.mod`
 
 Example output:
 
@@ -87,4 +102,4 @@ filippo.io/age@v1.1.1
 For existing dependencies, please review and update ownership of your team’s dependencies in `go.mod`.
 
 - If any assignments are incorrect, you can replace your team name with the correct team in `go.mod`.
-- If you don’t know who the correct team is, you can reassign the dependency back to backend platform. Afterwards, open a PR and assign backend platform as reviewers.
+- If you don’t know who the correct team is, you can reassign the dependency to `@grafana/grafana-backend-group`. The reviewers workflow will request that team.

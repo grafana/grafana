@@ -211,7 +211,7 @@ export interface RouteReference {
   };
 }
 
-export function getUsedContactPoints(route: Route): RouteReference[] {
+function getUsedContactPoints(route: Route): RouteReference[] {
   const childrenContactPoints = route.routes?.flatMap((route) => getUsedContactPoints(route)) ?? [];
 
   if (route.receiver) {

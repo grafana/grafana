@@ -1,9 +1,7 @@
-import { type FeatureLike } from 'ol/Feature';
 import type OpenLayersMap from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
-import { Subject } from 'rxjs';
 
 import { getFrameMatchers, type MapLayerHandler, type MapLayerOptions, type PanelData, textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -13,6 +11,7 @@ import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
 
+import { captureLayerAttribution, updateAttributionVisibility } from './attribution';
 import { getNextLayerName } from './utils';
 
 const layerStateMap = new WeakMap<BaseLayer, MapLayerState>();
@@ -43,7 +42,7 @@ export const applyLayerFilter = (
   }
 };
 
-export async function updateLayer(panel: GeomapPanel, uid: string, newOptions: MapLayerOptions): Promise<boolean> {
+async function updateLayer(panel: GeomapPanel, uid: string, newOptions: MapLayerOptions): Promise<boolean> {
   if (!panel.map) {
     return false;
   }
@@ -148,7 +147,6 @@ export async function initLayer(
     options,
     layer,
     handler,
-    mouseEvents: new Subject<FeatureLike | undefined>(),
 
     getName: () => UID,
 
@@ -160,6 +158,8 @@ export async function initLayer(
 
   panel.byName.set(UID, state);
   layerStateMap.set(state.layer, state);
+  captureLayerAttribution(layer);
+  updateAttributionVisibility([state], panel.props.options.controls);
 
   // Pass state into WebGLPointsLayers contained in a LayerGroup
   if (layer instanceof LayerGroup) {

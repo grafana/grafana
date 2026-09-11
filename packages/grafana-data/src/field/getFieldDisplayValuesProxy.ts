@@ -3,7 +3,7 @@ import { toNumber } from 'lodash';
 import { type DataFrame } from '../types/dataFrame';
 import { type DisplayValue } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
-import { formattedValueToString } from '../valueFormats/valueFormats';
+import { formattedValueToString } from '../valueFormats/baseFormatters';
 
 import { getDisplayProcessor } from './displayProcessor';
 
@@ -24,7 +24,11 @@ export function getFieldDisplayValuesProxy(options: {
   return new Proxy(
     {},
     {
-      get: (obj, key): DisplayValue | undefined => {
+      get: (obj, key): DisplayValue | undefined | (() => string) => {
+        if (key === Symbol.toPrimitive) {
+          return () => '';
+        }
+
         // 1. Match the name
         let field = options.frame.fields.find((f) => key === f.name);
         if (!field) {

@@ -1,5 +1,9 @@
 export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
+/** The name used to identify the built-in Grafana rules/alertmanager source */
+export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
+
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
 
 export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';
@@ -7,12 +11,15 @@ export const ALERTMANAGER_NAME_LOCAL_STORAGE_KEY = 'alerting-alertmanager';
 export const SILENCES_POLL_INTERVAL_MS = 20000;
 export const NOTIFICATIONS_POLL_INTERVAL_MS = 20000;
 export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
+/**
+ * The Config singleton is seeded by the external Alertmanager sync worker rather than by the UI, and
+ * nothing the settings page can do invalidates it. Polling is what turns the pre-seed 404 — and any
+ * change made outside this tab — into something a user who waits on the page eventually observes.
+ */
+export const AUTO_SYNC_CONFIG_POLL_INTERVAL_MS = 30000;
 
 export const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
-
-export const TIMESERIES = 'timeseries';
-export const TABLE = 'table';
-export const STAT = 'stat';
+export const GROUPS_PER_PAGE = 100;
 
 export enum Annotation {
   description = 'description',
@@ -55,6 +62,3 @@ export const GRAFANA_FOLDER_LABEL = 'grafana_folder';
 
 /** Minimum evaluation interval step in seconds (used for validation and UI) */
 export const MIN_TIME_RANGE_STEP_S = 10;
-
-/** Maximum number of rule groups to fetch for evaluation group selector */
-export const MAX_GROUP_RESULTS = 1000;

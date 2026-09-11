@@ -11,7 +11,8 @@ var (
 	MigrationAssistantAccess = accesscontrol.EvalPermission(ActionMigrate)
 )
 
-func RegisterAccessControlRoles(service accesscontrol.Service) error {
+// FixedRoleRegistrations returns the cloud migration role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	migrator := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:migrationassistant:migrator",
@@ -27,5 +28,9 @@ func RegisterAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(accesscontrol.RoleGrafanaAdmin)},
 	}
 
-	return service.DeclareFixedRoles(migrator)
+	return []accesscontrol.RoleRegistration{migrator}
+}
+
+func RegisterAccessControlRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

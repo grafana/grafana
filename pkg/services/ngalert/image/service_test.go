@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/screenshot"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestScreenshotImageService(t *testing.T) {
@@ -68,8 +67,8 @@ func TestScreenshotImageService(t *testing.T) {
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
 			UID:          "foo",
-			DashboardUID: util.Pointer("foo"),
-			PanelID:      util.Pointer(int64(1))})
+			DashboardUID: new("foo"),
+			PanelID:      new(int64(1))})
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -105,8 +104,8 @@ func TestScreenshotImageService(t *testing.T) {
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
 			UID:          "bar",
-			DashboardUID: util.Pointer("bar"),
-			PanelID:      util.Pointer(int64(1))})
+			DashboardUID: new("bar"),
+			PanelID:      new(int64(1))})
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -120,8 +119,8 @@ func TestScreenshotImageService(t *testing.T) {
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
 			UID:          "baz",
-			DashboardUID: util.Pointer("baz"),
-			PanelID:      util.Pointer(int64(1))})
+			DashboardUID: new("baz"),
+			PanelID:      new(int64(1))})
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -141,8 +140,8 @@ func TestScreenshotImageService(t *testing.T) {
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
 			UID:          "qux",
-			DashboardUID: util.Pointer("qux"),
-			PanelID:      util.Pointer(int64(1))})
+			DashboardUID: new("qux"),
+			PanelID:      new(int64(1))})
 		assert.EqualError(t, err, "context deadline exceeded")
 		assert.Nil(t, image)
 	})

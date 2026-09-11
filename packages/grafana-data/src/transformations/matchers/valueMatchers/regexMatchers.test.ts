@@ -82,4 +82,41 @@ describe('regex value matcher', () => {
       expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
     });
   });
+
+  describe('nullish values', () => {
+    const nullishData: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'temp',
+            values: [null, undefined, 0, ''],
+          },
+        ],
+      }),
+    ];
+
+    it.each(['.*', '.+', '\\w*', 'null', 'undefined'])('should not match null or undefined with %s', (value) => {
+      const matcher = getValueMatcher({
+        id: ValueMatcherID.regex,
+        options: { value },
+      });
+      const frame = nullishData[0];
+      const field = frame.fields[0];
+
+      expect(matcher(0, field, frame, nullishData)).toBeFalsy();
+      expect(matcher(1, field, frame, nullishData)).toBeFalsy();
+    });
+
+    it('should still match falsy non-nullish values', () => {
+      const matcher = getValueMatcher({
+        id: ValueMatcherID.regex,
+        options: { value: '.*' },
+      });
+      const frame = nullishData[0];
+      const field = frame.fields[0];
+
+      expect(matcher(2, field, frame, nullishData)).toBeTruthy();
+      expect(matcher(3, field, frame, nullishData)).toBeTruthy();
+    });
+  });
 });

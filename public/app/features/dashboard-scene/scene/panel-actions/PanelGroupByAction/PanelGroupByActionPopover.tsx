@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   GroupByVariable,
@@ -87,6 +88,8 @@ export function PanelGroupByActionPopover({
         originFilters: finalOriginFilters,
         filters: [...nonGroupByFilters, ...newUserGroupBys],
       });
+
+      reportInteraction('grafana_unified_drilldown_groupby_popover_applied');
     }
     onCancel();
   }, [groupByVariable, onCancel, values]);
@@ -162,7 +165,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     padding: theme.spacing(2),
   }),
   searchContainer: css({

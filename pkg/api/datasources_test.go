@@ -369,6 +369,35 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 	require.Equal(t, http.StatusConflict, sc.resp.Code)
 }
 
+func TestUpdateDataSourceByUID_UIDMismatch(t *testing.T) {
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{},
+		},
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accesscontrolService: actest.FakeService{},
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+
+	sc := setupScenarioContext(t, "/api/datasources/uid/url-uid")
+
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req = web.SetURLParams(c.Req, map[string]string{":uid": "url-uid"})
+		c.Req.Body = mockRequestBody(datasources.UpdateDataSourceCommand{
+			UID:    "different-uid",
+			Access: "proxy",
+			Type:   "test",
+			Name:   "test",
+		})
+		return hs.UpdateDataSourceByUID(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
+}
+
 func TestAPI_datasources_AccessControl(t *testing.T) {
 	type testCase struct {
 		desc         string

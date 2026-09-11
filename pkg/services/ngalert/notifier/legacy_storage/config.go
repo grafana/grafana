@@ -6,13 +6,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 type crypto interface {
-	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
-	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	EncryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
+	DecryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
 }
 
 type amConfigStore interface {
@@ -20,20 +20,24 @@ type amConfigStore interface {
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
-func DeserializeAlertmanagerConfig(config []byte) (*definitions.PostableUserConfig, error) {
-	result := definitions.PostableUserConfig{}
+func DeserializeAlertmanagerConfig(config []byte) (*v1.AMConfigDB, error) {
+	result := v1.AMConfigDB{}
 	if err := json.Unmarshal(config, &result); err != nil {
 		return nil, makeErrBadAlertmanagerConfiguration(err)
 	}
 	return &result, nil
 }
 
-func SerializeAlertmanagerConfig(config definitions.PostableUserConfig) ([]byte, error) {
-	return json.Marshal(config)
+func SerializeAlertmanagerConfig(config v1.AMConfigV1) ([]byte, error) {
+	dbModel, err := v1.ToDBModel(&config)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(dbModel)
 }
 
 type ConfigRevision struct {
-	Config           *definitions.PostableUserConfig
+	Config           *v1.AMConfigV1
 	ConcurrencyToken string
 	Version          string
 }
@@ -58,10 +62,11 @@ func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*Con
 	}
 
 	concurrencyToken := alertManagerConfig.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
+	dbCfg, err := DeserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return nil, err
 	}
+	cfg := v1.ToModel(dbCfg)
 
 	err = a.crypto.DecryptExtraConfigs(ctx, cfg)
 	if err != nil {

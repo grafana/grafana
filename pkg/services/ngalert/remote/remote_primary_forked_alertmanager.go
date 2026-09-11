@@ -2,7 +2,6 @@ package remote
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	alertingModels "github.com/grafana/alerting/models"
@@ -86,40 +85,11 @@ func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apim
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	originalID := silence.ID
-	id, err := fam.remote.CreateSilence(ctx, silence)
-	if err != nil {
-		return "", err
-	}
-
-	if originalID != "" && originalID != id {
-		// ID has changed, expire the old silence before creating a new one.
-		if err := fam.internal.DeleteSilence(ctx, originalID); err != nil {
-			if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-				// This can happen if the silence was created in the remote AM without using the Grafana UI
-				// in remote primary mode, or if the silence failed to be replicated in the internal AM.
-				fam.log.Warn("Failed to delete silence in the internal Alertmanager", "err", err, "id", originalID)
-			} else {
-				fam.log.Error("Failed to delete silence in the internal Alertmanager", "err", err, "id", originalID)
-			}
-		}
-	}
-
-	silence.ID = id
-	if _, err := fam.internal.CreateSilence(ctx, silence); err != nil {
-		fam.log.Error("Error creating silence in the internal Alertmanager", "err", err, "silence", silence)
-	}
-	return id, nil
+	return fam.remote.CreateSilence(ctx, silence)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	if err := fam.remote.DeleteSilence(ctx, id); err != nil {
-		return err
-	}
-	if err := fam.internal.DeleteSilence(ctx, id); err != nil {
-		fam.log.Error("Error deleting silence in the internal Alertmanager", "err", err, "id", id)
-	}
-	return nil
+	return fam.remote.DeleteSilence(ctx, id)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {

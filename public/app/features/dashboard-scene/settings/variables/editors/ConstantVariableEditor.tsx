@@ -28,27 +28,34 @@ export function getConstantVariableOptions(variable: SceneVariable): OptionsPane
     return [];
   }
 
+  const valueInputId = `variable-${variable.state.key}-value`;
+
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard-scene.constant-variable-form.label-value', 'Value'),
-      id: 'constant-variable-value',
-      render: (descriptor) => <ConstantValueInput id={descriptor.props.id} variable={variable} />,
+      id: valueInputId,
+      render: () => <ConstantValueInput id={valueInputId} variable={variable} />,
     }),
   ];
 }
 
-function ConstantValueInput({ variable, id }: { variable: ConstantVariable; id?: string }) {
+function ConstantValueInput({ variable, id }: { variable: ConstantVariable; id: string }) {
   const { value } = variable.useState();
 
-  const onBlur = async (event: FormEvent<HTMLInputElement>) => {
+  const onChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ value: event.currentTarget.value });
+  };
+
+  const onBlur = async () => {
     await lastValueFrom(variable.validateAndUpdate!());
   };
 
   return (
     <Input
+      key={variable.state.key}
       id={id}
-      defaultValue={value.toString()}
+      value={value.toString()}
+      onChange={onChange}
       onBlur={onBlur}
       placeholder={t('dashboard-scene.constant-variable-form.placeholder-your-metric-prefix', 'Your metric prefix')}
     />

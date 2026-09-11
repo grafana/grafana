@@ -83,6 +83,27 @@ describe('RepositoryPullStatusCard', () => {
       expect(screen.getByText('/var/lib/grafana/repos/test')).toBeInTheDocument();
     });
 
+    it('should display source info for GitHub Enterprise repos', () => {
+      const repo = createMockRepository({
+        spec: {
+          title: 'Test',
+          type: 'githubEnterprise',
+          githubEnterprise: { url: 'https://ghe.example.com/owner/repo', branch: 'develop', path: 'grafana/' },
+          sync: { target: 'folder', enabled: true },
+          workflows: [],
+        },
+      });
+      render(<RepositoryPullStatusCard repo={repo} />);
+
+      expect(screen.getByText('Repository URL:')).toBeInTheDocument();
+      const link = screen.getByRole('link', { name: /owner\/repo/ });
+      expect(link).toHaveAttribute('href', expect.stringContaining('ghe.example.com/owner/repo'));
+      expect(screen.getByText('Branch:')).toBeInTheDocument();
+      expect(screen.getByText('develop')).toBeInTheDocument();
+      expect(screen.getByText('Path:')).toBeInTheDocument();
+      expect(screen.getByText('grafana/')).toBeInTheDocument();
+    });
+
     it('should display source info for GitLab repos', () => {
       const repo = createMockRepository({
         spec: {

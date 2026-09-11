@@ -19,6 +19,8 @@ import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_
 export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOptions {
   children: AutoGridItem[];
 
+  draggedChildren?: AutoGridItem[];
+
   /**
    * True when the item should be rendered but not visible.
    * Useful for conditional display of layout items
@@ -37,7 +39,7 @@ export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOpt
   draggingKey?: string;
 }
 
-export interface AutoGridLayoutOptions {
+interface AutoGridLayoutOptions {
   /**
    * Useful for setting a height on items without specifying how many rows there will be.
    * Defaults to 320px
@@ -75,6 +77,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Container's initial page position, used to compensate for layout shifts during drag */
   private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
+  protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
     super({
@@ -96,8 +99,6 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   private _activationHandler() {
     return () => {
       this._resetPanelPositionAndSize();
-      document.body.removeEventListener('pointermove', this._onDrag);
-      document.body.removeEventListener('pointerup', this._onDragEnd);
       document.body.classList.remove('dashboard-draggable-transparent-selection');
     };
   }
@@ -119,6 +120,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   public getDragHooks() {
+    if (!this.isDraggable()) {
+      return {};
+    }
+
     return {
       onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
         const gridItem = panel.parent;
@@ -170,11 +175,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this.setState({ draggingKey: this._draggedGridItem.state.key });
 
-    document.body.addEventListener('pointermove', this._onDrag);
-    document.body.addEventListener('pointerup', this._onDragEnd);
     document.body.classList.add('dashboard-draggable-transparent-selection');
 
-    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem);
+    getLayoutOrchestratorFor(this)?.startDraggingSync(evt, this._draggedGridItem, {
+      onDrag: this._onDrag,
+      onDragEnd: this._onDragEnd,
+    });
   }
 
   // Stop inside dragging
@@ -186,28 +192,14 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
 
-    // Only reset position/size and clear draggingKey if not dropping to a different layout.
-    // For cross-grid drops, the orchestrator will call endExternalDrag() after the item is moved
-    // to prevent flickering where the item would momentarily appear at wrong position
-    // (CSS vars cleared but draggingKey still set = absolute positioning with no position).
-    const orchestrator = getLayoutOrchestratorFor(this);
-    if (!orchestrator?.isDroppedElsewhere()) {
-      this._resetPanelPositionAndSize();
-      this.setState({ draggingKey: undefined });
-    }
-
-    document.body.removeEventListener('pointermove', this._onDrag);
-    document.body.removeEventListener('pointerup', this._onDragEnd);
-    document.body.classList.remove('dashboard-draggable-transparent-selection');
-  }
-
-  /**
-   * Called by the orchestrator after a cross-layout drag ends and the item has been moved.
-   * Cleans up the drag state that was preserved during the cross-layout drop.
-   */
-  public endExternalDrag(): void {
     this._resetPanelPositionAndSize();
     this.setState({ draggingKey: undefined });
+
+    document.body.classList.remove('dashboard-draggable-transparent-selection');
+
+    if (this.state.draggedChildren) {
+      this.setState({ draggedChildren: undefined });
+    }
   }
 
   // Handle inside drag moves
@@ -249,7 +241,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
   // Handle dragging an item from the same grid over another item from the same grid
   private _onDragOverItem(key: string) {
-    const children = [...this.state.children];
+    const children = [...(this.state.draggedChildren ?? this.state.children)];
     const draggedIdx = children.findIndex((child) => child === this._draggedGridItem);
     const draggedOverIdx = children.findIndex((child) => child.state.key === key);
 
@@ -262,7 +254,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     children.splice(draggedOverIdx, 0, this._draggedGridItem!);
     this._lastDropTargetGridItemKey = this._draggedGridItem!.state.key!;
 
-    this.setState({ children });
+    this.setState({ draggedChildren: children });
   }
 
   private _updatePanelPosition(top: number, left: number) {

@@ -179,14 +179,62 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	return resp, err
 }
 
+func (m *MetricsMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	var requestSize float64
+	for _, v := range req.Queries {
+		requestSize += float64(len(v.JSON))
+	}
+
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, requestSize); err != nil {
+		return err
+	}
+
+	// The chunked response is streamed through the writer rather than returned, so wrap
+	// it to observe per-refID errors reported via WriteError. This lets the status
+	// reflect partial failures the same way QueryData inspects per-refID response errors.
+	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
+	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		return cw.requestStatus(innerErr), innerErr
+	})
+}
+
 func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
 		return err
 	}
+
+	// Wrap the sender to capture the HTTP status code from the first response
+	statusCapture := &callResourceStatusCapturingSender{
+		sender:     sender,
+		statusCode: -1, // -1 indicates no response was sent yet
+	}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.CallResource(ctx, req, sender)
+		innerErr := m.BaseHandler.CallResource(ctx, req, statusCapture)
+
+		// If we captured an HTTP status code, use it to determine the status
+		// Otherwise, fall back to error-based status determination
+		if statusCapture.statusCode >= 0 {
+			return instrumentationutils.RequestStatusFromHTTPStatus(statusCapture.statusCode), innerErr
+		}
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
+}
+
+// callResourceStatusCapturingSender wraps a CallResourceResponseSender to capture
+// the HTTP status code from the first response sent. This allows the metrics middleware
+// to properly label requests based on HTTP status codes rather than just Go error returns.
+type callResourceStatusCapturingSender struct {
+	sender     backend.CallResourceResponseSender
+	statusCode int
+}
+
+func (s *callResourceStatusCapturingSender) Send(res *backend.CallResourceResponse) error {
+	// Capture the status code from the first response
+	if s.statusCode == -1 && res != nil {
+		s.statusCode = res.Status
+	}
+	return s.sender.Send(res)
 }
 
 func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

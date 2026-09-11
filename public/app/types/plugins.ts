@@ -16,7 +16,7 @@ export interface PluginDashboard {
   uid: string;
 }
 
-export interface PanelPluginsIndex {
+interface PanelPluginsIndex {
   [id: string]: PanelPlugin;
 }
 

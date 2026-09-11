@@ -3,8 +3,6 @@ package store
 import (
 	"testing"
 	"time"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRuleVersion_EqualSpec(t *testing.T) {
@@ -27,7 +25,7 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 		IsPaused:                    true,
 		NotificationSettings:        `{ some json object }`,
 		Metadata:                    `{ some json object }`,
-		MissingSeriesEvalsToResolve: util.Pointer(int64(10)),
+		MissingSeriesEvalsToResolve: new(int64(10)),
 	}
 
 	tests := []struct {
@@ -76,12 +74,12 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 			name: "same MissingSeriesEvalsToResolve value, different pointers",
 			a: func() alertRuleVersion {
 				v := baseVersion
-				v.MissingSeriesEvalsToResolve = util.Pointer(int64(10))
+				v.MissingSeriesEvalsToResolve = new(int64(10))
 				return v
 			}(),
 			b: func() alertRuleVersion {
 				v := baseVersion
-				v.MissingSeriesEvalsToResolve = util.Pointer(int64(10))
+				v.MissingSeriesEvalsToResolve = new(int64(10))
 				return v
 			}(),
 			expect: true,
@@ -90,7 +88,7 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 			name: "different MissingSeriesEvalsToResolve",
 			a: func() alertRuleVersion {
 				v := baseVersion
-				v.MissingSeriesEvalsToResolve = util.Pointer(int64(123))
+				v.MissingSeriesEvalsToResolve = new(int64(123))
 				return v
 			}(),
 			b:      baseVersion,
@@ -232,12 +230,12 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 			name: "different CreatedBy but otherwise equal",
 			a: func() alertRuleVersion {
 				v := baseVersion
-				v.CreatedBy = util.Pointer("user1")
+				v.CreatedBy = new("user1")
 				return v
 			}(),
 			b: func() alertRuleVersion {
 				v := baseVersion
-				v.CreatedBy = util.Pointer("user2")
+				v.CreatedBy = new("user2")
 				return v
 			}(),
 			expect: true,

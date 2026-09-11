@@ -45,7 +45,7 @@ export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>
   };
 }
 
-export function loadProviderStatuses(): ThunkResult<void> {
+function loadProviderStatuses(): ThunkResult<void> {
   return async (dispatch) => {
     const registeredProviders = getRegisteredAuthProviders();
     const providerStatuses: Record<string, AuthProviderStatus> = {};

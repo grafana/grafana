@@ -54,7 +54,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	logger := &logtest.Fake{}
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -303,6 +303,45 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
 		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
 	})
+
+	t.Run("should preserve guid and use correct table when called inside an outer transaction", func(t *testing.T) {
+		// Regression test for the ORM table inference bug where UpdateAlertRules was
+		// called from callers (UpdateRuleGroup, UpdateAlertRule) that already hold an
+		// outer InTransaction session on the context. A prior query on that shared
+		// session could leave xorm's table state pointing at the wrong model,
+		// causing "SELECT alert_rule columns FROM user" on PostgreSQL.
+		rule := createRule(t, store, gen)
+		require.NotEmpty(t, rule.GUID, "rule must have a guid after insert")
+		originalGUID := rule.GUID
+
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+
+		err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+			// Simulate a prior query on the shared session using a different table,
+			// as would happen when the folder service or provenance store runs on
+			// the same transaction context before UpdateAlertRules is called.
+			_ = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				_, _ = sess.Table("alert_rule_version").Where("1=0").Count()
+				return nil
+			})
+			return store.UpdateAlertRules(ctx, &usr, []models.UpdateRule{{
+				Existing: rule,
+				New:      *newRule,
+			}})
+		})
+		require.NoError(t, err)
+
+		dbrule := &alertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, "rule with ID %d not found after update", rule.ID)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, originalGUID, dbrule.GUID, "guid must not change on update — it is an immutable identifier")
+		require.Equal(t, newRule.Title, dbrule.Title)
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -313,7 +352,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	logger := &logtest.Fake{}
@@ -501,7 +540,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 func TestIntegration_CountAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -514,7 +553,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	count := int64(5)
 	manyGen := gen.With(gen.WithNamespaceUID("many rules"), gen.WithOrgID(123))
-	for i := int64(0); i < count; i++ {
+	for range count {
 		_ = createRule(t, store, manyGen)
 	}
 
@@ -566,7 +605,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 func TestIntegration_DeleteInFolder(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -596,7 +635,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	cfg.UnifiedAlerting.RuleVersionRecordLimit = -1
@@ -704,7 +743,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -771,7 +810,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -824,7 +863,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, versions, 2)
 
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), true, uids...)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), true, uids...)
 		require.NoError(t, err)
 
 		guids := make([]string, 0, len(rules))
@@ -847,7 +886,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	orgID := int64(1)
 	usr := models.UserUID("test")
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -1053,7 +1092,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 		return result
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -1334,7 +1373,7 @@ func TestIntegrationListContactPointRoutings(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	cfg := setting.NewCfg()
@@ -1456,7 +1495,7 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 
 	usr := models.UserUID("test")
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -1505,7 +1544,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 
 	usr := models.UserUID("test")
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -1612,7 +1651,7 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 
 	usr := models.UserUID("test")
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -1751,7 +1790,7 @@ func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
@@ -1760,7 +1799,7 @@ func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
 
 	alertRules := make([]*models.AlertRule, 0, 5)
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		alertRules = append(alertRules, createRule(t, store, gen))
 	}
 	alertRuleNamespaceUIDs := make([]string, 0, len(alertRules))
@@ -1799,7 +1838,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
@@ -1825,7 +1864,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV2.OrgID, ruleV2.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
-		assert.IsDecreasing(t, versions[0].ID, versions[1].ID)
+		assert.IsDecreasing(t, []int64{versions[0].ID, versions[1].ID})
 		diff := versions[1].Diff(&versions[0].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
@@ -1867,7 +1906,7 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 	// Setup.
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
@@ -1957,7 +1996,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
 	b := &fakeBus{}
 
@@ -2015,7 +2054,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
 		rule := createRule(t, store, generator)
 
-		for i := 0; i < 4; i++ {
+		for range 4 {
 			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
 			require.NoError(t, err)
 			rn := models.CopyRule(r)
@@ -2051,7 +2090,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
@@ -2159,7 +2198,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	})
 
 	t.Run("SearchTitle filter should be applied across all pages", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
@@ -2247,7 +2286,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	})
 
 	t.Run("should filter by no-group rule group", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
@@ -2292,11 +2331,28 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	})
 
 	t.Run("should paginate with no-group rule group filter", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
 		ns := "test-ns-nogroup-paginated"
+		// Create a rule that we'll query via no-group
+		noGroupRule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+			ruleGen.WithGroupIndex(0),
+		))
+		noGroupRule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+			ruleGen.WithGroupIndex(0),
+		))
+
+		noGroup1, err := models.NewNoGroupRuleGroup(noGroupRule1.UID)
+		require.NoError(t, err)
+		noGroup2, err := models.NewNoGroupRuleGroup(noGroupRule2.UID)
+		require.NoError(t, err)
+
 		// Create rules in a normal group
 		groupedRule1 := createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
@@ -2306,20 +2362,12 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-a"),
 		))
-		// Create a rule that we'll query via no-group
-		noGroupRule := createRule(t, store, ruleGen.With(
-			ruleGen.WithNamespaceUID(ns),
-			ruleGen.WithGroupName(""),
-		))
-
-		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
-		require.NoError(t, err)
 
 		// Page 1: limit to 1 group
 		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
 				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			},
 			Limit: 1,
 		})
@@ -2330,9 +2378,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
 			ListAlertRulesQuery: models.ListAlertRulesQuery{
 				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			},
-			Limit:         1,
+			Limit:         2,
 			ContinueToken: token1,
 		})
 		require.NoError(t, err)
@@ -2342,12 +2390,12 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		for _, r := range allResults {
 			allUIDs = append(allUIDs, r.UID)
 		}
-		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule.UID}, allUIDs)
+		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule1.UID, noGroupRule2.UID}, allUIDs)
 		require.Empty(t, token2, "should have no more pages")
 	})
 
 	t.Run("should sort by folder fullpath when enabled", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
@@ -2387,7 +2435,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	})
 
 	t.Run("should paginate with fullpath cursor and include folder fullpath in token", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
 
@@ -2465,7 +2513,7 @@ func Benchmark_ListAlertRules(b *testing.B) {
 	ruleGen := models.RuleGen
 
 	// init
-	sqlStore := db.InitTestDB(b)
+	sqlStore := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
@@ -2536,7 +2584,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleGen.WithOrgID(orgID),
 	)
 	t.Run("filter by HasPrometheusRuleDefinition", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		regularRule := createRule(t, store, ruleGen)
@@ -2550,12 +2598,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}{
 			{
 				name:                   "should return only imported prometheus rules when filter is true",
-				importedPrometheusRule: util.Pointer(true),
+				importedPrometheusRule: new(true),
 				expectedRules:          []*models.AlertRule{importedRule},
 			},
 			{
 				name:                   "should return only non-imported rules when filter is false",
-				importedPrometheusRule: util.Pointer(false),
+				importedPrometheusRule: new(false),
 				expectedRules:          []*models.AlertRule{regularRule},
 			},
 			{
@@ -2578,7 +2626,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 
 	t.Run("filter by DataSourceUIDs", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
@@ -2656,7 +2704,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 
 	t.Run("filter by SearchTitle", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		rule1 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("CPU Usage Alert")))
@@ -2690,14 +2738,19 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				expectedRules: []*models.AlertRule{rule1, rule2, rule3, rule4},
 			},
 			{
-				name:          "should not find rules when word order is reversed",
+				name:          "should find rules when word order is reversed",
 				titleSearch:   "usage cpu",
-				expectedRules: []*models.AlertRule{},
+				expectedRules: []*models.AlertRule{rule1},
 			},
 			{
-				name:          "should find multiple rules matching sequential words",
+				name:          "should find multiple rules matching every word",
 				titleSearch:   "usage alert",
 				expectedRules: []*models.AlertRule{rule1, rule2},
+			},
+			{
+				name:          "should not find rules when only some words match",
+				titleSearch:   "cpu nonexistent",
+				expectedRules: []*models.AlertRule{},
 			},
 			{
 				name:          "should handle extra whitespace between words",
@@ -2707,6 +2760,16 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			{
 				name:          "should handle multiple words with partial matches",
 				titleSearch:   "aPp erR",
+				expectedRules: []*models.AlertRule{rule4},
+			},
+			{
+				name:          "should ignore words below the minimum term length",
+				titleSearch:   "cpu is",
+				expectedRules: []*models.AlertRule{rule1},
+			},
+			{
+				name:          "should still filter when every word is below the minimum term length",
+				titleSearch:   "ra on",
 				expectedRules: []*models.AlertRule{rule4},
 			},
 		}
@@ -2725,7 +2788,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 
 	t.Run("filter by SearchRuleGroup", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		rule1 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("database-alerts")))
@@ -2794,7 +2857,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 
 	t.Run("filter by LabelMatchers", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
@@ -2951,7 +3014,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	})
 
 	t.Run("filter by PluginOriginFilter", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		testOrgID := int64(12345)
@@ -3002,7 +3065,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
@@ -3110,7 +3173,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	t.Run("list rules with pagination", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		alertingGen := ruleGen.With(ruleGen.WithNamespaceUID("paginate-test"))
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			createRule(t, store, alertingGen)
 		}
 		t.Run("should return paginated results", func(t *testing.T) {
@@ -3153,7 +3216,7 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 	b := &fakeBus{}
 
 	t.Run("ExcludeNamespaceUIDs", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
@@ -3182,7 +3245,7 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 	})
 
 	t.Run("ExcludeRuleGroups", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
@@ -3211,7 +3274,7 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 	})
 
 	t.Run("RuleGroupExists=true", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
@@ -3235,7 +3298,7 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 	})
 
 	t.Run("RuleGroupExists=false", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
@@ -3257,6 +3320,534 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		require.Len(t, result, 1)
 		require.Equal(t, noGroupRule.UID, result[0].UID)
 	})
+
+	t.Run("TitleExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchTitle := "exact-title-match"
+		matchGen := ruleGen.With(ruleGen.WithTitle(matchTitle))
+		otherGen := ruleGen.With(ruleGen.WithUniqueTitle())
+
+		match1 := createRule(t, store, matchGen)
+		match2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				TitleExact: matchTitle,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{match1.UID, match2.UID}, gotUIDs)
+	})
+
+	t.Run("IsPaused=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		pausedGen := ruleGen.With(ruleGen.WithIsPaused(true))
+		activeGen := ruleGen.With(ruleGen.WithIsPaused(false))
+
+		paused1 := createRule(t, store, pausedGen)
+		paused2 := createRule(t, store, pausedGen)
+		createRule(t, store, activeGen)
+		createRule(t, store, activeGen)
+
+		trueVal := true
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:    orgID,
+				IsPaused: &trueVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{paused1.UID, paused2.UID}, gotUIDs)
+	})
+
+	t.Run("IsPaused=false", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		pausedGen := ruleGen.With(ruleGen.WithIsPaused(true))
+		activeGen := ruleGen.With(ruleGen.WithIsPaused(false))
+
+		createRule(t, store, pausedGen)
+		createRule(t, store, pausedGen)
+		active1 := createRule(t, store, activeGen)
+		active2 := createRule(t, store, activeGen)
+
+		falseVal := false
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:    orgID,
+				IsPaused: &falseVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{active1.UID, active2.UID}, gotUIDs)
+	})
+
+	t.Run("DashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "my-dashboard"
+		otherDashUID := "other-dashboard"
+		dashGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, nil))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&otherDashUID, nil))
+
+		dash1 := createRule(t, store, dashGen)
+		dash2 := createRule(t, store, dashGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:        orgID,
+				DashboardUID: dashUID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{dash1.UID, dash2.UID}, gotUIDs)
+	})
+
+	t.Run("PanelID independent of DashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "dash-for-panel"
+		panelID := int64(42)
+		otherPanelID := int64(99)
+		panelGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &panelID))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &otherPanelID))
+
+		panel1 := createRule(t, store, panelGen)
+		panel2 := createRule(t, store, panelGen)
+		createRule(t, store, otherGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:   orgID,
+				PanelID: panelID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{panel1.UID, panel2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeTitle", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedTitle := "excluded-title"
+		excludedGen := ruleGen.With(ruleGen.WithTitle(excludedTitle))
+		otherGen := ruleGen.With(ruleGen.WithUniqueTitle())
+
+		createRule(t, store, excludedGen)
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:        orgID,
+				ExcludeTitle: excludedTitle,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeDashboardUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedDash := "excluded-dashboard"
+		otherDash := "other-dashboard"
+		excludedGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&excludedDash, nil))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&otherDash, nil))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:               orgID,
+				ExcludeDashboardUID: excludedDash,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludePanelID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		dashUID := "dash-for-panel-exclude"
+		excludedPanelID := int64(42)
+		otherPanelID := int64(99)
+		excludedGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &excludedPanelID))
+		otherGen := ruleGen.With(ruleGen.WithDashboardAndPanel(&dashUID, &otherPanelID))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:          orgID,
+				ExcludePanelID: excludedPanelID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("NotificationSettingsType=SimplifiedRouting", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-x")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-x"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		s1 := createRule(t, store, simplifiedGen)
+		s2 := createRule(t, store, simplifiedGen)
+		createRule(t, store, policyGen)
+		createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                    orgID,
+				NotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{s1.UID, s2.UID}, gotUIDs)
+	})
+
+	t.Run("NotificationSettingsType=NamedRoutingTree", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-y")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-y"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, simplifiedGen)
+		p1 := createRule(t, store, policyGen)
+		p2 := createRule(t, store, policyGen)
+		createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                    orgID,
+				NotificationSettingsType: models.NotificationSettingsTypeNamedRoutingTree,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeNotificationSettingsType excludes simplified rules", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		simplifiedGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-z")))
+		policyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "policy-z"}))
+		noNotifGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, simplifiedGen)
+		p1 := createRule(t, store, policyGen)
+		n1 := createRule(t, store, noNotifGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                           orgID,
+				ExcludeNotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, n1.UID}, gotUIDs)
+	})
+
+	t.Run("RoutingPolicyExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchPolicy := "match-policy"
+		matchGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: matchPolicy}))
+		otherGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "other-policy"}))
+
+		p1 := createRule(t, store, matchGen)
+		p2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:              orgID,
+				RoutingPolicyExact: matchPolicy,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRoutingPolicy includes rules with no policy", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedPolicy := "excluded-policy"
+		excludedGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: excludedPolicy}))
+		otherGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "other-policy"}))
+		noPolicyGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		noPolicy := createRule(t, store, noPolicyGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                orgID,
+				ExcludeRoutingPolicy: excludedPolicy,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		// Both the rule with a different policy and the rule with no policy should match `!=`.
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, noPolicy.UID}, gotUIDs)
+	})
+
+	t.Run("RecordMetricExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchMetric := "match_metric"
+		matchGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric(matchMetric))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric("other_metric"))
+
+		m1 := createRule(t, store, matchGen)
+		m2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:             orgID,
+				RecordMetricExact: matchMetric,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{m1.UID, m2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRecordMetric", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedMetric := "excluded_metric"
+		excludedGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric(excludedMetric))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), ruleGen.WithMetric("other_metric"))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:               orgID,
+				ExcludeRecordMetric: excludedMetric,
+			},
+			// scope to recording rules so we don't pick up alerting noise.
+			RuleType: models.RuleTypeFilterRecording,
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
+
+	t.Run("RecordTargetDatasourceUIDExact", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchUID := "match-target-ds-uid"
+		setTargetUID := func(uid string) models.AlertRuleMutator {
+			return func(rule *models.AlertRule) {
+				if rule.Record == nil {
+					rule.Record = &models.Record{}
+				}
+				rule.Record.TargetDatasourceUID = uid
+			}
+		}
+		matchGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID(matchUID))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID("other-target-ds-uid"))
+
+		t1 := createRule(t, store, matchGen)
+		t2 := createRule(t, store, matchGen)
+		createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                          orgID,
+				RecordTargetDatasourceUIDExact: matchUID,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{t1.UID, t2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRecordTargetDatasourceUID", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		excludedUID := "excluded-target-ds-uid"
+		setTargetUID := func(uid string) models.AlertRuleMutator {
+			return func(rule *models.AlertRule) {
+				if rule.Record == nil {
+					rule.Record = &models.Record{}
+				}
+				rule.Record.TargetDatasourceUID = uid
+			}
+		}
+		excludedGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID(excludedUID))
+		otherGen := ruleGen.With(ruleGen.WithAllRecordingRules(), setTargetUID("other-target-ds-uid"))
+
+		createRule(t, store, excludedGen)
+		other1 := createRule(t, store, otherGen)
+		other2 := createRule(t, store, otherGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                            orgID,
+				ExcludeRecordTargetDatasourceUID: excludedUID,
+			},
+			RuleType: models.RuleTypeFilterRecording,
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{other1.UID, other2.UID}, gotUIDs)
+	})
 }
 
 func TestIntegration_ListDeletedRules(t *testing.T) {
@@ -3268,7 +3859,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		RuleVersionRecordLimit: -1,
 		DeletedRuleRetention:   10 * time.Hour,
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
@@ -3318,12 +3909,12 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 
 	// delete the second rule
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule2.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, rule2.UID)
 	require.NoError(t, err)
 
 	// and the first rule hour later
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule1.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, rule1.UID)
 	require.NoError(t, err)
 
 	t.Run("should return deleted rules sorted by date desc", func(t *testing.T) {
@@ -3340,7 +3931,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		assert.Empty(t, list[0].UID)
 		assert.Empty(t, rule1v2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
 		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
-		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
+		assert.EqualValues(t, list[0].UpdatedBy, new(models.UserUID("test")))
 	})
 }
 
@@ -3357,7 +3948,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		return t0
 	}
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{ //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		Cfg: nil,
 	})
 	cfg := setting.NewCfg()
@@ -3388,7 +3979,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		TimeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
-		err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, uid)
+		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uid)
 		require.NoError(t, err)
 	}
 
@@ -3548,7 +4139,7 @@ func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGen
 	for i := range namespaceUIDs {
 		namespaceUIDs[i] = fmt.Sprintf("ns-%d", i)
 	}
-	for i := 0; i < numRules; i++ {
+	for i := range numRules {
 		gen := ruleGen.With(
 			ruleGen.WithNamespaceUID(namespaceUIDs[i%numFolders]),
 			ruleGen.WithGroupName(fmt.Sprintf("group_%d", i%(numRules/rulesPerGroup))),

@@ -8,6 +8,7 @@ import {
   type BuildInfo,
   type DataSourceInstanceSettings,
   type FeatureToggles,
+  type GrafanaJavascriptAgentConfig,
   type GrafanaTheme,
   type GrafanaTheme2,
   type LicenseInfo,
@@ -15,6 +16,7 @@ import {
   type OAuthSettings,
   type PanelPluginMeta,
   type PreinstalledPlugin as PreinstalledPluginGrafanaData,
+  store,
   systemDateFormats,
   type SystemDateFormatSettings,
   getThemeById,
@@ -143,7 +145,7 @@ export class GrafanaBootConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  featureToggles: FeatureToggles & { kubernetesDashboards?: boolean } = {};
+  featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
@@ -155,7 +157,7 @@ export class GrafanaBootConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  grafanaJavascriptAgent = {
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig = {
     enabled: false,
     apiKey: '',
     customEndpoint: '',
@@ -170,7 +172,6 @@ export class GrafanaBootConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
-  pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
   pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';
@@ -222,6 +223,7 @@ export class GrafanaBootConfig {
   };
   analytics = {
     enabled: true,
+    presenceIndicatorsDisabled: false,
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;
@@ -232,9 +234,14 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  postHogToken?: string;
+  postHogHost?: string;
   analyticsConsoleReporting = false;
+  pluginImportTelemetryPackages: string[] = [];
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
+  dashboardDefaultPreload = false;
+  reportRenderQueryGracePeriodMs = 3000;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -247,6 +254,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  provisioningEnabled = true;
   cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
@@ -263,11 +271,6 @@ export class GrafanaBootConfig {
    */
   language: string | undefined;
 
-  /**
-   * regionalFormat used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
-   * This is the regionalFormat that is used for date formatting and other locale-specific features.
-   */
-  regionalFormat: string;
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 
@@ -289,23 +292,23 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
-    this.featureToggles.kubernetesDashboards = true; // Force true
+    // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
     this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
-    this.regionalFormat = options.bootData.user.regionalFormat;
   }
 }
 
 // localstorage key: grafana.featureToggles
 // example value: panelEditor=1,panelInspector=1
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
+  // eslint-disable-next-line @grafana/no-config-feature-toggles -- implements the localStorage toggle override
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
-  const localStorageValue = window.localStorage.getItem(localStorageKey);
+  const localStorageValue = store.get(localStorageKey);
   if (localStorageValue) {
     const features = localStorageValue.split(',');
     for (const feature of features) {
@@ -332,6 +335,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      // eslint-disable-next-line @grafana/no-config-feature-toggles -- implements the URL toggle override
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 

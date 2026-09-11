@@ -30,7 +30,11 @@ func GetNamespaceMapper(cfg *setting.Cfg) NamespaceMapper {
 }
 
 func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (claims.NamespaceInfo, error) {
-	info, err := claims.ParseNamespace(request.NamespaceValue(ctx))
+	ns := request.NamespaceValue(ctx)
+	if ns == "" {
+		return claims.NamespaceInfo{}, fmt.Errorf("missing namespace in context")
+	}
+	info, err := claims.ParseNamespace(ns)
 	if err == nil && requireOrgID && info.OrgID < 1 {
 		return info, fmt.Errorf("expected valid orgId in namespace")
 	}

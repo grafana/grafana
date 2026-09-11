@@ -6,7 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func RegisterRoles(service accesscontrol.Service) error {
+// FixedRoleRegistrations returns the service account role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	saReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:reader",
@@ -69,9 +70,9 @@ func RegisterRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	if err := service.DeclareFixedRoles(saReader, saCreator, saWriter); err != nil {
-		return err
-	}
+	return []accesscontrol.RoleRegistration{saReader, saCreator, saWriter}
+}
 
-	return nil
+func RegisterRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

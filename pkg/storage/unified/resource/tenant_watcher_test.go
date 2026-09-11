@@ -64,6 +64,22 @@ func TestNewTenantWatcherConfig(t *testing.T) {
 		cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue("")
 		require.Nil(t, NewTenantWatcherConfig(cfg))
 	})
+
+	t.Run("ignores allow_insecure_tls outside development", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.Env = setting.Prod
+		tenantWatcherCfg := NewTenantWatcherConfig(cfg)
+		require.NotNil(t, tenantWatcherCfg)
+		require.False(t, tenantWatcherCfg.AllowInsecure, "AllowInsecure must be forced off when app_mode is not development")
+	})
+
+	t.Run("honours allow_insecure_tls in development", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.Env = setting.Dev
+		tenantWatcherCfg := NewTenantWatcherConfig(cfg)
+		require.NotNil(t, tenantWatcherCfg)
+		require.True(t, tenantWatcherCfg.AllowInsecure)
+	})
 }
 
 func TestTenantAddPendingDeleted(t *testing.T) {
@@ -106,6 +122,17 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 		tenant.SetLabels(map[string]string{labelPendingDelete: "true"})
 
 		tw.handleTenant(t.Context(), tenant)
+
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		assert.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("no-op when context is already cancelled", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		tw.handleTenant(ctx, pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)

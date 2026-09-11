@@ -190,7 +190,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   tableWrap: css({
     minHeight: '40px',
   }),
@@ -258,18 +258,23 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
           valueMaps.options[item.key] = result;
         }
         break;
-      case MappingType.RangeToText:
-        if (item.from != null || item.to != null) {
+      case MappingType.RangeToText: {
+        const fromNum = item.from != null && String(item.from).trim() !== '' ? Number(item.from) : null;
+        const toNum = item.to != null && String(item.to).trim() !== '' ? Number(item.to) : null;
+        const validFrom = fromNum != null && !Number.isNaN(fromNum) ? fromNum : null;
+        const validTo = toNum != null && !Number.isNaN(toNum) ? toNum : null;
+        if (validFrom != null || validTo != null) {
           mappings.push({
             type: item.type,
             options: {
-              from: item.from ?? null,
-              to: item.to ?? null,
+              from: validFrom,
+              to: validTo,
               result,
             },
           });
         }
         break;
+      }
       case MappingType.RegexToText:
         if (item.pattern != null) {
           mappings.push({

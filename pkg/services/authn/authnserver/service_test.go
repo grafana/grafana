@@ -2,14 +2,20 @@ package authnserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
+	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/baggage"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -18,15 +24,20 @@ type mockClient struct {
 	testResult   bool
 	authResponse *authnv1.AuthenticateResponse
 	authError    error
+
+	gotTestCtx context.Context
+	gotAuthCtx context.Context
 }
 
 func (m *mockClient) Name() string { return m.name }
 
-func (m *mockClient) Test(_ context.Context, _ *authnv1.AuthenticateRequest) bool {
+func (m *mockClient) Test(ctx context.Context, _ *authnv1.AuthenticateRequest) bool {
+	m.gotTestCtx = ctx
 	return m.testResult
 }
 
-func (m *mockClient) Authenticate(_ context.Context, _ *authnv1.AuthenticateRequest) (*authnv1.AuthenticateResponse, error) {
+func (m *mockClient) Authenticate(ctx context.Context, _ *authnv1.AuthenticateRequest) (*authnv1.AuthenticateResponse, error) {
+	m.gotAuthCtx = ctx
 	return m.authResponse, m.authError
 }
 
@@ -58,7 +69,7 @@ func TestAuthenticate(t *testing.T) {
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK, resp.Code)
-		assert.Equal(t, "bespoke-token", resp.Token)
+		assert.Equal(t, "bespoke-token", resp.Token) //nolint:staticcheck
 	})
 
 	t.Run("single client Test false returns NOT_HANDLED", func(t *testing.T) {
@@ -117,7 +128,7 @@ func TestAuthenticate(t *testing.T) {
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK, resp.Code)
-		assert.Equal(t, "handled", resp.Token)
+		assert.Equal(t, "handled", resp.Token) //nolint:staticcheck
 	})
 
 	t.Run("multiple clients first declines via Test second handles", func(t *testing.T) {
@@ -138,7 +149,7 @@ func TestAuthenticate(t *testing.T) {
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK, resp.Code)
-		assert.Equal(t, "from-second", resp.Token)
+		assert.Equal(t, "from-second", resp.Token) //nolint:staticcheck
 	})
 
 	t.Run("client returning error propagates without fallthrough", func(t *testing.T) {
@@ -161,6 +172,66 @@ func TestAuthenticate(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, resp)
 		assert.Contains(t, err.Error(), "internal failure")
+	})
+
+	t.Run("nil request returns FAILED with errExpectedNamespace", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		client := &mockClient{name: "should-not-run", testResult: true}
+		svc.RegisterClient(client)
+
+		resp, err := svc.Authenticate(context.Background(), nil)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, errExpectedNamespace))
+		require.NotNil(t, resp)
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		assert.Nil(t, client.gotTestCtx, "clients must not be dispatched when namespace is missing")
+		assert.Nil(t, client.gotAuthCtx)
+	})
+
+	t.Run("empty namespace returns FAILED with errExpectedNamespace", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		client := &mockClient{name: "should-not-run", testResult: true}
+		svc.RegisterClient(client)
+
+		emptyNS := &authnv1.AuthenticateRequest{
+			Namespace:   "",
+			HttpHeaders: map[string]string{"X-Access-Token": "some-token"},
+		}
+		resp, err := svc.Authenticate(context.Background(), emptyNS)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, errExpectedNamespace))
+		require.NotNil(t, resp)
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		assert.Nil(t, client.gotTestCtx, "clients must not be dispatched when namespace is empty")
+		assert.Nil(t, client.gotAuthCtx)
+	})
+
+	t.Run("namespace from request is propagated into client context", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		client := &mockClient{
+			name:       "ns-capture",
+			testResult: true,
+			authResponse: &authnv1.AuthenticateResponse{
+				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
+				Token: "ok",
+			},
+		}
+		svc.RegisterClient(client)
+
+		_, err := svc.Authenticate(context.Background(), req)
+		require.NoError(t, err)
+
+		require.NotNil(t, client.gotTestCtx)
+		gotTestNS, ok := request.NamespaceFrom(client.gotTestCtx)
+		require.True(t, ok, "namespace must be set on Test ctx")
+		assert.Equal(t, "stacks-1234", gotTestNS)
+		assert.Equal(t, []any{"namespace", "stacks-1234"}, log.FromContext(client.gotTestCtx))
+
+		require.NotNil(t, client.gotAuthCtx)
+		gotAuthNS, ok := request.NamespaceFrom(client.gotAuthCtx)
+		require.True(t, ok, "namespace must be set on Authenticate ctx")
+		assert.Equal(t, "stacks-1234", gotAuthNS)
+		assert.Equal(t, []any{"namespace", "stacks-1234"}, log.FromContext(client.gotAuthCtx))
 	})
 
 	t.Run("all clients decline via NOT_HANDLED returns NOT_HANDLED", func(t *testing.T) {
@@ -197,4 +268,113 @@ func TestRegisterClient(t *testing.T) {
 	assert.Len(t, svc.clients, 2)
 	assert.Equal(t, "first", svc.clients[0].Name())
 	assert.Equal(t, "second", svc.clients[1].Name())
+}
+
+func TestAuthenticate_GRPCLogFields(t *testing.T) {
+	grpcCtx := func(ctx context.Context) context.Context {
+		return grpclog.InjectFields(ctx, grpclog.Fields{})
+	}
+
+	// gRPC log fields are stored as alternating (key, value, key, value, ...)
+	// in a flat []any slice. This helper converts it to a map to simplify assertions.
+	extractFieldMap := func(ctx context.Context) map[string]string {
+		m := make(map[string]string)
+		it := grpclog.ExtractFields(ctx).Iterator()
+		for it.Next() {
+			k, v := it.At()
+			m[k] = v.(string)
+		}
+		return m
+	}
+
+	t.Run("OK injects client, code, namespace, and headers", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{
+			name:       "ext_jwt",
+			testResult: true,
+			authResponse: &authnv1.AuthenticateResponse{
+				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
+				Token: "tok",
+			},
+		})
+
+		ctx := grpcCtx(t.Context())
+		req := &authnv1.AuthenticateRequest{
+			Namespace:   "stacks-123",
+			HttpHeaders: map[string]string{"Authorization": "Bearer xxx", "X-Grafana-Id": "id-token"},
+		}
+
+		_, err := svc.Authenticate(ctx, req)
+		require.NoError(t, err)
+
+		fields := extractFieldMap(ctx)
+		assert.Equal(t, "ext_jwt", fields["authn.client"])
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK.String(), fields["authn.code"])
+		assert.Equal(t, "stacks-123", fields["authn.namespace"])
+		assert.Equal(t, "Authorization,X-Grafana-Id", fields["authn.headers"])
+	})
+
+	t.Run("no match injects none client and NOT_HANDLED code", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{name: "ext_jwt", testResult: false})
+
+		ctx := grpcCtx(t.Context())
+		req := &authnv1.AuthenticateRequest{Namespace: "stacks-123"}
+
+		_, err := svc.Authenticate(ctx, req)
+		require.NoError(t, err)
+
+		fields := extractFieldMap(ctx)
+		assert.Equal(t, "none", fields["authn.client"])
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED.String(), fields["authn.code"])
+		assert.Equal(t, "", fields["authn.headers"])
+	})
+
+	t.Run("error injects client and namespace", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{
+			name:       "ext_jwt",
+			testResult: true,
+			authError:  fmt.Errorf("boom"),
+		})
+
+		ctx := grpcCtx(t.Context())
+		req := &authnv1.AuthenticateRequest{
+			Namespace:   "stacks-456",
+			HttpHeaders: map[string]string{"Authorization": "Bearer xxx"},
+		}
+
+		_, err := svc.Authenticate(ctx, req)
+		require.Error(t, err)
+
+		fields := extractFieldMap(ctx)
+		assert.Equal(t, "ext_jwt", fields["authn.client"])
+		assert.Equal(t, "stacks-456", fields["authn.namespace"])
+		assert.Equal(t, "Authorization", fields["authn.headers"])
+	})
+}
+
+func TestAuthenticate_TransactionContextFromBaggage(t *testing.T) {
+	client := &mockClient{
+		name:         "test-client",
+		testResult:   true,
+		authResponse: &authnv1.AuthenticateResponse{Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK},
+	}
+	svc := NewService(tracing.InitializeTracerForTest())
+	svc.RegisterClient(client)
+
+	// Baggage as otelgrpc.NewServerHandler would have extracted it from the request.
+	bag, err := baggage.Parse("slug=myslug,plan=pro,channel=stable,namespace=stacks-42")
+	require.NoError(t, err)
+	ctx := baggage.ContextWithBaggage(context.Background(), bag)
+
+	_, err = svc.Authenticate(ctx, &authnv1.AuthenticateRequest{Namespace: "stacks-42"})
+	require.NoError(t, err)
+
+	require.NotNil(t, client.gotAuthCtx, "client should have been invoked")
+	evalCtx := openfeature.TransactionContext(client.gotAuthCtx)
+	assert.Equal(t, "stacks-42", evalCtx.TargetingKey(), "namespace is the targeting key")
+	assert.Equal(t, "myslug", evalCtx.Attributes()["slug"], "slug attribute enables goff.ForSlugs targeting")
+	assert.Equal(t, "pro", evalCtx.Attributes()["plan"])
+	assert.Equal(t, "stable", evalCtx.Attributes()["channel"])
 }

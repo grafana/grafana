@@ -24,7 +24,8 @@ import { usePluginLinks } from './usePluginLinks';
 import { isGrafanaDevMode } from './utils';
 
 jest.mock('./useLoadAppPlugins');
-jest.mock('app/features/plugins/pluginSettings', () => ({
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn().mockResolvedValue({
     id: 'my-app-plugin',
     enabled: true,

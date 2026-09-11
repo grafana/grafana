@@ -16,14 +16,15 @@ type Runner struct {
 	SettingsProvider  setting.Provider
 	Features          featuremgmt.FeatureToggles
 	EncryptionService encryption.Internal
-	SecretsService    *manager.SecretsService
-	SecretsMigrator   secrets.Migrator
+	SecretsService    *manager.SecretsService //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	SecretsMigrator   secrets.Migrator        //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	UserService       user.Service
 }
 
 func New(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provider,
 	encryptionService encryption.Internal, features featuremgmt.FeatureToggles,
-	secretsService *manager.SecretsService, secretsMigrator secrets.Migrator,
+	secretsService *manager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	userService user.Service,
 ) Runner {
 	return Runner{

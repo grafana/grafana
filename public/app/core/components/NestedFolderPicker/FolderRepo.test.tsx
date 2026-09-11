@@ -1,174 +1,160 @@
-import { render, screen, cleanup } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
+import { FOLDER_BY_NAME_URL, PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import type * as useGetResourceRepositoryViewModule from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { FolderRepo } from './FolderRepo';
 
-jest.mock('@grafana/runtime', () => ({
-  config: { featureToggles: { provisioning: true } },
-}));
+setupProvisioningMswServer();
 
-const mockUseGetFrontendSettingsQuery = jest.fn();
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useGetFrontendSettingsQuery: () => mockUseGetFrontendSettingsQuery(),
-}));
-
-const mockUseGetResourceRepositoryView = jest.fn();
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
-  const actual = jest.requireActual<typeof useGetResourceRepositoryViewModule>(
-    'app/features/provisioning/hooks/useGetResourceRepositoryView'
-  );
-  return {
-    ...actual,
-    useGetResourceRepositoryView: () => mockUseGetResourceRepositoryView(),
-  };
-});
-
-function mockSettings(items: Array<Partial<RepositoryView>>) {
-  mockUseGetFrontendSettingsQuery.mockReturnValue({ data: { items } });
-}
-
-function mockRepoView({
-  isReadOnlyRepo = false,
-  repoType = 'github',
-  repository,
-  status = RepoViewStatus.Ready,
-}: {
-  isReadOnlyRepo?: boolean;
-  repoType?: string;
-  repository?: { title?: string; name?: string };
-  status?: RepoViewStatus;
-} = {}) {
-  mockUseGetResourceRepositoryView.mockReturnValue({
-    isReadOnlyRepo,
-    repoType,
-    repository,
-    status,
-  });
-}
-
-const MOCK_FOLDER: DashboardViewItem = {
-  uid: 'A',
-  managedBy: ManagerKind.Repo,
-  parentUID: undefined,
-  kind: 'folder',
-  title: 'test',
+const REPOSITORY: RepositoryView = {
+  name: 'repo-1',
+  title: 'My Repo',
+  type: 'github',
+  url: 'https://github.com/grafana/repo',
+  branch: 'main',
+  target: 'folder',
+  workflows: ['write'],
 };
 
-function setup({
-  folder = undefined,
-  repoViewMock = {},
-  settingsMock = [],
-}: {
-  folder?: DashboardViewItem;
-  repoViewMock?: {
-    isReadOnlyRepo?: boolean;
-    repoType?: string;
-    repository?: { title?: string; name?: string };
-    status?: RepoViewStatus;
-  };
-  settingsMock?: Array<Partial<RepositoryView>>;
-}) {
-  mockSettings(settingsMock);
-  mockRepoView(repoViewMock);
+// Root folder of a `folder`-target repository: its uid is the repository name.
+const ROOT_FOLDER: DashboardViewItem = {
+  kind: 'folder',
+  uid: 'repo-1',
+  title: 'Repo root',
+  managedBy: ManagerKind.Repo,
+  managerId: 'repo-1',
+};
 
-  return {
-    ...render(<FolderRepo folder={folder} />),
-  };
+/** Override the frontend settings endpoint that `useGetResourceRepositoryView` reads from. */
+function mockRepositories(repositories: RepositoryView[]) {
+  server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
 }
 
 describe('FolderRepo', () => {
+  let originalProvisioning: boolean;
+  let originalIsEditor: boolean;
+
+  beforeEach(() => {
+    originalProvisioning = config.provisioningEnabled;
+    originalIsEditor = contextSrv.isEditor;
+    config.provisioningEnabled = true;
+  });
+
   afterEach(() => {
-    cleanup();
-    jest.clearAllMocks();
+    config.provisioningEnabled = originalProvisioning;
+    contextSrv.isEditor = originalIsEditor;
   });
 
-  it('returns null when folder is undefined', () => {
-    setup({ folder: undefined });
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+  it.each([
+    { name: 'no folder', folder: undefined },
+    { name: 'a nested tree row', folder: { ...ROOT_FOLDER, parentUID: 'parent-folder' } },
+    { name: 'an unmanaged folder', folder: { ...ROOT_FOLDER, managedBy: undefined, managerId: undefined } },
+  ])('renders nothing for $name', ({ folder }) => {
+    render(<FolderRepo folder={folder} />);
+
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
-  it('returns null when folder has parentUID', () => {
-    setup({ folder: { ...MOCK_FOLDER, parentUID: 'repo-123' } });
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+  it.each([
+    { name: 'an item with a manager id', folder: ROOT_FOLDER },
+    { name: 'a legacy item without a manager id', folder: { ...ROOT_FOLDER, managerId: undefined } },
+  ])('hides the badge on an instance-managed setup for $name', async ({ folder }) => {
+    mockRepositories([{ ...REPOSITORY, target: 'instance' }]);
+
+    render(<FolderRepo folder={folder} />);
+
+    await waitFor(() => expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument());
   });
 
-  it('returns null when folder is not managed', () => {
-    setup({ folder: { ...MOCK_FOLDER, managedBy: undefined } });
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
-  });
+  it('resolves the repository from the manager id without requesting the folder', async () => {
+    let folderRequests = 0;
+    server.use(
+      http.get(FOLDER_BY_NAME_URL, () => {
+        folderRequests += 1;
+        return HttpResponse.json({}, { status: 404 });
+      })
+    );
+    mockRepositories([REPOSITORY]);
+    // Top-level folder of a folderless repository: its uid is not the repository name, so only
+    // the manager id can identify the repository.
+    const folder: DashboardViewItem = { ...ROOT_FOLDER, uid: 'abc123' };
 
-  it('returns null when whole instance is provisioned', () => {
-    setup({ folder: MOCK_FOLDER, settingsMock: [{ target: 'instance' }] });
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
-  });
+    const { user } = render(<FolderRepo folder={folder} />);
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
 
-  it('renders Read only badge when repo is read-only (empty workflows)', () => {
-    setup({ folder: MOCK_FOLDER, repoViewMock: { isReadOnlyRepo: true, repoType: 'github' } });
-    expect(screen.getByText('Read only')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
-  });
-
-  it('renders Provisioned badge when repository has title (tooltip shows repository title)', async () => {
-    const user = userEvent.setup();
-    setup({
-      folder: MOCK_FOLDER,
-      repoViewMock: { repository: { title: 'My Repo', name: 'repo-1' } },
-    });
-    const provisionedBadge = screen.getByTestId('icon-exchange-alt');
-    await user.hover(provisionedBadge);
     expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
+    expect(folderRequests).toBe(0);
   });
 
-  it('renders Provisioned badge when repository has name but no title (tooltip shows repository name)', async () => {
-    const user = userEvent.setup();
-    setup({
-      folder: MOCK_FOLDER,
-      repoViewMock: { repository: { name: 'repo-1' } },
-    });
-    const provisionedBadge = screen.getByTestId('icon-exchange-alt');
-    await user.hover(provisionedBadge);
+  it('falls back to the repository name in the tooltip when it has no title', async () => {
+    mockRepositories([{ ...REPOSITORY, title: '' }]);
+
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
+
     expect(await screen.findByText('Managed by: Repository repo-1')).toBeInTheDocument();
   });
 
-  it('renders Provisioned badge when repository is undefined (tooltip has empty title)', async () => {
-    const user = userEvent.setup();
-    setup({ folder: MOCK_FOLDER, repoViewMock: {} });
-    const provisionedBadge = screen.getByTestId('icon-exchange-alt');
-    await user.hover(provisionedBadge);
-    const tooltip = await screen.findByRole('tooltip');
-    expect(tooltip).toHaveTextContent('Managed by: Repository');
+  it('renders the generic repository badge for a legacy item without a manager id', async () => {
+    mockRepositories([REPOSITORY]);
+
+    const { user } = render(<FolderRepo folder={{ ...ROOT_FOLDER, managerId: undefined }} />);
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Managed by: Repository')).toBeInTheDocument();
   });
 
-  it('renders orphaned badge when repository status is orphaned and query is settled', async () => {
-    const user = userEvent.setup();
-    setup({
-      folder: MOCK_FOLDER,
-      repoViewMock: { status: RepoViewStatus.Orphaned },
-    });
+  it('renders the read-only badge when the repository has no workflows', async () => {
+    mockRepositories([{ ...REPOSITORY, workflows: [] }]);
 
-    const orphanedBadge = screen.getByTestId('icon-exclamation-triangle');
-    expect(orphanedBadge).toBeInTheDocument();
+    render(<FolderRepo folder={ROOT_FOLDER} />);
+
+    expect(await screen.findByText('Read only')).toBeInTheDocument();
+  });
+
+  it('renders the orphaned badge when the manager id names a deleted repository', async () => {
+    mockRepositories([{ ...REPOSITORY, name: 'other-repo' }]);
+
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
+
+    const orphanedBadge = await screen.findByTestId('icon-exclamation-triangle');
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
-
     await user.hover(orphanedBadge);
     expect(await screen.findByText('Repository not found')).toBeInTheDocument();
   });
 
-  it('does not render orphaned badge while repository query is loading', () => {
-    setup({
-      folder: MOCK_FOLDER,
-      repoViewMock: { status: RepoViewStatus.Loading },
-    });
+  it('keeps the plain badge instead of the orphaned one while the repository lookup is pending', () => {
+    server.use(
+      http.get(`${BASE}/settings`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({ items: [] });
+      })
+    );
+
+    render(<FolderRepo folder={ROOT_FOLDER} />);
+
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     expect(screen.queryByTestId('icon-exclamation-triangle')).not.toBeInTheDocument();
+  });
+
+  it('links to the folder in the repository tree when repository actions are enabled', async () => {
+    contextSrv.isEditor = true;
+    mockRepositories([REPOSITORY]);
+
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} enableRepositoryLink sourcePath="dashboards" />);
+    await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
+
+    expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
+      'href',
+      'https://github.com/grafana/repo/tree/main/dashboards'
+    );
   });
 });

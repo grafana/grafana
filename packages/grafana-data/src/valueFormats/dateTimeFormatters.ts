@@ -3,8 +3,9 @@ import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime/formatter';
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
 import { type DecimalCount } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
+import { type FormattedValue, type ValueFormatter } from '../types/valueFormats';
 
-import { toFixed, toFixedScaled, type FormattedValue, type ValueFormatter } from './valueFormats';
+import { toFixed, toFixedScaled } from './baseFormatters';
 
 interface IntervalsInSeconds {
   [interval: string]: number;

@@ -7,7 +7,6 @@ import { type VariableAdapter } from '../adapters';
 import { setOptionAsCurrent } from '../state/actions';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { TextBoxVariableEditor } from './TextBoxVariableEditor';
 import { TextBoxVariablePicker } from './TextBoxVariablePicker';
 import { setTextBoxVariableOptionsFromUrl, updateTextBoxVariableOptions } from './actions';
 import { initialTextBoxVariableModelState, textBoxVariableReducer } from './reducer';
@@ -20,7 +19,6 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
     initialState: initialTextBoxVariableModelState,
     reducer: textBoxVariableReducer,
     picker: TextBoxVariablePicker,
-    editor: TextBoxVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return false;
     },

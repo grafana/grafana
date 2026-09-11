@@ -5,12 +5,20 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import {
+  type DashboardChangeInfo,
+  NameAlreadyExistsError,
+  SaveButton,
+  isNameExistsError,
+  nextMetaAfterFolderPick,
+} from './shared';
+import { useParkSaveFormDraft } from './useParkSaveFormDraft';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -24,21 +32,28 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
+  /** Owns cancel (restoring Save As folder/meta mutations) and carries title/description across a swap to another save form */
+  drawer: SaveDashboardDrawer;
+  /** The drawer's view is held: a folder pick's lookup is still loading or dead-ended, so where this save would land is not known yet and saving must wait */
+  isHeld: boolean;
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: Props) {
   const { changedSaveModel } = changeInfo;
+  const draft = drawer.saveFormDraft;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
-      title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
-      description: changedSaveModel.description ?? '',
+      title: draft?.title ?? (changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`),
+      description: draft?.description ?? changedSaveModel.description ?? '',
       folder: {
         uid: dashboard.state.meta.folderUid,
         title: dashboard.state.meta.folderTitle,
       },
-      copyTags: false,
+      // The Copy tags switch below is hidden for new dashboards, which have no source to copy
+      // from: their tags are the user's own, so the default must keep them.
+      copyTags: changeInfo.isNew,
     },
   });
 
@@ -65,6 +80,19 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     };
   }, []);
 
+  useParkSaveFormDraft(drawer, formValues.title, formValues.description);
+
+  const onFolderChange = useCallback(
+    (uid: string | undefined, title: string | undefined) => {
+      setValue('folder', { uid, title });
+      // Meta is where the drawer resolves the repository from
+      dashboard.setState({ meta: nextMetaAfterFolderPick(dashboard.state.meta, uid, title) });
+      // Re-validate title when folder changes to check for duplicates in new folder
+      trigger('title');
+    },
+    [dashboard, setValue, trigger]
+  );
+
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue('title', e.target.value, { shouldDirty: true });
@@ -79,6 +107,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 
   const onSave = async (overwrite: boolean) => {
+    if (isHeld) {
+      return;
+    }
+
     if (validationTimeoutRef.current) {
       clearTimeout(validationTimeoutRef.current);
     }
@@ -92,6 +124,12 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
     const data = getValues();
 
+    // Only forward the selection annotation. Spreading full getK8SMetadata() would include
+    // name/resourceVersion and turn Save As into an update of the source dashboard.
+    const useCrossDashboardVariables =
+      dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables] ??
+      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUseCrossDashboardVariables];
+
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
@@ -103,6 +141,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
+      ...(useCrossDashboardVariables !== undefined
+        ? {
+            k8s: {
+              annotations: {
+                [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables,
+              },
+            },
+          }
+        : {}),
     });
 
     if (result.status === 'success') {
@@ -116,19 +163,21 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   };
 
   const cancelButton = (
-    <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
+    <Button variant="secondary" onClick={drawer.onClose} fill="outline">
       <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
 
   const saveButton = (overwrite: boolean) => {
-    return <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
+    return (
+      <SaveButton isValid={isValid} isLoading={state.loading} disabled={isHeld} onSave={onSave} overwrite={overwrite} />
+    );
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
     if (isNameExistsError(error) && formValuesMatchContentSent) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
     return (
       <>
@@ -190,21 +239,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         </Field>
 
         <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker
-            onChange={async (uid: string | undefined, title: string | undefined) => {
-              setValue('folder', { uid, title });
-              const meta = await getProvisionedMeta(uid);
-              dashboard.setState({
-                meta: {
-                  ...meta,
-                  folderUid: uid,
-                },
-              });
-              // Re-validate title when folder changes to check for duplicates in new folder
-              trigger('title');
-            }}
-            value={formValues.folder?.uid}
-          />
+          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} />
         </Field>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
@@ -217,42 +252,30 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function TitleFieldLabel(props: TitleLabelProps) {
+function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function DescriptionLabel(props: DescriptionLabelProps) {
+function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }

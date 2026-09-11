@@ -34,6 +34,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -52,7 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -198,18 +199,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.Index,
 		)
 
 		r.Get("/bootdata/:accessToken",
 			reqNoAuth,
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.GetBootdata,
 		)
 	}
@@ -295,15 +296,11 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
-			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))
-			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID))
+			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))     //nolint:staticcheck // legacy plumbing
+			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID)) //nolint:staticcheck // legacy plumbing
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
-			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
-			// For dev purpose
-			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
-
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
 			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
@@ -395,11 +392,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
-
-		// Preferences
-		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
-			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
-		})
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
@@ -510,6 +502,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
+		// On-demand datasource diagnostics. Admin-only, on-prem-only, experimental.
+		// Two deliberate, independent gates:
+		// 1. on-prem only (empty StackID => never on Grafana Cloud)
+		// 2. grafana.onDemandDiagnostics flag at request time
+		if hs.Cfg.StackID == "" {
+			apiRoute.Post("/ds/diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+			// Dashboard-level diagnostics: async create/poll/download (support-bundle style).
+			apiRoute.Post("/ds/dashboard-diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDashboardDiagnostics))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid", reqGrafanaAdmin, routing.Wrap(hs.GetDashboardDiagnosticsStatus))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid/download", reqGrafanaAdmin, routing.Wrap(hs.DownloadDashboardDiagnostics))
+		}
+
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
@@ -618,6 +622,8 @@ func middlewareUserUIDResolver(userService user.Service, paramName string) web.H
 		} else {
 			if errors.Is(err, user.ErrUserNotFound) {
 				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else if k8serrors.IsForbidden(err) {
+				c.JsonApiErr(http.StatusForbidden, "Access denied to user", err)
 			} else {
 				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
 			}

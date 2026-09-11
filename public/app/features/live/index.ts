@@ -1,4 +1,4 @@
-import { type GrafanaLiveSrv, config, getBackendSrv, getGrafanaLiveSrv, setGrafanaLiveSrv } from '@grafana/runtime';
+import { config, getBackendSrv, setGrafanaLiveSrv } from '@grafana/runtime';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 
 import { contextSrv } from '../../core/services/context_srv';
@@ -25,8 +25,4 @@ export function initGrafanaLive() {
       backendSrv: getBackendSrv(),
     })
   );
-}
-
-export function getGrafanaLiveCentrifugeSrv(): GrafanaLiveSrv {
-  return getGrafanaLiveSrv();
 }

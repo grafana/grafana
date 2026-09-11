@@ -22,13 +22,22 @@ func ProvideApi(
 	cfg *setting.Cfg, // for namespacer
 	features featuremgmt.FeatureToggles,
 	_ star.Service,
-	configProvider apiserver.DirectRestConfigProvider,
+	client K8sClients,
 ) *API {
 	return &API{
-		client: &k8sClients{
-			namespacer:     request.GetNamespaceMapper(cfg),
-			configProvider: configProvider,
-		},
+		client: client,
+	}
+}
+
+// ProvideK8sClients constructs the K8sClients used by the legacy /api/user/stars
+// HTTP handlers. It is exposed as a separate provider so other services (e.g.
+// navtree) can read stars through the collections API rather than the legacy
+// SQL `star` table — the SQL table is empty when the stars resource is in
+// dual-writer mode 5 (unified storage).
+func ProvideK8sClients(cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) K8sClients {
+	return &k8sClients{
+		namespacer:     request.GetNamespaceMapper(cfg),
+		configProvider: configProvider,
 	}
 }
 
@@ -45,6 +54,10 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 // Star a dashboard.
 //
 // Stars the given Dashboard for the actual user.
+//
+// Use: PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse
@@ -70,6 +83,10 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 // Unstar a dashboard.
 //
 // Deletes the starring of the given Dashboard for the actual user.
+//
+// Use: DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse

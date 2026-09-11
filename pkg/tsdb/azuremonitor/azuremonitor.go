@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
@@ -188,6 +189,27 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 				return nil, err
 			}
 			model.Services[routeName] = service
+		}
+
+		// Create a dedicated HTTP client for the Metrics Batch data-plane endpoint.
+		// It uses the metrics data-plane audience (metrics.monitor.azure.com, or the
+		// sovereign-cloud equivalent), which is distinct from the ARM audience used
+		// by the "Azure Monitor" service above.
+		// Only created when the route is present (standard clouds); customized cloud
+		// users must supply the metricsDataPlane route themselves.
+		if route, ok := routesForModel[azureMonitorBatchMetrics]; ok {
+			// Standard-cloud route URLs are validated by audienceToScopes, but
+			// customizedRoutes are unmarshaled without validation. Reject an
+			// invalid URL here so it fails at datasource creation with a clear
+			// message instead of producing broken batch hostnames at query time.
+			if u, err := url.Parse(route.URL); err != nil || u.Scheme == "" || u.Host == "" {
+				return nil, fmt.Errorf("invalid %s route URL %q: must be an absolute URL like https://metrics.monitor.azure.com", azureMonitorBatchMetrics, route.URL)
+			}
+			batchService, err := getDatasourceService(ctx, &settings, azureSettings, clientProvider, model, azureMonitorBatchMetrics, logger)
+			if err != nil {
+				return nil, err
+			}
+			model.Services[azureMonitorBatchMetrics] = batchService
 		}
 
 		return model, nil

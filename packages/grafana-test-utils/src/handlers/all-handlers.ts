@@ -3,6 +3,7 @@ import { type HttpHandler } from 'msw';
 import accessControlHandlers from './api/access-control/handlers';
 import dashboardsHandlers from './api/dashboards/handlers';
 import folderHandlers from './api/folders/handlers';
+import frontendSettingsHandlers from './api/frontend-settings/handlers';
 import pluginsHandlers from './api/plugins/handlers';
 import searchHandlers from './api/search/handlers';
 import teamsHandlers from './api/teams/handlers';
@@ -10,18 +11,22 @@ import userHandlers from './api/user/handlers';
 import appPlatformCollectionsv1alpha1Handlers from './apis/collections.grafana.app/v1alpha1/handlers';
 import appPlatformDashboardv0alpha1Handlers from './apis/dashboard.grafana.app/v0alpha1/handlers';
 import appPlatformDashboardv1beta1Handlers from './apis/dashboard.grafana.app/v1beta1/handlers';
+import appPlatformDashboardv2beta1Handlers from './apis/dashboard.grafana.app/v2beta1/handlers';
 import appPlatformFolderv1beta1Handlers from './apis/folder.grafana.app/v1beta1/handlers';
 import appPlatformIamv0alpha1Handlers from './apis/iam.grafana.app/v0alpha1/handlers';
-import appPlatformPreferencesv1alpha1Handlers from './apis/preferences.grafana.app/v1alpha1/handlers';
+import appPlatformPreferencesv1alpha1Handlers from './apis/preferences.grafana.app/v1/handlers';
 import appPlatformProvisioningv0alpha1Handlers from './apis/provisioning.grafana.app/v0alpha1/handlers';
 import appPlatformQuotasv0alpha1Handlers from './apis/quotas.grafana.app/v0alpha1/handlers';
 import appPlatformScopev0alpha1Handlers from './apis/scope.grafana.app/v0alpha1/handlers';
+import authHandlers from './auth/handlers';
 
 const allHandlers: HttpHandler[] = [
   // Legacy handlers
   ...accessControlHandlers,
+  ...authHandlers,
   ...dashboardsHandlers,
   ...folderHandlers,
+  ...frontendSettingsHandlers,
   ...pluginsHandlers,
   ...searchHandlers,
   ...teamsHandlers,
@@ -30,6 +35,7 @@ const allHandlers: HttpHandler[] = [
   // App platform handlers
   ...appPlatformDashboardv0alpha1Handlers,
   ...appPlatformDashboardv1beta1Handlers,
+  ...appPlatformDashboardv2beta1Handlers,
   ...appPlatformFolderv1beta1Handlers,
   ...appPlatformIamv0alpha1Handlers,
   ...appPlatformPreferencesv1alpha1Handlers,

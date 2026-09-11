@@ -1,4 +1,4 @@
-import { type Meta } from '@storybook/react';
+import { type Meta } from '@storybook/react-webpack5';
 import { useId, useMemo } from 'react';
 import ReactSelect, { createFilter } from 'react-select';
 

@@ -56,18 +56,34 @@ type Elector interface {
 	Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error
 }
 
-// NoopElector always acts as the leader (single-instance / backward compat).
-type NoopElector struct{}
+// DefaultElector always acts as the leader (single-instance / backward compat).
+type DefaultElector struct{}
 
-// NewNoopElector returns a NoopElector that always acts as leader.
-func NewNoopElector() *NoopElector {
-	return &NoopElector{}
+// NewDefaultElector returns a DefaultElector that always acts as leader.
+func NewDefaultElector() *DefaultElector {
+	return &DefaultElector{}
 }
 
 // Run calls fn immediately and blocks until ctx is cancelled.
 // RunOption values are accepted for interface compatibility but ignored.
-func (n *NoopElector) Run(ctx context.Context, fn func(ctx context.Context), _ ...RunOption) error {
+func (n *DefaultElector) Run(ctx context.Context, fn func(ctx context.Context), _ ...RunOption) error {
 	fn(ctx)
+	return ctx.Err()
+}
+
+// NoopElector is a true no-op: it never calls fn and simply blocks until ctx
+// is cancelled. Useful when the caller wants to satisfy the Elector interface
+// without actually running any leader work.
+type NoopElector struct{}
+
+// NewNoopElector returns a NoopElector.
+func NewNoopElector() *NoopElector {
+	return &NoopElector{}
+}
+
+// Run blocks until ctx is cancelled without ever invoking fn.
+func (n *NoopElector) Run(ctx context.Context, _ func(ctx context.Context), _ ...RunOption) error {
+	<-ctx.Done()
 	return ctx.Err()
 }
 
@@ -121,30 +137,26 @@ func NewKubernetesElector(
 // fn receives a context that is cancelled when leadership is lost.
 // Run blocks until ctx is cancelled.
 func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error {
-	o := &runOptions{
-		releaseOnCancel: true,
-		onStartedLeading: func(ctx context.Context) {
+	o := ResolveRunOptions([]RunOption{
+		WithReleaseOnCancel(true),
+		WithOnStartedLeading(func(ctx context.Context) {
 			k.logger.Info("Acquired leader lease, starting leader work",
 				"identity", k.identity,
 				"lease", k.leaseName,
 				"namespace", k.namespace,
 			)
-		},
-		onStoppedLeading: func() {
+		}),
+		WithOnStoppedLeading(func() {
 			k.logger.Info("Lost leader lease, stopping leader work",
 				"identity", k.identity,
 			)
-		},
-		onNewLeader: func(identity string) {
+		}),
+		WithOnNewLeader(func(identity string) {
 			if identity != k.identity {
 				k.logger.Info("New leader elected", "leader", identity)
 			}
-		},
-	}
-
-	for _, opt := range opts {
-		opt(o)
-	}
+		}),
+	}, opts)
 
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
@@ -162,14 +174,14 @@ func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context
 		LeaseDuration:   k.leaseDuration,
 		RenewDeadline:   k.renewDeadline,
 		RetryPeriod:     k.retryPeriod,
-		ReleaseOnCancel: o.releaseOnCancel,
+		ReleaseOnCancel: o.ReleaseOnCancel,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				o.onStartedLeading(ctx)
+				o.OnStartedLeading(ctx)
 				fn(ctx)
 			},
-			OnStoppedLeading: o.onStoppedLeading,
-			OnNewLeader:      o.onNewLeader,
+			OnStoppedLeading: o.OnStoppedLeading,
+			OnNewLeader:      o.OnNewLeader,
 		},
 	})
 	if err != nil {

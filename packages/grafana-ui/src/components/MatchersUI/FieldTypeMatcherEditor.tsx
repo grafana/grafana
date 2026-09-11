@@ -74,7 +74,7 @@ export const getAllFieldTypeIconOptions: () => Array<ComboboxOption<FieldType>> 
 
 type ScopedCounts = Map<MatcherScope, Map<FieldType, number>>;
 
-export const countScopedFields = (
+const countScopedFields = (
   data: DataFrame[],
   scopeCounts: ScopedCounts = new Map(),
   scope: MatcherScope = 'series'

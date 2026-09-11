@@ -18,7 +18,7 @@ jobs:
       github.repository == 'grafana/grafana' &&
       github.event.pull_request.merged == true &&
       contains(join(github.event.pull_request.labels.*.name, ','), 'backport v')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       # TODO: save this as job summary instead?
       - name: Trigger
