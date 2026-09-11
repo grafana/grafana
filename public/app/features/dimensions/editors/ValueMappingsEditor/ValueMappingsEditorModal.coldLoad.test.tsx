@@ -1,3 +1,4 @@
+import type * as DragAndDrop from '@hello-pangea/dnd';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
@@ -7,23 +8,24 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ValueMappingsEditorModal } from './ValueMappingsEditorModal';
 
-type DndModule = typeof import('@hello-pangea/dnd');
-
-const mockDndImportStarted = jest.fn();
-let resolveDndModule: (module: DndModule) => void;
-const mockDndModulePromise = new Promise<DndModule>((resolve) => {
-  resolveDndModule = resolve;
-});
-
-jest.mock('@hello-pangea/dnd', () => {
-  mockDndImportStarted();
-
-  // Preserve the promise through import interop without replacing the real DnD components.
-  return Object.assign(mockDndModulePromise, { __esModule: true });
-});
+type DndModule = typeof DragAndDrop;
 
 // Keep this cold-load scenario in its own suite so another test cannot warm the hook's module cache.
 it('waits for DnD before focusing the initial mapping, saves keyboard input, and focuses an added row', async () => {
+  const mockDndImportStarted = jest.fn();
+  let resolveDndModule!: (module: DndModule) => void;
+  const mockDndModulePromise = new Promise<DndModule>((resolve) => {
+    resolveDndModule = resolve;
+  });
+
+  // Register after static imports so unrelated eager DnD consumers receive the real module.
+  jest.doMock('@hello-pangea/dnd', () => {
+    mockDndImportStarted();
+
+    // Preserve the promise through import interop without replacing the real DnD components.
+    return Object.assign(mockDndModulePromise, { __esModule: true });
+  });
+
   const user = userEvent.setup();
   const onChange = jest.fn();
   const { baseElement } = render(<ValueMappingsEditorModal value={[]} onChange={onChange} onClose={jest.fn()} />);
