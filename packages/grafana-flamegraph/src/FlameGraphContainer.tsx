@@ -11,6 +11,7 @@ import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraph
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
+import { type FunctionTable } from './TopTable/FunctionTable';
 import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { PaneView, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
@@ -29,6 +30,9 @@ export type Props = {
    * selfRight: number - the self value of the node in the right profile
    */
   data?: DataFrame;
+
+  /** Exact function rows and full profile totals, supplied independently of the flamegraph. */
+  functionTable?: FunctionTable;
 
   /**
    * Whether the header should be sticky and be always visible on the top when scrolling.
@@ -96,6 +100,7 @@ export type Props = {
 
 const FlameGraphContainer = ({
   data,
+  functionTable,
   onTableSymbolClick,
   onViewSelected,
   onTextAlignSelected,
@@ -156,7 +161,7 @@ const FlameGraphContainer = ({
   }, [data, theme, disableCollapsing]);
 
   const styles = getStyles(theme);
-  const matchedLabels = useLabelSearch(search, dataContainer);
+  const matchedLabels = useLabelSearch(search, dataContainer, functionTable);
 
   const effectiveViewMode = canShowSplitView ? viewMode : ViewMode.Single;
 
@@ -178,6 +183,7 @@ const FlameGraphContainer = ({
 
   const commonPaneProps = {
     dataContainer,
+    functionTable,
     search,
     matchedLabels,
     onTableSymbolClick: stableOnTableSymbolClick,
@@ -320,7 +326,8 @@ const FlameGraphContainer = ({
  */
 function useLabelSearch(
   search: string | undefined,
-  data: FlameGraphDataContainer | undefined
+  data: FlameGraphDataContainer | undefined,
+  functionTable?: FunctionTable
 ): Set<string> | undefined {
   return useMemo(() => {
     if (!search || !data) {
@@ -329,11 +336,14 @@ function useLabelSearch(
       return undefined;
     }
 
-    return labelSearch(search, data);
-  }, [search, data]);
+    return labelSearch(search, data, functionTable);
+  }, [search, data, functionTable]);
 }
 
-export function labelSearch(search: string, data: FlameGraphDataContainer): Set<string> {
+export function labelSearch(search: string, data: FlameGraphDataContainer, functionTable?: FunctionTable): Set<string> {
+  const labels = functionTable
+    ? Array.from(new Set([...data.getUniqueLabels(), ...functionTable.rows.map((row) => row.name)]))
+    : data.getUniqueLabels();
   const foundLabels = new Set<string>();
   const terms = search.split(',');
 
@@ -376,9 +386,9 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
       continue;
     }
 
-    const found = regexFilter(data.getUniqueLabels(), term);
+    const found = regexFilter(labels, term);
     if (!found) {
-      fuzzyFilter(data.getUniqueLabels(), term);
+      fuzzyFilter(labels, term);
     }
   }
 

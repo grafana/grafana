@@ -1,15 +1,108 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, createTheme } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
-import { ColorScheme } from '../types';
+import { ColorScheme, ColorSchemeDiff } from '../types';
 
-import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, { buildFilteredTable, buildTableDataFrame } from './FlameGraphTopTableContainer';
+import { type FunctionTable } from './FunctionTable';
+
+describe('supplied function tables', () => {
+  const container = () => new FlameGraphDataContainer(createDataFrame(data), { collapsing: false });
+
+  it('uses exact rows instead of aggregating the displayed tree, including prototype-like names', () => {
+    const functionTable: FunctionTable = {
+      total: 100,
+      rows: [
+        { name: 'backend.only', self: 7, total: 18 },
+        { name: '__proto__', self: 3, total: 4 },
+      ],
+    };
+    expect(buildFilteredTable(container(), undefined, functionTable)).toEqual({
+      'backend.only': { self: 7, total: 18, totalRight: 0 },
+      ['__proto__']: { self: 3, total: 4, totalRight: 0 },
+    });
+    expect(buildFilteredTable(container(), new Set(['backend.only']), functionTable)).toEqual({
+      'backend.only': { self: 7, total: 18, totalRight: 0 },
+    });
+    expect(buildFilteredTable(container(), undefined, { total: 0, rows: [] })).toEqual({});
+  });
+
+  it('uses full profile totals for diff percentages after limiting and filtering rows', () => {
+    const functionTable: FunctionTable = {
+      total: 100,
+      totalRight: 200,
+      rows: [
+        { name: 'shared', self: 2, total: 20, selfRight: 3, totalRight: 60 },
+        { name: 'new', self: 0, total: 0, selfRight: 5, totalRight: 10 },
+        { name: 'removed', self: 5, total: 10, selfRight: 0, totalRight: 0 },
+      ],
+    };
+    const tree = container();
+    const frame = buildTableDataFrame(
+      tree,
+      buildFilteredTable(tree, undefined, functionTable),
+      800,
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+      createTheme(),
+      ColorSchemeDiff.Default,
+      undefined,
+      undefined,
+      functionTable
+    );
+    expect(frame.fields.map((field) => [field.name, field.values]).slice(1)).toEqual([
+      ['Symbol', ['shared', 'new', 'removed']],
+      ['Baseline', [20, 0, 10]],
+      ['Comparison', [30, 5, 0]],
+      ['Diff', [50, Infinity, -100]],
+    ]);
+    const filtered = buildTableDataFrame(
+      tree,
+      buildFilteredTable(tree, new Set(['shared']), functionTable),
+      800,
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+      createTheme(),
+      ColorSchemeDiff.Default,
+      undefined,
+      undefined,
+      functionTable
+    );
+    expect(filtered.fields.find((field) => field.name === 'Diff')?.values).toEqual([50]);
+  });
+
+  it('keeps an empty comparison in diff mode instead of using the tree total', () => {
+    const functionTable: FunctionTable = {
+      total: 100,
+      totalRight: 0,
+      rows: [{ name: 'removed', self: 10, total: 10, totalRight: 0 }],
+    };
+    const tree = container();
+    const frame = buildTableDataFrame(
+      tree,
+      buildFilteredTable(tree, undefined, functionTable),
+      800,
+      jest.fn(),
+      jest.fn(),
+      jest.fn(),
+      createTheme(),
+      ColorSchemeDiff.Default,
+      undefined,
+      undefined,
+      functionTable
+    );
+    expect(frame.fields.find((field) => field.name === 'Baseline')?.values).toEqual([10]);
+    expect(frame.fields.find((field) => field.name === 'Comparison')?.values).toEqual([NaN]);
+  });
+});
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {

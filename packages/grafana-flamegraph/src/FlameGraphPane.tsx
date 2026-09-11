@@ -8,6 +8,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
+import { type FunctionTable } from './TopTable/FunctionTable';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
 import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
@@ -15,6 +16,7 @@ import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from '.
 type FlameGraphPaneProps = {
   paneView: PaneView;
   dataContainer: FlameGraphDataContainer;
+  functionTable?: FunctionTable;
   search: string;
   matchedLabels: Set<string> | undefined;
   onTableSymbolClick?: (symbol: string) => void;
@@ -37,6 +39,7 @@ type FlameGraphPaneProps = {
 const FlameGraphPane = ({
   paneView,
   dataContainer,
+  functionTable,
   search,
   matchedLabels,
   onTableSymbolClick,
@@ -231,6 +234,7 @@ const FlameGraphPane = ({
       content = (
         <div className={styles.tableContainer}>
           <FlameGraphTopTableContainer
+            functionTable={functionTable}
             data={dataContainer}
             onSymbolClick={onSymbolClick}
             search={search}
