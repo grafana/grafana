@@ -34,6 +34,7 @@ type FrontendSettingsAuthDTO struct {
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
+	DisableForgotPassword         bool `json:"disableForgotPassword"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
