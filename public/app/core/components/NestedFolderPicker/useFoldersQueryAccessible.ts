@@ -2,55 +2,49 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { getAccessibleFolderTree, type AccessibleFolderTreeItem } from 'app/features/folders/api/accessibleFolderTree';
+import {
+  buildFolderNavigationIndex,
+  getFolderNavigationTree,
+  type FolderNavigationItem,
+} from 'app/features/folders/api/accessibleFolderTree';
 
 import { type UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
-const collator = new Intl.Collator();
-
 export function useFoldersQueryAccessible({
   isBrowsing,
   openFolders,
-  permission = 'edit',
+  purpose = 'folder-edit',
   rootFolderUID,
   rootFolderItem,
-  enabled = true,
-}: UseFoldersQueryProps & { enabled?: boolean }) {
-  const [tree, setTree] = useState<AccessibleFolderTreeItem[]>([]);
+}: UseFoldersQueryProps) {
+  const [tree, setTree] = useState<FolderNavigationItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
   useEffect(() => {
-    if (!enabled || !isBrowsing) {
+    if (!isBrowsing) {
       return;
     }
     let active = true;
     setTree([]);
     setIsLoading(true);
     setError(undefined);
-    getAccessibleFolderTree(permission)
+    getFolderNavigationTree(purpose)
       .then((items) => active && setTree(items))
       .catch((error) => active && setError(new Error(getMessageFromError(error))))
       .finally(() => active && setIsLoading(false));
     return () => {
       active = false;
     };
-  }, [enabled, isBrowsing, permission]);
+  }, [isBrowsing, purpose]);
 
   const { items, emptyFolders } = useMemo(() => {
-    if (!enabled || !isBrowsing) {
+    if (!isBrowsing) {
       return { items: [], emptyFolders: new Set<string>() };
     }
 
-    const children = new Map<string | undefined, AccessibleFolderTreeItem[]>();
-    for (const item of tree) {
-      const parent = item.parent || undefined;
-      children.set(parent, [...(children.get(parent) ?? []), item]);
-    }
-    for (const siblings of children.values()) {
-      siblings.sort((a, b) => collator.compare(a.title, b.title) || collator.compare(a.name, b.name));
-    }
+    const { childrenByParent: children } = buildFolderNavigationIndex(tree);
 
     const empty = new Set<string>();
     const flatten = (
@@ -58,31 +52,33 @@ export function useFoldersQueryAccessible({
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> =>
       (children.get(parent) ?? []).flatMap((folder) => {
-        const isOpen = Boolean(openFolders[folder.name]);
-        const childItems = children.get(folder.name) ?? [];
+        const isOpen = Boolean(openFolders[folder.uid]);
+        const childItems = children.get(folder.uid) ?? [];
         if (childItems.length === 0) {
-          empty.add(folder.name);
+          empty.add(folder.uid);
         }
         const row: DashboardsTreeItem = {
           isOpen,
           level,
-          parentUID: folder.parent || undefined,
+          parentUID: folder.navigationParentUid || undefined,
           item: {
             kind: 'folder',
-            uid: folder.name,
+            uid: folder.uid,
             title: folder.title,
-            parentUID: folder.parent || undefined,
+            parentUID: folder.navigationParentUid || undefined,
             access: folder.access,
+            selectable: folder.selectable,
+            navigationKind: folder.kind,
           },
         };
-        return isOpen ? [row, ...flatten(folder.name, level + 1)] : [row];
+        return isOpen ? [row, ...flatten(folder.uid, level + 1)] : [row];
       });
 
     return {
       items: [rootFolderItem || getRootFolderItem(), ...flatten(rootFolderUID, 1)],
       emptyFolders: empty,
     };
-  }, [enabled, isBrowsing, openFolders, rootFolderUID, rootFolderItem, tree]);
+  }, [isBrowsing, openFolders, rootFolderUID, rootFolderItem, tree]);
 
   const requestNextPage = useCallback((_parentUID: string | undefined) => Promise.resolve(), []);
   return { items, emptyFolders, isLoading, error, requestNextPage };

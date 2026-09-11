@@ -1,31 +1,39 @@
 import { getFolderAPIBaseURL } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { getBackendSrv } from '@grafana/runtime';
-import { type PermissionLevel } from 'app/types/acl';
+export type FolderNavigationPurpose = 'browse' | 'dashboard-create' | 'folder-edit' | 'folder-admin';
+export type FolderNavigationAccess = 'full' | 'ancestor' | 'navigation';
 
-export interface AccessibleFolderTreeItem {
-  name: string;
+export interface FolderNavigationItem {
+  uid: string;
   title: string;
-  parent?: string;
-  access: 'full' | 'ancestor';
+  kind: 'folder' | 'virtual';
+  navigationParentUid?: string;
+  access: FolderNavigationAccess;
+  selectable: boolean;
 }
 
-interface AccessibleFolderTreeResponse {
-  items: AccessibleFolderTreeItem[];
+interface FolderNavigationResponse {
+  items: FolderNavigationItem[];
+}
+
+export interface FolderNavigationIndex {
+  byUID: Map<string, FolderNavigationItem>;
+  childrenByParent: Map<string | undefined, FolderNavigationItem[]>;
 }
 
 const CACHE_TTL_MS = 10_000;
-const cache = new Map<string, { expires: number; request: Promise<AccessibleFolderTreeItem[]> }>();
+const cache = new Map<string, { expires: number; request: Promise<FolderNavigationItem[]> }>();
 
-export async function getAccessibleFolderTree(permission: PermissionLevel = 'view') {
+export async function getFolderNavigationTree(purpose: FolderNavigationPurpose = 'browse') {
   const baseURL = await getFolderAPIBaseURL();
-  const cacheKey = `${baseURL}:${permission}`;
+  const cacheKey = `${baseURL}:${purpose}`;
   const cached = cache.get(cacheKey);
   if (cached && cached.expires > Date.now()) {
     return cached.request;
   }
 
   const request = getBackendSrv()
-    .get<AccessibleFolderTreeResponse>(`${baseURL}/folders/general/tree`, { permission }, undefined, {
+    .get<FolderNavigationResponse>(`${baseURL}/folders/general/tree`, { purpose }, undefined, {
       showErrorAlert: false,
     })
     .then((response) => response.items);
@@ -34,18 +42,32 @@ export async function getAccessibleFolderTree(permission: PermissionLevel = 'vie
   return request;
 }
 
-export function invalidateAccessibleFolderTree() {
+export function invalidateFolderNavigationTree() {
   cache.clear();
 }
 
-export async function getAccessibleFolderChildren(
+// Keep mutation callers source-compatible while the navigation service name is rolled out.
+export const invalidateAccessibleFolderTree = invalidateFolderNavigationTree;
+
+export function buildFolderNavigationIndex(items: FolderNavigationItem[]): FolderNavigationIndex {
+  const byUID = new Map<string, FolderNavigationItem>();
+  const childrenByParent = new Map<string | undefined, FolderNavigationItem[]>();
+  for (const item of items) {
+    byUID.set(item.uid, item);
+    const parent = item.navigationParentUid || undefined;
+    childrenByParent.set(parent, [...(childrenByParent.get(parent) ?? []), item]);
+  }
+  return { byUID, childrenByParent };
+}
+
+export async function getFolderNavigationChildren(
   parentUID: string | undefined,
-  permission: PermissionLevel,
+  purpose: FolderNavigationPurpose,
   page: number,
   pageSize: number
 ) {
-  const tree = await getAccessibleFolderTree(permission);
-  const children = tree.filter((item) => (item.parent || undefined) === parentUID);
+  const index = buildFolderNavigationIndex(await getFolderNavigationTree(purpose));
+  const children = index.childrenByParent.get(parentUID) ?? [];
   const start = Math.max(0, page - 1) * pageSize;
   return children.slice(start, start + pageSize);
 }

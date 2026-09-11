@@ -1949,7 +1949,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyGo: true},
 			Expression:   "false",
 		},
 		{

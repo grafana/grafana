@@ -8,11 +8,13 @@ import (
 const OpenAPIPrefix = "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1."
 
 type (
-	FolderInfoList   = folderapiv1.FolderInfoList
-	FolderInfo       = folderapiv1.FolderInfo
-	FolderAccessInfo = folderapiv1.FolderAccessInfo
-	DescendantCounts = folderapiv1.DescendantCounts
-	ResourceStats    = folderapiv1.ResourceStats
+	FolderInfoList       = folderapiv1.FolderInfoList
+	FolderNavigationItem = folderapiv1.FolderNavigationItem
+	FolderNavigationList = folderapiv1.FolderNavigationList
+	FolderInfo           = folderapiv1.FolderInfo
+	FolderAccessInfo     = folderapiv1.FolderAccessInfo
+	DescendantCounts     = folderapiv1.DescendantCounts
+	ResourceStats        = folderapiv1.ResourceStats
 )
 
 var UnstructuredToDescendantCounts = folderapiv1.UnstructuredToDescendantCounts

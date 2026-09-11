@@ -49,6 +49,37 @@ type FolderInfo struct {
 	Access string `json:"access,omitempty"`
 }
 
+// FolderNavigationItem is the minimal authorization-aware record returned by
+// the folder navigation tree endpoint.
+type FolderNavigationItem struct {
+	UID                 string `json:"uid"`
+	Title               string `json:"title"`
+	Kind                string `json:"kind"`
+	NavigationParentUID string `json:"navigationParentUid,omitempty"`
+	Access              string `json:"access"`
+	Selectable          bool   `json:"selectable"`
+}
+
+// FolderNavigationList is the complete compact folder navigation projection.
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FolderNavigationList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=map
+	// +listMapKey=uid
+	Items []FolderNavigationItem `json:"items"`
+}
+
+func (FolderNavigationList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FolderNavigationList"
+}
+
+func (FolderNavigationItem) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FolderNavigationItem"
+}
+
 func (FolderInfo) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FolderInfo"
 }

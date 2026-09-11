@@ -166,7 +166,13 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   const handleSelect = useCallback(() => {
-    if (item.kind === 'folder' && !disabled && item.access !== 'ancestor') {
+    if (
+      item.kind === 'folder' &&
+      !disabled &&
+      item.access !== 'ancestor' &&
+      item.access !== 'navigation' &&
+      item.selectable !== false
+    ) {
       onFolderSelect(item);
       const folderType = teamFolderOwnersByUid?.[item.uid]
         ? 'team folder'

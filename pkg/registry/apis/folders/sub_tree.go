@@ -7,12 +7,16 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -24,24 +28,183 @@ import (
 )
 
 const (
-	folderTreeAccessFull     = "full"
-	folderTreeAccessAncestor = "ancestor"
-	folderTreePageSize       = int64(500)
+	folderTreeAccessFull       = "full"
+	folderTreeAccessAncestor   = "ancestor"
+	folderTreeAccessNavigation = "navigation"
+	folderTreeKindFolder       = "folder"
+	folderTreeKindVirtual      = "virtual"
+	folderTreePageSize         = int64(500)
 )
 
+type folderNavigationPurpose string
+
+const (
+	folderNavigationPurposeBrowse          folderNavigationPurpose = "browse"
+	folderNavigationPurposeDashboardCreate folderNavigationPurpose = "dashboard-create"
+	folderNavigationPurposeFolderEdit      folderNavigationPurpose = "folder-edit"
+	folderNavigationPurposeFolderAdmin     folderNavigationPurpose = "folder-admin"
+)
+
+func parseFolderNavigationPurpose(value string) (folderNavigationPurpose, error) {
+	purpose := folderNavigationPurpose(value)
+	if purpose == "" {
+		purpose = folderNavigationPurposeBrowse
+	}
+	switch purpose {
+	case folderNavigationPurposeBrowse,
+		folderNavigationPurposeDashboardCreate,
+		folderNavigationPurposeFolderEdit,
+		folderNavigationPurposeFolderAdmin:
+		return purpose, nil
+	default:
+		return "", apierrors.NewBadRequest(fmt.Sprintf("unknown folder navigation purpose %q", value))
+	}
+}
+
+func applyFolderNavigationSelectability(items []foldersv1.FolderNavigationItem, allowed map[string]bool) {
+	for i := range items {
+		item := &items[i]
+		item.Selectable = item.Kind == folderTreeKindFolder && item.Access == folderTreeAccessFull && allowed[item.UID]
+	}
+}
+
+func buildLegacyFolderNavigation(accessible []foldersv1.FolderInfo) []foldersv1.FolderNavigationItem {
+	readable := make(map[string]struct{}, len(accessible))
+	for _, folder := range accessible {
+		readable[folder.Name] = struct{}{}
+	}
+
+	items := []foldersv1.FolderNavigationItem{{
+		UID: foldermodel.SharedWithMeFolderUID, Title: "Shared with me",
+		Kind: folderTreeKindVirtual, Access: folderTreeAccessNavigation,
+	}}
+	for _, folder := range accessible {
+		parent := normalizeTreeParent(folder.Parent)
+		if parent != "" {
+			if _, ok := readable[parent]; !ok {
+				parent = foldermodel.SharedWithMeFolderUID
+			}
+		}
+		items = append(items, foldersv1.FolderNavigationItem{
+			UID: folder.Name, Title: folder.Title, Kind: folderTreeKindFolder,
+			NavigationParentUID: parent, Access: folderTreeAccessFull,
+		})
+	}
+	return orderFolderNavigation(items)
+}
+
+func buildHierarchyFolderNavigation(
+	accessible []foldersv1.FolderInfo,
+	all map[string]foldersv1.FolderInfo,
+	maxDepth int,
+) ([]foldersv1.FolderNavigationItem, error) {
+	visible := make(map[string]foldersv1.FolderNavigationItem, len(accessible))
+	for _, item := range accessible {
+		if item.Name == "" {
+			continue
+		}
+		visible[item.Name] = foldersv1.FolderNavigationItem{
+			UID: item.Name, Title: item.Title, Kind: folderTreeKindFolder,
+			NavigationParentUID: normalizeTreeParent(item.Parent), Access: folderTreeAccessFull,
+		}
+	}
+
+	depthLimit := maxDepth
+	if depthLimit < 1 {
+		depthLimit = 100
+	}
+	for _, leaf := range accessible {
+		parent := normalizeTreeParent(leaf.Parent)
+		seen := map[string]struct{}{leaf.Name: {}}
+		for depth := 0; parent != ""; depth++ {
+			if depth >= depthLimit {
+				return nil, fmt.Errorf("folder tree exceeded maximum nested folder depth")
+			}
+			if _, exists := seen[parent]; exists {
+				return nil, foldermodel.ErrCyclicReference.Errorf("cyclic folder references found: %s", parent)
+			}
+			seen[parent] = struct{}{}
+
+			if existing, ok := visible[parent]; ok {
+				parent = existing.NavigationParentUID
+				continue
+			}
+			ancestor, ok := all[parent]
+			if !ok {
+				break
+			}
+			ancestorParent := normalizeTreeParent(ancestor.Parent)
+			visible[parent] = foldersv1.FolderNavigationItem{
+				UID: ancestor.Name, Title: ancestor.Title, Kind: folderTreeKindFolder,
+				NavigationParentUID: ancestorParent, Access: folderTreeAccessAncestor,
+			}
+			parent = ancestorParent
+		}
+	}
+
+	items := make([]foldersv1.FolderNavigationItem, 0, len(visible)+1)
+	items = append(items, foldersv1.FolderNavigationItem{
+		UID: foldermodel.SharedWithMeFolderUID, Title: "Shared with me",
+		Kind: folderTreeKindVirtual, Access: folderTreeAccessNavigation,
+	})
+	for _, item := range visible {
+		if item.NavigationParentUID != "" {
+			if _, ok := visible[item.NavigationParentUID]; !ok {
+				item.NavigationParentUID = ""
+			}
+		}
+		items = append(items, item)
+	}
+	return orderFolderNavigation(items), nil
+}
+
+func orderFolderNavigation(items []foldersv1.FolderNavigationItem) []foldersv1.FolderNavigationItem {
+	children := make(map[string][]foldersv1.FolderNavigationItem, len(items))
+	for _, item := range items {
+		children[item.NavigationParentUID] = append(children[item.NavigationParentUID], item)
+	}
+	for parent := range children {
+		slices.SortFunc(children[parent], func(a, b foldersv1.FolderNavigationItem) int {
+			if a.Kind != b.Kind {
+				if a.Kind == folderTreeKindVirtual {
+					return -1
+				}
+				return 1
+			}
+			if byTitle := strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title)); byTitle != 0 {
+				return byTitle
+			}
+			return strings.Compare(a.UID, b.UID)
+		})
+	}
+	ordered := make([]foldersv1.FolderNavigationItem, 0, len(items))
+	var appendChildren func(string)
+	appendChildren = func(parent string) {
+		for _, item := range children[parent] {
+			ordered = append(ordered, item)
+			appendChildren(item.UID)
+		}
+	}
+	appendChildren("")
+	return ordered
+}
+
 type subTreeREST struct {
-	getter   rest.Getter
-	searcher resourcepb.ResourceIndexClient
-	maxDepth int
+	searcher  resourcepb.ResourceIndexClient
+	access    authlib.AccessClient
+	maxDepth  int
+	hierarchy bool
+	metrics   *folderTreeMetrics
+	topology  *folderTopologyCache
 }
 
 var _ rest.Connecter = (*subTreeREST)(nil)
 var _ rest.StorageMetadata = (*subTreeREST)(nil)
 
-func (r *subTreeREST) New() runtime.Object               { return &foldersv1.FolderInfoList{} }
+func (r *subTreeREST) New() runtime.Object               { return &foldersv1.FolderNavigationList{} }
 func (r *subTreeREST) Destroy()                          {}
 func (r *subTreeREST) ProducesMIMETypes(string) []string { return nil }
-func (r *subTreeREST) ProducesObject(string) interface{} { return &foldersv1.FolderInfoList{} }
+func (r *subTreeREST) ProducesObject(string) interface{} { return &foldersv1.FolderNavigationList{} }
 func (r *subTreeREST) ConnectMethods() []string          { return []string{http.MethodGet} }
 func (r *subTreeREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
@@ -55,44 +218,80 @@ func (r *subTreeREST) Connect(ctx context.Context, name string, _ runtime.Object
 	}
 
 	return http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
-		items, err := r.build(ctx, req.URL.Query())
+		started := time.Now()
+		items, purpose, err := r.build(ctx, req.URL.Query())
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-		responder.Object(http.StatusOK, &foldersv1.FolderInfoList{Items: items})
+		mode := "legacy"
+		if r.hierarchy {
+			mode = "hierarchy"
+		}
+		if r.metrics != nil {
+			r.metrics.duration.WithLabelValues(mode, string(purpose)).Observe(time.Since(started).Seconds())
+			r.metrics.items.WithLabelValues(mode, string(purpose)).Observe(float64(len(items)))
+		}
+		logging.FromContext(ctx).Debug("built folder navigation projection", "mode", mode, "purpose", purpose, "items", len(items), "duration", time.Since(started))
+		responder.Object(http.StatusOK, &foldersv1.FolderNavigationList{Items: items})
 	}), nil
 }
 
-func (r *subTreeREST) build(ctx context.Context, query url.Values) ([]foldersv1.FolderInfo, error) {
+func (r *subTreeREST) build(ctx context.Context, query url.Values) ([]foldersv1.FolderNavigationItem, folderNavigationPurpose, error) {
+	purpose, err := parseFolderNavigationPurpose(query.Get("purpose"))
+	if err != nil {
+		return nil, "", err
+	}
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	accessible, err := r.searchAccessible(ctx, ns.Value, treePermission(query.Get("permission")))
+	accessible, err := r.searchFolders(ctx, ns.Value, int64(dashboardaccess.PERMISSION_VIEW))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	// Only exact parents named by already-authorized resources are read with the
-	// service identity. It is deliberately never used to list children.
-	serviceCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	return buildFolderTree(accessible, r.maxDepth, func(uid string) (*foldersv1.FolderInfo, error) {
-		obj, err := r.getter.Get(serviceCtx, uid, &metav1.GetOptions{})
+	var items []foldersv1.FolderNavigationItem
+	if r.hierarchy {
+		// One service-authorized search loads compact parent links for the whole
+		// namespace. Only ancestors of caller-authorized folders are emitted.
+		allFolders, err := r.fullTopology(ctx, ns.OrgID, ns.Value)
+		if err != nil {
+			return nil, "", err
+		}
+		all := make(map[string]foldersv1.FolderInfo, len(allFolders))
+		for _, folder := range allFolders {
+			all[folder.Name] = folder
+		}
+		items, err = buildHierarchyFolderNavigation(accessible, all, r.maxDepth)
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		items = buildLegacyFolderNavigation(accessible)
+	}
+
+	allowed, err := r.selectableFolders(ctx, ns.Value, purpose, accessible)
+	if err != nil {
+		return nil, "", err
+	}
+	applyFolderNavigationSelectability(items, allowed)
+	return items, purpose, nil
+}
+
+func (r *subTreeREST) fullTopology(ctx context.Context, orgID int64, namespace string) ([]foldersv1.FolderInfo, error) {
+	loader := func(ctx context.Context) ([]foldersv1.FolderInfo, error) {
+		return r.searchFolders(identity.WithServiceIdentityContext(ctx, orgID), namespace, int64(dashboardaccess.PERMISSION_VIEW))
+	}
+	if r.topology == nil {
+		items, err := loader(ctx)
 		if err != nil {
 			return nil, err
 		}
-		folder, ok := obj.(*foldersv1.Folder)
-		if !ok {
-			return nil, fmt.Errorf("expected folder, found %T", obj)
-		}
-		meta, err := utils.MetaAccessor(folder)
-		if err != nil {
-			return nil, err
-		}
-		return &foldersv1.FolderInfo{Name: folder.Name, Title: folder.Spec.Title, Parent: meta.GetFolder()}, nil
-	})
+		return neutralFolderTopology(items), nil
+	}
+	return r.topology.get(ctx, folderTopologyCacheKey{orgID: orgID, namespace: namespace}, loader)
 }
 
 func treePermission(value string) int64 {
@@ -106,7 +305,7 @@ func treePermission(value string) int64 {
 	}
 }
 
-func (r *subTreeREST) searchAccessible(ctx context.Context, namespace string, permission int64) ([]foldersv1.FolderInfo, error) {
+func (r *subTreeREST) searchFolders(ctx context.Context, namespace string, permission int64) ([]foldersv1.FolderInfo, error) {
 	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
 	var items []foldersv1.FolderInfo
 	var after []string
@@ -167,6 +366,90 @@ func (r *subTreeREST) searchAccessible(ctx context.Context, namespace string, pe
 		after = last.SortFields
 	}
 	return nil, fmt.Errorf("folder tree search exceeded pagination safety limit")
+}
+
+func (r *subTreeREST) selectableFolders(
+	ctx context.Context,
+	namespace string,
+	purpose folderNavigationPurpose,
+	accessible []foldersv1.FolderInfo,
+) (map[string]bool, error) {
+	allowed := make(map[string]bool, len(accessible))
+	if purpose == folderNavigationPurposeBrowse {
+		for _, folder := range accessible {
+			allowed[folder.Name] = true
+		}
+		return allowed, nil
+	}
+	if len(accessible) == 0 {
+		return allowed, nil
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	checks := make([]authlib.BatchCheckItem, 0, len(accessible))
+	uidByCorrelationID := make(map[string]string, len(accessible))
+	for i, folder := range accessible {
+		correlationID := fmt.Sprintf("folder-%d", i)
+		check := authlib.BatchCheckItem{CorrelationID: correlationID}
+		switch purpose {
+		case folderNavigationPurposeDashboardCreate:
+			check.Verb = utils.VerbCreate
+			check.Group = dashboardv1.GROUP
+			check.Resource = dashboardv1.DASHBOARD_RESOURCE
+			check.Folder = folder.Name
+		case folderNavigationPurposeFolderEdit:
+			check.Verb = utils.VerbUpdate
+			check.Group = foldersv1.GROUP
+			check.Resource = foldersv1.RESOURCE
+			check.Name = folder.Name
+			check.Folder = normalizeTreeParent(folder.Parent)
+		case folderNavigationPurposeFolderAdmin:
+			check.Verb = utils.VerbSetPermissions
+			check.Group = foldersv1.GROUP
+			check.Resource = foldersv1.RESOURCE
+			check.Name = folder.Name
+			check.Folder = normalizeTreeParent(folder.Parent)
+		}
+		checks = append(checks, check)
+		uidByCorrelationID[correlationID] = folder.Name
+	}
+	response, err := r.access.BatchCheck(ctx, user, authlib.BatchCheckRequest{Namespace: namespace, Checks: checks})
+	if err != nil {
+		return nil, err
+	}
+	for correlationID, uid := range uidByCorrelationID {
+		result, ok := response.Results[correlationID]
+		if !ok {
+			return nil, fmt.Errorf("folder navigation access check returned no result for %q", uid)
+		}
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		allowed[uid] = result.Allowed
+	}
+	return allowed, nil
+}
+
+type folderTreeMetrics struct {
+	duration *prometheus.HistogramVec
+	items    *prometheus.HistogramVec
+}
+
+func newFolderTreeMetrics(registerer prometheus.Registerer) *folderTreeMetrics {
+	metrics := &folderTreeMetrics{
+		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana", Subsystem: "folder_navigation", Name: "projection_duration_seconds",
+			Help: "Time spent building an authorization-aware folder navigation projection.",
+		}, []string{"mode", "purpose"}),
+		items: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana", Subsystem: "folder_navigation", Name: "projection_items",
+			Help: "Number of items in an authorization-aware folder navigation projection.",
+		}, []string{"mode", "purpose"}),
+	}
+	registerer.MustRegister(metrics.duration, metrics.items)
+	return metrics
 }
 
 type folderInfoLookup func(uid string) (*foldersv1.FolderInfo, error)

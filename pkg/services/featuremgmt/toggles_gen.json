@@ -6,14 +6,16 @@
     {
       "metadata": {
         "name": "accessibleFolderHierarchy",
-        "resourceVersion": "1789059977352",
-        "creationTimestamp": "2026-09-10T17:06:17Z"
+        "resourceVersion": "1789114061879",
+        "creationTimestamp": "2026-09-10T17:06:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-11 08:07:41.879049 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Projects accessible folders into their minimum real ancestor hierarchy without granting access to ancestors",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }

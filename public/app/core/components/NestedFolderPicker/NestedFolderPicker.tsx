@@ -7,14 +7,15 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { getFolderNavigationTree, type FolderNavigationPurpose } from 'app/features/folders/api/accessibleFolderTree';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
@@ -53,6 +54,9 @@ export interface NestedFolderPickerProps {
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 
+  /* Operation used to calculate valid destinations. */
+  purpose?: FolderNavigationPurpose;
+
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
 
@@ -68,7 +72,33 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
+async function getSearchResults(
+  searchQuery: string,
+  permission: PermissionLevel | undefined,
+  purpose: FolderNavigationPurpose
+) {
+  if (config.featureToggles.foldersAppPlatformAPI) {
+    const normalizedQuery = searchQuery.toLocaleLowerCase();
+    const items: DashboardViewItem[] = (await getFolderNavigationTree(purpose))
+      .filter(
+        (item) =>
+          item.kind === 'folder' &&
+          item.access === 'full' &&
+          item.selectable &&
+          (item.title.toLocaleLowerCase().includes(normalizedQuery) ||
+            item.uid.toLocaleLowerCase().includes(normalizedQuery))
+      )
+      .map((item) => ({
+        kind: 'folder',
+        uid: item.uid,
+        title: item.title,
+        parentUID: item.navigationParentUid,
+        access: item.access,
+        selectable: item.selectable,
+        navigationKind: item.kind,
+      }));
+    return { items };
+  }
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
@@ -89,10 +119,12 @@ export function NestedFolderPicker({
   rootFolderUID,
   rootFolderItem,
   permission = 'edit',
+  purpose,
   onChange,
   id,
   disabled = false,
 }: NestedFolderPickerProps) {
+  const navigationPurpose = purpose ?? (permission === 'view' ? 'browse' : 'folder-edit');
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
 
@@ -102,7 +134,7 @@ export function NestedFolderPicker({
   const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
+  const [searchResults, setSearchResults] = useState<{ items: DashboardViewItem[] } | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
 
   const [autoFocusButton, setAutoFocusButton] = useState(false);
@@ -135,6 +167,7 @@ export function NestedFolderPicker({
     isBrowsing,
     openFolders: foldersOpenState,
     permission,
+    purpose: navigationPurpose,
     rootFolderUID,
     rootFolderItem,
   });
@@ -148,19 +181,18 @@ export function NestedFolderPicker({
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
-    debouncedSearch(search, permission).then((queryResponse) => {
+    debouncedSearch(search, permission, navigationPurpose).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
       // We don't need to worry about clearing the isFetching state either - if there's a later
       // request in progress, this will clear it for us
       if (timestamp > lastSearchTimestamp.current) {
-        const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-        setSearchResults({ ...queryResponse, items });
+        setSearchResults({ items: queryResponse.items });
         setIsFetchingSearchResults(false);
         lastSearchTimestamp.current = timestamp;
       }
     });
-  }, [search, permission]);
+  }, [search, permission, navigationPurpose]);
 
   // the order of middleware is important!
   const middleware = [
@@ -209,7 +241,7 @@ export function NestedFolderPicker({
 
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
-      if (item.access === 'ancestor') {
+      if (item.access === 'ancestor' || item.access === 'navigation' || item.selectable === false) {
         return;
       }
       if (onChange) {

@@ -71,7 +71,13 @@ export function useTreeInteractions({
           ev.preventDefault();
           const treeItem = tree[focusedItemIndex];
           const item = treeItem.item;
-          if (item.kind === 'folder' && !treeItem.disabled && item.access !== 'ancestor') {
+          if (
+            item.kind === 'folder' &&
+            !treeItem.disabled &&
+            item.access !== 'ancestor' &&
+            item.access !== 'navigation' &&
+            item.selectable !== false
+          ) {
             handleFolderSelect(item);
           }
           break;

@@ -20,10 +20,55 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderClient":    schema_pkg_apis_folder_v1_FolderClient(ref),
 		FolderInfo{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderInfo(ref),
 		FolderInfoList{}.OpenAPIModelName():                                         schema_pkg_apis_folder_v1_FolderInfoList(ref),
+		FolderNavigationItem{}.OpenAPIModelName():                                   schema_pkg_apis_folder_v1_FolderNavigationItem(ref),
+		FolderNavigationList{}.OpenAPIModelName():                                   schema_pkg_apis_folder_v1_FolderNavigationList(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderJSONCodec": schema_pkg_apis_folder_v1_FolderJSONCodec(ref),
 		FolderList{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderList(ref),
 		FolderSpec{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderSpec(ref),
 		ResourceStats{}.OpenAPIModelName():                                          schema_pkg_apis_folder_v1_ResourceStats(ref),
+	}
+}
+
+func schema_pkg_apis_folder_v1_FolderNavigationItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{SchemaProps: spec.SchemaProps{
+			Description: "FolderNavigationItem is the minimal authorization-aware folder navigation record.",
+			Type:        []string{"object"},
+			Properties: map[string]spec.Schema{
+				"uid":                 {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"title":               {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"kind":                {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"navigationParentUid": {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"access":              {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"selectable":          {SchemaProps: spec.SchemaProps{Type: []string{"boolean"}, Format: ""}},
+			},
+			Required: []string{"uid", "title", "kind", "access", "selectable"},
+		}},
+	}
+}
+
+func schema_pkg_apis_folder_v1_FolderNavigationList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{SchemaProps: spec.SchemaProps{
+			Description: "FolderNavigationList is the complete compact folder navigation projection.",
+			Type:        []string{"object"},
+			Properties: map[string]spec.Schema{
+				"kind":       {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"apiVersion": {SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: ""}},
+				"metadata":   {SchemaProps: spec.SchemaProps{Default: map[string]interface{}{}, Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta")}},
+				"items": {
+					VendorExtensible: spec.VendorExtensible{Extensions: spec.Extensions{
+						"x-kubernetes-list-map-keys": []interface{}{"uid"},
+						"x-kubernetes-list-type":     "map",
+					}},
+					SchemaProps: spec.SchemaProps{Type: []string{"array"}, Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{
+						Default: map[string]interface{}{}, Ref: ref(FolderNavigationItem{}.OpenAPIModelName()),
+					}}}},
+				},
+			},
+			Required: []string{"items"},
+		}},
+		Dependencies: []string{FolderNavigationItem{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

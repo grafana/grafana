@@ -15,11 +15,16 @@ import { setStore } from 'app/store/store';
 import { type SearchQuery } from './types';
 import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
 
+const emptyFolderNavigationHandler = http.get(
+  '/apis/folder.grafana.app/:version/namespaces/:namespace/folders/general/tree',
+  () => HttpResponse.json({ items: [] })
+);
+
 beforeEach(() => {
   jest.clearAllMocks();
   config.featureToggles.foldersAppPlatformAPI = false;
-  config.featureToggles.accessibleFolderHierarchy = false;
   invalidateAccessibleFolderTree();
+  server.use(emptyFolderNavigationHandler);
 });
 
 setBackendSrv(backendSrv);
@@ -85,7 +90,6 @@ describe('Unified Storage Searcher', () => {
 
   it('uses projected ancestors to keep authorized hits out of Shared with me', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
-    config.featureToggles.accessibleFolderHierarchy = true;
     folderAPIVersionResolver.set('v1');
     server.use(
       http.get(searchRoute, () =>
@@ -100,9 +104,23 @@ describe('Unified Storage Searcher', () => {
       http.get('/apis/folder.grafana.app/v1/namespaces/:namespace/folders/general/tree', () =>
         HttpResponse.json({
           items: [
-            { name: 'restricted', title: 'Restricted', access: 'ancestor' },
-            { name: 'department-a', title: 'Department A', parent: 'restricted', access: 'ancestor' },
-            { name: 'team-a', title: 'Team A', parent: 'department-a', access: 'full' },
+            { uid: 'restricted', title: 'Restricted', kind: 'folder', access: 'ancestor', selectable: false },
+            {
+              uid: 'department-a',
+              title: 'Department A',
+              kind: 'folder',
+              navigationParentUid: 'restricted',
+              access: 'ancestor',
+              selectable: false,
+            },
+            {
+              uid: 'team-a',
+              title: 'Team A',
+              kind: 'folder',
+              navigationParentUid: 'department-a',
+              access: 'full',
+              selectable: true,
+            },
           ],
         })
       )

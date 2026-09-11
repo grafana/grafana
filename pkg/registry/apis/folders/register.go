@@ -54,12 +54,15 @@ var (
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	storage              grafanarest.Storage
-	permissionStore      PermissionStore
-	accessClient         authlib.AccessClient
-	parents              parentsGetter
-	searcher             resourcepb.ResourceIndexClient
-	maxNestedFolderDepth int
+	storage                   grafanarest.Storage
+	permissionStore           PermissionStore
+	accessClient              authlib.AccessClient
+	parents                   parentsGetter
+	searcher                  resourcepb.ResourceIndexClient
+	maxNestedFolderDepth      int
+	accessibleFolderHierarchy bool
+	treeMetrics               *folderTreeMetrics
+	treeTopologyCache         *folderTopologyCache
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -152,13 +155,16 @@ func RegisterAPIService(cfg *setting.Cfg,
 	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		accessClient:         accessClient,
-		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
-		searcher:             unified,
-		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
-		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
-		contentsDeleter:      contentsDeleter,
+		accessClient:              accessClient,
+		permissionsOnCreate:       cfg.RBAC.PermissionsOnCreation("folder"),
+		useZanzana:                features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		searcher:                  unified,
+		permissionStore:           NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth:      cfg.MaxNestedFolderDepth,
+		accessibleFolderHierarchy: features.IsEnabledGlobally(featuremgmt.FlagAccessibleFolderHierarchy),
+		treeMetrics:               newFolderTreeMetrics(registerer),
+		treeTopologyCache:         newFolderTopologyCache(folderTopologyCacheTTL),
+		contentsDeleter:           contentsDeleter,
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -178,14 +184,16 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
-		accessClient:           ac,
-		searcher:               searcher,
-		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
-		resourcePermissionsSvc: resourcePermissionsSvc,
-		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
-		variableSvc:            variableSvc,  // injected so cascade delete can remove variables in MT
-		maxNestedFolderDepth:   maxNestedFolderDepth,
-		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		accessClient:              ac,
+		searcher:                  searcher,
+		permissionStore:           NewZanzanaPermissionStore(zanzanaClient),
+		resourcePermissionsSvc:    resourcePermissionsSvc,
+		dashboardSvc:              dashboardSvc, // injected so cascade delete can remove dashboards in MT
+		variableSvc:               variableSvc,  // injected so cascade delete can remove variables in MT
+		maxNestedFolderDepth:      maxNestedFolderDepth,
+		accessibleFolderHierarchy: features.IsEnabledGlobally(featuremgmt.FlagAccessibleFolderHierarchy),
+		treeTopologyCache:         newFolderTopologyCache(folderTopologyCacheTTL),
+		useZanzana:                features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
 }
 
@@ -210,6 +218,7 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&foldersv1.Folder{},
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
+		&foldersv1.FolderNavigationList{},
 		&foldersv1.DescendantCounts{},
 		&foldersv1.FolderAccessInfo{},
 	)
@@ -218,6 +227,7 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&foldersv1beta1.Folder{},
 		&foldersv1beta1.FolderList{},
 		&foldersv1beta1.FolderInfoList{},
+		&foldersv1beta1.FolderNavigationList{},
 		&foldersv1beta1.DescendantCounts{},
 		&foldersv1beta1.FolderAccessInfo{},
 	)
@@ -231,6 +241,7 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&foldersv1.Folder{},
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
+		&foldersv1.FolderNavigationList{},
 		&foldersv1.DescendantCounts{},
 		&foldersv1.FolderAccessInfo{},
 	)
@@ -305,12 +316,15 @@ func (b *FolderAPIBuilder) storageForVersion(
 		getter:   b.storage,
 		searcher: b.searcher,
 	}
-	// Always register this additive endpoint so the backend can roll out before clients opt in.
-	// accessibleFolderHierarchy gates frontend adoption, including mixed-version deployments.
+	// Always register the navigation endpoint. The server-side feature toggle
+	// changes its topology without changing the client contract.
 	storage[folders.StoragePath("tree")] = &subTreeREST{
-		getter:   b.storage,
-		searcher: b.searcher,
-		maxDepth: b.maxNestedFolderDepth,
+		searcher:  b.searcher,
+		access:    b.accessClient,
+		maxDepth:  b.maxNestedFolderDepth,
+		hierarchy: b.accessibleFolderHierarchy,
+		metrics:   b.treeMetrics,
+		topology:  b.treeTopologyCache,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage

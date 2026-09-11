@@ -19,6 +19,9 @@ interface FolderPickerProps {
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 
+  /* Operation used by the folder navigation endpoint to calculate selectable destinations. */
+  purpose?: 'browse' | 'dashboard-create' | 'folder-edit' | 'folder-admin';
+
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
 

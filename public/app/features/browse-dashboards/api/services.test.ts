@@ -52,6 +52,29 @@ const folderHits: DashboardHit[] = [
 ];
 
 const allHits = [...dashboardHits, ...folderHits];
+const folderNavigationHandler = http.get(
+  '/apis/folder.grafana.app/:version/namespaces/:namespace/folders/general/tree',
+  () =>
+    HttpResponse.json({
+      items: [
+        {
+          uid: 'sharedwithme',
+          title: 'Shared with me',
+          kind: 'virtual',
+          access: 'navigation',
+          selectable: false,
+        },
+        ...folderHits.map((hit) => ({
+          uid: hit.name,
+          title: hit.title,
+          kind: 'folder',
+          navigationParentUid: hit.folder,
+          access: 'full',
+          selectable: true,
+        })),
+      ],
+    })
+);
 
 describe('browse-dashboards services', () => {
   describe('listDashboards', () => {
@@ -78,7 +101,6 @@ describe('browse-dashboards services', () => {
       jest.clearAllMocks();
       mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
       config.featureToggles.foldersAppPlatformAPI = false;
-      config.featureToggles.accessibleFolderHierarchy = false;
       config.sharedWithMeFolderUID = 'sharedwithme';
       invalidateAccessibleFolderTree();
     });
@@ -123,6 +145,7 @@ describe('browse-dashboards services', () => {
     describe('new API (foldersAppPlatformAPI = true)', () => {
       beforeEach(() => {
         config.featureToggles.foldersAppPlatformAPI = true;
+        server.use(folderNavigationHandler);
       });
 
       it('returns the correct folders for the requested page', async () => {
@@ -159,7 +182,7 @@ describe('browse-dashboards services', () => {
         server.use(getCustomSearchHandler(allHits));
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
-        expect(result).toHaveLength(4);
+        expect(result).toHaveLength(3);
         expect(result[0]).toMatchObject({
           kind: 'folder',
           uid: 'sharedwithme',
@@ -177,7 +200,7 @@ describe('browse-dashboards services', () => {
       it('does not add shared with me folder on subsequent pages', async () => {
         const result = await listFolders(undefined, undefined, 2, PAGE_SIZE);
 
-        expect(result).toHaveLength(2);
+        expect(result).toHaveLength(1);
         expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
       });
 
@@ -189,30 +212,46 @@ describe('browse-dashboards services', () => {
         expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
       });
 
-      it('does not add shared with me folder when config.sharedWithMeFolderUID is not set', async () => {
+      it('uses the backend virtual shared folder when config.sharedWithMeFolderUID is not set', async () => {
         server.use(getCustomSearchHandler(allHits));
         config.sharedWithMeFolderUID = undefined;
 
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
         expect(result).toHaveLength(3);
-        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
-        expect(result[0]).toMatchObject({ uid: TEAM_FOLDERS_UID });
+        expect(result.find((f) => f.uid === 'sharedwithme')).toMatchObject({
+          navigationKind: 'virtual',
+          url: undefined,
+        });
+        expect(result[1]).toMatchObject({ uid: TEAM_FOLDERS_UID });
       });
     });
 
     describe('authorization-aware hierarchy', () => {
       beforeEach(() => {
         config.featureToggles.foldersAppPlatformAPI = true;
-        config.featureToggles.accessibleFolderHierarchy = true;
         folderAPIVersionResolver.set('v1');
         server.use(
           http.get('/apis/folder.grafana.app/v1/namespaces/:namespace/folders/general/tree', () =>
             HttpResponse.json({
               items: [
-                { name: 'restricted', title: 'Restricted', access: 'ancestor' },
-                { name: 'department-a', title: 'Department A', parent: 'restricted', access: 'ancestor' },
-                { name: 'team-a', title: 'Team A', parent: 'department-a', access: 'full' },
+                { uid: 'restricted', title: 'Restricted', kind: 'folder', access: 'ancestor', selectable: false },
+                {
+                  uid: 'department-a',
+                  title: 'Department A',
+                  kind: 'folder',
+                  navigationParentUid: 'restricted',
+                  access: 'ancestor',
+                  selectable: false,
+                },
+                {
+                  uid: 'team-a',
+                  title: 'Team A',
+                  kind: 'folder',
+                  navigationParentUid: 'department-a',
+                  access: 'full',
+                  selectable: true,
+                },
               ],
             })
           )
@@ -268,6 +307,7 @@ describe('browse-dashboards services', () => {
       beforeEach(() => {
         config.featureToggles.foldersAppPlatformAPI = true;
         setTestFlags({ 'grafana.starredFolders': true });
+        server.use(folderNavigationHandler);
       });
 
       afterEach(() => {

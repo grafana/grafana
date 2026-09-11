@@ -44,7 +44,9 @@ export interface DashboardViewItem {
 
   parentUID?: string;
   /** Whether this folder is usable or is only projected to preserve an authorized path. */
-  access?: 'full' | 'ancestor';
+  access?: 'full' | 'ancestor' | 'navigation';
+  selectable?: boolean;
+  navigationKind?: 'folder' | 'virtual';
   /** @deprecated Not used in new Browse UI */
   parentTitle?: string;
   /** @deprecated Not used in new Browse UI */

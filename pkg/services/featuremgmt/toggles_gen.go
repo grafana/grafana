@@ -638,6 +638,10 @@ const (
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
 
+	// FlagAccessibleFolderHierarchy
+	// Projects accessible folders into their minimum real ancestor hierarchy without granting access to ancestors
+	FlagAccessibleFolderHierarchy = "accessibleFolderHierarchy"
+
 	// FlagAlertingNotificationHistory
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"

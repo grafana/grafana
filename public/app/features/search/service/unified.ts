@@ -20,7 +20,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
-import { getAccessibleFolderTree } from 'app/features/folders/api/accessibleFolderTree';
+import { getFolderNavigationTree } from 'app/features/folders/api/accessibleFolderTree';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -459,8 +459,8 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 }
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
-  if (config.featureToggles.foldersAppPlatformAPI && config.featureToggles.accessibleFolderHierarchy) {
-    const folders = await getAccessibleFolderTree('view');
+  if (config.featureToggles.foldersAppPlatformAPI) {
+    const folders = await getFolderNavigationTree('browse');
     const locationInfo: Record<string, LocationInfo> = {
       general: {
         kind: 'folder',
@@ -474,10 +474,10 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
       },
     };
     for (const folder of folders) {
-      locationInfo[folder.name] = {
+      locationInfo[folder.uid] = {
         name: folder.title,
-        kind: 'folder',
-        url: folder.access === 'full' ? toURL('folders', folder.name, folder.title) : '',
+        kind: folder.kind === 'virtual' ? 'sharedwithme' : 'folder',
+        url: folder.access === 'full' ? toURL('folders', folder.uid, folder.title) : '',
       };
     }
     return locationInfo;
