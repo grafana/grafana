@@ -3,8 +3,8 @@ import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import AlertGroups from './AlertGroups';
