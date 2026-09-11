@@ -300,7 +300,7 @@ export class GrafanaBootConfig {
     // and before the bootData aliasing below so both access paths share the same proxy.
     if (this.disableLegacyFeatureToggles) {
       // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
-      this.featureToggles = blankLegacyFeatureToggles(this.featureToggles);
+      this.featureToggles = blankAndReportLegacyFeatureToggles(this.featureToggles);
     }
 
     // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
@@ -318,8 +318,8 @@ export class GrafanaBootConfig {
  * undefined, so single-tenant Grafana behaves like the multi-tenant frontend service, which
  * serves an empty toggle map.
  */
-function blankLegacyFeatureToggles(featureToggles: FeatureToggles): FeatureToggles {
-  const warnedFeatureToggles = new Set<string>();
+function blankAndReportLegacyFeatureToggles(featureToggles: FeatureToggles): FeatureToggles {
+  const reportedFeatureToggles = new Set<string>();
 
   return new Proxy(featureToggles, {
     get(_target, property) {
@@ -327,24 +327,25 @@ function blankLegacyFeatureToggles(featureToggles: FeatureToggles): FeatureToggl
         return undefined;
       }
 
-      // One console warning per toggle, carrying a stack so the call site is findable.
-      if (!warnedFeatureToggles.has(property)) {
-        warnedFeatureToggles.add(property);
+      // Reported once per toggle rather than once per read: there are hundreds of legacy reads, so
+      // per-read reporting would bury the signal under its own noise.
+      if (!reportedFeatureToggles.has(property)) {
+        reportedFeatureToggles.add(property);
+
+        // The stack makes the call site findable.
         console.warn(
           `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated and now resolves to undefined. Use OpenFeature instead.`,
           new Error().stack
         );
-      }
 
-      // A toast every time, so the read cannot be missed. Reads that happen before the app event
-      // bus is wired up have nowhere to publish, and must not throw from inside a get trap.
-      try {
-        getAppEvents().publish({
-          type: AppEvents.alertError.name,
-          payload: [`Legacy feature toggle read: "${property}"`, 'Use OpenFeature instead.'],
-        });
-      } catch {
-        // The console warning above is enough in that case.
+        // Reads that happen before the app event bus is wired up have nowhere to publish, and must
+        // not throw from inside a get trap — the console warning above covers that case.
+        try {
+          getAppEvents().publish({
+            type: AppEvents.alertWarning.name,
+            payload: [`Legacy feature toggle read: "${property}"`, 'Use OpenFeature instead.'],
+          });
+        } catch {}
       }
 
       return undefined;

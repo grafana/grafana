@@ -58,16 +58,21 @@ describe('GrafanaBootConfig', () => {
       expect(warnSpy.mock.calls[1][0]).toContain('"lokiExperimentalStreaming"');
     });
 
-    it('publishes a toast on every read, not just the first', () => {
+    it('publishes one warning toast per toggle, not per read', () => {
       const config = createConfig({ disableLegacyFeatureToggles: true });
 
       void config.featureToggles.panelTitleSearch;
       void config.featureToggles.panelTitleSearch;
+      void config.featureToggles.lokiExperimentalStreaming;
 
       expect(publishSpy).toHaveBeenCalledTimes(2);
-      expect(publishSpy).toHaveBeenLastCalledWith({
-        type: AppEvents.alertError.name,
+      expect(publishSpy).toHaveBeenNthCalledWith(1, {
+        type: AppEvents.alertWarning.name,
         payload: ['Legacy feature toggle read: "panelTitleSearch"', 'Use OpenFeature instead.'],
+      });
+      expect(publishSpy).toHaveBeenNthCalledWith(2, {
+        type: AppEvents.alertWarning.name,
+        payload: ['Legacy feature toggle read: "lokiExperimentalStreaming"', 'Use OpenFeature instead.'],
       });
     });
 

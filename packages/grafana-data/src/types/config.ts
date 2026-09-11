@@ -278,7 +278,6 @@ export interface GrafanaConfig {
   featureToggles: FeatureToggles;
   /**
    * When true, the frontend serves an empty `featureToggles` map so only OpenFeature flags resolve.
-   * Optional: a backend that predates the flag simply omits it.
    */
   disableLegacyFeatureToggles?: boolean;
   licenseInfo: LicenseInfo;
