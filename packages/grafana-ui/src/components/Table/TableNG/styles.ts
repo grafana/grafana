@@ -6,6 +6,7 @@ import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import {
   COLUMN,
+  COLUMN_SETTLE_MS,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
@@ -59,6 +60,29 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
 // hair of `background.secondary`, the established "one step off white" surface.
 const HEADER_BACKGROUND_EMPHASIS = 0.04;
 
+// `table.refresh` drag states: react-data-grid paints the dragged column and its drop target with
+// solid colors, and both step off the header's own background so they still read as part of it.
+const HEADER_DRAGGING_EMPHASIS = 0.1;
+const HEADER_DRAG_TARGET_EMPHASIS = 0.05;
+
+// The background the grid's rows sit on. Shared so the header, its drag states and the settle
+// highlight all derive from one color rather than each recomputing it.
+const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
+  if (theme.flags.visualDesignRefresh) {
+    return transparent ? theme.colors.background.page : theme.components.panel.background;
+  }
+  return transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+};
+
+const getHeaderBackgroundColor = (
+  theme: GrafanaTheme2,
+  transparent?: boolean,
+  tableRefreshEnabled?: boolean
+): string => {
+  const bgColor = getGridBackgroundColor(theme, transparent);
+  return tableRefreshEnabled ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS) : bgColor;
+};
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -67,11 +91,7 @@ export const getGridStyles = memoize(
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean
   ) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-    if (visualRefreshEnabled) {
-      bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
-    }
+    const bgColor = getGridBackgroundColor(theme, transparent);
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
     // unpredictable for background color cells
     const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
@@ -81,9 +101,12 @@ export const getGridStyles = memoize(
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
-    const headerBackgroundColor = tableRefreshEnabled
-      ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
-      : bgColor;
+    const headerBackgroundColor = getHeaderBackgroundColor(theme, transparent, tableRefreshEnabled);
+    const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
+    const headerCellDragTargetBackgroundColor = theme.colors.emphasize(
+      headerBackgroundColor,
+      HEADER_DRAG_TARGET_EMPHASIS
+    );
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
@@ -208,6 +231,17 @@ export const getGridStyles = memoize(
             // rounded corners) doesn't clip this: it governs the cell's own content, not a
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            // Backs the settle highlight (see getColumnSettleStyles): a plain transition rather than
+            // a @keyframes animation, so a background-color change mid-transition (the settle class
+            // toggling off, or a theme switch changing the color itself) blends smoothly from
+            // whatever's currently rendered instead of a keyframe animation restarting from a fixed
+            // "from" color computed under the old theme.
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
           },
           // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
@@ -277,6 +311,20 @@ export const getGridStyles = memoize(
         paddingBlockStart: 0,
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        // `table.refresh`: react-data-grid applies these classes itself while a column drag is in
+        // progress — only the visual treatment lives here, gated so a column can only look
+        // draggable once `enableColumnReorder` actually makes it so.
+        ...(tableRefreshEnabled && {
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            backgroundColor: headerCellDraggingBackgroundColor,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: headerCellDragTargetBackgroundColor,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
+        }),
       }),
       displayNone: css({ display: 'none' }),
       paginationContainer: css({
@@ -311,6 +359,18 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
+  })
+);
+
+// The brief highlight a column carries after it lands from a reorder or a pin. Same color the drop
+// target uses, so the settle reads as the tail end of the drag rather than a new signal; the
+// transition it fades over lives on the header cell itself (see getGridStyles).
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
+  css({
+    backgroundColor: theme.colors.emphasize(
+      getHeaderBackgroundColor(theme, false, tableRefreshEnabled),
+      HEADER_DRAG_TARGET_EMPHASIS
+    ),
   })
 );
 

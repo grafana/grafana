@@ -71,6 +71,7 @@ type CommonTableOptions = Pick<
   | 'cellHeight'
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
+  | 'showColumnsSidebar'
 >;
 
 /**
@@ -97,6 +98,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       cellHeight: options.cellHeight,
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
+      showColumnsSidebar: options.showColumnsSidebar,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
@@ -111,6 +113,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.cellHeight,
       options.maxRowHeight,
       options.disableKeyboardEvents,
+      options.showColumnsSidebar,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,
