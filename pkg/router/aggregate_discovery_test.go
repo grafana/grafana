@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +39,38 @@ func TestDiscoverGroups_NonOKStatus(t *testing.T) {
 
 	_, err := discoverGroups(t.Context(), srv.Client(), srv.URL)
 	require.Error(t, err)
+}
+
+// TestDiscoverGroups_ClientTimeoutFires proves that a *http.Client with a
+// Timeout set (as rest.HTTPClientFor now produces via rest.Config.Timeout in
+// cloud_router.go) bounds discoverGroups even when the upstream completes
+// the handshake and then never responds -- the scenario that previously hung
+// poll() forever because the zero-value rest.Config.Timeout produced a
+// client with no deadline at all.
+func TestDiscoverGroups_ClientTimeoutFires(t *testing.T) {
+	block := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-block // never responds until the test unblocks it below
+	}))
+	defer func() {
+		close(block) // let the handler return so srv.Close() doesn't hang
+		srv.Close()
+	}()
+
+	client := &http.Client{Timeout: 50 * time.Millisecond}
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := discoverGroups(t.Context(), client, srv.URL)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		require.Error(t, err, "discoverGroups must return an error once the client timeout fires, not hang")
+	case <-time.After(5 * time.Second):
+		t.Fatal("discoverGroups did not return within 5s of the 50ms client timeout -- timeout is not being enforced")
+	}
 }
 
 func TestAggregateBackend_ProxiesToTargetHost(t *testing.T) {

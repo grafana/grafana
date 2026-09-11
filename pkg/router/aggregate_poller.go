@@ -18,6 +18,14 @@ const (
 	defaultAggregatePollInterval = 30 * time.Second
 	defaultAggregateMinBackoff   = 5 * time.Second
 	defaultAggregateMaxBackoff   = 5 * time.Minute
+
+	// defaultAggregateDiscoveryTimeout bounds each discovery HTTP request so
+	// a silent upstream (handshake completes, response never arrives) can't
+	// hang poll() forever -- poll() runs synchronously in run()'s select
+	// loop, so a stuck request would otherwise freeze that target's
+	// discovery permanently. Generous for a discovery GET while leaving
+	// headroom before the next poll tick.
+	defaultAggregateDiscoveryTimeout = 10 * time.Second
 )
 
 // aggregateTarget owns one fixed upstream apiserver's discovery poll loop.

@@ -80,6 +80,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		restCfg := &rest.Config{
 			Host:          targetCfg.URL,
 			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace),
+			Timeout:       defaultAggregateDiscoveryTimeout,
 		}
 		httpClient, err := rest.HTTPClientFor(restCfg)
 		if err != nil {
