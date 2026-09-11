@@ -100,8 +100,6 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       cellHeight: options.cellHeight,
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
-      // The option is only offered behind the toggle, so it is only honoured there too - a
-      // dashboard that picked it up on an enabled instance shouldn't stripe on one without it.
       zebraStriping: refreshNewFeaturesEnabled && options.zebraStriping,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
