@@ -796,6 +796,7 @@ export interface ContentAwareWidths {
   enableColumnReorder?: boolean;
   canManageColumns?: boolean;
   noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
@@ -846,6 +847,7 @@ interface UseContentAwareWidthsOptions {
   enableColumnReorder?: boolean;
   canManageColumns?: boolean;
   noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
 }
 
 /**
@@ -864,6 +866,7 @@ export function useContentAwareWidths({
   enableColumnReorder = false,
   canManageColumns = false,
   noPanelPadding = false,
+  preventHorizontalOverflow = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
@@ -881,6 +884,7 @@ export function useContentAwareWidths({
             enableColumnReorder,
             canManageColumns,
             noPanelPadding,
+            preventHorizontalOverflow,
           }
         : undefined,
     [
@@ -895,6 +899,7 @@ export function useContentAwareWidths({
       enableColumnReorder,
       canManageColumns,
       noPanelPadding,
+      preventHorizontalOverflow,
     ]
   );
 }

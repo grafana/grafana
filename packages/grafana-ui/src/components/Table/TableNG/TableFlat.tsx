@@ -106,6 +106,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled = false,
     showColumnsSidebar = false,
     zebraStriping = false,
+    preventHorizontalOverflow = false,
   } = props;
 
   const theme = useTheme2();
@@ -393,6 +394,7 @@ export function TableFlat(props: TableNGProps) {
     enableColumnReorder: tableRefreshEnabled,
     canManageColumns: tableRefreshEnabled,
     noPanelPadding,
+    preventHorizontalOverflow,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
