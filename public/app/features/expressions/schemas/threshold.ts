@@ -15,16 +15,14 @@ import {
 } from './common';
 
 /**
- * Checks a series against a threshold.
+ * Checks a series against a threshold. Two things here are easy to get wrong:
  *
- * Two things about this type are easy to get wrong:
- *
- * - `expression` must be a plain refId. `reduce` and `resample` both tolerate a leading `$`, but
- *   threshold does not, and `$A` ends up looking for a query named `$A`. We do not rewrite it on
- *   read, because that would silently change a saved rule; the save rules reject it instead so the
- *   user finds out.
- * - The backend accepts exactly one condition. We still model the list as "one or more" so nothing
- *   is thrown away when reading a rule that somehow has more, and catch it on save.
+ * - `expression` has to be a plain query name. `reduce` and `resample` ignore a leading `$`, but
+ *   threshold does not and would look for a query called `$A`. We leave it alone when reading,
+ *   since rewriting it would change someone's saved rule behind their back, and reject it on save
+ *   instead so they hear about it.
+ * - Only one condition is allowed. The list is typed as "one or more" anyway, so a rule that
+ *   somehow has more does not lose them on the way in, and saving is what complains.
  */
 
 const conditionWireSchema = z.looseObject({
@@ -32,15 +30,15 @@ const conditionWireSchema = z.looseObject({
     type: EvalFunction.IsAbove,
     params: [],
   }),
-  // `null` here means "no hysteresis", same as leaving it out.
+  // `null` means no recovery threshold, same as leaving it out.
   unloadEvaluator: evaluatorWire(THRESHOLD_EVAL_FUNCTIONS).nullish().catch(undefined),
   /**
-   * Which series are currently firing. The server writes this in when it evaluates the rule; we
-   * never author it, but it has to survive a read/write round trip or hysteresis resets and the
-   * alert re-fires.
+   * Which series are already firing. The server fills this in when it evaluates the rule. We never
+   * set it, but it has to survive being read and written again - lose it and the alert forgets it
+   * was firing and goes off a second time.
    */
   loadedFingerprints: z.array(z.string()).optional().catch(undefined),
-  /** Superseded by loadedFingerprints. An encoded data frame, kept as-is. */
+  /** The older version of the field above. Passed through as-is. */
   loadedDimensions: z.unknown().optional(),
 });
 

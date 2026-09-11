@@ -12,11 +12,8 @@ import type { SqlExpressionQuery } from './sql';
 import { type ThresholdExpressionQuery, defaultThresholdCondition } from './threshold';
 
 /**
- * Builders for new expressions.
- *
- * Before these existed, five different places built their own reduce-and-threshold pair by hand
- * and two of them had already drifted apart. Everything that creates an expression should come
- * through here so there is only one set of defaults to keep straight.
+ * Builders for new expressions. Five places used to write their own defaults by hand, and two had
+ * already drifted apart, so create expressions through here.
  */
 
 /** What every expression carries, whatever its type. */
@@ -109,21 +106,17 @@ export function getExpressionInput(query: ExpressionQuery): string | undefined {
   return isClassicExpression(query) ? undefined : query.expression;
 }
 
-/**
- * Sets what the expression reads from, when the type has such a field. Classic conditions are
- * returned unchanged.
- */
+/** Points the expression at a different query. Classic conditions come back unchanged. */
 export function withExpressionInput(query: ExpressionQuery, expression: string): ExpressionQuery {
   return isClassicExpression(query) ? query : { ...query, expression };
 }
 
 /**
- * Swaps an expression to a different type, keeping the refId and data source. Fields that only
- * made sense for the old type are dropped rather than carried over, which is what the editor wants
- * and what the old in-place `getDefaults` was trying to do by clearing them one at a time.
+ * Changes an expression to a different type, keeping its name and data source. Fields that only
+ * made sense for the old type are dropped rather than carried over.
  */
 export function changeExpressionType(query: ExpressionQuery, type: ExpressionQueryType): ExpressionQuery {
-  // Picking the type it already is should not throw away the settings that go with it.
+  // Re-picking the type it already is should not wipe the settings that go with it.
   if (query.type === type) {
     return query;
   }

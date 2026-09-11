@@ -232,8 +232,9 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
   const styles = useStyles2(getQueryBoxStyles);
 
   function renderPreview() {
-    // Read before the switch: every type is handled, so the compiler narrows `model` away to
-    // nothing in the default branch. That branch still matters for a model with an unknown type.
+    // Grab this before the switch. Every type is handled below, so by the default branch there is
+    // no type left for `model` to be - but that branch still runs if a rule has a type we do not
+    // know about.
     const unsupportedType: string = model.type;
 
     switch (model.type) {

@@ -494,12 +494,12 @@ export function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: 
 }
 
 /**
- * Reads the expression models in a saved rule through the expression schemas, so everything
- * downstream gets a normalised model: fields older versions left out are filled in, and fields we
- * do not model are carried through untouched.
+ * Reads a saved rule's expressions through the expression schemas, so the rest of the app gets
+ * them in one shape: fields older versions left out are filled in, and fields we do not know about
+ * are passed along untouched.
  *
- * An expression we cannot read at all is left exactly as it was. `setQueryEditorSettings` already
- * knows how to deal with one of those, including fixing up which query is the condition.
+ * An expression we cannot read is left exactly as it was - `setQueryEditorSettings` already deals
+ * with those, including sorting out which query is the condition.
  */
 export function parseExpressionModels<T extends RulerRuleDTO>(rule: T): T {
   if (!rulerRuleType.grafana.rule(rule)) {
@@ -919,9 +919,8 @@ function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number):
 }
 
 /**
- * Writes an expression model back out the way the backend wants it: `settings` left out rather than
- * sent as null, the `$` convention put back where it belongs, and anything we do not model carried
- * through. Data queries are returned untouched.
+ * Writes an expression back out the way the backend wants it: `settings` left out rather than sent
+ * as null, the `$` put back, and unknown fields carried through. Data queries are left alone.
  */
 export function encodeExpressionModel(query: AlertQuery): AlertQuery {
   if (!isExpressionQuery(query.model)) {

@@ -12,13 +12,8 @@ import { type SqlExpressionQuery, sqlCodec, sqlSaveRules } from './sql';
 import { type ThresholdExpressionQuery, thresholdCodec, thresholdSaveRules } from './threshold';
 
 /**
- * Ties the per-type schemas together. Nothing is re-exported from here - this repo does not allow
- * barrel files under public/app - so import the per-type pieces from their own file.
- */
-
-/**
- * One expression query, narrowed by its `type`. Reading a field that only some types have is a
- * compile error until you check the type first, which is the whole point of splitting these up.
+ * Any expression query. Check `type` first: reading a field that only some types have is an
+ * error until you do.
  */
 export type ExpressionQuery =
   | MathExpressionQuery
@@ -51,17 +46,15 @@ const saveRulesByType = {
 } as const;
 
 /**
- * Reads one expression model out of a saved rule.
+ * Reads one expression out of a saved rule. Never throws: anything malformed falls back to a
+ * sensible default, so an old or hand-edited rule still opens. Unknown fields are kept.
  *
- * This never throws. Anything malformed falls back to a sensible default so a rule that was saved
- * by an older version, or hand-edited, still opens in the editor. Unknown fields are kept.
- *
- * Returns undefined when the model has no `type` we recognise - there is nothing sensible to show
- * for one of those, and callers already drop them.
+ * Returns undefined if the `type` is one we do not know, since there is nothing useful to show for
+ * it. Callers already drop those.
  */
 export function parseExpressionQuery(model: unknown): ExpressionQuery | undefined {
-  // safeParse on a codec runs the decode direction and accepts unknown, which is what we have
-  // here - callers read this straight off an API response.
+  // `safeParse` reads rather than writes, and takes anything - which is what we have, since
+  // callers hand us whatever came back from the API.
   const result = expressionQueryCodec.safeParse(model);
 
   if (!result.success) {
@@ -76,19 +69,16 @@ export function parseExpressionQuery(model: unknown): ExpressionQuery | undefine
 }
 
 /**
- * Turns an in-memory expression back into the JSON we send. Drops `settings` rather than sending
- * null, puts the `$` convention back where it belongs, and keeps any unknown fields that came in.
+ * Turns an expression back into the JSON we send: leaves `settings` out rather than sending null,
+ * puts the `$` back where it belongs, and keeps any unknown fields that came in.
  */
 export function encodeExpressionQuery(query: ExpressionQuery): ExpressionQueryWireModel {
   return z.encode(expressionQueryCodec, query);
 }
 
 /**
- * The stricter checks, for when the user saves.
- *
- * Kept separate from the codec on purpose: Zod checks the in-memory side of a codec while reading
- * as well as while writing, so putting these on the codec would stop an already-saved rule that
- * breaks one of them from opening at all.
+ * The stricter checks, for when someone saves. Kept off the codec on purpose - Zod would run them
+ * while reading too, and an already-saved rule that breaks one would stop opening.
  */
 export function validateExpressionQuery(query: ExpressionQuery) {
   return saveRulesByType[query.type].safeParse(query);

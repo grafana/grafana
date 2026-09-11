@@ -13,11 +13,11 @@ const queryModelBase = z.looseObject({
 });
 
 /**
- * A query model, which is either one of Grafana's own expressions or a query for a data source.
+ * Either one of Grafana's own expressions or a query for a data source.
  *
- * Expressions are checked against the real expression schemas, so a plugin passing a malformed one
- * finds out here rather than getting a confusing error from the backend later. Data source query
- * models stay unchecked - there are far too many of them, and they are the data source's business.
+ * Expressions get checked properly, so a plugin sending a broken one finds out here instead of
+ * getting a confusing error from the backend later. Data source queries are left unchecked -
+ * there are far too many of them, and their shape is the data source's business.
  */
 /** Does this model claim to be one of Grafana's expressions? */
 function looksLikeExpression(model: unknown): boolean {

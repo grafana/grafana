@@ -24,11 +24,11 @@ import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
 
 /**
- * Checks the expression models against the stricter rules the backend applies, and returns the
- * first problem as a message.
+ * Checks the expressions against the stricter rules the backend applies and returns the first
+ * problem found, as a message.
  *
- * Deliberately only run on save: a half-finished expression is normal while someone is still
- * editing, but it must not reach the backend, which would reject it with a much less helpful error.
+ * Only run on save. A half-finished expression is normal while someone is still editing it, but it
+ * should not reach the backend, which rejects it with a much less helpful error.
  */
 export function validateExpressionQueries(queries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>) {
   for (const query of queries) {

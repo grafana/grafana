@@ -98,9 +98,9 @@ export const Expression: FC<ExpressionProps> = ({
         .filter((q) => query.refId !== q.refId)
         .map((q) => ({ value: q.refId, label: q.refId }));
 
-      // Read before the switch: every type is handled below, so inside the default branch the
-      // compiler has narrowed `query` away to nothing. The branch still matters at runtime, for a
-      // model that somehow carries a type we do not know.
+      // Grab this before the switch. Every type is handled below, so by the default branch there
+      // is no type left for `query` to be - but that branch still runs if a rule has a type we do
+      // not know about.
       const unsupportedType: string = query.type;
 
       switch (query.type) {

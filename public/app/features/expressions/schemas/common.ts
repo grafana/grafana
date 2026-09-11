@@ -3,31 +3,24 @@ import * as z from 'zod';
 import { EvalFunction } from '../../alerting/state/alertDef';
 
 /**
- * Shared pieces for the per-type expression schemas.
+ * Shared pieces for the per-type expression schemas. Each type gets three things:
  *
- * Every expression type is described by three layers:
+ *   - a schema for the saved JSON, which forgives anything malformed so a rule always opens
+ *   - a codec, which reads that JSON in and writes it back out
+ *   - save rules, the stricter checks that only run when someone saves
  *
- *   1. a *wire* schema  - what the backend actually accepts. Deliberately forgiving: extra fields
- *      are kept, and anything malformed falls back to a default rather than failing.
- *   2. a *codec*        - converts wire <-> in-memory and back. Shape and normalisation only.
- *   3. *save rules*     - the stricter checks we only want to run when the user saves.
+ * Keep the save rules separate from the codec. Zod runs a codec's checks when reading as well as
+ * writing, so a `.refine()` on the codec would stop an already-saved rule from opening at all.
  *
- * Keep the save rules out of the codec. Zod validates the in-memory side of a codec on the way in
- * as well as on the way out, so a `.refine()` attached to the codec would stop us from reading a
- * rule that is already saved and slightly wrong - which would mean a user could no longer open
- * their own alert rule.
- *
- * The shapes here mirror what `pkg/expr` accepts at runtime. There is a generated JSON schema at
- * `pkg/expr/query.types.json`, but it is built from a set of Go structs that the parser does not
- * actually use, and it disagrees with the parser in several places, so it is not a safe reference.
+ * These shapes follow what `pkg/expr` really accepts. Do not use
+ * `pkg/expr/query.types.json` as a reference - it is generated from Go structs the parser does not
+ * use, and it disagrees with the parser in several places.
  */
 
 /**
- * Drops the catch-all `[x: string]: unknown` that looseObject puts on the inferred type.
- *
- * We do want unknown fields kept at runtime, but we do not want the type to accept any field name:
- * without this, reading `query.conditions` off a math expression quietly comes back as `unknown`
- * instead of being the compile error that tells you to check the type first.
+ * `looseObject` lets the type accept any field name. We still want to keep unknown fields when
+ * reading and writing, but with that in place asking a math expression for `conditions` gives you
+ * `unknown` instead of the error you want. This drops it from the type only.
  */
 export type KnownFields<T> = { [K in keyof T as string extends K ? never : K]: T[K] };
 
@@ -60,17 +53,16 @@ export const queryBaseMemory = {
 };
 
 /**
- * Reducers accepted by a `reduce` expression. The backend lower-cases the value before looking it
- * up, so `MAX` works, but the set is smaller than the classic-condition one below and notably has
- * no `avg`.
+ * Reducers a `reduce` expression accepts. The backend lower-cases these, so `MAX` is fine. Note
+ * there is no `avg` here - the average is called `mean`.
  */
 export const REDUCE_REDUCER_IDS = ['sum', 'mean', 'min', 'max', 'count', 'last', 'median'] as const;
 export type ReduceReducerId = (typeof REDUCE_REDUCER_IDS)[number];
 
 /**
- * Reducers accepted inside a classic condition. Overlaps with the `reduce` set but is not a
- * superset - this one has `avg` where `reduce` has `mean` - and the backend does not lower-case it,
- * so the casing here has to be exact.
+ * Reducers a classic condition accepts. Overlaps with the `reduce` list above but is not the same:
+ * the average is `avg` here and `mean` there. The backend does not lower-case these, so the
+ * spelling has to match exactly.
  */
 export const CLASSIC_REDUCER_IDS = [
   'avg',
@@ -120,8 +112,9 @@ export function isRangeEvalFunction(fn: EvalFunction): boolean {
 }
 
 /**
- * Resample only supports a subset of the reducers at execution time. The parser accepts anything,
- * so passing `count` or `median` here parses fine and then fails when the rule runs.
+ * The only downsamplers resample can actually do. It accepts any name when the rule is saved, and
+ * only complains later, when a bucket holds more than one point and it has to combine them - so a
+ * bad name here can sit unnoticed until the data lines up to expose it.
  */
 export const DOWNSAMPLER_IDS = ['sum', 'mean', 'min', 'max', 'last'] as const;
 export type DownsamplerId = (typeof DOWNSAMPLER_IDS)[number];
@@ -130,16 +123,15 @@ export const UPSAMPLER_IDS = ['pad', 'backfilling', 'fillna'] as const;
 export type UpsamplerId = (typeof UPSAMPLER_IDS)[number];
 
 /**
- * `reduce` and `resample` both strip a leading `$` from the expression they reference, so `$A` and
- * `A` mean the same thing to them. `threshold` does not, and a `$A` there ends up looking for a
- * query literally named `$A`. We normalise on read so the rest of the app only ever sees a bare
- * refId.
+ * `reduce` and `resample` ignore a leading `$` on the query they read, so `$A` and `A` mean the
+ * same to them. `threshold` does not, and would go looking for a query actually called `$A`. We
+ * strip it on the way in so the rest of the app only sees plain names.
  */
 export function stripRefIdPrefix(value: string): string {
   return value.startsWith('$') ? value.slice(1) : value;
 }
 
-/** A non-empty list of evaluators, which is what z.enum needs. */
+/** At least one evaluator, which is what `z.enum` needs. */
 type EvalFunctionList = readonly [EvalFunction, ...EvalFunction[]];
 
 /**

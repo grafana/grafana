@@ -16,15 +16,14 @@ import {
 } from './common';
 
 /**
- * The legacy condition type. Each condition reduces one query and compares it to a threshold, and
- * the conditions are combined with and/or.
+ * The old condition type. Each condition reduces one query, compares it to a number, and the
+ * results are combined with and/or.
  *
- * Differences from `threshold` that are easy to trip over:
+ * Three ways it differs from `threshold`, all easy to trip over:
  *
- * - the reducer names are not the same set, and this one is case-sensitive - see
- *   CLASSIC_REDUCER_IDS.
- * - range evaluators need exactly two parameters here, where threshold accepts two or more.
- * - `no_value` is only valid here.
+ * - the reducer names differ, and the spelling has to match exactly - see CLASSIC_REDUCER_IDS
+ * - a range comparison needs exactly two values here; threshold takes two or more
+ * - `no_value` only works here
  */
 
 export const CLASSIC_OPERATORS = ['and', 'or', 'logic-or'] as const;
