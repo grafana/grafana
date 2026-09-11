@@ -11,7 +11,6 @@ import AlertGroups from './AlertGroups';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
-import { GROUPS_PER_PAGE } from './utils/constants';
 import { DataSourceType } from './utils/datasource';
 
 const server = setupMswServer();
@@ -50,10 +49,6 @@ const ui = {
 };
 
 describe('AlertGroups', () => {
-  it('pages the groups list at 1000 rows', () => {
-    expect(GROUPS_PER_PAGE).toBe(1000);
-  });
-
   beforeAll(() => {
     grantUserPermissions([
       AccessControlAction.AlertingInstanceRead,

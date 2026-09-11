@@ -19,7 +19,7 @@ export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
 export const AUTO_SYNC_CONFIG_POLL_INTERVAL_MS = 30000;
 
 export const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
-export const GROUPS_PER_PAGE = 1000;
+export const GROUPS_PER_PAGE = 100;
 
 export enum Annotation {
   description = 'description',
