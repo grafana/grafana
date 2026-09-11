@@ -27,6 +27,9 @@ interface Rudderstack {
         };
         migrate?: boolean;
       };
+      queueOptions?: {
+        maxAttempts?: number;
+      };
     }
   ) => void;
   page: () => void;
@@ -104,6 +107,10 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
           version: 'legacy',
         },
         migrate: false,
+      },
+      // reduce the maximum number of retries for failed requests to avoid network spam.
+      queueOptions: {
+        maxAttempts: 3,
       },
     });
 
