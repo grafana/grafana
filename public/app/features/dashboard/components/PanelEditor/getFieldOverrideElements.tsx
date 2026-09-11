@@ -183,7 +183,7 @@ export function getFieldOverrideCategories(
 
     const configPropertiesOptions = registry.selectOptions(
       undefined,
-      (item) => !item.hideFromOverrides,
+      (item) => !item.hideFromOverrides && item.showIfOverride?.(context) !== false,
       (item) => {
         let label = item.name;
         if (item.category) {

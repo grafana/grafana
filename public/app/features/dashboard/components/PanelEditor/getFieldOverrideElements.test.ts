@@ -1,4 +1,5 @@
 import {
+  type DynamicConfigValue,
   type FieldConfigOptionsRegistry,
   type FieldConfigPropertyItem,
   type FieldConfigSource,
@@ -7,6 +8,7 @@ import {
   Registry,
 } from '@grafana/data';
 
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 
 jest.mock('app/features/panel/panellinks/link_srv', () => ({
@@ -192,6 +194,79 @@ describe('getFieldOverrideCategories', () => {
       }>;
 
       expect(element.props.options).toHaveLength(3);
+    });
+  });
+
+  describe('showIfOverride', () => {
+    const fieldConfigWith = (properties: FieldConfigSource['overrides'][number]['properties']): FieldConfigSource => ({
+      defaults: {},
+      // matcher.options must be truthy for the add-property button to appear
+      overrides: [{ matcher: { id: 'byName', options: 'someField' }, properties }],
+    });
+
+    function getPickerOptionValues(categories: OptionsPaneCategoryDescriptor[]): string[] {
+      const overrideCategory = categories[0];
+      const addButtonItem = overrideCategory.items[overrideCategory.items.length - 1];
+      const element = addButtonItem.props.render(addButtonItem) as React.ReactElement<{
+        options: Array<{ value: string }>;
+      }>;
+      return element.props.options.map((o) => o.value);
+    }
+
+    it('excludes an item from the add override property picker when its predicate returns false', () => {
+      const registry = makeRegistry([
+        makeItem('custom.lineWidth', {
+          showIfOverride: (context) => (context.options as { variant?: string })?.variant !== 'sankey',
+        }),
+        makeItem('custom.fillOpacity'),
+      ]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn(), {
+        variant: 'sankey',
+      });
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.fillOpacity']);
+    });
+
+    it('offers the item when the same predicate returns true for the current panel options', () => {
+      const registry = makeRegistry([
+        makeItem('custom.lineWidth', {
+          showIfOverride: (context) => (context.options as { variant?: string })?.variant !== 'sankey',
+        }),
+        makeItem('custom.fillOpacity'),
+      ]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn(), {
+        variant: 'line',
+      });
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.lineWidth', 'custom.fillOpacity']);
+    });
+
+    it('offers items that declare no predicate', () => {
+      const registry = makeRegistry([makeItem('custom.a'), makeItem('custom.b')]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn());
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.a', 'custom.b']);
+    });
+
+    it('still renders the row for a rule that already set the hidden property, keeping its value', () => {
+      const registry = makeRegistry([makeItem('custom.lineWidth', { showIfOverride: () => false })]);
+      const fieldConfig = fieldConfigWith([{ id: 'custom.lineWidth', value: 5 }]);
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), { variant: 'sankey' });
+
+      // hiding it from the picker must not strand an existing override the user cannot see or remove
+      expect(getPickerOptionValues(categories)).toEqual([]);
+
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      expect(propertyItem).toBeDefined();
+
+      const element = propertyItem!.props.render(propertyItem!) as React.ReactElement<{
+        property: DynamicConfigValue;
+      }>;
+      expect(element.props.property).toEqual({ id: 'custom.lineWidth', value: 5 });
     });
   });
 
