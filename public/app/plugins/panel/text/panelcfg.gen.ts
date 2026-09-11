@@ -61,6 +61,10 @@ export interface Options {
    */
   frameIndex?: number;
   mode: TextMode;
+  /**
+   * Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+   */
+  pageSize?: number;
   renderMode?: RenderMode;
 }
 

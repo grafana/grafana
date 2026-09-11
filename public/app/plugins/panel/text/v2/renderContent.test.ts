@@ -26,6 +26,7 @@ import {
   MAX_RENDERED_CHARS,
   MAX_RENDERED_ROWS,
   renderContent,
+  type RowWindow,
 } from './renderContent';
 
 beforeEach(() => {
@@ -80,9 +81,15 @@ function interpolate(
   content: string,
   series: DataFrame[] | undefined,
   renderMode: RenderMode | undefined,
-  mode = TextMode.Markdown
+  mode = TextMode.Markdown,
+  rowWindow?: RowWindow
 ) {
-  return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
+  return interpolateTemplate({ content, series, renderMode, mode, rowWindow }, createReplaceVariables());
+}
+
+/** One page of a per-row render, in markdown mode. */
+function withWindow(content: string, series: DataFrame[], rowWindow: RowWindow) {
+  return interpolate(content, series, RenderMode.PerRow, TextMode.Markdown, rowWindow).split('\n\n');
 }
 
 const theme = createTheme();
@@ -245,6 +252,45 @@ describe('interpolateTemplate', () => {
       expect(blocks[MAX_RENDERED_ROWS - 1]).toBe(String(MAX_RENDERED_ROWS - 1));
     });
 
+    it('renders only the rows the page covers', () => {
+      expect(withWindow('${__data.fields.n}', [numberedFrame(50)], { start: 20, count: 5 })).toEqual([
+        '20',
+        '21',
+        '22',
+        '23',
+        '24',
+      ]);
+    });
+
+    it('counts the page across frames, so a page can start inside a later one', () => {
+      const series = [numberedFrame(3), numberedFrame(3)];
+
+      expect(withWindow('${__data.fields.n}', series, { start: 2, count: 3 })).toEqual(['2', '0', '1']);
+    });
+
+    it('ends the last page at the final row instead of padding it out', () => {
+      expect(withWindow('${__data.fields.n}', [numberedFrame(12)], { start: 10, count: 5 })).toEqual(['10', '11']);
+    });
+
+    it('reaches rows past the hard ceiling, which no single pass renders', () => {
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
+
+      expect(withWindow('${__data.fields.n}', series, { start: MAX_RENDERED_ROWS, count: 5 })).toEqual([
+        '1000',
+        '1001',
+        '1002',
+        '1003',
+        '1004',
+      ]);
+    });
+
+    it('holds a page over the hard ceiling to the rows one pass can render', () => {
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 500)];
+      const blocks = withWindow('${__data.fields.n}', series, { start: 0, count: MAX_RENDERED_ROWS + 500 });
+
+      expect(blocks).toHaveLength(MAX_RENDERED_ROWS);
+    });
+
     it('stops at the size backstop before reaching the hard ceiling', () => {
       const rendered = interpolate('x'.repeat(1000), [numberedFrame(MAX_RENDERED_ROWS)], RenderMode.PerRow);
 
@@ -336,6 +382,16 @@ describe('interpolateTemplate', () => {
 
     it('renders the whole result set for Once', () => {
       expect(interpolate('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe('- web-1\n- web-2\n');
+    });
+
+    it('renders every row of a Once template, which pages nothing to page through', () => {
+      const series = [numberedFrame(150)];
+      const rendered = interpolate('{{#each data}}{{n}},{{/each}}', series, RenderMode.Once, TextMode.Markdown, {
+        start: 0,
+        count: 5,
+      });
+
+      expect(rendered.split(',').filter(Boolean)).toHaveLength(150);
     });
 
     it('caps the rows a Once template can iterate, so a huge frame cannot lock up the browser', () => {

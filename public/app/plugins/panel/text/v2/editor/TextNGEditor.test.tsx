@@ -21,6 +21,19 @@ afterAll(() => {
   setTestFlags({});
 });
 
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
+}));
+
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
