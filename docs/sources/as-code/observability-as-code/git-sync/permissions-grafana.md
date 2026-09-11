@@ -103,7 +103,7 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 
 **Resource access** depends on folder/dashboard permissions:
 
-- **Folder Editor or Admin**: Create, edit, and delete dashboards within the folder; create subfolders; changes sync to Git
+- **Folder Editor or Admin**: Create, edit, move, and delete dashboards within the folder; create subfolders; changes sync to Git
 - **Folder Viewer**: View dashboards only within that folder
 - **Dashboard Editor or Admin**: Edit specific dashboards; changes sync to Git (even without folder edit access)
 - **Dashboard Viewer**: View specific dashboards only
@@ -123,7 +123,11 @@ Users with the `Viewer` role can view provisioned resources. Their access to spe
 
 - **Folder Viewer**: View all dashboards and subfolders within that folder
 - **Dashboard Viewer**: View specific dashboards (even if they don't have folder access)
-- Cannot edit dashboards or manage Git Sync repositories
+- Cannot push changes to open a pull request, migrate resources, or manage Git Sync repositories, regardless of folder permissions
+
+{{< admonition type="note" >}}
+Moving and deleting only checks the folder/dashboard permission - not the organization role - when the job targets the repository's configured branch. So a `Viewer` who's also granted Folder Editor/Admin permission gets the same create, edit, move, and delete access listed for [Editor users](#editor-users), for that folder. A `Viewer` with only Dashboard-level Editor/Admin permission (no folder access) can edit and delete that dashboard the same way, but can't move it - moving needs create permission on the destination, which only a folder-level grant provides. The organization role still gates push, migrate, repository management, and any move or delete targeting a branch other than the configured one - refer to [Job actions and required permissions](#job-actions-and-required-permissions) for the full breakdown.
+{{< /admonition >}}
 
 ## Configure folder and dashboard permissions
 
@@ -147,7 +151,7 @@ When Git Sync creates a provisioned folder, it assigns these default permissions
 **Folder-level `Editor` users**:
 
 - Have all `Viewer` permissions
-- Create, edit and delete dashboards
+- Create, edit, move, and delete dashboards
 - Create subfolders
 - When an `Editor` saves dashboard changes, Git Sync automatically commits the changes to Git, or creates a pull request if branch protection is enabled
 
@@ -281,18 +285,29 @@ The following applies for Git Sync:
 
 ### Job actions and required permissions
 
-Git Sync operations run as jobs. You need the `provisioning.jobs:create` permission to create any job. Moreover, **some job actions are restricted to administrators** and require the `provisioning.repositories:write` permission. This prevents editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
+Git Sync operations run as jobs, but not all job actions are gated the same way:
 
-| Job action                          | Required permission                                                                   | Who can run it                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Push changes / open pull request    | `provisioning.jobs:create` plus the relevant `dashboards:*` / `folders:*` permissions | Editors and Admins, on the resources they can modify      |
-| Migrate resources                   | `provisioning.jobs:create` plus read/write on the affected resource types             | Editors and Admins with the required resource permissions |
-| Manual sync (pull from Git)         | `provisioning.repositories:write`                                                     | Admins only                                               |
-| Release / delete orphaned resources | `provisioning.repositories:write`                                                     | Admins only                                               |
+- **Move and delete** check the `dashboards:*` / `folders:*` permissions on the resources being moved or deleted - the same permissions that apply without Git Sync. They don't require `provisioning.jobs:create`, so a `Viewer` with the right folder or dashboard access can do them without an `Editor` role. Move also needs create permission on the destination, which is inherently folder-scoped: a `Viewer` with only Dashboard-level Editor/Admin permission (no folder access) can delete that dashboard, but can't move it - there's no destination folder to check create against.
+- **Push, migrate, and fix folder metadata** require `provisioning.jobs:create`, which is only granted to `Editor` and `Admin`. These actions have no equivalent per-resource permission to check, so the organization role is what gates them.
+- **Manual sync (pull from Git) and orphan-resource cleanup** require `provisioning.repositories:write`, which is admin-only. This keeps Editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
 
-### Repository subresource access
+{{< admonition type="note" >}}
+Move and delete only skip the `provisioning.jobs:create` requirement when the job targets the repository's configured branch (the default when no ref is specified). A move or delete that names a different branch - available when the repository's branch workflow is enabled - always requires `provisioning.jobs:create` in addition to the usual `dashboards:*`/`folders:*` permissions, since per-resource authorization reads from the configured branch and can't safely evaluate content on another one. A folder-scoped `Viewer` who can move and delete on the configured branch will still get a 403 targeting a feature branch.
+{{< /admonition >}}
 
-The repository API exposes several subresources. The following table shows the permission each one is gated on.
+| Job action                          | Required permission                                                                                           | Who can run it                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Move dashboards/folders             | `dashboards:write` / `folders:write` on the source, `dashboards:create` / `folders:create` on the destination | Anyone with the required folder/dashboard permission      |
+| Delete dashboards/folders           | `dashboards:delete` / `folders:delete` on the resources being deleted                                         | Anyone with the required folder/dashboard permission      |
+| Push changes / open pull request    | `provisioning.jobs:create` plus read on the resources being pushed                                            | Editors and Admins                                        |
+| Migrate resources                   | `provisioning.jobs:create` plus read/write on the affected resource types                                     | Editors and Admins with the required resource permissions |
+| Fix folder metadata                 | `provisioning.jobs:create`                                                                                    | Editors and Admins                                        |
+| Manual sync (pull from Git)         | `provisioning.repositories:write`                                                                             | Admins only                                               |
+| Release / delete orphaned resources | `provisioning.repositories:write`                                                                             | Admins only                                               |
+
+### Repository `subresource` access
+
+The repository API exposes several `subresources`. The following table shows the permission each one is gated on.
 
 The `refs` subresource lists the repository's branches and commits, and two distinct flows legitimately need it:
 
@@ -301,11 +316,17 @@ The `refs` subresource lists the repository's branches and commits, and two dist
 
 Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
 
-| Subresource                      | Purpose                                    | Required permission                                                     | Who can access it       |
-| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ----------------------- |
-| `files`                          | Read and write provisioned resource files  | Authenticated access, then standard `dashboards:*` / `folders:*` checks | All authenticated users |
-| `refs`                           | List repository branches and commits       | `provisioning.repositories:write` **or** `provisioning.jobs:create`     | Admins and Editors      |
-| `resources`, `history`, `status` | Repository management and inspection views | `provisioning.repositories:write`                                       | Admins only             |
+| `Subresource`                    | Purpose                                              | Required permission                                                                                                                                       | Who can access it       |
+| -------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `files`                          | Read and write provisioned resource files            | Authenticated access, then standard `dashboards:*` / `folders:*` checks                                                                                   | All authenticated users |
+| `jobs` (create)                  | Create a move, delete, push, migrate, and so on, job | Authenticated access; the specific action decides the permission - refer to [Job actions and required permissions](#job-actions-and-required-permissions) | All authenticated users |
+| `jobs` (list/get/watch)          | View job status and history                          | `provisioning.jobs:read`                                                                                                                                  | Editors and Admins      |
+| `refs`                           | List repository branches and commits                 | `provisioning.repositories:write` **or** `provisioning.jobs:create`                                                                                       | Admins and Editors      |
+| `resources`, `history`, `status` | Repository management and inspection views           | `provisioning.repositories:write`                                                                                                                         | Admins only             |
+
+{{< admonition type="note" >}}
+Creating a job is allowed at the route level for any authenticated user, the same way `files` is. The real authorization decision happens once the specific action is known: move and delete check the folder/dashboard permissions being acted on (only for jobs targeting the repository's configured branch - a different branch still requires `provisioning.jobs:create`), while push, migrate, and fix folder metadata always require `provisioning.jobs:create`. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+{{< /admonition >}}
 
 {{< admonition type="note" >}}
 The management and inspection views (`resources`, `history`, `status`) are gated on `provisioning.repositories:write` rather than `repositories:read`, because there's no admin-only read action on the `repositories` resource. As a result, only users who can manage a repository can inspect its management views; Viewers and Editors can't access these views.
