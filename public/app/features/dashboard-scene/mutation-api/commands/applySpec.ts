@@ -13,11 +13,10 @@
 
 import * as z from 'zod';
 
-import { NewSceneObjectAddedEvent, sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
-import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
@@ -35,11 +34,6 @@ const applySpecPayloadSchema = z.object({
 });
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
-
-type DashboardUrlSync = {
-  retainEditPanelAcrossRebuild: (panelId: string) => void;
-  updateFromUrl: (values: SceneObjectUrlValues) => void;
-};
 
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
@@ -78,44 +72,12 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
-      const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
 
-      const rebuilt = transformSaveModelSchemaV2ToScene(dto);
-
-      // Reuse the live key so existing references (incl. the mutation client's
-      // `scene`) survive the swap.
-      const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
-      // `setState` merges, so an open panel editor would survive the swap still driving the
-      // VizPanel and layout item of the tree we just discarded: edits made through it never reach
-      // the new tree, and so are absent from a save or a read. Drop it and re-open through url
-      // sync, the same path `?editPanel=` takes, which resolves the id against the current tree,
-      // waits for a library panel to load, and leaves the pane closed when the applied spec no
-      // longer has the panel.
-      const editPanelKey = scene.state.editPanel?.getUrlKey();
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
-      const urlSync = scene.urlSync as DashboardUrlSync | undefined;
-
-      if (editPanelKey) {
-        // Dropping the pane below writes `?editPanel=` out of the URL, and the re-open cannot
-        // always put it back in the same tick: a library panel has to load first. Hold the param
-        // so a reload during that window, or a load that never completes, still names the panel.
-        urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
-      }
-
-      scene.setState({ ...newState, editPanel: undefined });
-      // Dashboard state is replaced in place losing all edit-only properties.
-      // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
-
-      // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
-      // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
-      // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path
-      // into panel edit.
-      scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
-
-      if (editPanelKey) {
-        urlSync?.updateFromUrl({ editPanel: editPanelKey });
-      }
+      applyDashboardSpec({
+        scene,
+        spec,
+        description: t('dashboard.mutation-api.apply-spec.undo-title', 'Assistant schema edit'),
+      });
 
       // Return the re-serialized spec so the caller gets the rekeyed element
       // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.

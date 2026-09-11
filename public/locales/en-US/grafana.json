@@ -6006,6 +6006,11 @@
       "tooltip-next": "Next",
       "tooltip-previous": "Previous"
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-title": "Assistant schema edit"
+      }
+    },
     "new-dashboard-with-ds": {
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
     },
