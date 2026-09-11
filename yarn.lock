@@ -2185,7 +2185,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/plugin-configs": "npm:13.3.0-pre"
-    "@grafana/plugin-ui": "npm:^0.15.1"
+    "@grafana/plugin-ui": "npm:^0.17.0"
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
@@ -2851,38 +2851,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.15.1":
-  version: 0.15.1
-  resolution: "@grafana/plugin-ui@npm:0.15.1"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@hello-pangea/dnd": "npm:17.0.0"
-    "@react-awesome-query-builder/ui": "npm:6.6.12"
-    lodash: "npm:4.18.1"
-    prismjs: "npm:1.30.0"
-    react-calendar: "npm:4.8.0"
-    react-popper-tooltip: "npm:4.4.2"
-    react-use: "npm:17.6.0"
-    react-virtualized-auto-sizer: "npm:1.0.6"
-    sql-formatter: "npm:15.7.3"
-    uuid: "npm:14.0.0"
-  peerDependencies:
-    "@grafana/data": ">=10.4.7"
-    "@grafana/e2e-selectors": ">=10.4.7"
-    "@grafana/runtime": ">=10.4.7"
-    "@grafana/ui": ">=10.4.7"
-    "@testing-library/jest-dom": ">=5.16.5"
-    "@testing-library/react": ">=15.0.2"
-    "@testing-library/user-event": ">=14.5.2"
-    react: ">=18.2.0"
-    react-dom: ">=18.2.0"
-  checksum: 10/6d39184464b95d4b62a0fdbfb9df67d2ccd3ef6c7e3b670d1492e46e9cb8ac0ada3ef0998980dfccb5df516ee891b5dcc7a3c34a6c98edefcb3825757f7f2faa
-  languageName: node
-  linkType: hard
-
-"@grafana/plugin-ui@npm:^0.17.3":
-  version: 0.17.4
-  resolution: "@grafana/plugin-ui@npm:0.17.4"
+"@grafana/plugin-ui@npm:^0.17.0, @grafana/plugin-ui@npm:^0.17.3":
+  version: 0.17.5
+  resolution: "@grafana/plugin-ui@npm:0.17.5"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@hello-pangea/dnd": "npm:17.0.0"
@@ -2913,7 +2884,7 @@ __metadata:
   peerDependenciesMeta:
     monaco-editor:
       optional: true
-  checksum: 10/3dc22694195b48e386cdb6bf338337951a5d2ad21f639c07a3b3318a5debd71bb79b62d39094a3796ea913bed888eba22528c0ba2c424983b4b4ee08a258f7c5
+  checksum: 10/26eb87ce74c706044a0f4c4911eab0f8a516cfff903f3c25dbdec94faf65dc1812098d383614a2177214e8010402421ae5e674d7e73816103e45a50da7acd9b3
   languageName: node
   linkType: hard
 
@@ -7715,7 +7686,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.6.12, @react-awesome-query-builder/core@npm:^6.6.15":
+"@react-awesome-query-builder/core@npm:^6.6.15":
   version: 6.6.15
   resolution: "@react-awesome-query-builder/core@npm:6.6.15"
   dependencies:
@@ -7729,23 +7700,6 @@ __metadata:
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
   checksum: 10/60d87b3f0b395d3c7eb0e45e4cc2e2591599f06d80f9f6d502455eae9de11eadc60e7b1b339b0615b9ab44da3ac04d6a9047693e40ff2172d2b8f9845ecaeb43
-  languageName: node
-  linkType: hard
-
-"@react-awesome-query-builder/ui@npm:6.6.12":
-  version: 6.6.12
-  resolution: "@react-awesome-query-builder/ui@npm:6.6.12"
-  dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.6.12"
-    classnames: "npm:^2.5.1"
-    lodash: "npm:^4.17.21"
-    prop-types: "npm:^15.8.1"
-    react-redux: "npm:^8.1.3"
-    redux: "npm:^4.2.1"
-  peerDependencies:
-    react: ^16.8.4 || ^17.0.1 || ^18.0.0
-    react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 10/042fe33e338799dc473f9fad89aa653b1994fc1f960fe2db66122b6bb1b4efa891d7646e9e702e045571ca77472de297a8c5c27e6c5cd7c44d135a52f7dc4618
   languageName: node
   linkType: hard
 
@@ -30481,16 +30435,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:1.0.6":
-  version: 1.0.6
-  resolution: "react-virtualized-auto-sizer@npm:1.0.6"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
-  checksum: 10/6124d779e22b78054318033b5f13fd02015d08f2ebce9343f272976d4ae713463465dcdd758281e560e8b3d9cd57d7caf9d12bfd82ced615b9d4dccaef7eb2d8
-  languageName: node
-  linkType: hard
-
 "react-window-infinite-loader@npm:1.0.10":
   version: 1.0.10
   resolution: "react-window-infinite-loader@npm:1.0.10"
@@ -32554,18 +32498,6 @@ __metadata:
     "@babel/polyfill": "npm:^7.6.0"
     lodash: "npm:^4.17.15"
   checksum: 10/79e6bfb47e1ae6e24ee8bca94bf032089081517b35c2c99c6f2b706c9e19ed627b8ce272899b19ad8259f6bb606f7895e3ef93a0a7a12ce58824c702416eb0cc
-  languageName: node
-  linkType: hard
-
-"sql-formatter@npm:15.7.3":
-  version: 15.7.3
-  resolution: "sql-formatter@npm:15.7.3"
-  dependencies:
-    argparse: "npm:^2.0.1"
-    nearley: "npm:^2.20.1"
-  bin:
-    sql-formatter: bin/sql-formatter-cli.cjs
-  checksum: 10/095e04bc03e1ad8023577fafa81a1cd54d8ba37f8c45b8353c78e1db3ea85edaa90e51271258a7f588e2a8f6989bdab4acc817302f2617fc6f17787cf1dedb66
   languageName: node
   linkType: hard
 
@@ -34957,15 +34889,6 @@ __metadata:
   bin:
     uuid: dist/esm/bin/uuid
   checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
-  languageName: node
-  linkType: hard
-
-"uuid@npm:14.0.0":
-  version: 14.0.0
-  resolution: "uuid@npm:14.0.0"
-  bin:
-    uuid: dist-node/bin/uuid
-  checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
   languageName: node
   linkType: hard
 
