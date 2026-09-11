@@ -41,8 +41,9 @@ export const QuickAdd = ({}: Props) => {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const { isAvailable: isDashboardGenerationAvailable } = useDashboardGenerationAvailable();
   const isGenerateDashboardAvailable =
-    useDashboardGenerationAvailable() && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+    isDashboardGenerationAvailable && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
   const theme = useTheme2();
 

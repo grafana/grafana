@@ -26,8 +26,8 @@ interface Props {
  */
 export function GenerateDashboardForDatasourceButton({ datasourceUid, datasourceName }: Props) {
   const [showPrompt, setShowPrompt] = useState(false);
-  const isAvailable =
-    useDashboardGenerationAvailable() && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const { isAvailable: isGenerationAvailable } = useDashboardGenerationAvailable();
+  const isAvailable = isGenerationAvailable && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
   if (!isAvailable || datasourceUid === '') {
     return null;

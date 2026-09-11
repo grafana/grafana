@@ -132,7 +132,7 @@ describe('QuickAdd', () => {
     mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
     setTestFlags({ 'grafana.customDashboardTemplates': false });
-    mockUseDashboardGenerationAvailable.mockReturnValue(false);
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
   afterEach(() => {
@@ -318,7 +318,7 @@ describe('QuickAdd', () => {
     let originalPermissions: typeof contextSrv.user.permissions;
 
     beforeEach(() => {
-      mockUseDashboardGenerationAvailable.mockReturnValue(true);
+      mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: true, isLoading: false });
       originalPermissions = contextSrv.user.permissions;
       contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
     });
@@ -351,7 +351,7 @@ describe('QuickAdd', () => {
     });
 
     it('does not show the item when dashboard generation is unavailable', async () => {
-      mockUseDashboardGenerationAvailable.mockReturnValue(false);
+      mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();

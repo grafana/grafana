@@ -72,7 +72,7 @@ async function renderAndOpen(folder?: FolderDTO) {
 describe('NewActionsButton', () => {
   beforeEach(() => {
     mockUseIsProvisionedInstance.mockReturnValue(false);
-    mockUseDashboardGenerationAvailable.mockReturnValue(false);
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
@@ -225,7 +225,7 @@ describe('NewActionsButton', () => {
 
   describe('Generate dashboard item', () => {
     beforeEach(() => {
-      mockUseDashboardGenerationAvailable.mockReturnValue(true);
+      mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: true, isLoading: false });
     });
 
     it('shows the item directly after `New dashboard`, matching the QuickAdd menu', async () => {
@@ -251,7 +251,7 @@ describe('NewActionsButton', () => {
     });
 
     it('does not show the item when generation is unavailable', async () => {
-      mockUseDashboardGenerationAvailable.mockReturnValue(false);
+      mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
       await renderAndOpen();
       expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
     });

@@ -6,6 +6,11 @@ export interface PromptDatasource {
   name?: string;
 }
 
+export interface PromptDashboardRef {
+  uid: string;
+  title: string;
+}
+
 /**
  * Pre-seeded context for entry points that already know what the user is
  * looking at — today that's a datasource's settings page.
