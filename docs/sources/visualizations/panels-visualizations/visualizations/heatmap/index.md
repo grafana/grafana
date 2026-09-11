@@ -149,7 +149,7 @@ Use the following options to define the heatmap colors.
 
 #### Steps
 
-Set a value between `1` and `128`.
+Set a value between `2` and `128`.
 
 #### Reverse
 
@@ -174,8 +174,8 @@ Use these settings to control the display of heatmap cells.
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
 | Cell gap | Set how much space there is between cells. |
-| Hide cells with values <= | Enter a value. |
-| Hide cells with values >= | Enter a value. |
+| Hide cells with values <= | Enter a value below which cells are hidden. Leave empty for no filtering, which is the default. |
+| Hide cells with values >= | Enter a value above which cells are hidden. Leave empty for no filtering, which is the default. |
 
 <!-- prettier-ignore-end -->
 
