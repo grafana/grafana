@@ -6,9 +6,12 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
 import { adminNavEntry } from './sections/admin.navEntry';
+import { connectionsNavEntry } from './sections/connections.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
+import { drilldownNavEntry, exploreNavEntry } from './sections/explore.navEntry';
 import { helpNavEntry } from './sections/help.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
+import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
 import { applyAppSubUrl, buildEntries, type NavEntryBuilder, pruneEmptyNavSections, sortNavTree } from './utils';
@@ -67,8 +70,12 @@ export function getInitialNavTree(): NavModelItem[] {
 const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
   dashboardsNavEntry,
+  exploreNavEntry,
+  drilldownNavEntry,
+  notebooksNavEntry,
   profileNavEntry,
   alertingNavEntry,
+  connectionsNavEntry,
   adminNavEntry,
   helpNavEntry,
   bookmarksNavEntry,

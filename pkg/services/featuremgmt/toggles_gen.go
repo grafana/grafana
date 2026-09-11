@@ -43,6 +43,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagGrafanaUseRouterMiddleware
+	// intercept /apis/... and /openapi/v3/... requests in middleware.
+	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -938,6 +942,18 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagDashboardSearchFieldValueResults
+	// Uses field-value results for dashboard search requests
+	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
+
+	// FlagDashboardApiSearchFieldValueResults
+	// Uses field-value results for requests from the /api/search endpoint
+	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
+
+	// FlagSearchApiFieldValueResults
+	// Uses field-value results for generic resource search API requests
+	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1013,4 +1029,12 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagSamlGosaml2Provider
+	// Use the gosaml2 library instead of the crewjam SAML library for SAML authentication
+	FlagSamlGosaml2Provider = "saml.gosaml2Provider"
+
+	// FlagDatasourcesGatewayGuardrails
+	// Data source query gateway guardrails
+	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 )

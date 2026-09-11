@@ -15,8 +15,10 @@ import {
   getDefaultWorkflow,
   shouldEnforceBranchTemplate,
 } from '../components/defaults';
+import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath, slugifyForFilename } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
+import { type RecoverToNewBranch } from '../types';
 import { type ProvisionedDashboardFormData } from '../types/form';
 
 import { type DashboardRepositoryView } from './useDashboardRepositoryView';
@@ -31,6 +33,8 @@ interface GetDefaultValuesParams {
   view: Pick<RepositoryViewData, 'repository' | 'folder' | 'status' | 'error'>;
   /** Feeds the fallback filename for a save with no title to slugify; the caller keeps it stable across recomputes */
   timestamp: string;
+  /** Deleted-branch recovery: default to a fresh branch instead of the configured one or the (gone) preview ref. */
+  recoverToNewBranch?: RecoverToNewBranch;
 }
 
 export function getDefaultValues({
@@ -42,6 +46,7 @@ export function getDefaultValues({
   isNew,
   view: { repository, folder, status, error },
   timestamp,
+  recoverToNewBranch,
 }: GetDefaultValuesParams) {
   const annotations = meta.k8s?.annotations;
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
@@ -91,9 +96,16 @@ export function getDefaultValues({
     folderPath,
   });
 
+  // Deleted-branch recovery: the loaded ref is gone, so default to a fresh branch instead of the
+  // configured one or the (gone) preview ref. Only when the repo allows branches; otherwise the
+  // regular default (a write to the configured branch) is the only place the draft can go.
+  const forceBranch = Boolean(recoverToNewBranch) && Boolean(repository.workflows?.includes('branch'));
+  const workflow = forceBranch ? 'branch' : getDefaultWorkflow(repository, loadedFromRef);
+  const ref = forceBranch ? generateNewBranchName('dashboard') : getDefaultRef(repository, 'dashboard', loadedFromRef);
+
   return {
     values: {
-      ref: getDefaultRef(repository, 'dashboard', loadedFromRef),
+      ref,
       path: dashboardPath,
       // A new save targets whatever repository actually resolved: when the annotation hint missed,
       // the name it still carries is a repository that no longer exists
@@ -105,7 +117,7 @@ export function getDefaultValues({
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow: getDefaultWorkflow(repository, loadedFromRef),
+      workflow,
       copyTags: saveAsCopy ? false : true,
     },
     isNew,
@@ -134,9 +146,14 @@ export interface ProvisionedDashboardData {
 export function useProvisionedDashboardData(
   dashboard: DashboardScene,
   view: DashboardRepositoryView,
-  options: { saveAsCopy?: boolean; title?: string; description?: string } = {}
+  options: {
+    saveAsCopy?: boolean;
+    title?: string;
+    description?: string;
+    recoverToNewBranch?: RecoverToNewBranch;
+  } = {}
 ): ProvisionedDashboardData {
-  const { saveAsCopy, title, description } = options;
+  const { saveAsCopy, title, description, recoverToNewBranch } = options;
   const { meta, title: dashboardTitle, description: dashboardDescription } = dashboard.useState();
   const { repository, folder, status, error, isNewSave } = view;
   const [params] = useUrlParams();
@@ -162,6 +179,7 @@ export function useProvisionedDashboardData(
         isNew: isNewSave,
         view: { repository, folder, status, error },
         timestamp,
+        recoverToNewBranch,
       }),
     [
       meta,
@@ -175,6 +193,7 @@ export function useProvisionedDashboardData(
       status,
       error,
       timestamp,
+      recoverToNewBranch,
     ]
   );
 
@@ -186,11 +205,12 @@ export function useProvisionedDashboardData(
     // When the branch name template is enforced, dashboard pushes must go through the branch workflow
     // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
     // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
-    // useBranchTemplate then fills the `ref`.
+    // useBranchTemplate then fills the `ref`; the generated name keeps the branch default from ever
+    // pointing at the configured branch in the meantime.
     return values &&
       shouldEnforceBranchTemplate(resolvedRepository, gitConventionsEnabled) &&
       values.workflow !== 'branch'
-      ? { ...values, workflow: 'branch' as const }
+      ? { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') }
       : values;
   }, [defaultValuesResult, gitConventionsEnabled]);
 

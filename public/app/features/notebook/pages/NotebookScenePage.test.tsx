@@ -5,16 +5,28 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/sc
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 import { NotebookScenePage } from './NotebookScenePage';
 
+// Partial rather than a whole-module replacement so `loaded` stays real: the tests that open an
+// existing notebook run loadNotebook, which imports it from here.
+jest.mock('../analytics/main', () => {
+  const actual = jest.requireActual('../analytics/main');
+  return { ...actual, NotebookAnalytics: { ...actual.NotebookAnalytics, newStarted: jest.fn() } };
+});
+
 // The route is registered unconditionally, so the page itself enforces this OpenFeature flag.
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 describe('NotebookScenePage', () => {
+  beforeEach(() => {
+    jest.mocked(NotebookAnalytics.newStarted).mockClear();
+  });
+
   afterEach(async () => {
     // Wrap in act() because both of these publish state while a component is still mounted:
     // setTestFlags fires OpenFeature events, and clearing the state manager drops its scene. The
@@ -137,6 +149,28 @@ describe('NotebookScenePage', () => {
       expect(locationService.getLocation().pathname).toBe('/notebooks');
     });
 
+    it('reports a new notebook started from the notebooks list', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      await screen.findByRole('radio', { name: 'Edit' });
+
+      expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
+    });
+
+    // The flag gate is what makes this route real, and a page that renders not-found started nothing.
+    it('reports nothing when the notebooks flag is off', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: false });
+
+      render(<NotebookScenePage />, { historyOptions: { initialEntries: ['/notebooks/new'] } });
+      await screen.findByText('Page not found');
+
+      expect(jest.mocked(NotebookAnalytics.newStarted)).not.toHaveBeenCalled();
+    });
+
     it('opens in edit mode, since a blank notebook exists only to be written into', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
@@ -180,6 +214,16 @@ describe('NotebookScenePage', () => {
       await renderLoaded(scene, '/notebooks/nb-1?edit=true');
 
       expect(scene.state.isEditing).toBe(true);
+    });
+
+    // Only the blank route starts a notebook. Opening one that already exists is a view.
+    it('reports no new notebook started when an existing notebook opens', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = buildScene();
+
+      await renderLoaded(scene, '/notebooks/nb-1');
+
+      expect(jest.mocked(NotebookAnalytics.newStarted)).not.toHaveBeenCalled();
     });
 
     it('ignores the url for a user without edit permission', async () => {

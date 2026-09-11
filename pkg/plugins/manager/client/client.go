@@ -155,6 +155,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
 		}
 
+		if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
+			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
+		}
+
 		return plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 

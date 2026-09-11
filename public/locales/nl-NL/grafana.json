@@ -6023,7 +6023,6 @@
       "description": "Een verticale reeks panelen, tekst en codecellen",
       "name": "Notebook",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Tijd",
       "title-edit": "",
@@ -7091,6 +7090,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard"
     },
     "dashboard-scene": {
@@ -7638,6 +7643,10 @@
       "required": "Vereist"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Wijzigingen",
         "label-details": "Details",
@@ -9142,10 +9151,14 @@
       "share-export-json": "Exporteren als JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Begintijd",
       "success-indicator": "",
       "target": "Doel",
       "tooltip-url": "{{route}} of {{url}} of {{target}} of {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Tracering-id",
       "url": "URL",
       "warning-indicator": ""
@@ -10657,7 +10670,6 @@
       "ariaLabel-panel-loading": "Laadbalk van paneel",
       "ariaLabel-panel-status": "Paneelstatus",
       "errors-and-notices": "Fouten en meldingen",
-      "inspect-errors-notices": "Inspecteren",
       "tooltip-cancel": "Query annuleren",
       "tooltip-cancel-loading": "Query annuleren",
       "tooltip-stop-streaming": "Streamen stoppen",
@@ -10739,9 +10751,13 @@
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
       "cell-inspect-tooltip": "Waarde inspecteren",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Naar klembord kopiëren",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}",
       "csv-placeholder": "Voer hier csv in ...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Voeg alle weergegeven waarden toe aan het filter",
         "blanks": "(Lege velden)",
@@ -12564,6 +12580,7 @@
       "title": "Aanmaken"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nieuwe waarschuwingsregel"
     },
     "create-dashboard": {
@@ -13056,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13127,6 +13142,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13159,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13209,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Instellingen wissen"
+      "clear-tooltip": "Instellingen wissen",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Kleurenseries op"
@@ -16620,8 +16639,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

@@ -6023,7 +6023,6 @@
       "description": "Panelek, szöveg és kódcellák függőleges sorozata",
       "name": "Jegyzetfüzet",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Idő",
       "title-edit": "",
@@ -7091,6 +7090,12 @@
       "type": "Típus"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
     },
     "dashboard-scene": {
@@ -7638,6 +7643,10 @@
       "required": "Kötelező"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Módosítások",
         "label-details": "Részletek",
@@ -9142,10 +9151,14 @@
       "share-export-json": "Exportálás JSON-fájlként",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Kezdési idő",
       "success-indicator": "",
       "target": "Cél",
       "tooltip-url": "{{route}} vagy {{url}} vagy {{target}} vagy {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Nyomkövetési azonosító",
       "url": "URL-cím",
       "warning-indicator": ""
@@ -10657,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel betöltési sávja",
       "ariaLabel-panel-status": "Panel állapota",
       "errors-and-notices": "Hibák és értesítések",
-      "inspect-errors-notices": "Ellenőrzés",
       "tooltip-cancel": "A lekérdezés megszakítása",
       "tooltip-cancel-loading": "A lekérdezés megszakítása",
       "tooltip-stop-streaming": "Adatfolyam leállítása",
@@ -10739,9 +10751,13 @@
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
       "cell-inspect-tooltip": "Érték ellenőrzése",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Másolás a vágólapra",
       "csv-counts": "Sorok:{{rows}}, Oszlopok:{{columns}}",
       "csv-placeholder": "Itt adja meg a CSV-t...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Az összes megjelenített érték hozzáadása a szűrőhöz",
         "blanks": "(Üresek)",
@@ -12564,6 +12580,7 @@
       "title": "Létrehozás"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Új riasztási szabály"
     },
     "create-dashboard": {
@@ -13056,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13127,6 +13142,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13159,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13209,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Beállítások törlése"
+      "clear-tooltip": "Beállítások törlése",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Színsorozat alapja"
@@ -16620,8 +16639,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

@@ -50,8 +50,10 @@ export const getEditorLayoutStyles = (theme: GrafanaTheme2) => {
     }),
     previewPane: css({
       overflow: 'auto',
-      background: theme.colors.background.primary,
       ...codeMirrorPadding,
+    }),
+    previewPaneOpaque: css({
+      background: theme.colors.background.primary,
     }),
     // Rendered markdown and HTML bring no padding of their own.
     htmlPreviewPane: css({

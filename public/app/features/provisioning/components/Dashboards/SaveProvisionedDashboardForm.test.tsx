@@ -215,6 +215,28 @@ function setupFolderless(
   });
 }
 
+// An existing, unchanged dashboard scene — for tests where Save must be driven by something
+// other than the dashboard being dirty (branch retarget, recoverToNewBranch recovery).
+function makeNotDirtyDashboard(): DashboardScene {
+  const state = {
+    meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
+    title: 'Test Dashboard',
+    description: 'Test Description',
+    isDirty: false,
+  };
+  return {
+    state,
+    useState: () => state,
+    setState: jest.fn(),
+    closeModal: jest.fn(),
+    getSaveModel: jest.fn().mockReturnValue({}),
+    saveCompleted: jest.fn(),
+    getSaveAsModel: jest.fn().mockReturnValue({}),
+    setManager: jest.fn(),
+    getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+  } as unknown as DashboardScene;
+}
+
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
   expect(capturedRequest).not.toBeNull();
   return capturedRequest as { url: URL; body: unknown };
@@ -1039,6 +1061,149 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+  });
+
+  it('should enable save when the target branch is changed even if the dashboard is not dirty', async () => {
+    const { user } = setup({ dashboard: makeNotDirtyDashboard() });
+
+    // Baseline: nothing changed yet, so Save is disabled.
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+
+    // Enter a new branch name (retargeting is a committable change on its own).
+    const branchCombobox = screen.getByRole('combobox', { name: /branch/i });
+    await user.type(branchCombobox, 'brand-new-branch{Enter}');
+
+    expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
+  });
+
+  it('should enable save in the deleted-branch recovery with no other changes', () => {
+    // Recovery installs the generated branch as a default (never marks ref dirty) on an
+    // otherwise-unchanged preview, so Save must be enabled on the recovery flag alone.
+    setup({
+      dashboard: makeNotDirtyDashboard(),
+      isNew: false,
+      recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+    });
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
+  });
+
+  it('creates (not updates) in the deleted-branch recovery when the dashboard only existed on that branch', async () => {
+    // The dashboard was born on the (now deleted) branch and never merged, so the recovery branch —
+    // cut from the configured branch — doesn't have the file. An update (PUT) would fail with
+    // file-not-found on the backend; the save must issue a create (POST) instead.
+    let putCalled = false;
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, () => {
+        putCalled = true;
+        return HttpResponse.json({ message: 'file not found' }, { status: 404 });
+      }),
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const savedResource = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    };
+    const dashboard = makeNotDirtyDashboard();
+    // isNew is false (the preview scene has a k8s name), so the submit serializes via
+    // getSaveResourceFromSpec — mock it like the other update-path tests do.
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue(savedResource);
+
+    const { user } = setup({
+      dashboard,
+      isNew: false,
+      recoverToNewBranch: { fileExistsOnConfiguredBranch: false },
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+      defaultValues: {
+        ref: 'dashboard/recovery-branch',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'branch',
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(request.url.searchParams.get('ref')).toBe('dashboard/recovery-branch');
+    // A create has no original to point back at.
+    expect(request.url.searchParams.get('originalPath')).toBeNull();
+    expect(putCalled).toBe(false);
+    // The commit template must describe the same operation the request performs.
+    expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
+  });
+
+  it('lands on the saved dashboard after a deleted-branch recovery that writes to the configured branch', async () => {
+    // A write-only repo saves the draft straight to the configured branch. Staying on the preview
+    // URL would keep showing the deleted branch (and its recovery banner) for a draft already saved.
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const dashboard = makeNotDirtyDashboard();
+    dashboard.getSaveResourceFromSpec = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard' },
+    });
+
+    const { user } = setup({
+      dashboard,
+      isNew: false,
+      recoverToNewBranch: { fileExistsOnConfiguredBranch: true },
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['write'],
+        branch: 'main',
+        target: 'folder',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    const request = requireCapturedRequest(capturedRequest);
+    // Configured branch: no ref, and an update since the file exists there.
+    expect(request.url.searchParams.get('ref')).toBeNull();
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+
+    await waitFor(() => expect(dashboard.saveCompleted).toHaveBeenCalled());
+    expect(mockNavigate).toHaveBeenCalledWith('/d/test-dashboard');
   });
 
   it('should properly handle read-only state for a repository without workflows', () => {

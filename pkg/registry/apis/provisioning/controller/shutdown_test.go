@@ -174,8 +174,8 @@ func TestConnectionController_Run_DrainWaitsForInFlight(t *testing.T) {
 
 	cc := &ConnectionController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "test-connection-drain",
 			},
 		),
@@ -183,14 +183,14 @@ func TestConnectionController_Run_DrainWaitsForInFlight(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	cc.processFn = func(ctx context.Context, item *connectionQueueItem) error {
+	cc.processFn = func(ctx context.Context, key string) error {
 		close(processingStarted)
 		<-processCh
 		processed.Store(true)
 		return nil
 	}
 
-	cc.queue.Add(&connectionQueueItem{key: "test/conn"})
+	cc.queue.Add("test/conn")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})
@@ -230,8 +230,8 @@ func TestConnectionController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 
 	cc := &ConnectionController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "test-connection-drain-timeout",
 			},
 		),
@@ -240,12 +240,12 @@ func TestConnectionController_Run_DrainTimeoutForcesShutdown(t *testing.T) {
 	}
 
 	// processFn blocks forever to simulate a stuck reconciliation
-	cc.processFn = func(ctx context.Context, item *connectionQueueItem) error {
+	cc.processFn = func(ctx context.Context, key string) error {
 		close(processingStarted)
 		select {}
 	}
 
-	cc.queue.Add(&connectionQueueItem{key: "test/stuck"})
+	cc.queue.Add("test/stuck")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})
@@ -276,8 +276,8 @@ func TestConnectionController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 
 	cc := &ConnectionController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name: "test-connection-shutdown-ordering",
 			},
 		),
@@ -285,13 +285,13 @@ func TestConnectionController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	cc.processFn = func(ctx context.Context, item *connectionQueueItem) error {
+	cc.processFn = func(ctx context.Context, key string) error {
 		close(processingStarted)
 		<-processCh
 		return nil
 	}
 
-	cc.queue.Add(&connectionQueueItem{key: "test/ordering"})
+	cc.queue.Add("test/ordering")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})
