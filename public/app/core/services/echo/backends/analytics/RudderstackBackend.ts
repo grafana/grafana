@@ -28,6 +28,13 @@ interface Rudderstack {
         };
         migrate?: boolean;
       };
+      queueOptions?: {
+        maxAttempts?: number;
+        batch?: {
+          enabled?: boolean;
+          flushInterval?: number;
+        };
+      };
     }
   ) => void;
   page: () => void;
