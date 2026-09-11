@@ -2836,11 +2836,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
