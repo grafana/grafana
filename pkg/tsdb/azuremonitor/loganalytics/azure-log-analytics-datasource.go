@@ -335,22 +335,19 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	}
 
 	if basicLogsQueryFlag {
+		logTier := dataquery.AzureLogsQueryLogTierBasic
+		if azureLogAnalyticsTarget.LogTier != nil {
+			logTier = *azureLogAnalyticsTarget.LogTier
+		}
 		logTierEnabled, logTierErr := isLogTierEnabled(azureLogAnalyticsTarget.LogTier, basicLogsEnabled, auxiliaryLogsEnabled)
 		if logTierErr != nil {
 			return nil, logTierErr
 		}
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, true); meetsBasicLogsCriteriaErr != nil {
-			return nil, meetsBasicLogsCriteriaErr
-		} else {
-			if !logTierEnabled {
-				logTier := dataquery.AzureLogsQueryLogTierBasic
-				if azureLogAnalyticsTarget.LogTier != nil {
-					logTier = *azureLogAnalyticsTarget.LogTier
-				}
-				return nil, backend.DownstreamError(fmt.Errorf("%s Logs queries are disabled for this data source", logTier))
-			}
-			basicLogsQuery = meetsBasicLogsCriteria
+		eligibleForSearch, eligibilityErr := meetsSearchLogsCriteria(resources, fromAlert, logTierEnabled, logTier)
+		if eligibilityErr != nil {
+			return nil, eligibilityErr
 		}
+		basicLogsQuery = eligibleForSearch
 	}
 
 	if azureLogAnalyticsTarget.Query != nil {

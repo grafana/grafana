@@ -100,7 +100,7 @@ func TestRetrieveResources(t *testing.T) {
 	}
 }
 
-func TestMeetsBasicLogsCriteria(t *testing.T) {
+func TestMeetsSearchLogsCriteria(t *testing.T) {
 	workspaceResource := []string{"/subscriptions/abc/resourceGroups/rg/providers/microsoft.operationalinsights/workspaces/ws"}
 	storageResource := []string{"/subscriptions/abc/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/sa"}
 
@@ -109,57 +109,58 @@ func TestMeetsBasicLogsCriteria(t *testing.T) {
 		resources      []string
 		fromAlert      bool
 		logsEnabled    bool
+		logTier        dataquery.AzureLogsQueryLogTier
 		expectedResult bool
-		expectError    bool
+		expectedError  string
 	}{
 		{
 			name:           "returns true when basic/auxiliary logs enabled and single workspace",
 			resources:      workspaceResource,
 			fromAlert:      false,
 			logsEnabled:    true,
+			logTier:        dataquery.AzureLogsQueryLogTierBasic,
 			expectedResult: true,
-			expectError:    false,
 		},
 		{
-			name:           "returns false when logs not enabled",
-			resources:      workspaceResource,
-			fromAlert:      false,
-			logsEnabled:    false,
-			expectedResult: false,
-			expectError:    true,
+			name:          "returns a tier-specific error when logs are not enabled",
+			resources:     workspaceResource,
+			fromAlert:     false,
+			logsEnabled:   false,
+			logTier:       dataquery.AzureLogsQueryLogTierAuxiliary,
+			expectedError: "Auxiliary Logs queries are disabled for this data source",
 		},
 		{
-			name:           "returns false for alerts",
-			resources:      workspaceResource,
-			fromAlert:      true,
-			logsEnabled:    true,
-			expectedResult: false,
-			expectError:    true,
+			name:          "returns a tier-specific error for alerts",
+			resources:     workspaceResource,
+			fromAlert:     true,
+			logsEnabled:   true,
+			logTier:       dataquery.AzureLogsQueryLogTierAuxiliary,
+			expectedError: "Auxiliary Logs queries cannot be used for alerts",
 		},
 		{
-			name:           "returns false for non-workspace resources",
-			resources:      storageResource,
-			fromAlert:      false,
-			logsEnabled:    true,
-			expectedResult: false,
-			expectError:    true,
+			name:          "returns a tier-specific error for non-workspace resources",
+			resources:     storageResource,
+			fromAlert:     false,
+			logsEnabled:   true,
+			logTier:       dataquery.AzureLogsQueryLogTierAuxiliary,
+			expectedError: "Auxiliary Logs queries may only be run against Log Analytics workspaces",
 		},
 		{
-			name:           "returns false for multiple resources",
-			resources:      append(workspaceResource, workspaceResource...),
-			fromAlert:      false,
-			logsEnabled:    true,
-			expectedResult: false,
-			expectError:    true,
+			name:          "returns a tier-specific error for multiple resources",
+			resources:     append(workspaceResource, workspaceResource...),
+			fromAlert:     false,
+			logsEnabled:   true,
+			logTier:       dataquery.AzureLogsQueryLogTierAuxiliary,
+			expectedError: "Auxiliary Logs queries cannot be run against multiple resources",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := meetsBasicLogsCriteria(tc.resources, tc.fromAlert, tc.logsEnabled)
+			result, err := meetsSearchLogsCriteria(tc.resources, tc.fromAlert, tc.logsEnabled, tc.logTier)
 			assert.Equal(t, tc.expectedResult, result)
-			if tc.expectError {
-				assert.Error(t, err)
+			if tc.expectedError != "" {
+				assert.EqualError(t, err, tc.expectedError)
 			} else {
 				assert.NoError(t, err)
 			}
