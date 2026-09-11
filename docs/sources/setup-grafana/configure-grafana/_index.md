@@ -2838,6 +2838,14 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
 Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
 
+#### `renewal_enabled`
+
+Available only in Grafana Enterprise.
+
+Controls periodic renewal of persisted Marketplace plugin licenses. The default is `true`.
+
+Set this option to `false` to disable automatic renewal network requests.
+
 <hr>
 
 ### `[live]`
