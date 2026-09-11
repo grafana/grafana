@@ -2,11 +2,13 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { ResultFormat } from '../../dataquery.gen';
+import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType, ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { type EngineSchema } from '../../types/types';
+import { type EngineSchema, TablePlan } from '../../types/types';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import LogsQueryEditor from './LogsQueryEditor';
 import { createMockResourcePickerData } from './mocks';
@@ -465,6 +467,95 @@ describe('LogsQueryEditor', () => {
         await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
       ).toBeInTheDocument();
     });
+
+    it('should preserve a legacy Basic query when Basic Logs are enabled', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: undefined,
+          query: 'BasicTable | take 10',
+        },
+      });
+      const onChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={jest.fn()}
+          setError={() => {}}
+          basicLogsEnabled={true}
+          auxiliaryLogsEnabled={false}
+        />
+      );
+
+      await waitFor(() => expect(screen.getByLabelText('Basic')).toBeChecked());
+      expect(onChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({ basicLogsQuery: false }),
+        })
+      );
+    });
+
+    it('should clear a legacy Basic query rather than convert it when only Auxiliary Logs are enabled', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: undefined,
+          query: 'BasicTable | take 10',
+          builderQuery: {
+            from: {
+              type: BuilderQueryEditorExpressionType.Property,
+              property: { type: BuilderQueryEditorPropertyType.String, name: 'BasicTable' },
+            },
+          },
+        },
+      });
+      const onChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={jest.fn()}
+          setError={() => {}}
+          basicLogsEnabled={false}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      await waitFor(() =>
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            azureLogAnalytics: expect.objectContaining({
+              basicLogsQuery: false,
+              logTier: undefined,
+              query: '',
+              builderQuery: expect.objectContaining({
+                from: expect.objectContaining({ property: expect.objectContaining({ name: '' }) }),
+              }),
+            }),
+          })
+        )
+      );
+      expect(onChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({ logTier: 'Auxiliary' }),
+        })
+      );
+    });
   });
 
   describe('data ingestion warning', () => {
@@ -481,7 +572,7 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0);
       await act(async () => {
         render(
           <LogsQueryEditor
@@ -499,10 +590,49 @@ describe('LogsQueryEditor', () => {
       await act(async () => {
         await waitFor(() =>
           expect(
-            screen.findByText(/This is a Basic Logs query and incurs cost per GiB scanned./)
+            screen.findByText(/This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned\./)
           ).resolves.toBeInTheDocument()
         );
       });
+    });
+
+    it('shows the Auxiliary warning and documentation link when usage is nonzero', async () => {
+      const mockDatasource = createMockDatasource();
+      const onChange = jest.fn();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: 'Auxiliary',
+        },
+      });
+      const onQueryChange = jest.fn();
+
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0.45);
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={false}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      expect(
+        await screen.findByText(
+          "This Auxiliary Logs query is processing 0.45 GiB when run. Auxiliary Logs have no response-time SLA and aren't suitable for real-time or alerting scenarios."
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Learn More' })).toHaveAttribute(
+        'href',
+        'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs#table-plans'
+      );
     });
 
     it('should show data ingested warning when running basic logs queries', async () => {
@@ -518,7 +648,7 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.45);
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0.45);
       await act(async () => {
         render(
           <LogsQueryEditor
@@ -538,6 +668,10 @@ describe('LogsQueryEditor', () => {
           expect(screen.findByText(/This query is processing 0.45 GiB when run./)).resolves.toBeInTheDocument()
         );
       });
+      expect(screen.getByRole('link', { name: 'Learn More' })).toHaveAttribute(
+        'href',
+        'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1'
+      );
     });
 
     it('should not show data ingested warning when running basic logs queries', async () => {
@@ -554,7 +688,7 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.5);
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0.5);
       await act(async () => {
         render(
           <LogsQueryEditor
@@ -714,7 +848,7 @@ describe('LogsQueryEditor', () => {
       const mockDatasource = createMockDatasource();
       mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(mockSchema);
       // @ts-ignore: forcibly attach for test
-      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockResolvedValue('plan');
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockResolvedValue(TablePlan.Basic);
       const query = createMockQuery({
         azureLogAnalytics: {
           resources: [
@@ -750,6 +884,509 @@ describe('LogsQueryEditor', () => {
         query.azureLogAnalytics?.resources,
         'AppDependencies'
       );
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'AppDependencies');
+      expect(onQueryChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            basicLogsQuery: true,
+            logTier: 'Basic',
+          }),
+        })
+      );
+    });
+
+    it('keeps the base schema and successful table plans when a table plan request fails', async () => {
+      const tables = [
+        {
+          columns: [],
+          id: 'UnavailablePlanTable',
+          name: 'UnavailablePlanTable',
+          timespanColumn: 'TimeGenerated',
+          related: { solutions: [] },
+        },
+        {
+          columns: [],
+          id: 'BasicTable',
+          name: 'BasicTable',
+          timespanColumn: 'TimeGenerated',
+          related: { solutions: [] },
+        },
+      ];
+      const database = {
+        name: 'la-workspace',
+        tables,
+        functions: [],
+        majorVersion: 0,
+        minorVersion: 0,
+        entityGroups: [],
+      };
+      const mockSchema: EngineSchema = {
+        clusterType: 'Engine',
+        cluster: {
+          connectionString: 'la-workspace',
+          databases: [database],
+        },
+        database,
+      };
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(mockSchema);
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, tableName: string) => {
+        return tableName === 'UnavailablePlanTable'
+          ? Promise.reject(new Error('table plan request failed'))
+          : Promise.resolve(TablePlan.Basic);
+      });
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onQueryChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={jest.fn()}
+          onQueryChange={onQueryChange}
+          setError={jest.fn()}
+          basicLogsEnabled={true}
+        />
+      );
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'UnavailablePlanTable');
+      expect(onQueryChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            builderQuery: expect.objectContaining({
+              from: expect.objectContaining({
+                property: expect.objectContaining({ name: 'UnavailablePlanTable' }),
+              }),
+            }),
+          }),
+        })
+      );
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+      expect(onQueryChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            basicLogsQuery: true,
+            logTier: 'Basic',
+          }),
+        })
+      );
+    });
+  });
+
+  describe('tier auto-switch notification (Builder mode)', () => {
+    const workspaceUri =
+      '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+
+    const buildSchemaWithPlans = (): EngineSchema => ({
+      clusterType: 'Engine',
+      cluster: {
+        connectionString: workspaceUri,
+        databases: [],
+      },
+      database: {
+        name: workspaceUri,
+        tables: [
+          {
+            id: 'AnalyticsTable',
+            name: 'AnalyticsTable',
+            timespanColumn: 'TimeGenerated',
+            columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+            related: { solutions: [], functions: [], categories: [] },
+            plan: TablePlan.Analytics,
+          },
+          {
+            id: 'BasicTable',
+            name: 'BasicTable',
+            timespanColumn: 'TimeGenerated',
+            columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+            related: { solutions: [], functions: [], categories: [] },
+            plan: TablePlan.Basic,
+          },
+          {
+            id: 'AuxiliaryTable',
+            name: 'AuxiliaryTable',
+            timespanColumn: 'TimeGenerated',
+            columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+            related: { solutions: [], functions: [], categories: [] },
+            plan: TablePlan.Auxiliary,
+          },
+        ],
+        functions: [],
+        majorVersion: 0,
+        minorVersion: 0,
+        entityGroups: [],
+      },
+    });
+
+    let originalToggle: boolean | undefined;
+    beforeEach(() => {
+      originalToggle = config.featureToggles.azureMonitorLogsBuilderEditor;
+      config.featureToggles.azureMonitorLogsBuilderEditor = true;
+    });
+    afterEach(() => {
+      config.featureToggles.azureMonitorLogsBuilderEditor = originalToggle;
+    });
+
+    it('renders an info Alert when picking a Basic-plan table from an Analytics query and reverts on click', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // getWorkspaceTablePlan is invoked by the existing fetchAllPlans effect but
+      // the schema we provide already has `plan` set, so the in-place mutation is a no-op.
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      const tableSelect = await screen.findByLabelText('Table');
+      await selectOptionInTest(tableSelect, 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      // Alert appears with the new tier in the title and the table name in the body
+      const alertTitle = await screen.findByText(/Query tier set to Basic/);
+      expect(alertTitle).toBeInTheDocument();
+      const alert = alertTitle.closest('[role="alert"]') ?? alertTitle.closest('[data-testid^="data-testid Alert"]');
+      expect(alert).not.toBeNull();
+      expect(alert!.textContent).toContain('BasicTable');
+
+      // Revert button uses the previous tier name
+      const revertButton = screen.getByRole('button', { name: /Revert to Analytics/ });
+      await userEvent.click(revertButton);
+
+      // onChange is invoked with basicLogsQuery cleared back to false (Analytics tier)
+      await waitFor(() => {
+        const revertedCall = onChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.basicLogsQuery === false);
+        expect(revertedCall).toBeDefined();
+        expect(revertedCall![0].azureLogAnalytics.logTier).toBeUndefined();
+        expect(revertedCall![0].azureLogAnalytics.builderQuery.from.property.name).toBe('');
+        expect(revertedCall![0].azureLogAnalytics.query).toBe('');
+      });
+
+      // Alert is dismissed after revert
+      expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+    });
+
+    it('clears the selected table and KQL when reverting from Auxiliary to Basic', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'AuxiliaryTable' ? TablePlan.Auxiliary : TablePlan.Basic)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+          basicLogsQuery: true,
+          logTier: 'Basic',
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+            auxiliaryLogsEnabled={true}
+          />
+        ));
+      });
+
+      const tableSelect = await screen.findByLabelText('Table');
+      await selectOptionInTest(tableSelect, 'AuxiliaryTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onQueryChange.mock.calls.find(
+          (call) => call[0]?.azureLogAnalytics?.logTier === 'Auxiliary'
+        );
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      await userEvent.click(await screen.findByRole('button', { name: /Revert to Basic/ }));
+
+      await waitFor(() => {
+        const revertedCall = onChange.mock.calls.find(
+          (call) =>
+            call[0]?.azureLogAnalytics?.logTier === 'Basic' &&
+            call[0]?.azureLogAnalytics?.builderQuery?.from?.property.name === ''
+        );
+        expect(revertedCall).toBeDefined();
+        expect(revertedCall![0].azureLogAnalytics.query).toBe('');
+      });
+    });
+
+    it('dismisses the auto-switch notice when the tier is changed manually', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByText(/Query tier set to Basic/)).toBeInTheDocument();
+      await userEvent.click(await screen.findByLabelText('Analytics'));
+
+      expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+    });
+
+    it('dismisses the auto-switch notice when the workspace changes', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByText(/Query tier set to Basic/)).toBeInTheDocument();
+
+      rerender(
+        <LogsQueryEditor
+          query={{
+            ...switchedQuery,
+            azureLogAnalytics: {
+              ...switchedQuery.azureLogAnalytics,
+              resources: [`${workspaceUri}-other`],
+            },
+          }}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+      });
+    });
+
+    it('dismisses the auto-switch notice when the selected tier is disabled', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest.fn().mockResolvedValue(buildSchemaWithPlans());
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+      let rerender!: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        ));
+      });
+
+      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+
+      const switchedQuery = await waitFor(() => {
+        const switchedCall = onQueryChange.mock.calls.find((call) => call[0]?.azureLogAnalytics?.logTier === 'Basic');
+        expect(switchedCall).toBeDefined();
+        return switchedCall![0];
+      });
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={true}
+        />
+      );
+
+      expect(await screen.findByText(/Query tier set to Basic/)).toBeInTheDocument();
+      rerender(
+        <LogsQueryEditor
+          query={switchedQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={false}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
+      });
     });
   });
 });

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
 import { type PanelData, type TimeRange } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
-import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
+import { Alert, Button, LinkButton, Space, Stack, Text, TextLink } from '@grafana/ui';
 
 import { LogsEditorMode, ResultFormat } from '../../dataquery.gen';
 import type Datasource from '../../datasource';
@@ -13,6 +13,7 @@ import { type AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMet
 import { type AzureMonitorQuery } from '../../types/query';
 import { type AzureMonitorErrorish, type AzureMonitorOption, type EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
+import { type TierAutoSwitchInfo } from '../LogsQueryBuilder/TableSection';
 import ResourceField from '../ResourceField/ResourceField';
 import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
@@ -22,14 +23,15 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { onLoad, setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
+import { onLoad, setFormatAs, setLogTierAndClearQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
-import { shouldShowBasicLogsToggle } from './utils';
+import { getSelectedLogTier, shouldShowBasicLogsToggle } from './utils';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
   basicLogsEnabled: boolean;
+  auxiliaryLogsEnabled?: boolean;
   subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
@@ -40,10 +42,13 @@ interface LogsQueryEditorProps {
   data?: PanelData;
 }
 
+const SCHEMA_ERROR_SOURCE = 'logs-schema';
+
 const LogsQueryEditor = ({
   query,
   datasource,
   basicLogsEnabled,
+  auxiliaryLogsEnabled = false,
   subscriptionId,
   variableOptionGroup,
   onChange,
@@ -54,15 +59,18 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
+  const searchLogsEnabled = basicLogsEnabled || auxiliaryLogsEnabled;
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
-    shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
+    shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], searchLogsEnabled)
   );
   const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
+  const [tierAutoSwitchNotice, setTierAutoSwitchNotice] = useState<TierAutoSwitchInfo | null>(null);
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
   const templateVariableOptions = templateSrv.getVariables();
-  const isBasicLogsQuery = (basicLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
+  const isBasicLogsQuery = (searchLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
+  const selectedTier = getSelectedLogTier(query);
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
@@ -88,53 +96,95 @@ const LogsQueryEditor = ({
 
   useEffect(() => {
     const resources = query.azureLogAnalytics?.resources;
-    if (resources) {
-      setIsLoadingSchema(true);
-      const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
-        const promises = [];
-        for (const table of tables) {
-          promises.push({
-            ...table,
-            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name),
-          });
-        }
-
-        const tablesWithPlan = await Promise.all(promises);
-        return tablesWithPlan;
-      };
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]).then((schema) => {
-        if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
-          fetchAllPlans(schema?.database?.tables).then(async (t) => {
-            if (schema.database?.tables) {
-              schema.database.tables = t;
-            }
-          });
-        }
-        setSchema(schema);
-        setIsLoadingSchema(false);
-      });
+    if (!resources?.length) {
+      setSchema(undefined);
+      setIsLoadingSchema(false);
+      return;
     }
+
+    let cancelled = false;
+    setIsLoadingSchema(true);
+
+    const loadSchema = async () => {
+      const schema = await datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]);
+      if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
+        const planResults = await Promise.allSettled(
+          schema.database.tables.map((table: AzureLogAnalyticsMetadataTable) =>
+            datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name)
+          )
+        );
+        const tables = schema.database.tables.map((table, index) => {
+          const planResult = planResults[index];
+          return planResult?.status === 'fulfilled' ? { ...table, plan: planResult.value } : table;
+        });
+
+        return {
+          ...schema,
+          database: {
+            ...schema.database,
+            tables,
+          },
+        };
+      }
+
+      return schema;
+    };
+
+    void loadSchema()
+      .then((schema) => {
+        if (!cancelled) {
+          setSchema(schema);
+          setError(SCHEMA_ERROR_SOURCE, undefined);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setSchema(undefined);
+          setError(SCHEMA_ERROR_SOURCE, error);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingSchema(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     query.azureLogAnalytics?.resources,
     datasource.azureLogAnalyticsDatasource,
     datasource.azureMonitorDatasource,
     query.azureLogAnalytics?.mode,
+    setError,
   ]);
 
   useEffect(() => {
-    if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
+    setTierAutoSwitchNotice(null);
+  }, [query.azureLogAnalytics?.mode, query.azureLogAnalytics?.resources]);
+
+  useEffect(() => {
+    if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], searchLogsEnabled)) {
       setShowBasicLogsToggle(true);
     } else {
       setShowBasicLogsToggle(false);
     }
-  }, [basicLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
+  }, [searchLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
 
   useEffect(() => {
-    if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
-      const updatedBasicLogsQuery = setBasicLogsQuery(query, false);
-      onChange(setKustoQuery(updatedBasicLogsQuery, ''));
+    const tierStillEnabled =
+      (selectedTier === 'Basic' && basicLogsEnabled) || (selectedTier === 'Auxiliary' && auxiliaryLogsEnabled);
+
+    const shouldClear =
+      (!searchLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery
+        ? true
+        : !!query.azureLogAnalytics?.basicLogsQuery && !tierStillEnabled;
+    if (shouldClear) {
+      setTierAutoSwitchNotice(null);
+      onChange(setLogTierAndClearQuery(query, undefined));
     }
-  }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
+  }, [searchLogsEnabled, basicLogsEnabled, auxiliaryLogsEnabled, onChange, query, selectedTier, showBasicLogsToggle]);
 
   useEffect(() => {
     const hasRawKql = !!query.azureLogAnalytics?.query;
@@ -166,22 +216,44 @@ const LogsQueryEditor = ({
   }, [query.azureLogAnalytics?.mode, onQueryChange, query]);
 
   useEffect(() => {
-    const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
+    const getLogsUsage = async (query: AzureMonitorQuery) => {
       try {
         if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {
           const querySplit = query.azureLogAnalytics.query.split('|');
           // Basic Logs queries are required to start the query with a table
           const table = querySplit[0].trim();
-          const dataIngested = await datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table);
+          const dataIngested = await datasource.azureLogAnalyticsDatasource.getLogsQueryUsage(query, table);
           const textToShow = !!dataIngested
-            ? `This query is processing ${dataIngested} GiB when run. `
-            : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
+            ? selectedTier === 'Auxiliary'
+              ? t(
+                  'components.logs-query-editor.warning-auxiliary-data-ingested',
+                  "This Auxiliary Logs query is processing {{dataIngested}} GiB when run. Auxiliary Logs have no response-time SLA and aren't suitable for real-time or alerting scenarios. ",
+                  { dataIngested }
+                )
+              : t(
+                  'components.logs-query-editor.warning-data-ingested',
+                  'This query is processing {{dataIngested}} GiB when run. ',
+                  { dataIngested }
+                )
+            : selectedTier === 'Auxiliary'
+              ? t(
+                  'components.logs-query-editor.warning-auxiliary-raw',
+                  "This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). "
+                )
+              : t(
+                  'components.logs-query-editor.warning-basic-raw',
+                  "This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). "
+                );
           setDataIngestedWarning(
             <>
               <Text color="primary">
                 {textToShow}{' '}
                 <TextLink
-                  href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
+                  href={
+                    selectedTier === 'Auxiliary'
+                      ? 'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs#table-plans'
+                      : 'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1'
+                  }
                   external
                 >
                   <Trans i18nKey="components.logs-query-editor.learn-more">Learn More</Trans>
@@ -197,8 +269,8 @@ const LogsQueryEditor = ({
       }
     };
 
-    getBasicLogsUsage(query).catch((err) => console.error(err));
-  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to]);
+    getLogsUsage(query).catch((err) => console.error(err));
+  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to, selectedTier]);
   let portalLinkButton = null;
 
   if (data?.series) {
@@ -250,9 +322,20 @@ const LogsQueryEditor = ({
               )}
               selectionNotice={(selected) => {
                 if (selected.length === 1 && isBasicLogsQuery) {
-                  return 'When using Basic Logs, you may only select one resource at a time.';
+                  return selectedTier === 'Auxiliary'
+                    ? t(
+                        'components.logs-query-editor.notice-auxiliary-single-resource',
+                        'When using Auxiliary Logs, you may only select one resource at a time.'
+                      )
+                    : t(
+                        'components.logs-query-editor.notice-basic-single-resource',
+                        'When using Basic Logs, you may only select one resource at a time.'
+                      );
                 }
-                return 'You may only choose items of the same resource type.';
+                return t(
+                  'components.logs-query-editor.notice-same-resource-type',
+                  'You may only choose items of the same resource type.'
+                );
               }}
             />
             {showBasicLogsToggle && (
@@ -262,6 +345,9 @@ const LogsQueryEditor = ({
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}
                 setError={setError}
+                basicLogsEnabled={basicLogsEnabled}
+                auxiliaryLogsEnabled={auxiliaryLogsEnabled}
+                onTierChange={() => setTierAutoSwitchNotice(null)}
               />
             )}
             <TimeManagement
@@ -281,11 +367,13 @@ const LogsQueryEditor = ({
             query={query}
             schema={schema}
             basicLogsEnabled={basicLogsEnabled}
+            auxiliaryLogsEnabled={auxiliaryLogsEnabled}
             onQueryChange={onQueryChange}
             templateVariableOptions={templateVariableOptions}
             datasource={datasource}
             timeRange={timeRange}
             isLoadingSchema={isLoadingSchema}
+            onTierAutoSwitch={setTierAutoSwitchNotice}
           />
         ) : (
           <QueryField
@@ -297,6 +385,61 @@ const LogsQueryEditor = ({
             setError={setError}
             schema={schema}
           />
+        )}
+        {tierAutoSwitchNotice && (
+          <Alert
+            severity="info"
+            title={t('components.logs-query-editor.tier-switch-title', 'Query tier set to {{toTier}}', {
+              toTier: tierAutoSwitchNotice.toTier,
+            })}
+            onRemove={() => setTierAutoSwitchNotice(null)}
+          >
+            <Stack direction="column" gap={1}>
+              <Text>
+                {tierAutoSwitchNotice.toTier === 'Basic' && (
+                  <Trans
+                    i18nKey="components.logs-query-editor.tier-switch-body-basic"
+                    values={{ tableName: tierAutoSwitchNotice.tableName }}
+                  >
+                    <code>{'{{tableName}}'}</code> is a Basic Logs table — incurs cost per GiB scanned.
+                  </Trans>
+                )}
+                {tierAutoSwitchNotice.toTier === 'Auxiliary' && (
+                  <Trans
+                    i18nKey="components.logs-query-editor.tier-switch-body-auxiliary"
+                    values={{ tableName: tierAutoSwitchNotice.tableName }}
+                  >
+                    <code>{'{{tableName}}'}</code> is an Auxiliary Logs table — incurs cost per GiB scanned, has no
+                    response-time SLA, and isn&apos;t suitable for real-time or alerting scenarios.
+                  </Trans>
+                )}
+                {tierAutoSwitchNotice.toTier === 'Analytics' && (
+                  <Trans
+                    i18nKey="components.logs-query-editor.tier-switch-body-analytics"
+                    values={{ tableName: tierAutoSwitchNotice.tableName }}
+                  >
+                    <code>{'{{tableName}}'}</code> is an Analytics table.
+                  </Trans>
+                )}
+              </Text>
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const { fromTier } = tierAutoSwitchNotice;
+                    const tierValue = fromTier === 'Analytics' ? undefined : fromTier;
+                    onChange(setLogTierAndClearQuery(query, tierValue));
+                    setTierAutoSwitchNotice(null);
+                  }}
+                >
+                  {t('components.logs-query-editor.tier-switch-revert', 'Revert to {{fromTier}}', {
+                    fromTier: tierAutoSwitchNotice.fromTier,
+                  })}
+                </Button>
+              </div>
+            </Stack>
+          </Alert>
         )}
         {dataIngestedWarning}
         <EditorRow>

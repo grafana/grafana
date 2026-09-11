@@ -69,6 +69,10 @@ const QueryEditor = ({
     datasource.azureMonitorDatasource.basicLogsEnabled &&
     app !== CoreApp.UnifiedAlerting &&
     app !== CoreApp.CloudAlerting;
+  const auxiliaryLogsEnabled =
+    datasource.azureMonitorDatasource.auxiliaryLogsEnabled &&
+    app !== CoreApp.UnifiedAlerting &&
+    app !== CoreApp.CloudAlerting;
   const variableOptionGroup = {
     label: 'Template Variables',
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
@@ -109,6 +113,7 @@ const QueryEditor = ({
         data={data}
         subscriptionId={subscriptionId}
         basicLogsEnabled={basicLogsEnabled ?? false}
+        auxiliaryLogsEnabled={auxiliaryLogsEnabled ?? false}
         query={query}
         datasource={datasource}
         onChange={onQueryChange}
@@ -138,6 +143,7 @@ const QueryEditor = ({
 interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'onRunQuery'> {
   subscriptionId?: string;
   basicLogsEnabled: boolean;
+  auxiliaryLogsEnabled: boolean;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
   // Used to update the query without running it
@@ -148,6 +154,7 @@ const EditorForQueryType = ({
   data,
   subscriptionId,
   basicLogsEnabled,
+  auxiliaryLogsEnabled,
   query,
   datasource,
   variableOptionGroup,
@@ -175,6 +182,7 @@ const EditorForQueryType = ({
           data={data}
           subscriptionId={subscriptionId}
           basicLogsEnabled={basicLogsEnabled}
+          auxiliaryLogsEnabled={auxiliaryLogsEnabled}
           query={query}
           datasource={datasource}
           onChange={onChange}
