@@ -887,8 +887,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
-	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader)
+	routesLoader, err := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	if err != nil {
+		return nil, err
+	}
+	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1659,8 +1662,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
-	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader)
+	routesLoader, err := router.ProvideRoutesLoader(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg)
+	if err != nil {
+		return nil, err
+	}
+	routerService, err := router.ProvideService(cfg, featureToggles, routesLoader, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1948,12 +1954,6 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return apiServerFactory, nil
 }
 
-// Initialize the standalone router factory
-func InitializeRouterFactory() (router.RouterFactory, error) {
-	routerFactory := router.ProvideRouterFactory()
-	return routerFactory, nil
-}
-
 // InitializeRoutesLoader uses the same configured OSS dependency graph as the
 // app-plugin API registration.
 func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
@@ -2213,7 +2213,10 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	routesLoader := router.ProvideRoutesLoaderWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, clients)
+	routesLoader, err := router.ProvideRoutesLoaderWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, clients)
+	if err != nil {
+		return nil, err
+	}
 	return routesLoader, nil
 }
 

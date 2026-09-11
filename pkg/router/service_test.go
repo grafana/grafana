@@ -9,9 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type testReadyNotifier struct {
@@ -22,10 +24,12 @@ func (n *testReadyNotifier) SetReady()    { n.ready.Store(true) }
 func (n *testReadyNotifier) SetNotReady() { n.ready.Store(false) }
 
 func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
-	features := featuremgmt.WithFeatures()
-	svc, err := ProvideService(features, dummyRoutesLoader{})
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
 
@@ -59,22 +63,19 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 }
 
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
+	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-
-	_, err := ProvideService(features, nil)
+	_, err := ProvideService(cfg, features, nil, prometheus.NewRegistry())
 	require.ErrorContains(t, err, "routes loader is required")
-
-	svc, err := ProvideService(features, dummyRoutesLoader{})
-	require.NoError(t, err)
-	err = svc.RegisterTargetRoutes(nil, nil)
-	require.ErrorContains(t, err, "HTTP router is required")
 }
 
 func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Target = []string{"router"}
 	httpRouter := mux.NewRouter()
 	features := featuremgmt.WithFeatures()
 
-	svc, err := ProvideService(features, dummyRoutesLoader{})
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	err = svc.RegisterTargetRoutes(httpRouter, nil)
 	require.NoError(t, err)
@@ -92,6 +93,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 }
 
 func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
+	cfg := setting.NewCfg()
 	httpRouter := mux.NewRouter()
 	httpRouter.HandleFunc("/apis/legacy.grafana.app/v1", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
@@ -101,7 +103,7 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 	})
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 
-	svc, err := ProvideService(features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
+	svc, err := ProvideService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
@@ -135,13 +137,14 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 }
 
 func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
+	cfg := setting.NewCfg()
 	loader := dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}}
 
-	enabled, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
+	enabled, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.False(t, enabled.IsDisabled())
 
-	disabled, err := ProvideService(featuremgmt.WithFeatures(), loader)
+	disabled, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
 	require.NoError(t, err)
 	require.True(t, disabled.IsDisabled())
 

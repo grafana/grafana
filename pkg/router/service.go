@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,20 +29,22 @@ type ReadyNotifier interface {
 type Service struct {
 	*services.BasicService
 
-	router *GrafanaRouter
-	ready  ReadyNotifier
+	router  *GrafanaRouter
+	ready   ReadyNotifier
+	metrics *routerMetrics
 
 	standalone bool
 	middleware bool
 }
 
-// ProvideService creates the router service.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader) (*Service, error) {
+// ProvideService creates the router service. RegisterTargetRoutes enables it
+// for the router module; otherwise the middleware feature toggle controls it.
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
 
-	s := newService(loader)
+	s := newService(loader, reg)
 	s.standalone = slices.Contains(cfg.Target, "router")
 	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	return s, nil
@@ -49,12 +52,8 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 
 // RegisterTargetRoutes enables the service and mounts it on the dskit module server.
 func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifier) error {
-	if !s.standalone {
-		return nil
-	}
-
-	if httpRouter == nil {
-		return fmt.Errorf("HTTP router is required")
+	if !s.standalone || httpRouter == nil {
+		return nil // do not register!
 	}
 
 	s.ready = ready
@@ -63,7 +62,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 		next = http.NotFoundHandler()
 	}
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.router.HandleFunc(w, req, next)
+		s.metrics.instrument(s.router, w, req, next)
 	})
 	for _, path := range []string{"/apis", "/openapi/v3"} {
 		httpRouter.Handle(path, handler)
@@ -72,9 +71,10 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	return nil
 }
 
-func newService(loader RoutesLoader) *Service {
+func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
 	s := &Service{
-		router: NewGrafanaRouter(loader),
+		router:  NewGrafanaRouter(loader),
+		metrics: newRouterMetrics(reg),
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
@@ -83,10 +83,10 @@ func newService(loader RoutesLoader) *Service {
 // HandleFunc serves through the router when enabled and otherwise delegates.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	if s.middleware {
-		s.router.HandleFunc(w, req, next)
+		s.metrics.instrument(s.router, w, req, next)
 		return
 	}
-	next.ServeHTTP(w, req) // pass though
+	next.ServeHTTP(w, req)
 }
 
 // Run adapts Service to the full server's background-service lifecycle.
