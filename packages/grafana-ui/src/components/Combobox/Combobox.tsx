@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
+import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -194,6 +194,20 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     resetSearch,
   } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
+  const searchTermRef = useRef('');
+
+  useEffect(() => {
+    if (isOpenProp === undefined) {
+      return;
+    }
+
+    if (isOpenProp && searchTermRef.current === '') {
+      updateOptions('');
+    } else if (!isOpenProp) {
+      searchTermRef.current = '';
+      resetSearch();
+    }
+  }, [isOpenProp, resetSearch, updateOptions]);
 
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
@@ -235,15 +249,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
 
-      if (changes.isOpen && (changes.inputValue ?? '') === '') {
-        updateOptions('');
-      }
+      if (isOpenProp === undefined) {
+        if (changes.isOpen && (changes.inputValue ?? '') === '') {
+          updateOptions('');
+        }
 
-      if (!changes.isOpen) {
-        resetSearch();
+        if (!changes.isOpen) {
+          searchTermRef.current = '';
+          resetSearch();
+        }
       }
     },
-    [onIsOpenChangeProp, updateOptions, resetSearch]
+    [isOpenProp, onIsOpenChangeProp, updateOptions, resetSearch]
   );
 
   // Injects the group header for the first rendered item into the range to render.
@@ -350,10 +367,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       setShowFocusRing(isKeyboardEvent(type));
 
       switch (type) {
-        case useCombobox.stateChangeTypes.InputChange:
-          updateOptions(newInputValue ?? '');
+        case useCombobox.stateChangeTypes.InputChange: {
+          const searchTerm = newInputValue ?? '';
+          searchTermRef.current = searchTerm;
+          updateOptions(searchTerm);
 
           break;
+        }
         default:
           break;
       }
