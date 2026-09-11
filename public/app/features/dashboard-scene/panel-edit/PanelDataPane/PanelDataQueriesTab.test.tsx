@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of, map } from 'rxjs';
 
@@ -443,6 +443,69 @@ describe('PanelDataQueriesTab', () => {
       const queries = queriesTab.queryRunner.state.queries;
       expect(refId).toBe('B');
       expect(queries[queries.length - 1].refId).toBe('B');
+    });
+  });
+
+  describe('scrolling a new query row into view', () => {
+    let scrollIntoViewSpy: jest.Mock;
+    let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
+
+    beforeEach(() => {
+      // jsdom doesn't implement scrollIntoView, so patch the prototype rather than spy on it.
+      originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+      scrollIntoViewSpy = jest.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoViewSpy;
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    // The tab renders nothing until the query runner has data, and these tests need the real
+    // (unmocked) query state so adding and removing rows is observable.
+    async function setupTabWithData() {
+      const { queriesTab } = await setupScene('panel-1');
+      queriesTab.queryRunner.setState({
+        data: { state: LoadingState.Done, series: [], timeRange: {} as TimeRange },
+      });
+      return queriesTab;
+    }
+
+    it('clears scrollToRefId as soon as the row starts scrolling, even if the tab unmounts mid-scroll', async () => {
+      const queriesTab = await setupTabWithData();
+      await queriesTab.addQueryClick();
+      queriesTab.setState({ scrollToRefId: 'B' });
+
+      const { unmount } = render(<PanelDataQueriesTabRendered model={queriesTab} />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      // PanelDataPane renders only the active tab, so leaving the Queries tab unmounts the row
+      // while it is still pinned. Nothing reports back on that path.
+      unmount();
+
+      expect(queriesTab.state.scrollToRefId).toBeUndefined();
+    });
+
+    it('does not scroll a new query that inherits the refId of the deleted pinned row', async () => {
+      const queriesTab = await setupTabWithData();
+      await queriesTab.addQueryClick();
+      queriesTab.setState({ scrollToRefId: 'B' });
+
+      const { unmount } = render(<PanelDataQueriesTabRendered model={queriesTab} />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      unmount();
+
+      // getNextRefId recycles freed refIds, so an unrelated query added later gets 'B' back and
+      // would inherit a stale scroll target.
+      queriesTab.onQueriesChange(queriesTab.queryRunner.state.queries.filter((query) => query.refId !== 'B'));
+      await queriesTab.addQueryClick();
+      expect(queriesTab.queryRunner.state.queries.map((query) => query.refId)).toEqual(['A', 'B']);
+
+      scrollIntoViewSpy.mockClear();
+      render(<PanelDataQueriesTabRendered model={queriesTab} />);
+      await waitFor(() => expect(screen.getAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(2));
+
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
     });
   });
 

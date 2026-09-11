@@ -19,6 +19,17 @@ class MockResizeObserver implements ResizeObserver {
   }
 
   unobserve() {}
+
+  /**
+   * Delivers an observation. Real observers stop delivering after disconnect(), so mirror that —
+   * it's what lets a test prove pinning actually stopped rather than only that disconnect() ran.
+   */
+  fire(height: number) {
+    if (this.disconnected) {
+      return;
+    }
+    this.callback([{ contentRect: { height } } as ResizeObserverEntry], this);
+  }
 }
 
 describe('pinScrollIntoView', () => {
@@ -44,25 +55,22 @@ describe('pinScrollIntoView', () => {
     global.ResizeObserver = originalResizeObserver;
   });
 
+  // jsdom's getBoundingClientRect returns 0, so the baseline height measured at pin start is 0.
   function setup() {
     const parent = document.createElement('div');
     const element = document.createElement('div');
     parent.appendChild(element);
     document.body.appendChild(parent);
 
-    const onDone = jest.fn();
-    const cancel = pinScrollIntoView(element, onDone);
-    const observer = MockResizeObserver.instances[0];
+    const cancel = pinScrollIntoView(element);
+    const observer = MockResizeObserver.instances[MockResizeObserver.instances.length - 1];
 
     return {
       element,
       parent,
-      onDone,
       cancel,
       observer,
-      // Simulates a ResizeObserver callback reporting the observed target at `height`. jsdom's
-      // getBoundingClientRect returns 0, so the baseline height measured at pin start is 0.
-      fireResize: (height: number) => observer.callback([{ contentRect: { height } } as ResizeObserverEntry], observer),
+      fireResize: (height: number) => observer.fire(height),
     };
   }
 
@@ -116,52 +124,76 @@ describe('pinScrollIntoView', () => {
     expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('reports done once the layout stays quiet for the settle window', () => {
-    const { onDone, observer } = setup();
+  it('keeps re-pinning right up to the end of the settle window, then stops', () => {
+    const { fireResize, observer } = setup();
 
     jest.advanceTimersByTime(SCROLL_PIN_SETTLE_MS - 1);
-    expect(onDone).not.toHaveBeenCalled();
-
-    jest.advanceTimersByTime(1);
-    expect(onDone).toHaveBeenCalledTimes(1);
-    expect(observer.disconnected).toBe(true);
-  });
-
-  it('restarts the settle window on every height change', () => {
-    const { onDone, fireResize } = setup();
-
+    expect(observer.disconnected).toBe(false);
     fireResize(100);
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+
+    // The re-pin restarted the window, so the pin only ends a full window after the last growth.
     jest.advanceTimersByTime(SCROLL_PIN_SETTLE_MS - 1);
-    fireResize(200);
-    jest.advanceTimersByTime(SCROLL_PIN_SETTLE_MS - 1);
-    expect(onDone).not.toHaveBeenCalled();
+    expect(observer.disconnected).toBe(false);
 
     jest.advanceTimersByTime(1);
-    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(observer.disconnected).toBe(true);
+    fireResize(200);
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('stops pinning and reports done on the first user scroll gesture', () => {
-    const { onDone, observer } = setup();
+  it('stops pinning on the first user scroll gesture, leaving deliberate navigation alone', () => {
+    const { fireResize, observer } = setup();
 
     window.dispatchEvent(new Event('wheel'));
 
-    expect(onDone).toHaveBeenCalledTimes(1);
     expect(observer.disconnected).toBe(true);
-
-    // The settle timer must not report done a second time.
+    // Content that grows after the handover must not drag the viewport back to the element.
+    fireResize(400);
     jest.advanceTimersByTime(SCROLL_PIN_SETTLE_MS);
-    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('cancel stops pinning without reporting done', () => {
-    const { onDone, cancel, observer } = setup();
+  it('cancel stops pinning', () => {
+    const { cancel, fireResize, observer } = setup();
 
     cancel();
 
-    jest.advanceTimersByTime(SCROLL_PIN_SETTLE_MS);
-    window.dispatchEvent(new Event('wheel'));
-
-    expect(onDone).not.toHaveBeenCalled();
     expect(observer.disconnected).toBe(true);
+    fireResize(400);
+    jest.advanceTimersByTime(SCROLL_PIN_SETTLE_MS);
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('supersedes an outstanding pin, so two pins never fight over the viewport', () => {
+    const first = setup();
+    const second = setup();
+
+    expect(first.observer.disconnected).toBe(true);
+    expect(second.observer.disconnected).toBe(false);
+
+    // Growth now moves the viewport to the newest target only.
+    first.fireResize(300);
+    second.fireResize(300);
+
+    expect(scrollIntoViewSpy).toHaveBeenCalledTimes(3);
+    expect(scrollIntoViewSpy.mock.instances[2]).toBe(second.element);
+  });
+
+  it('a superseded pin cancelling late leaves the live pin, and the next pin still supersedes it', () => {
+    const first = setup();
+    const second = setup();
+
+    // The superseded row cleaning up late (its row unmounting) must neither stop the pin that
+    // replaced it nor detach that pin from the viewport.
+    first.cancel();
+    expect(second.observer.disconnected).toBe(false);
+
+    const third = setup();
+
+    expect(second.observer.disconnected).toBe(true);
+    expect(third.observer.disconnected).toBe(false);
+    third.fireResize(300);
+    expect(scrollIntoViewSpy.mock.instances[3]).toBe(third.element);
   });
 });
