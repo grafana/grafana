@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
+import { onInteraction, setEchoSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { Echo } from 'app/core/services/echo/Echo';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookConflictError } from '../api/notebookResource';
@@ -104,11 +106,15 @@ async function chooseExisting(user: ReturnType<typeof render>['user']) {
   await user.click(screen.getByRole('radio', { name: 'Existing notebook' }));
 }
 
-function renderModal() {
-  const buildPanel = jest.fn(async () => panel());
+function renderModal(buildPanel = jest.fn(async (): Promise<PanelKind> => panel()), isLibraryPanel = false) {
   const onDismiss = jest.fn();
   const result = render(
-    <AddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onDismiss} entryPoint="dashboard_panel" />
+    <AddPanelToNotebookModalBody
+      buildPanel={buildPanel}
+      onDismiss={onDismiss}
+      entryPoint="dashboard_panel"
+      isLibraryPanel={isLibraryPanel}
+    />
   );
   return { ...result, buildPanel, onDismiss };
 }
@@ -208,10 +214,22 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
-      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel'));
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false));
       // Built on submit, so a panel edited while the modal was open is the one that lands.
       expect(buildPanel).toHaveBeenCalledTimes(1);
       expect(onDismiss).toHaveBeenCalled();
+    });
+
+    // The dashboard inlines a library panel on the way here, so the element cannot be asked. The
+    // caller passes the fact along instead, and it has to survive the trip to the write.
+    it('tells the write that the panel came from the library', async () => {
+      const { user } = renderModal(undefined, true);
+      await chooseExisting(user);
+
+      await user.click(selectNotebook('Checkout error spike'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', true));
     });
 
     it('stays open when the write fails, so the choice is not lost', async () => {
@@ -238,7 +256,12 @@ describe('AddPanelToNotebookModalBody', () => {
 
       setPicker({ rows: [row('nb2', 'Checkout error spike')] });
       rerender(
-        <AddPanelToNotebookModalBody buildPanel={jest.fn()} onDismiss={jest.fn()} entryPoint="dashboard_panel" />
+        <AddPanelToNotebookModalBody
+          buildPanel={jest.fn()}
+          onDismiss={jest.fn()}
+          entryPoint="dashboard_panel"
+          isLibraryPanel={false}
+        />
       );
 
       expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeDisabled();
@@ -377,6 +400,23 @@ describe('AddPanelToNotebookModalBody', () => {
       await waitFor(() => expect(createWithPanel).toHaveBeenCalledTimes(1));
     });
 
+    // Same fact as the existing route: the create event describes the panel it was created around.
+    it('tells the create that the panel came from the library', async () => {
+      const { user } = renderModal(undefined, true);
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() =>
+        expect(createWithPanel).toHaveBeenCalledWith(
+          { title: 'New investigation', description: '', tags: [] },
+          panel(),
+          'dashboard_panel',
+          true
+        )
+      );
+    });
+
     it('creates the notebook with the panel, description and tags', async () => {
       const { user, onDismiss } = renderModal();
 
@@ -393,7 +433,8 @@ describe('AddPanelToNotebookModalBody', () => {
           // Trimmed, so a stray space doesn't become part of the notebook's name.
           { title: 'Checkout latency', description: 'Why is checkout slow?', tags: ['latency'] },
           panel(),
-          'dashboard_panel'
+          'dashboard_panel',
+          false
         )
       );
       expect(onDismiss).toHaveBeenCalled();
@@ -584,6 +625,71 @@ describe('AddPanelToNotebookModalBody', () => {
 
       expect(screen.getByRole('radio', { name: 'New notebook' })).toBeChecked();
       expect(screen.getByRole('textbox', { name: /Notebook name/ })).toBeInTheDocument();
+    });
+  });
+  /**
+   * The whole flow has no other failure signal: the success events fire from addPanelToNotebook,
+   * which is never reached when the write fails. Read off the echo service rather than by mocking
+   * the analytics module, so the assertion is the payload that actually goes out.
+   */
+  describe('reporting a failed add', () => {
+    let failures: Array<Record<string, unknown>>;
+    let unsubscribe: () => void;
+
+    beforeEach(() => {
+      setEchoSrv(new Echo());
+      failures = [];
+      unsubscribe = onInteraction('grafana_notebook_add_to_notebook_failed', (properties) => failures.push(properties));
+    });
+
+    afterEach(() => unsubscribe());
+
+    it('reports a conflict against the notebook that was chosen', async () => {
+      addToExisting.mockRejectedValue(new NotebookConflictError('the object has been modified'));
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      await user.click(selectNotebook('Q2 latency regression'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() =>
+        expect(failures).toEqual([
+          { notebookUid: 'nb1', source: 'dashboard_panel', target: 'existing', reason: 'conflict' },
+        ])
+      );
+    });
+
+    // Nothing was created, so there is no uid to report and nothing to join this to.
+    it('reports a failed create with no notebook uid', async () => {
+      createWithPanel.mockRejectedValue(new Error('notebook is too large'));
+      const { user } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() =>
+        expect(failures).toEqual([
+          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'write_failed' },
+        ])
+      );
+    });
+
+    // The panel is serialized on submit, so this fails before either write is attempted.
+    it('reports a panel that could not be serialized as a build failure', async () => {
+      const buildPanel = jest.fn(async (): Promise<PanelKind> => {
+        throw new Error('nothing to serialize');
+      });
+      const { user } = renderModal(buildPanel);
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() =>
+        expect(failures).toEqual([
+          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'build_failed' },
+        ])
+      );
+      expect(createWithPanel).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,10 +1,16 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 
-// EventProperty interfaces for each notebook analytics event land here, one per event.
+// EventProperty interfaces for each notebook analytics event land here, one per event, plus the
+// property groups that several events send. A group is shared when one reader in shape.ts computes
+// it in one go and every event that sends it means the same thing by it, so the wording is written
+// once. A property whose meaning changes per event, such as notebookUid or source, stays declared on
+// each event: the per-event caveat is the only thing those docs carry.
+//
+// The groups extend EventProperty like the events do, which the define-feature-events lint rule asks
+// of every interface in here. That is also what lets a reader in shape.ts return the group directly.
 
-export interface NotebookLoadedProperties extends EventProperty {
-  /** Identifier and join key for this notebook. Never the title, see the decisions doc. */
-  notebookUid: string;
+/** What a notebook held when the event fired, as readNotebookShape computes it. */
+export interface NotebookShape extends EventProperty {
   /** Cells in the notebook, excluding the trailing empty editor block. */
   cellCount: number;
   /** The type of each cell in cellCount, in order. */
@@ -15,10 +21,6 @@ export interface NotebookLoadedProperties extends EventProperty {
   datasourceTypes: string[];
   /** Cells among cellCount whose element the assistant wrote. */
   assistantCellCount: number;
-  /** Whether the url opened the notebook in edit mode. A toggle later in the session does not change it. */
-  mode: 'view' | 'edit';
-  /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
-  wasCached: boolean;
   /** Cells among cellCount with real content: markdown someone typed in, or a configured panel. */
   nonEmptyCellCount: number;
   /** Markdown cells among cellCount. */
@@ -29,6 +31,38 @@ export interface NotebookLoadedProperties extends EventProperty {
   configuredPanelCount: number;
   /** Distinct datasource types among datasourceTypes. */
   datasourceCount: number;
+}
+
+/** What the panel being added says about itself, as readAddedPanelShape reads it off the spec. */
+export interface AddedPanelShape extends EventProperty {
+  /** The panel's visualization plugin ID. Empty when only a library panel reference was stored. */
+  panelType: string;
+  /** Deduplicated datasource plugin IDs across the panel's queries. */
+  datasourceTypes: string[];
+  /** Queries on the panel, including the ones that are hidden. */
+  queryCount: number;
+}
+
+/**
+ * Everything an event says about the panel being added: what the spec can answer, plus the one thing
+ * it cannot. The dashboard inlines a loaded library panel before it is serialized, so the element
+ * stops saying that it came from the library and the caller has to pass that in.
+ */
+export interface AddedPanelProperties extends EventProperty, AddedPanelShape {
+  /**
+   * Whether the panel came from the library. The notebook stores it inlined, so it stops following
+   * later library edits.
+   */
+  isLibraryPanel: boolean;
+}
+
+export interface NotebookLoadedProperties extends EventProperty, NotebookShape {
+  /** Identifier and join key for this notebook. Never the title, see the decisions doc. */
+  notebookUid: string;
+  /** Whether the url opened the notebook in edit mode. A toggle later in the session does not change it. */
+  mode: 'view' | 'edit';
+  /** Whether this load came from the page's in-memory scene cache instead of a fetch. */
+  wasCached: boolean;
 }
 
 /**
@@ -84,7 +118,7 @@ export const NOTEBOOK_EDIT_SESSION_END_REASON = {
 export type NotebookEditSessionEndReason =
   (typeof NOTEBOOK_EDIT_SESSION_END_REASON)[keyof typeof NOTEBOOK_EDIT_SESSION_END_REASON];
 
-export interface NotebookEditSessionEndedProperties extends EventProperty {
+export interface NotebookEditSessionEndedProperties extends EventProperty, NotebookShape {
   /** Identifier and join key for this notebook. Empty for a session that ended before autosave created one. */
   notebookUid: string;
   /** How long the session ran, from entering edit mode to leaving it. */
@@ -101,26 +135,6 @@ export interface NotebookEditSessionEndedProperties extends EventProperty {
   timeRangeChanged: boolean;
   /** How the session ended. */
   endReason: NotebookEditSessionEndReason;
-  /** Cells in the notebook when the session ended, excluding the trailing empty editor block. */
-  cellCount: number;
-  /** The type of each cell in cellCount, in order. */
-  cellsByType: string[];
-  /** Panel cells among cellCount. */
-  panelCount: number;
-  /** Deduplicated datasource plugin IDs used by the notebook's panels. */
-  datasourceTypes: string[];
-  /** Cells among cellCount whose element the assistant wrote. */
-  assistantCellCount: number;
-  /** Cells among cellCount with real content: markdown someone typed in, or a configured panel. */
-  nonEmptyCellCount: number;
-  /** Markdown cells among cellCount. */
-  textCellCount: number;
-  /** Code cells among cellCount. */
-  codeCellCount: number;
-  /** Panels among panelCount that have at least one real query configured. */
-  configuredPanelCount: number;
-  /** Distinct datasource types among datasourceTypes. */
-  datasourceCount: number;
 }
 
 export interface NotebookNewStartedProperties extends EventProperty {
@@ -128,7 +142,7 @@ export interface NotebookNewStartedProperties extends EventProperty {
   source: NotebookEntryPoint;
 }
 
-export interface NotebookCreatedProperties extends EventProperty {
+export interface NotebookCreatedProperties extends EventProperty, Partial<AddedPanelProperties> {
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which surface the notebook was created from. */
@@ -173,13 +187,12 @@ export type NotebookAutosaveFailedReason =
   (typeof NOTEBOOK_AUTOSAVE_FAILED_REASON)[keyof typeof NOTEBOOK_AUTOSAVE_FAILED_REASON];
 
 /**
- * A cell added to a notebook that was not open at the time. For a cell added inside an editing
- * session, the session counts it on `edit_session_ended` instead, so this only covers the add-panel
- * modal.
+ * A cell added through the "Add to notebook" option. For a cell added inside an editing session, the
+ * session counts it on `edit_session_ended` instead.
  *
- * No cell type: that modal only ever appends a panel, so the value would be the same every time.
+ * No cell type: this option only ever appends a panel, so the value would be the same every time.
  */
-export interface NotebookCellAddedProperties extends EventProperty {
+export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, AddedPanelProperties {
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which surface the panel was sent from. */
@@ -195,4 +208,38 @@ export interface NotebookAutosaveFailedProperties extends EventProperty {
   reason: NotebookAutosaveFailedReason;
   /** Failures in a row for this notebook since the last save that landed. */
   attempt: number;
+}
+
+/** Where the panel was headed: a notebook the user picked, or one the same submit would create. */
+export const NOTEBOOK_ADD_TARGET = {
+  NEW: 'new',
+  EXISTING: 'existing',
+} as const;
+
+export type NotebookAddTarget = (typeof NOTEBOOK_ADD_TARGET)[keyof typeof NOTEBOOK_ADD_TARGET];
+
+/**
+ * Why an "Add to notebook" attempt failed. `build_failed` means the panel could not be turned into
+ * a spec, so nothing was sent. `conflict` means someone else changed the notebook first, which is
+ * the one failure a retry fixes. `write_failed` is every other failed request. `build_failed` and
+ * `write_failed` are spelled as they are in `NOTEBOOK_AUTOSAVE_FAILED_REASON`, so both write paths
+ * read the same across events.
+ */
+export const NOTEBOOK_ADD_FAILED_REASON = {
+  BUILD_FAILED: 'build_failed',
+  CONFLICT: 'conflict',
+  WRITE_FAILED: 'write_failed',
+} as const;
+
+export type NotebookAddFailedReason = (typeof NOTEBOOK_ADD_FAILED_REASON)[keyof typeof NOTEBOOK_ADD_FAILED_REASON];
+
+export interface NotebookAddFailedProperties extends EventProperty {
+  /** Identifier and join key for the target notebook. Empty when the submit was creating one. */
+  notebookUid: string;
+  /** Which surface the panel was sent from. */
+  source: NotebookEntryPoint;
+  /** Whether the panel was headed for a new notebook or one that already existed. */
+  target: NotebookAddTarget;
+  /** Why the attempt failed. */
+  reason: NotebookAddFailedReason;
 }

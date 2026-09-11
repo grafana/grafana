@@ -23,7 +23,8 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
 import { NotebookTagsField } from '../NotebookTagsField';
-import { type NotebookEntryPoint } from '../analytics/types';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ADD_TARGET, type NotebookEntryPoint } from '../analytics/types';
 import { canCreateNotebooks, canEditNotebooks } from '../permissions';
 import { type PanelElement } from '../types';
 import { notebookViewHref } from '../urls';
@@ -31,7 +32,12 @@ import { notebookViewHref } from '../urls';
 import { CreateNotebookFields } from './CreateNotebookFields';
 import { NotebookPickerList } from './NotebookPickerList';
 import { type AddPanelFormValues } from './addPanelForm';
-import { addPanelErrorMessage, addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
+import {
+  addPanelErrorMessage,
+  addPanelFailureReason,
+  addPanelToExistingNotebook,
+  createNotebookWithPanel,
+} from './addPanelToNotebook';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
@@ -45,9 +51,14 @@ interface Props {
   onDismiss: () => void;
   /** Which surface opened this modal, for the notebook_created analytics event when it creates one. */
   entryPoint: NotebookEntryPoint;
+  /**
+   * Whether the panel being sent is a library panel, for the same analytics. Taken from the caller
+   * because the built element cannot say: a loaded library panel is inlined on the way here.
+   */
+  isLibraryPanel: boolean;
 }
 
-export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint }: Props) {
+export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint, isLibraryPanel }: Props) {
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();
   const canCreate = canCreateNotebooks();
@@ -106,14 +117,21 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint 
 
       isSubmittingRef.current = true;
 
+      // Tells a panel that would not serialize apart from a write that failed: both land in the
+      // same catch, as plain Errors.
+      let panelWasBuilt = false;
+
       try {
         const panel = await buildPanel();
+        panelWasBuilt = true;
+
         const added = existingUid
-          ? await addPanelToExistingNotebook(existingUid, panel, entryPoint)
+          ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, isLibraryPanel)
           : await createNotebookWithPanel(
               { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
               panel,
-              entryPoint
+              entryPoint,
+              isLibraryPanel
             );
 
         dispatch(
@@ -130,6 +148,15 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint 
         );
         onDismiss();
       } catch (error) {
+        // Reported here rather than beside the successes in addPanelToNotebook: this is the only
+        // place that sees both routes, and the panel build that comes before either of them.
+        NotebookAnalytics.addToNotebookFailed(
+          existingUid ?? '',
+          entryPoint,
+          existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
+          addPanelFailureReason(error, panelWasBuilt)
+        );
+
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));
         // Deliberately left open: a conflict is worth retrying, and retyping a new notebook's details
         // because the request failed would be its own small insult.
@@ -137,7 +164,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint 
         throw error;
       }
     },
-    [buildPanel, onDismiss, selected, entryPoint]
+    [buildPanel, onDismiss, selected, entryPoint, isLibraryPanel]
   );
 
   const isSubmitting = submitState.loading;

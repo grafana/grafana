@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { type NotebookEntryPoint } from '../analytics/types';
+import { NOTEBOOK_ADD_FAILED_REASON, type NotebookAddFailedReason, type NotebookEntryPoint } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
 import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
 
@@ -30,13 +30,17 @@ interface CreateNotebookFields {
 export async function addPanelToExistingNotebook(
   uid: string,
   panel: PanelElement,
-  entryPoint: NotebookEntryPoint
+  entryPoint: NotebookEntryPoint,
+  isLibraryPanel: boolean
 ): Promise<AddedToNotebook> {
   const spec = await updateNotebookSpec(uid, (current) => appendPanelToNotebook(current, panel));
 
   // Reported here rather than in the layout manager: this notebook is not open, so there is no scene
   // to add the cell to. `appendPanelToNotebook` puts it last, which is where the index comes from.
-  NotebookAnalytics.cellAdded(uid, entryPoint, spec.layout.spec.cells.length - 1);
+  NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, spec.layout.spec.cells.length - 1, {
+    panel,
+    isLibraryPanel,
+  });
 
   return { uid, title: spec.title };
 }
@@ -44,7 +48,8 @@ export async function addPanelToExistingNotebook(
 export async function createNotebookWithPanel(
   fields: CreateNotebookFields,
   panel: PanelElement,
-  entryPoint: NotebookEntryPoint
+  entryPoint: NotebookEntryPoint,
+  isLibraryPanel: boolean
 ): Promise<AddedToNotebook> {
   const spec = appendPanelToNotebook(
     {
@@ -59,9 +64,26 @@ export async function createNotebookWithPanel(
   );
 
   const created = await createNotebook(spec);
-  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
+  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length, { panel, isLibraryPanel });
 
   return { uid: created.uid, title: spec.title };
+}
+
+/**
+ * Why the failure analytics says the attempt failed. Whether the panel was built is the one thing
+ * the error cannot answer on its own: a panel that would not serialize and a request that came back
+ * 400 both arrive as plain Errors.
+ */
+export function addPanelFailureReason(error: unknown, panelWasBuilt: boolean): NotebookAddFailedReason {
+  if (!panelWasBuilt) {
+    return NOTEBOOK_ADD_FAILED_REASON.BUILD_FAILED;
+  }
+
+  if (error instanceof NotebookConflictError) {
+    return NOTEBOOK_ADD_FAILED_REASON.CONFLICT;
+  }
+
+  return NOTEBOOK_ADD_FAILED_REASON.WRITE_FAILED;
 }
 
 /**
