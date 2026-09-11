@@ -17,7 +17,6 @@ const usePluginComponentMock = jest.mocked(usePluginComponent);
 interface CapturedPromptProps {
   onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
   placeholder?: string;
-  includeContextSections?: readonly string[];
   hideModeSelector?: boolean;
   mode?: string;
 }
@@ -63,7 +62,7 @@ describe('DashboardLandingPrompt', () => {
     expect(screen.queryByLabelText('Loading')).not.toBeInTheDocument();
   });
 
-  it('configures the plugin prompt for dashboard planning', () => {
+  it('configures dashboard planning with the default Assistant context picker', () => {
     const received: CapturedPromptProps[] = [];
     const onSubmit = jest.fn();
     const Prompt = (props: CapturedPromptProps) => {
@@ -82,13 +81,13 @@ describe('DashboardLandingPrompt', () => {
     expect(STANDALONE_PROMPT_COMPONENT_ID).toBe('grafana-assistant-app/standalone-prompt/v1');
     expect(usePluginComponentMock).toHaveBeenCalledWith(STANDALONE_PROMPT_COMPONENT_ID);
     expect(received).toHaveLength(1);
-    expect(received[0].onSubmit).toBe(onSubmit);
-    expect(received[0].placeholder).toBe(
-      'Describe your dashboard to the assistant. This will open the assistant chat and start a conversation.'
-    );
-    expect(received[0].includeContextSections).toEqual(['datasources', 'dashboards']);
-    expect(received[0].hideModeSelector).toBe(true);
-    expect(received[0].mode).toBe('dashboarding');
+    expect(received[0]).toEqual({
+      onSubmit,
+      placeholder:
+        'Describe your dashboard to the assistant. This will open the assistant chat and start a conversation.',
+      hideModeSelector: true,
+      mode: 'dashboarding',
+    });
   });
 
   it('renders nothing when the plugin prompt is unavailable', () => {

@@ -9,16 +9,12 @@ import { Spinner, useStyles2 } from '@grafana/ui';
 
 export const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-prompt/v1';
 
-/** + menu sections this Grafana surface allows in the prompt picker. */
-const DASHBOARD_PROMPT_CONTEXT_SECTIONS = ['datasources', 'dashboards'] as const;
-
 /**
  * keep in sync with grafana-assistant-app `StandaloneAssistantPromptProps`
  */
 interface StandalonePromptProps {
   onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
   placeholder?: string;
-  includeContextSections?: readonly string[];
   hideModeSelector?: boolean;
   mode?: string;
   className?: string;
@@ -42,8 +38,7 @@ function PromptLoadingSlot() {
 
 /**
  * Grafana host for the new-dashboard prompt. ChatInput itself lives in the
- * assistant plugin; this file is the dashboard-domain configuration: placeholder,
- * dashboarding mode, and a + menu limited to dashboards and data sources.
+ * assistant plugin; this file configures the placeholder and dashboarding mode.
  */
 export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandingPromptProps) {
   const { component: Prompt, isLoading } = usePluginComponent<StandalonePromptProps>(STANDALONE_PROMPT_COMPONENT_ID);
@@ -63,7 +58,6 @@ export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandi
             'Describe your dashboard to the assistant. This will open the assistant chat and start a conversation.'
           )
         }
-        includeContextSections={DASHBOARD_PROMPT_CONTEXT_SECTIONS}
         hideModeSelector
         mode="dashboarding"
       />
