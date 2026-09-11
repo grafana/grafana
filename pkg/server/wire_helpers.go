@@ -14,6 +14,8 @@ import (
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
 	preferencesmigration "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
+	correlationsmigration "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	correlationsmigrator "github.com/grafana/grafana/pkg/registry/apps/correlations/migrator"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	querycachingmigration "github.com/grafana/grafana/pkg/registry/apps/querycaching"
@@ -39,6 +41,7 @@ func ProvideMigrationRegistry(
 	starsMigrator legacystars.StarsMigrator,
 	preferencesMigrator legacypreferences.PreferencesMigrator,
 	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
+	correlationMigrator correlationsmigrator.CorrelationMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
@@ -49,5 +52,6 @@ func ProvideMigrationRegistry(
 	r.Register(collectionsmigration.StarsMigration(starsMigrator))
 	r.Register(preferencesmigration.PreferencesMigration(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
+	r.Register(correlationsmigration.CorrelationMigration(correlationMigrator))
 	return r
 }
