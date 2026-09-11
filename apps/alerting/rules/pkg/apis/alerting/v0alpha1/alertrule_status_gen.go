@@ -10,12 +10,11 @@ import (
 type AlertRuleAlertRuleHealth string
 
 const (
-	AlertRuleAlertRuleHealthUnknown      AlertRuleAlertRuleHealth = "Unknown"
-	AlertRuleAlertRuleHealthOK           AlertRuleAlertRuleHealth = "OK"
-	AlertRuleAlertRuleHealthPaused       AlertRuleAlertRuleHealth = "Paused"
-	AlertRuleAlertRuleHealthError        AlertRuleAlertRuleHealth = "Error"
-	AlertRuleAlertRuleHealthNoData       AlertRuleAlertRuleHealth = "NoData"
-	AlertRuleAlertRuleHealthNotScheduled AlertRuleAlertRuleHealth = "NotScheduled"
+	AlertRuleAlertRuleHealthUnknown AlertRuleAlertRuleHealth = "Unknown"
+	AlertRuleAlertRuleHealthOK      AlertRuleAlertRuleHealth = "OK"
+	AlertRuleAlertRuleHealthPaused  AlertRuleAlertRuleHealth = "Paused"
+	AlertRuleAlertRuleHealthError   AlertRuleAlertRuleHealth = "Error"
+	AlertRuleAlertRuleHealthNoData  AlertRuleAlertRuleHealth = "NoData"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for AlertRuleAlertRuleHealth.

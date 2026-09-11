@@ -38,7 +38,6 @@ spec:
           - Paused
           - Error
           - NoData
-          - NotScheduled
           type: string
         AlertRuleState:
           enum:
@@ -503,7 +502,6 @@ spec:
           - Paused
           - Error
           - NoData
-          - NotScheduled
           type: string
         RelativeTimeRange:
           additionalProperties: false

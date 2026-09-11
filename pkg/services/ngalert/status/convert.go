@@ -22,7 +22,7 @@ func toAlertRuleStatus(base model.AlertRuleStatus, states []*state.State, paused
 	base.LastError = nil
 
 	if len(states) == 0 {
-		base.Health = new(model.AlertRuleAlertRuleHealthNotScheduled)
+		base.Health = new(model.AlertRuleAlertRuleHealthUnknown)
 		base.State = new(model.AlertRuleAlertRuleStateInactive)
 		if paused {
 			base.Health = new(model.AlertRuleAlertRuleHealthPaused)
@@ -96,7 +96,7 @@ func alertHealth(health string) model.AlertRuleAlertRuleHealth {
 	case "ok":
 		return model.AlertRuleAlertRuleHealthOK
 	default:
-		return model.AlertRuleAlertRuleHealthNotScheduled
+		return model.AlertRuleAlertRuleHealthUnknown
 	}
 }
 
@@ -106,7 +106,7 @@ func recordingHealth(health string, paused, found bool) model.RecordingRuleRecor
 	}
 
 	if !found {
-		return model.RecordingRuleRecordingRuleHealthNotScheduled
+		return model.RecordingRuleRecordingRuleHealthUnknown
 	}
 
 	switch health {
@@ -117,8 +117,6 @@ func recordingHealth(health string, paused, found bool) model.RecordingRuleRecor
 	case "ok":
 		return model.RecordingRuleRecordingRuleHealthRecording
 	default:
-		// In this case we know about the rule but it hasn't been evaluated
-		// yet so we consider it to be NotScheduled
-		return model.RecordingRuleRecordingRuleHealthNotScheduled
+		return model.RecordingRuleRecordingRuleHealthUnknown
 	}
 }

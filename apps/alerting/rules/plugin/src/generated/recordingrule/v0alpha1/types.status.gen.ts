@@ -6,7 +6,6 @@ export enum RecordingRuleHealth {
 	Paused = "Paused",
 	Error = "Error",
 	NoData = "NoData",
-	NotScheduled = "NotScheduled",
 }
 
 export const defaultRecordingRuleHealth = (): RecordingRuleHealth => (RecordingRuleHealth.Unknown);

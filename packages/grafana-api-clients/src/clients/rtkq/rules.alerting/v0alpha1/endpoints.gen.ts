@@ -1209,7 +1209,7 @@ export type AlertRuleSpec = {
   title: string;
   trigger: AlertRuleIntervalTrigger;
 };
-export type AlertRuleAlertRuleHealth = 'Unknown' | 'OK' | 'Paused' | 'Error' | 'NoData' | 'NotScheduled';
+export type AlertRuleAlertRuleHealth = 'Unknown' | 'OK' | 'Paused' | 'Error' | 'NoData';
 export type AlertRuleOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */
   descriptiveState?: string;
@@ -1455,7 +1455,7 @@ export type RecordingRuleSpec = {
   title: string;
   trigger: RecordingRuleIntervalTrigger;
 };
-export type RecordingRuleRecordingRuleHealth = 'Unknown' | 'Recording' | 'Paused' | 'Error' | 'NoData' | 'NotScheduled';
+export type RecordingRuleRecordingRuleHealth = 'Unknown' | 'Recording' | 'Paused' | 'Error' | 'NoData';
 export type RecordingRuleOperatorState = {
   /** descriptiveState is an optional more descriptive state field which has no requirements on format */
   descriptiveState?: string;

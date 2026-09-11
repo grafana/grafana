@@ -2,7 +2,7 @@ package v0alpha1
 
 import "time"
 
-#AlertRuleHealth:      "Unknown" | "OK" | "Paused" | "Error" | "NoData" | "NotScheduled"
+#AlertRuleHealth:      "Unknown" | "OK" | "Paused" | "Error" | "NoData"
 #AlertRuleState:       "Inactive" | "Healthy" | "Firing" | "Pending" | "Recovering"
 #AlertRuleStateReason: "Evaluated" | "KeepLast"
 

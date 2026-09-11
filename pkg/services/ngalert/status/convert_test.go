@@ -91,11 +91,11 @@ func TestToAlertRuleStatus(t *testing.T) {
 			wantEval:   true,
 		},
 		{
-			name:       "no states is inactive/not-scheduled",
+			name:       "no states is inactive/unknown",
 			states:     nil,
 			wantState:  model.AlertRuleAlertRuleStateInactive,
 			wantReason: model.AlertRuleAlertRuleStateReasonEvaluated,
-			wantHealth: model.AlertRuleAlertRuleHealthNotScheduled,
+			wantHealth: model.AlertRuleAlertRuleHealthUnknown,
 			wantEval:   false,
 		},
 	}
@@ -160,10 +160,10 @@ func TestToRecordingRuleStatus(t *testing.T) {
 			wantError:  "boom",
 		},
 		{
-			name:       "not found maps to not scheduled",
+			name:       "not found maps to unknown",
 			rs:         ngmodels.RuleStatus{},
 			found:      false,
-			wantHealth: model.RecordingRuleRecordingRuleHealthNotScheduled,
+			wantHealth: model.RecordingRuleRecordingRuleHealthUnknown,
 		},
 		{
 			name:       "paused overrides",
@@ -209,7 +209,7 @@ func TestToAlertRuleStatus_preservesBaseAndClearsStaleFields(t *testing.T) {
 	got := toAlertRuleStatus(base, nil, false)
 
 	require.Equal(t, model.AlertRuleAlertRuleStateInactive, *got.State)
-	require.Equal(t, model.AlertRuleAlertRuleHealthNotScheduled, *got.Health)
+	require.Equal(t, model.AlertRuleAlertRuleHealthUnknown, *got.Health)
 	require.Nil(t, got.LastError, "stale LastError must be cleared")
 
 	// Fields owned by other writers are preserved from base.

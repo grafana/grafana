@@ -95,7 +95,6 @@ spec:
                 - Paused
                 - Error
                 - NoData
-                - NotScheduled
                 type: string
               lastError:
                 type: string

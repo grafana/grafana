@@ -10,12 +10,11 @@ import (
 type RecordingRuleRecordingRuleHealth string
 
 const (
-	RecordingRuleRecordingRuleHealthUnknown      RecordingRuleRecordingRuleHealth = "Unknown"
-	RecordingRuleRecordingRuleHealthRecording    RecordingRuleRecordingRuleHealth = "Recording"
-	RecordingRuleRecordingRuleHealthPaused       RecordingRuleRecordingRuleHealth = "Paused"
-	RecordingRuleRecordingRuleHealthError        RecordingRuleRecordingRuleHealth = "Error"
-	RecordingRuleRecordingRuleHealthNoData       RecordingRuleRecordingRuleHealth = "NoData"
-	RecordingRuleRecordingRuleHealthNotScheduled RecordingRuleRecordingRuleHealth = "NotScheduled"
+	RecordingRuleRecordingRuleHealthUnknown   RecordingRuleRecordingRuleHealth = "Unknown"
+	RecordingRuleRecordingRuleHealthRecording RecordingRuleRecordingRuleHealth = "Recording"
+	RecordingRuleRecordingRuleHealthPaused    RecordingRuleRecordingRuleHealth = "Paused"
+	RecordingRuleRecordingRuleHealthError     RecordingRuleRecordingRuleHealth = "Error"
+	RecordingRuleRecordingRuleHealthNoData    RecordingRuleRecordingRuleHealth = "NoData"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for RecordingRuleRecordingRuleHealth.

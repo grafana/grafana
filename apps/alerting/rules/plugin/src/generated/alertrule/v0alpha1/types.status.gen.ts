@@ -6,7 +6,6 @@ export enum AlertRuleHealth {
 	Paused = "Paused",
 	Error = "Error",
 	NoData = "NoData",
-	NotScheduled = "NotScheduled",
 }
 
 export const defaultAlertRuleHealth = (): AlertRuleHealth => (AlertRuleHealth.Unknown);

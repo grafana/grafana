@@ -2,7 +2,7 @@ package v0alpha1
 
 import "time"
 
-#RecordingRuleHealth: "Unknown" | "Recording" | "Paused" | "Error" | "NoData" | "NotScheduled"
+#RecordingRuleHealth: "Unknown" | "Recording" | "Paused" | "Error" | "NoData"
 
 #RecordingRuleStatus: {
 	health?:             #RecordingRuleHealth

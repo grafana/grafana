@@ -2956,7 +2956,7 @@
       },
       "AlertRuleAlertRuleHealth": {
         "type": "string",
-        "enum": ["Unknown", "OK", "Paused", "Error", "NoData", "NotScheduled"]
+        "enum": ["Unknown", "OK", "Paused", "Error", "NoData"]
       },
       "AlertRuleAlertRuleState": {
         "type": "string",
@@ -4352,7 +4352,7 @@
       },
       "RecordingRuleRecordingRuleHealth": {
         "type": "string",
-        "enum": ["Unknown", "Recording", "Paused", "Error", "NoData", "NotScheduled"]
+        "enum": ["Unknown", "Recording", "Paused", "Error", "NoData"]
       },
       "RecordingRuleRelativeTimeRange": {
         "type": "object",

@@ -3175,8 +3175,7 @@
           "OK",
           "Paused",
           "Error",
-          "NoData",
-          "NotScheduled"
+          "NoData"
         ]
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState": {
@@ -4775,8 +4774,7 @@
           "Recording",
           "Paused",
           "Error",
-          "NoData",
-          "NotScheduled"
+          "NoData"
         ]
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange": {
