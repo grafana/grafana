@@ -293,6 +293,27 @@ describe('<SpanDetail>', () => {
     expect(props.logItemToggle).toHaveBeenLastCalledWith(span.spanID, props.span.logs[0]);
   });
 
+  it('shows Events above attribute sections when the span is in error', () => {
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    const switches = screen.getAllByRole('switch').map((el) => el.textContent ?? '');
+    const eventsIndex = switches.findIndex((text) => /Events/.test(text));
+    const spanAttributesIndex = switches.findIndex((text) => /Span attributes/.test(text));
+    expect(eventsIndex).toBeGreaterThanOrEqual(0);
+    expect(spanAttributesIndex).toBeGreaterThanOrEqual(0);
+    expect(eventsIndex).toBeLessThan(spanAttributesIndex);
+  });
+
+  it('keeps Events below attribute sections when the span is not in error', () => {
+    const okSpan = { ...span, statusCode: 1 };
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={okSpan} />);
+    const switches = screen.getAllByRole('switch').map((el) => el.textContent ?? '');
+    const eventsIndex = switches.findIndex((text) => /Events/.test(text));
+    const spanAttributesIndex = switches.findIndex((text) => /Span attributes/.test(text));
+    expect(eventsIndex).toBeGreaterThanOrEqual(0);
+    expect(spanAttributesIndex).toBeGreaterThanOrEqual(0);
+    expect(spanAttributesIndex).toBeLessThan(eventsIndex);
+  });
+
   it('renders the warnings', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Warnings/ }));
