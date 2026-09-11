@@ -51,6 +51,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+  import-alertmanager-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/import-alertmanager-configuration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/import-alertmanager-configuration/
 ---
 
 {{< admonition type="caution" >}}
@@ -155,6 +160,7 @@ On the Settings page, you can also manage your Alertmanager configurations.
 
 - Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
 - Compare the historical snapshot with the latest configuration to see which changes were made.
+- Import notification configuration from another Alertmanager. For more details, refer to [import Alertmanager configuration to Grafana](ref:import-alertmanager-configuration).
 
 ### Configuration history limits
 
