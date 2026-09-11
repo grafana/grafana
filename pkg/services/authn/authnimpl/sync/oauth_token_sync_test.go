@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
@@ -141,4 +142,74 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			assert.Equal(t, tt.expectRevokeTokenCalled, revokeTokenCalled)
 		})
 	}
+}
+
+func TestOAuthTokenSync_ReusesPrefetchedOAuthToken(t *testing.T) {
+	newSync := func(service oauthtoken.OAuthTokenService) *OAuthTokenSync {
+		return &OAuthTokenSync{
+			log:               log.NewNopLogger(),
+			service:           service,
+			sessionService:    authtest.NewFakeUserAuthTokenService(),
+			singleflightGroup: new(singleflight.Group),
+			tracer:            tracing.InitializeTracerForTest(),
+			cache:             localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+			features:          featuremgmt.WithFeatures(),
+		}
+	}
+	newIdentity := func(token *oauth2.Token) *authn.Identity {
+		return &authn.Identity{
+			ID:              "1",
+			Type:            claims.TypeUser,
+			SessionToken:    &auth.UserToken{Id: 42},
+			AuthenticatedBy: login.AzureADAuthModule,
+			OAuthToken:      token,
+		}
+	}
+
+	t.Run("skips refresh and database reread for a current token", func(t *testing.T) {
+		calls := 0
+		service := &oauthtokentest.MockOauthTokenService{
+			TryTokenRefreshFunc: func(context.Context, identity.Requester, *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
+				calls++
+				return nil, nil
+			},
+		}
+		prefetched := &oauth2.Token{AccessToken: "current", Expiry: time.Now().Add(time.Hour)}
+		ident := newIdentity(prefetched)
+
+		err := newSync(service).SyncOauthTokenHook(context.Background(), ident, nil)
+
+		require.NoError(t, err)
+		assert.Zero(t, calls)
+		assert.Same(t, prefetched, ident.OAuthToken)
+	})
+
+	t.Run("uses the locked refresh result for passthrough", func(t *testing.T) {
+		refreshed := &oauth2.Token{AccessToken: "refreshed", Expiry: time.Now().Add(time.Hour)}
+		service := &oauthtokentest.MockOauthTokenService{
+			TryTokenRefreshFunc: func(context.Context, identity.Requester, *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
+				return refreshed, nil
+			},
+		}
+		ident := newIdentity(&oauth2.Token{AccessToken: "expired", Expiry: time.Now().Add(-time.Hour)})
+
+		err := newSync(service).SyncOauthTokenHook(context.Background(), ident, nil)
+
+		require.NoError(t, err)
+		assert.Same(t, refreshed, ident.OAuthToken)
+	})
+
+	t.Run("does not retain a stale token when refresh is skipped", func(t *testing.T) {
+		service := &oauthtokentest.MockOauthTokenService{
+			TryTokenRefreshFunc: func(context.Context, identity.Requester, *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
+				return nil, nil
+			},
+		}
+		ident := newIdentity(&oauth2.Token{AccessToken: "expired", Expiry: time.Now().Add(-time.Hour)})
+
+		err := newSync(service).SyncOauthTokenHook(context.Background(), ident, nil)
+
+		require.NoError(t, err)
+		assert.Nil(t, ident.OAuthToken)
+	})
 }

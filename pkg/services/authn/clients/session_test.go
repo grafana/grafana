@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -209,6 +210,80 @@ func TestSession_Authenticate(t *testing.T) {
 			}
 
 			require.EqualValues(t, tt.wantID, got)
+		})
+	}
+}
+
+func TestSession_AuthenticateUsesOAuthPassthroughLookup(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = "grafana_session"
+	cfg.TokenRotationIntervalMinutes = 10
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+
+	sessionToken := &auth.UserToken{
+		Id:            1,
+		UserId:        7,
+		AuthTokenSeen: true,
+		RotatedAt:     time.Now().Unix(),
+	}
+	oauthToken := &oauth2.Token{AccessToken: "access-token", Expiry: time.Now().Add(time.Hour)}
+	for _, tt := range []struct {
+		name        string
+		passthrough bool
+		hasAuthInfo bool
+	}{
+		{name: "passthrough reuses linked auth info", passthrough: true, hasAuthInfo: true},
+		{name: "external session without auth info uses fallback", passthrough: true},
+		{name: "ordinary session uses token-only lookup"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			lookupCalls, authnLookupCalls := 0, 0
+			sessionService := &authtest.FakeUserAuthTokenService{
+				LookupTokenProvider: func(context.Context, string) (*auth.UserToken, error) {
+					lookupCalls++
+					return sessionToken, nil
+				},
+				LookupTokenForAuthnProvider: func(context.Context, string) (*auth.SessionTokenAuthnInfo, error) {
+					authnLookupCalls++
+					return &auth.SessionTokenAuthnInfo{
+						Token:       sessionToken,
+						AuthModule:  login.AzureADAuthModule,
+						OAuthToken:  oauthToken,
+						HasAuthInfo: tt.hasAuthInfo,
+					}, nil
+				},
+			}
+			authInfo := &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{
+				AuthId: "fallback-subject", AuthModule: login.AzureADAuthModule,
+			}}
+			client := ProvideSession(cfgProvider, sessionService, authInfo, tracing.InitializeTracerForTest())
+
+			httpReq := &http.Request{Header: make(http.Header)}
+			httpReq.AddCookie(&http.Cookie{Name: cfg.LoginCookieName, Value: "raw-token"})
+			req := &authn.Request{HTTPRequest: httpReq, IncludeOauthPassthroughHeaders: tt.passthrough}
+
+			ident, err := client.Authenticate(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, ident)
+			assert.Same(t, sessionToken, ident.SessionToken)
+			assert.Equal(t, login.AzureADAuthModule, ident.AuthenticatedBy)
+			if tt.passthrough {
+				assert.Zero(t, lookupCalls)
+				assert.Equal(t, 1, authnLookupCalls)
+				assert.Same(t, oauthToken, ident.OAuthToken)
+			} else {
+				assert.Equal(t, 1, lookupCalls)
+				assert.Zero(t, authnLookupCalls)
+				assert.Nil(t, ident.OAuthToken)
+			}
+			if tt.hasAuthInfo {
+				assert.Zero(t, authInfo.LatestUserID, "a present auth-info row may have an empty auth ID")
+				assert.Empty(t, ident.AuthID)
+			} else {
+				assert.Equal(t, sessionToken.UserId, authInfo.LatestUserID)
+				assert.Equal(t, "fallback-subject", ident.AuthID)
+			}
 		})
 	}
 }
