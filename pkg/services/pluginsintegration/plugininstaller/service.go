@@ -104,6 +104,9 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if exists {
 			// If it's installed, check if we are looking for a specific version
 			if p.Info.Version == installPlugin.Version {
