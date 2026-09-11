@@ -58,16 +58,4 @@ export const LongTextWrapping: StoryFn<typeof Badge> = () => (
   </div>
 );
 
-export const Truncated: StoryFn<typeof Badge> = (args) => (
-  <div style={{ display: 'flex', maxWidth: 180 }}>
-    <Badge {...args} />
-  </div>
-);
-
-Truncated.args = {
-  text: 'Badge label that is long enough to be truncated',
-  color: 'blue',
-  icon: 'clock-nine',
-};
-
 export default meta;
