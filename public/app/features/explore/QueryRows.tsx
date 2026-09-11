@@ -72,7 +72,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
 
   const onUpdateDatasources = useCallback(
     (datasource: DataSourceRef) => {
-      dispatch(changeDatasource({ exploreId, datasource }));
+      dispatch(changeDatasource({ exploreId, datasource, options: { importQueries: true } }));
     },
     [dispatch, exploreId]
   );
