@@ -105,7 +105,7 @@ export default function RepositoryStatusPage() {
                   ))}
                 </TabsBar>
                 <TabContent>
-                  {data?.metadata?.deletionTimestamp && (
+                  {data.metadata?.deletionTimestamp && !data.status?.deleteError && (
                     <Alert
                       title={t('provisioning.repository-status-page.title-queued-for-deletion', 'Queued for deletion')}
                       severity="warning"
