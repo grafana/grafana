@@ -31,110 +31,62 @@ type Service struct {
 
 	router  *GrafanaRouter
 	ready   ReadyNotifier
-	enabled bool
 	metrics *routerMetrics
+
+	standalone bool
+	middleware bool
 }
 
-// ProvideMiddlewareService creates the router service for the full Grafana
-// server. The embedded API server invokes HandleFunc before its existing handler.
-//
-// Unlike the dskit router target (pkg/server's initRouterModule, which checks
-// loader.(services.Service) and runs it alongside the router Service), this
-// does not start a loader's background lifecycle even if it implements
-// services.Service. cloud_router's informer-backed loader is only meant to
-// run as the standalone router module; the monolith path here is expected to
-// stay on the dummy/static loader.
-func ProvideMiddlewareService(features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
+// ProvideService creates the router service. RegisterTargetRoutes enables it
+// for the router module; otherwise the middleware feature toggle controls it.
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, reg prometheus.Registerer) (*Service, error) {
 	if loader == nil {
 		return nil, fmt.Errorf("routes loader is required")
 	}
 
-	s := newService(loader, nil, reg)
-	s.enabled = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	s := newService(loader, reg)
+	s.standalone = slices.Contains(cfg.Target, "router")
+	s.middleware = features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 	return s, nil
 }
 
-// ProvideService creates the router target service.
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loader RoutesLoader, httpRouter *mux.Router, ready ReadyNotifier, reg prometheus.Registerer) (*Service, error) {
-	switch {
-	case cfg == nil:
-		return nil, fmt.Errorf("configuration is required")
-	case loader == nil:
-		return nil, fmt.Errorf("routes loader is required")
-	case httpRouter == nil:
-		return nil, fmt.Errorf("HTTP router is required")
+// RegisterTargetRoutes enables the service and mounts it on the dskit module server.
+func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifier) error {
+	if !s.standalone || httpRouter == nil {
+		return nil // do not register!
 	}
 
-	s := newService(loader, ready, reg)
-
-	// Explicitly configured
-	// NOTE: eventually should be the only path
-	if slices.Contains(cfg.Target, "router") {
-		s.enabled = true
-		next := httpRouter.NotFoundHandler
-		if next == nil {
-			next = http.NotFoundHandler()
-		}
-		handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			s.HandleFunc(w, req, next)
-		})
-		for _, v := range []string{"/apis", "/openapi/v3"} {
-			httpRouter.Handle(v, handler)
-			httpRouter.PathPrefix(v + "/").Handler(handler)
-		}
-		return s, nil
+	s.ready = ready
+	next := httpRouter.NotFoundHandler
+	if next == nil {
+		next = http.NotFoundHandler()
 	}
-
-	// We need to run as middleware on-top of the existing HTTP router
-	// NOTE: this should be removed when we are no longer running "standard" k8s APIServer
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) { //nolint:staticcheck
-		s.enabled = true
-		// This will intercept the calls to /apis/* and /openapi/v3/*
-		// After we have fully migrated to the router, this should be a raw handler rather than middleware
-		httpRouter.Use(s.Middleware)
-
-		// Gorilla middleware only runs after a registered route matches. New router-only
-		// groups have no matching route in the existing API server, so they must also get
-		// a chance to handle the request before the mux returns its not-found response.
-		notFound := httpRouter.NotFoundHandler
-		if notFound == nil {
-			notFound = http.NotFoundHandler()
-		}
-		httpRouter.NotFoundHandler = s.Middleware(notFound)
-		return s, nil
+	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		s.metrics.instrument(s.router, w, req, next)
+	})
+	for _, path := range []string{"/apis", "/openapi/v3"} {
+		httpRouter.Handle(path, handler)
+		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
-
-	// Do not register the handler unless router is explicitly configured (externally)
-	// This should be removed when we are no longer running "standard" k8s APIServer
-	s.router = NewGrafanaRouter(dummyRoutesLoader{}) // EMPTY loader
-	return s, nil
+	return nil
 }
 
-func newService(loader RoutesLoader, ready ReadyNotifier, reg prometheus.Registerer) *Service {
+func newService(loader RoutesLoader, reg prometheus.Registerer) *Service {
 	s := &Service{
 		router:  NewGrafanaRouter(loader),
-		ready:   ready,
 		metrics: newRouterMetrics(reg),
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
 }
 
-// Middleware gives the configured router first chance to serve a request and
-// delegates requests for groups it does not own to the existing HTTP stack.
-func (s *Service) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.HandleFunc(w, req, next)
-	})
-}
-
 // HandleFunc serves through the router when enabled and otherwise delegates.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if !s.enabled {
-		next.ServeHTTP(w, req)
+	if s.middleware {
+		s.metrics.instrument(s.router, w, req, next)
 		return
 	}
-	s.metrics.instrument(s.router, w, req, next)
+	next.ServeHTTP(w, req)
 }
 
 // Run adapts Service to the full server's background-service lifecycle.
@@ -147,7 +99,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // IsDisabled avoids starting the reconcile loop when middleware routing is off.
 func (s *Service) IsDisabled() bool {
-	return !s.enabled
+	return !s.middleware && !s.standalone
 }
 
 func (s *Service) starting(ctx context.Context) error {
