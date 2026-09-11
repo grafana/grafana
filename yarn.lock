@@ -3048,13 +3048,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:9.0.0--canary.1614.34254315117.0":
-  version: 9.0.0--canary.1614.34254315117.0
-  resolution: "@grafana/scenes-react@npm:9.0.0--canary.1614.34254315117.0"
+"@grafana/scenes-react@npm:9.0.0--canary.1614.34591232350.0":
+  version: 9.0.0--canary.1614.34591232350.0
+  resolution: "@grafana/scenes-react@npm:9.0.0--canary.1614.34591232350.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:9.0.0--canary.1614.34254315117.0"
+    "@grafana/scenes": "npm:9.0.0--canary.1614.34591232350.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3064,11 +3064,11 @@ __metadata:
     "@grafana/runtime": ">=11.6"
     "@grafana/schema": ">=11.6"
     "@grafana/ui": ">=11.6"
-    react: ^18.0.0
-    react-dom: ^18.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/1288fbb1d436cbf43e3caac48be53ca3b5bae52efeda039339606492c5b46dd3f498941e1cdda701e78c1d7aa18ab0879a08dc54d704f2f53227272186094667
+  checksum: 10/b7c3422672b01bf89318b7a8d7959f2fa5e2f7321d577a7a805f08a206ed830cf442499cfd0bacb1d320f1be003e7a972633ab7d30476002fa892e39e82cf33c
   languageName: node
   linkType: hard
 
@@ -3103,9 +3103,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:9.0.0--canary.1614.34254315117.0":
-  version: 9.0.0--canary.1614.34254315117.0
-  resolution: "@grafana/scenes@npm:9.0.0--canary.1614.34254315117.0"
+"@grafana/scenes@npm:9.0.0--canary.1614.34591232350.0":
+  version: 9.0.0--canary.1614.34591232350.0
+  resolution: "@grafana/scenes@npm:9.0.0--canary.1614.34591232350.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -3126,11 +3126,11 @@ __metadata:
     "@grafana/runtime": ">=11.6"
     "@grafana/schema": ">=11.6"
     "@grafana/ui": ">=11.6"
-    react: ^18.0.0
-    react-dom: ^18.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/5321348cf0dc72d4a7dbed4172be1ba4afa37287486d093bff40d93019900628854ae5c3d8aafeb6baa4307f935301905afb9c48f291593d87ee083fad60e831
+  checksum: 10/cca2acf1dc61df27c403eba0a52568587040cee49965b13baeb264fa304ef1fce7292b91f41dc31d4418fa94e9f5c87ec2aaafcade2f16dff5a9cc8f25e950c3
   languageName: node
   linkType: hard
 
@@ -20106,8 +20106,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:9.0.0--canary.1614.34254315117.0"
-    "@grafana/scenes-react": "npm:9.0.0--canary.1614.34254315117.0"
+    "@grafana/scenes": "npm:9.0.0--canary.1614.34591232350.0"
+    "@grafana/scenes-react": "npm:9.0.0--canary.1614.34591232350.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
