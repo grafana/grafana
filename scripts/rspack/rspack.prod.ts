@@ -3,9 +3,9 @@ import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { merge } from 'webpack-merge';
 
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import { fullStatsOptions } from './plugins/webpackStatsCompat.ts';
-import common, { type Env } from './rspack.common.ts';
+import common, { type Env, PUBLIC_PATH } from './rspack.common.ts';
 import swaggerConfig from './rspack.swagger.ts';
 
 export default (env: Env = {}) => {
@@ -57,7 +57,7 @@ export default (env: Env = {}) => {
     plugins: [
       new rspack.SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH)),
       function (this: Compiler) {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {

@@ -129,9 +129,15 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         return `[name]${contentHash}.js`;
       },
       chunkFilename: `[name]${contentHash}.js`,
-      publicPath: PUBLIC_PATH,
+      publicPath: 'auto',
       // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
       trustedTypes: { policyName: 'grafana#rspack' },
+      // Enable es module output
+      module: true,
+      chunkFormat: 'module',
+      chunkLoading: 'import',
+      workerChunkLoading: 'import',
+      crossOriginLoading: 'anonymous',
     },
     resolve: {
       conditionNames: ['@grafana-app/source', '...'],
@@ -148,6 +154,15 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         // source code and miss out in updates
         '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
           '@locker/near-membrane-dom/custom-devtools-formatter.js'
+        ),
+        // TODO: Remove once Rspack replaces Webpack.
+        // Rspack emits worker chunks as ES modules (workerChunkLoading: 'import' below), which
+        // resolve to module-worker variants instead of the importScripts based originals used by
+        // the webpack build.
+        'app/core/utils/CorsWorker$': path.resolve(grafanaRoot, 'public/app/core/utils/CorsWorker.rspack.ts'),
+        'app/core/utils/CorsSharedWorker$': path.resolve(
+          grafanaRoot,
+          'public/app/core/utils/CorsSharedWorker.rspack.ts'
         ),
       },
       modules: [
