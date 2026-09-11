@@ -141,15 +141,15 @@ type ConvertPrometheusSrv struct {
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
-	rulerSync        ExternalRulerSyncChecker
+	rulerSync        externalRulerSyncChecker
 }
 
-// ExternalRulerSyncChecker reports whether external Mimir ruler sync is
+// externalRulerSyncChecker reports whether external Mimir ruler sync is
 // configured for an org and whether a folder is part of the sync's managed
 // subtree. The convert API uses it to reject manual imports that target the
 // sync-managed folder (the sync worker owns those rules), while allowing imports
 // into unrelated folders. Satisfied by *rulesync.ExternalRulerSyncer.
-type ExternalRulerSyncChecker interface {
+type externalRulerSyncChecker interface {
 	IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 	IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error)
 }
@@ -171,7 +171,7 @@ func NewConvertPrometheusSrv(
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
-	rulerSync ExternalRulerSyncChecker,
+	rulerSync externalRulerSyncChecker,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -407,7 +407,7 @@ func (srv *ConvertPrometheusSrv) rejectManagedFolderChange(c *contextmodel.ReqCo
 		return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
 	}
 	if managed {
-		return response.Error(http.StatusConflict, "rule changes are disabled while external ruler sync is configured for this organization", nil)
+		return response.Error(http.StatusConflict, fmt.Sprintf("rule changes are disabled for folder %q while external ruler sync is configured for it", folderUID), nil)
 	}
 	return nil
 }
