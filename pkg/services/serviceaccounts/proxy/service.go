@@ -142,6 +142,10 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, query
 	return sa, nil
 }
 
+func (s *ServiceAccountsProxy) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return s.proxiedService.RetrieveServiceAccountsByUIDs(ctx, orgID, uids)
+}
+
 func (s *ServiceAccountsProxy) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	return s.proxiedService.RetrieveServiceAccountIdByName(ctx, orgID, name)
 }

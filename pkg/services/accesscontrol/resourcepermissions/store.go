@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -111,6 +112,79 @@ func (s *store) GetPermissionIDByRoleName(ctx context.Context, orgID int64, role
 	})
 
 	return permissionID, err
+}
+
+// permissionIDBatchSize keeps a single IN(...) list well below the placeholder
+// limits of the supported drivers.
+const permissionIDBatchSize = 500
+
+type roleNamePermissionID struct {
+	RoleName     string `xorm:"role_name"`
+	PermissionID int64  `xorm:"permission_id"`
+}
+
+// GetPermissionIDsByRoleNames resolves many managed role names to permission IDs
+// for one resource scope in one query per batch. A role with no permission on
+// that scope produces no row, so missing names are absent from the result.
+func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, scope string, roleNames []string) (map[string]int64, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDsByRoleNames")
+	defer span.End()
+
+	result := make(map[string]int64, len(roleNames))
+	if len(roleNames) == 0 {
+		return result, nil
+	}
+
+	unique := make([]string, 0, len(roleNames))
+	seen := make(map[string]struct{}, len(roleNames))
+	for _, name := range roleNames {
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		unique = append(unique, name)
+	}
+	if len(unique) == 0 {
+		return result, nil
+	}
+
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		for chunk := range slices.Chunk(unique, permissionIDBatchSize) {
+			args := make([]any, 0, len(chunk)+2)
+			args = append(args, scope, orgID)
+			for _, name := range chunk {
+				args = append(args, name)
+			}
+
+			var rows []roleNamePermissionID
+			if err := sess.SQL(`
+				SELECT r.name AS role_name, p.id AS permission_id
+				FROM role r
+				INNER JOIN permission p ON p.id = (
+					SELECT p2.id
+					FROM permission p2
+					WHERE p2.role_id = r.id AND p2.scope = ?
+					LIMIT 1
+				)
+				WHERE r.org_id = ? AND r.name IN (?`+strings.Repeat(",?", len(chunk)-1)+`)
+			`, args...).Find(&rows); err != nil {
+				return err
+			}
+
+			for _, row := range rows {
+				result[row.RoleName] = row.PermissionID
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *store) SetUserResourcePermission(
