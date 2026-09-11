@@ -738,11 +738,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/debug.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/utils/dom.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2264,11 +2259,6 @@
   },
   "public/app/features/serviceaccounts/state/reducers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/templating/fieldAccessorCache.ts": {
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },

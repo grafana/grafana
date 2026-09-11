@@ -6107,7 +6107,6 @@
       "description": "Pionowa sekwencja paneli, tekstu i komórek kodu",
       "name": "Notatnik",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Czas",
       "title-edit": "",
@@ -7181,6 +7180,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Błąd wczytywania pulpitu"
     },
     "dashboard-scene": {
@@ -7730,6 +7735,10 @@
       "required": "Wymagane"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Zmiany",
         "label-details": "Szczegóły",
@@ -9248,10 +9257,14 @@
       "share-export-json": "Eksportuj jako JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Godzina rozpoczęcia",
       "success-indicator": "",
       "target": "Cel",
       "tooltip-url": "{{route}} lub {{url}} lub {{target}} lub {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Identyfikator śledzenia",
       "url": "URL",
       "warning-indicator": ""
@@ -10783,7 +10796,6 @@
       "ariaLabel-panel-loading": "Pasek ładowania panelu",
       "ariaLabel-panel-status": "Status panelu",
       "errors-and-notices": "Błędy i powiadomienia",
-      "inspect-errors-notices": "Sprawdź",
       "tooltip-cancel": "Anuluj zapytanie",
       "tooltip-cancel-loading": "Anuluj zapytanie",
       "tooltip-stop-streaming": "Zatrzymaj strumieniowanie",
@@ -10865,9 +10877,13 @@
       "cell-filter-out": "Odfiltruj wartość",
       "cell-inspect": "Sprawdź wartość",
       "cell-inspect-tooltip": "Sprawdź wartość",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Kopiuj do schowka",
       "csv-counts": "Wiersze: {{rows}}, Kolumny: {{columns}}",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Dodaj wszystkie wyświetlane wartości do filtra",
         "blanks": "(Puste)",
@@ -12740,6 +12756,7 @@
       "title": "Utwórz"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nowa reguła alertu"
     },
     "create-dashboard": {
@@ -13238,7 +13255,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13258,7 +13274,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13309,6 +13324,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13325,6 +13341,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_few": "",
@@ -13378,7 +13395,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Wyczyść ustawienia"
+      "clear-tooltip": "Wyczyść ustawienia",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Kolory serii wg"
@@ -16866,8 +16885,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
