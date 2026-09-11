@@ -12,7 +12,6 @@ import {
   Button,
   ClipboardButton,
   Stack,
-  CodeEditor,
   Box,
   Label,
   RadioButtonGroup,
@@ -20,6 +19,7 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -108,7 +108,7 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
 
   return (
     <div className={styles.container}>
-      <Stack direction="column" gap={2} grow={1}>
+      <Stack direction="column" gap={2} grow={1} minWidth={0}>
         <div>
           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cannot-be-saved">
             This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
@@ -176,14 +176,16 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
           ) : (
             <AutoSizer disableWidth>
               {({ height }) => (
-                <CodeEditor
-                  width="100%"
-                  height={height}
+                <CodeMirrorEditor
+                  height={`${height}px`}
                   language="json"
-                  showLineNumbers={true}
-                  showMiniMap={displayJson.length > 100}
                   value={displayJson}
-                  readOnly={true}
+                  aria-label={t(
+                    'dashboard-scene.save-provisioned-dashboard-form.json-preview-label',
+                    'Provisioned dashboard JSON'
+                  )}
+                  onChange={() => {}}
+                  readOnly
                 />
               )}
             </AutoSizer>
@@ -219,6 +221,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     json: css({
       flexGrow: 1,
+      width: '100%',
+      minWidth: 0,
+      minHeight: '300px',
       maxHeight: '800px',
     }),
     // Alert's wrapper sets flexGrow: 1, which in this column layout makes it swallow all the
