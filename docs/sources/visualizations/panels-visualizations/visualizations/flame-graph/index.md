@@ -31,7 +31,7 @@ refs:
 
 # Flame graph
 
-Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/latest/introduction/what-is-profiling/) data. Using this visualization, a [profile](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/profiling-types/) can be represented as a [flame graph](#flame-graph-mode), [top table](#top-table-mode), or both.
+Flame graphs let you visualize [profiling](https://grafana.com/docs/pyroscope/latest/introduction/what-is-profiling/) data. Using this visualization, a [profile](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/profiling-types/) can be represented as a [flame graph](#flame-graph-mode), [top table](#top-table-mode), or [call tree](#call-tree-mode), shown individually or two at a time side by side.
 
 For example, if you want to understand which parts of a program consume the most resources, such as CPU time, memory, or I/O operations, you can use a flame graph to visualize and analyze where potential performance issues are:
 
@@ -39,7 +39,7 @@ For example, if you want to understand which parts of a program consume the most
 
 You can use a flame graph visualization if you need to:
 
-- Identify any performance hotspots to find where code optimizations may be needed.
+- Identify any performance bottlenecks to find where code optimizations may be needed.
 - Diagnose the root cause of any performance degradation.
 - Analyze the behavior of complex systems, including distributed systems or microservices architectures.
 
@@ -145,6 +145,16 @@ The top table shows the functions from the profile in table format. The table ha
 
 There are also action buttons on the left-most side of each row. The first button searches for the function name while second button shows the sandwich view of the function.
 
+## Call tree mode
+
+The call tree shows the profile's call hierarchy as an expandable tree. Each row represents a function and has **Self** and **Total** values: **Self** is the resources spent in the function itself, and **Total** is the resources spent in the function together with everything it calls.
+
+{{< figure src="/media/docs/pyroscope/screenshot-flamegraph-call-tree.png" max-width="700px" alt="A flame graph visualization showing the toolbar and a Call tree view alongside the flame graph." >}}
+
+To explore the tree, click the expand icon on a row to reveal its child functions, and click it again to collapse them. Expanding a branch lets you follow a single call path from a parent function down to the functions it calls.
+
+Use the call tree when you want to read the call hierarchy directly, one path at a time, instead of scanning block widths in the flame graph or aggregated rows in the top table. It works well as a substitute for the callers side of [Sandwich view](#sandwich-view) when you want to trace how a function is reached in the call hierarchy.
+
 ## Toolbar
 
 The following table lists the features of the toolbar:
@@ -158,7 +168,7 @@ The following table lists the features of the toolbar:
 | [Change color scheme](#change-color-scheme) | Switch between **By value** and **By package name** to visually tie functions from the same package together. |
 | Grouping | Expand or collapse all groups to show all instances of a function or show the function grouped. |
 | Text align | Align text either to the left or to the right to show more important parts of the function name when it does not fit into the block. |
-| Visualization picker | Choose to show only the flame graph, only table, or both at the same time. |
+| Visualization picker | Switch between **Single** and **Split** view. In **Single** view, one pane shows the **Top table**, **Flame graph**, or **Call tree**. In **Split** view, two panes appear side by side, and each pane can independently show the **Top table**, **Flame graph**, or **Call tree**. |
 
 <!-- prettier-ignore-end -->
 
@@ -213,11 +223,11 @@ By visualizing the call hierarchy and the relative cost of each function, you ca
 {{< qa question="How do I read a flame graph?" >}}
 A flame graph represents a hierarchy of function calls collected during profiling.
 Each block represents a function, and its position in the graph shows where it appears in the call stack.
-The width of a block indicates how much time or resources were spent in that function, making wider blocks a good starting point for identifying performance hotspots.
-You can click a function to inspect its call hierarchy, use Sandwich view to examine its callers and callees, or switch to the Top table to see aggregated profiling data in a tabular format.
+The width of a block indicates how much time or resources were spent in that function, making wider blocks a good starting point for identifying performance bottlenecks.
+You can click a function to inspect its call hierarchy, use Sandwich view to examine its callers and callees, switch to the Call tree to expand the call hierarchy one path at a time, or switch to the Top table to see aggregated profiling data in a tabular format.
 {{< /qa >}}
 {{< qa question="How does a flame graph help identify performance bottlenecks?" >}}
 A flame graph makes performance bottlenecks easier to spot by showing the relative cost of each function in the call stack.
-Wider blocks represent functions that consume more time or resources, allowing you to quickly identify hotspots and then drill into their callers and callees to understand where optimization efforts will have the greatest impact.
+Wider blocks represent functions that consume more time or resources, allowing you to quickly identify costly functions and then drill into their callers and callees to understand where optimization efforts will have the greatest impact.
 {{< /qa >}}
 {{< /qa-list >}}
