@@ -4,7 +4,11 @@ import { type ComponentClass, type ComponentType } from 'react';
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
-import { type FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
+import {
+  type FieldConfigProperty,
+  type FieldConfigPropertyItem,
+  type FieldConfigSource,
+} from '../types/fieldOverrides';
 import {
   type PanelPluginMeta,
   type PanelProps,
@@ -35,6 +39,14 @@ export type StandardOptionConfig = {
   defaultValue?: any;
   settings?: any;
   hideFromDefaults?: boolean;
+  /**
+   * Conditionally hide this standard property in the options pane. Replaces any showIf the property
+   * declares itself, so a panel can force a property visible as well as hide it.
+   *
+   * Only affects the defaults pane - the property is still offered for override rules. Use
+   * {@link SetFieldConfigOptionsArgs.disableStandardOptions} to remove it everywhere.
+   */
+  showIf?: FieldConfigPropertyItem['showIf'];
 };
 
 /**

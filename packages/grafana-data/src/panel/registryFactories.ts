@@ -54,6 +54,14 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
       const customHideFromDefaults = config.standardOptions[id]?.hideFromDefaults;
       const customDefault = config.standardOptions[id]?.defaultValue;
       const customSettings = config.standardOptions[id]?.settings;
+      const customShowIf = config.standardOptions[id]?.showIf;
+
+      if (customShowIf) {
+        fieldConfigProp = {
+          ...fieldConfigProp,
+          showIf: customShowIf,
+        };
+      }
 
       if (customHideFromDefaults !== undefined) {
         fieldConfigProp = {

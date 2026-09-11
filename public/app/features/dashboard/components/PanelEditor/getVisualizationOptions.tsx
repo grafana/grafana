@@ -11,6 +11,7 @@ import {
   type StandardEditorContext,
   type VariableSuggestionsScope,
   type FieldConfigSource,
+  type FieldConfigPropertyItem,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -33,6 +34,7 @@ interface GetStandardEditorContextProps {
   data: PanelData | undefined;
   replaceVariables: InterpolateFunction;
   options: Record<string, unknown>;
+  fieldConfig: FieldConfigSource;
   eventBus: EventBus;
   instanceState: OptionPaneRenderProps['instanceState'];
 }
@@ -41,6 +43,7 @@ export function getStandardEditorContext({
   data,
   replaceVariables,
   options,
+  fieldConfig,
   eventBus,
   instanceState,
 }: GetStandardEditorContextProps): StandardEditorContext<unknown, unknown> {
@@ -50,6 +53,7 @@ export function getStandardEditorContext({
     data: dataSeries,
     replaceVariables,
     options,
+    fieldConfig,
     eventBus,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(dataSeries, scope),
     instanceState,
@@ -57,6 +61,38 @@ export function getStandardEditorContext({
   };
 
   return context;
+}
+
+/**
+ * Whether a field config property should appear in the defaults pane.
+ *
+ * The property's own `showIf` receives the slice it is registered against - `defaults.custom` for a
+ * custom property, `defaults` for a standard one - and the editor context, which carries the panel
+ * options and the whole field config so a condition can span both.
+ *
+ * Overrides are not filtered here: `hideFromOverrides` is the knob for that side, so hiding a
+ * property from the defaults pane never hides an override rule that already configures it.
+ *
+ * @internal
+ */
+export function isFieldConfigOptionVisible(
+  fieldOption: FieldConfigPropertyItem,
+  fieldConfig: FieldConfigSource,
+  data: PanelData | undefined,
+  context: StandardEditorContext<unknown, unknown>
+): boolean {
+  if (fieldOption.hideFromDefaults) {
+    return false;
+  }
+
+  if (!fieldOption.showIf) {
+    return true;
+  }
+
+  const currentValue = fieldOption.isCustom ? fieldConfig.defaults.custom : fieldConfig.defaults;
+
+  // showIf is typed `boolean | undefined` and an undefined return has always hidden the option.
+  return Boolean(fieldOption.showIf(currentValue, data?.series, data?.annotations, context));
 }
 
 export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
@@ -69,6 +105,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     data,
     replaceVariables: panel.replaceVariables,
     options: currentOptions,
+    fieldConfig: currentFieldConfig,
     eventBus: dashboard.events,
     instanceState,
   });
@@ -103,20 +140,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Field options
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (fieldOption.isCustom) {
-      if (
-        fieldOption.showIf &&
-        !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
-      ) {
-        continue;
-      }
-    } else {
-      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations)) {
-        continue;
-      }
-    }
-
-    if (fieldOption.hideFromDefaults) {
+    if (!isFieldConfigOptionVisible(fieldOption, currentFieldConfig, data, context)) {
       continue;
     }
 
@@ -252,6 +276,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     data,
     replaceVariables: panel.interpolate,
     options: currentOptions,
+    fieldConfig: currentFieldConfig,
     eventBus: eventBus,
     instanceState,
   });
@@ -261,12 +286,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
 
   // Field options
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    const hideOption =
-      fieldOption.showIf &&
-      (fieldOption.isCustom
-        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
-        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations));
-    if (fieldOption.hideFromDefaults || hideOption) {
+    if (!isFieldConfigOptionVisible(fieldOption, currentFieldConfig, data, context)) {
       continue;
     }
 
@@ -334,7 +354,7 @@ export function fillOptionsPaneItems(
   supplier(builder, context);
 
   for (const pluginOption of builder.getItems()) {
-    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations)) {
+    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations, context)) {
       continue;
     }
 

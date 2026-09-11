@@ -1,3 +1,5 @@
+import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+
 import { type DataFrame } from './dataFrame';
 
 /**
@@ -49,7 +51,21 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   defaultValue?: TValue;
 
   /**
-   * Function that enables configuration of when option editor should be shown based on current panel option properties.
+   * Function that enables configuration of when option editor should be shown.
+   *
+   * `currentOptions` is the object the editor is registered against: the panel options for a panel
+   * option, `fieldConfig.defaults.custom` for a custom field config property, and
+   * `fieldConfig.defaults` for a standard one.
+   *
+   * `context` is the same editor context the editor component receives, so a condition can span
+   * both sides of the pane - `context.options` for the panel options and `context.fieldConfig` for
+   * the whole field config. It is undefined when options are built outside an options pane (for
+   * example while collecting static defaults), so guard before reading it.
    */
-  showIf?: (currentOptions: TOptions, data?: DataFrame[], annotations?: DataFrame[]) => boolean | undefined;
+  showIf?: (
+    currentOptions: TOptions,
+    data?: DataFrame[],
+    annotations?: DataFrame[],
+    context?: StandardEditorContext<unknown>
+  ) => boolean | undefined;
 }
