@@ -7,7 +7,13 @@ const pkg = rq('./package.json');
 
 export default [
   {
-    input: entryPoint,
+    input: 'src/datasources.ts',
+    plugins,
+    output: [esmOutput(pkg, 'grafana-plugin-compat')],
+    treeshake: false,
+  },
+  {
+    input: 'src/apps.ts',
     plugins,
     output: [esmOutput(pkg, 'grafana-plugin-compat')],
     treeshake: false,

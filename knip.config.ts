@@ -148,9 +148,6 @@ const config: KnipConfig = {
       ignoreDependencies: ['.*'],
     },
     'packages/grafana-plugin-compat': {
-      // index.ts isn't in package.json's `exports` map (subpaths like ./apps,
-      // ./datasources are used directly instead), so knip sees it as unreachable
-      entry: [...defaultEntries, 'src/index.ts'],
       ignoreDependencies: packageIgnoreDeps,
     },
   },

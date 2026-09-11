@@ -49,10 +49,10 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "workspace:*",
     "@grafana/runtime": "workspace:*"
   },
   "devDependencies": {
+    "@grafana/data": "workspace:*",
     "@typescript/native": "npm:typescript@^7.0.2",
     "rimraf": "^6.0.1",
     "rollup": "^4.60.1",
