@@ -116,7 +116,7 @@ services:
       - 'alloy.logs=true'
 
   prometheus:
-    image: prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038
+    image: prom/prometheus:v3.14.0@sha256:5ce7540c3c00ef4ab0c9d2c995c6a5b9c421f44b4a115d97a2c7af3b1c21cbb0
     volumes:
       - prometheus-data:/prometheus
     command:
