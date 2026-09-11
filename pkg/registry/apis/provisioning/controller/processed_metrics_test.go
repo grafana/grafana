@@ -104,9 +104,9 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 				drainTimeout: 5 * time.Second,
 				processed:    usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
 				keyFunc:      repoKeyFunc,
-				processFn: func(string) error {
+				processFn: func(string) (string, error) {
 					close(processedDone)
-					return nil
+					return "", nil
 				},
 			}
 			rc.enqueueRepository = rc.enqueue
@@ -153,7 +153,7 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 	rc.enqueueRepository = rc.enqueue
 
 	var enqueuedDuringFlight atomic.Bool
-	rc.processFn = func(string) error {
+	rc.processFn = func(string) (string, error) {
 		// On the first reconcile, a live update (bumped RV) arrives while the key
 		// is in flight — the classic self-induced status update — marking it dirty.
 		if enqueuedDuringFlight.CompareAndSwap(false, true) {
@@ -162,7 +162,7 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "6"}},
 			)
 		}
-		return nil
+		return "", nil
 	}
 
 	// Initial live add (apiserver watch, full RV, non-initial).
@@ -192,9 +192,9 @@ func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
 		logger:    logging.DefaultLogger.With("logger", "test"),
 		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
 		keyFunc:   repoKeyFunc,
-		processFn: func(string) error {
+		processFn: func(string) (string, error) {
 			close(processedDone)
-			return nil
+			return "", nil
 		},
 	}
 	rc.enqueueRepository = rc.enqueue
@@ -250,6 +250,40 @@ func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {
 			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.UpdateFunc(conn("5"), conn("5")) },
 			wantTrigger: "relist",
 		},
+		{
+			name:        "apiserver live update",
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.UpdateFunc(conn("5"), conn("6")) },
+			wantTrigger: "live",
+		},
+		{
+			name:        "nats relist add",
+			natsBacked:  true,
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(conn("5"), false) },
+			wantTrigger: "relist",
+		},
+		{
+			name:        "nats live add",
+			natsBacked:  true,
+			feed:        func(h cache.ResourceEventHandlerDetailedFuncs) { h.AddFunc(conn(""), false) },
+			wantTrigger: "live",
+		},
+		{
+			name: "coalesced updates keep initial trigger",
+			feed: func(h cache.ResourceEventHandlerDetailedFuncs) {
+				h.AddFunc(conn("5"), true)
+				h.UpdateFunc(conn("5"), conn("6"))
+				h.UpdateFunc(conn("6"), conn("6"))
+			},
+			wantTrigger: "initial",
+		},
+		{
+			name: "coalesced relist keeps live trigger",
+			feed: func(h cache.ResourceEventHandlerDetailedFuncs) {
+				h.AddFunc(conn("5"), false)
+				h.UpdateFunc(conn("5"), conn("5"))
+			},
+			wantTrigger: "live",
+		},
 	}
 
 	for _, tt := range tests {
@@ -259,13 +293,13 @@ func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {
 
 			cc := &ConnectionController{
 				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-					workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-					workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{Name: "test-processed"},
+					workqueue.DefaultTypedControllerRateLimiter[string](),
+					workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-processed"},
 				),
 				logger:       logging.DefaultLogger.With("logger", "test"),
 				drainTimeout: 5 * time.Second,
 				processed:    usinformer.NewProcessedMetrics(reg, "connections", tt.natsBacked),
-				processFn: func(context.Context, *connectionQueueItem) error {
+				processFn: func(context.Context, string) error {
 					close(processedDone)
 					return nil
 				},

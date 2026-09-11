@@ -33,7 +33,36 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
 	SearchCapabilityViolations *prometheus.CounterVec
+
+	BuildPhaseSeconds *prometheus.CounterVec
+	BuildDocuments    *prometheus.CounterVec
+	BuildSourceBytes  *prometheus.CounterVec
+	BuildIndexedBytes *prometheus.CounterVec
 }
+
+// Phases of getting a document into an index.
+const (
+	// IndexPhaseFetch reads the stored object.
+	IndexPhaseFetch = "fetch"
+	// IndexPhaseConvert turns it into a search document.
+	IndexPhaseConvert = "convert"
+	// IndexPhaseMap adds it to a batch, which maps it onto the index schema.
+	IndexPhaseMap = "map"
+	// IndexPhaseCommit writes the batch, which is where a file-backed index pays
+	// for disk. Documents in this phase are the ones the write accepted.
+	IndexPhaseCommit = "commit"
+	// IndexPhasePromote copies an index that has outgrown memory onto disk, which
+	// happens once during a build and costs more the later it happens.
+	IndexPhasePromote = "promote"
+)
+
+// What was being done to the index, used as the path label. Trash is the pass
+// over deleted objects that a build makes when the index keeps them.
+const (
+	IndexPathBuild  = "build"
+	IndexPathUpdate = "update"
+	IndexPathTrash  = "trash"
+)
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
@@ -144,6 +173,22 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_disk_cleanup_dirs_deleted_total",
 			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
 		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
+		BuildPhaseSeconds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_phase_seconds_total",
+			Help: "Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch, promote moves an index that outgrew memory onto disk.",
+		}, []string{"phase", "path", "group", "resource"}),
+		BuildDocuments: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_documents_total",
+			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.",
+		}, []string{"phase", "path", "group", "resource"}),
+		BuildSourceBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_source_bytes_total",
+			Help: "Bytes of stored objects read while building or updating an index.",
+		}, []string{"path", "group", "resource"}),
+		BuildIndexedBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_indexed_bytes_total",
+			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
+		}, []string{"path", "group", "resource"}),
 		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_search_capability_violations_total",
 			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",

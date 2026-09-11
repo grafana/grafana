@@ -63,7 +63,8 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getLibraryPanelBehavior, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
