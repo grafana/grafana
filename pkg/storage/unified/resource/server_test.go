@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -1624,6 +1625,432 @@ func TestPeriodicBookmarks(t *testing.T) {
 
 		require.Empty(t, bookmarks)
 	})
+}
+
+type bookmarkWatchServer struct {
+	*mockWatchServer
+	beforeSend func(*resourcepb.WatchEvent) error
+}
+
+func (s *bookmarkWatchServer) Send(event *resourcepb.WatchEvent) error {
+	if s.beforeSend != nil {
+		if err := s.beforeSend(event); err != nil {
+			return err
+		}
+	}
+	return s.mockWatchServer.Send(event)
+}
+
+// startBookmarkWatch uses the real broadcaster with controlled events and sends.
+// Call it inside synctest so ticker assertions do not depend on scheduling delays.
+func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure func(*server, *bookmarkWatchServer)) (chan<- *WrittenEvent, *bookmarkWatchServer, <-chan error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	events := make(chan *WrittenEvent, 10)
+	stream := &bookmarkWatchServer{mockWatchServer: newMockWatchServer(ctx)}
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:           &UnimplementedStorageBackend{},
+		BookmarkFrequency: time.Second,
+	})
+	require.NoError(t, err)
+	srv.log = log.NewNopLogger()
+	srv.broadcaster = NewBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), nil)
+	if configure != nil {
+		configure(srv, stream)
+	}
+	done := make(chan error, 1)
+	go func() { done <- srv.Watch(req, stream) }()
+	t.Cleanup(func() {
+		cancel()
+		srv.cancel()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			assert.NoError(t, err)
+		default: // An error-path test already consumed the result.
+		}
+	})
+	synctest.Wait()
+	return events, stream, done
+}
+
+func bookmarkWatchRequest() *resourcepb.WatchRequest {
+	return &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "playlist",
+		}},
+		Since:               100,
+		AllowWatchBookmarks: true,
+	}
+}
+
+func bookmarkWrittenEvent(rv int64) *WrittenEvent {
+	return &WrittenEvent{
+		Key:             bookmarkWatchRequest().Options.Key,
+		Type:            resourcepb.WatchEvent_ADDED,
+		ResourceVersion: rv,
+		Value:           []byte(`{"metadata":{"name":"playlist"}}`),
+	}
+}
+
+func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType resourcepb.WatchEvent_Type, rv int64) {
+	t.Helper()
+	synctest.Wait()
+	require.NotEmpty(t, stream.events, "expected %s at RV %d", eventType, rv)
+	event := <-stream.events
+	require.Equal(t, eventType, event.Type)
+	require.Equal(t, rv, event.Resource.Version)
+}
+
+func TestIncrementalBookmarksFilteredEvents(t *testing.T) {
+	for _, backend := range []string{"legacy_sql", "kv"} {
+		for _, filter := range []string{"namespace", "name", "access", "group", "resource"} {
+			if backend == "legacy_sql" && (filter == "group" || filter == "resource") {
+				continue
+			}
+			t.Run(backend+"/"+filter, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+						if backend == "kv" {
+							srv.backend = &kvStorageBackend{}
+						}
+						srv.mostRecentRV.Store(1000)
+						if filter == "access" {
+							srv.access = &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }}
+						}
+					})
+					filteredEvent := func(rv int64) *WrittenEvent {
+						event := bookmarkWrittenEvent(rv)
+						switch filter {
+						case "namespace":
+							event.Key.Namespace = "other"
+						case "name":
+							event.Key.Name = "other"
+						case "group":
+							event.Key.Group = "other.grafana.app"
+						case "resource":
+							event.Key.Resource = "other"
+						}
+						return event
+					}
+
+					// Neither startup nor events at/below the fixed cutoff establish progress.
+					events <- filteredEvent(99)
+					events <- filteredEvent(100)
+					synctest.Wait()
+					time.Sleep(3 * time.Second)
+					synctest.Wait()
+					require.Empty(t, stream.events)
+
+					for _, rv := range []int64{101, 102} {
+						events <- filteredEvent(rv)
+						synctest.Wait()
+						require.Empty(t, stream.events, "filtered objects must not be sent")
+						time.Sleep(time.Second)
+						requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rv)
+						time.Sleep(3 * time.Second)
+						synctest.Wait()
+						require.Empty(t, stream.events, "unchanged progress must not repeat")
+					}
+					events <- filteredEvent(101)
+					synctest.Wait()
+					time.Sleep(time.Second)
+					synctest.Wait()
+					require.Empty(t, stream.events, "progress must not regress")
+				})
+			})
+		}
+	}
+}
+
+func TestIncrementalBookmarksLegacySQLGroupResourceOrdering(t *testing.T) {
+	for _, other := range []string{"group", "resource"} {
+		t.Run(other, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), nil)
+				foreign := bookmarkWrittenEvent(300)
+				if other == "group" {
+					foreign.Key.Group = "other.grafana.app"
+				} else {
+					foreign.Key.Resource = "other"
+				}
+				events <- foreign
+				synctest.Wait()
+				time.Sleep(3 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events, "other group/resource activity cannot establish progress")
+
+				// Legacy SQL can deliver another collection's higher RV before this one.
+				events <- bookmarkWrittenEvent(110)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 110)
+				time.Sleep(time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 110)
+
+				// Bookmark progress must not become a new live-delivery deduplication cutoff.
+				for _, rv := range []int64{105, 110} {
+					events <- bookmarkWrittenEvent(rv)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, rv)
+					time.Sleep(time.Second)
+					synctest.Wait()
+					require.Empty(t, stream.events, "bookmarks must not regress or repeat")
+				}
+				filtered := bookmarkWrittenEvent(108)
+				filtered.Key.Namespace = "other"
+				events <- filtered
+				synctest.Wait()
+				time.Sleep(time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events)
+
+				events <- bookmarkWrittenEvent(111)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 111)
+				time.Sleep(time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 111)
+			})
+		})
+	}
+}
+
+func TestIncrementalBookmarksBlockedSend(t *testing.T) {
+	for _, backend := range []string{"legacy_sql", "kv"} {
+		for _, fail := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/send failure=%t", backend, fail), func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					entered, release := make(chan struct{}), make(chan struct{})
+					sendErr := errors.New("send failed")
+					events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
+						if backend == "kv" {
+							srv.backend = &kvStorageBackend{}
+						}
+						srv.mostRecentRV.Store(1000)
+						stream.beforeSend = func(event *resourcepb.WatchEvent) error {
+							if event.Type == resourcepb.WatchEvent_ADDED && event.Resource.Version == 101 {
+								close(entered)
+								select {
+								case <-release:
+								case <-stream.Context().Done():
+									return stream.Context().Err()
+								}
+								if fail {
+									return sendErr
+								}
+							}
+							return nil
+						}
+					})
+					events <- bookmarkWrittenEvent(101)
+					synctest.Wait()
+					select {
+					case <-entered:
+					default:
+						t.Fatal("matching send was not reached")
+					}
+					pending := bookmarkWrittenEvent(102)
+					wantObjects := []int64{101, 102}
+					if backend == "kv" {
+						pending.Key.Group = "other.grafana.app"
+						wantObjects = []int64{101}
+					}
+					events <- pending
+					synctest.Wait()
+					time.Sleep(5 * time.Second)
+					synctest.Wait()
+					require.Empty(t, stream.events, "neither the blocked nor pending event may be covered")
+
+					close(release)
+					synctest.Wait()
+					if fail {
+						require.NotEmpty(t, done)
+						require.ErrorIs(t, <-done, sendErr)
+						time.Sleep(3 * time.Second)
+						synctest.Wait()
+						require.Empty(t, stream.events, "failed sends cannot become successful progress")
+						return
+					}
+
+					time.Sleep(time.Second)
+					synctest.Wait()
+					var lastBookmarkRV int64
+					var objects []int64
+					for len(stream.events) > 0 {
+						event := <-stream.events
+						if event.Type == resourcepb.WatchEvent_BOOKMARK {
+							for _, rv := range wantObjects {
+								if rv <= event.Resource.Version {
+									require.Contains(t, objects, rv, "matching sends must precede covering bookmarks")
+								}
+							}
+							require.Greater(t, event.Resource.Version, lastBookmarkRV)
+							lastBookmarkRV = event.Resource.Version
+						} else {
+							objects = append(objects, event.Resource.Version)
+						}
+					}
+					require.Equal(t, wantObjects, objects)
+					require.Equal(t, int64(102), lastBookmarkRV)
+				})
+			})
+		}
+	}
+}
+
+func TestIncrementalBookmarkSendError(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sendErr := errors.New("bookmark send failed")
+		events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(_ *server, stream *bookmarkWatchServer) {
+			stream.beforeSend = func(*resourcepb.WatchEvent) error { return sendErr }
+		})
+		filtered := bookmarkWrittenEvent(101)
+		filtered.Key.Name = "other"
+		events <- filtered
+		synctest.Wait()
+		time.Sleep(time.Second)
+		synctest.Wait()
+		require.NotEmpty(t, done)
+		require.ErrorIs(t, <-done, sendErr)
+		require.Empty(t, stream.events)
+	})
+}
+
+func TestIncrementalBookmarksPreviousReadFailure(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &errorOnReadResourceBackend{readErr: &resourcepb.ErrorResult{
+				Code: http.StatusInternalServerError, Message: "read failed",
+			}}
+		})
+		event := bookmarkWrittenEvent(101)
+		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = 100
+		events <- event
+		synctest.Wait()
+		require.NotEmpty(t, done)
+		require.ErrorContains(t, <-done, "resource version mismatch")
+		time.Sleep(3 * time.Second)
+		synctest.Wait()
+		require.Empty(t, stream.events, "a fatal previous-read failure must not establish progress")
+	})
+}
+
+type bookmarkKVListBackend struct {
+	KVBackend
+	list func(func(ListIterator) error) (int64, error)
+}
+
+func (b *bookmarkKVListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	return b.list(callback)
+}
+
+func TestIncrementalBookmarksInitialBackfill(t *testing.T) {
+	for _, initial := range []string{"matching", "filtered", "empty", "backend error"} {
+		t.Run(initial, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				req := bookmarkWatchRequest()
+				req.SendInitialEvents = true
+				req.Options.Key.Name = ""
+				req.Options.Key.Namespace = ""
+				listed, release := make(chan struct{}), make(chan struct{})
+				listErr := errors.New("list failed")
+				events, stream, done := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
+					srv.backend = &bookmarkKVListBackend{list: func(callback func(ListIterator) error) (int64, error) {
+						values := [][]byte{[]byte(`{"initial":1}`), []byte(`{"initial":2}`)}
+						if initial == "empty" {
+							values = nil
+						}
+						if err := callback(&docListIterator{values: values}); err != nil {
+							return 0, err
+						}
+						close(listed)
+						select {
+						case <-release:
+						case <-stream.Context().Done():
+							return 0, stream.Context().Err()
+						}
+						if initial == "backend error" {
+							return 100, listErr
+						}
+						return 100, nil
+					}}
+					if initial == "filtered" {
+						srv.access = &callbackAccessClient{fn: func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+							if req.Name == "name" {
+								return deny()
+							}
+							return allow()
+						}}
+					}
+				})
+				select {
+				case <-listed:
+				default:
+					t.Fatal("initial list was not reached")
+				}
+				if initial == "matching" || initial == "backend error" {
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 1)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 2)
+				}
+				events <- bookmarkWrittenEvent(101)
+				foreign := bookmarkWrittenEvent(102)
+				foreign.Key.Resource = "other"
+				events <- foreign
+				synctest.Wait()
+				time.Sleep(5 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events, "no incremental bookmark or live event during backfill")
+				close(release)
+				synctest.Wait()
+				if initial == "backend error" {
+					require.NotEmpty(t, done)
+					require.ErrorIs(t, <-done, listErr)
+					require.Empty(t, stream.events, "failed backfill must not claim completion")
+					return
+				}
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 100)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+				time.Sleep(time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+				time.Sleep(3 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events)
+			})
+		})
+	}
+}
+
+func TestIncrementalBookmarksFrequency(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		require.Equal(t, 10*time.Second, srv.bookmarkFrequency)
+	})
+
+	for _, enabled := range []bool{true, false} {
+		t.Run(fmt.Sprintf("bookmarks enabled=%t", enabled), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				req := bookmarkWatchRequest()
+				req.AllowWatchBookmarks = enabled
+				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
+					srv.backend = &kvStorageBackend{}
+					srv.bookmarkFrequency = 5 * time.Second
+				})
+				events <- bookmarkWrittenEvent(101)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+				filtered := bookmarkWrittenEvent(102)
+				filtered.Key.Resource = "other"
+				events <- filtered
+				synctest.Wait()
+				time.Sleep(4 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events)
+				time.Sleep(time.Second)
+				if enabled {
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+				}
+				time.Sleep(15 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events)
+			})
+		})
+	}
 }
 
 // stubWatchServer is a ResourceStore_WatchServer mock whose Send returns a
