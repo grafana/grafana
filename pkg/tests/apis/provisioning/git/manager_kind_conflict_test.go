@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -17,11 +18,18 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 	for _, syncType := range []string{"full", "incremental"} {
 		t.Run(syncType, func(t *testing.T) {
 			helper := sharedGitHelper(t)
+			if syncType == "incremental" {
+				helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+				t.Cleanup(func() { helper.SetQuotaStatus(provisioning.QuotaStatus{}) })
+			}
 			repoName := "git-manager-kind-" + syncType
 			_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 				"initial.json": common.DashboardJSON("initial", "Initial Dashboard", 1),
 			})
 			common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+			if syncType == "incremental" {
+				helper.WaitForResourceQuotaLimit(t, repoName, 2)
+			}
 			repoBefore, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(t, err)
 			previousRef := common.MustNestedString(repoBefore.Object, "status", "sync", "lastRef")

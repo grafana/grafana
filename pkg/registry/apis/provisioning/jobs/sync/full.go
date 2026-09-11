@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -337,6 +338,9 @@ func applyChange(
 	}
 	resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 	if err != nil {
+		if change.Action == repository.FileActionCreated && utils.IsResourceManagerKindConflictError(err) {
+			quotaTracker.Release()
+		}
 		writeSpan.RecordError(err)
 		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 	}
