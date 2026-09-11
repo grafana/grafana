@@ -5,6 +5,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import * as notebookResource from '../api/notebookResource';
+import { markdownCell } from '../mutation-api/test-utils';
 import { NotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
@@ -185,6 +186,34 @@ describe('NotebookView', () => {
       return { ...defaultNotebookSpec(), title };
     }
 
+    /** The same, with one markdown cell — needed by anything that edits a cell rather than a root field. */
+    function aDraftSpecWithCell(text = 'original text'): NotebookSpec {
+      return {
+        ...aDraftSpec(),
+        elements: { intro: markdownCell(text) },
+        layout: {
+          kind: 'NotebookLayout',
+          spec: {
+            cells: [
+              {
+                kind: 'NotebookLayoutItem',
+                spec: { element: { kind: 'ElementReference', name: 'intro' }, source: 'assistant' },
+              },
+            ],
+          },
+        },
+      };
+    }
+
+    /** The cell the draft was seeded with, by the element it references. */
+    function seededCell(scene: NotebookScene) {
+      const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'intro');
+      if (!cell) {
+        throw new Error('the draft was built without its seeded cell');
+      }
+      return cell;
+    }
+
     /** The scene a draft builds for itself — there is no other handle on it. */
     function captureDraftScene() {
       const scenes: NotebookScene[] = [];
@@ -244,6 +273,57 @@ describe('NotebookView', () => {
       expect(onTitleChange).toHaveBeenCalledWith('Checkout latency');
     });
 
+    /**
+     * The edit that matters, and the one the previous version of this test missed.
+     *
+     * Cell edits call `setState` on the CELL, not on the scene root, so a root-level
+     * `subscribeToState` never heard them — every edit but the title was silently dropped. Driven
+     * through the layout manager here rather than through a root field for exactly that reason: a
+     * test that mutates `title` passes against the broken subscription.
+     */
+    it('reports an edit made to a cell, not just to the document title', async () => {
+      jest.useFakeTimers();
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const onChange = jest.fn();
+      const draftScene = captureDraftScene();
+
+      render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
+
+      await act(async () => {
+        const scene = draftScene();
+        scene.state.body.setCellContent(seededCell(scene), {
+          kind: 'Markdown',
+          spec: { text: 'p99 rose after the deploy' },
+        });
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(onChange).toHaveBeenCalled();
+      expect(JSON.stringify(onChange.mock.calls.at(-1)?.[0])).toContain('p99 rose after the deploy');
+      jest.useRealTimers();
+    });
+
+    // Scene events bubble, so a panel refresh reaches this subscription too. Reporting on one would
+    // have the host writing a snapshot per refresh tick for a document nobody touched.
+    it('reports nothing when the document itself did not change', async () => {
+      jest.useFakeTimers();
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const onChange = jest.fn();
+      const draftScene = captureDraftScene();
+
+      render(<NotebookView spec={aDraftSpec()} onChange={onChange} />);
+
+      await act(async () => {
+        // A state change that is not part of the serialized document, as a query runner's results
+        // are not: the event fires, the document is identical, so nothing is reported.
+        draftScene().setState({ isEditing: true });
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(onChange).not.toHaveBeenCalled();
+      jest.useRealTimers();
+    });
+
     // Without a way back out, an edit to a draft dies with the component.
     it('hands the edited document back to the host', async () => {
       jest.useFakeTimers();
@@ -274,10 +354,14 @@ describe('NotebookView', () => {
       const onChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      const { unmount } = render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} />);
+      const { unmount } = render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
 
       await act(async () => {
-        draftScene().setState({ title: 'Typed then closed' });
+        const scene = draftScene();
+        scene.state.body.setCellContent(seededCell(scene), {
+          kind: 'Markdown',
+          spec: { text: 'typed then closed' },
+        });
         // Deliberately inside the debounce window, so only the unmount flush can report it.
         jest.advanceTimersByTime(100);
       });
@@ -287,7 +371,7 @@ describe('NotebookView', () => {
         unmount();
       });
 
-      expect(onChange.mock.calls.at(-1)?.[0]).toMatchObject({ title: 'Typed then closed' });
+      expect(JSON.stringify(onChange.mock.calls.at(-1)?.[0])).toContain('typed then closed');
       jest.useRealTimers();
     });
   });

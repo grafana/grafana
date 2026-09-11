@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -171,15 +172,41 @@ function useNotebookDraftChanges(
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let pending = false;
+    // The document as last handed to the host, to compare against. Seeded with what it already has,
+    // so mounting alone reports nothing.
+    let reported = JSON.stringify(transformNotebookSceneToSaveModel(scene));
 
     const report = () => {
       timer = undefined;
+      const spec = transformNotebookSceneToSaveModel(scene);
+      const serialized = JSON.stringify(spec);
+
+      /**
+       * Compared by content, not by which event arrived. Scene events fire for reader-owned changes
+       * too — a SceneQueryRunner writes its results into `$data` on every refresh, and that bubbles
+       * — so a draft with a live panel would otherwise report on every tick. Query results are not
+       * part of the serialized document, so comparing the document filters them out by construction.
+       */
+      if (serialized === reported) {
+        pending = false;
+        onDirtyChangeRef.current?.(false);
+        return;
+      }
+
+      reported = serialized;
       pending = false;
       onDirtyChangeRef.current?.(false);
-      onChangeRef.current?.(transformNotebookSceneToSaveModel(scene));
+      onChangeRef.current?.(spec);
     };
 
-    const subscription = scene.subscribeToState(() => {
+    /**
+     * `subscribeToEvent`, not `subscribeToState`: the latter observes only this object's own state,
+     * and almost nothing a person edits lives there. A cell edit calls `setState` on the CELL
+     * (see NotebookLayoutManager.setCellContent), so the root never hears it — which lost every
+     * edit but the title. Scene state-change events bubble up the graph, which is how
+     * NotebookAutosave catches the same edits.
+     */
+    const subscription = scene.subscribeToEvent(SceneObjectStateChangedEvent, () => {
       pending = true;
       onDirtyChangeRef.current?.(true);
       clearTimeout(timer);

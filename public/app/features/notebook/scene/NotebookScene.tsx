@@ -72,6 +72,44 @@ export interface NotebookSceneState extends SceneObjectState {
   isDraft?: boolean;
 }
 
+/**
+ * Notebooks currently holding the global scene context, most recently activated last, and whatever
+ * held it before the first of them.
+ *
+ * A stack rather than each activation remembering its own predecessor, because deactivation order is
+ * not activation order: more than one notebook can be mounted at a time — an embedded one over
+ * whatever else is open — and the naive version got both ends wrong. An older notebook closing used
+ * to hand the context back while a newer one was still live, and the last one closing handed it to
+ * an already-deactivated sibling, leaving panel interpolation and TimeSrv resolving against a dead
+ * scene. Splicing by identity is correct for any order.
+ *
+ * Only notebooks are tracked. A dashboard deactivating still restores unconditionally and can take
+ * the context from a live notebook; that is a pre-existing behaviour of DashboardScene and is
+ * deliberately left alone here.
+ */
+const sceneContextStack: NotebookScene[] = [];
+let beforeFirstSceneContext: SceneObject | undefined;
+
+function claimSceneContext(scene: NotebookScene): void {
+  if (sceneContextStack.length === 0) {
+    beforeFirstSceneContext = window.__grafanaSceneContext;
+  }
+  sceneContextStack.push(scene);
+  window.__grafanaSceneContext = scene;
+}
+
+function releaseSceneContext(scene: NotebookScene): void {
+  const index = sceneContextStack.lastIndexOf(scene);
+  if (index !== -1) {
+    sceneContextStack.splice(index, 1);
+  }
+  // The newest notebook still mounted, or whatever held it before any of them.
+  window.__grafanaSceneContext = sceneContextStack[sceneContextStack.length - 1] ?? beforeFirstSceneContext;
+  if (sceneContextStack.length === 0) {
+    beforeFirstSceneContext = undefined;
+  }
+}
+
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
   public readonly editHistory = new NotebookEditHistory();
@@ -100,8 +138,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     this.addActivationHandler(() => {
       // template_srv and TimeSrv resolve variables/time for panel plugins through the global
       // scene context; without this, plugin-side interpolation silently degrades.
-      const prevSceneContext = window.__grafanaSceneContext;
-      window.__grafanaSceneContext = this;
+      claimSceneContext(this);
 
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
       // plain state, so they are activated by their renderers. With the controls row hidden nothing
@@ -160,14 +197,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         destroyMutationClient();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
-        // Only while this notebook is still the context. Documents can be mounted at once now — an
-        // embedded notebook over whatever else is open — and they do not deactivate in the order
-        // they activated. Restoring unconditionally let a notebook closing underneath a newer one
-        // hand the context back to a document that had already gone, leaving panel interpolation
-        // and TimeSrv resolving against a deactivated scene.
-        if (window.__grafanaSceneContext === this) {
-          window.__grafanaSceneContext = prevSceneContext;
-        }
+        releaseSceneContext(this);
       };
     });
   }

@@ -76,6 +76,28 @@ describe('the global scene context', () => {
     releaseB();
   });
 
+  /**
+   * The tail the ownership guard alone did not fix. Each activation used to remember its own
+   * predecessor, so the LAST notebook to close handed the context to an already-deactivated
+   * sibling — leaving panel interpolation and TimeSrv resolving through a dead scene.
+   */
+  it('returns the context to what preceded the first notebook, not to a closed one', () => {
+    const before = window.__grafanaSceneContext;
+    const a = aScene('nb-a');
+    const b = aScene('nb-b');
+
+    const releaseA = a.activate();
+    const releaseB = b.activate();
+
+    // Out of order on purpose: A closes while B is still live, then B closes.
+    releaseA();
+    releaseB();
+
+    expect(window.__grafanaSceneContext === before).toBe(true);
+    // Specifically NOT A, which is what the per-activation predecessor gave us.
+    expect(window.__grafanaSceneContext === a).toBe(false);
+  });
+
   it('gives the context back once the last notebook closes', () => {
     const before = window.__grafanaSceneContext;
     const scene = aScene('nb-1');
