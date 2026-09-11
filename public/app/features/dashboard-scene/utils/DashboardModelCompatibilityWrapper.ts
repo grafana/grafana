@@ -15,7 +15,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
+import { findVizPanelByKey } from './utils';
+import { getVizPanelKeyForPanelId } from './utils-panels';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent

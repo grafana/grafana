@@ -187,6 +187,16 @@ func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 	return result
 }
 
+// MigrationIDs returns the ordered migration IDs that register would add.
+// cfg must be the same config the migrations will later run with: registration may
+// branch on it (e.g. the enterprise migration set registers its migrations only when
+// the migrator carries a non-nil config), so a different cfg can enumerate a different set.
+func MigrationIDs(cfg *setting.Cfg, driverName string, register func(*Migrator)) []string {
+	mg := newMigrator(nil, cfg, "", NewDialect(driverName))
+	register(mg)
+	return mg.GetMigrationIDs(false)
+}
+
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)

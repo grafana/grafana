@@ -69,6 +69,11 @@ const (
 	ReasonCompletedWithWarnings = "CompletedWithWarnings"
 	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
 	ReasonResourceInvalid = "ResourceInvalid"
+	// ReasonResourceManagedByOther indicates an old resource could not be deleted
+	// during a replace because another file in the repository now owns its UID.
+	// The user must resolve the duplicate-UID misconfiguration; the sync completes
+	// with a warning rather than failing.
+	ReasonResourceManagedByOther = "ResourceManagedByOther"
 	// ReasonResourceTooLarge indicates a resource file exceeded the maximum size
 	// the repository will read.
 	ReasonResourceTooLarge = "ResourceTooLarge"

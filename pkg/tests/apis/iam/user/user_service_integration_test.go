@@ -1,12 +1,14 @@
 package user
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -374,12 +376,13 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 	}
 
 	type searchUserHit struct {
-		ID      int64     `json:"id"`
-		UID     string    `json:"uid"`
-		Name    string    `json:"name"`
-		Login   string    `json:"login"`
-		Email   string    `json:"email"`
-		Created time.Time `json:"created"`
+		ID         int64     `json:"id"`
+		UID        string    `json:"uid"`
+		Name       string    `json:"name"`
+		Login      string    `json:"login"`
+		Email      string    `json:"email"`
+		Created    time.Time `json:"created"`
+		AuthLabels []string  `json:"authLabels"`
 	}
 
 	type searchUsersResponse struct {
@@ -428,6 +431,23 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			require.NotEmpty(t, betaUser.Result.UID)
 			require.NotZero(t, betaUser.Result.ID)
 
+			// Give alpha-user an external auth module so the search response carries its provider labels.
+			userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User:      helper.Org1.Admin,
+				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+				GVR:       gvrUsers,
+			})
+			ctx := context.Background()
+			alphaObj, err := userClient.Resource.Get(ctx, alphaUser.Result.UID, metav1.GetOptions{})
+			require.NoError(t, err)
+			alphaSpec := alphaObj.Object["spec"].(map[string]interface{})
+			alphaSpec["externalAuthInfo"] = []interface{}{
+				map[string]interface{}{"module": "ldap", "authID": "alpha-ldap"},
+			}
+			alphaObj.Object["spec"] = alphaSpec
+			_, err = userClient.Resource.Update(ctx, alphaObj, metav1.UpdateOptions{})
+			require.NoError(t, err)
+
 			// Wait for the search index to be populated.
 			time.Sleep(2 * time.Second)
 
@@ -466,6 +486,11 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				require.Equal(t, "alpha@example.com", hit.Email)
 				require.Equal(t, alphaUser.Result.ID, hit.ID)
 				require.False(t, hit.Created.IsZero(), "created timestamp should be populated")
+				if mode >= rest.Mode4 {
+					require.Equal(t, []string{"LDAP"}, hit.AuthLabels, "external auth module should map to an auth label")
+				} else {
+					require.Empty(t, hit.AuthLabels, "legacy SQL search does not surface external auth modules")
+				}
 			})
 
 			t.Run("should filter results by query", func(t *testing.T) {

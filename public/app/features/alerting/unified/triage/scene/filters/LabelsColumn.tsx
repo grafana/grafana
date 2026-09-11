@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { Button, FilterInput, Icon, LoadingBar, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -93,6 +94,7 @@ export function LabelsColumn() {
             <button
               className={styles.collapseButton}
               onClick={toggleOpen}
+              data-testid={selectors.pages.Alerting.Triage.sidebarToggleButton}
               aria-label={
                 open
                   ? t('alerting.triage.collapse-sidebar', 'Collapse sidebar')
@@ -103,7 +105,14 @@ export function LabelsColumn() {
             </button>
           </Tooltip>
           {open && (
-            <Button size="sm" variant="primary" fill="text" onClick={clearAllFilters} disabled={!hasActiveFilters}>
+            <Button
+              size="sm"
+              variant="primary"
+              fill="text"
+              onClick={clearAllFilters}
+              disabled={!hasActiveFilters}
+              data-testid={selectors.pages.Alerting.Triage.clearFiltersButton}
+            >
               <Trans i18nKey="alerting.triage.clear-filters">Clear filters</Trans>
             </Button>
           )}
@@ -182,6 +191,7 @@ function StateFilter() {
       <button
         className={cx(styles.stateButton, activeState === 'firing' && styles.stateButtonActive)}
         onClick={() => toggle('firing')}
+        data-testid={selectors.pages.Alerting.Triage.stateFilterButton('firing')}
       >
         <Icon name="exclamation-circle" size="sm" className={styles.firingIcon} />
         <span className={styles.stateLabel}>
@@ -192,6 +202,7 @@ function StateFilter() {
       <button
         className={cx(styles.stateButton, activeState === 'pending' && styles.stateButtonActive)}
         onClick={() => toggle('pending')}
+        data-testid={selectors.pages.Alerting.Triage.stateFilterButton('pending')}
       >
         <Icon name="circle" size="sm" className={styles.pendingIcon} />
         <span className={styles.stateLabel}>

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -9,16 +9,44 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
+import { homepageViewed } from './analytics/main';
+
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
+  usePluginBridge: jest.fn(),
+}));
+
+jest.mock('./analytics/main', () => ({
+  ctaClicked: jest.fn(),
+  tabChanged: jest.fn(),
+  clearHistoryClicked: jest.fn(),
+  homepageViewed: jest.fn(),
+}));
+
+jest.mock('app/plugins/panel/news/useNewsFeed');
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
+const mockUsePluginBridge = jest.mocked(usePluginBridge);
+const useNewsFeedMock = jest.mocked(useNewsFeed);
+
 beforeEach(() => {
+  jest.clearAllMocks();
+  window.localStorage.clear();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+  mockUsePluginBridge.mockReturnValue({ installed: false, loading: false });
+  useNewsFeedMock.mockReturnValue({
+    state: { loading: false, error: undefined, value: undefined },
+    getNews: jest.fn(),
+  });
 
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -26,7 +54,7 @@ beforeEach(() => {
   server.use(
     http.get('/api/user/teams', () => HttpResponse.json([])),
     http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
-    // IncidentsCard checks the IRM/Incident plugins; report them absent so it renders nothing
+    // Report any probed app plugin as absent so plugin-gated cards render nothing
     http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false }))
   );
 });
@@ -63,6 +91,26 @@ describe('HomePage', () => {
   it('renders the greeting', async () => {
     render(<HomePage />);
     expect(await screen.findByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
+  });
+
+  it('scopes firing alerts to the team stored in local storage', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
+    window.localStorage.setItem('grafana.home.alerts.teamFilter', 'platform');
+    const filters: string[][] = [];
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        filters.push(new URL(request.url).searchParams.getAll('filter'));
+        return HttpResponse.json([]);
+      })
+    );
+
+    render(<HomePage />);
+
+    await waitFor(() => expect(filters.length).toBeGreaterThan(0));
+    expect(filters[0]).toEqual([expect.stringContaining('team=~')]);
+    expect(filters[0][0]).toContain('platform');
   });
 
   it('renders the OSS welcome message', async () => {
@@ -171,6 +219,17 @@ describe('HomePage', () => {
 
     expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
+  });
+
+  it('renders a skeleton instead of the page content while the IRM plugin is loading', async () => {
+    mockUsePluginBridge.mockReturnValue({ installed: undefined, loading: true });
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
@@ -179,6 +238,7 @@ describe('HomePage', () => {
     // dashboards load inside DashboardTabs now; the page does not gate reveal on them
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('reveals extension tabs together with the built-in tabs', async () => {
@@ -262,6 +322,7 @@ describe('HomePage', () => {
     // and the greeting stays — the suspension must not bubble to the route-level spinner.
     expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
 
     await act(async () => {
       resolveComponent({ default: () => <div>Lazy assistant content</div> });
@@ -273,5 +334,6 @@ describe('HomePage', () => {
     expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 });

@@ -17,7 +17,12 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -64,9 +69,15 @@ func TestValidateVariable(t *testing.T) {
 }
 
 func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
-	builder := &DashboardsAPIBuilder{}
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+	builder := &DashboardsAPIBuilder{accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}
 	v := newCustomVariable("region", "region")
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgRole: identity.RoleEditor})
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesCreate: {generalScope}},
+		},
+	})
 
 	err := builder.Validate(ctx, admission.NewAttributesRecord(
 		v,
@@ -85,23 +96,24 @@ func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testing.T) {
+func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderPermission(t *testing.T) {
 	folderUID := "folder-a"
 	v := newCustomVariable("region", "")
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgRole: identity.RoleEditor,
-		OrgID:   1,
+		OrgID: 1,
+		// Root create only — not enough for folder-a.
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesCreate: {generalScope}},
+		},
 	})
 
-	folderHandler := &variableFolderAccessHandler{
-		forbiddenAccessSubresource: true,
-	}
-
 	builder := &DashboardsAPIBuilder{
-		folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
 	}
 
 	err := builder.Validate(ctx, admission.NewAttributesRecord(
@@ -120,21 +132,24 @@ func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testi
 
 	require.Error(t, err)
 	require.True(t, apierrors.IsForbidden(err))
-	require.True(t, folderHandler.accessSubresourceChecked)
 }
 
 func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsError(t *testing.T) {
 	folderUID := "folder-a"
 	v := newCustomVariable("region", "")
 	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)
 
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgRole: identity.RoleEditor,
-		OrgID:   1,
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesCreate: {folderScope}},
+		},
 	})
 
 	builder := &DashboardsAPIBuilder{
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		folderClientProvider: &staticHandlerProvider{},
 	}
 
@@ -157,8 +172,14 @@ func TestDashboardsAPIBuilderValidateVariableCreateMissingFolderHandlerReturnsEr
 }
 
 func TestDashboardsAPIBuilderValidateVariableCreateMetadataNameContract(t *testing.T) {
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgRole: identity.RoleEditor, OrgID: 1})
-	builder := &DashboardsAPIBuilder{}
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesCreate: {generalScope, folder.ScopeFoldersAll}},
+		},
+	})
+	builder := &DashboardsAPIBuilder{accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}
 
 	t.Run("name may be omitted and derived during mutation", func(t *testing.T) {
 		v := newCustomVariable("status", "")
@@ -243,34 +264,37 @@ func TestDashboardsAPIBuilderValidateVariableUpdateRenameRejected(t *testing.T) 
 	require.Contains(t, err.Error(), "spec.spec.name cannot be changed")
 }
 
-func TestVariableMutationPermissionsByRole(t *testing.T) {
-	builder := &DashboardsAPIBuilder{}
+func TestVariableMutationPermissionsStackWide(t *testing.T) {
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	builder := &DashboardsAPIBuilder{accessControl: ac}
 	oldVariable := newCustomVariable("region", "region")
 	newVariable := newCustomVariable("region", "region")
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
 	tests := []struct {
 		name     string
-		role     identity.RoleType
+		perms    map[string][]string
 		op       admission.Operation
 		expected bool
 	}{
-		{name: "admin can create", role: identity.RoleAdmin, op: admission.Create, expected: true},
-		{name: "editor can create", role: identity.RoleEditor, op: admission.Create, expected: true},
-		{name: "viewer cannot create", role: identity.RoleViewer, op: admission.Create, expected: false},
-		{name: "none cannot create", role: identity.RoleNone, op: admission.Create, expected: false},
-		{name: "admin can update", role: identity.RoleAdmin, op: admission.Update, expected: true},
-		{name: "editor can update", role: identity.RoleEditor, op: admission.Update, expected: true},
-		{name: "viewer cannot update", role: identity.RoleViewer, op: admission.Update, expected: false},
-		{name: "none cannot update", role: identity.RoleNone, op: admission.Update, expected: false},
-		{name: "admin can delete", role: identity.RoleAdmin, op: admission.Delete, expected: true},
-		{name: "editor can delete", role: identity.RoleEditor, op: admission.Delete, expected: true},
-		{name: "viewer cannot delete", role: identity.RoleViewer, op: admission.Delete, expected: false},
-		{name: "none cannot delete", role: identity.RoleNone, op: admission.Delete, expected: false},
+		{name: "root writer can create global", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: true},
+		{name: "all-folders writer can create global", perms: map[string][]string{ActionVariablesCreate: {folder.ScopeFoldersAll}}, op: admission.Create, expected: true},
+		{name: "reader cannot create global", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Create, expected: false},
+		{name: "no perms cannot create global", perms: map[string][]string{}, op: admission.Create, expected: false},
+		{name: "root writer can update global", perms: map[string][]string{ActionVariablesWrite: {generalScope}}, op: admission.Update, expected: true},
+		{name: "reader cannot update global", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Update, expected: false},
+		{name: "root writer can delete global", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: true},
+		{name: "reader cannot delete global", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgRole: tc.role})
+			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: tc.perms,
+				},
+			})
 			attrs := buildVariableAttributesForOp(tc.op, newVariable, oldVariable)
 
 			err := builder.Validate(ctx, attrs, nil)
@@ -280,7 +304,184 @@ func TestVariableMutationPermissionsByRole(t *testing.T) {
 			}
 
 			require.Error(t, err)
-			require.Contains(t, err.Error(), "variable mutation requires editor or admin role")
+			require.True(t, apierrors.IsForbidden(err))
+		})
+	}
+}
+
+func TestVariableMutationPermissionsFolderScoped(t *testing.T) {
+	folderUID := "folder-a"
+	oldVariable := newCustomVariable("region", "region--folder-a")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	newVariable := newCustomVariable("region", "region--folder-a")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+
+	tests := []struct {
+		name     string
+		perms    map[string][]string
+		op       admission.Operation
+		expected bool
+	}{
+		{name: "folder create grant can create", perms: map[string][]string{ActionVariablesCreate: {folderScope}}, op: admission.Create, expected: true},
+		{name: "folder write grant can update", perms: map[string][]string{ActionVariablesWrite: {folderScope}}, op: admission.Update, expected: true},
+		{name: "folder delete grant can delete", perms: map[string][]string{ActionVariablesDelete: {folderScope}}, op: admission.Delete, expected: true},
+		{name: "root-only create cannot create in folder", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: false},
+		{name: "root-only write cannot update in folder", perms: map[string][]string{ActionVariablesWrite: {generalScope}}, op: admission.Update, expected: false},
+		{name: "read-only cannot create in folder", perms: map[string][]string{ActionVariablesRead: {folderScope}}, op: admission.Create, expected: false},
+		{name: "all-folders create can create", perms: map[string][]string{ActionVariablesCreate: {folder.ScopeFoldersAll}}, op: admission.Create, expected: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			folderHandler := &variableFolderAccessHandler{}
+			builder := &DashboardsAPIBuilder{
+				accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+			}
+
+			ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: tc.perms,
+				},
+			})
+			attrs := buildVariableAttributesForOp(tc.op, newVariable, oldVariable)
+
+			err := builder.Validate(ctx, attrs, nil)
+			if tc.expected {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			require.True(t, apierrors.IsForbidden(err))
+		})
+	}
+}
+
+func TestVariableMutationPermissionsFolderScopedDryRun(t *testing.T) {
+	folderUID := "folder-a"
+	v := newCustomVariable("region", "region--folder-a")
+	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)
+
+	t.Run("dry-run still checks variables:create on folder", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{
+			accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
+		}
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {ActionVariablesRead: {folderScope}},
+			},
+		})
+
+		err := builder.Validate(ctx, admission.NewAttributesRecord(
+			v,
+			nil,
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			"stacks-1",
+			v.GetName(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			"",
+			admission.Create,
+			&metav1.CreateOptions{},
+			true, // dry-run
+			nil,
+		), nil)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("dry-run allows create with folder grant", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{
+			accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
+		}
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {ActionVariablesCreate: {folderScope}},
+			},
+		})
+
+		err := builder.Validate(ctx, admission.NewAttributesRecord(
+			v,
+			nil,
+			dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+			"stacks-1",
+			v.GetName(),
+			dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+			"",
+			admission.Create,
+			&metav1.CreateOptions{},
+			true, // dry-run
+			nil,
+		), nil)
+
+		require.NoError(t, err)
+	})
+}
+
+func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
+	folderUID := "missing-folder"
+	oldVariable := newCustomVariable("region", "region--missing-folder")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	newVariable := newCustomVariable("region", "region--missing-folder")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+	otherFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")
+
+	tests := []struct {
+		name     string
+		perms    map[string][]string
+		op       admission.Operation
+		expected bool
+	}{
+		{name: "root delete grant cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: false},
+		// folders:* matches folders:uid:<gone> without a second-chance root check.
+		{name: "all-folders write can update variable whose folder is gone", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
+		{name: "other-folder write cannot update variable whose folder is gone", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
+		{name: "other-folder delete cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
+		{name: "read-only cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
+		{name: "root create cannot create into missing folder", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			folderSvc := foldertest.NewFakeService()
+			folderSvc.ExpectedError = folder.ErrFolderNotFound
+			acSvc.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderSvc))
+
+			folderHandler := &variableFolderAccessHandler{notFoundAccessSubresource: true}
+			builder := &DashboardsAPIBuilder{
+				accessControl:        acSvc,
+				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+			}
+
+			ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: tc.perms,
+				},
+			})
+
+			err := builder.Validate(ctx, buildVariableAttributesForOp(tc.op, newVariable, oldVariable), nil)
+			if tc.expected {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.True(t, apierrors.IsNotFound(err) || apierrors.IsForbidden(err))
 		})
 	}
 }
@@ -395,22 +596,33 @@ func (p *staticHandlerProvider) GetOrCreateHandler(namespace string) client.K8sH
 type variableFolderAccessHandler struct {
 	accessSubresourceChecked   bool
 	forbiddenAccessSubresource bool
+	notFoundAccessSubresource  bool
+	getError                   error
 }
 
 func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int64, _ metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
 	if len(subresource) > 0 && subresource[0] == "access" {
 		h.accessSubresourceChecked = true
+		if h.notFoundAccessSubresource {
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+		}
 		if h.forbiddenAccessSubresource {
 			return nil, apierrors.NewForbidden(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name, nil)
 		}
 
 		return &unstructured.Unstructured{
 			Object: map[string]any{
-				"spec": map[string]any{
-					"canEdit": true,
-				},
+				"canEdit": true,
 			},
 		}, nil
+	}
+
+	if h.getError != nil {
+		return nil, h.getError
+	}
+
+	if h.notFoundAccessSubresource {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
 	}
 
 	return &unstructured.Unstructured{

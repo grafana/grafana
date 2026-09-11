@@ -1,7 +1,5 @@
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 
-import { type SolutionSparklineData } from './SolutionSparkline';
-
 export interface RecommendationItem {
   id: string; // stable telemetry id (recommendation_id)
   title: string;
@@ -11,22 +9,10 @@ export interface RecommendationItem {
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
+  /** CTA intent for analytics; defaults to enabling a disabled app. */
+  cta?: 'enable' | 'setup' | 'learn_more';
 }
 
-export interface ExistingItem {
-  title: string;
-  icon: IconName;
-  subtitle?: string;
-  stats?: { primary: string; secondary: string };
-  statsLoading?: boolean;
-  sparkline?: SolutionSparklineData;
-  sparklineLoading?: boolean;
-  alert?: {
-    primary: string;
-    details?: string[];
-    action: string;
-    href: string;
-  };
-  action: string;
-  href: string;
+export function isExternal(href: string): boolean {
+  return /^https?:\/\//.test(href);
 }

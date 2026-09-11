@@ -7,7 +7,7 @@
   "spec": {
     "annotations": [],
     "cursorSync": "Off",
-    "description": "Covers all variable types, layouts, shadowing, repeating, and edge cases for section-level variables (requires dashboardSectionVariables feature toggle).",
+    "description": "Covers all variable types, layouts, shadowing, repeating, and edge cases for section-level variables.",
     "editable": true,
     "elements": {
       "all_types_info": {

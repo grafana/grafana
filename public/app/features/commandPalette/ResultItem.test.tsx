@@ -16,14 +16,14 @@ function createActionImpl(props: Record<string, unknown> = {}): ActionImpl {
 }
 
 describe('ResultItem', () => {
-  let originalProvisioning: boolean | undefined;
+  let originalProvisioning: boolean;
 
   beforeEach(() => {
-    originalProvisioning = config.featureToggles.provisioning;
+    originalProvisioning = config.provisioningEnabled;
   });
 
   afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
+    config.provisioningEnabled = originalProvisioning;
   });
 
   it('renders the action name', () => {
@@ -33,42 +33,35 @@ describe('ResultItem', () => {
   });
 
   it('renders the managed badge when managedBy is Repo and provisioning toggle is on', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('does not render the managed badge when managedBy is undefined', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl();
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('renders the managed badge when managedBy is a non-Repo kind', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Terraform });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('renders the managed badge for plugin-managed resources', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Plugin });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('does not render the managed badge when provisioning toggle is off', () => {
-    config.featureToggles.provisioning = false;
-    const action = createActionImpl({ managedBy: ManagerKind.Repo });
-    render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
-  });
-
-  it('does not render the managed badge when provisioning toggle is undefined', () => {
-    config.featureToggles.provisioning = undefined;
+    config.provisioningEnabled = false;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();

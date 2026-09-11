@@ -7,6 +7,10 @@ const defaultPrunerHistoryLimit = 20
 // The key format is "group/resource".
 var customPrunerHistoryLimits = map[string]int{
 	"plugins.grafana.app/plugins": 3,
+	// Jobs are ephemeral work items and HistoricJobs are terminal audit
+	// records; neither benefits from a version trail, so keep only the latest.
+	"provisioning.grafana.app/jobs":         1,
+	"provisioning.grafana.app/historicjobs": 1,
 }
 
 // LookupPrunerHistoryLimit returns the history limit for the given group/resource,

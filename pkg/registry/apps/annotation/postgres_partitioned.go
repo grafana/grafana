@@ -25,6 +25,33 @@ const (
 	defaultTagCacheSize    = 1000
 )
 
+// annotationColumns is the column order for the bound columns of an
+// annotation row. It is the single source of truth for every INSERT (single-row
+// Create and bulk backfill), so the column list and its count cannot drift
+// apart.
+var annotationColumns = []string{
+	"namespace", "name", "time", "time_end", "dashboard_uid", "panel_id",
+	"text", "tags", "scopes", "created_by", "created_at", "legacy_id", "legacy_data",
+}
+
+var (
+	annotationColumnsSQL  = strings.Join(annotationColumns, ", ")
+	annotationColumnCount = len(annotationColumns)
+
+	// insertAnnotationSQL is the single-row INSERT used by Create, built from
+	// the shared column list so it stays in sync with the bulk backfill path.
+	insertAnnotationSQL = buildSingleRowInsertSQL()
+)
+
+func buildSingleRowInsertSQL() string {
+	placeholders := make([]string, annotationColumnCount)
+	for i := range placeholders {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+	}
+	return fmt.Sprintf("INSERT INTO annotations (%s) VALUES (%s)",
+		annotationColumnsSQL, strings.Join(placeholders, ", "))
+}
+
 type PostgreSQLStoreConfig struct {
 	ConnectionString string
 	MaxConnections   int
@@ -189,13 +216,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 		legacyData = &d
 	}
 
-	query := `
-		INSERT INTO annotations
-		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at, legacy_id, legacy_data)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-	`
-
-	_, err := s.pool.Exec(ctx, query,
+	_, err := s.pool.Exec(ctx, insertAnnotationSQL,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
 		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID, legacyData,
 	)

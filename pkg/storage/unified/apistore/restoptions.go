@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -34,6 +35,16 @@ type RESTOptionsGetter struct {
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
+
+	// versionPolicy is shared across every resource this getter serves; nil disables maxAllowedVersion enforcement.
+	versionPolicy *versionpolicy.VersionPolicyRegistry
+}
+
+// VersionPolicy returns the registry this getter enforces against; nil when enforcement is disabled.
+// A getter that wraps this one and replaces the RESTOptions decorator has to copy this onto the
+// StorageOptions it builds, or the resources it serves skip the cap.
+func (r *RESTOptionsGetter) VersionPolicy() *versionpolicy.VersionPolicyRegistry {
+	return r.versionPolicy
 }
 
 func NewRESTOptionsGetterForClient(
@@ -41,6 +52,7 @@ func NewRESTOptionsGetterForClient(
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
 	configProvider RestConfigProvider,
+	versionPolicy *versionpolicy.VersionPolicyRegistry,
 ) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:         client,
@@ -48,6 +60,7 @@ func NewRESTOptionsGetterForClient(
 		original:       original,
 		options:        make(map[string]StorageOptions),
 		configProvider: configProvider,
+		versionPolicy:  versionPolicy,
 	}
 }
 
@@ -65,9 +78,9 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 
 	kv := resource.NewBadgerKV(db)
 	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore:       kv,
-		Log:           log.New(),
-		DisablePruner: true,
+		KvStore:                kv,
+		Log:                    log.New(),
+		DisableStorageServices: true,
 	})
 	if err != nil {
 		return nil, err
@@ -84,6 +97,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 		resource.NewLocalResourceClient(server),
 		secrets,
 		originalStorageConfig,
+		nil,
 		nil,
 	), nil
 }
@@ -124,6 +138,7 @@ func NewRESTOptionsGetterForFileXX(path string,
 		resource.NewLocalResourceClient(server),
 		nil, // secrets
 		originalStorageConfig,
+		nil,
 		nil,
 	), nil
 }
@@ -167,6 +182,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 		) (storage.Interface, factory.DestroyFunc, error) {
 			opts := r.options[resource.String()]
 			opts.SecureValues = r.secrets
+			opts.VersionPolicy = r.versionPolicy
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
 				trigger, indexers, r.configProvider, opts)
 		},

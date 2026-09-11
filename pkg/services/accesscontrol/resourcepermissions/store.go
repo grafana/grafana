@@ -686,7 +686,7 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 }
 
 func generateNewRoleUID(sess *db.Session, orgID int64) (string, error) {
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		uid := util.GenerateShortUID()
 
 		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Role{})

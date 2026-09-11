@@ -363,6 +363,97 @@ func TestWrapper_Update(t *testing.T) {
 	setup.mockStore.AssertExpectations(t)
 }
 
+func TestWrapper_UpdateAuthorizationUsesExecutionContext(t *testing.T) {
+	type contextKey string
+
+	const authorizationContextKey contextKey = "fake-authorization-context-key"
+
+	mockStore := rest.NewMockStorage(t)
+	mockAuth := &FakeAuthorizer{}
+	wrapper := New(mockStore, testResource, mockAuth)
+	requester := &identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser}
+	requestCtx, cancelRequest := context.WithCancel(identity.WithRequester(context.Background(), requester))
+	requestCtx = context.WithValue(requestCtx, authorizationContextKey, "fake-request-value")
+
+	oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fake-object"}}
+	objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
+	updateOpts := &metaV1.UpdateOptions{}
+
+	var authzInfo *authorizedUpdateInfo
+	mockStore.On(
+		"Update",
+		mock.MatchedBy(matchesServiceIdentity()),
+		"fake-object",
+		mock.MatchedBy(func(info *authorizedUpdateInfo) bool {
+			authzInfo = info
+			return true
+		}),
+		mock.Anything,
+		mock.Anything,
+		false,
+		updateOpts,
+	).Return(oldObj, true, nil)
+
+	_, _, err := wrapper.Update(requestCtx, "fake-object", objInfo, nil, nil, false, updateOpts)
+	require.NoError(t, err)
+	require.NotNil(t, authzInfo)
+	cancelRequest()
+
+	mockAuth.On(
+		"BeforeUpdate",
+		mock.MatchedBy(func(ctx context.Context) bool {
+			actualRequester, err := identity.GetRequester(ctx)
+			return ctx.Err() == nil &&
+				err == nil &&
+				actualRequester.GetUID() == "user:fake-user-uid" &&
+				ctx.Value(authorizationContextKey) == "fake-execution-value"
+		}),
+		oldObj,
+		oldObj,
+	).Return(nil)
+
+	executionCtx := context.WithValue(context.Background(), authorizationContextKey, "fake-execution-value")
+	_, err = authzInfo.UpdatedObject(executionCtx, oldObj)
+	require.NoError(t, err)
+
+	mockAuth.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
+}
+
+func TestWrapper_UpdateFailsClosedWithoutOriginalIdentity(t *testing.T) {
+	testCases := map[string]context.Context{
+		"no auth values": context.Background(),
+		"AuthInfo without requester": types.WithAuthInfo(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser},
+		),
+	}
+
+	for name, ctx := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockStore := rest.NewMockStorage(t)
+			mockAuth := &FakeAuthorizer{}
+			wrapper := New(mockStore, testResource, mockAuth)
+
+			result, updated, err := wrapper.Update(
+				ctx,
+				"fake-object",
+				&fakeUpdatedObjectInfo{obj: &fakeObject{}},
+				nil,
+				nil,
+				false,
+				&metaV1.UpdateOptions{},
+			)
+
+			require.ErrorIs(t, err, ErrUnauthenticated)
+			assert.Nil(t, result)
+			assert.False(t, updated)
+			mockStore.AssertNumberOfCalls(t, "Update", 0)
+			mockAuth.AssertNumberOfCalls(t, "BeforeUpdate", 0)
+		})
+	}
+}
+
 func TestWrapper_PassthroughMethods(t *testing.T) {
 	setup := newTestSetup(t)
 

@@ -1,26 +1,36 @@
 import { css } from '@emotion/css';
-import { Suspense } from 'react';
+import { Suspense, useCallback, useEffect, useRef } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Grid, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { useStoredString } from 'app/core/hooks/useStored';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
+import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
-import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { NewsCard } from './AlertsIncidents/NewsCard';
+import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
+import { HeaderActions } from './HeaderActions';
+import { HomeGrid } from './HomeGrid';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
+import { Overview } from './Overview/Overview';
 import { Recommendations } from './Recommendations/Recommendations';
+import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
+import { useHomepageSolutions } from './useHomepageSolutions';
+
+const HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -33,6 +43,29 @@ const getEdition = () => {
 
   return t('home.home-page.edition.open-source', 'Grafana');
 };
+
+/**
+ * Renders nothing; reports a view on mount. Inside a Suspense boundary, React defers
+ * the effect until the content is revealed.
+ */
+function HomepageViewTracker({ onView }: { onView: () => void }) {
+  useEffect(() => {
+    onView();
+  }, [onView]);
+
+  return null;
+}
+
+function HomepageSolutionSections() {
+  const solutions = useHomepageSolutions();
+
+  return (
+    <>
+      <Recommendations solutions={solutions} />
+      <Overview solutions={solutions.solutions} />
+    </>
+  );
+}
 
 export default function HomePage() {
   const styles = useStyles2(getStyles);
@@ -52,8 +85,30 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
+  // Persisted team scope for the alerts view and header pill; '' is the "your teams" default.
+  const [storedTeam, setStoredTeam] = useStoredString(HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY, '');
+  const team = storedTeam || undefined;
+  const setTeam = useCallback((next: string | undefined) => setStoredTeam(next ?? ''), [setStoredTeam]);
+  const alertsData = useFiringAlerts(team);
+  const incidentsData = useIncidents();
+  const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
+
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs;
+  const isWaitingForIRM = !redesignEnabled && incidentsData.enabled === undefined;
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs || isWaitingForIRM;
+
+  // The impression counts a rendered homepage, never a skeleton: the tracker mounts inside
+  // the Suspense boundary below, so a suspended lazy extension defers it until reveal. The
+  // ref keeps it once per mount (extension loading can flip and remount the boundary's
+  // children; StrictMode replays effects). HomeRoute only mounts HomePage when the unified
+  // homepage actually renders (redirect / home-dashboard branches never reach here).
+  const hasTrackedView = useRef(false);
+  const trackView = useCallback(() => {
+    if (!hasTrackedView.current) {
+      hasTrackedView.current = true;
+      homepageViewed();
+    }
+  }, []);
 
   // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
   // what actually renders below.
@@ -71,9 +126,15 @@ export default function HomePage() {
       ),
   });
   const showExtra = extraContent !== null;
-  const showAlertsCard = canViewFiringAlerts();
+  const showAlertsCard = alertsData.enabled;
+  const showIRMNewsCard = incidentsData.enabled === undefined || incidentsData.enabled || config.newsFeedEnabled;
   const skeleton = (
-    <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} redesignEnabled={redesignEnabled} />
+    <HomePageSkeleton
+      showAlertsCard={showAlertsCard}
+      showIRMNewsCard={showIRMNewsCard}
+      showExtra={showExtra}
+      redesignEnabled={redesignEnabled}
+    />
   );
 
   return (
@@ -84,6 +145,11 @@ export default function HomePage() {
         subTitle: t('home.home-page.placeholder', 'Welcome to {{edition}}.', { edition: getEdition() }),
         hideFromBreadcrumbs: true,
       }}
+      actions={
+        redesignEnabled ? (
+          <HeaderActions alertsData={alertsData} incidentsData={incidentsData} alertIncidentRef={alertIncidentRef} />
+        ) : undefined
+      }
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
@@ -91,6 +157,7 @@ export default function HomePage() {
           skeleton
         ) : (
           <Suspense fallback={skeleton}>
+            <HomepageViewTracker onView={trackView} />
             <Stack direction="column" gap={2}>
               {redesignEnabled ? (
                 <>
@@ -106,13 +173,19 @@ export default function HomePage() {
                     ),
                   })}
 
-                  <Recommendations />
+                  <HomepageSolutionSections />
 
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                  <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
-                    <AlertIncidentTabs />
-                  </Grid>
+                    <AlertIncidentTabs
+                      alertsData={alertsData}
+                      incidentsData={incidentsData}
+                      team={team}
+                      setTeam={setTeam}
+                      switchRef={alertIncidentRef}
+                    />
+                  </HomeGrid>
                 </>
               ) : (
                 <>
@@ -127,10 +200,14 @@ export default function HomePage() {
                     <DashboardTabs extensionComponents={tabComponents} />
                   </HomeSection>
 
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <FiringAlertsCard />
-                    <IncidentsCard />
-                  </Grid>
+                  <HomeGrid columns={2} gap={2}>
+                    {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
+                    {incidentsData.enabled ? (
+                      <IncidentsCard data={incidentsData} />
+                    ) : (
+                      config.newsFeedEnabled && <NewsCard />
+                    )}
+                  </HomeGrid>
                 </>
               )}
               {extraContent}

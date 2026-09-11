@@ -32,15 +32,15 @@ function buildDashboard(kind?: ManagerKind, id?: string): DashboardScene {
 }
 
 describe('ManagedDashboardNavBarBadge', () => {
-  let originalProvisioning: boolean | undefined;
+  let originalProvisioning: boolean;
 
   beforeEach(() => {
-    originalProvisioning = config.featureToggles.provisioning;
-    config.featureToggles.provisioning = true;
+    originalProvisioning = config.provisioningEnabled;
+    config.provisioningEnabled = true;
   });
 
   afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
+    config.provisioningEnabled = originalProvisioning;
     jest.restoreAllMocks();
   });
 

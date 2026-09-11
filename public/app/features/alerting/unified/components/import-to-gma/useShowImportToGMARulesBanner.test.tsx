@@ -2,12 +2,11 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { getWrapper, testWithFeatureToggles } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../../mocks';
-import { setupAdminConfigGet } from '../../mocks/server/configure/admin_config';
+import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
@@ -38,6 +37,7 @@ describe('useShowImportToGMARulesBanner', () => {
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.AlertingProvisioningSetStatus,
       AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.ActionAlertingNotificationsConfigRead,
     ]);
     setupExternalRulesSource();
   });
@@ -61,10 +61,7 @@ describe('useShowImportToGMARulesBanner', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationWizardUI', 'alerting.syncExternalAlertmanager'] });
 
     it('hides the banner while Mimir Alertmanager auto-sync is active', async () => {
-      setupAdminConfigGet(server, {
-        alertmanagersChoice: AlertmanagerChoice.Internal,
-        external_alertmanager_uid: 'mimir-uid',
-      });
+      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       const { result } = renderUseShowImportToGMARulesBanner();
 
@@ -74,9 +71,9 @@ describe('useShowImportToGMARulesBanner', () => {
     });
 
     it('does not flash the banner before the auto-sync state has loaded', async () => {
-      // Auto-sync is NOT active, but while the admin_config query is in flight we do not yet
+      // Auto-sync is NOT active, but while the Config query is in flight we do not yet
       // know that, so the banner stays hidden and only appears once the response arrives.
-      setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+      setupAutoSyncConfig(server, {});
 
       const { result } = renderUseShowImportToGMARulesBanner();
 

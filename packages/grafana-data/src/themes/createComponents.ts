@@ -17,11 +17,17 @@ interface TagColors {
   text: string;
 }
 
+const badgeColorTokens = z.object({
+  text: z.string().optional(),
+  background: z.string().optional(),
+  border: z.string().optional(),
+});
+
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
  * Default tag colours, used when a theme does not provide its own.
  */
-export const DEFAULT_TAG_COLORS: readonly TagColors[] = [
+export const DEFAULT_TAG_COLORS: TagColors[] = [
   { background: '#D32D20', text: DEFAULT_TAG_TEXT_COLOR },
   { background: '#1E72B8', text: DEFAULT_TAG_TEXT_COLOR },
   { background: '#B240A2', text: DEFAULT_TAG_TEXT_COLOR },
@@ -68,9 +74,37 @@ export const ThemeComponentsInputSchema = z
       borderHover: z.string().optional(),
       text: z.string().optional(),
     }),
+    codeEditor: z.object({
+      keyword: z.string().optional(),
+      controlKeyword: z.string().optional(),
+      variable: z.string().optional(),
+      type: z.string().optional(),
+      function: z.string().optional(),
+      number: z.string().optional(),
+      string: z.string().optional(),
+      operator: z.string().optional(),
+      regexp: z.string().optional(),
+      comment: z.string().optional(),
+      heading: z.string().optional(),
+      link: z.string().optional(),
+      invalid: z.string().optional(),
+    }),
+    card: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
+    }),
+    checkbox: z.object({
+      activeBackground: z.string().optional(),
+      activeBackgroundHover: z.string().optional(),
+    }),
+    switch: z.object({
+      activeBackground: z.string().optional(),
+      activeBackgroundHover: z.string().optional(),
+    }),
     tooltip: z.object({
       text: z.string().optional(),
       background: z.string().optional(),
+      borderColor: z.string().optional(),
     }),
     panel: z.object({
       padding: z.number().optional(),
@@ -81,6 +115,11 @@ export const ThemeComponentsInputSchema = z
     }),
     dropdown: z.object({
       background: z.string().optional(),
+      borderColor: z.string().optional(),
+    }),
+    modal: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
     }),
     overlay: z.object({
       background: z.string().optional(),
@@ -90,6 +129,8 @@ export const ThemeComponentsInputSchema = z
       padding: z.number().optional(),
     }),
     drawer: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
       padding: z.number().optional(),
     }),
     textHighlight: z.object({
@@ -113,19 +154,36 @@ export const ThemeComponentsInputSchema = z
     tag: z.object({
       colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
     }),
+    home: z.object({
+      background: z
+        .object({
+          fade: z.string().optional(),
+          highlight: z.string().optional(),
+          right: z.string().optional(),
+          left: z.string().optional(),
+        })
+        .optional(),
+    }),
+    // keyed by BadgeColor ('brand' is handled separately)
+    badge: z.object({
+      blue: badgeColorTokens.optional(),
+      red: badgeColorTokens.optional(),
+      green: badgeColorTokens.optional(),
+      orange: badgeColorTokens.optional(),
+      purple: badgeColorTokens.optional(),
+      darkgrey: badgeColorTokens.optional(),
+      brand: badgeColorTokens.optional(),
+    }),
   })
   .partial();
 
 /** @beta */
 type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
 
-// The menu and tag props are overridden to preserve types that zod inference can't reproduce
+// The menu is overridden to preserve types that zod inference can't reproduce
 /** @beta */
-export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu' | 'tag'>> & {
+export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu'>> & {
   menu: MenuComponentTokens;
-  tag: {
-    colors: readonly TagColors[];
-  };
 };
 
 export function createComponents(colors: ThemeColors, componentsInput: ThemeComponentsInput = {}): ThemeComponents {
@@ -143,6 +201,33 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       text: colors.text.primary,
       background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
     },
+    codeEditor: {
+      keyword: colors.primary.text,
+      controlKeyword: colors.tertiary.text,
+      variable: colors.text.primary,
+      type: colors.tertiary.text,
+      function: colors.primary.text,
+      number: colors.warning.text,
+      string: colors.success.text,
+      operator: colors.text.secondary,
+      regexp: colors.warning.text,
+      comment: colors.text.secondary,
+      heading: colors.primary.text,
+      link: colors.text.link,
+      invalid: colors.error.text,
+    },
+    card: {
+      background: colors.background.secondary,
+      borderColor: 'transparent',
+    },
+    checkbox: {
+      activeBackground: colors.accent.main,
+      activeBackgroundHover: colors.accent.shade,
+    },
+    switch: {
+      activeBackground: colors.accent.main,
+      activeBackgroundHover: colors.accent.shade,
+    },
     panel: {
       padding: 1,
       headerHeight: 5,
@@ -152,9 +237,11 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     dropdown: {
       background: colors.background.elevated,
+      borderColor: 'transparent',
     },
     tooltip: {
       background: colors.background.elevated,
+      borderColor: 'transparent',
       text: colors.text.primary,
     },
     dashboard: {
@@ -162,7 +249,13 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       padding: 1,
     },
     drawer: {
+      background: colors.background.primary,
+      borderColor: 'transparent',
       padding: 2,
+    },
+    modal: {
+      background: colors.background.primary,
+      borderColor: colors.border.weak,
     },
     overlay: {
       background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',
@@ -192,6 +285,24 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     tag: {
       colors: DEFAULT_TAG_COLORS,
     },
+    home: {
+      background: {
+        fade:
+          colors.mode === 'dark'
+            ? 'hsl(from #3a364c h calc(s * 1.5) calc(l * 1.1))'
+            : 'hsl(from #dedfee h calc(s * 1.05) calc(l * 0.9))',
+        highlight: 'transparent',
+        right:
+          colors.mode === 'dark'
+            ? 'hsl(from #722323 h calc(s * 1.1) calc(l * 0.9) / 80%)'
+            : 'hsl(from #ff9a9a h s l / 80%)',
+        left:
+          colors.mode === 'dark'
+            ? 'hsl(from #1b416d h calc(s * 0.9) calc(l * 0.9) / 60%)'
+            : 'hsl(from #a6e3df h s l / 60%)',
+      },
+    },
+    badge: getBadgeColorToken(colors),
   };
 
   // deep-merge caller overrides on top of the defaults
@@ -200,3 +311,39 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     Array.isArray(inputValue) ? inputValue : undefined
   );
 }
+const getBadgeColor = (
+  sourceColor: string,
+  mode: ThemeColors['mode']
+): ThemeComponents['badge'][keyof ThemeComponents['badge']] => {
+  const BADGE_TEXT_ADJUSTMENT = mode === 'dark' ? 15 : -25;
+  const background = `hsl(from ${sourceColor} h s l / 0.15)`;
+  const border = `hsl(from ${sourceColor} h s l / 0.25)`;
+  const text = `hsl(from ${sourceColor} h s calc(l + ${BADGE_TEXT_ADJUSTMENT}))`;
+
+  return { background, border, text };
+};
+
+const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
+  const mode = colors.mode;
+
+  const BADGE_RED = mode === 'dark' ? '#F2495C' : '#E02F44';
+  const BADGE_ORANGE = mode === 'dark' ? '#FF9830' : '#FF780A';
+  const BADGE_GREEN = mode === 'dark' ? '#73BF69' : '#56A64B';
+  const BADGE_BLUE = mode === 'dark' ? '#5794F2' : '#3274D9';
+  const BADGE_PURPLE = mode === 'dark' ? '#B877D9' : '#A352CC';
+  const BADGE_DARKGREY = '#a9a9a9';
+
+  return {
+    red: getBadgeColor(BADGE_RED, mode),
+    orange: getBadgeColor(BADGE_ORANGE, mode),
+    green: getBadgeColor(BADGE_GREEN, mode),
+    blue: getBadgeColor(BADGE_BLUE, mode),
+    purple: getBadgeColor(BADGE_PURPLE, mode),
+    darkgrey: getBadgeColor(BADGE_DARKGREY, mode),
+    brand: {
+      background: colors.gradients.brandHorizontal,
+      border: 'transparent',
+      text: colors.primary.contrastText,
+    },
+  };
+};

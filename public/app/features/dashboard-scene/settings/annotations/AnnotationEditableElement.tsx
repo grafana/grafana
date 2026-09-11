@@ -26,7 +26,7 @@ import { annotationEditActions } from './actions';
 
 export type AnnotationLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
-function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const annotationCategoryId = useId();
   const annotationNameId = useId();
   const enabledId = useId();
@@ -78,7 +78,7 @@ function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boole
 
   const queryOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.edit-pane.annotation.query', 'Query'),
+      title: t('dashboard.sidebar.annotation.query', 'Query'),
       id: queryCategoryId,
     }).addItem(
       new OptionsPaneItemDescriptor({
@@ -99,28 +99,17 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.annotation', 'Annotation'),
+      typeName: t('dashboard.sidebar.elements.annotation', 'Annotation'),
       icon: 'comment-alt',
       instanceName: this.layer.state.name,
       isHidden: this.layer.state.isHidden,
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDuplicate() {
-    const dataLayerSet = this.layer.parent;
-    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
-      return;
-    }
-
-    annotationEditActions.addAnnotation({
-      source: dataLayerSet,
-      addedObject: this.layer.clone({
-        key: undefined,
-        name: `${this.layer.state.name} - Copy`,
-      }),
-    });
+    annotationEditActions.duplicateAnnotation(this.layer);
   }
 
   public onConfirmDelete() {

@@ -1,19 +1,21 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { Grid, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
 import { DashboardTabsSkeleton } from './DashboardTabs/DashboardTabsSkeleton';
+import { HomeGrid } from './HomeGrid';
 import { HomeSection } from './HomeSection';
 
 interface Props {
   showAlertsCard?: boolean;
+  showIRMNewsCard?: boolean;
   showExtra?: boolean;
   redesignEnabled?: boolean;
 }
 
 // Opt-in sections so the skeleton never reserves a block the real page won't render.
-export function HomePageSkeleton({ showAlertsCard, showExtra, redesignEnabled }: Props) {
+export function HomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra, redesignEnabled }: Props) {
   return (
     <div data-testid="home-page-skeleton">
       <Stack direction="column" gap={2}>
@@ -25,22 +27,23 @@ export function HomePageSkeleton({ showAlertsCard, showExtra, redesignEnabled }:
               <Skeleton height={120} containerClassName={styles.block} />
             </HomeSection>
             {/* DashboardTabs and Alerts card*/}
-            <Grid gap={2} columns={{ xs: 1, md: 2 }} data-testid="home-page-skeleton-cards">
+            <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
               <HomeSection direction="column" display="flex" gap={2}>
                 <DashboardTabsSkeleton redesignEnabled />
               </HomeSection>
               {showAlertsCard && <CardSkeleton />}
-            </Grid>
+            </HomeGrid>
           </>
         ) : (
           <>
             <HomeSection direction="column" display="flex" gap={2}>
               <DashboardTabsSkeleton />
             </HomeSection>
-            {showAlertsCard && (
-              <Grid gap={2} columns={{ xs: 1, md: 2 }} data-testid="home-page-skeleton-cards">
-                <CardSkeleton />
-              </Grid>
+            {(showAlertsCard || showIRMNewsCard) && (
+              <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
+                {showAlertsCard && <CardSkeleton />}
+                {showIRMNewsCard && <CardSkeleton />}
+              </HomeGrid>
             )}
           </>
         )}

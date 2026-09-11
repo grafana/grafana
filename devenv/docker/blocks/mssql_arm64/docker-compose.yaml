@@ -1,0 +1,8 @@
+  mssql:
+    build:
+      context: docker/blocks/mssql_arm64/build
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Password!
+    ports:
+      - "1433:1433"

@@ -1,7 +1,8 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -35,6 +36,7 @@ import {
   isV2StoredVersion,
 } from 'app/features/dashboard/api/utils';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
+import { recordDashboardFetchTiming } from 'app/features/dashboard/services/DashboardFetchTiming';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -47,6 +49,7 @@ import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-sce
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { isRefNotFoundError } from 'app/features/provisioning/components/utils/errors';
 import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
 import {
@@ -67,7 +70,15 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import {
+  countPredefinedVariableOrigins,
+  getGlobalVariablesMode,
+  mayInjectAnyPredefinedVariables,
+  parseUseCrossDashboardVariables,
+  resolvePredefinedVariablesForDashboard,
+} from '../utils/crossDashboardVariablesSelection';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { DashboardInteractions } from '../utils/interactions';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -363,7 +374,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await loadWithRef(ref);
     } catch (err) {
       // If ref is not found (404), retry without ref to default to the main branch
-      if (ref && isFetchError(err) && err.status === 404) {
+      if (isRefNotFoundError(err, ref)) {
         return await loadWithRef(undefined);
       }
       throw err;
@@ -473,7 +484,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
-        initializeReportRenderReadinessObserver();
+        initializeReportRenderReadinessObserver(queryController);
       }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
@@ -524,11 +535,18 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await this.loadHomeDashboard();
     }
 
+    // dashboard_view/dashboard_render profiling only starts once the scene exists, i.e. after
+    // this resolves - record it separately so it can be attached to those events later.
+    const fetchStart = performance.now();
     const rsp = await this.fetchDashboard(options);
 
     if (!rsp) {
+      // Cancelled or failed fetch - nothing was actually loaded, so don't record a timing
+      // that could get misattributed to a later, unrelated load.
       return null;
     }
+
+    recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
@@ -597,8 +615,11 @@ abstract class DashboardScenePageStateManagerBase<T>
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
-    // Public dashboards are not part of a session and therefore should not use the cache
-    const skipSceneCache = options.route === DashboardRoutes.Public;
+    // Public dashboards are not part of a session and therefore should not use the cache.
+    // Provisioning previews are cached under the file path (options.uid for this route), which
+    // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
+    // preview when the same file is revisited at a different ref.
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -705,7 +726,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       throw new Error('Missing required parameters for template dashboard');
     }
 
-    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    const ds = await getDataSourceInstanceSettings(datasource);
     if (!ds) {
       throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
     }
@@ -740,7 +761,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, [
       {
         name: '*',
         type: 'datasource',
@@ -776,7 +797,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, mappings);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
@@ -929,7 +950,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     try {
       this.setState({ isLoading: true });
 
+      const fetchStart = performance.now();
       const rsp = await dashboardLoaderSrv.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
+      recordDashboardFetchTiming(uid, performance.now() - fetchStart);
       const fromCache = this.getSceneFromCache(uid);
 
       // check if cached db version is same as both
@@ -1021,13 +1044,45 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     // fetchPredefinedVariables is a no-op when the feature flag is off.
-    if (!config.featureToggles.globalDashboardVariables) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
       return options;
     }
 
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
-    const predefinedVariables = await fetchPredefinedVariables(folderUid);
+    // k8s annotations can include non-string values; resolution only needs string entries.
+    const annotations: Record<string, string> = {};
+    for (const [key, value] of Object.entries(rsp.metadata.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const resolutionInput = { annotations };
+
+    const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
+
+    if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      DashboardInteractions.globalVariablesLoaded({
+        global_count: 0,
+        folder_count: 0,
+        total_count: 0,
+        mode,
+      });
+      return {
+        ...options,
+        defaultVariables: [...(options.defaultVariables ?? [])],
+      };
+    }
+
+    // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
+    const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
+    const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
+    const counts = countPredefinedVariableOrigins(predefinedVariables);
+
+    DashboardInteractions.globalVariablesLoaded({
+      ...counts,
+      mode,
+    });
 
     // Always attach (including []) so scene-cache hits can sync — including clearing
     // variables that were deleted after the scene was cached.
@@ -1041,8 +1096,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    // Public dashboards are not part of a session and therefore should not use the cache
-    const skipSceneCache = options.route === DashboardRoutes.Public;
+    // Public dashboards are not part of a session and therefore should not use the cache.
+    // Provisioning previews are cached under the file path (options.uid for this route), which
+    // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
+    // preview when the same file is revisited at a different ref.
+    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1264,7 +1322,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     try {
       this.setState({ isLoading: true });
 
+      const fetchStart = performance.now();
       const rsp = await this.dashboardLoader.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
+      recordDashboardFetchTiming(uid, performance.now() - fetchStart);
       const fromCache = this.getSceneFromCache(uid);
 
       if (

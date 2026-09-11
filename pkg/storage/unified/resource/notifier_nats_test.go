@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -151,6 +153,53 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	}
 }
 
+func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		previousType   resourcepb.WatchNotification_Type
+		previousFolder string
+		previousAction kv.DataAction
+	}{
+		{name: "older publisher omits metadata"},
+		{name: "created in root", previousType: resourcepb.WatchNotification_ADDED, previousAction: DataActionCreated},
+		{name: "created in folder", previousType: resourcepb.WatchNotification_ADDED, previousFolder: "old-folder", previousAction: DataActionCreated},
+		{name: "updated", previousType: resourcepb.WatchNotification_MODIFIED, previousFolder: "old-folder", previousAction: DataActionUpdated},
+		{name: "deleted", previousType: resourcepb.WatchNotification_DELETED, previousFolder: "old-folder", previousAction: DataActionDeleted},
+		{name: "unrecognized previous type still delivers current event", previousType: resourcepb.WatchNotification_Type(99), previousFolder: "old-folder"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			n := newNatsNotifier(nil, nil, log.NewNopLogger())
+			data := mustMarshalNotification(t, &resourcepb.WatchNotification{
+				Type:                    resourcepb.WatchNotification_MODIFIED,
+				Group:                   "playlist.grafana.app",
+				Resource:                "playlists",
+				Namespace:               "default",
+				Name:                    "abc",
+				ResourceVersion:         42,
+				Folder:                  "new-folder",
+				PreviousResourceVersion: 41,
+				PreviousType:            tc.previousType,
+				PreviousFolder:          tc.previousFolder,
+			})
+
+			event, ok := n.decode("some.subject", data)
+			require.True(t, ok)
+			require.Equal(t, Event{
+				Namespace:       "default",
+				Group:           "playlist.grafana.app",
+				Resource:        "playlists",
+				Name:            "abc",
+				ResourceVersion: 42,
+				Action:          DataActionUpdated,
+				Folder:          "new-folder",
+				PreviousRV:      41,
+				PreviousAction:  tc.previousAction,
+				PreviousFolder:  tc.previousFolder,
+			}, event)
+		})
+	}
+}
+
 func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())
@@ -213,6 +262,73 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 
 	expectNoEvent(t, out)
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unmarshal_error")))
+}
+
+func TestThrottledLog_ReleasesOneLinePerInterval(t *testing.T) {
+	// The fake clock lets the interval expire without the test waiting for it.
+	synctest.Test(t, func(t *testing.T) {
+		tl := newThrottledLog(time.Hour)
+
+		suppressed, ok := tl.next("reason")
+		require.True(t, ok, "first occurrence must always be logged")
+		assert.Zero(t, suppressed)
+
+		for range 5 {
+			_, ok := tl.next("reason")
+			assert.False(t, ok, "further occurrences within the interval must be throttled")
+		}
+
+		// Once the interval expires the next line is released, reporting everything
+		// suppressed since the previous one.
+		time.Sleep(time.Hour)
+		suppressed, ok = tl.next("reason")
+		require.True(t, ok)
+		assert.Equal(t, int64(5), suppressed)
+
+		// The count resets once reported.
+		time.Sleep(time.Hour)
+		suppressed, ok = tl.next("reason")
+		require.True(t, ok)
+		assert.Zero(t, suppressed)
+	})
+}
+
+func TestThrottledLog_ThrottlesKeysIndependently(t *testing.T) {
+	tl := newThrottledLog(time.Hour)
+
+	_, ok := tl.next("first")
+	require.True(t, ok)
+	_, ok = tl.next("first")
+	require.False(t, ok)
+
+	// A storm on one key must not hide the first occurrence of another.
+	_, ok = tl.next("second")
+	assert.True(t, ok)
+}
+
+func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+		logger := &logtest.Fake{}
+		n := newNatsNotifier(sub, dropped, logger)
+
+		// The counter is the source of truth for drop rates, so it must stay exact
+		// even though the warning is throttled to one line per interval.
+		for range 100 {
+			n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", "some.subject")
+		}
+		assert.Equal(t, float64(100), testutil.ToFloat64(dropped.WithLabelValues(dropReasonBufferFull)))
+		require.Equal(t, 1, logger.WarnLogs.Calls, "only the first drop should be logged within the interval")
+
+		// The next drop after the interval logs again and reports the backlog, so a
+		// throttled line still conveys volume.
+		time.Sleep(dropLogInterval)
+		n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", "some.subject")
+		require.Equal(t, 2, logger.WarnLogs.Calls)
+		assert.Contains(t, logger.WarnLogs.Ctx, "suppressed_since_last_log")
+		assert.Contains(t, logger.WarnLogs.Ctx, int64(99))
+	})
 }
 
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {

@@ -6,8 +6,10 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	"github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // UserAttributionEnabledFunc reports whether user attribution is enabled for the
@@ -44,30 +46,38 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("expected job, got %T", a.GetObject())
 	}
 
-	// Never trust client-supplied author annotations: clear them first and set
-	// them only from the request identity below. This guarantees the recorded
-	// author always reflects who actually made the request.
-	delete(job.Annotations, AnnoAuthor)
-	delete(job.Annotations, AnnoAuthorEmail)
-
-	if m.userAttributionEnabled == nil || !m.userAttributionEnabled(ctx) {
-		return nil
-	}
-
-	author, ok := auth.GetAuthorFromRequester(ctx)
-	if !ok {
-		return nil
-	}
-
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
 	}
-	if author.Name != "" {
-		job.Annotations[AnnoAuthor] = author.Name
+	// Never let a caller set the email annotation
+	delete(job.Annotations, AnnoAuthorEmail)
+
+	enabled := m.userAttributionEnabled != nil && m.userAttributionEnabled(ctx)
+
+	requester, err := identity.GetRequester(ctx)
+	isUser := err == nil && requester.IsIdentityType(types.TypeUser)
+
+	if enabled && isUser {
+		job.Annotations[AnnoAuthor] = requester.GetName()
+		job.Annotations[AnnoAuthorEmail] = requester.GetEmail()
+		job.Annotations[AnnoAuthorID] = requester.GetUID()
+		job.Annotations[AnnoAuthorOrigin] = "Grafana"
+		return nil
 	}
-	if author.Email != "" {
-		job.Annotations[AnnoAuthorEmail] = author.Email
+
+	info, hasInfo := types.AuthInfoFrom(ctx)
+	isProvisioningService := hasInfo && identity.IsProvisioningServiceIdentity(info)
+
+	if enabled && isProvisioningService {
+		if job.Annotations[AnnoAuthorOrigin] == "" {
+			job.Annotations[AnnoAuthorOrigin] = "Grafana"
+		}
+		return nil
 	}
+
+	delete(job.Annotations, AnnoAuthor)
+	delete(job.Annotations, AnnoAuthorID)
+	delete(job.Annotations, AnnoAuthorOrigin)
 
 	return nil
 }

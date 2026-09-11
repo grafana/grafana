@@ -4,7 +4,7 @@
  * Replace an existing template variable with a new definition, preserving its position.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -12,13 +12,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import {
-  buildVariableChangePath,
-  findSectionPathsContainingVariable,
-  getEffectiveVariableParentPath,
-  isSectionVariablesFeatureEnabled,
-  resolveVariableScope,
-} from './variableScope';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const updateVariablePayloadSchema = payloads.updateVariable;
@@ -39,13 +33,12 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
     try {
       const { name, variable: variableKind, parentPath } = payload;
-      const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
-      const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
+      const effectiveParentPath = parentPath ?? '/';
 
       let scope;
       if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          const sectionPaths = sectionVariablesEnabled ? findSectionPathsContainingVariable(scene, name) : [];
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
           }
@@ -71,9 +64,21 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
+      // Preserve scene identity across the replacement - element pickers, highlight
+      // overlays, and attached assistant context address the variable by scene key.
+      newSceneVariable.setState({ key: previousState.key });
       currentVariables[existingIndex] = newSceneVariable;
 
       replaceScopeVariableSet(scopeOwner, currentVariables);
+
+      // The element edit pane memoizes its editable element per selection, so a pane
+      // open on the replaced variable would keep editing the detached object.
+      // Re-selecting the successor (same key, force) remounts the pane against it.
+      const editPane = scene.state.sidebar;
+      const selected = editPane?.state.selectionContext.selected;
+      if (selected?.length === 1 && selected[0].id === previousState.key) {
+        editPane.selectObject(newSceneVariable, { force: true });
+      }
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 

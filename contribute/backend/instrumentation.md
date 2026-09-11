@@ -138,13 +138,37 @@ If label values originate from user input they should be validated. Use `metricu
 
 To guarantee the existence of metrics before any observations have happened, you can use the helper methods available in the `pkg/infra/metrics/metricutil` package.
 
-### Inspect metrics locally
+### Registering metrics
 
-Run Grafana and open `http://localhost:3000/metrics` to inspect its exported metrics.
+Register collectors on the `prometheus.Registerer` your service is given, using `promauto.With(reg)`. A nil registerer leaves the collectors unregistered, which is what tests usually want.
 
-To collect and query the metrics, configure a Prometheus-compatible system to scrape that endpoint. Follow the setup instructions for the system you choose. For example, refer to the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/getting_started/).
+These helpers handle nil registerers directly. `promauto.With(nil)` returns a factory whose `New*` methods create unregistered collectors. `prometheus.WrapRegistererWith` and `prometheus.WrapRegistererWithPrefix` also accept nil and return a no-op registerer, so callers do not need nil checks before using them.
 
-To query the metrics from Grafana, install and configure an external data source plugin that supports your metrics system. For Prometheus, refer to the [Grafana Prometheus data source repository](https://github.com/grafana/grafana-prometheus-datasource).
+Do not declare collectors as package-level variables with `promauto.NewCounter` and friends. Those register on the global default registry at init, so they ignore the registry your service was wired with and they leak between tests.
+
+### Duplicate registration
+
+Registering two collectors with the same name on one registry fails. With `promauto` or `MustRegister` that means a panic, usually at startup; plain `Register` returns an `AlreadyRegisteredError` instead. Note that the registry compares label _names_, not label values: two collectors named `foo_total` with a `resource` label conflict even when one is only ever used with `resource="a"` and the other with `resource="b"`.
+
+Duplicate registration usually means either that the same component was wired twice or that multiple legitimate components register identical collectors on the same registry without distinguishing themselves.
+
+Do not resolve a production collision by catching and ignoring the error, reusing another component's collector, passing a nil registerer, or otherwise skipping registration. Every production component must report its metrics. Consider these options:
+
+- **Build the collectors once and pass them down.** If several callers intentionally contribute to the same measurements, construct the collectors in one place and hand them to each caller.
+- **Use a const label per component.** If separate components expose the same measurements, apply the same stable, bounded label name, such as `component`, to every collector in the metric family and give each component a different value. This keeps a shared metric name for dashboards while allowing each component to report separately. Registering the same component twice still fails, which is what you want.
+- **Use distinct metric names for different measurements.** If components expose different concepts that should not be queried together, give their metrics distinct names. `prometheus.WrapRegistererWithPrefix("mycomponent_", reg)` can apply a prefix to everything registered by a component.
+
+### How to collect and visualize metrics locally
+
+1. Ensure you have Docker installed and running on your machine.
+1. Start Prometheus.
+
+   ```bash
+   make devenv sources=prometheus
+   ```
+
+1. Run Grafana, and then create a Prometheus data source if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic authentication, and enter the same authentication you have for local Grafana.
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at `http://localhost:3000/metrics`.
 
 ## Traces
 
@@ -357,28 +381,73 @@ attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID)
 attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 ```
 
-### Enable tracing and export traces locally<a name="enable-tracing-in-grafana"></a>
+### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-Grafana exports traces to systems that accept the OpenTelemetry Protocol (OTLP). Before you enable tracing, start an OTLP-compatible collector or tracing backend and determine its OTLP gRPC endpoint.
+1. Start a tracing backend
 
-Configure the endpoint in your `config.ini` file:
+   Pick one of the following `devenv` blocks:
 
-```ini
-[tracing.opentelemetry.otlp]
-address = <OTLP_HOST>:<OTLP_PORT>
-insecure = true
-```
+   ```bash
+   # Simplest: Jaeger all-in-one, with its own UI at http://localhost:16686
+   make devenv sources=jaegeronly
 
-Replace `<OTLP_HOST>` and `<OTLP_PORT>` with the host and port of your OTLP endpoint. Only use `insecure = true` for local development.
+   # Full self-observability stack (Tempo + Prometheus + Loki + Pyroscope + Alloy),
+   # for inspecting Grafana's own telemetry. No Jaeger UI; traces are viewed in Grafana.
+   make devenv sources=self-instrumentation
+   ```
 
-Run Grafana and exercise the code path that you instrumented. Use your tracing backend's query interface to verify and inspect the exported spans.
+   Prefer `jaegeronly` over the plain `jaeger` block, since `jaeger` also starts Loki and promtail and requires the Loki Docker log-driver plugin, whereas `jaegeronly` has no such dependency.
 
-For local tracing backend setup instructions, refer to one of these external projects:
+1. Enable tracing in Grafana<a name="enable-tracing-in-grafana"></a>
 
-- [Grafana Tempo](https://github.com/grafana/tempo)
-- [Jaeger](https://github.com/jaegertracing/jaeger)
+   There is no `enabled` flag, to turn tracing on you need to set an exporter `address`. Tracing configuration is read at **startup**, so restart the backend after editing `custom.ini`.
 
-To query traces from Grafana, install and configure the corresponding external data source plugin:
+   For the `jaegeronly` block, use the Jaeger exporter:
 
-- [Grafana Tempo data source](https://github.com/grafana/grafana-tempo-datasource)
-- [Grafana Jaeger data source](https://github.com/grafana/grafana-jaeger-datasource)
+   ```ini
+   [tracing.opentelemetry.jaeger]
+   address = http://localhost:14268/api/traces
+   ```
+
+   For the `self-instrumentation` (Tempo) block, use the OTLP exporter:
+
+   ```ini
+   [tracing.opentelemetry.otlp]
+   address = localhost:4317
+   insecure = true
+   ```
+
+   While testing, you can force full sampling so every request produces a trace:
+
+   ```ini
+   [tracing.opentelemetry]
+   sampler_type = const
+   sampler_param = 1
+   ```
+
+1. Provision the data sources
+
+   `make devenv` only starts the containers but it doesn't provision data sources. Run the setup script (from inside `devenv`) to symlink `devenv/datasources.yaml` into `conf/provisioning/datasources/`:
+
+   ```bash
+   cd devenv
+   ./setup.sh
+   ```
+
+   This provides the `gdev-tempo` (`http://localhost:3200`), `gdev-jaeger`, and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for details. Alternatively, add the data source by hand under **Connections > Data sources**.
+
+1. Search/browse collected logs and traces in Grafana Explore
+
+   Open Grafana Explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
+
+   You can then inspect any log message that includes a `traceID` and from there click the trace data source (`gdev-jaeger` or `gdev-tempo`) to split the view and inspect the trace in question.
+
+1. Search or browse collected traces
+   - With `jaegeronly`: open `http://localhost:16686` to use the Jaeger UI.
+   - With `self-instrumentation`: there is no standalone UI. In Grafana Explore, select the `gdev-tempo` data source and run a TraceQL query such as `{}` (search by service name `grafana`).
+
+### Troubleshoot local tracing
+
+- **`http://localhost:16686` refused.** The `self-instrumentation` block has no Jaeger. Use Explore with the `gdev-tempo` data source instead.
+- **No Tempo/Jaeger data source in Explore.** The setup script wasn't run. Check for the `dev.yaml` symlink under `conf/provisioning/datasources/`.
+- **No spans appear.** Confirm the exporter block is in `custom.ini` and that the backend was restarted after editing it (tracing is read at startup).

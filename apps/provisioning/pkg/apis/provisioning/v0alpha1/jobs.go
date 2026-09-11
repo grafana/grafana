@@ -356,6 +356,12 @@ type JobStatus struct {
 	// Optional value 0-100 that can be set while running
 	Progress float64 `json:"progress,omitempty"`
 
+	// ProgressUpdates is the number of times the job's status has been written
+	// while it was processed. It is carried over to the historic job so the total
+	// number of progress updates a job went through remains observable after
+	// completion.
+	ProgressUpdates int64 `json:"progressUpdates,omitempty"`
+
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
 
@@ -399,6 +405,11 @@ type JobResourceSummary struct {
 
 	// No action required (useful for sync)
 	Noop int64 `json:"noop,omitempty"`
+
+	// TotalChanges is the action-aware count of resources changed for this group/kind,
+	// set by the progress recorder as results are recorded. Used for the job-duration
+	// histogram's resources_changed bucket.
+	TotalChanges int64 `json:"totalChanges,omitempty"`
 
 	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info

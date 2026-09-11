@@ -3,7 +3,7 @@ import { useLocation } from 'react-use';
 
 import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, TextLink, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -89,18 +89,16 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                       </div>
                       <Spacer />
                       {href && (
-                        <a
+                        <TextLink
                           href={href}
-                          target="__blank"
-                          className={styles.link}
-                          rel="noopener"
+                          external={true}
+                          inline={false}
                           aria-label={t('alertlist.ungrouped-mode-view.aria-label-view-alert-rule', 'View alert rule')}
                         >
                           <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>
                             <Trans i18nKey="alertlist.ungrouped-mode-view.view-alert-rule">View alert rule</Trans>
                           </span>
-                          <Icon name={'external-link-alt'} size="sm" />
-                        </a>
+                        </TextLink>
                       )}
                     </Stack>
                     <div className={styles.alertDuration}>

@@ -350,6 +350,14 @@ export function hashQuery(query: string) {
   // Convert `{{.field}}` to "{{.field}}"
   query = query.replace(/`([^`]*)`/g, '"$1"');
 
+  // Mimir re-serializes the expression when exposing it via the Prometheus rules API, which drops
+  // trailing commas and empty label selectors that are legal in hand-written ruler YAML. Both have
+  // to go before hashing, or a ruler `expr` and its Prometheus `query` fingerprint differently.
+  // Convert `metric{foo="bar",}` to `metric{foo="bar"}`
+  query = query.replace(/,(?=})/g, '');
+  // Convert `metric{}` to `metric`
+  query = query.replace(/{}/g, '');
+
   // remove quotes, brackets, parentheses, backslashes, and backticks
   query = query.replace(/['"()\[\]\\`]/g, '');
 

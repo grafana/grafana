@@ -93,7 +93,7 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
     labelKey: 'explore.span-detail.attribute-category.frontend',
     defaultLabel: 'Frontend',
     icon: 'frontend-observability',
-    prefixes: ['browser', 'device', 'session'],
+    prefixes: ['browser', 'device', 'session', 'gf.feo11y'],
   },
   {
     id: 'telemetry-sdk',
@@ -160,8 +160,21 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
   },
 ];
 
+/** Resource categories ordered by "gravity" (user-facing → infrastructure → telemetry). */
 const SECTION_CATEGORY_PRIORITY: Record<AttributeSectionType, string[]> = {
-  resource: [SERVICE_CATEGORY_ID],
+  resource: [
+    'frontend',
+    SERVICE_CATEGORY_ID,
+    'deployment',
+    'database',
+    'process',
+    'runtime',
+    'container',
+    'kubernetes',
+    'host-os',
+    'cloud',
+    'telemetry-sdk',
+  ],
   span: ['http', 'url'],
 };
 
@@ -210,9 +223,11 @@ function orderAttributeCategories(
   return [...priorityCategories, ...remainingCategories];
 }
 
+export const OTHER_CATEGORY_ID = 'other' as const;
+
 function getOtherCategory(): AttributeCategoryDefinition {
   return {
-    id: 'other',
+    id: OTHER_CATEGORY_ID,
     label: t('explore.span-detail.attribute-category.other', 'Other'),
     icon: 'tag-alt',
     match: () => true,
@@ -221,6 +236,31 @@ function getOtherCategory(): AttributeCategoryDefinition {
 
 function getAttributeCategories(sectionType: AttributeSectionType): AttributeCategoryDefinition[] {
   return orderAttributeCategories(buildAttributeCategories(), SECTION_CATEGORY_PRIORITY[sectionType]);
+}
+
+/** Returns true when an attribute key matches the OpenTelemetry `db.*` / `db_*` namespace. */
+export function isDatabaseAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['db']);
+}
+
+/** Returns true when an attribute key matches the OpenTelemetry `service.*` / `service_*` namespace. */
+export function isServiceAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['service']);
+}
+
+/** Returns true when an attribute key matches Kubernetes-related trace resource attributes. */
+export function isKubernetesAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['k8s']) || key === 'container.id';
+}
+
+/** Returns true when an attribute key matches Frontend Observability session / app attributes. */
+export function isFrontendObservabilityAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['browser', 'device', 'session', 'gf.feo11y']) || key === 'app_id' || key === 'app_name';
+}
+
+/** Returns true when an attribute key is linked from Knowledge Graph service entity extensions. */
+export function isKnowledgeGraphAttribute(key: string): boolean {
+  return isServiceAttribute(key);
 }
 
 export function groupAttributesByCategory(

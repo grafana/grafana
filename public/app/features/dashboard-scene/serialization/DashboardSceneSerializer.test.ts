@@ -19,7 +19,7 @@ import {
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import { AnnoKeyDashboardSnapshotOriginalUrl, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -75,6 +75,12 @@ describe('DashboardSceneSerializer', () => {
       expect(result.diffCount).toBe(0);
     });
 
+    it('reports a dashboard as new by its missing identity, not by its version', () => {
+      expect(setup({ uid: '', version: 0 }).getDashboardChanges().isNew).toBe(true);
+      // A previewed repo file carries version 0 but already has a uid: saving it updates the file
+      expect(setup({ version: 0 }).getDashboardChanges().isNew).toBe(false);
+    });
+
     it('Can detect time changed', () => {
       const dashboard = setup();
 
@@ -105,6 +111,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasChanges).toBe(true);
       expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
       expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect cross-dashboard variables selection change', () => {
+      const dashboard = setup();
+      dashboard.onEnterEditMode();
+
+      const annotation = '{"global":"all","folder":"all"}';
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
     });
 
     it('Can detect refresh changed', () => {
@@ -524,6 +554,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasChanges).toBe(true);
       expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
       expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect cross-dashboard variables selection change', () => {
+      const dashboard = setupV2();
+      dashboard.onEnterEditMode();
+
+      const annotation = '{"global":"all","folder":"all"}';
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
     });
 
     it('Can detect refresh changed', () => {
@@ -1454,6 +1508,11 @@ describe('DashboardSceneSerializer', () => {
   describe('onSaveComplete', () => {
     it('should set the initialSaveModel correctly', () => {
       const serializer = new V2DashboardSerializer();
+      serializer.metadata = {
+        name: 'source-uid',
+        resourceVersion: '1',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+      };
       const saveModel = defaultDashboardV2Spec();
       const response = {
         id: 1,
@@ -1469,6 +1528,9 @@ describe('DashboardSceneSerializer', () => {
       expect(serializer.initialSaveModel).toEqual({
         ...saveModel,
       });
+      // Save As create must update metadata.name so follow-up saves don't PUT the source.
+      expect(serializer.metadata?.name).toBe('aa');
+      expect(serializer.metadata?.generation).toBe(2);
     });
 
     it('should allow retrieving snapshot url', () => {

@@ -20,6 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
+	"k8s.io/utils/ptr"
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -105,7 +107,6 @@ type k8sRESTAdapter struct {
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
-	tracer  trace.Tracer
 	metrics *Metrics
 	logger  log.Logger
 }
@@ -148,7 +149,7 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 
 func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -209,7 +210,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -245,12 +246,16 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	options *metav1.CreateOptions,
 ) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
@@ -303,13 +308,17 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (out runtime.Object, created bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
@@ -360,6 +369,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, goneError(name)
 	}
 
+	if err := validateUpdate(existing, resource); err != nil {
+		return nil, false, err
+	}
+
 	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
 	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
 	if _, ok := GetLegacyData(resource); !ok {
@@ -377,13 +390,17 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -517,7 +534,28 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	return nil
 }
 
+// validateUpdate rejects updates that attempt to modify immutable fields
+func validateUpdate(existing, updated *annotationV0.Annotation) error {
+	if existing.Spec.Time != updated.Spec.Time {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.TimeEnd, updated.Spec.TimeEnd) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.DashboardUID, updated.Spec.DashboardUID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: dashboardUID is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.PanelID, updated.Spec.PanelID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: panelID is immutable", ErrInvalidInput))
+	}
+	return nil
+}
+
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	if anno.Spec.Time <= 0 {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -88,7 +89,7 @@ func ensurePartition(ctx context.Context, pool *pgxpool.Pool, logger log.Logger,
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
 			logger.Error("failed to rollback transaction", "error", err)
 		}
 	}()
@@ -200,8 +201,7 @@ func isAlreadyExistsError(err error) bool {
 		return false
 	}
 	// Check for pgx error code "42P07" (duplicate_table)
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == "42P07"
 	}
 	return false

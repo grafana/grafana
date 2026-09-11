@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
@@ -424,7 +424,7 @@ describe('Tree', () => {
       await openSelector();
 
       const searchInput = screen.getByRole('combobox', { name: 'Search' });
-      searchInput.focus();
+      await act(async () => fireEvent.focus(searchInput));
 
       // Navigate to Applications (which is expandable) - need to ensure we reach it
       await user.keyboard('{ArrowDown}');

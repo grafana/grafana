@@ -19,8 +19,8 @@ import {
   organizeFieldsTransformer,
 } from '@grafana/data/internal';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { getMockFrames } from 'app/features/loki-helpers/mocks';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
-import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
 import { downloadDataFrameAsCsv } from '../inspector/utils/download';
 

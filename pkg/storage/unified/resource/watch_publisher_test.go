@@ -2,8 +2,11 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -14,10 +17,11 @@ import (
 
 // fakeEventPublisher records what publishWatchNotification hands to the bus.
 type fakeEventPublisher struct {
-	enabled  bool
-	err      error
-	subjects []string
-	payloads [][]byte
+	enabled   bool
+	err       error
+	subjects  []string
+	payloads  [][]byte
+	onPublish func(subject string, data []byte)
 }
 
 func (f *fakeEventPublisher) Enabled() bool { return f.enabled }
@@ -25,6 +29,9 @@ func (f *fakeEventPublisher) Enabled() bool { return f.enabled }
 func (f *fakeEventPublisher) Publish(_ context.Context, subject string, data []byte) error {
 	f.subjects = append(f.subjects, subject)
 	f.payloads = append(f.payloads, data)
+	if f.err == nil && f.onPublish != nil {
+		f.onPublish(subject, data)
+	}
 	return f.err
 }
 
@@ -46,6 +53,8 @@ func TestPublishWatchNotification(t *testing.T) {
 		Action:          DataActionUpdated,
 		Folder:          "folder-1",
 		PreviousRV:      41,
+		PreviousAction:  DataActionCreated,
+		PreviousFolder:  "old-folder",
 	}
 
 	t.Run("publishes a metadata-only notification on the resource subject", func(t *testing.T) {
@@ -55,7 +64,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend.publishWatchNotification(context.Background(), event)
 
 		require.Len(t, pub.subjects, 1)
-		assert.Equal(t, "provisioning.grafana.app.default.repositories", pub.subjects[0])
+		assert.Equal(t, "us.watch.v1.provisioning.grafana.app.default.repositories", pub.subjects[0])
 
 		var got resourcepb.WatchNotification
 		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
@@ -67,6 +76,30 @@ func TestPublishWatchNotification(t *testing.T) {
 		assert.Equal(t, event.ResourceVersion, got.GetResourceVersion())
 		assert.Equal(t, event.Folder, got.GetFolder())
 		assert.Equal(t, event.PreviousRV, got.GetPreviousResourceVersion())
+		assert.Equal(t, resourcepb.WatchNotification_ADDED, got.GetPreviousType())
+		assert.Equal(t, event.PreviousFolder, got.GetPreviousFolder())
+	})
+
+	t.Run("counts a successful publish", func(t *testing.T) {
+		pub := &fakeEventPublisher{enabled: true}
+		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
+		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: metrics}
+
+		backend.publishWatchNotification(context.Background(), event)
+
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+	})
+
+	t.Run("counts a failed publish as a failure, not as published", func(t *testing.T) {
+		pub := &fakeEventPublisher{enabled: true, err: errors.New("bus unavailable")}
+		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
+		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: metrics}
+
+		backend.publishWatchNotification(context.Background(), event)
+
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {

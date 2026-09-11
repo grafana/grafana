@@ -12,8 +12,11 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { createCodeEditorTheme } from './components/CodeMirror/theme';
 export { signatureHelp } from './components/CodeMirror/signatureHelp';
 export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
+export { applyVariableReference, createVariableCompletionSource } from './components/CodeMirror/variableCompletion';
+export type { VariableCompletionDisplay, VariableCompletionOptions } from './components/CodeMirror/variableCompletion';
 export type {
   CodeMirrorBasicSetup,
   CodeMirrorCompletion,

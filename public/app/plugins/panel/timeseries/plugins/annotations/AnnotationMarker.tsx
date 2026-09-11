@@ -211,7 +211,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: 0,
     left: 0,
     zIndex: theme.zIndex.tooltip,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     position: 'absolute',
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,

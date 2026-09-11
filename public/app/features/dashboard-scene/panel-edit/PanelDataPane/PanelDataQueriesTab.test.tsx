@@ -22,6 +22,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -203,6 +204,46 @@ const MixedDsSettingsMock = {
 
 const panelPlugin = getPanelPlugin({ id: 'timeseries', skipDataQuery: false });
 
+function resolveMockUid(ref?: DataSourceRef | string | null) {
+  return typeof ref === 'string' ? ref : ref?.uid;
+}
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === '-- Grafana --') {
+      return grafanaDs;
+    }
+    if (uid === 'gdev-testdata') {
+      return ds1Mock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return ds2Mock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDs;
+    }
+    if (uid === SHARED_DASHBOARD_QUERY) {
+      return ds3Mock;
+    }
+    return defaultDsMock;
+  },
+  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === 'gdev-testdata') {
+      return instance1SettingsMock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return instance2SettingsMock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDsSettingsMock;
+    }
+    return instance1SettingsMock;
+  },
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
@@ -369,7 +410,7 @@ describe('PanelDataQueriesTab', () => {
     it('can add a new query', async () => {
       const { queriesTab } = await setupScene('panel-1');
 
-      queriesTab.addQueryClick();
+      await queriesTab.addQueryClick();
 
       expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
       expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
@@ -386,12 +427,22 @@ describe('PanelDataQueriesTab', () => {
       expect(queriesTab.state.datasource?.uid).toBe('-- Mixed --');
       expect(queriesTab.queryRunner.state.datasource?.uid).toBe('-- Mixed --');
 
-      queriesTab.addQueryClick();
+      await queriesTab.addQueryClick();
 
       expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
       expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
       expect(queriesTab.queryRunner.state.queries[1].hide).toBe(false);
       expect(queriesTab.queryRunner.state.queries[1].datasource?.uid).toBe('gdev-testdata');
+    });
+
+    it('returns the refId of a newly added expression, so callers can scroll to it', async () => {
+      const { queriesTab } = await setupScene('panel-1');
+
+      const refId = queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+
+      const queries = queriesTab.queryRunner.state.queries;
+      expect(refId).toBe('B');
+      expect(queries[queries.length - 1].refId).toBe('B');
     });
   });
 

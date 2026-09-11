@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type QueryVariable, sceneGraph } from '@grafana/scenes';
 import { type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, Stack } from '@grafana/ui';
@@ -156,7 +156,7 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
   } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+    const datasource = await getDataSourceInstance(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
 

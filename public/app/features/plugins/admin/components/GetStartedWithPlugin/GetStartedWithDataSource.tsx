@@ -40,7 +40,8 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
       mode: 'assistant',
       context: [
         createAssistantContextItem('structured', {
-          data: { pluginId: plugin.id, title: t('plugins.get-started-with-data-source.plugin-id', 'Plugin ID') },
+          title: t('plugins.get-started-with-data-source.plugin-id', 'Plugin ID'),
+          data: { pluginId: plugin.id },
         }),
       ],
       prompt: `Help me create a new ${plugin.name} data source.`,

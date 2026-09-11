@@ -9,14 +9,7 @@ const packageIgnoreDeps = [
 
 const defaultEntries = ['i18next.config.ts'];
 
-const externalisedDatasources = [
-  'azuremonitor',
-  'grafana-testdata-datasource',
-  'graphite',
-  'influxdb',
-  'loki',
-  'mysql',
-];
+const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -36,16 +29,19 @@ const config: KnipConfig = {
     'public/app/features/alerting/unified/search/search.terms.js',
     'scripts/grafana-server/tmp/**',
     'devenv/**',
+
+    // vendored temporarily
+    'packages/grafana-data/src/datetime/easytz.js',
+    'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
+    // TODO: Remove once Rspack replaces Webpack.
+    'public/app/core/utils/CorsWorker.rspack.ts',
+    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // TODO remove these ignores when react 19 is released
-        'react-19',
-        'react-dom-19',
-
         // used by yarn test:ci
         'jest-junit',
 
@@ -59,6 +55,12 @@ const config: KnipConfig = {
         // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
+
+        // not imported directly, but the pin keeps react-router@5 hoisted to the top level so
+        // @types/react-router-dom resolves v5 types (otherwise react-router@6 from
+        // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
+        'react-router',
+        '@types/react-router',
       ],
       project: [
         'public/app/**',
@@ -95,6 +97,9 @@ const config: KnipConfig = {
       ],
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
       },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',
@@ -144,6 +149,9 @@ const config: KnipConfig = {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
       ignoreDependencies: ['.*'],
+    },
+    'packages/grafana-plugin-compat': {
+      ignoreDependencies: packageIgnoreDeps,
     },
   },
 };

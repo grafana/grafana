@@ -536,7 +536,6 @@ func runStorageAndSearchBenchmark(
 				QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 					{
 						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
-						Type: resourcepb.QueryFieldType_KEYWORD,
 					},
 				},
 				Limit: 10,

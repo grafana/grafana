@@ -74,6 +74,14 @@ This variable is only available in the **Singlestat** panel and can be used in t
 The **Singlestat** panel is no longer available from Grafana 8.0.
 {{< /admonition >}}
 
+## `$__namespace`
+
+This variable is the Kubernetes namespace that Grafana uses internally to identify the current organization. In Grafana Cloud, the value might be `stacks-123`. In self-managed Grafana, it is `default` for the default organization and `org-<id>` for other organizations. Use the variable in API URLs that require an organization namespace, such as `/apis/<group>/<version>/namespaces/${__namespace}/<resource>`.
+
+{{< admonition type="note" >}}
+This variable is only interpolated in dashboards. In Explore, alert rule query editors, and other views outside a dashboard, it's left as written.
+{{< /admonition >}}
+
 ## `$__org`
 
 This variable is the ID of the current organization.

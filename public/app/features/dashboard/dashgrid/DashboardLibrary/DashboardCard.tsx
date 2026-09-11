@@ -238,19 +238,6 @@ function DashboardCardComponent({
               e.currentTarget.style.display = 'none';
             }}
           />
-        ) : isCustomTemplate ? (
-          <div className={styles.customTemplateContent}>
-            <h3 className={styles.customTemplateTitle}>
-              <span className={styles.titleText}>{title}</span>
-            </h3>
-            <p
-              data-testid="dashboard-card-description"
-              className={cx(styles.customTemplateDescription, { [styles.noDescription]: !dashboard.description })}
-            >
-              {dashboard.description ||
-                t('dashboard-library.dashboard-card.no-description', 'No description available')}
-            </p>
-          </div>
         ) : (
           <div className={styles.noImage}>
             <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
@@ -308,15 +295,21 @@ function DashboardCardComponent({
         </div>
       </div>
       <div className={styles.bottomSection}>
-        {!isCustomTemplate && (
+        {isCustomTemplate && (
+          <h3 className={styles.customTemplateTitle}>
+            <span className={styles.titleText}>{title}</span>
+          </h3>
+        )}
+        {dashboard.description && (
           <div title={dashboard.description}>
-            <p
-              data-testid="dashboard-card-description"
-              className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
-            >
-              {dashboard.description ||
-                t('dashboard-library.dashboard-card.no-description', 'No description available')}
+            <p data-testid="dashboard-card-description" className={styles.description}>
+              {dashboard.description}
             </p>
+          </div>
+        )}
+        {tags && tags.length > 0 && (
+          <div className={styles.tagsContainer}>
+            <TagList tags={tags} className={styles.tagList} />
           </div>
         )}
         {isCustomTemplate && createdByName && (
@@ -326,11 +319,6 @@ function DashboardCardComponent({
             </span>{' '}
             {createdByName}
           </p>
-        )}
-        {tags && tags.length > 0 && (
-          <div className={styles.tagsContainer}>
-            <TagList tags={tags} className={styles.tagList} />
-          </div>
         )}
         {hasCompatActions && (
           <div className={styles.actionsContainer}>
@@ -476,18 +464,6 @@ function getStyles(theme: GrafanaTheme2) {
     },
   });
 
-  const customTemplateContent = css({
-    position: 'absolute',
-    inset: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    gap: theme.spacing(0.5),
-    padding: theme.spacing(2),
-    pointerEvents: 'none',
-  });
-
   return {
     card: css({
       position: 'relative',
@@ -608,7 +584,6 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
-    customTemplateContent,
     customTemplateThumbnail: css({
       '&::after': {
         content: 'none',
@@ -630,16 +605,6 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '100%',
-    }),
-    customTemplateDescription: css({
-      display: '-webkit-box',
-      WebkitLineClamp: 3,
-      WebkitBoxOrient: 'vertical',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      margin: 0,
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
     }),
     createdBy: css({
       margin: 0,
@@ -689,9 +654,6 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
-    }),
-    noDescription: css({
-      fontStyle: 'italic',
     }),
     tagsContainer: css({
       paddingTop: theme.spacing(1),

@@ -277,7 +277,12 @@ Live currently does not support Redis Sentinel. We recommend using a Redis Clust
 
 {{< /admonition >}}
 
-{{< admonition type="note" >}}
-The Redis Live HA engine does not currently support TLS.
+To connect to Redis over TLS, use a `rediss://` connection URL as the engine address:
 
-{{< /admonition >}}
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = rediss://redis.example.com:6380
+```
+
+The `redis://` scheme is also supported. Both schemes accept credentials and a database number in the URL, for example `redis://username:password@localhost:6379/0`. A password set in the URL (even an explicitly empty one) takes precedence; `ha_engine_password` applies when the URL sets no password. Grafana verifies server certificates against the operating system's trusted certificate authorities; verification cannot be disabled through this setting.
