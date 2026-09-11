@@ -54,10 +54,13 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
 // `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
 // — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
 // `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
+// white), so the header was indistinguishable from its rows.
+//
+// 0.06 lands the refreshed themes on the surfaces design picked for the header — ink700 in dark
+// (#1f2227 against #202429) and neutral150 in light (#f0f0f0 against #f0f0ef), both within 2/255 —
+// without reaching for the raw palette, which would paint the same blue-grey header onto every
+// custom theme in `themeDefinitions/` regardless of its hue.
+const HEADER_BACKGROUND_EMPHASIS = 0.06;
 
 export const getGridStyles = memoize(
   (
@@ -72,9 +75,14 @@ export const getGridStyles = memoize(
     if (visualRefreshEnabled) {
       bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
     }
+    // `border.weak` is faint by design, and in a dark theme it loses the little contrast it had
+    // once `table.refresh` steps the header this far off the row background — the grid lines read
+    // as missing beside it. `border.medium` puts them back. Light themes keep `weak`: there the
+    // step darkens rather than lightens, so the lines never went soft.
+    const borderToken = tableRefreshEnabled && theme.isDark ? theme.colors.border.medium : theme.colors.border.weak;
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
     // unpredictable for background color cells
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
+    const borderColor = colorManipulator.onBackground(borderToken, bgColor).toHexString();
     const selectedRowColor = theme.isDark
       ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
       : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
