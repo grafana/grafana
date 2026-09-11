@@ -97,7 +97,6 @@ import (
 	_ "github.com/grafana/grafana-plugin-sdk-go/data/converters"
 	_ "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	_ "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	_ "github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	_ "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	_ "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	_ "github.com/grafana/grafana/apps/advisor/pkg/app"
