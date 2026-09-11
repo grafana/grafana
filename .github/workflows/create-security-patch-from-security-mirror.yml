@@ -17,6 +17,10 @@ on:
       - "main"
       - "v*.*.*"
       - "release-*.*.*"
+      # Vendor-targeting patches: authors PR against "<branch>#vendor" (published by
+      # security-patch-actions alongside "<branch>#patched") to modify a vendored dependency
+      # directly. "#" is not a path separator, so this also matches "release-*.*.*#vendor" etc.
+      - "*#vendor"
 
 concurrency:
   group: create-patch-${{ github.ref }}

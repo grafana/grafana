@@ -5981,7 +5981,6 @@
       "description": "패널, 텍스트 및 코드 셀을 세로로 배열한 시퀀스",
       "name": "노트북",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "시간",
       "title-edit": "",
@@ -7046,6 +7045,12 @@
       "type": "유형"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
     },
     "dashboard-scene": {
@@ -7592,6 +7597,10 @@
       "required": "필수 항목"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "변경 사항",
         "label-details": "세부 정보",
@@ -9089,10 +9098,14 @@
       "share-export-json": "JSON으로 내보내기",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "시작 시간",
       "success-indicator": "",
       "target": "대상",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "트레이스 ID",
       "url": "URL",
       "warning-indicator": ""
@@ -10594,7 +10607,6 @@
       "ariaLabel-panel-loading": "패널 로딩 표시줄",
       "ariaLabel-panel-status": "패널 상태",
       "errors-and-notices": "오류 및 알림",
-      "inspect-errors-notices": "검사",
       "tooltip-cancel": "쿼리 취소",
       "tooltip-cancel-loading": "쿼리 취소",
       "tooltip-stop-streaming": "스트리밍 중지",
@@ -10676,9 +10688,13 @@
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "클립보드로 복사",
       "csv-counts": "행:{{rows}}, 열:{{columns}}",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
@@ -12476,6 +12492,7 @@
       "title": "생성"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "새 경고 규칙"
     },
     "create-dashboard": {
@@ -12965,7 +12982,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +13001,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13051,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13068,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13116,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "설정 지우기"
+      "clear-tooltip": "설정 지우기",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "기준별 색상 시리즈"
@@ -16497,8 +16516,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

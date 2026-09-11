@@ -39,6 +39,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
+| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
@@ -75,6 +76,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
+| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         |                    |
 | `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                     | Yes                |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
 
@@ -110,7 +112,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
-| `flameGraphWithCallTree`           | Enables the new Flame Graph UI containing the Call Tree view                                                                   |
 | `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
 | `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
 

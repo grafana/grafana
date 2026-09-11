@@ -120,6 +120,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "grafana.useRouterMiddleware",
+			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -299,7 +309,7 @@ var (
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
@@ -307,7 +317,7 @@ var (
 			Name:        "reportingFooterSettings",
 			Description: "Enables the configurable footer settings for PDF reports",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
@@ -922,7 +932,7 @@ var (
 		{
 			Name:        "grafana.filterablePanels",
 			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -2636,14 +2646,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "flameGraphWithCallTree",
-			Description: "Enables the new Flame Graph UI containing the Call Tree view",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
-		},
-		{
 			Name:        "flameGraph.tableNg",
 			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
 			Stage:       FeatureStageExperimental,
@@ -2662,10 +2664,10 @@ var (
 		{
 			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
@@ -2958,6 +2960,30 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "dashboard.searchFieldValueResults",
+			Description: "Uses field-value results for dashboard search requests",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
+			Name:        "dashboard.apiSearchFieldValueResults",
+			Description: "Uses field-value results for requests from the /api/search endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
+			Name:        "search.apiFieldValueResults",
+			Description: "Uses field-value results for generic resource search API requests",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
@@ -3199,7 +3225,7 @@ var (
 		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
@@ -3315,6 +3341,15 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:         "saml.gosaml2Provider",
+			Description:  "Use the gosaml2 library instead of the crewjam SAML library for SAML authentication",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "grafana.multiTenantUserPermissions",
 			Description:  "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
 			Stage:        FeatureStageExperimental,
@@ -3322,6 +3357,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayGuardrails",
+			Description:  "Data source query gateway guardrails",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

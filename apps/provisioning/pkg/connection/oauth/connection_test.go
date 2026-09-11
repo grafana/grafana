@@ -205,6 +205,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 		response     map[string]any
 		responseCode int
 		expectedErr  string
+		wantAuthErr  bool // error must be classified as connection.ErrAuthentication (user-actionable)
 		validate     func(t *testing.T, token *oauth2.Token)
 	}{
 		{
@@ -240,12 +241,60 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			name:        "failure - no refresh token",
 			token:       marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			expectedErr: "no refresh token available; authorize the OAuth application again",
+			wantAuthErr: true,
 		},
 		{
-			name:         "failure - token endpoint rejects refresh",
+			name:         "failure - invalid_grant (revoked/expired) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_grant"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - GitHub bad_refresh_token (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "bad_refresh_token"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - GitHub incorrect_client_credentials (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "incorrect_client_credentials"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - invalid_client (HTTP 400) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_client"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 401 is user-actionable",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,
 			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 429 stays system-caused (retryable)",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusTooManyRequests,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
+		},
+		{
+			name:         "failure - token endpoint 5xx stays system-caused",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusInternalServerError,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
 		},
 	}
 
@@ -257,12 +306,21 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			raw, err := conn.GenerateConnectionToken(t.Context())
 			if tt.expectedErr != "" {
 				require.ErrorContains(t, err, tt.expectedErr)
+				if tt.wantAuthErr {
+					assert.ErrorIs(t, err, connection.ErrAuthentication, "expected a user-actionable authentication error")
+				} else {
+					assert.NotErrorIs(t, err, connection.ErrAuthentication, "expected a system-caused error")
+				}
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
+			// The persisted expiration mirrors the access token's expiry (Equal
+			// ignores the monotonic-clock reading the live token carries).
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 			tt.validate(t, token)
 		})
 	}
@@ -307,11 +365,14 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
 			assert.Equal(t, "access", token.AccessToken)
 			assert.Equal(t, "refresh", token.RefreshToken)
+			// The persisted expiration mirrors the exchanged token's expiry.
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 		})
 	}
 }
@@ -384,6 +445,15 @@ func newTokenServer(t *testing.T, code int, response map[string]any) *httptest.S
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if code != 0 {
+			// A non-nil response with an error status returns a JSON OAuth error
+			// body (e.g. {"error":"invalid_grant"}) so oauth2 populates
+			// RetrieveError.ErrorCode; otherwise a plain status is returned.
+			if response != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(code)
+				require.NoError(t, json.NewEncoder(w).Encode(response))
+				return
+			}
 			http.Error(w, "denied", code)
 			return
 		}
