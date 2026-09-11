@@ -178,6 +178,19 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleStatusSync",
+        "resourceVersion": "1788893745114",
+        "creationTimestamp": "2026-09-08T18:55:45Z"
+      },
+      "spec": {
+        "description": "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -816,6 +829,20 @@
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleStatusSync",
+        "resourceVersion": "1785534653123",
+        "creationTimestamp": "2026-07-31T21:50:53Z",
+        "deletionTimestamp": "2026-09-08T18:55:45Z"
+      },
+      "spec": {
+        "description": "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
       }
     },
     {
