@@ -36,13 +36,13 @@ interface ModifyExportRuleFormProps {
 }
 
 export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFormProps) {
-  const defaultValuesForNewRule: RuleFormValues = useMemo(() => {
+  const getDefaultValuesForNewRule = useCallback(async (): Promise<RuleFormValues> => {
     const defaultRuleType = RuleFormType.grafana;
 
     return {
       ...getDefaultFormValues(),
       condition: 'C',
-      queries: getDefaultQueries(false),
+      queries: await getDefaultQueries(false),
       type: defaultRuleType,
       evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     };
@@ -50,9 +50,13 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
-    defaultValues: ruleForm ?? defaultValuesForNewRule,
+    defaultValues: ruleForm ?? getDefaultValuesForNewRule,
     shouldFocusError: true,
   });
+
+  const {
+    formState: { isLoading: isLoadingDefaultValues },
+  } = formAPI;
 
   const existing = Boolean(ruleForm);
   const notifyApp = useAppNotification();
@@ -80,6 +84,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const onClose = useCallback(() => {
     setExportData(undefined);
   }, [setExportData]);
+
+  if (isLoadingDefaultValues) {
+    return <LoadingPlaceholder text={t('alerting.modify-export-rule-form.text-loading', 'Loading...')} />;
+  }
 
   return (
     <FormProvider {...formAPI}>

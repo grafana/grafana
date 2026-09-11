@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -77,7 +78,7 @@ export const RECORDING_TYPE = ['grafana-recording', 'recording'];
  * This one is used for creating new rules (both alerting and recording rules)
  */
 function NewRuleEditor() {
-  const prefill = useDefaultsFromQuery();
+  const { queryDefaults: prefill, loading: loadingPrefill } = useDefaultsFromQuery();
   const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
 
@@ -101,8 +102,9 @@ function NewRuleEditor() {
         id: 'alert-rule-add',
         text: isExisting ? editText : newText,
       }}
+      isLoading={loadingPrefill}
     >
-      <AlertRuleForm prefill={prefill} isManualRestore={isManualRestore} />
+      {!loadingPrefill && <AlertRuleForm prefill={prefill} isManualRestore={isManualRestore} />}
     </AlertingPageWrapper>
   );
 }
@@ -132,12 +134,17 @@ function useDefaultsFromQuery() {
   const [searchParams] = useURLSearchParams();
 
   const ruleType = translateRouteParamToRuleType(type);
+  const defaultsParam = searchParams.get('defaults');
 
-  const queryDefaults = searchParams.has('defaults')
-    ? formValuesFromQueryParams(searchParams.get('defaults') ?? '', ruleType)
-    : undefined;
+  const { value: queryDefaults, loading } = useAsync(async () => {
+    if (!defaultsParam) {
+      return undefined;
+    }
+    return formValuesFromQueryParams(defaultsParam, ruleType);
+  }, [defaultsParam, ruleType]);
 
-  return queryDefaults;
+  // Only report loading when a `defaults` param exists, so the common new-rule flow never waits.
+  return { queryDefaults, loading: Boolean(defaultsParam) && loading };
 }
 
 function useManualRestore() {

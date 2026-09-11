@@ -1,9 +1,9 @@
 import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
 import {
+  type DataSourceInstanceListItem,
   ReducerID,
   type RelativeTimeRange,
-  getDataSourceRef,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
@@ -20,8 +20,6 @@ import {
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { getDefaultQueries, getInstantFromDataQuery } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
@@ -52,7 +50,7 @@ const initialState: QueriesAndExpressionsState = {
 };
 
 export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
-export const addNewDataQuery = createAction('addNewDataQuery');
+export const addNewDataQuery = createAction<DataSourceInstanceListItem | undefined>('addNewDataQuery');
 export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
 export const addNewExpression = createAction<ExpressionQueryType>('addNewExpression');
@@ -66,10 +64,11 @@ export const updateExpressionTimeRange = createAction('updateExpressionTimeRange
 const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
 const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
-export const resetToSimpleCondition = createAction('resetToSimpleCondition');
+export const resetToSimpleCondition = createAction<AlertQuery[]>('resetToSimpleCondition');
 export const optimizeReduceExpression = createAction<{
   updatedQueries: AlertQuery[];
   expressionQueries: Array<AlertQuery<ExpressionQuery>>;
+  isInstantDataQuery: boolean;
 }>('optimizeReduceExpression');
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
@@ -79,14 +78,13 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
   // data queries actions
   builder
     // simple condition actions
-    .addCase(resetToSimpleCondition, (state) => {
-      state.queries = getDefaultQueries();
+    .addCase(resetToSimpleCondition, (state, { payload }) => {
+      state.queries = payload;
     })
     .addCase(duplicateQuery, (state, { payload }) => {
       state.queries = addQuery(state.queries, payload);
     })
-    .addCase(addNewDataQuery, (state) => {
-      const datasource = getDefaultOrFirstCompatibleDataSource();
+    .addCase(addNewDataQuery, (state, { payload: datasource }) => {
       if (!datasource) {
         return;
       }
@@ -95,7 +93,13 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
         datasourceUid: datasource.uid,
         model: {
           refId: '',
-          datasource: getDataSourceRef(datasource),
+          // Built by hand: datasource is a slim DataSourceInstanceListItem, and getDataSourceRef()
+          // requires the full DataSourceInstanceSettings.
+          datasource: {
+            uid: datasource.uid,
+            type: datasource.type,
+            ...(datasource.apiVersion ? { apiVersion: datasource.apiVersion } : {}),
+          },
         },
       });
     })
@@ -237,7 +241,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     // removes the reduce expression when we have a instant data query
     .addCase(optimizeReduceExpression, (state, { payload }) => {
-      const { updatedQueries, expressionQueries } = payload;
+      const { updatedQueries, expressionQueries, isInstantDataQuery } = payload;
 
       if (updatedQueries.length !== 1) {
         // we only optimize when we have one data query
@@ -245,7 +249,6 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       }
 
       const dataQuery = updatedQueries.at(0);
-      const isInstantDataQuery = dataQuery ? getInstantFromDataQuery(dataQuery) : false;
       const hasReducer = expressionQueries.some((q) => isReducerExpression(q.model));
       const shouldRemoveReducer = isInstantDataQuery && expressionQueries.length === 2 && hasReducer;
 

@@ -1,6 +1,8 @@
+import { useAsync } from 'react-use';
+
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Stack } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
@@ -47,6 +49,13 @@ export function ExistingRuleEditor({
     loading: loadingEditable,
     error: errorEditable,
   } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
+
+  const { value: clonePrefill } = useAsync(async () => {
+    if (!clone || !ruleWithLocation) {
+      return undefined;
+    }
+    return rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation));
+  }, [clone, ruleWithLocation]);
 
   if (fetchRuleError || errorEditable) {
     return (
@@ -109,6 +118,12 @@ export function ExistingRuleEditor({
     ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
     : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 
+  const cloneContent = clonePrefill ? (
+    <AlertRuleForm prefill={clonePrefill} />
+  ) : (
+    <LoadingPlaceholder text={t('alerting.existing-rule-editor.loading-clone', 'Loading rule...')} />
+  );
+
   return (
     <AlertingPageWrapper
       navId={navId}
@@ -122,7 +137,7 @@ export function ExistingRuleEditor({
       pageNav={getPageNav({ text: pageTitle })}
     >
       {clone ? (
-        <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />
+        cloneContent
       ) : (
         <AlertRuleForm existing={ruleWithLocation} prefill={prefill} isManualRestore={isManualRestore} />
       )}
