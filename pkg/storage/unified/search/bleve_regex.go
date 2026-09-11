@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"regexp/syntax"
 	"strings"
+	"unicode"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
@@ -245,8 +246,10 @@ func normalizeRegexNode(expression *syntax.Regexp, caseMode, dotMode *regexMode)
 			return errors.New("regular expression uses unsupported named capture")
 		}
 	case syntax.OpLiteral, syntax.OpCharClass:
-		if err := setRegexMode(caseMode, expression.Flags&syntax.FoldCase != 0, "case"); err != nil {
-			return err
+		if regexAtomHasCaseVariants(expression) {
+			if err := setRegexMode(caseMode, expression.Flags&syntax.FoldCase != 0, "case"); err != nil {
+				return err
+			}
 		}
 	case syntax.OpAnyChar:
 		if err := setRegexMode(dotMode, true, "dot-newline"); err != nil {
@@ -274,6 +277,35 @@ func normalizeRegexNode(expression *syntax.Regexp, caseMode, dotMode *regexMode)
 		}
 	}
 	return nil
+}
+
+func regexAtomHasCaseVariants(expression *syntax.Regexp) bool {
+	switch expression.Op {
+	case syntax.OpLiteral:
+		for _, r := range expression.Rune {
+			if unicode.SimpleFold(r) != r {
+				return true
+			}
+		}
+		return false
+	case syntax.OpCharClass:
+		return regexCharClassHasCaseVariants(expression.Rune)
+	default:
+		return false
+	}
+}
+
+func regexCharClassHasCaseVariants(runes []rune) bool {
+	for i := 0; i+1 < len(runes); i += 2 {
+		classStart := uint32(runes[i])
+		classEnd := uint32(runes[i+1])
+		for _, caseRange := range unicode.CaseRanges {
+			if caseRange.Lo <= classEnd && classStart <= caseRange.Hi {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func setRegexMode(mode *regexMode, value bool, name string) error {
