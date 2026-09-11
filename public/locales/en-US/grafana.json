@@ -16737,6 +16737,9 @@
     }
   },
   "timeline": {
+    "enum-state": {
+      "other": "Other"
+    },
     "missing-field": {
       "all": "No graphable fields",
       "time": "Data does not have a time field"

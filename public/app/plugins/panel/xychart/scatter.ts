@@ -6,12 +6,16 @@ import {
   type Field,
   FieldType,
   formattedValueToString,
+  getFieldConfigWithMinMax,
   getFieldColorModeForField,
+  getValueFormat,
   type GrafanaTheme2,
   MappingType,
   SpecialValueMatch,
+  stringToJsRegex,
   ThresholdsMode,
   colorManipulator,
+  type EnumFieldConfig,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
@@ -112,7 +116,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let sizes = opts.disp.size.values(u, seriesIdx);
           // let pointColors = opts.disp.color.values(u, seriesIdx);
           let pointColors = dispColors[seriesIdx - 1].values; // idxs
-          let pointPalette = dispColors[seriesIdx - 1].index as Array<CanvasRenderingContext2D['fillStyle']>;
+          let pointPalette = (dispColors[seriesIdx - 1].index.color ?? []) as Array<
+            CanvasRenderingContext2D['fillStyle']
+          >;
           let paletteHasAlpha = dispColors[seriesIdx - 1].hasAlpha;
 
           let isSquare = scatterInfo.pointShape === PointShape.Square;
@@ -435,7 +441,11 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
   const dispColors = xySeries.map((s): FieldColorValuesWithCache => {
     const cfg: FieldColorValuesWithCache = {
-      index: [],
+      index: {
+        color: [],
+        text: [],
+        icon: [],
+      },
       getAll: () => [],
       getOne: () => -1,
       // cache for renderer, refreshed in prepData()
@@ -446,8 +456,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     const f = s.color.field;
 
     if (f != null) {
-      Object.assign(cfg, fieldValueColors(f, theme));
-      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
+      Object.assign(cfg, getEnumConfig(f, theme));
+      cfg.hasAlpha = cfg.index.color!.some((v) => !(v as string).endsWith('ff'));
     }
 
     return cfg;
@@ -462,6 +472,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     xySeries.forEach((s, i) => {
       dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
+      dispColors[i].hasAlpha = dispColors[i].index.color!.some((color) => !String(color).endsWith('ff'));
     });
 
     return [
@@ -557,7 +568,7 @@ function getHex8Color(color: string, theme: GrafanaTheme2) {
 }
 
 export interface FieldColorValues {
-  index: unknown[];
+  index: EnumFieldConfig;
   getOne: GetOneValue;
   getAll: GetAllValues;
 }
@@ -568,84 +579,200 @@ interface FieldColorValuesWithCache extends FieldColorValues {
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
+export interface EnumConfigOptions {
+  paletteStatesQty?: number;
+  range?: {
+    min?: number;
+    max?: number;
+  };
+}
+
+function getLabelForRange(from: number | null, to: number | null, formatValue: (value: number) => string = String) {
+  let text: string;
+
+  if (from != null) {
+    if (to != null) {
+      text = `${formatValue(from)} - ${formatValue(to)}`;
+    } else {
+      text = `≥ ${formatValue(from)}`;
+    }
+  } else {
+    if (to != null) {
+      text = `≤ ${formatValue(to)}`;
+    } else {
+      text = '';
+    }
+  }
+
+  return text;
+}
+
+function getSpecialValueLabel(match: SpecialValueMatch) {
+  switch (match) {
+    case SpecialValueMatch.NaN:
+      return 'NaN';
+    case SpecialValueMatch.NullAndNaN:
+      return 'null/NaN';
+    case SpecialValueMatch.Empty:
+      return '""';
+    default:
+      return match;
+  }
+}
+
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-// exported for golden tests that freeze its palette+index output ahead of the
-// field.display.colors() migration
-export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
-  let index: unknown[] = [];
+export function getEnumConfig(f: Field, theme: GrafanaTheme2, options?: EnumConfigOptions): FieldColorValues {
+  const index: EnumFieldConfig = {
+    color: [],
+    text: [],
+    icon: [],
+  };
+
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;
+  const formatValue = (value: number) =>
+    formattedValueToString(getValueFormat(f.config.unit ?? '')(value, f.config.decimals ?? undefined));
+  const colorMode = getFieldColorModeForField(f);
 
   let conds = '';
 
   // if any mappings exist, use them regardless of other settings
-  if (f.config.mappings?.length ?? 0 > 0) {
-    let mappings = f.config.mappings!;
+  if ((f.config.mappings?.length ?? 0) > 0) {
+    const mappings = f.config.mappings!;
+    const regexStates: Array<{ regex: RegExp; color?: string; text?: string; icon?: string }> = [];
 
-    for (let i = 0; i < mappings.length; i++) {
-      let m = mappings[i];
+    // this is color+text+icon that deduplicates the index above
+    // e.g. if multiple values + ranges map "OK"+"green", this ensures they map to same state by key
+    const keys: string[] = [];
 
-      if (m.type === MappingType.ValueToText) {
-        for (let k in m.options) {
-          let { color } = m.options[k];
+    function indexOf(color = FALLBACK_COLOR, text = '', icon = '') {
+      const resolvedColor = getHex8Color(color, theme);
+      const key = `${resolvedColor}|${text}|${icon}`;
 
-          if (color != null) {
-            let rhs = f.type === FieldType.string ? JSON.stringify(k) : Number(k);
-            conds += `v === ${rhs} ? ${index.length} : `;
-            index.push(getHex8Color(color, theme));
-          }
+      let idx = keys.indexOf(key);
+
+      if (idx === -1) {
+        idx = keys.length;
+        keys.push(key);
+
+        index.color!.push(resolvedColor);
+        index.text!.push(text);
+        index.icon!.push(icon);
+      }
+
+      return idx;
+    }
+
+    for (const mapping of mappings) {
+      if (mapping.type === MappingType.ValueToText) {
+        for (const [value, result] of Object.entries(mapping.options)) {
+          const state = indexOf(result.color, result.text ?? value, result.icon);
+          const rhs =
+            f.type === FieldType.string
+              ? JSON.stringify(value)
+              : f.type === FieldType.boolean && (value === 'true' || value === 'false')
+                ? value
+                : Number(value);
+          conds += `v === ${rhs} ? ${state} : `;
         }
-      } else if (m.options.result.color != null) {
-        let { color } = m.options.result;
-
-        if (m.type === MappingType.RangeToText) {
-          let range = [];
-
-          if (m.options.from != null) {
-            range.push(`v >= ${Number(m.options.from)}`);
-          }
-
-          if (m.options.to != null) {
-            range.push(`v <= ${Number(m.options.to)}`);
-          }
-
-          if (range.length > 0) {
-            conds += `${range.join(' && ')} ? ${index.length} : `;
-            index.push(getHex8Color(color, theme));
-          }
-        } else if (m.type === MappingType.SpecialValue) {
-          let spl = m.options.match;
-
-          if (spl === SpecialValueMatch.NaN) {
-            conds += `isNaN(v)`;
-          } else if (spl === SpecialValueMatch.NullAndNaN) {
-            conds += `v == null || isNaN(v)`;
-          } else {
-            conds += `v ${
-              spl === SpecialValueMatch.True
-                ? '=== true'
-                : spl === SpecialValueMatch.False
-                  ? '=== false'
-                  : spl === SpecialValueMatch.Null
-                    ? '== null'
-                    : spl === SpecialValueMatch.Empty
-                      ? '=== ""'
-                      : '== null'
-            }`;
-          }
-
-          conds += ` ? ${index.length} : `;
-          index.push(getHex8Color(color, theme));
-        } else if (m.type === MappingType.RegexToText) {
-          // TODO
+      } else if (mapping.type === MappingType.RangeToText) {
+        const { from, to, result } = mapping.options;
+        const state = indexOf(result.color, result.text ?? getLabelForRange(from, to, formatValue), result.icon);
+        const range = ['v != null', '!isNaN(parseFloat(v))'];
+        if (from != null) {
+          range.push(`parseFloat(v) >= ${Number(from)}`);
         }
+        if (to != null) {
+          range.push(`parseFloat(v) <= ${Number(to)}`);
+        }
+        conds += `${range.join(' && ')} ? ${state} : `;
+      } else if (mapping.type === MappingType.RegexToText) {
+        if (f.type !== FieldType.string) {
+          continue;
+        }
+
+        const result = mapping.options.result;
+        const regexIdx =
+          regexStates.push({
+            regex: stringToJsRegex(mapping.options.pattern),
+            color: result.color,
+            text: result.text,
+            icon: result.icon,
+          }) - 1;
+        conds += `(s = regexState(${regexIdx}, v)) !== -1 ? s : `;
+      } else {
+        const { match, result } = mapping.options;
+        const state = indexOf(result.color, result.text ?? getSpecialValueLabel(match), result.icon);
+        const condition =
+          match === SpecialValueMatch.NaN
+            ? 'typeof v === "number" && isNaN(v)'
+            : match === SpecialValueMatch.NullAndNaN
+              ? 'v == null || (typeof v === "number" && isNaN(v))'
+              : match === SpecialValueMatch.True
+                ? 'v === true || v === "true"'
+                : match === SpecialValueMatch.False
+                  ? 'v === false || v === "false"'
+                  : match === SpecialValueMatch.Empty
+                    ? 'v === ""'
+                    : 'v == null';
+        conds += `(${condition}) ? ${state} : `;
       }
     }
 
-    conds += '-1'; // ?? what default here? null? FALLBACK_COLOR?
-  } else if (f.config.color?.mode === FieldColorModeId.Thresholds) {
-    if (f.config.thresholds?.mode === ThresholdsMode.Absolute) {
-      let steps = f.config.thresholds.steps;
+    const regexState = (regexIdx: number, value: string | null | undefined) => {
+      if (value == null) {
+        return -1;
+      }
+
+      const state = regexStates[regexIdx];
+      state.regex.lastIndex = 0;
+      if (!value.match(state.regex)) {
+        return -1;
+      }
+
+      state.regex.lastIndex = 0;
+      const text = state.text == null ? value : value.replace(state.regex, state.text);
+      return indexOf(state.color, text, state.icon);
+    };
+
+    conds += '-1';
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const getOneFactory = new Function(
+      'regexState',
+      `
+        return function(v) {
+          let s;
+          return ${conds};
+        };
+      `
+    ) as (regexState: (regexIdx: number, value: string | null | undefined) => number) => GetOneValue;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const getAllFactory = new Function(
+      'regexState',
+      `
+        return function(values) {
+          const idxs = Array(values.length);
+          let s;
+          for (let i = 0; i < values.length; i++) {
+            const v = values[i];
+            idxs[i] = ${conds};
+          }
+          return idxs;
+        };
+      `
+    ) as (regexState: (regexIdx: number, value: string | null | undefined) => number) => GetAllValues;
+
+    getOne = getOneFactory(regexState);
+    getAll = getAllFactory(regexState);
+    conds = '';
+  } else if (f.config.color?.mode === FieldColorModeId.Thresholds && (f.config.thresholds?.steps.length ?? 0) > 1) {
+    const thresholds = f.config.thresholds!;
+    const steps = thresholds.steps;
+
+    index.color = steps.map((step) => getHex8Color(step.color, theme));
+    index.icon = Array(steps.length).fill('');
+
+    if (thresholds.mode === ThresholdsMode.Absolute) {
       let lasti = steps.length - 1;
 
       for (let i = lasti; i > 0; i--) {
@@ -655,21 +782,128 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
 
       conds += '0';
 
-      index = steps.map((s) => getHex8Color(s.color, theme));
+      index.text = steps.map((step, i) =>
+        i === 0 ? `< ${formatValue(steps[i + 1].value)}` : getLabelForRange(step.value, null, formatValue)
+      );
     } else {
-      // TODO: percent thresholds?
+      const fieldConfig = getFieldConfigWithMinMax(f);
+      const fieldMin = fieldConfig.min ?? 0;
+      const fieldMax = fieldConfig.max ?? 0;
+      const hasExplicitRange = typeof f.config.min === 'number' && typeof f.config.max === 'number';
+      const formatPercent = getValueFormat('percent');
+      let percentConds = '';
+
+      index.text = steps.map((step) => `${formattedValueToString(formatPercent(step.value, f.config.decimals))}+`);
+
+      for (let i = steps.length - 1; i > 0; i--) {
+        percentConds += `percent >= ${Number(steps[i].value)} ? ${i} : `;
+      }
+      percentConds += '0';
+
+      const minExpr = hasExplicitRange ? String(fieldMin) : `min ?? ${fieldMin}`;
+      const maxExpr = hasExplicitRange ? String(fieldMax) : `max ?? ${fieldMax}`;
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      getOne = new Function(
+        'v',
+        'min',
+        'max',
+        `
+          const rangeMin = ${minExpr};
+          const rangeMax = ${maxExpr};
+          const delta = rangeMax - rangeMin;
+          const percent = delta === 0 ? 0 : ((Number(v) - rangeMin) / delta) * 100;
+          return ${percentConds};
+        `
+      ) as GetOneValue;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      getAll = new Function(
+        'values',
+        'min',
+        'max',
+        `
+          const idxs = Array(values.length);
+          const rangeMin = ${minExpr};
+          const rangeMax = ${maxExpr};
+          const delta = rangeMax - rangeMin;
+          for (let i = 0; i < values.length; i++) {
+            const percent = delta === 0 ? 0 : ((Number(values[i]) - rangeMin) / delta) * 100;
+            idxs[i] = ${percentConds};
+          }
+          return idxs;
+        `
+      ) as GetAllValues;
     }
+  } else if (
+    options?.paletteStatesQty != null &&
+    (colorMode.isContinuous || colorMode.id.startsWith('palette-') || colorMode.id === FieldColorModeId.Shades)
+  ) {
+    const statesQty = options.paletteStatesQty;
+    const needsFallbackRange = options.range?.min == null || options.range.max == null;
+    const fieldConfig = needsFallbackRange ? getFieldConfigWithMinMax(f) : undefined;
+    const min = options.range?.min ?? fieldConfig?.min ?? 0;
+    const max = options.range?.max ?? fieldConfig?.max ?? 0;
+    const delta = max - min;
+
+    index.color = Array(statesQty);
+    index.text = Array(statesQty);
+    index.icon = Array(statesQty).fill('');
+
+    if (colorMode.isContinuous) {
+      const calc = colorMode.getCalculator(f, theme);
+      for (let i = 0; i < statesQty; i++) {
+        const percent = statesQty === 1 ? 0 : i / (statesQty - 1);
+        index.color[i] = getHex8Color(calc(0, percent), theme);
+      }
+    } else if (colorMode.id === FieldColorModeId.Shades) {
+      const baseColor = theme.visualization.getColorByName(f.config.color?.fixedColor ?? FALLBACK_COLOR);
+      for (let i = 0; i < statesQty; i++) {
+        const percent = statesQty === 1 ? 0 : i / (statesQty - 1);
+        index.color[i] = tinycolor(baseColor)
+          .brighten(35 - percent * 70)
+          .toHex8String();
+      }
+    } else {
+      const palette = colorMode.getColors?.(theme) ?? [FALLBACK_COLOR];
+      for (let i = 0; i < statesQty; i++) {
+        index.color[i] = getHex8Color(palette[i % palette.length], theme);
+      }
+    }
+
+    for (let i = 0; i < statesQty; i++) {
+      const from = min + (delta * i) / statesQty;
+      const to = min + (delta * (i + 1)) / statesQty;
+
+      if (i === 0) {
+        index.text[i] = `< ${formatValue(to)}`;
+      } else {
+        index.text[i] = `≥ ${formatValue(from)}`;
+      }
+    }
+
+    getOne = (value, rangeMin = min, rangeMax = max) => {
+      const range = rangeMax - rangeMin || 1;
+      const numeric = Number(value);
+      return numeric < rangeMin
+        ? 0
+        : numeric > rangeMax
+          ? statesQty - 1
+          : Math.min(statesQty - 1, Math.floor((statesQty * (numeric - rangeMin)) / range));
+    };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    getAll = (values, rangeMin = min, rangeMax = max) =>
+      valuesToFills(values as number[], index.color!, rangeMin, rangeMax);
   } else if (f.config.color?.mode?.startsWith('continuous')) {
-    let calc = getFieldColorModeForField(f).getCalculator(f, theme);
+    let calc = colorMode.getCalculator(f, theme);
 
-    index = Array(32);
+    index.color = Array(32);
 
-    for (let i = 0; i < index.length; i++) {
-      let pct = i / (index.length - 1);
-      index[i] = getHex8Color(calc(pct, pct), theme);
+    for (let i = 0; i < index.color.length; i++) {
+      let pct = i / (index.color.length - 1);
+      index.color[i] = getHex8Color(calc(pct, pct), theme);
     }
 
-    getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
+    getAll = (vals, min, max) => valuesToFills(vals as number[], index.color!, min!, max!);
   }
 
   if (conds !== '') {

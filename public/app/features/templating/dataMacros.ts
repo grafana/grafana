@@ -59,6 +59,10 @@ function getValueForValueMacro(match: string, fieldPath?: string, scopedVars?: S
 
   const value = field.values[rowIndex];
   if (fieldPath === 'raw') {
+    if (field.type === FieldType.enum) {
+      return field.config.type?.enum?.text?.[value];
+    }
+
     return value;
   }
 

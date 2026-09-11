@@ -71,6 +71,7 @@ export const StatusHistoryPanel = ({
   );
 
   const { frames, warn } = useMemo(
+    // status-history draws a discrete cell per sample, so consecutive equal values are never merged
     () => prepareTimelineFields(data.series, false, timeRange, theme),
     [data.series, timeRange, theme]
   );

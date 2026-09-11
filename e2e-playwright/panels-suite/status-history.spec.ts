@@ -57,13 +57,13 @@ test.describe('Panels test: StatusHistory', { tag: ['@panels', '@status-history'
     // hover over a spot to trigger the tooltip
     await statusHistoryUplot.hover({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip appears on hover').toBeVisible();
-    await expect(tooltip, 'tooltip displays the value').toContainText('value5');
+    await expect(tooltip, 'tooltip displays the value').toContainText('valueOther');
 
     // click to pin the tooltip, hover away to be sure it's pinned
     await statusHistoryUplot.click({ position: { x: 100, y: 50 } });
     await statusHistoryUplot.hover({ position: { x: 300, y: 50 } });
     await expect(tooltip, 'tooltip pinned on click').toBeVisible();
-    await expect(tooltip, 'tooltip displays the first value').toContainText('value5');
+    await expect(tooltip, 'tooltip displays the first value').toContainText('valueOther');
 
     // unpin the tooltip, ensure it closes on hover away
     await statusHistoryUplot.click({ position: { x: 300, y: 50 } });
