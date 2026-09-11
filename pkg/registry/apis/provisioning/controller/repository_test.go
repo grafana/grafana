@@ -1633,9 +1633,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	health, ok := healthPatch["value"].(provisioning.HealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
-	require.Len(t, health.Message, 1)
-	assert.Contains(t, health.Message[0], "unable to delete repository")
-	assert.Contains(t, health.Message[0], "permission denied")
+	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 
 	condOp, ok := patcher.findPatchOp("/status/conditions")
 	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
@@ -1704,8 +1702,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	health, ok := healthPatch["value"].(provisioning.HealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
-	require.Len(t, health.Message, 1)
-	assert.Contains(t, health.Message[0], "unable to delete repository")
+	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 
 	condOp, ok := patcher.findPatchOp("/status/conditions")
 	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
