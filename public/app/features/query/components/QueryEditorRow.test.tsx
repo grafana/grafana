@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
@@ -452,6 +452,8 @@ describe('QueryEditorRow', () => {
   describe('scroll into view', () => {
     let scrollIntoViewSpy: jest.Mock;
     let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
+    let originalResizeObserver: typeof ResizeObserver;
+    let resizeCallbacks: ResizeObserverCallback[];
 
     const data: PanelData = {
       state: LoadingState.Done,
@@ -459,78 +461,107 @@ describe('QueryEditorRow', () => {
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
     };
 
+    // Growing the container is the only way to observe that a pin is still live, and the
+    // jest-setup ResizeObserver only ever emits one observation per observe(). Take it over so
+    // resizes are deterministic and re-pin counts are exact.
+    function growContainer() {
+      resizeCallbacks.forEach((callback) =>
+        callback([{ contentRect: { height: 500 } } as ResizeObserverEntry], {} as ResizeObserver)
+      );
+    }
+
     beforeEach(() => {
       // jsdom doesn't implement scrollIntoView, so patch the prototype rather than spy on it.
       originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
       scrollIntoViewSpy = jest.fn();
       HTMLElement.prototype.scrollIntoView = scrollIntoViewSpy;
       jest.mocked(pinScrollIntoView).mockClear();
+
+      resizeCallbacks = [];
+      originalResizeObserver = global.ResizeObserver;
+      global.ResizeObserver = class {
+        constructor(private callback: ResizeObserverCallback) {}
+        observe() {
+          resizeCallbacks.push(this.callback);
+        }
+        disconnect() {
+          resizeCallbacks = resizeCallbacks.filter((callback) => callback !== this.callback);
+        }
+        unobserve() {}
+      } as unknown as typeof ResizeObserver;
     });
 
     afterEach(() => {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      global.ResizeObserver = originalResizeObserver;
     });
 
     it('scrolls the row into view once it renders (after the datasource loads)', async () => {
       render(<QueryEditorRow {...props(data)} scrollIntoView />);
 
       // The row renders nothing until its datasource resolves, so the scroll must wait for that.
-      // The jest-setup ResizeObserver mock may fire an extra re-pin, so assert on the first
-      // (deliberate) call rather than the total count.
-      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1));
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(screen.getByTestId(selectors.components.QueryEditorRows.rows));
-      expect(scrollIntoViewSpy).toHaveBeenNthCalledWith(1, { behavior: 'smooth', block: 'start' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     });
 
-    it('keeps pinning after the scroll and reports back when the user takes over', async () => {
+    it('reports the scroll as soon as the pin starts, so unmounting cannot leave the flag set', async () => {
       const onScrollIntoView = jest.fn();
-      render(<QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />);
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
 
-      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
-      // The row stays pinned until the layout settles or the user scrolls, so the flag isn't
-      // cleared right after the first scroll.
-      expect(onScrollIntoView).not.toHaveBeenCalled();
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1));
+      // Reported in the same tick as the scroll rather than after the pin's settle window.
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
 
-      fireEvent.wheel(window);
+      // Switching tabs unmounts the row mid-pin, and nothing reports back on that path — which is
+      // why the report has to happen at pin start.
+      unmount();
 
       expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps pinning after the owner clears the flag, so growing siblings cannot push the row away', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(onScrollIntoView).toHaveBeenCalledTimes(1));
+
+      // The owner clears its one-shot flag in response to that report. The render that follows
+      // must not be mistaken for a retarget and cancel the pin.
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      growContainer();
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      expect(scrollIntoViewSpy.mock.instances[1]).toBe(screen.getByTestId(selectors.components.QueryEditorRows.rows));
     });
 
     it('starts the pin only once, even as the row keeps re-rendering', async () => {
       const initialProps = props(data);
       const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
-      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1));
 
       rerender(<QueryEditorRow {...initialProps} scrollIntoView data={{ ...data }} />);
 
       expect(pinScrollIntoView).toHaveBeenCalledTimes(1);
     });
 
-    it('cancels the pin when the scroll is retargeted at another row', async () => {
+    it('pins again when the owner points the scroll back at this row', async () => {
       const onScrollIntoView = jest.fn();
       const initialProps = props(data);
       const { rerender } = render(
         <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
       );
-      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      await waitFor(() => expect(onScrollIntoView).toHaveBeenCalledTimes(1));
 
       rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
-      fireEvent.wheel(window);
-
-      // The pin is gone, so the row neither re-scrolls nor reports back — reporting would clear the
-      // owner's new scroll target.
-      expect(onScrollIntoView).not.toHaveBeenCalled();
-    });
-
-    it('pins again if the row is retargeted later', async () => {
-      const initialProps = props(data);
-      const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
-      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
-
-      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} />);
-      rerender(<QueryEditorRow {...initialProps} scrollIntoView />);
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />);
 
       expect(pinScrollIntoView).toHaveBeenCalledTimes(2);
+      expect(onScrollIntoView).toHaveBeenCalledTimes(2);
     });
 
     it('does not scroll when the flag is not set', async () => {
