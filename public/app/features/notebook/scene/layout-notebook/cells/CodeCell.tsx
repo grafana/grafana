@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Box, Button, Combobox, type ComboboxOption, Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
@@ -11,9 +11,11 @@ import {
   canonicalLanguage,
   codeLanguageLabel,
   getCodeLanguageOptions,
+  isExecutableLanguage,
   normalizeLanguage,
   toCodeMirrorLanguage,
 } from './codeLanguages';
+import { executeCode, type CodeExecutionResult } from './executeCode';
 import { navigationKeymap, scrollMarginExtension, useFocusExtension } from './focusExtension';
 
 // Reading a notebook should look like reading a document, so everything that makes CodeMirror feel
@@ -119,11 +121,27 @@ export function CodeCell({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
   }, [Boolean(onNavigate)]);
 
+  // Ephemeral by design: a run's output lives in component state, not in the notebook spec, so it is
+  // never saved or exported — reopening a notebook shows the code, and the reader runs it themselves.
+  const [output, setOutput] = useState<CodeExecutionResult>();
+  const [running, setRunning] = useState(false);
+
   if (content.kind !== 'Code') {
     return null;
   }
 
   const { code, language } = content.spec;
+
+  const executable = isExecutableLanguage(language);
+  const hasCode = code.trim().length > 0;
+
+  const runCode = async () => {
+    setRunning(true);
+    setOutput(undefined);
+    const result = await executeCode(code);
+    setOutput(result);
+    setRunning(false);
+  };
 
   // Spread the existing spec rather than rebuilding it: `highlight` and `annotation` are optional
   // schema fields nothing reads yet, and rebuilding would drop them on the first keystroke.
@@ -134,7 +152,24 @@ export function CodeCell({
     // The language sits above the frame rather than inside it: in the box it stole a full row of
     // height from every cell, which reads as padding around short snippets.
     <Stack direction="column" gap={0.5}>
-      <Stack justifyContent="flex-end" alignItems="center">
+      <Stack justifyContent="space-between" alignItems="center">
+        {/* Left of the frame: the Run affordance, shown for a language the browser can execute. A
+            reader can run a cell without entering edit mode, the same as reading and running a
+            notebook anywhere else. */}
+        {executable ? (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={running ? 'spinner' : 'play'}
+            disabled={running || !hasCode}
+            onClick={runCode}
+            aria-label={t('notebook.cell.code.aria-label-run', 'Run code')}
+          >
+            {running ? t('notebook.cell.code.running', 'Running') : t('notebook.cell.code.run', 'Run')}
+          </Button>
+        ) : (
+          <span />
+        )}
         {isEditing ? (
           <Combobox
             options={getCodeLanguageOptions(language)}
@@ -182,7 +217,62 @@ export function CodeCell({
           onChange={(value) => changeSpec({ code: value })}
         />
       </Box>
+
+      {output && <CodeOutput output={output} />}
     </Stack>
+  );
+}
+
+// The result of the most recent run: any console output, then the cell's value or the error it threw.
+// Everything is rendered as plain text through React's own escaping — never as HTML — so a cell that
+// logs or returns a string of markup shows that markup verbatim rather than injecting it.
+function CodeOutput({ output }: { output: CodeExecutionResult }) {
+  const styles = useStyles2(getStyles);
+  const { logs, value, error, durationMs } = output;
+  const isEmpty = logs.length === 0 && value === undefined && error === undefined;
+
+  return (
+    <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={1} backgroundColor="secondary">
+      <Stack direction="column" gap={0.5}>
+        <Stack justifyContent="space-between" alignItems="center">
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="notebook.cell.code.output-label">Output</Trans>
+          </Text>
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="notebook.cell.code.ran-in" values={{ duration: Math.round(durationMs) }}>
+              {'{{duration}} ms'}
+            </Trans>
+          </Text>
+        </Stack>
+
+        {logs.map((log, index) => (
+          <pre key={index} className={cx(styles.output, styles.logLevel[log.level])}>
+            {log.text}
+          </pre>
+        ))}
+
+        {error !== undefined && (
+          <pre className={cx(styles.output, styles.logLevel.error)}>
+            <Icon name="exclamation-triangle" /> {error}
+          </pre>
+        )}
+
+        {value !== undefined && (
+          <pre className={cx(styles.output, styles.resultValue)}>
+            <span className={styles.resultArrow} aria-hidden>
+              {'\u2192 '}
+            </span>
+            <span>{value}</span>
+          </pre>
+        )}
+
+        {isEmpty && (
+          <Text variant="bodySmall" color="secondary" italic>
+            <Trans i18nKey="notebook.cell.code.no-output">Ran with no output</Trans>
+          </Text>
+        )}
+      </Stack>
+    </Box>
   );
 }
 
@@ -199,5 +289,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.components.input.background,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
+  }),
+  // A single console line or the result value: monospaced to match the editor, wrapping so a long
+  // object never forces the document sideways.
+  output: css({
+    margin: 0,
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.code.fontSize,
+    lineHeight: theme.typography.code.lineHeight,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    color: theme.colors.text.primary,
+  }),
+  // Console levels borrow the same semantic colors the rest of Grafana uses for warnings and errors,
+  // so a `console.warn` reads as a warning without a legend.
+  logLevel: {
+    log: css({}),
+    info: css({ color: theme.colors.info.text }),
+    debug: css({ color: theme.colors.text.secondary }),
+    warn: css({ color: theme.colors.warning.text }),
+    error: css({ color: theme.colors.error.text }),
+  },
+  resultValue: css({
+    color: theme.colors.text.primary,
+  }),
+  // The REPL arrow that marks the value line as the cell's result rather than one more log line.
+  resultArrow: css({
+    color: theme.colors.text.secondary,
+    userSelect: 'none',
   }),
 });
