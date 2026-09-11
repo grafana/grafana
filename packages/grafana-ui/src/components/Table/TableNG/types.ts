@@ -146,7 +146,10 @@ interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  // Used solely for testing as RTL can't correctly render the table otherwise
+  /**
+   * Renders every row into the DOM instead of only the visible window. Needed when the
+   * table is captured as a static image (PDF reporting) rather than scrolled by a user.
+   */
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
