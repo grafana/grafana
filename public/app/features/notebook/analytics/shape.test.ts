@@ -2,14 +2,21 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@
 import { type DataQuery } from '@grafana/schema';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
+import {
+  defaultLibraryPanelKind,
+  defaultPanelKind,
+  defaultVisualizationPanelKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type PanelQueryKind,
+} from 'app/features/notebook/types';
 
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 import { setQueryRunnerQueries } from '../scene/layout-notebook/setQueryRunnerQueries';
 
-import { readNotebookShape } from './shape';
+import { readAddedPanelShape, readNotebookShape } from './shape';
 
 function sceneWithCells(cells: NotebookCellItem[]): NotebookScene {
   const manager = new NotebookLayoutManager({
@@ -119,5 +126,84 @@ describe('readNotebookShape', () => {
     const shape = readNotebookShape(scene);
     expect(shape.panelCount).toBe(2);
     expect(shape.datasourceTypes).toEqual(['prometheus']);
+  });
+});
+
+/** A query as the add-panel flow serializes one: the datasource type lands on the query's group. */
+function query(refId: string, datasourceType: string): PanelQueryKind {
+  return {
+    kind: 'PanelQuery',
+    spec: {
+      refId,
+      hidden: false,
+      query: {
+        kind: 'DataQuery',
+        group: datasourceType,
+        version: 'v0',
+        datasource: { name: 'ds1' },
+        spec: {},
+      },
+    },
+  };
+}
+
+function panelWithQueries(queries: PanelQueryKind[]): PanelKind {
+  const base = defaultPanelKind();
+  return {
+    ...base,
+    spec: {
+      ...base.spec,
+      id: 1,
+      title: 'p95 latency',
+      vizConfig: { ...base.spec.vizConfig, group: 'timeseries' },
+      data: { ...base.spec.data, spec: { ...base.spec.data.spec, queries } },
+    },
+  };
+}
+
+function libraryPanel(): LibraryPanelKind {
+  const base = defaultLibraryPanelKind();
+  return {
+    ...base,
+    spec: { ...base.spec, id: 1, title: 'p95 latency', libraryPanel: { name: 'p95 latency', uid: 'lib-1' } },
+  };
+}
+
+describe('readAddedPanelShape', () => {
+  it('reads the visualization type, the queries and the datasources of the panel being sent', () => {
+    const panel = panelWithQueries([query('A', 'prometheus'), query('B', 'loki')]);
+
+    expect(readAddedPanelShape(panel)).toEqual({
+      panelType: 'timeseries',
+      datasourceTypes: ['prometheus', 'loki'],
+      queryCount: 2,
+    });
+  });
+
+  it('deduplicates datasource types across queries on the same datasource', () => {
+    const shape = readAddedPanelShape(panelWithQueries([query('A', 'prometheus'), query('B', 'prometheus')]));
+
+    expect(shape.datasourceTypes).toEqual(['prometheus']);
+    // Both queries still count, only the type list is deduplicated.
+    expect(shape.queryCount).toBe(2);
+  });
+
+  // A panel can reach here from Explore with a query that never had a datasource picked, which
+  // carries an empty group rather than none at all.
+  it('leaves a query with no datasource out of the datasource types', () => {
+    const shape = readAddedPanelShape(panelWithQueries([query('A', ''), query('B', 'prometheus')]));
+
+    expect(shape.datasourceTypes).toEqual(['prometheus']);
+    expect(shape.queryCount).toBe(2);
+  });
+
+  // Only reachable for a library panel that had not loaded, which the notebook stores as a bare
+  // reference. Whether the user sent a library panel is reported separately, by the caller.
+  it('reports an element that is only a reference with no visualization type and no queries', () => {
+    expect(readAddedPanelShape(libraryPanel())).toEqual({
+      panelType: '',
+      datasourceTypes: [],
+      queryCount: 0,
+    });
   });
 });

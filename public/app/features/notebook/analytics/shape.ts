@@ -4,19 +4,9 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 import { type NotebookScene } from '../scene/NotebookScene';
 import { type NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { isEmptyMarkdown } from '../scene/layout-notebook/isEmptyMarkdown';
+import { type PanelElement } from '../types';
 
-export interface NotebookShape {
-  cellCount: number;
-  cellsByType: string[];
-  panelCount: number;
-  datasourceTypes: string[];
-  assistantCellCount: number;
-  nonEmptyCellCount: number;
-  textCellCount: number;
-  codeCellCount: number;
-  configuredPanelCount: number;
-  datasourceCount: number;
-}
+import { type AddedPanelShape, type NotebookShape } from './types';
 
 export function readNotebookShape(scene: NotebookScene): NotebookShape {
   const layout = scene.state.body;
@@ -38,6 +28,32 @@ export function readNotebookShape(scene: NotebookScene): NotebookShape {
     codeCellCount: cellsByType.filter((type) => type === 'code').length,
     configuredPanelCount: panels.filter(isConfiguredPanel).length,
     datasourceCount: datasourceTypes.length,
+  };
+}
+
+/**
+ * Reads the panel that "Add to notebook" is sending. Read off the spec rather than off a VizPanel
+ * like readNotebookShape does, because the target notebook is not open and has no scene.
+ *
+ * Whether the panel came from the library is not in here. The dashboard builder inlines a loaded
+ * library panel, so the element it returns says 'Panel' either way, and the caller has to pass that
+ * fact in from the panel it started with.
+ */
+export function readAddedPanelShape(panel: PanelElement): AddedPanelShape {
+  if (panel.kind === 'LibraryPanel') {
+    // All the notebook stores for a library panel that had not finished loading is a reference, so
+    // the visualization and the queries are not here to read.
+    return { panelType: '', datasourceTypes: [], queryCount: 0 };
+  }
+
+  const queries = panel.spec.data.spec.queries;
+
+  return {
+    panelType: panel.spec.vizConfig.group,
+    // A query with no datasource chosen carries an empty group, and is skipped the same way
+    // readNotebookShape skips a panel with no datasource.
+    datasourceTypes: [...new Set(queries.map((query) => query.spec.query.group).filter((group) => group !== ''))],
+    queryCount: queries.length,
   };
 }
 

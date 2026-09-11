@@ -2,13 +2,17 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
 import { canEditNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { type PanelElement } from '../types';
 import { isNotebookEditUrl } from '../urls';
 
-import { readNotebookShape } from './shape';
+import { readAddedPanelShape, readNotebookShape } from './shape';
 import {
+  type NotebookAddFailedProperties,
+  type NotebookAddFailedReason,
+  type NotebookAddTarget,
   type NotebookAutosaveFailedProperties,
   type NotebookAutosaveFailedReason,
-  type NotebookCellAddedProperties,
+  type NotebookCellAddedFromAddToNotebookProperties,
   type NotebookCreatedProperties,
   type NotebookDeletedProperties,
   type NotebookDeleteSource,
@@ -47,13 +51,36 @@ const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('creat
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
 
 /**
- * Fired when a panel is added to a notebook that is not open, from Explore or a dashboard. For a cell
- * added inside an editing session, the session keeps a count on `edit_session_ended` instead.
+ * Fired when a panel is added through "Add to notebook", from Explore or a dashboard. For a cell added
+ * inside an editing session, the session keeps a count on `edit_session_ended` instead.
  */
-const createCellAddedEvent = createNotebookEvent<NotebookCellAddedProperties>('cell_added');
+const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAddedFromAddToNotebookProperties>(
+  'cell_added_from_add_to_notebook'
+);
 
 /** Fired on each autosave error, never on success. A save still in flight has no outcome to report. */
 const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
+
+/**
+ * Fired when an "Add to notebook" submit fails, on either route: nothing was added and nothing was
+ * created. The successes are `cell_added_from_add_to_notebook` for an existing notebook and
+ * `created` for a new one, so `target` says which of the two this attempt was aiming for.
+ */
+const createAddFailedEvent = createNotebookEvent<NotebookAddFailedProperties>('add_to_notebook_failed');
+
+/** The single panel an add or a create came with, so both events describe it the same way. */
+interface AddedPanel {
+  panel: PanelElement;
+  /**
+   * Passed in rather than read off the panel: the dashboard inlines a loaded library panel on the way
+   * here, so the element itself no longer says that it came from the library.
+   */
+  isLibraryPanel: boolean;
+}
+
+function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
+  return { isLibraryPanel, ...readAddedPanelShape(panel) };
+}
 
 /**
  * Every notebook event, so a call site reads as analytics rather than as a stray helper. The wrappers
@@ -92,8 +119,15 @@ export const NotebookAnalytics = {
     });
   },
 
-  created(notebookUid: string, source: NotebookEntryPoint, cellCount: number): void {
-    createCreatedEvent({ notebookUid, source, cellCount });
+  created(notebookUid: string, source: NotebookEntryPoint, cellCount: number, addedPanel?: AddedPanel): void {
+    createCreatedEvent({
+      notebookUid,
+      source,
+      cellCount,
+      // Absent for the blank notebook route, which creates the notebook from whatever cells exist by
+      // its first save rather than around one panel.
+      ...(addedPanel && addedPanelProperties(addedPanel)),
+    });
   },
 
   deleted(notebookUid: string, source: NotebookDeleteSource): void {
@@ -104,7 +138,26 @@ export const NotebookAnalytics = {
     createAutosaveFailedEvent({ notebookUid, reason, attempt });
   },
 
-  cellAdded(notebookUid: string, source: NotebookEntryPoint, position: number): void {
-    createCellAddedEvent({ notebookUid, source, position });
+  cellAddedFromAddToNotebook(
+    notebookUid: string,
+    source: NotebookEntryPoint,
+    position: number,
+    addedPanel: AddedPanel
+  ): void {
+    createCellAddedFromAddToNotebookEvent({
+      notebookUid,
+      source,
+      position,
+      ...addedPanelProperties(addedPanel),
+    });
+  },
+
+  addToNotebookFailed(
+    notebookUid: string,
+    source: NotebookEntryPoint,
+    target: NotebookAddTarget,
+    reason: NotebookAddFailedReason
+  ): void {
+    createAddFailedEvent({ notebookUid, source, target, reason });
   },
 };
