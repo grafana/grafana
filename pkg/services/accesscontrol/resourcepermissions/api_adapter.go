@@ -175,7 +175,7 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 		}
 
 		switch kind {
-		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+		case iamv0.ResourcePermissionSpecPermissionKindUser:
 			userDetails, ok := subjects.users[name]
 			if !ok {
 				// The subject was deleted, so the assignment is stale. The
@@ -188,8 +188,23 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 			permDTO.UserUID = userDetails.UID
 			permDTO.UserLogin = userDetails.Login
 			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
-			permDTO.IsServiceAccount = userDetails.IsServiceAccount
 			permDTO.RoleName = userManagedRoleName(userDetails.ID)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
+		case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+			serviceAccount, ok := subjects.serviceAccounts[name]
+			if !ok {
+				// The subject was deleted, so the assignment is stale. The
+				// legacy read path omits these through its INNER JOIN on the
+				// user table, and an entry with no subject claims someone has
+				// access without saying who.
+				continue
+			}
+			permDTO.UserID = serviceAccount.ID
+			permDTO.UserUID = serviceAccount.UID
+			permDTO.UserLogin = serviceAccount.Login
+			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, serviceAccount.Email)
+			permDTO.IsServiceAccount = true
+			permDTO.RoleName = userManagedRoleName(serviceAccount.ID)
 			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
 			teamDetails, ok := subjects.teams[name]
@@ -230,14 +245,11 @@ func basicRoleManagedRoleName(role string) string {
 // name a subject and attach its managed-role permission ID. A missing key means
 // the subject no longer exists and its assignment is dropped; a lookup that
 // failed is an error, not a missing key, so the two cannot be confused.
-//
-// Note that with kubernetesUsersRedirect enabled the user service resolves UIDs
-// against the users collection only, which does not contain service accounts,
-// so service-account assignments will not resolve on that path.
 type resolvedSubjects struct {
-	users         map[string]*user.User
-	teams         map[string]*team.TeamDTO
-	permissionIDs map[string]int64
+	users           map[string]*user.User
+	serviceAccounts map[string]*user.User
+	teams           map[string]*team.TeamDTO
+	permissionIDs   map[string]int64
 }
 
 // teamBatchSize matches the searchTeams endpoint's maximum number of uid
@@ -259,15 +271,18 @@ const teamBatchSize = 100
 // response full of unnamed assignments is worse than failing the request.
 func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) (*resolvedSubjects, error) {
 	subjects := &resolvedSubjects{
-		users:         make(map[string]*user.User),
-		teams:         make(map[string]*team.TeamDTO),
-		permissionIDs: make(map[string]int64),
+		users:           make(map[string]*user.User),
+		serviceAccounts: make(map[string]*user.User),
+		teams:           make(map[string]*team.TeamDTO),
+		permissionIDs:   make(map[string]int64),
 	}
 
 	userUIDs := make([]string, 0, len(permissions))
+	serviceAccountUIDs := make([]string, 0, len(permissions))
 	teamUIDs := make([]string, 0, len(permissions))
 	roleNames := make([]string, 0, len(permissions))
 	seenUser := make(map[string]struct{}, len(permissions))
+	seenServiceAccount := make(map[string]struct{})
 	seenTeam := make(map[string]struct{})
 
 	for _, perm := range permissions {
@@ -276,12 +291,18 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 		}
 
 		switch perm.Kind {
-		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+		case iamv0.ResourcePermissionSpecPermissionKindUser:
 			if _, ok := seenUser[perm.Name]; ok {
 				continue
 			}
 			seenUser[perm.Name] = struct{}{}
 			userUIDs = append(userUIDs, perm.Name)
+		case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+			if _, ok := seenServiceAccount[perm.Name]; ok {
+				continue
+			}
+			seenServiceAccount[perm.Name] = struct{}{}
+			serviceAccountUIDs = append(serviceAccountUIDs, perm.Name)
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
 			if _, ok := seenTeam[perm.Name]; ok {
 				continue
@@ -301,6 +322,17 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 		for _, u := range users {
 			subjects.users[u.UID] = u
 			roleNames = append(roleNames, userManagedRoleName(u.ID))
+		}
+	}
+
+	if len(serviceAccountUIDs) > 0 && a.service.store != nil {
+		serviceAccounts, err := a.service.store.GetServiceAccountsByUIDs(ctx, orgID, serviceAccountUIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve %d service accounts for resource permissions: %w", len(serviceAccountUIDs), err)
+		}
+		for _, serviceAccount := range serviceAccounts {
+			subjects.serviceAccounts[serviceAccount.UID] = serviceAccount
+			roleNames = append(roleNames, userManagedRoleName(serviceAccount.ID))
 		}
 	}
 

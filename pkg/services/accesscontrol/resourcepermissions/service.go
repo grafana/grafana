@@ -79,6 +79,9 @@ type Store interface {
 	// GetPermissionIDsByRoleNames returns the permission ID for each of the supplied
 	// role names. Names with no permission are omitted from the result.
 	GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, roleNames []string) (map[string]int64, error)
+
+	// GetServiceAccountsByUIDs returns service accounts in the requested organization.
+	GetServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*user.User, error)
 }
 
 func New(cfg *setting.Cfg,

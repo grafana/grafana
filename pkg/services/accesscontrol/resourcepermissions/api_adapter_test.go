@@ -691,6 +691,59 @@ func TestConvertK8sResourcePermissionToDTOChunksTeamLookupsAtUIDFilterLimit(t *t
 		"the searchTeams endpoint rejects more than 100 uid filters per request")
 }
 
+func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedirect(t *testing.T) {
+	userSvc := &countingUserService{
+		FakeUserService: usertest.NewUserServiceFake(),
+		users:           map[string]*user.User{},
+	}
+	store := &mockResourcePermissionStore{
+		serviceAccounts: map[string]*user.User{
+			"sa-uid-1": {
+				ID:               1,
+				UID:              "sa-uid-1",
+				Login:            "sa-1",
+				Email:            "sa-1@example.com",
+				IsServiceAccount: true,
+			},
+		},
+	}
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       store,
+			userService: userSvc,
+			teamService: teamtest.NewFakeService(),
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}},
+			},
+		},
+	}
+
+	perms, err := testApi.convertK8sResourcePermissionToDTO(
+		context.Background(),
+		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{{
+				Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+				Name: "sa-uid-1",
+				Verb: "view",
+			}},
+		}},
+		"stack-123-org-1",
+		false,
+	)
+	require.NoError(t, err)
+	require.Len(t, perms, 1)
+	assert.Zero(t, userSvc.listCalls, "service accounts must not use the redirected user service")
+	assert.Equal(t, int64(1), perms[0].UserID)
+	assert.Equal(t, "sa-uid-1", perms[0].UserUID)
+	assert.Equal(t, "sa-1", perms[0].UserLogin)
+	assert.True(t, perms[0].IsServiceAccount)
+	assert.Equal(t, int64(100), perms[0].ID)
+}
+
 // TestConvertK8sResourcePermissionToDTODropsStaleAssignments checks that an
 // assignment whose subject no longer exists is omitted rather than returned
 // with a blank subject, matching the INNER JOINs on the legacy read path.
@@ -1482,7 +1535,8 @@ func TestAdminRoleLogic(t *testing.T) {
 
 // mockResourcePermissionStore is a mock implementation of the Store interface for testing
 type mockResourcePermissionStore struct {
-	permissions []accesscontrol.ResourcePermission
+	permissions     []accesscontrol.ResourcePermission
+	serviceAccounts map[string]*user.User
 }
 
 func (m *mockResourcePermissionStore) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
@@ -1543,6 +1597,16 @@ func (m *mockResourcePermissionStore) GetPermissionIDsByRoleNames(ctx context.Co
 			continue
 		}
 		result[roleName] = id
+	}
+	return result, nil
+}
+
+func (m *mockResourcePermissionStore) GetServiceAccountsByUIDs(_ context.Context, _ int64, uids []string) ([]*user.User, error) {
+	result := make([]*user.User, 0, len(uids))
+	for _, uid := range uids {
+		if serviceAccount, ok := m.serviceAccounts[uid]; ok {
+			result = append(result, serviceAccount)
+		}
 	}
 	return result, nil
 }
