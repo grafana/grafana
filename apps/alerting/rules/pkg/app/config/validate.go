@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	prommodel "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
 )
@@ -24,6 +26,18 @@ func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Co
 				if err := cfg.CheckExternalRulerSyncDatasource(ctx, newUID); err != nil {
 					return fmt.Errorf("externalRulerSync.datasourceUid: %w", err)
 				}
+			}
+		}
+
+		// The CUE schema constrains pollInterval to #PromDuration, but that
+		// constraint isn't reflected in the generated Go/OpenAPI type (a plain
+		// *string) or enforced anywhere else -- externalRulerSyncPollIntervalFromConfig
+		// silently falls back to the default on a parse error, so an invalid
+		// value would otherwise be accepted here and silently ignored at sync
+		// time, with no signal to the writer that their value didn't take.
+		if ers := obj.Spec.ExternalRulerSync; ers != nil && ers.PollInterval != nil && *ers.PollInterval != "" {
+			if _, err := prommodel.ParseDuration(*ers.PollInterval); err != nil {
+				return fmt.Errorf("externalRulerSync.pollInterval: %w", err)
 			}
 		}
 
