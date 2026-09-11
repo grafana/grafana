@@ -14,7 +14,6 @@ import {
   Field,
   InlineSwitch,
   Button,
-  Spinner,
   Alert,
   Select,
   ClipboardButton,
@@ -39,7 +38,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
   const {
     currentTab,
-    loading,
     error,
     options,
     showMessage,
@@ -108,7 +106,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
         </TabsBar>
       }
     >
-      {loading && <Spinner />}
       {error && <Alert title={error.title}>{error.message}</Alert>}
 
       {currentTab === SnapshotTab.Data && (

@@ -22,7 +22,6 @@ interface RoleMenuGroupsSectionProps {
   onGroupChange: (value: string) => void;
   groupSelected: (group: string) => boolean;
   groupPartiallySelected: (group: string) => boolean;
-  disabled?: boolean;
   subMenuNode?: HTMLDivElement;
   selectedOptions: Role[];
   onRoleChange: (option: Role) => void;

@@ -18,14 +18,12 @@ import { getState } from 'app/store/store';
 
 import { getExploreBaseUrl } from './utils/url';
 interface Props extends CustomCellRendererProps {
-  logId?: string;
   logsFrame?: LogsFrame;
   exploreId?: string;
   panelState?: ExploreLogsPanelState;
   displayedFields?: string[];
   absoluteRange?: AbsoluteTimeRange;
   logRows?: LogRowModel[];
-  index?: number;
 }
 
 export const LogsTableActionButtons = memo((props: Props) => {

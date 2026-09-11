@@ -30,7 +30,6 @@ interface SuggestionsInputProps {
   placeholder?: string;
   invalid?: boolean;
   error?: string;
-  width?: number;
   type?: HTMLElementType;
   style?: React.CSSProperties;
   autoFocus?: boolean;

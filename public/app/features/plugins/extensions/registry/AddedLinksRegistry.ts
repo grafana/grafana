@@ -30,7 +30,6 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedLinkRegistryItem[]>>;
-      initialState?: RegistryType<AddedLinkRegistryItem[]>;
     } = {}
   ) {
     super(apps, options);

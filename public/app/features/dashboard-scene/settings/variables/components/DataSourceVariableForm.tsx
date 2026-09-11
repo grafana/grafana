@@ -24,8 +24,6 @@ interface DataSourceVariableFormProps {
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
-  onQueryBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
-  onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function DataSourceVariableForm({

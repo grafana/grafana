@@ -7,13 +7,12 @@ import { useStyles2 } from '@grafana/ui';
 export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   markdown?: string;
-  onRemove?: () => void;
   styleOverrides?: { [key: string]: string };
 }
 
 export const OperationRowHelp = React.memo(
   React.forwardRef<HTMLDivElement, Props>(
-    ({ className, children, markdown, styleOverrides, onRemove, ...otherProps }, ref) => {
+    ({ className, children, markdown, styleOverrides, ...otherProps }, ref) => {
       const styles = useStyles2((theme) => getStyles(theme, styleOverrides?.borderTop));
 
       return (
