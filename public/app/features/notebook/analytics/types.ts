@@ -46,7 +46,7 @@ export interface AddedPanelShape extends EventProperty {
  * it cannot. The dashboard inlines a loaded library panel before it is serialized, so the element
  * stops saying that it came from the library and the caller has to pass that in.
  */
-export interface AddedPanelProperties extends EventProperty, AddedPanelShape {
+interface AddedPanelProperties extends EventProperty, AddedPanelShape {
   /**
    * Whether the panel came from the library. The notebook stores it inlined, so it stops following
    * later library edits.
