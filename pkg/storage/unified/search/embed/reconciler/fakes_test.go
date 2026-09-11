@@ -58,18 +58,6 @@ func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
 	f.folders[namespace+"/"+uid] = title
 }
 
-// emit synchronously delivers a watch event on the channel set up by
-// startWatch. Tests use it to drive the watch path.
-func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
-	f.mu.Lock()
-	ch := f.watchCh
-	f.mu.Unlock()
-	if ch == nil {
-		return
-	}
-	ch <- ev
-}
-
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	panic("not implemented")
 }
@@ -82,6 +70,14 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	defer f.mu.Unlock()
 	if f.readErr != nil {
 		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
+	}
+	if req.Key.Resource == dashRes && req.Key.Group == dashGroup {
+		for _, c := range f.changes {
+			if c.Key.Namespace == req.Key.Namespace && c.Key.Name == req.Key.Name && c.Key.Group == req.Key.Group && c.Key.Resource == req.Key.Resource && c.Action != resourcepb.WatchEvent_DELETED {
+				return &resource.BackendReadResponse{Value: c.Value, ResourceVersion: c.ResourceVersion}
+			}
+		}
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
 	}
 	title, ok := f.folders[req.Key.Namespace+"/"+req.Key.Name]
 	if !ok {
@@ -98,7 +94,7 @@ func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func
 }
 
 // WatchWriteEvents returns a channel the test can push events onto via
-// emit(). Closing happens when the parent ctx ends (handled by the test
+// its channel. Closing happens when the parent ctx ends (handled by the test
 // harness). Tests that need watch errors set watchErr.
 func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	f.mu.Lock()
@@ -233,6 +229,7 @@ type fakeVector struct {
 	lockAttempts    int
 	lockReleases    int
 
+	onSetLatestRV    func(int64)
 	setLatestRVCalls int
 	setLatestRVErr   error
 	getLatestRVErr   error
@@ -414,6 +411,9 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	return f.latestRV, nil
 }
 func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
+	if f.onSetLatestRV != nil {
+		f.onSetLatestRV(rv)
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.setLatestRVCalls++

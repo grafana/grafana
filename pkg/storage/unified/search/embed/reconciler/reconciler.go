@@ -1,13 +1,7 @@
-// Package reconciler keeps the vector index in sync with ongoing
-// dashboard writes. Each cycle drains an in-memory dedup map of watch
-// events keyed by (group, resource, namespace, name) — enqueue keeps only
-// the highest RV per resource, so a replayed older event can't overwrite
-// a newer one before it's processed — and then sweeps everything written
-// since the checkpoint.
-//
-// Only the sweep advances the checkpoint. Watch delivery is at-most-once
-// on some notifiers, so the events that arrived can't show that nothing
-// between them was missed; a completed listing from the cursor can.
+// Package reconciler keeps the vector index in sync by sweeping writes since
+// a durable checkpoint. Watch notifications only seed the initial checkpoint;
+// payloads are read and processed one at a time from storage. Late bootstrap
+// notifications retain only their identity for catch-up below the initial seed.
 package reconciler
 
 import (
@@ -15,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"sync"
 	"time"
 
@@ -43,6 +38,8 @@ type Backfiller interface {
 
 const DefaultInterval = time.Minute
 
+const bootstrapBatchSize = 100
+
 // maxEventAttempts caps retries so a permanently broken dashboard
 // can't wedge cursor advancement forever. This includes provider errors:
 // providers can misclassify an invalid request as temporarily unavailable.
@@ -54,34 +51,25 @@ const maxEventAttempts = 5
 // postgres without delaying real work.
 const defaultLockRetryInterval = 10 * time.Second
 
-// startupBatchSize bounds the per-flush batch size during
-// a sweep. When the listing iterator fills a batch to this
-// cap, we flush it through processEvents, then resume listing. Keeps
-// memory bounded over large catch-up windows. Package-level so tests
-// can override.
-var startupBatchSize = 1000
-
-// maxStartupBatchBytes caps a startup batch's accumulated value bytes at
-// 64 MiB before flushing. Package-level so tests can override.
-var maxStartupBatchBytes = 64 * 1024 * 1024
-
-// pendingEvent flattens (group, resource, namespace, name) instead of
-// holding a *resourcepb.ResourceKey because that type embeds a sync.Mutex
-// (via protoimpl.MessageState), which `go vet`'s copylocks check rejects
-// on the value-typed map entries we use.
-type pendingEvent struct {
-	action    resourcepb.WatchEvent_Type
-	group     string
-	resource  string
-	namespace string
-	name      string
-	value     []byte
-	rv        int64
-	attempts  int
-	retry     bool
+// reconcileEvent is transient: no resource payload survives a sweep iteration.
+type reconcileEvent struct {
+	action      resourcepb.WatchEvent_Type
+	group       string
+	resource    string
+	namespace   string
+	name        string
+	value       []byte
+	rv          int64
+	attempts    int
+	bootstrapRV int64
 }
 
-func pendingKey(group, resource, namespace, name string) string {
+type bootstrapEvent struct {
+	key *resourcepb.ResourceKey
+	rv  int64
+}
+
+func retryKey(group, resource, namespace, name string) string {
 	return group + "/" + resource + "/" + namespace + "/" + name
 }
 
@@ -111,8 +99,7 @@ type Options struct {
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
 // advisory lock is held for the pod's lifetime (acquired in Run), so
-// only one replica processes the pending map at a time and listing
-// pagination doesn't ping-pong across replicas. Connection-bound pg
+// only one replica sweeps at a time. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
 	storage                resource.StorageBackend
@@ -132,25 +119,20 @@ type Reconciler struct {
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
-	pendingMu sync.Mutex
-	pending   map[string]*pendingEvent
+	seedMu    sync.Mutex
+	seedRV    int64
+	seeded    bool
+	seedingRV int64
+	bootstrap map[string]bootstrapEvent
 
-	// Only ever touched from the sweep, which runs on Run's goroutine.
+	// The remaining state is only touched by Run's goroutine.
 	lastSweepSinceRv int64
 	lastSweepAt      time.Time
+	embedRetryAt     time.Time
+	embedBackoff     *backoff.Backoff
 
-	// Shared provider failures pause both watch processing and sweeps so
-	// a backlog cannot turn a quota rejection into a burst of retries.
-	embedRetryAt time.Time
-	embedBackoff *backoff.Backoff
-
-	// exhausted records the highest RV per resource whose retry budget
-	// ran out, so a sweep re-listing it from storage doesn't hand it a
-	// fresh one and pin the cursor below it forever. Bounded by the
-	// number of permanently broken resources; an entry is dropped once
-	// the resource is written again or sweeps stop listing it.
-	exhaustedMu sync.Mutex
-	exhausted   map[string]exhaustedEvent
+	// Only failures retain bookkeeping; their payloads are re-read by the sweep.
+	retries map[string]retryState
 
 	// ensuredResources tracks provisioned resources (have partition leaf and backfill job)
 	ensuredResources map[string]struct{}
@@ -190,8 +172,8 @@ func New(opts Options) (*Reconciler, error) {
 		embeddingCountInterval: opts.EmbeddingCountInterval,
 		log:                    log.New("embeddings_reconciler"),
 		metrics:                opts.Metrics,
-		pending:                make(map[string]*pendingEvent),
-		exhausted:              make(map[string]exhaustedEvent),
+		retries:                make(map[string]retryState),
+		bootstrap:              make(map[string]bootstrapEvent),
 		ensuredResources:       make(map[string]struct{}),
 		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
@@ -201,48 +183,37 @@ func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEven
 	s.broadcaster = b
 }
 
-// enqueue keeps the highest RV per resource so older replayed events
-// can't overwrite a newer one already pending.
-func (s *Reconciler) enqueue(ev *pendingEvent) {
-	if ev == nil || ev.namespace == "" {
+// observeWrite tracks the seed and exceptions arriving while it is persisted.
+func (s *Reconciler) observeWrite(ev *resource.WrittenEvent) {
+	if ev == nil || ev.Key == nil || ev.Key.Namespace == "" {
 		return
 	}
-	if _, ok := s.builders[builderKey(ev.group, ev.resource)]; !ok {
+	if _, ok := s.builders[builderKey(ev.Key.Group, ev.Key.Resource)]; !ok {
 		return
 	}
-	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	if existing, ok := s.pending[k]; ok && existing.rv >= ev.rv {
+	rv := resource.ToSnowflakeRV(ev.ResourceVersion)
+	if rv <= 0 {
 		return
 	}
-	s.pending[k] = ev
-	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
+	s.seedMu.Lock()
+	defer s.seedMu.Unlock()
+	if s.seeded {
+		return
 	}
-}
-
-func (s *Reconciler) drainPending() []*pendingEvent {
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	if len(s.pending) == 0 {
-		return nil
+	// A notification below the in-flight seed cannot be recovered by listing
+	// from that seed. Retain its identity, never its payload.
+	if s.seedingRV > 0 && rv < s.seedingRV {
+		k := retryKey(ev.Key.Group, ev.Key.Resource, ev.Key.Namespace, ev.Key.Name)
+		if old, ok := s.bootstrap[k]; !ok || rv > old.rv {
+			s.bootstrap[k] = bootstrapEvent{
+				key: &resourcepb.ResourceKey{Group: ev.Key.Group, Resource: ev.Key.Resource, Namespace: ev.Key.Namespace, Name: ev.Key.Name},
+				rv:  rv,
+			}
+		}
 	}
-	out := make([]*pendingEvent, 0, len(s.pending))
-	for _, ev := range s.pending {
-		out = append(out, ev)
+	if s.seedRV == 0 || rv < s.seedRV {
+		s.seedRV = rv
 	}
-	s.pending = make(map[string]*pendingEvent)
-	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(0)
-	}
-	return out
-}
-
-func (s *Reconciler) pendingLen() int {
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	return len(s.pending)
 }
 
 func (s *Reconciler) Run(ctx context.Context) error {
@@ -308,25 +279,16 @@ func (s *Reconciler) Run(ctx context.Context) error {
 	// First cycle runs immediately, so a freshly-started replica catches
 	// up on whatever it missed while it was down without waiting an
 	// interval.
-	s.reconcileCycle(ctx)
+	s.sweep(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			s.log.Info("reconciler: stopping", "reason", ctx.Err())
 			return ctx.Err()
 		case <-t.C:
-			s.reconcileCycle(ctx)
+			s.sweep(ctx)
 		}
 	}
-}
-
-// reconcileCycle drains the pending map, then sweeps. Both run on the
-// same ticker, so draining first is not a latency win today: it is the
-// only path that retries a failed event, and the only thing that seeds
-// the cursor on a fleet that has never checkpointed.
-func (s *Reconciler) reconcileCycle(ctx context.Context) {
-	s.processPending(ctx)
-	s.sweep(ctx)
 }
 
 // acquireLockBlocking retries TryAcquireReconcilerLock at lockRetryInterval
@@ -390,23 +352,7 @@ func (s *Reconciler) consumeWatchEvents(ctx context.Context, ch <-chan *resource
 				s.log.Warn("reconciler: watch channel closed")
 				return
 			}
-			if ev == nil || ev.Key == nil {
-				continue
-			}
-			s.enqueue(&pendingEvent{
-				action:    ev.Type,
-				group:     ev.Key.Group,
-				resource:  ev.Key.Resource,
-				namespace: ev.Key.Namespace,
-				name:      ev.Key.Name,
-				value:     ev.Value,
-				rv:        resource.ToSnowflakeRV(ev.ResourceVersion),
-			})
-			s.log.Debug("reconciler: watch event enqueued",
-				"namespace", ev.Key.Namespace,
-				"name", ev.Key.Name,
-				"action", ev.Type,
-				"rv", ev.ResourceVersion)
+			s.observeWrite(ev)
 		}
 	}
 }
@@ -456,12 +402,27 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		return
 	}
 	if sinceRv == 0 {
-		// Seeded by the first live batch; ListModifiedSince rejects 0.
-		if s.broadcaster == nil {
-			s.log.Warn("reconciler: cursor at 0 and no write event broadcaster; nothing will be embedded")
+		sinceRv, err = s.seedCheckpoint(ctx)
+		if err != nil {
+			s.log.Error("reconciler: seed checkpoint", "err", err)
 			return
 		}
-		s.log.Debug("reconciler: sweep skipped; cursor at 0, nothing to process")
+		if sinceRv == 0 {
+			if s.broadcaster == nil {
+				s.log.Warn("reconciler: cursor at 0 and no write event broadcaster; nothing will be embedded")
+			}
+			return
+		}
+	}
+	s.seedMu.Lock()
+	s.seeded, s.seedRV, s.seedingRV = true, 0, 0
+	s.seedMu.Unlock()
+	for k, state := range s.retries {
+		state.seen = false
+		s.retries[k] = state
+	}
+	defer s.recordRetryCount()
+	if s.processBootstrap(ctx, sinceRv) {
 		return
 	}
 
@@ -476,11 +437,13 @@ func (s *Reconciler) sweep(ctx context.Context) {
 	// One cursor for every builder, so it can only move to the lowest RV
 	// all of them proved.
 	target := int64(math.MaxInt64)
+	hasFailures := false
 	for _, b := range s.builders {
 		if ctx.Err() != nil {
 			return
 		}
-		proven, complete := s.reconcileSince(ctx, b, sinceRv, calledAt)
+		proven, complete, failed := s.reconcileSince(ctx, b, sinceRv, calledAt)
+		hasFailures = hasFailures || failed
 		if !complete {
 			return
 		}
@@ -488,21 +451,31 @@ func (s *Reconciler) sweep(ctx context.Context) {
 			target = proven
 		}
 	}
-	s.lastSweepSinceRv = sinceRv
-	s.lastSweepAt = startedAt
+	// An unresolved lookback failure may sit below the checkpoint. Continue
+	// listing that window until it succeeds or exhausts its retry allowance.
+	if !hasFailures {
+		s.lastSweepSinceRv = sinceRv
+		s.lastSweepAt = startedAt
+	} else {
+		s.lastSweepAt = time.Time{}
+	}
 	if target > sinceRv {
 		if err := s.vectorBackend.SetLatestRV(ctx, target); err != nil {
 			s.log.Error("reconciler: sweep advance checkpoint",
 				"err", err, "sinceRV", sinceRv, "target", target)
 			return
 		}
-		s.forgetExhaustedBelow(target)
+	}
+	for k, state := range s.retries {
+		if _, pending := s.bootstrap[k]; !pending && !state.seen && state.rv <= target {
+			delete(s.retries, k)
+		}
 	}
 	s.log.Debug("reconciler: sweep complete", "from", sinceRv, "to", target)
 	s.embedBackoff = nil
 }
 
-// reconcileSince walks ListModifiedSince in batches and returns the RV
+// reconcileSince walks ListModifiedSince one resource at a time and returns the RV
 // it proved complete; complete is false if the walk was interrupted.
 //
 // sinceRv stays pinned; the caller advances the cursor only after the
@@ -511,285 +484,178 @@ func (s *Reconciler) sweep(ctx context.Context) {
 // RVs than rows already seen: advancing to the highest RV seen so far
 // would claim rows the walk has not reached, and an interrupted walk
 // would leave them un-embedded with the cursor already past them.
-func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time) (int64, bool) {
-	logger := s.log.FromContext(ctx)
-	key := resource.NamespacedResource{
-		Group:    builder.Group(),
-		Resource: builder.Resource(),
-		// Empty namespace → cross-namespace listing.
-	}
-	// The listing snapshot: the store's latest RV, read before the walk
-	// and covered by it. It is a ceiling, not a floor: the walk may yield
-	// a write that landed after the snapshot while a lower-RV write is
-	// still in flight, so proving anything above it would jump the
-	// in-flight one. Without a snapshot at all, an idle resource freezes
-	// the cursor until it ages off the event store and listing falls back
-	// to a full scan.
+func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time) (proven int64, complete, failed bool) {
+	key := resource.NamespacedResource{Group: builder.Group(), Resource: builder.Resource()}
+	// Writes arriving during listing must not lift this checkpoint ceiling.
 	latestRv, seq := s.storage.ListModifiedSince(ctx, key, sinceRv, lastCalledAt)
-	ceiling := resource.ToSnowflakeRV(latestRv)
-
-	var (
-		failed         []*pendingEvent
-		succeeded      int
-		lowestFailedRv = int64(math.MaxInt64)
-	)
-	// An interrupted iterator must retain earlier failures too, including
-	// lookback writes that a later listing may no longer return.
-	defer func() {
-		for _, ev := range failed {
-			s.enqueue(ev)
-		}
-	}()
-
-	flush := func(batch []*pendingEvent) bool {
-		batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, batch)
-		failed = append(failed, batchFailed...)
-		if abort {
-			return false
-		}
-		if batchLowestFailed < lowestFailedRv {
-			lowestFailedRv = batchLowestFailed
-		}
-		succeeded += len(batchSuccess)
-		return true
-	}
-
-	batch := make([]*pendingEvent, 0, startupBatchSize)
-	var batchBytes int
+	lowestFailedRv := int64(math.MaxInt64)
+	listed, failures := 0, 0
 	for mr, err := range seq {
 		if ctx.Err() != nil {
-			return sinceRv, false
+			return sinceRv, false, false
 		}
 		if err != nil {
-			logger.Warn("reconciler: reconcileSince iterator error",
+			s.log.FromContext(ctx).Warn("reconciler: reconcileSince iterator error",
 				"group", builder.Group(), "resource", builder.Resource(), "err", err)
-			return sinceRv, false
+			return sinceRv, false, false
 		}
 		if mr == nil {
 			continue
 		}
-		ev := &pendingEvent{
-			action:    mr.Action,
-			group:     mr.Key.Group,
-			resource:  mr.Key.Resource,
-			namespace: mr.Key.Namespace,
-			name:      mr.Key.Name,
-			value:     mr.Value,
-			rv:        resource.ToSnowflakeRV(mr.ResourceVersion),
+		ev := &reconcileEvent{
+			action: mr.Action, group: mr.Key.Group, resource: mr.Key.Resource,
+			namespace: mr.Key.Namespace, name: mr.Key.Name, value: mr.Value,
+			rv: resource.ToSnowflakeRV(mr.ResourceVersion),
 		}
-		// Skip iter events that watch has already superseded with a
-		// newer write - re-embedding the older copy would just be
-		// overwritten by the watch event the next cycle.
-		if s.supersedesPending(ev, ceiling) || s.isExhausted(ev) {
-			continue
+		listed++
+		failed, abort := s.processListedEvent(ctx, builder, ev)
+		if abort {
+			return sinceRv, false, false
 		}
-		batch = append(batch, ev)
-		batchBytes += len(ev.value)
-		if len(batch) >= startupBatchSize || batchBytes >= maxStartupBatchBytes {
-			if !flush(batch) {
-				return sinceRv, false
-			}
-			batch = batch[:0]
-			batchBytes = 0
+		if failed {
+			failures++
+			lowestFailedRv = min(lowestFailedRv, ev.rv)
 		}
 	}
-	if len(batch) > 0 {
-		if !flush(batch) {
-			return sinceRv, false
-		}
-	}
-
 	target := pickLatestRV(sinceRv, resource.ToSnowflakeRV(latestRv), lowestFailedRv)
-	logger.Info("reconciler: reconcileSince builder complete",
+	s.log.FromContext(ctx).Info("reconciler: reconcileSince builder complete",
 		"group", builder.Group(), "resource", builder.Resource(),
-		"events", succeeded, "failed", len(failed),
-		"from", sinceRv, "to", target)
-	return target, true
+		"listed", listed, "failed", failures, "from", sinceRv, "to", target)
+	return target, true, failures > 0
 }
 
-// supersedesPending reports whether the pending map holds a newer event
-// for the same resource that the cursor cannot reach, letting the walk
-// skip work watch has overtaken. Both conditions matter: at an equal RV,
-// or at any RV the cursor is about to pass, the queued copy is dropped as
-// already processed, so the walk has to embed it itself.
-func (s *Reconciler) supersedesPending(ev *pendingEvent, ceiling int64) bool {
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	existing, ok := s.pending[pendingKey(ev.group, ev.resource, ev.namespace, ev.name)]
-	return ok && existing.rv > ev.rv && existing.rv > ceiling
-}
-
-// dropPendingUpTo discards a queued event for the same resource at or
-// below the RV just embedded. The walk bypasses the pending map, so a
-// copy queued by an earlier failure would otherwise be retried over the
-// newer revision the walk just stored, deleting the subresources that
-// revision added.
-func (s *Reconciler) dropPendingUpTo(ev *pendingEvent) {
-	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	existing, ok := s.pending[k]
-	if !ok || existing.rv > ev.rv {
-		return
+func (s *Reconciler) seedCheckpoint(ctx context.Context) (int64, error) {
+	s.seedMu.Lock()
+	seed := s.seedRV
+	s.seedingRV = seed
+	s.seedMu.Unlock()
+	if seed == 0 {
+		return 0, nil
 	}
-	delete(s.pending, k)
-	if s.metrics != nil {
-		s.metrics.ReconcilerPendingEvents.Set(float64(len(s.pending)))
-	}
-}
-
-// processPending drains the in-memory pending map (watch-sourced events,
-// plus failed retries) and runs the batch through processBatch.
-func (s *Reconciler) processPending(ctx context.Context) {
-	if time.Now().Before(s.embedRetryAt) {
-		return
-	}
-	s.processBatch(ctx, s.drainPending())
-}
-
-// processBatch runs the embed/upsert pipeline over a batch of pending
-// events. It does not advance the cursor: the batch that arrived says
-// nothing about the events that did not, so writing the cursor to the
-// batch maximum would jump over an undelivered write for good.
-func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
-	if len(batch) == 0 {
-		return
-	}
-	logger := s.log.FromContext(ctx)
-
-	sinceRv, err := s.checkpointRV(ctx)
-	if err != nil {
-		logger.Error("reconciler: read checkpoint", "err", err)
-		s.requeue(batch)
-		return
-	}
-
-	// A watch event at or below the cursor was covered by the walk that
-	// moved the cursor there, and re-embedding it would overwrite the
-	// newer content that walk already indexed. A failed event is exempt:
-	// it is this reconciler's own retry, and the lookback window hands
-	// back writes the cursor has already passed.
-	live := make([]*pendingEvent, 0, len(batch))
-	for _, ev := range batch {
-		if ev.rv > sinceRv || ev.attempts > 0 || ev.retry {
-			live = append(live, ev)
-		}
-	}
-	batch = live
-
-	// Persist a sweep starting point before calling the provider, so an
-	// outage on the first event remains recoverable after a restart.
-	if sinceRv == 0 && !s.seedCheckpoint(ctx, batch) {
-		s.requeue(batch)
-		return
-	}
-
-	_, failed, successes, abort := s.processEvents(ctx, batch)
-	for _, ev := range failed {
-		s.enqueue(ev)
-	}
-	if abort {
-		return
-	}
-
-	switch {
-	case len(successes) == 0 && len(failed) == 0:
-	case len(failed) == 0:
-		logger.Info("reconciler: cycle processed", "events", len(successes))
-	default:
-		logger.Info("reconciler: cycle processed (partial)",
-			"events", len(successes),
-			"failed", len(failed))
-	}
-}
-
-// seedCheckpoint gives the sweep somewhere to start on a fleet that has
-// never checkpointed, since ListModifiedSince rejects 0. The seed sits
-// below every RV in the batch, so the first sweep re-lists even these
-// events; anything older belongs to the backfiller.
-func (s *Reconciler) seedCheckpoint(ctx context.Context, batch []*pendingEvent) bool {
-	seed := int64(math.MaxInt64)
-	for _, ev := range batch {
-		if ev.rv > 0 && ev.rv < seed {
-			seed = ev.rv
-		}
-	}
-	if seed == math.MaxInt64 {
-		return true
-	}
+	// Persist before any provider call so the first write survives a restart.
 	if err := s.vectorBackend.SetLatestRV(ctx, seed-1); err != nil {
-		s.log.FromContext(ctx).Error("reconciler: seed checkpoint", "err", err, "seed", seed-1)
-		return false
+		return 0, err
 	}
-	s.log.FromContext(ctx).Info("reconciler: checkpoint seeded", "seed", seed-1)
-	return true
+	// Closing capture and publishing completion use the same lock as observeWrite.
+	s.seedMu.Lock()
+	s.seeded, s.seedRV, s.seedingRV = true, 0, 0
+	s.seedMu.Unlock()
+	return seed - 1, nil
 }
 
-// processEvents runs the embed/upsert loop without advancing the
-// cursor — the caller decides when to commit progress. abort is true if
-// ctx was cancelled or the embedding provider needs a cooldown; the
-// failed then includes the unprocessed remainder, and the caller must
-// enqueue it and leave the checkpoint unchanged.
-// For new resources, it ensures a partition and backfill job is created
-func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
+// Capture is closed before this runs, so only the sweep goroutine touches
+// bootstrap. A bounded batch lets ordinary sweeps progress during catch-up.
+func (s *Reconciler) processBootstrap(ctx context.Context, sinceRv int64) (abort bool) {
+	processed := 0
+	for _, pending := range s.bootstrap {
+		ev := &reconcileEvent{
+			group: pending.key.Group, resource: pending.key.Resource,
+			namespace: pending.key.Namespace, name: pending.key.Name,
+			rv: pending.rv, bootstrapRV: sinceRv,
+		}
+		_, abort = s.processListedEvent(ctx, s.builders[builderKey(ev.group, ev.resource)], ev)
+		if abort {
+			return true
+		}
+		processed++
+		if processed >= bootstrapBatchSize {
+			break
+		}
+	}
+	return false
+}
+
+func (s *Reconciler) finishBootstrap(ev *reconcileEvent) {
+	k := retryKey(ev.group, ev.resource, ev.namespace, ev.name)
+	if pending, ok := s.bootstrap[k]; ok && ev.rv >= pending.rv {
+		delete(s.bootstrap, k)
+	}
+}
+
+// processListedEvent retains only retry bookkeeping. A newer revision starts
+// with a fresh allowance. Provider errors also consume the five attempts.
+func (s *Reconciler) processListedEvent(ctx context.Context, builder embed.Builder, ev *reconcileEvent) (failed, abort bool) {
+	if ctx.Err() != nil {
+		return false, true
+	}
+	var readErr error
+	if ev.bootstrapRV > 0 {
+		response := s.storage.ReadResource(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+			Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name,
+		}})
+		switch {
+		case response.Error == nil:
+			ev.action, ev.value = resourcepb.WatchEvent_MODIFIED, response.Value
+			ev.rv = max(ev.rv, resource.ToSnowflakeRV(response.ResourceVersion))
+		case response.Error.Code == http.StatusNotFound:
+			ev.action = resourcepb.WatchEvent_DELETED
+		default:
+			readErr = fmt.Errorf("read bootstrap resource: %s", response.Error.Message)
+		}
+	}
+	k := retryKey(ev.group, ev.resource, ev.namespace, ev.name)
+	if readErr != nil {
+		ev.rv = max(ev.rv, s.retries[k].rv)
+	}
+	if state, ok := s.retries[k]; ok {
+		if ev.rv <= state.rv {
+			alreadySeen := state.seen
+			state.seen = true
+			s.retries[k] = state
+			if state.attempts >= maxEventAttempts {
+				s.finishBootstrap(ev)
+				return false, false
+			}
+			// Bootstrap replay and listing can encounter the same failure in one
+			// sweep. Keep the cursor pinned without consuming another attempt.
+			if alreadySeen {
+				return true, false
+			}
+			ev.attempts = state.attempts
+		} else {
+			delete(s.retries, k)
+		}
+	}
+	ev.attempts++
+	// An old bootstrap exception must not leave a gap between backfill and
+	// the persisted checkpoint, even when its current resource cannot be read.
+	err := s.ensureResourceInitialized(ctx, builder, max(ev.rv, ev.bootstrapRV))
+	if err == nil {
+		err = readErr
+	}
+	if err == nil {
+		err = s.processEvent(ctx, builder, ev)
+	}
+	if ctx.Err() != nil {
+		return false, true
+	}
+	if err == nil {
+		delete(s.retries, k)
+		s.finishBootstrap(ev)
+		return false, false
+	}
+	var retryErr *embedder.RetryableError
+	abort = errors.As(err, &retryErr)
+	if abort {
+		s.backoffEmbedding(ctx, ev, retryErr)
+	}
+	s.retries[k] = retryState{rv: ev.rv, attempts: ev.attempts, seen: true}
 	logger := s.log.FromContext(ctx)
-	lowestFailedRv = math.MaxInt64
-	unfinished := func(start int) []*pendingEvent {
-		for _, ev := range batch[start:] {
-			// Unattempted lookback events also need to survive the live
-			// path's cursor filter when this batch is interrupted.
-			ev.retry = true
+	if ev.attempts >= maxEventAttempts {
+		s.finishBootstrap(ev)
+		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
+			"namespace", ev.namespace, "name", ev.name, "rv", ev.rv, "err", err)
+		if s.metrics != nil {
+			s.metrics.ReconcilerEventsDroppedTotal.WithLabelValues(ev.group, ev.resource, "retries_exhausted").Inc()
 		}
-		return append(failed, batch[start:]...)
+		return false, abort
 	}
-	for i, ev := range batch {
-		if ctx.Err() != nil {
-			return lowestFailedRv, unfinished(i), successes, true
-		}
-		builder, ok := s.builders[builderKey(ev.group, ev.resource)]
-		if !ok {
-			continue
-		}
-
-		// Increment before processing so recordFailure sees the
-		// post-increment value when deciding whether to retry.
-		ev.attempts++
-
-		// Ensure partition + backfill job before processing the event.
-		if err := s.ensureResourceInitialized(ctx, builder, ev.rv); err != nil {
-			logger.Error("reconciler: ensure resource for event",
-				"group", ev.group, "resource", ev.resource, "err", err)
-			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
-			continue
-		}
-
-		if err := s.processEvent(ctx, builder, ev); err != nil {
-			if ctx.Err() != nil {
-				ev.attempts--
-				return lowestFailedRv, unfinished(i), successes, true
-			}
-			var retryErr *embedder.RetryableError
-			if errors.As(err, &retryErr) {
-				s.backoffEmbedding(ctx, ev, retryErr)
-				lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
-				return lowestFailedRv, unfinished(i + 1), successes, true
-			}
-			logger.Warn("reconciler: process event",
-				"namespace", ev.namespace, "name", ev.name,
-				"rv", ev.rv, "attempts", ev.attempts,
-				"action", ev.action, "err", err)
-			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
-			continue
-		}
-		// successes accumulates across the whole startup backlog; drop the
-		// embedded value so retention doesn't grow unbounded. Nothing reads
-		// it afterwards — re-enqueue on checkpoint failure is a no-op for an
-		// already-embedded resource.
-		ev.value = nil
-		s.dropPendingUpTo(ev)
-		successes = append(successes, ev)
+	logger.Warn("reconciler: process event", "namespace", ev.namespace, "name", ev.name,
+		"rv", ev.rv, "attempts", ev.attempts, "err", err)
+	if s.metrics != nil {
+		s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
 	}
-	return lowestFailedRv, failed, successes, false
+	return true, abort
 }
 
 // processEvent dispatches on the event action and runs the per-event
@@ -798,7 +664,7 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 //
 // On a write, only panels whose content changed are re-embedded;
 // unchanged panels stay and stale ones are deleted.
-func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
+func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *reconcileEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
 	span.SetAttributes(
@@ -947,97 +813,23 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	return nil
 }
 
-// requeue is the catch-all path when we can't tell what's persisted
-// (e.g. cursor write failed). Successful events get filtered out by
-// the cursor check on the next cycle; the wasted re-processing is
-// idempotent.
-func (s *Reconciler) requeue(events []*pendingEvent) {
-	for _, ev := range events {
-		s.enqueue(ev)
-		if s.metrics != nil {
-			s.metrics.ReconcilerRetriesTotal.WithLabelValues(ev.group, ev.resource).Inc()
-		}
-	}
-}
-
-// recordFailure assumes ev.attempts has already been incremented.
-// Returning lowestFailedRv unchanged on cap-exhaustion is what lets
-// the cursor move past a permanently broken event.
-func (s *Reconciler) recordFailure(ev *pendingEvent, failed *[]*pendingEvent, lowestFailedRv int64, logger log.Logger) int64 {
-	if ev.attempts >= maxEventAttempts {
-		logger.Error("reconciler: dropping event past retry cap; cursor will advance past it",
-			"namespace", ev.namespace, "name", ev.name,
-			"rv", ev.rv, "attempts", ev.attempts, "action", ev.action)
-		if s.metrics != nil {
-			s.metrics.ReconcilerEventsDroppedTotal.
-				WithLabelValues(ev.group, ev.resource, "retries_exhausted").
-				Inc()
-		}
-		s.markExhausted(ev)
-		return lowestFailedRv
-	}
-	*failed = append(*failed, ev)
-	if ev.rv < lowestFailedRv {
-		return ev.rv
-	}
-	return lowestFailedRv
-}
-
-// exhaustedEvent is the RV a resource gave up at, plus whether listing
-// has handed that RV back since the last cursor advance.
-type exhaustedEvent struct {
+type retryState struct {
 	rv       int64
-	relisted bool
+	attempts int
+	seen     bool
 }
 
-// markExhausted remembers that this resource gave up at this RV.
-func (s *Reconciler) markExhausted(ev *pendingEvent) {
-	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
-	s.exhaustedMu.Lock()
-	defer s.exhaustedMu.Unlock()
-	if s.exhausted[k].rv < ev.rv {
-		s.exhausted[k] = exhaustedEvent{rv: ev.rv, relisted: true}
+func (s *Reconciler) recordRetryCount() {
+	if s.metrics == nil {
+		return
 	}
-}
-
-// isExhausted reports whether this event already used up its retries. A
-// newer RV for the same resource is a fresh write, so it drops the
-// record and gets a full budget.
-func (s *Reconciler) isExhausted(ev *pendingEvent) bool {
-	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
-	s.exhaustedMu.Lock()
-	defer s.exhaustedMu.Unlock()
-	at, ok := s.exhausted[k]
-	if !ok {
-		return false
-	}
-	if ev.rv > at.rv {
-		delete(s.exhausted, k)
-		return false
-	}
-	at.relisted = true
-	s.exhausted[k] = at
-	return true
-}
-
-// forgetExhaustedBelow drops records below the cursor that the last
-// sweep did not list. Passing the cursor is not enough on its own: the
-// backend lists from a lookback window behind the cursor, so a record
-// still being handed back has to stay or the resource gets a fresh
-// budget every advance.
-func (s *Reconciler) forgetExhaustedBelow(rv int64) {
-	s.exhaustedMu.Lock()
-	defer s.exhaustedMu.Unlock()
-	for k, at := range s.exhausted {
-		switch {
-		case at.rv > rv:
-		case at.relisted:
-			at.relisted = false
-			s.exhausted[k] = at
-		default:
-			delete(s.exhausted, k)
+	pending := 0
+	for _, state := range s.retries {
+		if state.attempts < maxEventAttempts {
+			pending++
 		}
 	}
+	s.metrics.ReconcilerPendingEvents.Set(float64(pending))
 }
 
 // pickLatestRV keeps the cursor strictly below any unhandled failure so
@@ -1046,7 +838,7 @@ func pickLatestRV(sinceRv, latestRv, lowestFailedRv int64) int64 {
 	if lowestFailedRv == math.MaxInt64 {
 		return latestRv
 	}
-	candidate := lowestFailedRv - 1
+	candidate := min(latestRv, lowestFailedRv-1)
 	if candidate < sinceRv {
 		return sinceRv
 	}
@@ -1058,7 +850,7 @@ const (
 	maxEmbedRetryDelay = 5 * time.Minute
 )
 
-func (s *Reconciler) backoffEmbedding(ctx context.Context, ev *pendingEvent, err *embedder.RetryableError) {
+func (s *Reconciler) backoffEmbedding(ctx context.Context, ev *reconcileEvent, err *embedder.RetryableError) {
 	if ctx.Err() != nil {
 		return
 	}
