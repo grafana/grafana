@@ -108,7 +108,7 @@ func (s *benchStore) GetPermissionIDByRoleName(_ context.Context, _ int64, roleN
 	return id, nil
 }
 
-func (s *benchStore) GetPermissionIDsByRoleNames(_ context.Context, _ int64, roleNames []string) (map[string]int64, error) {
+func (s *benchStore) GetPermissionIDsByRoleNames(_ context.Context, _ int64, _ string, roleNames []string) (map[string]int64, error) {
 	s.db.hit()
 	result := make(map[string]int64, len(roleNames))
 	for _, roleName := range roleNames {

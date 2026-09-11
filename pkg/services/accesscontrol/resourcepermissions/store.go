@@ -124,13 +124,9 @@ type roleNamePermissionID struct {
 }
 
 // GetPermissionIDsByRoleNames resolves many managed role names to permission IDs
-// in one query per batch. The correlated LIMIT 1 takes one row per role with an
-// index seek on permission.role_id, instead of reading every permission row of
-// every named role in order to aggregate over them, and it picks the row the
-// same way GetPermissionIDByRoleName does. A role with no permissions produces
-// no row, so missing names are absent from the result rather than an error,
-// mirroring how callers treat an unresolvable role as ID 0.
-func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, roleNames []string) (map[string]int64, error) {
+// for one resource scope in one query per batch. A role with no permission on
+// that scope produces no row, so missing names are absent from the result.
+func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, scope string, roleNames []string) (map[string]int64, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDsByRoleNames")
 	defer span.End()
 
@@ -157,8 +153,8 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, ro
 
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		for chunk := range slices.Chunk(unique, permissionIDBatchSize) {
-			args := make([]any, 0, len(chunk)+1)
-			args = append(args, orgID)
+			args := make([]any, 0, len(chunk)+2)
+			args = append(args, scope, orgID)
 			for _, name := range chunk {
 				args = append(args, name)
 			}
@@ -170,7 +166,7 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, ro
 				INNER JOIN permission p ON p.id = (
 					SELECT p2.id
 					FROM permission p2
-					WHERE p2.role_id = r.id
+					WHERE p2.role_id = r.id AND p2.scope = ?
 					LIMIT 1
 				)
 				WHERE r.org_id = ? AND r.name IN (?`+strings.Repeat(",?", len(chunk)-1)+`)

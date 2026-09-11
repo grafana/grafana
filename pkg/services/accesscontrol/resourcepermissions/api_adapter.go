@@ -141,8 +141,9 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
+	scope := accesscontrol.Scope(a.service.scopeResource(), a.service.options.ResourceAttribute, resourcePerm.Spec.Resource.Name)
 
-	subjects, err := a.resolveSubjects(lookupCtx, serviceIdentity, orgID, permissions)
+	subjects, err := a.resolveSubjects(lookupCtx, serviceIdentity, orgID, scope, permissions)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +271,7 @@ const teamBatchSize = 100
 // the blast radius: where a per-entry failure cost one subject its details, a
 // failed batch costs every subject of that kind, and silently answering with a
 // response full of unnamed assignments is worse than failing the request.
-func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, permissions []iamv0.ResourcePermissionspecPermission) (*resolvedSubjects, error) {
+func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, scope string, permissions []iamv0.ResourcePermissionspecPermission) (*resolvedSubjects, error) {
 	subjects := &resolvedSubjects{
 		users:           make(map[string]*user.User),
 		serviceAccounts: make(map[string]*serviceaccounts.ServiceAccountProfileDTO),
@@ -357,7 +358,7 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 	}
 
 	if len(roleNames) > 0 && a.service.store != nil {
-		permissionIDs, err := a.service.store.GetPermissionIDsByRoleNames(ctx, orgID, roleNames)
+		permissionIDs, err := a.service.store.GetPermissionIDsByRoleNames(ctx, orgID, scope, roleNames)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve permission IDs for %d managed roles: %w", len(roleNames), err)
 		}

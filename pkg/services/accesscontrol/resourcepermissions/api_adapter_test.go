@@ -851,7 +851,7 @@ type failingPermissionIDStore struct {
 	err error
 }
 
-func (s *failingPermissionIDStore) GetPermissionIDsByRoleNames(context.Context, int64, []string) (map[string]int64, error) {
+func (s *failingPermissionIDStore) GetPermissionIDsByRoleNames(context.Context, int64, string, []string) (map[string]int64, error) {
 	return nil, s.err
 }
 
@@ -1612,7 +1612,7 @@ func (m *mockResourcePermissionStore) GetPermissionIDByRoleName(ctx context.Cont
 	}
 }
 
-func (m *mockResourcePermissionStore) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, roleNames []string) (map[string]int64, error) {
+func (m *mockResourcePermissionStore) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, _ string, roleNames []string) (map[string]int64, error) {
 	result := make(map[string]int64, len(roleNames))
 	for _, roleName := range roleNames {
 		id, err := m.GetPermissionIDByRoleName(ctx, orgID, roleName)

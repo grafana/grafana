@@ -564,7 +564,8 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 	const orgID int64 = 1
 	ctx := context.Background()
-	store, _, _ := setupTestEnv(t)
+	store, sql, _ := setupTestEnv(t)
+	scope := accesscontrol.Scope("folders", "uid", "folder-1")
 
 	cmd := func(resourceID string) SetResourcePermissionCommand {
 		return SetResourcePermissionCommand{
@@ -579,9 +580,11 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 	_, err := store.SetUserResourcePermission(ctx, orgID, accesscontrol.User{ID: 1}, cmd("folder-1"), nil)
 	require.NoError(t, err)
-	_, err = store.SetTeamResourcePermission(ctx, orgID, 3, cmd("folder-2"), nil)
+	_, err = store.SetUserResourcePermission(ctx, orgID, accesscontrol.User{ID: 1}, cmd("folder-2"), nil)
 	require.NoError(t, err)
-	_, err = store.SetBuiltInResourcePermission(ctx, orgID, string(org.RoleEditor), cmd("folder-3"), nil)
+	_, err = store.SetTeamResourcePermission(ctx, orgID, 3, cmd("folder-1"), nil)
+	require.NoError(t, err)
+	_, err = store.SetBuiltInResourcePermission(ctx, orgID, string(org.RoleEditor), cmd("folder-1"), nil)
 	require.NoError(t, err)
 
 	seeded := []string{
@@ -594,26 +597,33 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 	t.Run("resolves every seeded role and skips unknown and duplicate names", func(t *testing.T) {
 		query := append(append([]string{}, seeded...), unknownRole, seeded[0])
 
-		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, query)
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, scope, query)
 		require.NoError(t, err)
 		require.Len(t, ids, len(seeded))
 
 		for _, name := range seeded {
-			expected, err := store.GetPermissionIDByRoleName(ctx, orgID, name)
+			var permission accesscontrol.Permission
+			var found bool
+			err := sql.WithDbSession(ctx, func(sess *db.Session) error {
+				var err error
+				found, err = sess.ID(ids[name]).Get(&permission)
+				return err
+			})
 			require.NoError(t, err)
-			assert.Equal(t, expected, ids[name], "batched ID must match the per-name query for %s", name)
+			require.True(t, found)
+			assert.Equal(t, scope, permission.Scope, "permission ID must belong to the requested scope for %s", name)
 		}
 		assert.NotContains(t, ids, unknownRole)
 	})
 
 	t.Run("returns an empty result for no names", func(t *testing.T) {
-		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, nil)
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, scope, nil)
 		require.NoError(t, err)
 		assert.Empty(t, ids)
 	})
 
 	t.Run("does not leak roles across orgs", func(t *testing.T) {
-		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID+1, seeded)
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID+1, scope, seeded)
 		require.NoError(t, err)
 		assert.Empty(t, ids)
 	})
