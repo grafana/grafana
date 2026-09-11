@@ -256,7 +256,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Return a large number of commits that would exceed the maxCommits limit
 						commits := make([]*github.RepositoryCommit, maxCommits+1)
-						for i := 0; i < maxCommits+1; i++ {
+						for i := range maxCommits + 1 {
 							commits[i] = &github.RepositoryCommit{
 								SHA: new(fmt.Sprintf("commit%d", i)),
 								Commit: &github.Commit{
@@ -1189,7 +1189,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Create more files than the maxPRFiles limit
 						files := make([]*github.CommitFile, maxPRFiles+1)
-						for i := 0; i < maxPRFiles+1; i++ {
+						for i := range maxPRFiles + 1 {
 							files[i] = &github.CommitFile{
 								Filename:  new(fmt.Sprintf("file%d.txt", i+1)),
 								Additions: new(i + 1),

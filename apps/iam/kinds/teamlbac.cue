@@ -15,7 +15,8 @@ teamlbacruleKind: {
 
 teamlbacrulev0alpha1: teamlbacruleKind & {
 	schema: {
-		spec: v0alpha1.TeamLBACRuleSpec
+		spec:   v0alpha1.TeamLBACRuleSpec
+		status: v0alpha1.TeamLBACRuleStatus
 	}
 	routes: {
 		"/for-subject/{type}/{uid}": {

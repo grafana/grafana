@@ -1870,7 +1870,7 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 
 	// Enqueue several jobs against the repository so the finalizer has queued work
 	// to clear when the repository is deleted.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		helper.CreatePullJob(t, fmt.Sprintf("%s-queued-%02d", repo, i), repo)
 	}
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -35,8 +35,15 @@ function renderForm(props: Partial<VariableMultiPropStaticOptionsFormProps>) {
 
 describe('<VariableMultiPropStaticOptionsForm />', () => {
   describe('Rendering', () => {
-    test('renders a grid with column headers matching the properties and an "Add new option" button', () => {
-      const { getByRole, getAllByRole } = renderForm({ options: [], properties: ['text', 'value', 'color'] });
+    test('renders a grid with column headers matching the properties and an "Add new option" button', async () => {
+      const { container, getByRole, getAllByRole } = renderForm({
+        options: [],
+        properties: ['text', 'value', 'color'],
+      });
+
+      await waitFor(() => {
+        expect(container.querySelector('[data-rfd-droppable-id="static-options-list"]')).toBeInTheDocument();
+      });
 
       const grid = getByRole('grid', { name: 'Static options' });
       expect(grid).toBeInTheDocument();
@@ -169,6 +176,9 @@ describe('<VariableMultiPropStaticOptionsForm />', () => {
       ];
       const { elements, findByText } = renderForm({ properties: ['text', 'value'], options, onChange });
 
+      await waitFor(() => {
+        expect(within(elements.rows()[0]).getByTestId('icon-draggabledots').closest('[role="button"]')).not.toBeNull();
+      });
       const dragIcon = within(elements.rows()[0]).getByTestId('icon-draggabledots');
       const handle = dragIcon.closest('[role="button"]')!;
 

@@ -2248,6 +2248,13 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
+func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
+	if b.indexMetrics == nil || response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
+		return
+	}
+	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
+}
+
 func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
 	resultFormat, err := selectedResultFormat(req.ResultFormat)
 	if err != nil {
@@ -2274,14 +2281,17 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 	stats *resource.SearchStats,
-) (*resourcepb.ResourceSearchResponse, error) {
+) (response *resourcepb.ResourceSearchResponse, _ error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
-	response := b.initialSearchResponse(req)
+	response = b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
+	defer func() {
+		b.observeSearchResultFormat(response)
+	}()
 
 	// Verifies the index federation
 	index, err := b.getIndex(ctx, req, federate)

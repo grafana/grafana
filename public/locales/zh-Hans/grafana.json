@@ -5981,7 +5981,6 @@
       "description": "垂直排列的面板、文本和代码单元格",
       "name": "笔记本",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "时间",
       "title-edit": "",
@@ -7046,6 +7045,12 @@
       "type": "类型"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "加载数据面板时出错"
     },
     "dashboard-scene": {
@@ -7592,6 +7597,10 @@
       "required": "必填"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "变更",
         "label-details": "详情",
@@ -9089,10 +9098,14 @@
       "share-export-json": "导出为 JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "开始时间",
       "success-indicator": "",
       "target": "目标",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "跟踪 ID",
       "url": "URL",
       "warning-indicator": ""
@@ -10594,7 +10607,6 @@
       "ariaLabel-panel-loading": "面板加载栏",
       "ariaLabel-panel-status": "面板状态",
       "errors-and-notices": "错误和通知",
-      "inspect-errors-notices": "检查",
       "tooltip-cancel": "取消查询",
       "tooltip-cancel-loading": "取消查询",
       "tooltip-stop-streaming": "停止流媒体传输",
@@ -10676,9 +10688,13 @@
       "cell-filter-out": "筛除值",
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "复制到剪贴板",
       "csv-counts": "行：{{rows}}，列：{{columns}}",
       "csv-placeholder": "在此处输入 CSV...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "将所有显示的值添加到筛选条件",
         "blanks": "（空白）",
@@ -12476,6 +12492,7 @@
       "title": "创建"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "新建警报规则"
     },
     "create-dashboard": {
@@ -12965,7 +12982,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +13001,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13051,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13068,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13116,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "清除设置"
+      "clear-tooltip": "清除设置",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "为序列添加颜色的方式"
@@ -16497,8 +16516,6 @@
       "label": ""
     },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {

@@ -2282,6 +2282,45 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
 }
 
+// TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies
+// that the expired counter is incremented only for an already-expired token,
+// independently of whether a refresh is triggered.
+func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t *testing.T) {
+	resyncInterval := 5 * time.Minute
+	oldEnough := time.Now().Add(-time.Hour)
+
+	tests := []struct {
+		name        string
+		expiration  int64 // epoch millis; 0 means non-expiring
+		wantExpired float64
+	}{
+		{"expired", time.Now().Add(-time.Minute).UnixMilli(), 1},
+		{"near expiry is not counted as expired", time.Now().Add(30 * time.Second).UnixMilli(), 0},
+		{"valid far from expiry", time.Now().Add(2 * time.Hour).UnixMilli(), 0},
+		{"non-expiring returns before classification", 0, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				tokenMetrics:   registerRepositoryTokenMetrics(reg),
+				resyncInterval: resyncInterval,
+			}
+			obj := &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Token: provisioning.TokenStatus{LastUpdated: oldEnough.UnixMilli(), Expiration: tt.expiration},
+				},
+				Secure: provisioning.SecureValues{Token: common.InlineSecureValue{Create: "existing-token"}},
+			}
+
+			rc.shouldGenerateTokenFromConnection(obj)
+
+			assert.Equal(t, tt.wantExpired, counterValue(t, reg, "grafana_provisioning_repository_tokens_expired_total"))
+		})
+	}
+}
+
 // TestRepositoryController_process_TokenRefreshedWhileOverQuota verifies that auth token
 // refresh is not skipped when a repository is blocked due to namespace quota being exceeded.
 func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T) {
@@ -2410,6 +2449,83 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The token patch must be present even though the repository is currently over quota.
 	_, found := patcher.findPatchOp("/status/token")
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
+}
+
+// TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused verifies that when
+// token generation fails because access was lost (e.g. the GitHub App was uninstalled or its
+// permissions revoked, surfaced as connection.ErrAuthentication), the failure is classified as
+// cause="user" on both the token-generation-error metric and the reconcile-error metric, so an
+// SLO/alert filtering cause!="user" does not page on-call for a condition only the customer can fix.
+func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	connName := "my-connection"
+
+	// A missing token makes shouldGenerateTokenFromConnection return true, so the token phase runs.
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type:       provisioning.LocalRepositoryType,
+			Sync:       provisioning.SyncOptions{Enabled: false},
+			Connection: &provisioning.ConnectionInfo{Name: connName},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// Access lost: the connection can no longer mint a repository token.
+	authErr := fmt.Errorf("unable to create token for repository: %w", connection.ErrAuthentication)
+	mockConn := connection.NewMockConnection(t)
+	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(nil, authErr).Once()
+
+	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	provClient := &mockProvisioningV0alpha1Interface{
+		connectionsFunc: func(_ string) client.ConnectionInterface {
+			return mockConnectionInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+					return connObj, nil
+				},
+			}
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:             repoGetter,
+		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
+		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
+		statusPatcher:     &capturePatcher{},
+		connectionFactory: mockConnFactory,
+		client:            provClient,
+		tokenMetrics:      registerRepositoryTokenMetrics(reg),
+		reconcileMetrics:  registerReconcileErrorMetrics(reg),
+		resyncInterval:    5 * time.Minute,
+		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.Error(t, err, "a lost-access token failure must be returned to the workqueue")
+
+	assert.Equal(t, 1.0,
+		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
+		"token generation error must be labeled cause=user")
+	assert.Equal(t, 1.0,
+		reconcileErrorCount(t, reg, reconcilePhaseToken, reconcileCauseUser),
+		"reconcile error must be counted under phase=token, cause=user")
 }
 
 // TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound verifies that when the
@@ -2609,6 +2725,41 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 		}
 		require.False(t, rc.shouldRotateWebhookSecret(obj))
 	})
+}
+
+// TestShouldRotateWebhookSecret_OverdueCounter verifies the overdue counter is
+// incremented only when a secret is actually due for rotation.
+func TestShouldRotateWebhookSecret_OverdueCounter(t *testing.T) {
+	interval := 30 * 24 * time.Hour
+	writeWorkflow := []provisioning.Workflow{provisioning.WriteWorkflow}
+
+	tests := []struct {
+		name        string
+		lastRotated int64
+		wantOverdue float64
+	}{
+		{"overdue past interval", time.Now().Add(-31 * 24 * time.Hour).UnixMilli(), 1},
+		{"never rotated", 0, 1},
+		{"within interval", time.Now().Add(-1 * 24 * time.Hour).UnixMilli(), 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				webhookSecretRotationInterval: interval,
+				webhookMetrics:                registerWebhookSecretMetrics(reg),
+			}
+			obj := &provisioning.Repository{
+				Spec:   provisioning.RepositorySpec{Workflows: writeWorkflow},
+				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123, LastRotated: tt.lastRotated}},
+			}
+
+			rc.shouldRotateWebhookSecret(obj)
+
+			assert.Equal(t, tt.wantOverdue, counterValue(t, reg, "grafana_provisioning_webhook_secret_rotation_overdue_total"))
+		})
+	}
 }
 
 // hookRepoStub implements repository.WebhookRepository so we can observe whether
