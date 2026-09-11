@@ -474,6 +474,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/embedded-dashboard.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/import-dashboard-file-upload.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
@@ -514,6 +515,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/frontend-sandbox-datasource.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/grafana-datasource-random-walk.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/graph-auto-migrate.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/help-modal-shortcut.spec.ts @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/migrate-to-cloud.spec.ts @grafana/grafana-operator-experience-squad
