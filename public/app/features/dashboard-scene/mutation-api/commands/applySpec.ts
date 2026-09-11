@@ -15,10 +15,8 @@ import * as z from 'zod';
 
 import { NewSceneObjectAddedEvent, sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type ObjectMeta } from 'app/features/apiserver/types';
-import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
+import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
@@ -38,79 +36,6 @@ const applySpecPayloadSchema = z.object({
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
 
-/**
- * Wrap a bare spec in the access/metadata envelope `transformSaveModelSchemaV2ToScene`
- * expects, reusing the live scene's metadata + access so identity and
- * permissions survive the rebuild.
- */
-function dtoFromScene(scene: MutationContextScene, spec: DashboardV2Spec): DashboardWithAccessInfo<DashboardV2Spec> {
-  const meta = scene.state.meta;
-  return {
-    kind: 'DashboardWithAccessInfo',
-    metadata: resolveMetadata(scene),
-    access: {
-      canEdit: meta.canEdit !== false,
-      canSave: meta.canSave !== false,
-      canShare: meta.canShare !== false,
-      canStar: meta.canStar !== false,
-      canDelete: meta.canDelete !== false,
-      canAdmin: meta.canAdmin !== false,
-      slug: meta.slug,
-      url: meta.url,
-    },
-    // Whichever v2 version the backend serves (stable v2 or v2beta1). It is
-    // stamped onto the scene, so a wrong literal would mislabel it on save.
-    apiVersion: dashboardAPIVersionResolver.getV2(),
-    spec,
-  };
-}
-
-/**
- * `transformSaveModelSchemaV2ToScene` reads `metadata.name`/`generation`/
- * `creationTimestamp` unguarded, which throws on a brand-new / unsaved dashboard
- * whose serializer metadata is absent or partial. Guarantee a populated
- * envelope, preferring whatever the scene already has.
- */
-function resolveMetadata(scene: MutationContextScene): DashboardWithAccessInfo<DashboardV2Spec>['metadata'] {
-  const existing = scene.serializer.getK8SMetadata() ?? {};
-  const meta = scene.state.meta;
-  const uid =
-    (typeof existing.name === 'string' && existing.name) ||
-    (typeof meta.uid === 'string' && meta.uid) ||
-    (typeof meta.key === 'string' && meta.key) ||
-    'new-dashboard';
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- assemble the metadata envelope
-  return {
-    ...existing,
-    name: uid,
-    generation: typeof existing.generation === 'number' ? existing.generation : 1,
-    creationTimestamp:
-      typeof existing.creationTimestamp === 'string' ? existing.creationTimestamp : new Date().toISOString(),
-    annotations: existing.annotations ?? {},
-  } as DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
-}
-
-// Minimal structural type for the bits of DashboardScene this command touches,
-// kept local to avoid a circular import.
-type MutationContextScene = {
-  state: {
-    meta: Record<string, unknown> & {
-      canEdit?: boolean;
-      canSave?: boolean;
-      canShare?: boolean;
-      canStar?: boolean;
-      canDelete?: boolean;
-      canAdmin?: boolean;
-      slug?: string;
-      url?: string;
-      key?: string;
-    };
-  };
-  serializer: { getK8SMetadata: () => Partial<ObjectMeta> | undefined };
-  setState: (state: unknown) => void;
-};
-
-// Same reason: the bits of DashboardSceneUrlSync the rebuild drives, without importing it.
 type DashboardUrlSync = {
   retainEditPanelAcrossRebuild: (panelId: string) => void;
   updateFromUrl: (values: SceneObjectUrlValues) => void;
@@ -153,8 +78,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow DashboardScene to the fields this command reads
-      const dto = dtoFromScene(scene as unknown as MutationContextScene, spec);
+      const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
 
       const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
