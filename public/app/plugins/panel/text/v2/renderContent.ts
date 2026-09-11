@@ -1,4 +1,14 @@
-import { type DataFrame, type InterpolateFunction, type ScopedVars } from '@grafana/data';
+import {
+  type DataFrame,
+  type DisplayValue,
+  type Field,
+  FieldType,
+  getDisplayProcessor,
+  type InterpolateFunction,
+  reduceField,
+  ReducerID,
+  type ScopedVars,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
@@ -7,7 +17,7 @@ import { RenderMode, TextMode } from '../panelcfg.gen';
 import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
 import { transformContent } from './utils';
 
-/** Ceiling for the `maxRows` option, so a typed value cannot hang the panel. */
+/** Hard ceiling on the rows a single render pass may cover, so a large query cannot hang the panel. */
 export const MAX_RENDERED_ROWS = 1000;
 
 /** Render cost follows output size, not row count, and markdown-it degrades superlinearly. */
@@ -23,7 +33,6 @@ export interface TextTemplate {
   series?: DataFrame[];
   renderMode?: RenderMode;
   format?: string;
-  maxRows?: number;
 }
 
 /** A finished render pass, or the error that stopped it. */
@@ -55,30 +64,26 @@ function handlebarsEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
 }
 
-// A cleared or zeroed field falls back to the ceiling.
-function resolveMaxRows(maxRows?: number): number {
-  return maxRows ? Math.max(1, Math.min(Math.floor(maxRows), MAX_RENDERED_ROWS)) : MAX_RENDERED_ROWS;
-}
-
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, mode, series = [], renderMode, format } = template;
-  const maxRows = resolveMaxRows(template.maxRows);
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
     handlebarsEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables, maxRows, compiled);
+    return interpolateEveryRow(template, series, replaceVariables, compiled);
   }
+
+  const scopedVars = buildOnceContext(series);
 
   if (!compiled) {
-    return replaceVariables(content, {}, format);
+    return replaceVariables(content, scopedVars, format);
   }
 
-  const rendered = replaceVariables(compiled(buildAllRowsContext(series, maxRows)), {}, format);
+  const rendered = replaceVariables(compiled(buildAllRowsContext(series, MAX_RENDERED_ROWS)), scopedVars, format);
 
-  // A Once template emits one string, so the row limit cannot bound its size.
+  // A Once template emits one string, so the row ceiling cannot bound its size.
   return cutToMaxChars(rendered);
 }
 
@@ -93,6 +98,42 @@ function cutToMaxChars(rendered: string): string {
   return rendered.slice(0, boundary >= MAX_RENDERED_CHARS - CUT_BACKTRACK_CHARS ? boundary : MAX_RENDERED_CHARS);
 }
 
+// Never the time field, where ${__field.labels.x} is always empty.
+function getMacroField(frame: DataFrame): Field | undefined {
+  return frame.fields.find((field) => field.type !== FieldType.time) ?? frame.fields[0];
+}
+
+// Rendering once leaves no row for ${__value} to read, so it resolves against the
+// reduced value instead. ${__data} does need one, and keeps its literal fallback.
+function buildOnceContext(series: DataFrame[]): ScopedVars {
+  const frameIndex = findMacroFrameIndex(series);
+  const frame = series[frameIndex];
+  const field = frame && getMacroField(frame);
+
+  if (!field) {
+    return {};
+  }
+
+  const calculatedValue = reduceToDisplayValue(field);
+
+  return { __dataContext: { value: { data: series, frame, field, frameIndex, calculatedValue } } };
+}
+
+// The frame Handlebars' `data` binds to, so the two syntaxes agree.
+function findMacroFrameIndex(series: DataFrame[]): number {
+  const withRows = series.findIndex((frame) => frame.fields.length > 0 && frame.length > 0);
+
+  return withRows >= 0 ? withRows : series.findIndex((frame) => frame.fields.length > 0);
+}
+
+// lastNotNull, the reduction the stat panel shows by default.
+function reduceToDisplayValue(field: Field): DisplayValue {
+  const value = reduceField({ field, reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
+
+  // `display` is only attached once field overrides have run.
+  return (field.display ?? getDisplayProcessor())(value);
+}
+
 // Markdown needs a blank line between blocks, because `breaks` is off.
 function joinBlocks(blocks: string[], mode: TextMode): string {
   return blocks.join(mode === TextMode.Markdown ? '\n\n' : '\n');
@@ -102,7 +143,6 @@ function interpolateEveryRow(
   template: TextTemplate,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
-  maxRows: number,
   compiled?: CompiledTemplate
 ): string {
   const { content, mode, format } = template;
@@ -110,17 +150,15 @@ function interpolateEveryRow(
   let renderedChars = 0;
 
   for (const [frameIndex, frame] of series.entries()) {
-    const field = frame.fields[0];
+    const field = getMacroField(frame);
     if (!field) {
       continue;
     }
 
-    const rowCount = Math.min(frame.length, maxRows - blocks.length);
+    const rowCount = Math.min(frame.length, MAX_RENDERED_ROWS - blocks.length);
     const rows = compiled ? buildRows(frame, series, rowCount) : [];
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-      // `field` is unused by the ${__data} macro but required by the type, and
-      // ${__value}/${__field} fall back to the raw match without it.
       const scopedVars: ScopedVars = {
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
@@ -135,7 +173,7 @@ function interpolateEveryRow(
       }
     }
 
-    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxRows) {
+    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= MAX_RENDERED_ROWS) {
       break;
     }
   }

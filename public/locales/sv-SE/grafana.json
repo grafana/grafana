@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Varningshanterare",
+        "alert-managers": "",
         "import": "Importera"
       }
     },
@@ -6023,7 +6023,6 @@
       "description": "En vertikal sekvens av paneler, text och kodceller",
       "name": "Anteckningsbok",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Tid",
       "title-edit": "",
@@ -6313,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Kommentarer",
         "description": "Beskrivning",
@@ -6416,17 +6428,6 @@
           "empty": "(tomt)",
           "no-title": "<no title>"
         }
-      },
-      "predefined-variables": {
-        "all": "Alla",
-        "description": "",
-        "folder": "Mapp",
-        "global": "Globalt",
-        "label": "Fördefinierade variabler",
-        "none": "Ingen",
-        "pane-header": "Fördefinierade variabler",
-        "title": "Fördefinierade variabler",
-        "tooltip": "Välj vilka globala variabler och mappvariabler som denna instrumentpanel ska ta emot"
       },
       "redo": "Gör om",
       "row": {
@@ -7043,6 +7044,10 @@
       "recommendation": "När funktionen är aktiverad igen kommer dina instrumentpaneler att återges normalt i deras dynamiska instrumentpanelsformat. Därför rekommenderar vi starkt att du inte gör några ändringar i dessa instrumentpaneler förrän funktionen har aktiverats igen eftersom redigeringar i klassiskt läge kan leda till oväntade resultat. Alternativt kan du spara en kopia av instrumentpanelen med alternativet ”Spara som kopia” i menyn för att spara instrumentpanelen.",
       "save-warning": "Alla instrumentpaneler som skapats som eller konverterats till en dynamisk instrumentpanel öppnas som en klassisk instrumentpanel. Om du sparar instrumentpanelen kan du förlora redan konfigurerade dynamiska instrumentpanelfunktioner."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Anpassade alternativ",
       "json-values-tooltip": "Tillhandahåll en JSON som representerar en matris av objekt, där varje objekt kan ha valfritt antal egenskaper.<br/>Se <4>vår dokumentation</4> för mer information.",
@@ -7085,6 +7090,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
     },
     "dashboard-scene": {
@@ -7514,13 +7525,6 @@
       },
       "title-close": "Stäng"
     },
-    "predefined-variables": {
-      "label-all": "Alla",
-      "label-custom": "Anpassad",
-      "label-folder": "Mapp",
-      "label-global": "Globalt",
-      "label-none": "Ingen"
-    },
     "provisioned-controls-section": {
       "label": "Tillhandahållen av datakälla",
       "tooltip": "Tillagt av tillägget {{pluginName}}",
@@ -7639,6 +7643,10 @@
       "required": "Krävs"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Ändringar",
         "label-details": "Detaljer",
@@ -9125,6 +9133,7 @@
       "critical-path": "Kritisk väg",
       "critical-path-tooltip": "Väljer tidsspann i den kritiska vägen – den längsta sekvensen av beroende uppgifter som bestämmer spårningens minsta varaktighet.",
       "duration": "Varaktighet",
+      "error-indicator": "",
       "errors": "Fel",
       "errors-tooltip": "Väljer spännvidd där status är lika med fel.",
       "export-started": "Exporten startad",
@@ -9142,11 +9151,17 @@
       "share-export-json": "Exportera som JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Starttid",
+      "success-indicator": "",
       "target": "Mål",
       "tooltip-url": "{{route}} eller {{url}} eller {{target}} eller {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Spårnings-ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -10655,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panelladdningsfält",
       "ariaLabel-panel-status": "Panelstatus",
       "errors-and-notices": "Fel och meddelanden",
-      "inspect-errors-notices": "Inspektera",
       "tooltip-cancel": "Avbryt fråga",
       "tooltip-cancel-loading": "Avbryt fråga",
       "tooltip-stop-streaming": "Avsluta streaming",
@@ -10737,9 +10751,13 @@
       "cell-filter-out": "Filtrera bort värde",
       "cell-inspect": "Inspektera värde",
       "cell-inspect-tooltip": "Inspektera värde",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Kopiera till klippbordet",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}",
       "csv-placeholder": "Ange CSV här…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Lägg till alla visade värden i filtret",
         "blanks": "(Tomma)",
@@ -12562,6 +12580,7 @@
       "title": "Skapa"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Ny varningsregel"
     },
     "create-dashboard": {
@@ -13054,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13074,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13125,6 +13142,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13141,6 +13159,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13190,7 +13209,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Rensa inställningarna"
+      "clear-tooltip": "Rensa inställningarna",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Färga serier efter"
@@ -16621,8 +16642,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

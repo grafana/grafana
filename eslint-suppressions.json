@@ -738,11 +738,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/debug.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/utils/dom.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -977,11 +972,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/GrafanaRuleQueryViewer.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1137,11 +1127,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-viewer/tabs/QueryAndCondition.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/Filter/useRuleFilterAutocomplete.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1283,12 +1268,10 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/utils/config.ts": {
+  "public/app/features/alerting/unified/utils/datasource.ts": {
     "@grafana/no-config-datasources": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/utils/datasource.ts": {
+    },
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }
@@ -1609,46 +1592,6 @@
   },
   "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/dashboardControls.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/dashboardControls.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/drilldownUtils.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/drilldownUtils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/getVizSuggestionForQuery.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/getVizSuggestionForQuery.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/utils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/variables.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -2317,11 +2260,6 @@
       "count": 1
     }
   },
-  "public/app/features/templating/fieldAccessorCache.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/templating/formatVariableValue.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -2404,11 +2342,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/features/transformers/extractFields/fieldExtractors.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/transformers/fieldToConfigMapping/FieldToConfigMappingEditor.tsx": {

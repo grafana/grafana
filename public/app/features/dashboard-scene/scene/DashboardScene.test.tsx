@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   CoreApp,
   type GrafanaConfig,
@@ -28,13 +30,7 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  AnnoKeyManagerKind,
-  DENY_ALL_GLOBAL_PREDEFINED,
-  DENY_ALL_PREDEFINED,
-  ManagerKind,
-} from 'app/features/apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -50,7 +46,6 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
@@ -93,6 +88,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -341,7 +341,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
+      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
@@ -350,29 +350,31 @@ describe('DashboardScene', () => {
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
-        scene.setState({ title: 'Updated title' });
-        expect(scene.state.isDirty).toBe(true);
-        scene.exitEditMode({ skipConfirm: false });
+        try {
+          scene.setState({ title: 'Updated title' });
+          expect(scene.state.isDirty).toBe(true);
+          scene.exitEditMode({ skipConfirm: false });
 
-        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
-        expect(modalCall).toBeDefined();
+          const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+          expect(modalCall).toBeDefined();
 
-        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
-        expect(modalEvent.payload.altActionText).toBeDefined();
+          const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+          expect(modalEvent.payload.altActionText).toBeDefined();
 
-        modalEvent.payload.onAltAction?.();
+          modalEvent.payload.onAltAction?.();
 
-        expect(scene.state.overlay).toBeDefined();
+          await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
 
-        const overlay = scene.state.overlay as SaveDashboardDrawer;
-        expect(overlay.state.onSaveSuccess).toBeDefined();
+          const overlay = scene.state.overlay as SaveDashboardDrawer;
+          expect(overlay.state.onSaveSuccess).toBeDefined();
 
-        overlay.state.onSaveSuccess!();
-        expect(scene.state.isEditing).toBe(false);
-
-        publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          overlay.state.onSaveSuccess!();
+          expect(scene.state.isEditing).toBe(false);
+        } finally {
+          publishSpy.mockRestore();
+          hasActualSaveChangesSpy.mockRestore();
+          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
@@ -489,11 +491,11 @@ describe('DashboardScene', () => {
         expect(scene.state.meta).toEqual(prevMeta);
       });
 
-      it('A change to predefined variables denylist should set isDirty true', () => {
+      it('A change to cross-dashboard variables selection should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
-        const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+        const annotation = '{"global":"all","folder":"all"}';
         scene.setState({
           meta: {
             ...prevMeta,
@@ -501,7 +503,7 @@ describe('DashboardScene', () => {
               ...prevMeta.k8s,
               annotations: {
                 ...prevMeta.k8s?.annotations,
-                [AnnoKeyIgnorePredefinedVariables]: annotation,
+                [AnnoKeyUseCrossDashboardVariables]: annotation,
               },
             },
           },
@@ -714,11 +716,11 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBeFalsy();
       });
 
-      it('Should create and add a new panel to the dashboard', () => {
+      it('Should create and add a new panel to the dashboard', async () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        const panel = scene.onCreateNewPanel();
+        const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
@@ -1983,11 +1985,11 @@ describe('DashboardScene', () => {
   });
 
   describe('openSaveDrawer with template flags', () => {
-    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -1995,11 +1997,11 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
     });
 
-    it('opens the drawer in saveDashboardTemplate mode', () => {
+    it('opens the drawer in saveDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -2007,10 +2009,10 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
     });
 
-    it('does nothing when the scene is not in edit mode', () => {
+    it('does nothing when the scene is not in edit mode', async () => {
       const scene = buildTestScene();
       // Not entering edit mode
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
       expect(scene.state.overlay).toBeUndefined();
     });
   });
@@ -2730,23 +2732,21 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
 
-      // First refresh: inject all (explicit empty denylist). Fetch stays pending.
+      // First refresh: inject all. Fetch stays pending.
       const staleRefresh = scene.refreshPredefinedVariables();
 
-      // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
+      // Second refresh: inject none — applies immediately and invalidates the in-flight fetch.
       scene.setState({
         meta: {
           ...scene.state.meta,
           k8s: {
-            annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
-            },
+            annotations: {},
           },
         },
       });
@@ -2797,22 +2797,22 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
 
-      // First: All (explicit empty denylist)
+      // First: All
       const firstRefresh = scene.refreshPredefinedVariables();
 
-      // Second: Folder only (deny globals) — starts while first fetch is still pending.
+      // Second: Folder only — starts while first fetch is still pending.
       scene.setState({
         meta: {
           ...scene.state.meta,
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_GLOBAL_PREDEFINED]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":"all"}',
             },
           },
         },
@@ -2849,7 +2849,7 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
@@ -2862,7 +2862,7 @@ describe('DashboardScene', () => {
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
     });
 
-    it('should ignore in-flight refresh results after discard restores the denylist', async () => {
+    it('should ignore in-flight refresh results after discard restores the selection', async () => {
       const globalVar = {
         kind: 'CustomVariable' as const,
         spec: {
@@ -2883,11 +2883,9 @@ describe('DashboardScene', () => {
         $variables: new SceneVariableSet({ variables: [] }),
         meta: {
           folderUid: 'folder-1',
-          // Baseline: deny all predefined variables.
+          // Baseline: not opted in (annotation absent).
           k8s: {
-            annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
-            },
+            annotations: {},
           },
         },
       });
@@ -2901,18 +2899,16 @@ describe('DashboardScene', () => {
           ...scene.state.meta,
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
       const staleRefresh = scene.refreshPredefinedVariables();
 
-      // Discard restores the deny-all baseline (and serializer annotations).
+      // Discard restores the not-opted-in baseline (and serializer annotations).
       scene.exitEditMode({ skipConfirm: true });
-      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(
-        serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED])
-      );
+      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
 
       // Stale All fetch must not re-inject after discard.
