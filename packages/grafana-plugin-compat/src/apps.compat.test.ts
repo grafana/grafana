@@ -1,7 +1,7 @@
 import { type PluginMeta } from '@grafana/data';
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-import { getPluginSettings, updatePluginSettings } from './apps';
+import { getPluginSettings, updateAppPluginSettings } from './apps';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   getPluginSettings: undefined,
@@ -59,7 +59,7 @@ describe('getPluginSettings', () => {
   });
 });
 
-describe('updatePluginSettings', () => {
+describe('updateAppPluginSettings', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     setBackendSrv(mockBackendSrv);
@@ -68,7 +68,7 @@ describe('updatePluginSettings', () => {
   });
 
   it('should call correct function when updateAppPluginSettings does not exists', async () => {
-    await updatePluginSettings('grafana-exploretraces-app', mockData);
+    await updateAppPluginSettings('grafana-exploretraces-app', mockData);
 
     expect(mockBackendSrv.post).toHaveBeenCalled();
     expect(mockBackendSrv.post).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe('updatePluginSettings', () => {
   });
 
   it('should return correct response when updateAppPluginSettings does not exists', async () => {
-    const result = await updatePluginSettings('grafana-exploretraces-app', mockData);
+    const result = await updateAppPluginSettings('grafana-exploretraces-app', mockData);
 
     expect(result).toStrictEqual(mockData);
   });
