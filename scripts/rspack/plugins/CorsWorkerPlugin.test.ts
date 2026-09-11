@@ -27,6 +27,23 @@ function createConfig(publicPath: string): Configuration {
   };
 }
 
+function createModuleOutputConfig(publicPath: string): Configuration {
+  return {
+    ...createConfig(publicPath),
+    target: ['web', 'es2022'],
+    output: {
+      path: OUTPUT_PATH,
+      publicPath,
+      filename: '[name].js',
+      chunkFilename: '[name].chunk.js',
+      module: true,
+      chunkFormat: 'module',
+      chunkLoading: 'import',
+      workerChunkLoading: 'import',
+    },
+  };
+}
+
 describe('CorsWorkerPlugin', () => {
   it('injects the __webpack_worker_public_path__ fallback into worker chunks without a later override', async () => {
     const { outputFs } = await compile(createConfig(PUBLIC_PATH));
@@ -59,6 +76,16 @@ describe('CorsWorkerPlugin', () => {
     const { outputFs } = await compile(createConfig('auto'));
     const assets = readAssets(outputFs, OUTPUT_PATH);
 
+    for (const content of Object.values(assets)) {
+      expect(content).not.toContain('__webpack_worker_public_path__');
+    }
+  });
+
+  it('is a no-op under module output (chunkLoading: import), where chunks resolve siblings via native import() instead of __webpack_require__.p', async () => {
+    const { outputFs } = await compile(createModuleOutputConfig(PUBLIC_PATH));
+    const assets = readAssets(outputFs, OUTPUT_PATH);
+
+    expect(Object.keys(assets).length).toBeGreaterThan(0);
     for (const content of Object.values(assets)) {
       expect(content).not.toContain('__webpack_worker_public_path__');
     }

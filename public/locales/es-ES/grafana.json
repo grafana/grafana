@@ -2666,7 +2666,9 @@
       "view-in-explore": "Ver en Explorar"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opciones",
+      "invalid-interval-error": "",
       "label-time-range": "Rango de tiempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "¿Deshabilitar la sincronización automática de Mimir Alertmanager?",
         "disable-success": "Sincronización automática de Mimir Alertmanager deshabilitada",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Este valor lo establece la clave <1>[unified_alerting] external_alertmanager_uid</1> en grafana.ini y no se puede cambiar desde la interfaz de usuario. Edita el archivo de configuración y reinicia Grafana, o elimina la clave para gestionar la sincronización desde aquí.",
         "operator-managed-title": "Administrado por el operador",
         "orphan-warning": "La fuente de datos configurada con el UID {{uid}} no está disponible. Deshabilita la sincronización o restaura la fuente de datos para continuar.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Fuente de datos",
         "picker-placeholder": "Selecciona una fuente de datos de Mimir o Cortex Alertmanager...",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Selecciona una fuente de datos de Mimir o Cortex Alertmanager para habilitar el guardado.",
         "save-disabled-staged-config": "",
         "save-error": "Error al guardar la sincronización automática de Mimir Alertmanager",
@@ -3345,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Administradores de alertas",
+        "alert-managers": "",
         "import": "Importar"
       }
     },
@@ -6018,11 +6022,13 @@
     "notebook-layout": {
       "description": "Una secuencia vertical de paneles, texto y celdas de código",
       "name": "Cuaderno",
-      "pill": "Cuaderno publicado",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Hora"
+      "time": "Hora",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6306,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anotaciones",
         "description": "Descripción",
@@ -6409,17 +6428,6 @@
           "empty": "(vacío)",
           "no-title": "<sin título>"
         }
-      },
-      "predefined-variables": {
-        "all": "Todas",
-        "description": "",
-        "folder": "Carpeta",
-        "global": "Global",
-        "label": "Variables predefinidas",
-        "none": "Ninguna",
-        "pane-header": "Variables predefinidas",
-        "title": "Variables predefinidas",
-        "tooltip": "Elige qué variables globales y de carpeta recibe este dashboard"
       },
       "redo": "Rehacer",
       "row": {
@@ -7036,6 +7044,10 @@
       "recommendation": "Una vez que la función se vuelva a habilitar, tus dashboards se mostrarán normalmente en su formato de dashboard dinámico. Por este motivo, es recomendable no realizar cambios en estos dashboards hasta que la función se vuelva a activar, ya que las modificaciones realizadas en el modo clásico pueden dar lugar a resultados inesperados. Como alternativa, puedes guardar una copia del dashboard utilizando la opción «Guardar como copia», en el menú para guardar el dashboard.",
       "save-warning": "Cualquier dashboard creado o convertido en un dashboard dinámico se abrirá como un dashboard clásico. Guardar el dashboard podría provocar la pérdida de las funciones del dashboard dinámico ya configuradas."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
       "json-values-tooltip": "Proporciona un JSON que represente una matriz de objetos, donde cada objeto puede tener cualquier número de propiedades.<br/>Consulta <4>nuestra documentación</4> para obtener más información.",
@@ -7078,6 +7090,12 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Error al cargar el panel de control"
     },
     "dashboard-scene": {
@@ -7507,13 +7525,6 @@
       },
       "title-close": "Cerrar"
     },
-    "predefined-variables": {
-      "label-all": "Todas",
-      "label-custom": "Personalizada",
-      "label-folder": "Carpeta",
-      "label-global": "Global",
-      "label-none": "Ninguna"
-    },
     "provisioned-controls-section": {
       "label": "Aprovisionado por la fuente de datos",
       "tooltip": "Añadido por el plugin {{pluginName}}",
@@ -7632,6 +7643,10 @@
       "required": "Requerido"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Cambios",
         "label-details": "Detalles",
@@ -8392,7 +8407,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valor fijo"
       },
-      "label": "Escalar",
+      "label-field": "",
       "label-limit": "Límite",
       "label-value": "Valor",
       "noOptionsMessage-no-fields-found": "No se han encontrado campos",
@@ -9118,6 +9133,7 @@
       "critical-path": "Ruta crítica",
       "critical-path-tooltip": "Selecciona los intervalos en la ruta crítica, la secuencia más larga de tareas dependientes que determina la duración mínima de la traza.",
       "duration": "Duración",
+      "error-indicator": "",
       "errors": "Errores",
       "errors-tooltip": "Selecciona los intervalos donde el estado es igual a error.",
       "export-started": "Exportación iniciada",
@@ -9135,11 +9151,17 @@
       "share-export-json": "Exportar como JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Fecha de inicio",
+      "success-indicator": "",
       "target": "Destino",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "ID de traza",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9728,6 +9750,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Anteayer",
           "previousFiscalQuarter": "Trimestre fiscal anterior",
@@ -10646,7 +10670,6 @@
       "ariaLabel-panel-loading": "Barra de carga del panel",
       "ariaLabel-panel-status": "Estado del panel",
       "errors-and-notices": "Errores y avisos",
-      "inspect-errors-notices": "Inspeccionar",
       "tooltip-cancel": "Cancelar consulta",
       "tooltip-cancel-loading": "Cancelar consulta",
       "tooltip-stop-streaming": "Detener transmisión",
@@ -10728,9 +10751,13 @@
       "cell-filter-out": "Filtrar valor",
       "cell-inspect": "Inspeccionar valor",
       "cell-inspect-tooltip": "Inspeccionar valor",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copiar al portapapeles",
       "csv-counts": "Filas: {{rows}}, Columnas: {{columns}}",
       "csv-placeholder": "Introducir CSV aquí...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Añadir todos los valores mostrados al filtro",
         "blanks": "(En blanco)",
@@ -12481,6 +12508,9 @@
       "subtitle": "Reglas que determinan si una alerta se activará",
       "title": "Reglas de alerta"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Elige cómo notificar tus puntos de contacto cuando se dispara una instancia de alerta",
       "title": "Puntos de contacto"
@@ -12550,6 +12580,7 @@
       "title": "Crear"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nueva regla de alerta"
     },
     "create-dashboard": {
@@ -12584,6 +12615,10 @@
     },
     "explore": {
       "title": "Explorar"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Obtén información de seguimiento real del usuario",
@@ -12665,6 +12700,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12695,6 +12734,10 @@
     },
     "profiles": {
       "title": "Perfiles"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -12981,6 +13024,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13004,6 +13051,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13019,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13039,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13086,15 +13138,14 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13108,11 +13159,15 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "new": {
+      "default-title": ""
     },
     "save-status": {
       "failed": "",
@@ -13122,6 +13177,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13153,10 +13209,19 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Borrar parámetros"
+      "clear-tooltip": "Borrar parámetros",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Colorear series por"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -16577,8 +16642,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16744,6 +16808,8 @@
       "name-faceted-filter": "Visibilidad de las series"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Accesible",
         "label-dash": "Raya",
@@ -17894,7 +17960,7 @@
       "delete-modal-body": "¿Seguro que quieres eliminar «{{name}}»?",
       "delete-modal-confirm": "Eliminar",
       "delete-modal-title": "Eliminar variable",
-      "folder-description": "Asigna el ámbito de la variable a una carpeta o elige la carpeta raíz de Dashboards para que sea global (disponible en toda la organización)",
+      "folder-description": "",
       "folder-description-folder-only": "Asigna el alcance de la variable a una carpeta que puedas editar",
       "folder-label": "Carpeta",
       "moved": "Variable movida",
@@ -17914,8 +17980,8 @@
       "move": "Mover",
       "moving": "Moviendo...",
       "title": "Mover variables",
-      "body_one": "Mover {{count}} variable seleccionada. Al elegir la carpeta raíz de Dashboards, se convierte en global (disponible en toda la organización).",
-      "body_other": "Mueve {{count}} variables seleccionadas. Al elegir la carpeta raíz de Dashboards, se convierten en globales (disponibles en toda la organización).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Mueve {{count}} variable seleccionada a una carpeta que puedas editar.",
       "body-folder-only_other": "Mueve {{count}} variables seleccionadas a una carpeta que puedas editar."
     },

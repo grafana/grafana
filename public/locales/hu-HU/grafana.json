@@ -2666,7 +2666,9 @@
       "view-in-explore": "Megtekintés az Explore-ban"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Beállítások",
+      "invalid-interval-error": "",
       "label-time-range": "Időtartomány",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. intervallum = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "Letiltja a Mimir-riasztáskezelő automatikus szinkronizálását?",
         "disable-success": "A Mimir-riasztáskezelő automatikus szinkronizálása letiltva",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Ezt az értéket a grafana.ini fájlban található <1>[unified_alerting] external_alertmanager_uid</1> kulcs állítja be, és nem módosítható a felhasználói felületről. Szerkessze a konfigurációs fájlt, és indítsa újra a Grafanát, vagy távolítsa el a kulcsot a szinkronizálás innen történő kezeléséhez.",
         "operator-managed-title": "Operátor által felügyelt",
         "orphan-warning": "Nem áll rendelkezésre a konfigurált adatforrás {{uid}} UID-je. A folytatáshoz tiltsa le a szinkronizálást, vagy állítsa vissza az adatforrást.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Adatforrás",
         "picker-placeholder": "Válasszon egy Mimir- vagy Cortex-riasztáskezelő adatforrást…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Válasszon egy Mimir- vagy Cortex-riasztáskezelő adatforrást a mentés engedélyezéséhez.",
         "save-disabled-staged-config": "",
         "save-error": "A Mimir-riasztáskezelő automatikus szinkronizálásának mentése nem sikerült",
@@ -3345,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Riasztáskezelők",
+        "alert-managers": "",
         "import": "Importálás"
       }
     },
@@ -6018,11 +6022,13 @@
     "notebook-layout": {
       "description": "Panelek, szöveg és kódcellák függőleges sorozata",
       "name": "Jegyzetfüzet",
-      "pill": "Közzétett jegyzetfüzet",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Idő"
+      "time": "Idő",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6306,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Jegyzetek",
         "description": "Leírás",
@@ -6409,17 +6428,6 @@
           "empty": "(üres)",
           "no-title": "<nincs cím>"
         }
-      },
-      "predefined-variables": {
-        "all": "Összes",
-        "description": "",
-        "folder": "Mappa",
-        "global": "Globális",
-        "label": "Előre definiált változók",
-        "none": "Nincs",
-        "pane-header": "Előre definiált változók",
-        "title": "Előre definiált változók",
-        "tooltip": "Válassza ki, hogy mely globális és mappaváltozókat kapja meg ez az irányítópult"
       },
       "redo": "Újra",
       "row": {
@@ -7036,6 +7044,10 @@
       "recommendation": "A funkció újbóli engedélyezése után az irányítópultok normálisan, dinamikus irányítópult formátumban jelennek meg. Ezért azt javasoljuk, hogy ne módosítsa ezeket az irányítópultokat, amíg a funkció újra be nem lesz kapcsolva, mivel a klasszikus módban végzett szerkesztések váratlan eredményekhez vezethetnek. Alternatív megoldásként mentheti az irányítópult másolatát a „Mentés másolatként” opcióval az irányítópult mentése menüben.",
       "save-warning": "Minden Dinamikus irányítópultként létrehozott vagy Dinamikus irányítópulttá konvertált irányítópult klasszikus irányítópultként nyílik meg. Az irányítópult mentése a már beállított Dinamikus irányítópult-funkciók elvesztéséhez vezethet."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
       "json-values-tooltip": "Adjon meg egy objektumtömböt jelölő JSON-t, ahol minden objektum tetszőleges számú tulajdonsággal rendelkezhet.<br/>További információért tekintse meg a <4>dokumentációnkat</4>.",
@@ -7078,6 +7090,12 @@
       "type": "Típus"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
     },
     "dashboard-scene": {
@@ -7507,13 +7525,6 @@
       },
       "title-close": "Bezárás"
     },
-    "predefined-variables": {
-      "label-all": "Összes",
-      "label-custom": "Egyéni",
-      "label-folder": "Mappa",
-      "label-global": "Globális",
-      "label-none": "Nincs"
-    },
     "provisioned-controls-section": {
       "label": "Adatforrás által kiépített",
       "tooltip": "A(z) {{pluginName}} bővítmény adta hozzá",
@@ -7632,6 +7643,10 @@
       "required": "Kötelező"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Módosítások",
         "label-details": "Részletek",
@@ -8392,7 +8407,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Rögzített érték"
       },
-      "label": "Skalár",
+      "label-field": "",
       "label-limit": "Korlát",
       "label-value": "Érték",
       "noOptionsMessage-no-fields-found": "Nem található mező",
@@ -9118,6 +9133,7 @@
       "critical-path": "Kritikus útvonal",
       "critical-path-tooltip": "Kiválasztja a kritikus útvonalon lévő tartományokat – a függő feladatok leghosszabb sorozatát, amely meghatározza a nyomkövetés minimális időtartamát.",
       "duration": "Időtartam",
+      "error-indicator": "",
       "errors": "Hibák",
       "errors-tooltip": "Kiválasztja azokat a tartományokat, ahol az állapot hibával egyenlő.",
       "export-started": "Exportálás elindítva",
@@ -9135,11 +9151,17 @@
       "share-export-json": "Exportálás JSON-fájlként",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Kezdési idő",
+      "success-indicator": "",
       "target": "Cél",
       "tooltip-url": "{{route}} vagy {{url}} vagy {{target}} vagy {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Nyomkövetési azonosító",
-      "url": "URL-cím"
+      "url": "URL-cím",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9728,6 +9750,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Tegnapelőtt",
           "previousFiscalQuarter": "Az előző pénzügyi negyedév",
@@ -10646,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel betöltési sávja",
       "ariaLabel-panel-status": "Panel állapota",
       "errors-and-notices": "Hibák és értesítések",
-      "inspect-errors-notices": "Ellenőrzés",
       "tooltip-cancel": "A lekérdezés megszakítása",
       "tooltip-cancel-loading": "A lekérdezés megszakítása",
       "tooltip-stop-streaming": "Adatfolyam leállítása",
@@ -10728,9 +10751,13 @@
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
       "cell-inspect-tooltip": "Érték ellenőrzése",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Másolás a vágólapra",
       "csv-counts": "Sorok:{{rows}}, Oszlopok:{{columns}}",
       "csv-placeholder": "Itt adja meg a CSV-t...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Az összes megjelenített érték hozzáadása a szűrőhöz",
         "blanks": "(Üresek)",
@@ -12481,6 +12508,9 @@
       "subtitle": "Szabályok, amelyek meghatározzák, hogy egy riasztás elindul-e",
       "title": "Riasztási szabályok"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Válassza ki, hogyan kapjanak értesítést a kapcsolattartási pontjai, amikor egy riasztáspéldány aktiválódik",
       "title": "Kapcsolattartási pontok"
@@ -12550,6 +12580,7 @@
       "title": "Létrehozás"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Új riasztási szabály"
     },
     "create-dashboard": {
@@ -12584,6 +12615,10 @@
     },
     "explore": {
       "title": "Explore"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Valós felhasználói megfigyelési információkra tehet szert",
@@ -12665,6 +12700,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12695,6 +12734,10 @@
     },
     "profiles": {
       "title": "Profilok"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -12981,6 +13024,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13004,6 +13051,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13019,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13039,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13086,15 +13138,14 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13108,11 +13159,15 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "new": {
+      "default-title": ""
     },
     "save-status": {
       "failed": "",
@@ -13122,6 +13177,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13153,10 +13209,19 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Beállítások törlése"
+      "clear-tooltip": "Beállítások törlése",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Színsorozat alapja"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -16577,8 +16642,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16744,6 +16808,8 @@
       "name-faceted-filter": "Sorozat láthatósága"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Hozzáférhető",
         "label-dash": "Szaggatott",
@@ -17894,7 +17960,7 @@
       "delete-modal-body": "Biztosan törölni kívánja ezt: „{{name}}”?",
       "delete-modal-confirm": "Törlés",
       "delete-modal-title": "Változó törlése",
-      "folder-description": "Határozza meg a változó hatókörét egy mappára, vagy válassza az irányítópultok gyökérmappáját, hogy globálissá tegye (a szervezetben mindenhol elérhetővé)",
+      "folder-description": "",
       "folder-description-folder-only": "Állítsa be a változó hatókörét egy Ön által szerkeszthető mappára",
       "folder-label": "Mappa",
       "moved": "Változó áthelyezve",
@@ -17914,8 +17980,8 @@
       "move": "Áthelyezés",
       "moving": "Áthelyezés...",
       "title": "Változók áthelyezése",
-      "body_one": "{{count}} kiválasztott változó áthelyezése. Az irányítópultok gyökérmappájának kiválasztásával globálissá teszi (a szervezetben mindenhol elérhetővé).",
-      "body_other": "{{count}} kiválasztott változó áthelyezése. Az irányítópultok gyökérmappájának kiválasztásával globálissá teszi őket (a szervezetben mindenhol elérhetővé).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Helyezze át a(z) {{count}} kiválasztott változót egy Ön által szerkeszthető mappába.",
       "body-folder-only_other": "Helyezze át a(z) {{count}} kiválasztott változót egy Ön által szerkeszthető mappába."
     },

@@ -43,6 +43,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagGrafanaUseRouterMiddleware
+	// intercept /apis/... and /openapi/v3/... requests in middleware.
+	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -415,10 +419,6 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
-	// FlagImprovedExternalSessionHandling
-	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
-	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
-
 	// FlagUseSessionStorageForRedirection
 	// Use session storage for handling the redirection after login
 	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
@@ -487,10 +487,6 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagImprovedExternalSessionHandlingSAML
-	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
-
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
@@ -499,13 +495,13 @@ const (
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
-	// FlagTeamHttpHeadersFromAppPlatformST
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformST
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana
-	FlagTeamHttpHeadersFromAppPlatformST = "teamHttpHeadersFromAppPlatformST"
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformST = "datasources.teamHttpHeadersFromAppPlatformST"
 
-	// FlagTeamHttpHeadersFromAppPlatformMT
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
-	FlagTeamHttpHeadersFromAppPlatformMT = "teamHttpHeadersFromAppPlatformMT"
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
@@ -946,6 +942,18 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagDashboardSearchFieldValueResults
+	// Uses field-value results for dashboard search requests
+	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
+
+	// FlagDashboardApiSearchFieldValueResults
+	// Uses field-value results for requests from the /api/search endpoint
+	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
+
+	// FlagSearchApiFieldValueResults
+	// Uses field-value results for generic resource search API requests
+	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -969,6 +977,10 @@ const (
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
+
+	// FlagReportingRedirectReportSettingsToK8SApi
+	// Redirect legacy report settings API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportSettingsToK8SApi = "reporting.redirectReportSettingsToK8SApi"
 
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
@@ -1017,4 +1029,12 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagSamlGosaml2Provider
+	// Use the gosaml2 library instead of the crewjam SAML library for SAML authentication
+	FlagSamlGosaml2Provider = "saml.gosaml2Provider"
+
+	// FlagDatasourcesGatewayGuardrails
+	// Data source query gateway guardrails
+	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 )

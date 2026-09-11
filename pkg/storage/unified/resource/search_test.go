@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -115,12 +116,13 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
-	resourceStats   []ResourceStats
-	lastImportTimes []ResourceLastImportTime
-	statsCalls      atomic.Int32
-	listStoredCalls atomic.Int32
-	listStoredErr   error
-	lastCountLimit  atomic.Int64
+	resourceStats       []ResourceStats
+	lastImportTimes     []ResourceLastImportTime
+	statsCalls          atomic.Int32
+	listStoredCalls     atomic.Int32
+	listStoredErr       error
+	lastCountLimit      atomic.Int64
+	lastImportTimeCalls atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -195,14 +197,14 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 	}
 }
 
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		for _, ti := range m.lastImportTimes {
-			if !yield(ti, nil) {
-				return
-			}
+func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	m.lastImportTimeCalls.Add(1)
+	for _, importTime := range m.lastImportTimes {
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
 		}
 	}
+	return time.Time{}, nil
 }
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
@@ -471,13 +473,11 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 
 	const concurrency = 100
 	wg := sync.WaitGroup{}
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range concurrency {
+		wg.Go(func() {
 			<-start
 			_, _ = support.getOrCreateIndex(context.Background(), nil, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
-		}()
+		})
 	}
 
 	// Wait a bit for goroutines to start (hopefully)
@@ -490,6 +490,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
 	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
 	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
+	require.Equal(t, int32(1), storage.lastImportTimeCalls.Load())
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -1348,14 +1349,14 @@ func TestRebuildIndexesForResource(t *testing.T) {
 func TestMaybeInjectFailure(t *testing.T) {
 	t.Run("disabled when percent is 0", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 0}
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			require.NoError(t, s.maybeInjectFailure())
 		}
 	})
 
 	t.Run("always fails when percent is 100", func(t *testing.T) {
 		s := &searchServer{injectFailuresPercent: 100}
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			err := s.maybeInjectFailure()
 			require.Error(t, err)
 			require.Equal(t, "injected search failure", err.Error())
@@ -1480,7 +1481,7 @@ func TestJitterForKey(t *testing.T) {
 	})
 
 	t.Run("bounded to maxAge/2", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "g", Resource: "r"}
 			j := jitterForKey(key, maxAge)
 			require.GreaterOrEqual(t, j, time.Duration(0))
@@ -1508,7 +1509,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	numIndexes := 20
 	openIndexes := make([]NamespacedResource, numIndexes)
 	cache := make(map[NamespacedResource]ResourceIndex, numIndexes)
-	for i := 0; i < numIndexes; i++ {
+	for i := range numIndexes {
 		key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "group", Resource: "folder"}
 		openIndexes[i] = key
 		cache[key] = &MockResourceIndex{
@@ -2270,5 +2271,116 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
 		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
 		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+	})
+}
+
+// Counts builder resolutions, the step that reads usage insights data for real
+// dashboards. Only namespaced builders go through it.
+type countingBuilderSupplier struct {
+	resolved atomic.Int32
+}
+
+func (s *countingBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
+	return []DocumentBuilderInfo{{
+		GroupResource: schema.GroupResource{Group: "group", Resource: "resource"},
+		Namespaced: func(_ context.Context, _ string, _ BlobSupport) (DocumentBuilder, error) {
+			s.resolved.Add(1)
+			return &testDocumentBuilder{}, nil
+		},
+	}}, nil
+}
+
+// Stands in for an index served from a remote snapshot: ready without either
+// callback running.
+type snapshotSearchBackend struct {
+	mockSearchBackend
+}
+
+func (m *snapshotSearchBackend) BuildIndex(_ context.Context, key NamespacedResource, size int64, _ string, _ BuildFn, updater UpdateFn, _ bool, _ time.Time, _ time.Duration) (ResourceIndex, error) {
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(m.keepsDeletedDocuments)}}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.lastUpdater = updater
+	if m.cache == nil {
+		m.cache = make(map[NamespacedResource]ResourceIndex)
+	}
+	m.cache[key] = index
+	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{key: key, size: size})
+
+	return index, nil
+}
+
+// Resolving a builder is expensive, so a build must not do it until something
+// actually needs to index documents.
+func TestBuildResolvesDocumentBuilderOnFirstUse(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+
+	t.Run("an index served from a snapshot never resolves the builder", func(t *testing.T) {
+		supplier := &countingBuilderSupplier{}
+		search := &snapshotSearchBackend{}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+		}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		require.Len(t, search.buildIndexCalls, 1, "the index should still have been built")
+		require.Zero(t, supplier.resolved.Load(), "no callback ran, so the builder should never have been resolved")
+	})
+
+	t.Run("a build that indexes documents resolves the builder", func(t *testing.T) {
+		supplier := &countingBuilderSupplier{}
+		search := &mockSearchBackend{keepsDeletedDocuments: true}
+		storage := &trashStorageBackend{trash: []trashEntry{
+			{name: "gone", rv: 10, value: testObjectJSON("gone", "Gone")},
+		}}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		built, err := server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		require.Len(t, built.(*MockResourceIndex).indexedItems(), 1)
+		require.Equal(t, int32(1), supplier.resolved.Load(), "the build callback needs a builder")
+	})
+
+	// The cache entry expires while the updater keeps running, so resolving per
+	// call would re-read the insights data on most updates.
+	t.Run("the builder is resolved once for a build and every later update", func(t *testing.T) {
+		supplier := &countingBuilderSupplier{}
+		search := &mockSearchBackend{keepsDeletedDocuments: true}
+		storage := &trashStorageBackend{
+			trash:    []trashEntry{{name: "gone", rv: 10, value: testObjectJSON("gone", "Gone")}},
+			modified: []*ModifiedResource{{Action: resourcepb.WatchEvent_ADDED, Key: resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "added"}, ResourceVersion: 11, Value: testObjectJSON("added", "Added")}},
+		}
+		server, err := newSearchServer(SearchOptions{
+			Backend:   search,
+			Resources: supplier,
+		}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		search.mu.Lock()
+		updater := search.lastUpdater
+		search.mu.Unlock()
+		require.NotNil(t, updater)
+
+		for i := range 3 {
+			index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+			_, docs, err := updater(t.Context(), index, int64(11+i))
+			require.NoError(t, err)
+			require.Equal(t, 1, docs)
+		}
+
+		require.Equal(t, int32(1), supplier.resolved.Load(), "the builder resolved for the build should be reused by every update")
 	})
 }

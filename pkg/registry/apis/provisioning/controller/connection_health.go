@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -97,7 +98,7 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 		return true
 	}
 
-	if len(old.Message) != len(new.Message) {
+	if !slices.Equal(old.Message, new.Message) {
 		return true
 	}
 
@@ -107,12 +108,6 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	}
 	if time.UnixMilli(new.Checked).Sub(time.UnixMilli(old.Checked)) > recent {
 		return true
-	}
-
-	for i, oldMsg := range old.Message {
-		if i >= len(new.Message) || oldMsg != new.Message[i] {
-			return true
-		}
 	}
 
 	return false
@@ -129,14 +124,22 @@ func classifyTestResultReason(testResults *provisioning.TestResults) string {
 	// Map HTTP status codes to condition reasons
 	// We only map status codes that connections actually return
 	switch testResults.Code {
-	case 401, 403: // Authentication/authorization failed
+	case 401:
 		return provisioning.ReasonAuthenticationFailed
+	case 403:
+		// A write-permission-denied 403 leaves the repository accessible
+		// (isRepositoryAccessible special-cases it) -- the credentials work, so
+		// it's not an auth failure, just a configuration gap. Fall through to the
+		// default case below instead of over-classifying it.
+		if !isRepositoryAccessible(testResults) {
+			return provisioning.ReasonAuthenticationFailed
+		}
 	case 503: // Service unavailable
 		return provisioning.ReasonServiceUnavailable
-	default:
-		// All other errors (404, 422, 500, etc.) are spec/configuration issues
-		return provisioning.ReasonInvalidSpec
 	}
+
+	// All other errors (400, 404, 422, 500, etc.) are spec/configuration issues
+	return provisioning.ReasonInvalidSpec
 }
 
 // RefreshHealthWithPatchOps performs a health check on an existing connection

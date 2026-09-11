@@ -2666,7 +2666,9 @@
       "view-in-explore": "Weergeven in Verkennen"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opties",
+      "invalid-interval-error": "",
       "label-time-range": "Tijdbereik",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "Automatische synchronisatie van Mimir Alertmanager uitschakelen?",
         "disable-success": "Automatische synchronisatie van Mimir Alertmanager uitgeschakeld",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Deze waarde wordt ingesteld door de sleutel <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini en kan niet worden gewijzigd vanuit de gebruikersinterface. Bewerk het configuratiebestand en start Grafana opnieuw op, of verwijder de sleutel om de synchronisatie vanaf hier te beheren.",
         "operator-managed-title": "Beheerd door operator",
         "orphan-warning": "De geconfigureerde gegevensbron-UID {{uid}} is niet beschikbaar. Schakel synchronisatie uit of herstel de gegevensbron om door te gaan.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Databron",
         "picker-placeholder": "Selecteer een Mimir- of Cortex Alertmanager-gegevensbron...",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Selecteer een Mimir- of Cortex Alertmanager-gegevensbron om opslaan in te schakelen.",
         "save-disabled-staged-config": "",
         "save-error": "Kan automatische synchronisatie van Mimir Alertmanager niet opslaan",
@@ -3345,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Waarschuwingsmanagers",
+        "alert-managers": "",
         "import": "Importeren"
       }
     },
@@ -6018,11 +6022,13 @@
     "notebook-layout": {
       "description": "Een verticale reeks panelen, tekst en codecellen",
       "name": "Notebook",
-      "pill": "Gepubliceerde notebook",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Tijd"
+      "time": "Tijd",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6306,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Annotaties",
         "description": "Beschrijving",
@@ -6409,17 +6428,6 @@
           "empty": "(leeg)",
           "no-title": "<geen titel>"
         }
-      },
-      "predefined-variables": {
-        "all": "Alle",
-        "description": "",
-        "folder": "Map",
-        "global": "Wereldwijd",
-        "label": "Vooraf gedefinieerde variabelen",
-        "none": "Geen",
-        "pane-header": "Vooraf gedefinieerde variabelen",
-        "title": "Vooraf gedefinieerde variabelen",
-        "tooltip": "Kies welke globale variabelen en mapvariabelen dit dashboard ontvangt"
       },
       "redo": "Opnieuw uitvoeren",
       "row": {
@@ -7036,6 +7044,10 @@
       "recommendation": "Zodra de functie opnieuw is ingeschakeld, worden je dashboards weer normaal weergegeven in hun dynamische dashboardindeling. Daarom raden wij sterk aan om geen wijzigingen aan deze dashboards aan te brengen totdat de functie weer is ingeschakeld, aangezien bewerkingen in de klassieke modus tot onverwachte resultaten kunnen leiden. Je kunt ook een kopie van het dashboard opslaan via de optie ‘Opslaan als kopie’ in het menu voor het opslaan van dashboards.",
       "save-warning": "Elk dashboard dat als dynamisch dashboard is gemaakt of daarnaar is geconverteerd, wordt geopend als een klassiek dashboard. Het opslaan van het dashboard kan ertoe leiden dat reeds ingestelde dynamische dashboardfuncties verloren gaan."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Aangepaste opties",
       "json-values-tooltip": "Geef een JSON op die een array van objecten vertegenwoordigt, waarbij elk object een willekeurig aantal eigenschappen kan hebben.<br/>Raadpleeg <4>onze documentatie</4> voor meer informatie.",
@@ -7078,6 +7090,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard"
     },
     "dashboard-scene": {
@@ -7507,13 +7525,6 @@
       },
       "title-close": "Sluiten"
     },
-    "predefined-variables": {
-      "label-all": "Alle",
-      "label-custom": "Aangepast",
-      "label-folder": "Map",
-      "label-global": "Wereldwijd",
-      "label-none": "Geen"
-    },
     "provisioned-controls-section": {
       "label": "Geprovisioneerd door databron",
       "tooltip": "Toegevoegd door de {{pluginName}} plug-in",
@@ -7632,6 +7643,10 @@
       "required": "Vereist"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Wijzigingen",
         "label-details": "Details",
@@ -8392,7 +8407,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Vaste waarde"
       },
-      "label": "Scalair",
+      "label-field": "",
       "label-limit": "Limiet",
       "label-value": "Waarde",
       "noOptionsMessage-no-fields-found": "Geen velden gevonden",
@@ -9118,6 +9133,7 @@
       "critical-path": "Kritiek pad",
       "critical-path-tooltip": "Selecteert spans in het kritieke pad: de langste reeks afhankelijke taken die de minimale duur van de trace bepaalt.",
       "duration": "Duur",
+      "error-indicator": "",
       "errors": "Fouten",
       "errors-tooltip": "Selecteert spans waarvan de status gelijk is aan fout.",
       "export-started": "Exporteren gestart",
@@ -9135,11 +9151,17 @@
       "share-export-json": "Exporteren als JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Begintijd",
+      "success-indicator": "",
       "target": "Doel",
       "tooltip-url": "{{route}} of {{url}} of {{target}} of {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Tracering-id",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9728,6 +9750,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Eergisteren",
           "previousFiscalQuarter": "Vorig fiscaal kwartaal",
@@ -10646,7 +10670,6 @@
       "ariaLabel-panel-loading": "Laadbalk van paneel",
       "ariaLabel-panel-status": "Paneelstatus",
       "errors-and-notices": "Fouten en meldingen",
-      "inspect-errors-notices": "Inspecteren",
       "tooltip-cancel": "Query annuleren",
       "tooltip-cancel-loading": "Query annuleren",
       "tooltip-stop-streaming": "Streamen stoppen",
@@ -10728,9 +10751,13 @@
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
       "cell-inspect-tooltip": "Waarde inspecteren",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Naar klembord kopiëren",
       "csv-counts": "Rijen:{{rows}}, kolommen:{{columns}}",
       "csv-placeholder": "Voer hier csv in ...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Voeg alle weergegeven waarden toe aan het filter",
         "blanks": "(Lege velden)",
@@ -12481,6 +12508,9 @@
       "subtitle": "Regels die bepalen of een waarschuwing afgaat",
       "title": "Waarschuwingsregels"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Kies hoe je je contactpunten op de hoogte wilt stellen wanneer een waarschuwingsinstantie afgaat",
       "title": "Contactpunten"
@@ -12550,6 +12580,7 @@
       "title": "Aanmaken"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nieuwe waarschuwingsregel"
     },
     "create-dashboard": {
@@ -12584,6 +12615,10 @@
     },
     "explore": {
       "title": "Verkennen"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Ontvang monitoringinzichten van echte gebruikers",
@@ -12665,6 +12700,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "Oproepbaar"
     },
@@ -12695,6 +12734,10 @@
     },
     "profiles": {
       "title": "Profielen"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -12981,6 +13024,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13004,6 +13051,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13019,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13039,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13086,15 +13138,14 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13108,11 +13159,15 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "new": {
+      "default-title": ""
     },
     "save-status": {
       "failed": "",
@@ -13122,6 +13177,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13153,10 +13209,19 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Instellingen wissen"
+      "clear-tooltip": "Instellingen wissen",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Kleurenseries op"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -16577,8 +16642,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16744,6 +16808,8 @@
       "name-faceted-filter": "Zichtbaarheid van reeksen"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Toegankelijk",
         "label-dash": "Liggend streepje",
@@ -17894,7 +17960,7 @@
       "delete-modal-body": "Weet je zeker dat je '{{name}}' wilt verwijderen?",
       "delete-modal-confirm": "Verwijderen",
       "delete-modal-title": "Variabele verwijderen",
-      "folder-description": "Beperk de variabele tot een map of kies de hoofdmap Dashboards om deze globaal te maken (overal in de organisatie beschikbaar)",
+      "folder-description": "",
       "folder-description-folder-only": "Stel het bereik van de variabele in op een map die je kunt bewerken",
       "folder-label": "Map",
       "moved": "Variabele verplaatst",
@@ -17914,8 +17980,8 @@
       "move": "Verplaatsen",
       "moving": "Aan het verplaatsen...",
       "title": "Variabelen verplaatsen",
-      "body_one": "Verplaats {{count}} geselecteerde variabele. Als je de hoofdmap Dashboards kiest, wordt deze globaal (overal in de organisatie beschikbaar).",
-      "body_other": "Verplaats {{count}} geselecteerde variabelen. Als je de hoofdmap Dashboards kiest, worden ze globaal (overal in de organisatie beschikbaar).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Verplaats {{count}} geselecteerde variabele naar een map die je kunt bewerken.",
       "body-folder-only_other": "Verplaats {{count}} geselecteerde variabelen naar een map die je kunt bewerken."
     },
