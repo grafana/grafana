@@ -356,7 +356,6 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     gap: theme.spacing(0.75),
     zIndex: theme.zIndex.navbarFixed,
     height: theme.spacing(5.5),
-    marginBottom: theme.spacing(1),
     padding: theme.spacing(0.5, 1),
   }),
   icons: css({

@@ -343,5 +343,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
+    marginTop: theme.spacing(1),
   }),
 });
