@@ -1227,8 +1227,8 @@ func TestConnectionController_process(t *testing.T) {
 				tracer:            tracing.InitializeTracerForTest(),
 			}
 
-			item := &connectionQueueItem{key: tt.conn.Namespace + "/" + tt.conn.Name}
-			err := cc.process(t.Context(), item)
+			key := tt.conn.Namespace + "/" + tt.conn.Name
+			err := cc.process(t.Context(), key)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1393,10 +1393,8 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 			}
 
 			// Process the connection
-			item := &connectionQueueItem{
-				key: "default/test-conn",
-			}
-			err := cc.process(ctx, item)
+			key := "default/test-conn"
+			err := cc.process(ctx, key)
 			require.NoError(t, err, "process should succeed")
 		})
 	}

@@ -77,7 +77,7 @@ func TestRepositoryController_WorkerQueueWaitHistogram(t *testing.T) {
 }
 
 // TestConnectionController_WorkerQueueWaitHistogram verifies the queue-wait histogram
-// records one observation each time a worker picks an item up off the queue.
+// records one observation each time a worker picks a key up off the queue.
 func TestConnectionController_WorkerQueueWaitHistogram(t *testing.T) {
 	const metricName = "grafana_provisioning_connection_worker_queue_wait_seconds"
 
@@ -92,15 +92,16 @@ func TestConnectionController_WorkerQueueWaitHistogram(t *testing.T) {
 
 	require.Equal(t, uint64(0), histogramSampleCountByName(t, reg, metricName))
 
-	cc.queue.Add(&connectionQueueItem{key: "ns/conn-a"})
-	cc.queue.Add(&connectionQueueItem{key: "ns/conn-b"})
+	cc.queue.Add("ns/conn-a")
+	cc.queue.Add("ns/conn-a")
+	cc.queue.Add("ns/conn-b")
 
-	item, _ := cc.queue.Get()
-	cc.queue.Done(item)
+	key, _ := cc.queue.Get()
+	cc.queue.Done(key)
 	require.Equal(t, uint64(1), histogramSampleCountByName(t, reg, metricName))
 
-	item, _ = cc.queue.Get()
-	cc.queue.Done(item)
+	key, _ = cc.queue.Get()
+	cc.queue.Done(key)
 	require.Equal(t, uint64(2), histogramSampleCountByName(t, reg, metricName))
 }
 
@@ -150,12 +151,13 @@ func TestConnectionController_WorkerQueueSizeGauge(t *testing.T) {
 
 	require.Equal(t, 0.0, gaugeValueByName(t, reg, metricName))
 
-	cc.queue.Add(&connectionQueueItem{key: "ns/conn-a"})
-	cc.queue.Add(&connectionQueueItem{key: "ns/conn-b"})
+	cc.queue.Add("ns/conn-a")
+	cc.queue.Add("ns/conn-a")
+	cc.queue.Add("ns/conn-b")
 	require.Equal(t, 2.0, gaugeValueByName(t, reg, metricName))
 
-	// Get removes the item from the queue (Len drops); Done clears it from processing.
-	item, _ := cc.queue.Get()
-	cc.queue.Done(item)
+	// Get removes the key from the queue (Len drops); Done clears it from processing.
+	key, _ := cc.queue.Get()
+	cc.queue.Done(key)
 	require.Equal(t, 1.0, gaugeValueByName(t, reg, metricName))
 }
