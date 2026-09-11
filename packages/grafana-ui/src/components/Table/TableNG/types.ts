@@ -306,6 +306,13 @@ export interface TypographyCtx {
   avgCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
+  /**
+   * The narrowest width at which the line counter keeps a string on one line — see
+   * `createTypographyContext`. Anything that sizes a column so its text fits has to measure with
+   * this rather than with `ctx.measureText`, or the counter and the sizing disagree about the same
+   * string and the row reserves a line the browser doesn't draw.
+   */
+  measureWidth: (text: string) => number;
 }
 
 export type MeasureCellHeight = (
