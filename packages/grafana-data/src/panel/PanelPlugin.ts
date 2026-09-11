@@ -4,7 +4,12 @@ import { type ComponentClass, type ComponentType } from 'react';
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
-import { type FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
+import { type FieldConfig } from '../types/dataFrame';
+import {
+  type FieldConfigProperty,
+  type FieldConfigPropertyItem,
+  type FieldConfigSource,
+} from '../types/fieldOverrides';
 import {
   type PanelPluginMeta,
   type PanelProps,
@@ -31,10 +36,18 @@ import { createFieldConfigRegistry } from './registryFactories';
 import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
-export type StandardOptionConfig = {
+export type StandardOptionConfig<TContextOptions = unknown> = {
   defaultValue?: any;
   settings?: any;
   hideFromDefaults?: boolean;
+  /**
+   * Conditionally hide this standard property in the options pane. Replaces any showIf the property
+   * declares itself, so a panel can force a property visible as well as hide it.
+   *
+   * Only affects the defaults pane - the property is still offered for override rules. Use
+   * {@link SetFieldConfigOptionsArgs.disableStandardOptions} to remove it everywhere.
+   */
+  showIf?: FieldConfigPropertyItem<FieldConfig, unknown, {}, TContextOptions>['showIf'];
 };
 
 /**
@@ -64,7 +77,7 @@ export interface PanelScreenshotContext {
 export type PanelScreenshotHandler = (ctx: PanelScreenshotContext) => Promise<Blob | null>;
 
 /** @beta */
-export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
+export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any, TContextOptions = unknown> {
   /**
    * Configuration object of the standard field config properites
    *
@@ -79,7 +92,7 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
    * }
    * ```
    */
-  standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig>>;
+  standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig<TContextOptions>>>;
 
   /**
    * Array of standard field config properties that should not be available in the panel
@@ -121,7 +134,7 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
    * }
    * ```
    */
-  useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
+  useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions, TContextOptions>) => void;
 }
 
 /**
@@ -447,7 +460,7 @@ export class PanelPlugin<
    *
    * @public
    */
-  useFieldConfig(config: SetFieldConfigOptionsArgs<TFieldConfigOptions> = {}) {
+  useFieldConfig(config: SetFieldConfigOptionsArgs<TFieldConfigOptions, TOptions> = {}) {
     // builder is applied lazily when custom field configs are accessed
     this._initConfigRegistry = () => createFieldConfigRegistry(config, this.meta.name);
 
