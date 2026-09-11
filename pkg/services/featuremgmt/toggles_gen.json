@@ -3109,7 +3109,8 @@
       "metadata": {
         "name": "grafana.disableLegacyFeatureToggles",
         "resourceVersion": "1789140399996",
-        "creationTimestamp": "2026-09-11T15:26:39Z"
+        "creationTimestamp": "2026-09-11T15:26:39Z",
+        "deletionTimestamp": "2026-09-11T16:04:13Z"
       },
       "spec": {
         "description": "Serve an empty legacy featureToggles map to the frontend, so only OpenFeature flags resolve",
@@ -3190,6 +3191,20 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.frontendLegacyFeatureToggleHandling",
+        "resourceVersion": "1789142653210",
+        "creationTimestamp": "2026-09-11T16:04:13Z"
+      },
+      "spec": {
+        "description": "Controls how the frontend handles reads of the legacy config.featureToggles map. One of \"off\", \"log\" (report each toggle once) or \"block\" (report, and resolve every toggle to undefined).",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "off"
       }
     },
     {

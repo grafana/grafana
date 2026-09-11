@@ -26,6 +26,15 @@ export declare global {
     __grafanaLegacyAPIMode?: string;
 
     /**
+     * How the frontend handles reads of the legacy `config.featureToggles` map.
+     * Controlled by the `grafana.frontendLegacyFeatureToggleHandling` feature flag.
+     * - `off`: reads are left untouched
+     * - `log`: reads resolve normally but each toggle is reported once
+     * - `block`: reads resolve to undefined, and each toggle is reported once
+     */
+    __grafanaLegacyFeatureToggleMode?: string;
+
+    /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.
      * Required in new index.html to fetch necessary data before app init()
      **/

@@ -3,9 +3,10 @@ import { AppEvents, type BootData, type GrafanaConfig } from '@grafana/data';
 import { GrafanaBootConfig } from './config';
 import { setAppEvents } from './services/appEvents';
 
-describe('GrafanaBootConfig', () => {
+describe('GrafanaBootConfig legacy feature toggle handling', () => {
   let warnSpy: jest.SpyInstance;
   let publishSpy: jest.Mock;
+  const originalMode = window.__grafanaLegacyFeatureToggleMode;
 
   beforeEach(() => {
     warnSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -15,39 +16,56 @@ describe('GrafanaBootConfig', () => {
 
   afterEach(() => {
     warnSpy.mockRestore();
+    window.__grafanaLegacyFeatureToggleMode = originalMode;
   });
 
-  describe('when disableLegacyFeatureToggles is off', () => {
-    it('reads pass through untouched, with no warning and no toast', () => {
-      const config = createConfig({ disableLegacyFeatureToggles: false });
+  describe('off', () => {
+    it.each([undefined, 'off', 'nonsense'])('does nothing when the mode is %s', (mode) => {
+      window.__grafanaLegacyFeatureToggleMode = mode;
+      const config = createConfig();
 
       expect(config.featureToggles.panelTitleSearch).toBe(true);
-      expect(config.featureToggles.lokiExperimentalStreaming).toBe(false);
-
       expect(warnSpy).not.toHaveBeenCalled();
       expect(publishSpy).not.toHaveBeenCalled();
     });
+  });
 
-    it('is off when the backend omits the field entirely', () => {
-      const config = createConfig({});
+  describe('log', () => {
+    beforeEach(() => {
+      window.__grafanaLegacyFeatureToggleMode = 'log';
+    });
 
-      expect(config.disableLegacyFeatureToggles).toBe(false);
+    it('reports reads but leaves the values intact', () => {
+      const config = createConfig();
+
       expect(config.featureToggles.panelTitleSearch).toBe(true);
-      expect(warnSpy).not.toHaveBeenCalled();
+      expect(config.featureToggles.lokiExperimentalStreaming).toBe(false);
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('says the toggle will stop resolving, rather than that it already has', () => {
+      const config = createConfig();
+
+      void config.featureToggles.panelTitleSearch;
+
+      expect(warnSpy.mock.calls[0][0]).toContain('will stop resolving');
     });
   });
 
-  describe('when disableLegacyFeatureToggles is on', () => {
+  describe('block', () => {
+    beforeEach(() => {
+      window.__grafanaLegacyFeatureToggleMode = 'block';
+    });
+
     it('resolves every toggle to undefined', () => {
-      const config = createConfig({ disableLegacyFeatureToggles: true });
+      const config = createConfig();
 
       expect(config.featureToggles.panelTitleSearch).toBeUndefined();
-      // Reads false in the underlying map too, so this proves it is blanked rather than passed through
       expect(config.featureToggles.lokiExperimentalStreaming).toBeUndefined();
     });
 
-    it('warns once per toggle, naming the toggle', () => {
-      const config = createConfig({ disableLegacyFeatureToggles: true });
+    it('reports once per toggle, not once per read', () => {
+      const config = createConfig();
 
       void config.featureToggles.panelTitleSearch;
       void config.featureToggles.panelTitleSearch;
@@ -55,16 +73,6 @@ describe('GrafanaBootConfig', () => {
 
       expect(warnSpy).toHaveBeenCalledTimes(2);
       expect(warnSpy.mock.calls[0][0]).toContain('"panelTitleSearch"');
-      expect(warnSpy.mock.calls[1][0]).toContain('"lokiExperimentalStreaming"');
-    });
-
-    it('publishes one warning toast per toggle, not per read', () => {
-      const config = createConfig({ disableLegacyFeatureToggles: true });
-
-      void config.featureToggles.panelTitleSearch;
-      void config.featureToggles.panelTitleSearch;
-      void config.featureToggles.lokiExperimentalStreaming;
-
       expect(publishSpy).toHaveBeenCalledTimes(2);
       expect(publishSpy).toHaveBeenNthCalledWith(1, {
         type: AppEvents.alertWarning.name,
@@ -73,25 +81,18 @@ describe('GrafanaBootConfig', () => {
           'Use OpenFeature instead, or remove the legacy toggle entirely.',
         ],
       });
-      expect(publishSpy).toHaveBeenNthCalledWith(2, {
-        type: AppEvents.alertWarning.name,
-        payload: [
-          'Legacy feature toggle read: "lokiExperimentalStreaming"',
-          'Use OpenFeature instead, or remove the legacy toggle entirely.',
-        ],
-      });
     });
 
     it('does not throw when the app event bus is not wired up yet', () => {
       setAppEvents(undefined as never);
-      const config = createConfig({ disableLegacyFeatureToggles: true });
+      const config = createConfig();
 
       expect(() => config.featureToggles.panelTitleSearch).not.toThrow();
       expect(warnSpy).toHaveBeenCalled();
     });
 
     it('closes the bootData bypass by sharing one proxy', () => {
-      const config = createConfig({ disableLegacyFeatureToggles: true });
+      const config = createConfig();
 
       expect(config.bootData.settings.featureToggles).toBe(config.featureToggles);
       expect(config.bootData.settings.featureToggles.panelTitleSearch).toBeUndefined();
@@ -99,14 +100,13 @@ describe('GrafanaBootConfig', () => {
   });
 });
 
-function createConfig(overrides: Partial<GrafanaConfig>): GrafanaBootConfig {
+function createConfig(): GrafanaBootConfig {
   const settings: GrafanaConfig = {
     ...window.grafanaBootData.settings,
     featureToggles: {
       panelTitleSearch: true,
       lokiExperimentalStreaming: false,
     },
-    ...overrides,
   };
   const bootData: BootData = {
     assets: { dark: '', light: '' },

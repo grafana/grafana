@@ -149,7 +149,6 @@ export class GrafanaBootConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
-  disableLegacyFeatureToggles = false;
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
@@ -298,9 +297,10 @@ export class GrafanaBootConfig {
 
     // Installed after the overrides so the URL and localStorage switches still reach the real map,
     // and before the bootData aliasing below so both access paths share the same proxy.
-    if (this.disableLegacyFeatureToggles) {
+    const legacyMode = window.__grafanaLegacyFeatureToggleMode;
+    if (legacyMode === 'log' || legacyMode === 'block') {
       // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
-      this.featureToggles = blankAndReportLegacyFeatureToggles(this.featureToggles);
+      this.featureToggles = reportLegacyFeatureToggles(this.featureToggles, legacyMode);
     }
 
     // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
@@ -314,17 +314,17 @@ export class GrafanaBootConfig {
 }
 
 /**
- * Returns a proxy that reports every legacy feature toggle read and resolves them all to
- * undefined, so single-tenant Grafana behaves like the multi-tenant frontend service, which
- * serves an empty toggle map.
+ * Returns a proxy that reports every legacy feature toggle read. In `block` mode reads also
+ * resolve to undefined, so single-tenant Grafana behaves like the multi-tenant frontend service,
+ * which serves an empty toggle map.
  */
-function blankAndReportLegacyFeatureToggles(featureToggles: FeatureToggles): FeatureToggles {
+function reportLegacyFeatureToggles(featureToggles: FeatureToggles, mode: 'log' | 'block'): FeatureToggles {
   const reportedFeatureToggles = new Set<string>();
 
   return new Proxy(featureToggles, {
-    get(_target, property) {
+    get(target, property, receiver) {
       if (typeof property !== 'string') {
-        return undefined;
+        return Reflect.get(target, property, receiver);
       }
 
       // Reported once per toggle rather than once per read: there are hundreds of legacy reads, so
@@ -333,8 +333,9 @@ function blankAndReportLegacyFeatureToggles(featureToggles: FeatureToggles): Fea
         reportedFeatureToggles.add(property);
 
         // The stack makes the call site findable.
+        const resolution = mode === 'block' ? 'and now resolves to undefined' : 'and will stop resolving';
         console.warn(
-          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated and now resolves to undefined. Use OpenFeature instead, or remove the legacy toggle entirely.`,
+          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated ${resolution}. Use OpenFeature instead, or remove the legacy toggle entirely.`,
           new Error().stack
         );
 
@@ -351,7 +352,7 @@ function blankAndReportLegacyFeatureToggles(featureToggles: FeatureToggles): Fea
         } catch {}
       }
 
-      return undefined;
+      return mode === 'block' ? undefined : Reflect.get(target, property, receiver);
     },
   });
 }

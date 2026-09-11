@@ -10,8 +10,6 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/api/webassets"
@@ -161,15 +159,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	// this is needed for backwards compatibility with external plugins
 	// we should remove this once we can be sure that no external plugins rely on this
 	frontendSettings.FeatureToggles["topnav"] = true
-
-	// Lets the frontend serve an empty legacy toggle map, mirroring what the multi-tenant
-	// frontend service already does, so single-tenant can reproduce that behaviour.
-	frontendSettings.DisableLegacyFeatureToggles, _ = ofClient.BooleanValue(
-		c.Req.Context(),
-		featuremgmt.FlagGrafanaDisableLegacyFeatureToggles,
-		false,
-		openfeature.TransactionContext(c.Req.Context()),
-	)
 
 	hideVersion := hs.Cfg.Anonymous.HideVersion && !c.IsSignedIn
 	if hideVersion {
