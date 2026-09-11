@@ -22,7 +22,6 @@ const meta: Meta<typeof Badge> = {
     },
     color: { control: 'select' },
     text: { control: 'text' },
-    tooltip: { control: 'text' },
   },
 };
 
@@ -57,5 +56,4 @@ export const LongTextWrapping: StoryFn<typeof Badge> = () => (
     />
   </div>
 );
-
 export default meta;
