@@ -4,6 +4,7 @@ import { type ComponentClass, type ComponentType } from 'react';
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
+import { type FieldConfig } from '../types/dataFrame';
 import {
   type FieldConfigProperty,
   type FieldConfigPropertyItem,
@@ -46,7 +47,7 @@ export type StandardOptionConfig = {
    * Only affects the defaults pane - the property is still offered for override rules. Use
    * {@link SetFieldConfigOptionsArgs.disableStandardOptions} to remove it everywhere.
    */
-  showIf?: FieldConfigPropertyItem['showIf'];
+  showIf?: FieldConfigPropertyItem<FieldConfig>['showIf'];
 };
 
 /**
