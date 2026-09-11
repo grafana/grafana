@@ -55,7 +55,7 @@ Choose the method that best fits your workflow. As a best practice, test and val
 
 Rules only tell you about a problem if the notification reaches someone. Grafana-managed rules route through the Grafana Alertmanager, not through the Alertmanager your data source-managed rules used, so imported rules notify through whatever contact points and notification policies already exist in Grafana.
 
-Consider [importing your Alertmanager configuration](ref:import-alertmanager-configuration) before you import rules. Grafana imports the configuration as it is and evaluates it the way your Prometheus or Mimir Alertmanager does, so the rules you import next land in the routing you already have.
+Consider [importing your Alertmanager configuration](ref:import-alertmanager-configuration) before you import rules. Grafana imports the configuration as it is and runs it the way your Prometheus or Mimir Alertmanager does. You can then route the rules you import through the imported policy tree.
 
 ## How it works
 

@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/import-alertmanager-configuration/
-description: Import an existing Prometheus or Mimir Alertmanager configuration into Grafana Alerting and operate it as Grafana-managed notification resources.
+description: Import an existing Prometheus or Mimir Alertmanager configuration as Grafana-managed notification resources, then manage them directly in Grafana Alerting.
 keywords:
   - grafana
   - alerting
@@ -36,6 +36,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policies
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policies
+  notification-policy-default-timing:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#edit-the-default-notification-policy
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#edit-the-default-notification-policy
   configure-templates:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
@@ -66,7 +71,7 @@ refs:
 
 # Import Alertmanager configuration to Grafana-managed notifications
 
-You can import an existing Prometheus or Mimir Alertmanager configuration into Grafana Alerting. Grafana stores the configuration as-is and evaluates it the way your Alertmanager does. It then surfaces the configuration as Grafana notification resources: contact points, a notification policy tree, notification templates, time intervals, and inhibition rules. You operate your notification setup from Grafana.
+You can import an existing Prometheus or Mimir Alertmanager configuration into Grafana Alerting. Grafana runs the imported receivers as Mimir Alertmanager v0 integrations and surfaces the configuration as Grafana notification resources: contact points, a notification policy tree, notification templates, time intervals, and inhibition rules. You operate your notification setup from Grafana.
 
 Importing is a safe operation. The source Alertmanager keeps its configuration, and Grafana never writes back to it.
 
@@ -85,8 +90,8 @@ Importing Alertmanager configuration is in [public preview](https://grafana.com/
 
 Before you import an Alertmanager configuration, make sure you have the following:
 
-- **A source Grafana can read**: A configuration YAML file with its template files, or a configured Mimir Alertmanager data source. Upstream Prometheus Alertmanager data sources aren't supported.
-- **Permissions**: Importing a configuration requires the `alert.notifications:write` permission, or the scoped Alertmanager imports permissions. Both are granted to the Admin role by default. Promoting an import additionally requires create permissions for each resource type in the configuration: contact points, notification policies, notification templates, time intervals, and inhibition rules. For more details, refer to [RBAC permissions](ref:rbac).
+- **A source Grafana can read**: A configuration YAML file with its template files, or a configured Mimir Alertmanager data source. Prometheus Alertmanager data sources aren't supported.
+- **Permissions**: Creating, reading, updating, or deleting an import requires the corresponding scoped Alertmanager import permissions. Promoting an import requires read and delete permissions for the import, create permissions for contact points and notification policy trees, and write permissions for any notification templates, time intervals, and inhibition rules in the configuration. The Admin role has these permissions by default. For more details, refer to [RBAC permissions](ref:rbac).
 
 Not every Alertmanager configuration can be imported as it is. Refer to [limitations](#limitations) before you start.
 
@@ -94,7 +99,7 @@ Not every Alertmanager configuration can be imported as it is. Refer to [limitat
 
 Grafana imports the configuration as it is and evaluates it the way your source Alertmanager does. Receivers keep their Alertmanager fields, and they notify with the same logic and message format, because Grafana runs them as Mimir-compatible integrations instead of rewriting them into native Grafana ones.
 
-Mimir-compatible integrations don't offer what a native Grafana integration adds on top, such as [images in notifications](ref:images-in-notifications). To pick those up, promote the import and then rebuild the contact point as a Grafana one.
+Mimir-compatible integrations don't offer what a native Grafana integration adds on top, such as [images in notifications](ref:images-in-notifications). To use those features, promote the import and then rebuild the contact point as a Grafana one.
 
 ### What gets imported
 
@@ -104,18 +109,18 @@ The `global` section is the one part with no place of its own. Grafana resolves 
 
 ### Routing
 
-Grafana adds the imported routing tree as a named policy tree of its own, alongside your default notification policy. Alerts reach it only when an alert rule routes to it by name. The matchers inside the imported tree then sort those alerts the way they did in your source Alertmanager. For more details on serving more than one policy tree, refer to [manage multiple notification policies](ref:notification-policy-trees).
+Grafana adds the imported routing tree as a named policy tree of its own, alongside your default notification policy and any other named policy trees. Alerts reach it only when an alert rule routes to it by name. The matchers inside the imported tree then route those alerts the way they did in your source Alertmanager. For more details on serving more than one policy tree, refer to [manage multiple notification policies](ref:notification-policy-trees).
 
-If the imported root route leaves `group_wait`, `group_interval`, or `repeat_interval` unset, Grafana fills in the Alertmanager defaults: 30 seconds, 5 minutes, and 4 hours. The imported tree keeps its own timing instead of inheriting it from your Grafana root policy.
+If the imported root route leaves `group_wait`, `group_interval`, or `repeat_interval` unset, Grafana uses the [default notification timing values](ref:notification-policy-default-timing).
 
-You choose the tree name when you import. This name is also the identifier of the import, so pick something you recognize, such as `prometheus-prod`. The name has to be a valid DNS subdomain name and is length-limited; for more details, refer to [limitations](#limitations).
+You choose the tree name when you import. This name is also the identifier of the import, so pick something you recognize, such as `mimir-prod`. The name can't be `default` or match another named policy tree. It must be a valid DNS subdomain name and is length-limited; for more details, refer to [limitations](#limitations).
 
 ### Name conflicts
 
 Contact points, time intervals, and notification templates are identified by name, and the imported configuration may reuse names that already exist. Rather than fail or overwrite, Grafana renames the incoming resource:
 
-1. Grafana appends `_` and the import identifier to the name, for example `default` becomes `default_prometheus-prod`.
-1. If that name is also taken, Grafana appends a number, for example `default_prometheus-prod_01`.
+1. Grafana appends `_` and the import identifier to the name, for example `default` becomes `default_mimir-prod`.
+1. If that name is also taken, Grafana appends a number, for example `default_mimir-prod_01`.
 
 All references to a renamed resource are updated throughout the imported configuration, so routing still points at the right contact point.
 
@@ -131,7 +136,7 @@ To make imported resources editable and available for reference, promote the imp
 
 ### One import at a time
 
-Grafana stores one imported configuration per organization. Importing a second configuration with a different identifier fails unless you explicitly replace the existing one.
+Grafana stores one imported configuration per organization. Before you stage another configuration, promote or revert the existing one. You can also explicitly replace the existing configuration during import.
 
 ## Import with the Grafana Alerting user interface
 
@@ -141,7 +146,7 @@ The Grafana Alerting user interface imports notification resources and alert rul
 1. In the **More** menu, click **Import to Grafana Alerting**.
 1. Choose how the resources are added:
    - **Stage** brings the configuration in as a read-only, reversible copy.
-   - **Promote** merges the configuration into your live configuration immediately. This can't be undone. To reverse it you have to delete each resulting resource by hand.
+   - **Promote** merges the configuration into your live configuration immediately. This can't be undone. To reverse it, you have to delete each resulting resource by hand.
 1. Click **Next**.
 1. On the **Import notification resources** step, choose the **Import source**:
    - **Alertmanager config YAML** uploads a configuration file. Optionally, upload the template files the configuration references. Each file is imported as a template named after the file.
@@ -159,12 +164,12 @@ The Alertmanager import endpoints are compatible with the [Mimir Alertmanager HT
 
 In these endpoints, an import is addressed by its identifier, which is set with the `X-Grafana-Alerting-Config-Identifier` header and defaults to `imported`.
 
-| Method | Endpoint                                      | Summary                                                                            |
-| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| POST   | `/convert/api/v1/alerts`                      | Import an Alertmanager configuration, optionally promoting it in the same request. |
-| GET    | `/convert/api/v1/alerts`                      | Get the staged configuration. Secrets are masked.                                  |
-| DELETE | `/convert/api/v1/alerts`                      | Delete the staged configuration. The Grafana configuration is unaffected.          |
-| POST   | `/convert/api/v1/alerts/{Identifier}/promote` | Promote a staged configuration into the Grafana configuration.                     |
+| Method | Endpoint                                          | Summary                                                                            |
+| ------ | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| POST   | `/api/convert/api/v1/alerts`                      | Import an Alertmanager configuration, optionally promoting it in the same request. |
+| GET    | `/api/convert/api/v1/alerts`                      | Get the staged configuration. Secrets are masked.                                  |
+| DELETE | `/api/convert/api/v1/alerts`                      | Delete the staged configuration. The Grafana configuration is unaffected.          |
+| POST   | `/api/convert/api/v1/alerts/{Identifier}/promote` | Promote a staged configuration into the Grafana configuration.                     |
 
 The `POST` endpoint accepts YAML and JSON. If no media type is specified, YAML is assumed. The request body has the same shape as the Mimir Alertmanager configuration API:
 
@@ -180,18 +185,15 @@ alertmanager_config: |
         - url: 'https://example.com/webhook'
 ```
 
-A successful import returns the merge result, including any renamed resources:
+A successful import returns the merge result:
 
 ```json
 {
   "status": "success",
   "stats": {
-    "addedRoute": "prometheus-prod",
-    "addedReceivers": ["webhook", "default_prometheus-prod"],
-    "addedTemplates": ["default.tmpl"]
-  },
-  "renameResources": {
-    "receivers": { "default": "default_prometheus-prod" }
+    "added_route": "mimir-prod",
+    "added_receivers": ["webhook"],
+    "added_templates": ["default.tmpl"]
   }
 }
 ```
@@ -225,7 +227,7 @@ MIMIR_ADDRESS=<GRAFANA_BASE_URL>/api/convert/ \
 MIMIR_AUTH_TOKEN=<SERVICE_ACCOUNT_TOKEN> \
 MIMIR_TENANT_ID=1 \
 mimirtool alertmanager load alertmanager.yaml default.tmpl \
-  --extra-headers "X-Grafana-Alerting-Config-Identifier=prometheus-prod"
+  --extra-headers "X-Grafana-Alerting-Config-Identifier=mimir-prod"
 ```
 
 Replace the following placeholders:
@@ -244,7 +246,7 @@ To promote a configuration that's already staged, call the promote endpoint with
 ```bash
 curl -X POST \
   -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
-  <GRAFANA_BASE_URL>/api/convert/api/v1/alerts/prometheus-prod/promote
+  <GRAFANA_BASE_URL>/api/convert/api/v1/alerts/mimir-prod/promote
 ```
 
 After promotion, the staged configuration no longer exists. Its resources are part of the Grafana configuration. You can edit them through the regular notification APIs and user interface.
@@ -268,12 +270,12 @@ Reverting deletes the imported notification policy tree. Alert rules that route 
 
 Consider the following when you import an Alertmanager configuration:
 
-- **Unsupported receiver fields**: An integration field that reads its value from elsewhere, which includes every `*_file` and `*_ref` variant. Has no equivalent in Grafana. Grafana rejects a configuration that contains one, so nothing is imported. Supply the value inline in the matching field instead, and drop the `_file` or `_ref` variant.
+- **Unsupported receiver fields**: Integration fields that read their values from elsewhere, including every `*_file` and `*_ref` variant, have no equivalent in Grafana. Grafana rejects a configuration that contains one, so nothing is imported. Supply the value inline in the matching field instead, and drop the `_file` or `_ref` variant.
 - **Data source support**: Grafana reads a configuration from a Mimir Alertmanager data source. Upstream Prometheus Alertmanager doesn't expose a configuration API, so those data sources aren't supported. Import a configuration YAML file instead.
 - **Global settings**: After you promote an import, the `global` section no longer exists as a section of its own. Grafana has resolved its values into each integration setting that relies on them, so a promoted contact point carries the resolved value rather than a reference to `global`.
 - **Policy tree name**: The name of the imported policy tree, which is also the import identifier, must be a valid DNS subdomain name of at most 40 characters, using only lowercase alphanumeric characters, `-`, and `.`.
-- **One staged configuration at a time**: Grafana stores one staged configuration per organization. Importing a second configuration with a different identifier fails unless you explicitly replace the existing one.
-- **Template name conflicts across imports**: Grafana renames colliding template files, but the templates defined inside those files share one namespace. Say an earlier import defines a template called `default.email` that renders `X`, and a new import defines `default.email` again, in a file under a different name, rendering `Y`. Which definition wins isn't deterministic, and every contact point that uses that name gets the winner—so contact points from the earlier import can start sending the wrong content. Check the names of the templates you define, not just the file names, before you import a second configuration.
+- **One staged configuration at a time**: Grafana stores one staged configuration per organization. Before you stage another configuration, promote or revert the existing one. You can also explicitly replace the existing configuration during import.
+- **Template name conflicts across imports**: Grafana renames colliding template files, but the templates defined inside those files share one namespace. Say an earlier import defines a template called `default.email` that renders `X`, and a new import defines `default.email` again, in a file under a different name, rendering `Y`. Which definition wins isn't deterministic, and every contact point that uses that template gets the winner. As a result, contact points from the earlier import can start sending the wrong content. Check the names of the templates you define, not just the file names, before you import a second configuration.
 - **Deprecated provisioning API**: A staged configuration isn't visible in the deprecated provisioning API, which doesn't return its contact points, templates, or time intervals. Use the Grafana Alerting notification API (`notifications.alerting.grafana.app`) instead.
 - **Inhibition rules**: Imported inhibition rules are supported through the API only. There's no user interface for creating or editing them. For more details, refer to [configure inhibition rules](ref:configure-inhibition-rules).
 
