@@ -1,25 +1,19 @@
 package rulesync
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io"
-	"net/http"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/services/ngalert/dsproxyfetch"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // RulerConfig is the namespace-grouped rule configuration returned by a
@@ -53,25 +47,20 @@ func IsRulerCandidate(ds *datasources.DataSource) error {
 	return nil
 }
 
-// datasourceProxy routes an outbound request through Grafana's datasource proxy
-// service, so the datasource's configured auth/TLS/headers are honoured and the
-// same egress allow/deny-list validation the user-driven proxy runs is applied.
-// *datasourceproxy.DataSourceProxyService satisfies it; a fake stands in for it
-// in tests.
-type datasourceProxy interface {
-	ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string)
-}
+// rulerSyncLogin identifies this worker in the service-identity user the
+// datasource proxy access-checks (surfaced in logs/audit only).
+const rulerSyncLogin = "grafana_external_ruler_sync"
 
 // RulerFetcher fetches namespace-grouped rule configs from a Mimir ruler
 // datasource by routing the ruler config GET through Grafana's datasource proxy
 // service (transport, auth and egress validation are all handled there).
 type RulerFetcher struct {
-	proxy  datasourceProxy
+	proxy  dsproxyfetch.Proxy
 	logger log.Logger
 }
 
 // NewRulerFetcher constructs a RulerFetcher around the datasource proxy service.
-func NewRulerFetcher(proxy datasourceProxy, logger log.Logger) *RulerFetcher {
+func NewRulerFetcher(proxy dsproxyfetch.Proxy, logger log.Logger) *RulerFetcher {
 	return &RulerFetcher{proxy: proxy, logger: logger}
 }
 
@@ -84,50 +73,22 @@ func NewRulerFetcher(proxy datasourceProxy, logger log.Logger) *RulerFetcher {
 // validates egress, and derives the upstream path from the request URL
 // (/api/datasources/proxy/uid/<uid>/config/v1/rules -> config/v1/rules).
 func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error) {
-	// Service-identity context so the proxy's requester lookup succeeds; Fetch
-	// runs from a background job with no user request context.
-	svcCtx, _ := identity.WithServiceIdentity(ctx, ds.OrgID)
-
-	// The proxy strips the /api/datasources/proxy/uid/<uid>/ prefix to derive the
-	// upstream path.
-	proxyURL := fmt.Sprintf("/api/datasources/proxy/uid/%s/config/v1/rules", ds.UID)
-	req, err := http.NewRequestWithContext(svcCtx, http.MethodGet, proxyURL, nil)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to create HTTP request: %w", err)
-	}
 	// Mimir serves the ruler config API as YAML.
-	req.Header.Set("Accept", "application/yaml")
-
-	// Capture the proxied reply in-memory (mirrors AlertingProxy.withReq in
-	// api/util.go): response.NormalResponse records status/body and the wrapper
-	// adds the CloseNotify method web.NewResponseWriter requires. SignedInUser is
-	// the org-scoped service identity the proxy access-checks.
-	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
-	c := &contextmodel.ReqContext{
-		Context: &web.Context{
-			Req:  req,
-			Resp: web.NewResponseWriter(req.Method, &closeNotifierResponseWriter{resp}),
-		},
-		SignedInUser: serviceIdentityUser(ds.OrgID),
-		// The proxy calls ReqContext.JsonApiErr on failures (datasource lookup,
-		// access, plugin load), which logs via Logger when err != nil — it must be
-		// non-nil or that call panics (and this runs in a background goroutine).
-		Logger: f.logger,
+	res, err := dsproxyfetch.Get(ctx, f.proxy, f.logger, ds, "config/v1/rules", rulerSyncLogin, "application/yaml")
+	if err != nil {
+		return nil, 0, err
 	}
-
-	f.proxy.ProxyDatasourceRequestWithUID(c, ds.UID)
 
 	// The ruler config list API returns HTTP 200 with an empty object when there
 	// are no rule groups (see Mimir's ListRules), so a non-2xx is never "no rules":
 	// a 404 here is a proxy-local error (datasource/plugin not found) or an upstream
 	// failure, not an empty ruler. Treat every non-2xx as a fetch failure so
 	// apply/prune never runs and synced rules aren't wiped.
-	if resp.Status()/100 != 2 {
-		body, _ := io.ReadAll(io.LimitReader(bytes.NewReader(resp.Body()), 1024))
-		return nil, 0, fmt.Errorf("ruler config API returned HTTP %d: %s", resp.Status(), string(body))
+	if res.Status/100 != 2 {
+		return nil, 0, fmt.Errorf("ruler config API returned HTTP %d: %s", res.Status, util.TruncateUTF8(string(res.Body), 1024))
 	}
 
-	body := resp.Body()
+	body := res.Body
 	var cfg RulerConfig
 	if err := yaml.Unmarshal(body, &cfg); err != nil {
 		return nil, 0, fmt.Errorf("%w: failed to parse response as ruler config: %v", ErrNotARuler, err)
@@ -143,34 +104,4 @@ func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (R
 	h := fnv.New64a()
 	_, _ = h.Write(body)
 	return cfg, h.Sum64(), nil
-}
-
-// closeNotifierResponseWriter adapts the in-memory response.NormalResponse to
-// what web.NewResponseWriter expects, adding CloseNotify. Mirrors the
-// safeMacaronWrapper used by AlertingProxy (api/util.go).
-type closeNotifierResponseWriter struct {
-	http.ResponseWriter
-}
-
-func (w *closeNotifierResponseWriter) CloseNotify() <-chan bool {
-	return make(chan bool)
-}
-
-// serviceIdentityUser builds the *user.SignedInUser the datasource proxy
-// access-checks. The ReqContext requires a *user.SignedInUser, which
-// identity.WithServiceIdentity does not provide, so mirror it here carrying the
-// datasource query/read permissions the proxy's access check requires.
-func serviceIdentityUser(orgID int64) *user.SignedInUser {
-	return &user.SignedInUser{
-		OrgID:          orgID,
-		OrgRole:        identity.RoleAdmin,
-		Login:          "grafana_external_ruler_sync",
-		IsGrafanaAdmin: true,
-		Permissions: map[int64]map[string][]string{
-			orgID: {
-				datasources.ActionQuery: {datasources.ScopeAll},
-				datasources.ActionRead:  {datasources.ScopeAll},
-			},
-		},
-	}
 }
