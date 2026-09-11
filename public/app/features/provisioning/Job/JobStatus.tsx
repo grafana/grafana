@@ -1,11 +1,15 @@
-import { lazy, Suspense } from 'react';
+import { useEffect } from 'react';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
-import { type Job } from 'app/api/clients/provisioning/v0alpha1';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
+import { type Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type StepStatusInfo } from '../Wizard/types';
 import { type JobType } from '../types';
+
+import { FinishedJobStatus } from './FinishedJobStatus';
+import { JobContent } from './JobContent';
 
 export interface JobStatusProps {
   watch: Job;
@@ -14,29 +18,75 @@ export interface JobStatusProps {
   onRetry?: () => void;
 }
 
-// The job UI (JobContent, JobSummary, FinishedJobStatus) pulls InteractiveTable and with
-// it react-table into every consumer, including the provisioned-dashboard banners on the
-// dashboard view path. Jobs only render after a user action starts one, so the
-// implementation is loaded on demand.
-const JobStatusInner = lazy(() =>
-  import(/* webpackChunkName: "provisioning-job-status" */ './JobStatusInner').then((m) => ({
-    default: m.JobStatusInner,
-  }))
-);
+export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatusProps) {
+  const activeQuery = useListJobQuery({
+    fieldSelector: `metadata.name=${watch.metadata?.name}`,
+    watch: true,
+  });
+  const activeJob = activeQuery?.data?.items?.[0];
+  const repoLabel = watch.metadata?.labels?.['provisioning.grafana.app/repository'];
 
-export function JobStatus(props: JobStatusProps) {
+  // Only initialize finished query if we've checked active jobs and found none
+  const activeQueryCompleted = !activeQuery.isUninitialized && !activeQuery.isLoading;
+  const shouldCheckFinishedJobs = activeQueryCompleted && !activeJob && !!repoLabel;
+
+  useEffect(() => {
+    if (activeQuery.isError) {
+      onStatusChange?.({
+        status: 'error',
+        error: {
+          title: t('provisioning.job-status.title.error-fetching-active-job', 'Error fetching active job'),
+          message: getErrorMessage(activeQuery.error),
+        },
+      });
+    }
+  }, [activeQuery.isError, activeQuery.error, onStatusChange]);
+
+  if (activeQuery.isLoading) {
+    return (
+      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+        <Spinner size={24} />
+        <Text element="h4" color="secondary">
+          <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
+        </Text>
+      </Stack>
+    );
+  }
+
+  if (activeQuery.isError) {
+    return null;
+  }
+
+  if (activeJob) {
+    return (
+      <JobContent
+        job={activeJob}
+        isFinishedJob={false}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+        onRetry={onRetry}
+      />
+    );
+  }
+
+  if (shouldCheckFinishedJobs) {
+    return (
+      <FinishedJobStatus
+        jobUid={watch.metadata?.uid!}
+        repositoryName={repoLabel}
+        onStatusChange={onStatusChange}
+        jobType={jobType}
+        onRetry={onRetry}
+      />
+    );
+  }
+
   return (
-    <Suspense
-      fallback={
-        <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-          <Spinner size={24} />
-          <Text element="h4" color="secondary">
-            <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
-          </Text>
-        </Stack>
-      }
-    >
-      <JobStatusInner {...props} />
-    </Suspense>
+    <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+      <Spinner size={24} />
+      <Text element="h4" weight="bold">
+        <Trans i18nKey="provisioning.job-status.starting">Starting...</Trans>
+      </Text>
+    </Stack>
   );
 }

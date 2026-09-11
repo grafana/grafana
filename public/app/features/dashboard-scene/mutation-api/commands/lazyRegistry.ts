@@ -39,6 +39,14 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
     load: () => import('./getDashboardInfo').then((module) => module.getDashboardInfoCommand),
   },
   {
+    name: 'GET_METADATA_ANNOTATIONS',
+    load: () => import('./getMetadataAnnotations').then((module) => module.getMetadataAnnotationsCommand),
+  },
+  {
+    name: 'UPDATE_METADATA_ANNOTATIONS',
+    load: () => import('./updateMetadataAnnotations').then((module) => module.updateMetadataAnnotationsCommand),
+  },
+  {
     name: 'UPDATE_DASHBOARD_SETTINGS',
     load: () => import('./updateDashboardSettings').then((module) => module.updateDashboardSettingsCommand),
   },

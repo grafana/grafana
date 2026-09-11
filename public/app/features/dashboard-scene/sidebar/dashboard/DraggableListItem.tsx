@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { useDragAndDrop } from '@grafana/ui/unstable';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 interface DraggableListItemProps {
   draggableId: string;

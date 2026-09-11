@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
-import { useDragAndDrop } from '@grafana/ui/unstable';
+import { useDragAndDrop } from '@grafana/ui/internal';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 

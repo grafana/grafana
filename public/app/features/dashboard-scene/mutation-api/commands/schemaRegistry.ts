@@ -26,6 +26,8 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'REMOVE_PANEL', payloadSchema: payloads.removePanel },
   { name: 'LIST_PANELS', payloadSchema: payloads.listPanels },
   { name: 'GET_DASHBOARD_INFO', payloadSchema: payloads.getDashboardInfo },
+  { name: 'GET_METADATA_ANNOTATIONS', payloadSchema: payloads.getMetadataAnnotations },
+  { name: 'UPDATE_METADATA_ANNOTATIONS', payloadSchema: payloads.updateMetadataAnnotations },
   { name: 'UPDATE_DASHBOARD_SETTINGS', payloadSchema: payloads.updateDashboardSettings },
   { name: 'GET_SPEC', payloadSchema: payloads.getSpec },
   { name: 'APPLY_SPEC', payloadSchema: payloads.applySpec },

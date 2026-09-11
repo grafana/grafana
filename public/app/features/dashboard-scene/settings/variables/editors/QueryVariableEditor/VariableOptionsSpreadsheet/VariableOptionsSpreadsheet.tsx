@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { useDragAndDrop } from '@grafana/ui/unstable';
+import { useDragAndDrop } from '@grafana/ui/internal';
 import {
   type StaticOptionsOrderType,
   type StaticOptionsType,

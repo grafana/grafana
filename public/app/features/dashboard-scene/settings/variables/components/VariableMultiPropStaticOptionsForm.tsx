@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
-import { useDragAndDrop } from '@grafana/ui/unstable';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
 

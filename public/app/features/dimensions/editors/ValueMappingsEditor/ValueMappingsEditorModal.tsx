@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { type GrafanaTheme2, MappingType, type SelectableValue, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
-import { useDragAndDrop } from '@grafana/ui/unstable';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 import { buildEditRowModels, createRow, duplicateRow, editModelToSaveModel } from './editRowModels';
@@ -18,7 +18,7 @@ export interface Props {
 }
 
 export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPicker }: Props) {
-  const { DragDropContext, Droppable } = useDragAndDrop();
+  const { DragDropContext, Droppable, isReady } = useDragAndDrop();
   const styles = useStyles2(getStyles);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
@@ -142,17 +142,19 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
             <Droppable droppableId="sortable-field-mappings" direction="vertical">
               {(provided) => (
                 <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                  {rows.map((row, index) => (
-                    <ValueMappingEditRow
-                      key={row.id}
-                      mapping={row}
-                      index={index}
-                      onChange={onChangeMapping}
-                      onRemove={onRemoveRow}
-                      onDuplicate={onDuplicateMapping}
-                      showIconPicker={showIconPicker}
-                    />
-                  ))}
+                  {/* Mount inputs only after DnD loads so the component switch cannot discard their focus. */}
+                  {isReady &&
+                    rows.map((row, index) => (
+                      <ValueMappingEditRow
+                        key={row.id}
+                        mapping={row}
+                        index={index}
+                        onChange={onChangeMapping}
+                        onRemove={onRemoveRow}
+                        onDuplicate={onDuplicateMapping}
+                        showIconPicker={showIconPicker}
+                      />
+                    ))}
                   {provided.placeholder}
                 </tbody>
               )}
