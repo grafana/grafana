@@ -458,7 +458,8 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 			jobStatus.Message = "completed with errors"
 		}
 		jobStatus.State = provisioning.JobStateError
-	} else if len(jobStatus.Warnings) > 0 {
+	} else if len(jobStatus.Warnings) > 0 && len(jobStatus.Errors) == 0 &&
+		(jobStatus.State != provisioning.JobStateError || isWarningError(err)) {
 		jobStatus.State = provisioning.JobStateWarning
 		jobStatus.Message = "completed with warnings"
 	}
