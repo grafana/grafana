@@ -333,7 +333,7 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	// informers watching a remote apiserver to feed Notify's wake signal).
 	// Run it alongside the router service under one module so it starts and
 	// stops with the router rather than leaking independently of it.
-	lifecycle, ok := loader.(grafanarouter.LifecycleRoutesLoader)
+	lifecycle, ok := loader.(services.Service)
 	if !ok {
 		return routerSvc, nil
 	}
