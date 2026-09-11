@@ -93,9 +93,8 @@ anywhere else — see Lifecycle / ownership below.
 `Service.HandleFunc` instruments every request through `routerMetrics` (`metrics.go`: an in-flight
 gauge plus a duration histogram labeled by group/status, registered on the caller's own
 `prometheus.Registerer` — the module server's shared one in production, a fresh `prometheus.NewRegistry()`
-in tests) and logs the outcome (`logging.go`). Both `ProvideService` and `ProvideMiddlewareService`
-take a `reg` param for this; there is no private registry the way the old standalone `grafana router`
-process had one.
+in tests) and logs the outcome (`logging.go`). `ProvideService` takes a `reg` param for this; there
+is no private registry the way the old standalone `grafana router` process had one.
 
 `HandleFunc` is the one serving entry point: it covers `/apis` (by group) **and** `/openapi/v3`
 (there is no exported OpenAPI handler — `serveOpenAPIV3` is private, reached only through
