@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -41,12 +41,23 @@ const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<ValueMappingsEditorModal {...props} />);
+  return render(<ValueMappingsEditorModal {...props} />);
 };
 
 describe('ValueMappingsEditorModal', () => {
-  it('should render component', () => {
-    setup();
+  it('renders the existing value and range mappings with drag handles', async () => {
+    const { baseElement } = setup();
+
+    await waitFor(() => {
+      expect(baseElement.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
+
+    expect(screen.getByPlaceholderText('Exact value to match')).toHaveValue('20');
+    expect(screen.getByPlaceholderText('From')).toHaveValue('21');
+    expect(screen.getByPlaceholderText('To')).toHaveValue('30');
+    const displayTextInputs = screen.getAllByPlaceholderText('Optional display text');
+    expect(displayTextInputs[0]).toHaveValue('Ok');
+    expect(displayTextInputs[1]).toHaveValue('Meh');
   });
 
   describe('On remove mapping', () => {

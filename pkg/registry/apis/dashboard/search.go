@@ -587,6 +587,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
+		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)

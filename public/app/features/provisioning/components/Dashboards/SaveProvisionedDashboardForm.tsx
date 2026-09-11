@@ -68,6 +68,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
+  recoverToNewBranch,
   isHeld,
 }: Props) {
   const navigate = useNavigate();
@@ -107,15 +108,25 @@ export function SaveProvisionedDashboardForm({
   } = methods;
 
   const path = watch('path');
-  const originalPath = isNew ? undefined : defaultValues.path;
+  // Whether this commit creates the file (POST) rather than updates it (PUT). Distinct from isNew,
+  // which is about the dashboard never having been saved: the recovery branch is cut from the
+  // configured branch, so a file that only ever lived on the deleted branch has to be created there.
+  const createsFile = isNew || recoverToNewBranch?.fileExistsOnConfiguredBranch === false;
+  const originalPath = createsFile ? undefined : defaultValues.path;
   const isRename = Boolean(originalPath && path !== originalPath);
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
 
-  // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
+  // Retargeting to another branch is a committable change on its own. In the recovery flow the new
+  // branch is a form default (never dirty), so the flag itself has to enable Save.
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
   const isDirtyState =
-    Boolean(dirtyFields.comment) || Boolean(dirtyFields.path) || isDirty || Boolean(rawDashboardJSON);
+    Boolean(dirtyFields.comment) ||
+    Boolean(dirtyFields.path) ||
+    Boolean(dirtyFields.ref) ||
+    Boolean(recoverToNewBranch) ||
+    isDirty ||
+    Boolean(rawDashboardJSON);
   const [workflow, ref] = watch(['workflow', 'ref']);
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
@@ -146,7 +157,7 @@ export function SaveProvisionedDashboardForm({
   useParkSaveFormDraft(drawer, title, description);
 
   const templateVars: CommitTemplateVars = {
-    action: isNew ? 'create' : 'update',
+    action: createsFile ? 'create' : 'update',
     resourceKind: 'dashboard',
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: title ?? '',
@@ -255,12 +266,30 @@ export function SaveProvisionedDashboardForm({
         return;
       }
 
+      // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
+      // for a draft that was just saved, so go to the saved dashboard instead.
+      if (recoverToNewBranch && upsert?.metadata?.name) {
+        navigate(`/d/${upsert.metadata.name}`);
+        return;
+      }
+
       locationService.partial({
         viewPanel: null,
         editPanel: null,
       });
     },
-    [isNew, path, ref, repository?.branch, repository?.type, handleDismiss, handleNewDashboard, navigateToPreview]
+    [
+      isNew,
+      path,
+      ref,
+      repository?.branch,
+      repository?.type,
+      recoverToNewBranch,
+      navigate,
+      handleDismiss,
+      handleNewDashboard,
+      navigateToPreview,
+    ]
   );
 
   const onBranchSuccess = useCallback(
