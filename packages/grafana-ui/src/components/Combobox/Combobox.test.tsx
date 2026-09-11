@@ -449,6 +449,46 @@ describe('Combobox', () => {
     // Assume that most apis only return with the value
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
 
+    it('loads async options when mounted with controlled isOpen', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(
+        <React.StrictMode>
+          <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />
+        </React.StrictMode>
+      );
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('loads async options once when opening a controlled Combobox', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+
+      function ControlledCombobox() {
+        const [isOpen, setIsOpen] = React.useState(false);
+        return (
+          <Combobox
+            options={asyncOptions}
+            value={null}
+            onChange={onChangeHandler}
+            isOpen={isOpen}
+            onIsOpenChange={setIsOpen}
+          />
+        );
+      }
+
+      render(<ControlledCombobox />);
+      await user.click(screen.getByRole('combobox'));
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
     it('should allow async options', async () => {
       const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);

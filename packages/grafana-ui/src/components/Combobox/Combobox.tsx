@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
+import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -195,6 +195,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
+  useEffect(() => {
+    if (isOpenProp === undefined) {
+      return;
+    }
+
+    if (isOpenProp) {
+      updateOptions('');
+    } else {
+      resetSearch();
+    }
+  }, [isOpenProp, resetSearch, updateOptions]);
+
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
       return null;
@@ -235,15 +247,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
 
-      if (changes.isOpen && (changes.inputValue ?? '') === '') {
-        updateOptions('');
-      }
+      if (isOpenProp === undefined) {
+        if (changes.isOpen && (changes.inputValue ?? '') === '') {
+          updateOptions('');
+        }
 
-      if (!changes.isOpen) {
-        resetSearch();
+        if (!changes.isOpen) {
+          resetSearch();
+        }
       }
     },
-    [onIsOpenChangeProp, updateOptions, resetSearch]
+    [isOpenProp, onIsOpenChangeProp, updateOptions, resetSearch]
   );
 
   // Injects the group header for the first rendered item into the range to render.
