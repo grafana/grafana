@@ -1,17 +1,19 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import {
   type RepositoryView,
   type ResourceListItem,
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS, renderMermaidDiagrams } from 'app/core/utils/mermaid';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
@@ -208,6 +210,8 @@ function RenderedMarkdown({
   repositoryType: RepositoryView['type'];
   syncFinished: number | undefined;
 }) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   // Links to JSON/YAML files or folders are tagged during rewrite; the resource
   // listing is fetched lazily only when the user first clicks one of them.
   const [fetchResources, { data: resourcesData }] = useLazyGetRepositoryResourcesQuery();
@@ -324,7 +328,27 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
-  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
+  // allowRerender rebuilds the DOM on every html change, and a theme flip
+  // redraws the diagrams in place.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) {
+      return;
+    }
+
+    // Per-diagram failures are already reported in place.
+    const controller = new AbortController();
+    renderMermaidDiagrams(el, theme, controller.signal).catch(() => {});
+
+    return () => controller.abort();
+  }, [safe, theme]);
+
+  return (
+    <div ref={containerRef} className={styles.markdownBody}>
+      {/* An empty README is valid, but DangerouslySetHtmlContent rejects empty html. */}
+      {safe && <DangerouslySetHtmlContent allowRerender html={safe} className="markdown-html" />}
+    </div>
+  );
 }
 
 /**
@@ -423,5 +447,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(2),
+  }),
+  markdownBody: css({
+    [`.${DIAGRAM_CLASS}`]: {
+      display: 'flex',
+      justifyContent: 'center',
+      margin: theme.spacing(2, 0),
+      svg: {
+        maxWidth: '100%',
+        height: 'auto',
+      },
+    },
+    [`.${DIAGRAM_ERROR_CLASS}`]: {
+      color: theme.colors.error.text,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginBottom: theme.spacing(0.5),
+    },
   }),
 });

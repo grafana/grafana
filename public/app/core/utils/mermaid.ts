@@ -2,7 +2,6 @@ import type { Mermaid, MermaidConfig } from 'mermaid';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 export const DIAGRAM_CLASS = 'textng-mermaid';
 export const DIAGRAM_ERROR_CLASS = 'textng-mermaid-error';
@@ -15,11 +14,6 @@ const SOURCE_ATTR = 'data-mermaid-source';
 let diagramSeq = 0;
 
 export async function renderMermaidDiagrams(container: HTMLElement, theme: GrafanaTheme2, signal: AbortSignal) {
-  // Not cached: the flag value can change after the providers settle.
-  if (!getFeatureFlagClient().getBooleanValue('text.newFeatures', false)) {
-    return;
-  }
-
   const diagrams = Array.from(container.querySelectorAll(MERMAID_SELECTOR), (block) => {
     // A fence keeps the source in the <code>, but the <pre> is what gets replaced.
     const target = block.tagName === 'CODE' ? (block.parentElement ?? block) : block;
@@ -89,6 +83,8 @@ function markFailed(target: Element, source: string, error: Error) {
 
   const message = document.createElement('div');
   message.className = DIAGRAM_ERROR_CLASS;
+  // Announce the failure to screen readers without stealing focus.
+  message.setAttribute('role', 'status');
   message.textContent = text;
   anchor.insertAdjacentElement('beforebegin', message);
 }
@@ -122,6 +118,8 @@ function getMermaidConfig(theme: GrafanaTheme2): MermaidConfig {
     // so the shapes would survive with no text in them.
     htmlLabels: false,
     flowchart: { htmlLabels: false, useMaxWidth: true },
+    // We report failures ourselves; never let mermaid inject its own error graphic.
+    suppressErrorRendering: true,
     theme: 'base',
     fontFamily: theme.typography.fontFamily,
     themeVariables: {

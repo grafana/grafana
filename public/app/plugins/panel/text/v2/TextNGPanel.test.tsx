@@ -727,6 +727,45 @@ describe('TextNGPanel', () => {
     });
   });
 
+  describe('mermaid', () => {
+    const fence = '```mermaid\ngraph TD; A-->B;\n```';
+
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
+    it('renders a mermaid fence as a diagram', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      setup(
+        Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      const content = screen.getByTestId('TextNGPanel-converted-content');
+      await screen.findByText('A');
+      expect(content.querySelector('.textng-mermaid svg')).not.toBeNull();
+      expect(content.querySelector('code.language-mermaid')).toBeNull();
+    });
+
+    it('leaves the fence as code when the text.newFeatures flag is off', async () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      mermaidRender.mockClear();
+      setup(
+        Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      const content = screen.getByTestId('TextNGPanel-converted-content');
+      // Let any pending lazy import settle before asserting nothing rendered.
+      await act(async () => {});
+      expect(content.querySelector('code.language-mermaid')).not.toBeNull();
+      expect(mermaidRender).not.toHaveBeenCalled();
+    });
+  });
+
   it('evaluates handlebars expressions against the query data', () => {
     const series = [toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })];
     const props = createProps((target) => target, {

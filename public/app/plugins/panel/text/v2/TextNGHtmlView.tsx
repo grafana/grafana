@@ -3,9 +3,10 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS, renderMermaidDiagrams } from 'app/core/utils/mermaid';
 
-import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS, renderMermaidDiagrams } from './mermaid';
 import { BLOCKS_ATTR } from './pagination';
 
 interface Props {
@@ -25,6 +26,11 @@ export function TextNGHtmlView({ html, className, testId }: Props) {
   useEffect(() => {
     const container = ref.current;
     if (!container) {
+      return;
+    }
+
+    // Not cached: the flag value can change after the providers settle.
+    if (!getFeatureFlagClient().getBooleanValue('text.newFeatures', false)) {
       return;
     }
 

@@ -1,6 +1,4 @@
 import { createTheme } from '@grafana/data';
-import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { renderMermaidDiagrams } from './mermaid';
 
@@ -41,7 +39,6 @@ async function redraw(el: HTMLElement) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
   parse.mockResolvedValue(true);
   render.mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>Start</text></svg>' });
 });
@@ -185,14 +182,5 @@ describe('renderMermaidDiagrams', () => {
 
     expect(initialize).not.toHaveBeenCalled();
     expect(render).not.toHaveBeenCalled();
-  });
-
-  it('does not load mermaid when the text.newFeatures flag is off', async () => {
-    setTestFlags({ [FlagKeys.TextNewFeatures]: false });
-
-    const el = await hydrate(FENCE);
-
-    expect(initialize).not.toHaveBeenCalled();
-    expect(el.querySelector('code.language-mermaid')).not.toBeNull();
   });
 });
