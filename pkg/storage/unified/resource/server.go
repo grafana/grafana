@@ -68,6 +68,10 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
 
+// filteredBookmarkDelay leaves a recovery window for late writes without
+// delaying progress from objects already sent to the client.
+const filteredBookmarkDelay = time.Minute
+
 // maxKeysPageSize caps a keys_only page by count. The byte budget also applies,
 // but it measures the wire and a key costs far less there (~20 bytes) than the
 // wrapper holding it does in memory (~120), so bytes alone would admit a page
@@ -2041,8 +2045,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	lastBookmarkRV := int64(-1)
 	sendBookmark := func(rv int64) error {
-		// Don't send repeated bookmarks if no new events were received.
-		if rv <= 0 || rv == lastBookmarkRV {
+		// Don't send repeated or regressing bookmarks.
+		if rv <= 0 || rv <= lastBookmarkRV {
 			return nil
 		}
 
@@ -2057,7 +2061,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return nil
 	}
 
-	var lastEmittedRV int64 // tracks the most recent RV sent to the client
+	var processedRV int64 // Includes events deliberately excluded by watch filters.
+	var lastObjectRV int64
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2084,9 +2089,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return err
 		}
 
-		lastEmittedRV = initialEventsRV
+		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
-			if err := sendBookmark(lastEmittedRV); err != nil {
+			if err := sendBookmark(processedRV); err != nil {
 				return err
 			}
 		}
@@ -2095,12 +2100,14 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
-		since = lastEmittedRV
+		since = processedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
 		since = req.Since
 	}
+
+	_, isKVBackend := s.backend.(KVBackend)
 
 	// Set up periodic bookmark ticker when the client opted in.
 	var bookmarkC <-chan time.Time
@@ -2116,8 +2123,17 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return nil
 
 		case <-bookmarkC:
-			if err := sendBookmark(lastEmittedRV); err != nil {
-				return err
+			cutoff := time.Now().Add(-filteredBookmarkDelay)
+			cutoffRV := cutoff.UnixMicro()
+			if IsSnowflake(processedRV) {
+				cutoffRV = snowflakeFromTime(cutoff)
+			}
+			// Object sends have already advanced the client's cursor; only filtered progress is held back.
+			bookmarkRV := max(lastObjectRV, min(processedRV, cutoffRV))
+			if bookmarkRV > since {
+				if err := sendBookmark(bookmarkRV); err != nil {
+					return err
+				}
 			}
 
 		case event, ok := <-stream:
@@ -2126,11 +2142,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				return nil
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
-			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Name, event.Folder) {
-					continue
-				}
-
+			if event.ResourceVersion <= since {
+				continue
+			}
+			// KV notifiers settle and order events across collections. Legacy SQL polls
+			// group/resources separately, so other collections cannot establish progress.
+			if !isKVBackend && (event.Key.Group != key.Group || event.Key.Resource != key.Resource) {
+				continue
+			}
+			if matchesQueryKey(key, event.Key) && checker(event.Key.Name, event.Folder) {
 				value := event.Value
 				// remove the delete marker stored in the value for deleted objects
 				if event.Type == resourcepb.WatchEvent_DELETED {
@@ -2164,7 +2184,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if err := srv.Send(resp); err != nil {
 					return err
 				}
-				lastEmittedRV = event.ResourceVersion
+				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
@@ -2175,6 +2195,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 			}
+			// Progress is not a delivery cutoff: keep using the fixed starting since.
+			processedRV = max(processedRV, event.ResourceVersion)
 		}
 	}
 }
