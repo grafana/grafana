@@ -11,6 +11,7 @@ import {
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,
+  type StandardEditorContext,
   FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -53,7 +54,9 @@ export function getFieldOverrideCategories(
   registry: FieldConfigOptionsRegistry,
   data: DataFrame[],
   searchQuery: string,
-  onFieldConfigsChange: (config: FieldConfigSource) => void
+  onFieldConfigsChange: (config: FieldConfigSource) => void,
+  // Panel options, so an override editor can render against them
+  options?: Record<string, unknown>
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -97,8 +100,9 @@ export function getFieldOverrideCategories(
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
     const overrideData = getFramesForMatcherScope(data, override.matcher.scope);
-    const context = {
+    const context: StandardEditorContext<unknown, unknown> = {
       data: overrideData,
+      options,
       getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
       isOverride: true,
     };
