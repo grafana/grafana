@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -78,6 +79,8 @@ func classifyWarning(err error) (string, bool) {
 	case errors.As(err, &validationErr):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
+		return provisioning.ReasonResourceInvalid, true
+	case utils.IsResourceManagerKindConflictError(err):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &unmanagedErr):
 		return provisioning.ReasonResourceInvalid, true

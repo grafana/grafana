@@ -95,12 +95,7 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Changing the manager kind is not allowed.
 	// Remove the old manager first, then add a new one with a different kind.
 	if hasOld && managerNew.Kind != managerOld.Kind {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "Cannot change resource manager kind; remove the existing manager first, then add the new one",
-		}}
+		return utils.NewResourceManagerKindConflictError(managerOld, managerNew)
 	}
 
 	// For non-Terraform managers, identity changes are also blocked.

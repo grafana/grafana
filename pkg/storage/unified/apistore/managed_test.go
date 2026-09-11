@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +25,32 @@ import (
 	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
+	_, provisioner, err := identity.WithProvisioningIdentity(t.Context(), "default")
+	require.NoError(t, err)
+	for _, current := range []utils.ManagerProperties{
+		{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider", AllowsEdits: true},
+		{Kind: utils.ManagerKindClassicFP}, //nolint:staticcheck
+	} {
+		t.Run(string(current.Kind), func(t *testing.T) {
+			old, err := utils.MetaAccessor(&unstructured.Unstructured{})
+			require.NoError(t, err)
+			old.SetManagerProperties(current)
+			obj, err := utils.MetaAccessor(&unstructured.Unstructured{})
+			require.NoError(t, err)
+			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "dashboards"})
+
+			err = checkManagerPropertiesOnUpdateSpec(provisioner, obj, old)
+			require.Error(t, err)
+			require.True(t, apierrors.IsForbidden(err))
+			require.True(t, utils.IsResourceManagerKindConflictError(err))
+			require.True(t, apierrors.HasStatusCause(err, "ResourceManagerKindConflict"))
+			require.Contains(t, err.Error(), string(current.Kind))
+			require.Contains(t, err.Error(), `to "repo" (identity "dashboards")`)
+		})
+	}
+}
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
