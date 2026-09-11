@@ -76,10 +76,12 @@ if [[ -z "$REMOVED_API" ]]; then
 fi
 
 # === Migration detected — check for feature toggle ===
+# Accepts either an OpenFeature read (preferred) or a legacy config.featureToggles
+# read, since flags that have not been migrated yet are still valid.
 TOGGLE_PRESENT=$(echo "$FILTERED_DIFF" | \
   grep -E '^\+' | \
   grep -vE '^\+\+\+' | \
-  grep -E 'config\.featureToggles\.\w+' || true)
+  grep -E "(useFlag[A-Z][a-zA-Z]*\(|getBooleanValue\(|FlagKeys\.\w+|config\.featureToggles\.\w+)" || true)
 
 if [[ -n "$TOGGLE_PRESENT" ]]; then
   echo "Endpoint migration detected AND feature toggle found. Check passed."
@@ -105,13 +107,20 @@ echo ""
 echo "How to fix:"
 echo "  Gate the migration behind a feature toggle with a fallback:"
 echo ""
-echo "    import { config } from '@grafana/runtime';"
+echo "    import { useFlagYourFeatureFlag } from '@grafana/runtime/internal';"
 echo ""
-echo "    if (config.featureToggles.yourFeatureFlag) {"
+echo "    const useNewApi = useFlagYourFeatureFlag();"
+echo "    if (useNewApi) {"
 echo "      // Use new K8s API endpoint"
 echo "    } else {"
 echo "      // Keep existing API call as fallback"
 echo "    }"
+echo ""
+echo "  Outside React, use:"
+echo "    getFeatureFlagClient().getBooleanValue(FlagKeys.YourFeatureFlag, false)"
+echo ""
+echo "  The flag needs 'React: true' in its Generate field in"
+echo "  pkg/services/featuremgmt/registry.go. See contribute/feature-toggles.md."
 echo ""
 echo "  If a toggle is not needed (e.g., the backend endpoint is already"
 echo "  fully rolled out on all channels), add the label:"

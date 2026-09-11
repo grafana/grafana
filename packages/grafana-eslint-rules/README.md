@@ -365,3 +365,30 @@ const logger = createMonitoringLogger('features.my-area');
 import { getLogger } from '@grafana/runtime/unstable';
 const logger = getLogger('features.my-area');
 ```
+
+### `no-config-feature-toggles`
+
+Disallow reads of the legacy `config.featureToggles` map. Feature flags should be read through OpenFeature instead — `useFlagXxx()` from `@grafana/runtime/internal` in React, or `getFeatureFlagClient().getBooleanValue(FlagKeys.Xxx, default)` outside it.
+
+`config.featureToggles` is a static snapshot taken from bootData at page load. The multi-tenant frontend service serves an empty map, so every flag read through it resolves to `false` there — including flags that are GA and enabled by default, which silently sends code down retired paths. OpenFeature resolves flags over OFREP per tenant instead, and picks up changes without a reload.
+
+The rule matches on the `featureToggles` property rather than a `config` receiver, because the receiver is not always named `config` — aliased imports (`config as grafanaConfig`), renamed locals (`cfg`) and namespace imports (`runtime.config`) all reach the same map.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { config } from '@grafana/runtime';
+if (config.featureToggles.myFeatureFlag) {
+}
+
+// Good ✅ — in React
+import { useFlagMyFeatureFlag } from '@grafana/runtime/internal';
+const enabled = useFlagMyFeatureFlag();
+
+// Good ✅ — outside React
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.MyFeatureFlag, false);
+```
+
+If the flag has no OpenFeature target yet, add `React: true` alongside its existing `LegacyFrontend` in `pkg/services/featuremgmt/registry.go` — do not rename it, since the name is the OFREP key — then run `make gen-feature-toggles`. New flags should use `Generate{React: true}` with a `component.flagName` name and no legacy target. See [the feature flags guide](../../contribute/feature-toggles.md).
