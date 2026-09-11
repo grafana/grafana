@@ -9,11 +9,20 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { MixedDatasource, MIXED_DATASOURCE_NAME } from './MixedDataSource';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn((uid: DataSourceRef | string) => datasourceSrv.get(uid)),
+  getDataSourceInstanceSettings: jest.fn(async () => ({ meta: {} })),
+}));
+
+const getDataSourceInstanceSettingsMock = jest.mocked(getDataSourceInstanceSettings);
 
 const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
@@ -100,6 +109,7 @@ describe('MixedDatasource', () => {
 
   describe('with multi template variable', () => {
     beforeAll(() => {
+      getDataSourceInstanceSettingsMock.mockResolvedValue({} as DataSourceInstanceSettings);
       setDataSourceSrv({
         getInstanceSettings() {
           return {};
@@ -161,6 +171,7 @@ describe('MixedDatasource', () => {
 
   describe('with single value template variable', () => {
     beforeAll(() => {
+      getDataSourceInstanceSettingsMock.mockResolvedValue({} as DataSourceInstanceSettings);
       setDataSourceSrv({
         getInstanceSettings() {
           return {};

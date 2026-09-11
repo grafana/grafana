@@ -9,12 +9,8 @@ import {
   type TypedVariableModel,
   type ScopedVar,
 } from '@grafana/data';
-import {
-  getDataSourceSrv,
-  setTemplateSrv,
-  type TemplateSrv as BaseTemplateSrv,
-  type VariableInterpolation,
-} from '@grafana/runtime';
+import { setTemplateSrv, type TemplateSrv as BaseTemplateSrv, type VariableInterpolation } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { sceneGraph, type VariableCustomFormatterFn, type SceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -133,9 +129,9 @@ export class TemplateSrv implements BaseTemplateSrv {
    * Use filters property on the request (DataQueryRequest) or if this is called from
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
    **/
-  getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
+  async getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): Promise<AdHocVariableFilter[]> {
     let filters: AdHocVariableFilter[] = [];
-    let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
+    let ds = await getDataSourceInstanceSettings(datasourceName);
 
     if (!ds) {
       return [];

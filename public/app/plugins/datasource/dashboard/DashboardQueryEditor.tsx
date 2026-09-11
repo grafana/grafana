@@ -6,6 +6,7 @@ import { useAsync } from 'react-use';
 
 import {
   type DataQuery,
+  type DataSourceRef,
   type GrafanaTheme2,
   type SelectableValue,
   DataTopic,
@@ -14,11 +15,11 @@ import {
 import { t } from '@grafana/i18n';
 import { OperationsEditorRow } from '@grafana/plugin-ui';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
 import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
@@ -50,8 +51,23 @@ const topics = [
 
 export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
 
+function datasourceRefKey(ref?: DataSourceRef | string | { uid?: string; type?: string } | null): string {
+  if (ref == null) {
+    return '';
+  }
+  if (typeof ref === 'string') {
+    return ref;
+  }
+  if (ref.uid) {
+    return ref.uid;
+  }
+  if (ref.type) {
+    return `type:${ref.type}`;
+  }
+  return '';
+}
+
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
-  const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
   const { value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
 
   const panel = useMemo(() => {
@@ -63,10 +79,10 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     if (!panel || !data) {
       return [];
     }
-    const mainDS = await getDatasourceSrv().get(panel.datasource);
+    const mainDS = await getDataSourceInstance(panel.datasource);
     return Promise.all(
       panel.targets.map(async (query) => {
-        const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
+        const ds = query.datasource ? await getDataSourceInstance(query.datasource) : mainDS;
         const fmt = ds.getQueryDisplayText || getQueryDisplayText;
         const queryData = filterPanelDataToQuery(data, query.refId) ?? data;
         return {
@@ -130,17 +146,34 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     );
   };
 
+  const dashboard = getDashboardSrv().getCurrent();
+
+  // Keep the panel list sync so the Select mounts immediately; apply names after settings resolve.
+  // Key and look up by the panel ref only — never the resolved default instance — so the
+  // cache stays valid across the default-datasource load.
+  const { value: datasourceNames = {} } = useAsync(async () => {
+    if (!dashboard) {
+      return {};
+    }
+
+    const entries = await Promise.all(
+      dashboard.panels.map(async (panel) => {
+        const settings = await getDataSourceInstanceSettings(panel.datasource ?? null);
+        return [datasourceRefKey(panel.datasource), settings?.name] as const;
+      })
+    );
+
+    return Object.fromEntries(entries);
+  }, [dashboard]);
+
   const getPanelDescription = useCallback(
     (panel: PanelModel): string => {
-      const datasource = panel.datasource ?? defaultDatasource;
-      const dsname = getDatasourceSrv().getInstanceSettings(datasource)?.name;
+      const dsname = datasourceNames[datasourceRefKey(panel.datasource)];
       const queryCount = panel.targets.length;
       return `${queryCount} ${pluralize('query', queryCount)} to ${dsname}`;
     },
-    [defaultDatasource]
+    [datasourceNames]
   );
-
-  const dashboard = getDashboardSrv().getCurrent();
   const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>

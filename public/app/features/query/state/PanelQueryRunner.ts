@@ -345,7 +345,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
-      request.filters = this.templateSrv.getAdhocFilters(ds.name, true);
+      request.filters = await this.templateSrv.getAdhocFilters(ds.name, true);
 
       request.panelId = panelId;
       request.panelName = panelName;
