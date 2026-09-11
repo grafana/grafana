@@ -3377,6 +3377,7 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
 		{
 			Name:         "alerting.folderHasRulesLabel",
 			Description:  "Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector",
