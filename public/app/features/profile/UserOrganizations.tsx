@@ -1,18 +1,19 @@
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, ScrollContainer, Text } from '@grafana/ui';
+import { Button, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
 import { type UserDTO, type UserOrg } from 'app/types/user';
 
 interface Props {
   user: UserDTO | null;
   orgs: UserOrg[];
   isLoading: boolean;
+  heading: ReactNode;
   setUserOrg: (org: UserOrg) => void;
 }
 
-const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) => {
+const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg, heading }) => {
   if (isLoading) {
     return (
       <LoadingPlaceholder
@@ -27,11 +28,7 @@ const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) =>
 
   return (
     <div>
-      <div>
-        <Text variant="h2" element="h2">
-          <Trans i18nKey="user-orgs.title">Organizations</Trans>
-        </Text>
-      </div>
+      {heading}
 
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.orgsTable}>
