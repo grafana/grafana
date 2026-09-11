@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -100,9 +100,18 @@ afterEach(() => {
 });
 
 describe('<DashboardVariablesList />', () => {
-  test('renders 3 sections (one per variable display type)', () => {
+  test('renders 3 sections (one per variable display type)', async () => {
     const { visibleVar1, visibleVar2, controlsMenuVar1, hiddenVar1 } = buildTestVariables();
-    const { getByRole, elements } = renderVariablesList([hiddenVar1, controlsMenuVar1, visibleVar2, visibleVar1]);
+    const { container, getByRole, elements } = renderVariablesList([
+      hiddenVar1,
+      controlsMenuVar1,
+      visibleVar2,
+      visibleVar1,
+    ]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -118,16 +127,24 @@ describe('<DashboardVariablesList />', () => {
     expect(hiddenNames).toEqual(['ninjaVar1']);
   });
 
-  test('uses custom top placement label when provided', () => {
+  test('uses custom top placement label when provided', async () => {
     const { visibleVar1 } = buildTestVariables();
-    const { getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+    const { container, getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     expect(getByRole('heading', { name: /top of row/i })).toBeInTheDocument();
   });
 
-  test('always renders all 3 section titles even when some are empty', () => {
+  test('always renders all 3 section titles even when some are empty', async () => {
     const { hiddenVar1 } = buildTestVariables();
-    const { getByRole } = renderVariablesList([hiddenVar1]);
+    const { container, getByRole } = renderVariablesList([hiddenVar1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -182,6 +199,9 @@ describe('<DashboardVariablesList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();

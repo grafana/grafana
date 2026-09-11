@@ -119,6 +119,16 @@ export interface CodeMirrorEditorProps {
    */
   onChange: (value: string) => void;
   /**
+   * Called with the current editor contents when the editor loses focus.
+   */
+  onBlur?: (value: string) => void;
+  /**
+   * Called with the current editor contents when Ctrl/Cmd+S is pressed while
+   * focused. Providing this callback handles the shortcut and prevents the
+   * browser's default save action. The caller is responsible for persistence.
+   */
+  onSave?: (value: string) => void;
+  /**
    * Accessible label applied to the editor input.
    */
   'aria-label'?: string;

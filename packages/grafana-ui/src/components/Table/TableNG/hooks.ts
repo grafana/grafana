@@ -32,7 +32,13 @@ import { type MatcherScope } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { CELL_HORIZONTAL_CHROME, HEADER_ICON_SPACE, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_ICON_SPACE,
+  getPaginationChromeHeight,
+  TABLE,
+} from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -138,6 +144,46 @@ export function useSortedRows(
   };
 }
 
+/**
+ * Notify when the table's filtered + sorted parent-row order changes.
+ */
+export function useNotifyDisplayedRowIndices(
+  sortedRows: TableRow[],
+  onDisplayedRowIndicesChange?: (rowIndices: number[]) => void
+) {
+  const callbackRef = useRef(onDisplayedRowIndicesChange);
+  callbackRef.current = onDisplayedRowIndicesChange;
+  const prevIndicesRef = useRef<number[] | undefined>(undefined);
+
+  useEffect(() => {
+    const callback = callbackRef.current;
+    if (!callback) {
+      return;
+    }
+
+    const indices: number[] = [];
+    let hasDifferences = !prevIndicesRef.current;
+    for (let i = 0; i < sortedRows.length; i++) {
+      const row = sortedRows[i];
+      if (row.__depth === 0) {
+        if (!hasDifferences && prevIndicesRef.current?.[indices.length] !== row.__index) {
+          hasDifferences = true;
+        }
+        indices.push(row.__index);
+      }
+    }
+    if (!hasDifferences && prevIndicesRef.current?.length !== indices.length) {
+      hasDifferences = true;
+    }
+    if (!hasDifferences) {
+      return;
+    }
+
+    prevIndicesRef.current = indices;
+    callback(indices);
+  }, [sortedRows]);
+}
+
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
@@ -147,6 +193,8 @@ export interface PaginatedRowsOptions {
   paginationHeight?: number;
   enabled: boolean;
   hasNestedFrames?: boolean;
+  /** Whether the panel has dropped its own padding — the pagination controls then need their own bottom margin. */
+  noPanelPadding?: boolean;
   /** When set to a positive value, fixes the number of rows per page instead of deriving it from the panel height. */
   pageSize?: number;
 }
@@ -163,12 +211,19 @@ export interface PaginatedRowsResult {
   smallPagination: boolean;
 }
 
-// hand-measured. pagination height is 30px, plus 8px top margin
-const PAGINATION_HEIGHT = 38;
-
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, headerHeight, footerHeight, rowHeight, enabled, hasNestedFrames, pageSize }: PaginatedRowsOptions
+  {
+    height,
+    width,
+    headerHeight,
+    footerHeight,
+    rowHeight,
+    enabled,
+    hasNestedFrames,
+    pageSize,
+    noPanelPadding,
+  }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
@@ -224,7 +279,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
+      const rowAreaHeight = height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding);
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
       // ensure at least one row per page is displayed
       rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -244,7 +299,7 @@ export function usePaginatedRows(
       pageRangeStart,
       pageRangeEnd,
     };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize]);
+  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize, noPanelPadding]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
@@ -351,6 +406,7 @@ interface UseHeaderHeightOptions {
   columnWidths: number[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  noPanelPadding?: boolean;
 }
 
 export function useHeaderHeight({
@@ -359,6 +415,7 @@ export function useHeaderHeight({
   columnWidths,
   typographyCtx,
   showTypeIcons = false,
+  noPanelPadding = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
@@ -370,6 +427,9 @@ export function useHeaderHeight({
         }
 
         let width = c - CELL_HORIZONTAL_CHROME;
+        if (noPanelPadding && idx === 0) {
+          width -= FIRST_COLUMN_EXTRA_PADDING;
+        }
         const field = fields[idx];
 
         // filtering icon
@@ -388,7 +448,7 @@ export function useHeaderHeight({
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, showTypeIcons]
+    [fields, columnWidths, showTypeIcons, noPanelPadding]
   );
 
   const headerHeight = useMemo(() => {
@@ -425,7 +485,8 @@ interface UseRowHeightOptions {
   nestedFooterHeight?: number;
 }
 
-const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - CELL_HORIZONTAL_CHROME);
+const getTrueColWidths = (cw: number[], noPanelPadding = false): number[] =>
+  cw.map((c, i) => c - CELL_HORIZONTAL_CHROME - (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0));
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
@@ -574,6 +635,7 @@ interface UseFlatRowHeightOptions {
   defaultHeight: NonNullable<CSSProperties['height']>;
   typographyCtx: TypographyCtx;
   maxHeight?: number;
+  noPanelPadding?: boolean;
 }
 
 /**
@@ -586,6 +648,7 @@ export function useFlatRowHeight({
   defaultHeight,
   typographyCtx,
   maxHeight,
+  noPanelPadding = false,
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const measurers = useMemo(
     () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
@@ -598,7 +661,7 @@ export function useFlatRowHeight({
       return defaultHeight;
     }
 
-    const trueColWidths = getTrueColWidths(columnWidths);
+    const trueColWidths = getTrueColWidths(columnWidths, noPanelPadding);
     const cache: Array<number | undefined> = Array(fields[0]?.values.length ?? 0);
     return (row: TableRow) => {
       let result = cache[row.__index];
@@ -607,7 +670,7 @@ export function useFlatRowHeight({
       }
       return result;
     };
-  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols, noPanelPadding]);
 }
 
 /**
@@ -730,6 +793,9 @@ export interface ContentAwareWidths {
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
+  tableRefreshEnabled?: boolean;
+  filter?: FilterType;
+  noPanelPadding?: boolean;
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
@@ -756,6 +822,9 @@ interface UseContentAwareWidthsOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
+  tableRefreshEnabled?: boolean;
+  filter?: FilterType;
+  noPanelPadding?: boolean;
 }
 
 /**
@@ -768,6 +837,9 @@ export function useContentAwareWidths({
   typographyCtx,
   showTypeIcons = false,
   getActions,
+  tableRefreshEnabled = false,
+  filter,
+  noPanelPadding = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -788,9 +860,21 @@ export function useContentAwareWidths({
             headerTypographyCtx,
             showTypeIcons,
             getActions,
+            tableRefreshEnabled,
+            filter,
+            noPanelPadding,
           }
         : undefined,
-    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions]
+    [
+      enabled,
+      typographyCtx,
+      headerTypographyCtx,
+      showTypeIcons,
+      getActions,
+      filter,
+      tableRefreshEnabled,
+      noPanelPadding,
+    ]
   );
 }
 
