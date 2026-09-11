@@ -92,6 +92,26 @@ func (f *fakeConfigClient) setSpecWithPromote(orgID int64, datasourceUID, target
 	f.objects[obj.GetNamespace()] = obj
 }
 
+// setDatasourceUIDPreservingStatus changes only spec.externalRulerSync's
+// datasourceUid, keeping promote and status as they were — unlike
+// setSpec/setSpecWithPromote, which reset the whole object (status included).
+// Simulates a real spec-only PATCH, e.g. an admin re-pointing sync at a
+// different datasource after a previous promotion committed.
+func (f *fakeConfigClient) setDatasourceUIDPreservingStatus(orgID int64, datasourceUID string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	ns := f.nsMapper(orgID)
+	existing, ok := f.objects[ns]
+	if !ok || existing.Spec.ExternalRulerSync == nil {
+		return
+	}
+	updated := *existing
+	spec := *existing.Spec.ExternalRulerSync
+	spec.DatasourceUid = &datasourceUID
+	updated.Spec.ExternalRulerSync = &spec
+	f.objects[ns] = &updated
+}
+
 // statusFor returns the last-written status for orgID, or nil if none exists.
 func (f *fakeConfigClient) statusFor(orgID int64) *alertingrulesv0alpha1.ConfigStatus {
 	f.mu.Lock()

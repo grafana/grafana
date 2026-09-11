@@ -33,9 +33,11 @@ type ConfigV0alpha1SpecExternalRulerSync struct {
 	// promote, when true, converts the rules already synced from datasourceUid
 	// into native Grafana rules the org owns (their management is cleared so
 	// they become freely editable) and stops syncing them. This is a one-way
-	// action: once promoted the worker no longer manages these rules. Ignored
-	// while the operator ini override `unified_alerting.external_ruler_uid` is
-	// set.
+	// action scoped to that datasourceUid: once promoted, it cannot be
+	// reverted back to false for the same datasourceUid. Pointing
+	// datasourceUid at a different source resumes normal syncing for it,
+	// regardless of this flag. Ignored while the operator ini override
+	// `unified_alerting.external_ruler_uid` is set.
 	Promote *bool `json:"promote,omitempty"`
 	// pollInterval sets how often this org's rules are re-synced from
 	// datasourceUid. Empty defaults to 1m. The worker checks orgs against a

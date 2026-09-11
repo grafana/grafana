@@ -31,14 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// RootFolderTitle is the title of the dedicated folder the syncer lands
+// rootFolderTitle is the title of the dedicated folder the syncer lands
 // imported namespaces under, one per ruler datasource UID. prune and
 // IsManagedFolder key on the folder UID, not this title, so a pre-existing
-// user folder with the same title is harmless. Exported: the promote
-// admission guard (apps/alerting/rules/pkg/app/config, wired from
-// pkg/registry/apps/alerting/rules/register.go) resolves the same folder by
-// title to check it still exists before allowing a promote:false revert.
-func RootFolderTitle(dsUID string) string {
+// user folder with the same title is harmless.
+func rootFolderTitle(dsUID string) string {
 	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
 }
 
@@ -428,7 +425,7 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 		return false, nil
 	}
 	svcCtx, user := identity.WithServiceIdentity(ctx, orgID)
-	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, RootFolderTitle(rc.uid), orgID, user, "")
+	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(rc.uid), orgID, user, "")
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return false, nil
@@ -455,7 +452,7 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 // gone. SyncOrg uses this to force a re-apply instead of letting a persisted
 // dedup key skip it forever once the folder has disappeared from under it.
 func (s *ExternalRulerSyncer) rootFolderMissing(ctx context.Context, orgID int64, user identity.Requester, uid string) (bool, error) {
-	_, err := s.namespaceStore.GetNamespaceByTitle(ctx, RootFolderTitle(uid), orgID, user, "")
+	_, err := s.namespaceStore.GetNamespaceByTitle(ctx, rootFolderTitle(uid), orgID, user, "")
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return true, nil
@@ -540,10 +537,15 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 
 	svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
 
-	// Promotion is the terminal exit: convert the rules this datasource synced
-	// into native rules the org owns and stop syncing. Idempotent — once
-	// promoted there is nothing left owned, so subsequent ticks are cheap
-	// no-ops that just re-assert the terminal status.
+	// Promotion is the terminal exit for rc.uid: convert the rules this
+	// datasource synced into native rules the org owns and stop syncing.
+	// Idempotent — once promoted there is nothing left owned, so subsequent
+	// ticks are cheap no-ops that just re-assert the terminal status.
+	// rc.promote is already scoped to rc.uid (see
+	// externalRulerSyncPromoteFromConfig): it only reads true here while
+	// rc.uid is the datasource that was actually promoted, so pointing
+	// datasourceUid at a different, never-promoted source falls through to
+	// normal syncing below instead of getting stuck behind a stale flag.
 	if rc.promote {
 		if err := s.promote(svcCtx, svcUser, orgID, rc.uid); err != nil {
 			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonPromote, Cause: err})
@@ -649,7 +651,7 @@ type groupKey struct {
 // them, and prunes previously-synced groups that vanished upstream. Returns a
 // classified *SyncError on failure.
 func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, ds *datasources.DataSource, targetDS *datasources.DataSource, cfg RulerConfig) *SyncError {
-	root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, RootFolderTitle(ds.UID), orgID, user, "")
+	root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(ds.UID), orgID, user, "")
 	if err != nil {
 		return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create root folder: %w", err)}
 	}
@@ -772,7 +774,7 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 // folder was never created (sync never actually ran), there's nothing to
 // promote either.
 func (s *ExternalRulerSyncer) promote(ctx context.Context, user identity.Requester, orgID int64, uid string) error {
-	root, err := s.namespaceStore.GetNamespaceByTitle(ctx, RootFolderTitle(uid), orgID, user, "")
+	root, err := s.namespaceStore.GetNamespaceByTitle(ctx, rootFolderTitle(uid), orgID, user, "")
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return nil

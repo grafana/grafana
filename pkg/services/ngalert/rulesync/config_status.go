@@ -174,16 +174,57 @@ func externalRulerSyncTargetDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Con
 	return *c.Spec.ExternalRulerSync.TargetDatasourceUid
 }
 
-// externalRulerSyncPromoteFromConfig reports whether promote-to-native was
-// requested, defaulting to false when any level in the nested optional chain
-// is unset.
+// externalRulerSyncStatusDatasourceUIDFromConfig returns the datasource UID
+// actually used on the last sync attempt (status, not spec — see
+// externalRulerSyncPromoteFromConfig for why this distinction matters), or ""
+// if never synced.
+func externalRulerSyncStatusDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Config) string {
+	if c == nil ||
+		c.Status.ExternalRulerSync == nil ||
+		c.Status.ExternalRulerSync.DatasourceUid == nil {
+		return ""
+	}
+	return *c.Status.ExternalRulerSync.DatasourceUid
+}
+
+// externalRulerSyncPromotionCommittedFromConfig reports whether c's status
+// already shows a committed promotion (the sync worker's terminal
+// ExternalRulerSynced/PromotionCommitted condition).
+func externalRulerSyncPromotionCommittedFromConfig(c *alertingrulesv0alpha1.Config) bool {
+	if c == nil {
+		return false
+	}
+	for _, cond := range c.Status.Conditions {
+		if cond.Type == conditionTypeExternalRulerSynced {
+			return cond.Reason == conditionReasonPromoted
+		}
+	}
+	return false
+}
+
+// externalRulerSyncPromoteFromConfig reports whether promote-to-native
+// applies to the currently-configured datasourceUid. promote is a one-way
+// flag with no admission-level revert (see ValidateConfigWrite), but it is
+// not a permanent kill switch on the whole resource: it only ever committed
+// against one specific datasourceUid (status.externalRulerSync.datasourceUid,
+// the UID actually promoted at the time). If promotion is already committed
+// for a UID other than the one now configured, that commitment doesn't apply
+// here — pointing datasourceUid at a different, never-promoted source must
+// resume normal syncing for it, not stay stuck behind a stale promote:true
+// left over from the old one. Defaults to false when any level in the nested
+// optional chain is unset.
 func externalRulerSyncPromoteFromConfig(c *alertingrulesv0alpha1.Config) bool {
 	if c == nil ||
 		c.Spec.ExternalRulerSync == nil ||
-		c.Spec.ExternalRulerSync.Promote == nil {
+		c.Spec.ExternalRulerSync.Promote == nil ||
+		!*c.Spec.ExternalRulerSync.Promote {
 		return false
 	}
-	return *c.Spec.ExternalRulerSync.Promote
+	if externalRulerSyncPromotionCommittedFromConfig(c) &&
+		externalRulerSyncStatusDatasourceUIDFromConfig(c) != externalRulerSyncDatasourceUIDFromConfig(c) {
+		return false
+	}
+	return true
 }
 
 // externalRulerSyncLastAppliedHashFromConfig returns the persisted dedup key

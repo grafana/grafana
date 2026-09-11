@@ -27,13 +27,14 @@ const (
 //
 // promote is a one-way action once committed (status shows
 // PromotionCommitted): the sync worker stops managing the promoted rules and
-// hands them to the org as freely-editable. Without this check, clearing
-// spec.promote back to false would make the worker resume "syncing" — i.e.
-// silently reclaim and overwrite whatever the org has since done with those
-// rules. That risk only exists while the sync-owned folder is still there:
-// if it's gone, there's nothing left to overwrite, so the revert is safe
-// (regardless of whether a resumed sync can actually recreate the folder —
-// see rootFolderMissing).
+// hands them to the org as freely-editable. This is permanent by design, not
+// just while some side effect (like the sync folder) still exists: promoted
+// rules are freely editable from that point on, and letting the worker ever
+// resume "syncing" over them — even conditionally — risks silently reclaiming
+// and overwriting whatever the org has since done with them. The way back to
+// active sync is a different datasourceUid than the one that was promoted
+// (see the sync worker's own uid-scoped check on rc.promote), not reverting
+// this flag.
 func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Config] {
 	return func(ctx context.Context, req validation.Request[*v0alpha1.Config]) error {
 		obj := req.Object
@@ -50,17 +51,7 @@ func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Co
 		}
 
 		if promotionCommitted(req.OldObject) && !externalRulerSyncPromote(obj) {
-			folderExists := true // fail-safe default: matches this guard's pre-existing unconditional behavior
-			if cfg.ExternalRulerSyncFolderExists != nil {
-				exists, err := cfg.ExternalRulerSyncFolderExists(ctx, externalRulerSyncStatusUID(req.OldObject))
-				if err != nil {
-					return fmt.Errorf("externalRulerSync.promote: check sync folder: %w", err)
-				}
-				folderExists = exists
-			}
-			if folderExists {
-				return fmt.Errorf("externalRulerSync.promote: promotion is a one-way action and cannot be reverted once committed")
-			}
+			return fmt.Errorf("externalRulerSync.promote: promotion is a one-way action and cannot be reverted once committed")
 		}
 
 		return nil
@@ -80,17 +71,6 @@ func promotionCommitted(obj *v0alpha1.Config) bool {
 		}
 	}
 	return false
-}
-
-// externalRulerSyncStatusUID returns the datasource UID actually used on the
-// last sync attempt (status, not spec, which may have since changed). This
-// is the UID the sync worker named the canonical folder after, so it's what
-// the folder-existence check must use.
-func externalRulerSyncStatusUID(c *v0alpha1.Config) string {
-	if c == nil || c.Status.ExternalRulerSync == nil || c.Status.ExternalRulerSync.DatasourceUid == nil {
-		return ""
-	}
-	return *c.Status.ExternalRulerSync.DatasourceUid
 }
 
 func externalRulerSyncPromote(c *v0alpha1.Config) bool {
