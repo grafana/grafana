@@ -79,8 +79,8 @@ describe('NotebookEditSession', () => {
     expect(session.end()).toMatchObject({ cellsAdded: 2, cellsRemoved: 1, cellsMoved: 1, editCount: 5 });
   });
 
-  // Undo does not tell the observer anything, so the action stays counted. Same rule as editCount:
-  // the person did it, and `history_used` is what reports the undo.
+  // Undo does not take the cell count back down, so the action stays counted. Same rule as
+  // editCount: the person did it. undoCount is what says they undid it.
   it('keeps counting a cell that was added and then undone', () => {
     const session = new NotebookEditSession();
     const history = new NotebookEditHistory(session);
@@ -105,15 +105,65 @@ describe('NotebookEditSession', () => {
     expect(session.end().cellsAdded).toBe(1);
   });
 
-  it('starts the next session from nothing on the cell counts too', () => {
+  it('starts the next session from nothing on every count', () => {
     const session = new NotebookEditSession();
     const history = new NotebookEditHistory(session);
     session.start();
 
     history.execute(edit('Add block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    history.undo();
+    history.redo();
     session.end();
 
-    expect(session.end()).toMatchObject({ cellsAdded: 0, cellsRemoved: 0, cellsMoved: 0 });
+    expect(session.end()).toMatchObject({
+      cellsAdded: 0,
+      cellsRemoved: 0,
+      cellsMoved: 0,
+      undoCount: 0,
+      redoCount: 0,
+    });
+  });
+
+  it('counts the undo and redo steps', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    history.execute(edit('Add block', NOTEBOOK_EDIT_KIND.ADD_CELL));
+    history.execute(edit('Edit block'));
+    history.undo();
+    history.undo();
+    history.redo();
+
+    expect(session.end()).toMatchObject({ undoCount: 2, redoCount: 1 });
+  });
+
+  it('counts nothing for an undo with an empty stack', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    expect(history.undo()).toBe(false);
+    expect(history.redo()).toBe(false);
+    expect(session.end()).toMatchObject({ undoCount: 0, redoCount: 0 });
+  });
+
+  it('counts nothing for an undo that threw, since the notebook did not change', () => {
+    const session = new NotebookEditSession();
+    const history = new NotebookEditHistory(session);
+    session.start();
+
+    history.execute({
+      label: 'failing edit',
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: jest.fn(),
+      undo: () => {
+        throw new Error('undo failed');
+      },
+    });
+
+    expect(() => history.undo()).toThrow('undo failed');
+    expect(session.end().undoCount).toBe(0);
   });
 
   it('reports whether the time range moved, once however many times it moved', () => {
