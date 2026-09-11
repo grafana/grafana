@@ -197,7 +197,7 @@ export class LiveDataStream<T = unknown> {
   private process = (msg: DataFrameJSON) => {
     const packetInfo = this.frameBuffer.push(msg);
 
-    if (packetInfo.schemaChanged) {
+    if (packetInfo.schemaChanged || packetInfo.frameChanged) {
       this.stream.next({
         type: InternalStreamMessageType.ChangedSchema,
       });
