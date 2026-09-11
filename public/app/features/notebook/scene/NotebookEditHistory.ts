@@ -36,7 +36,10 @@ export interface NotebookEditHistoryState {
 }
 
 /**
- * Told when an action is recorded or rolled back, so that something outside can count edits.
+ * Told when the history changes, so that something outside can count edits.
+ *
+ * The observer only adds up what happened. It sends nothing. One event carries the totals when the
+ * editing session ends.
  *
  * The stacks themselves cannot be counted: `record` drops the oldest action once the undo stack is
  * full, and `clear` empties both.
@@ -44,6 +47,8 @@ export interface NotebookEditHistoryState {
 export interface NotebookEditHistoryObserver {
   onRecord(kind: NotebookEditKind): void;
   onDiscard(): void;
+  onUndo(): void;
+  onRedo(): void;
 }
 
 export class NotebookEditHistory extends StateManagerBase<NotebookEditHistoryState> {
@@ -92,6 +97,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     action.undo();
     this.undoStack.pop();
     this.redoStack.push(action);
+    this.observer?.onUndo();
     this.publishState();
     return true;
   }
@@ -105,6 +111,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     action.perform();
     this.redoStack.pop();
     this.undoStack.push(action);
+    this.observer?.onRedo();
     this.publishState();
     return true;
   }

@@ -10,6 +10,8 @@ export interface NotebookEditSessionTotals {
   cellsAdded: number;
   cellsRemoved: number;
   cellsMoved: number;
+  undoCount: number;
+  redoCount: number;
   timeRangeChanged: boolean;
 }
 
@@ -30,6 +32,8 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
   private cellsAdded = 0;
   private cellsRemoved = 0;
   private cellsMoved = 0;
+  private undoCount = 0;
+  private redoCount = 0;
   private timeRangeChanged = false;
 
   public start(): void {
@@ -38,6 +42,8 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
     this.cellsAdded = 0;
     this.cellsRemoved = 0;
     this.cellsMoved = 0;
+    this.undoCount = 0;
+    this.redoCount = 0;
     this.timeRangeChanged = false;
   }
 
@@ -49,6 +55,8 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
       cellsAdded: this.cellsAdded,
       cellsRemoved: this.cellsRemoved,
       cellsMoved: this.cellsMoved,
+      undoCount: this.undoCount,
+      redoCount: this.redoCount,
       timeRangeChanged: this.timeRangeChanged,
     };
 
@@ -75,6 +83,18 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
     } else if (kind === NOTEBOOK_EDIT_KIND.MOVE_CELL) {
       this.cellsMoved++;
     }
+  }
+
+  /**
+   * The session counts undo and redo rather than sending an event per step. Holding the key
+   * auto-repeats, so one gesture can walk the whole stack.
+   */
+  public onUndo(): void {
+    this.undoCount++;
+  }
+
+  public onRedo(): void {
+    this.redoCount++;
   }
 
   /**
