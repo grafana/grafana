@@ -195,7 +195,9 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       if (!currentLayout.removePanel) {
         throw new Error('Source layout does not support panel removal');
       }
-      currentLayout.removePanel(vizPanel);
+      // skipFocus: this is a move (remove + re-add), not a delete, so keyboard focus
+      // should not jump to a neighboring panel as a side effect.
+      currentLayout.removePanel(vizPanel, { skipFocus: true });
 
       // TODO: share id-preserving logic with movePanelsHelper.ts.
       targetLayout.addPanel(panelClone);
