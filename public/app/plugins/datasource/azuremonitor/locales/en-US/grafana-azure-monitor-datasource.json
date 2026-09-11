@@ -216,6 +216,7 @@
       "tier-switch-revert": "Revert to {{fromTier}}",
       "tier-switch-title": "Query tier set to {{toTier}}",
       "view-query": "View query in Azure Portal",
+      "warning-auxiliary-data-ingested": "This Auxiliary Logs query is processing {{dataIngested}} GiB when run. Auxiliary Logs have no response-time SLA and aren't suitable for real-time or alerting scenarios. ",
       "warning-auxiliary-raw": "This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
       "warning-basic-raw": "This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
       "warning-data-ingested": "This query is processing {{dataIngested}} GiB when run. "

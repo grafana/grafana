@@ -256,7 +256,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return await this.getResource(`${this.resourcePath}/v1/metadata`);
   }
 
-  async getBasicLogsQueryUsage(query: AzureMonitorQuery, table: string): Promise<number> {
+  async getLogsQueryUsage(query: AzureMonitorQuery, table: string): Promise<number> {
     const templateSrv = getTemplateSrv();
 
     const data = {
@@ -265,6 +265,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       queryType: query.queryType,
       from: templateSrv.replace('$__from'),
       to: templateSrv.replace('$__to'),
+      logTier: query.azureLogAnalytics?.logTier,
     };
     return await this.postResource(`${this.resourcePath}/usage/basiclogs`, data);
   }

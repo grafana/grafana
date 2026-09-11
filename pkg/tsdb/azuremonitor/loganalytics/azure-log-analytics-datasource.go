@@ -114,7 +114,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			Host:   req.URL.Host,
 			Path:   "/v1/query",
 		}
-		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
+		return e.GetLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
 	} else if strings.Contains(req.URL.Path, "/metadata") {
 		isAppInsights := strings.Contains(strings.ToLower(req.URL.Path), "microsoft.insights/components")
 		// Add necessary headers
@@ -184,17 +184,17 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 	return e.Proxy.Do(rw, req, cli)
 }
 
-// builds and executes a new query request that will get the data ingeted for the given table in the basic logs query
-func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
+// builds and executes a new query request that will get the data ingested for the given table in the logs query
+func (e *AzureLogAnalyticsDatasource) GetLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
 	// read the full body
 	originalPayload, readErr := io.ReadAll(reqBody)
 	if readErr != nil {
 		return rw, fmt.Errorf("failed to read request body %w", readErr)
 	}
-	var payload BasicLogsUsagePayload
+	var payload LogsUsagePayload
 	jsonErr := json.Unmarshal(originalPayload, &payload)
 	if jsonErr != nil {
-		return rw, fmt.Errorf("error decoding basic logs table usage payload: %w", jsonErr)
+		return rw, fmt.Errorf("error decoding logs table usage payload: %w", jsonErr)
 	}
 	table := payload.Table
 
@@ -208,12 +208,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		return rw, fmt.Errorf("failed to convert to time: %w", toErr)
 	}
 
-	// basic logs queries only show data for last 8 days or less
-	// data volume query should also only calculate volume for last 8 days if time range exceeds that.
-	diff := to.Sub(from).Hours()
-	if diff > float64(MaxHoursBasicLogs) {
-		from = to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
-	}
+	from = getUsageQueryStart(from, to, payload.LogTier)
 
 	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
 	dataVolumeQuery := &AzureLogAnalyticsQuery{
@@ -234,7 +229,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		return rw, err
 	}
 
-	_, span := tracing.DefaultTracer().Start(ctx, "azure basic logs usage query", trace.WithAttributes(
+	_, span := tracing.DefaultTracer().Start(ctx, "azure logs usage query", trace.WithAttributes(
 		attribute.String("target", dataVolumeQuery.Query),
 		attribute.String("table", table),
 		attribute.Int64("from", dataVolumeQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)),
@@ -274,6 +269,18 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	}
 
 	return rw, err
+}
+
+func getUsageQueryStart(from, to time.Time, logTier *dataquery.AzureLogsQueryLogTier) time.Time {
+	if logTier != nil && *logTier == dataquery.AzureLogsQueryLogTierAuxiliary {
+		return from
+	}
+
+	if to.Sub(from).Hours() > float64(MaxHoursBasicLogs) {
+		return to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
+	}
+
+	return from
 }
 
 // executeTimeSeriesQuery does the following:

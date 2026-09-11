@@ -216,19 +216,25 @@ const LogsQueryEditor = ({
   }, [query.azureLogAnalytics?.mode, onQueryChange, query]);
 
   useEffect(() => {
-    const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
+    const getLogsUsage = async (query: AzureMonitorQuery) => {
       try {
         if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {
           const querySplit = query.azureLogAnalytics.query.split('|');
           // Basic Logs queries are required to start the query with a table
           const table = querySplit[0].trim();
-          const dataIngested = await datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table);
+          const dataIngested = await datasource.azureLogAnalyticsDatasource.getLogsQueryUsage(query, table);
           const textToShow = !!dataIngested
-            ? t(
-                'components.logs-query-editor.warning-data-ingested',
-                'This query is processing {{dataIngested}} GiB when run. ',
-                { dataIngested }
-              )
+            ? selectedTier === 'Auxiliary'
+              ? t(
+                  'components.logs-query-editor.warning-auxiliary-data-ingested',
+                  "This Auxiliary Logs query is processing {{dataIngested}} GiB when run. Auxiliary Logs have no response-time SLA and aren't suitable for real-time or alerting scenarios. ",
+                  { dataIngested }
+                )
+              : t(
+                  'components.logs-query-editor.warning-data-ingested',
+                  'This query is processing {{dataIngested}} GiB when run. ',
+                  { dataIngested }
+                )
             : selectedTier === 'Auxiliary'
               ? t(
                   'components.logs-query-editor.warning-auxiliary-raw',
@@ -243,7 +249,11 @@ const LogsQueryEditor = ({
               <Text color="primary">
                 {textToShow}{' '}
                 <TextLink
-                  href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
+                  href={
+                    selectedTier === 'Auxiliary'
+                      ? 'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs#table-plans'
+                      : 'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1'
+                  }
                   external
                 >
                   <Trans i18nKey="components.logs-query-editor.learn-more">Learn More</Trans>
@@ -259,7 +269,7 @@ const LogsQueryEditor = ({
       }
     };
 
-    getBasicLogsUsage(query).catch((err) => console.error(err));
+    getLogsUsage(query).catch((err) => console.error(err));
   }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to, selectedTier]);
   let portalLinkButton = null;
 

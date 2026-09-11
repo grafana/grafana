@@ -658,6 +658,40 @@ func TestBuildLogAnalyticsQueryRequiresMatchingTierSetting(t *testing.T) {
 	}
 }
 
+func TestGetUsageQueryStart(t *testing.T) {
+	to := time.Date(2026, 9, 11, 0, 0, 0, 0, time.UTC)
+	from := to.Add(-10 * 24 * time.Hour)
+	basicTier := dataquery.AzureLogsQueryLogTierBasic
+	auxiliaryTier := dataquery.AzureLogsQueryLogTierAuxiliary
+
+	tests := []struct {
+		name     string
+		logTier  *dataquery.AzureLogsQueryLogTier
+		expected time.Time
+	}{
+		{
+			name:     "legacy usage requests retain the Basic Logs eight day limit",
+			expected: to.Add(-8 * 24 * time.Hour),
+		},
+		{
+			name:     "explicit Basic usage requests retain the eight day limit",
+			logTier:  &basicTier,
+			expected: to.Add(-8 * 24 * time.Hour),
+		},
+		{
+			name:     "Auxiliary usage requests retain the full dashboard range",
+			logTier:  &auxiliaryTier,
+			expected: from,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, getUsageQueryStart(from, to, tt.logTier))
+		})
+	}
+}
+
 func TestLogAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
 	url := "http://ds/"

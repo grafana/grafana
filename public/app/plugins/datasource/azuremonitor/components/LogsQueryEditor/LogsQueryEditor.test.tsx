@@ -572,7 +572,7 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0);
       await act(async () => {
         render(
           <LogsQueryEditor
@@ -596,7 +596,7 @@ describe('LogsQueryEditor', () => {
       });
     });
 
-    it('should show generic data ingested warning when running auxiliary logs queries', async () => {
+    it('shows the Auxiliary warning and documentation link when usage is nonzero', async () => {
       const mockDatasource = createMockDatasource();
       const onChange = jest.fn();
       const query = createMockQuery({
@@ -610,29 +610,29 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
-      await act(async () => {
-        render(
-          <LogsQueryEditor
-            query={query}
-            datasource={mockDatasource}
-            variableOptionGroup={variableOptionGroup}
-            onChange={onChange}
-            onQueryChange={onQueryChange}
-            setError={() => {}}
-            basicLogsEnabled={false}
-            auxiliaryLogsEnabled={true}
-          />
-        );
-      });
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0.45);
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={false}
+          auxiliaryLogsEnabled={true}
+        />
+      );
 
-      await act(async () => {
-        await waitFor(() =>
-          expect(
-            screen.findByText(/This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned/)
-          ).resolves.toBeInTheDocument()
-        );
-      });
+      expect(
+        await screen.findByText(
+          "This Auxiliary Logs query is processing 0.45 GiB when run. Auxiliary Logs have no response-time SLA and aren't suitable for real-time or alerting scenarios."
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Learn More' })).toHaveAttribute(
+        'href',
+        'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs#table-plans'
+      );
     });
 
     it('should show data ingested warning when running basic logs queries', async () => {
@@ -648,7 +648,7 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.45);
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0.45);
       await act(async () => {
         render(
           <LogsQueryEditor
@@ -668,6 +668,10 @@ describe('LogsQueryEditor', () => {
           expect(screen.findByText(/This query is processing 0.45 GiB when run./)).resolves.toBeInTheDocument()
         );
       });
+      expect(screen.getByRole('link', { name: 'Learn More' })).toHaveAttribute(
+        'href',
+        'https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1'
+      );
     });
 
     it('should not show data ingested warning when running basic logs queries', async () => {
@@ -684,7 +688,7 @@ describe('LogsQueryEditor', () => {
       });
       const onQueryChange = jest.fn();
 
-      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0.5);
+      mockDatasource.azureLogAnalyticsDatasource.getLogsQueryUsage.mockResolvedValue(0.5);
       await act(async () => {
         render(
           <LogsQueryEditor

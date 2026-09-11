@@ -34,6 +34,39 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
   });
 
+  describe('When requesting Logs query usage', () => {
+    it('includes the Auxiliary tier in the Logs usage resource request', async () => {
+      replace = (target?: string) => {
+        if (target === '$__from') {
+          return '2026-09-01T00:00:00.000Z';
+        }
+        if (target === '$__to') {
+          return '2026-09-11T00:00:00.000Z';
+        }
+        return target || '';
+      };
+      const postResource = jest.fn().mockResolvedValue(0.45);
+      ctx.datasource.azureLogAnalyticsDatasource.postResource = postResource;
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: ['/subscriptions/sub/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/ws'],
+          logTier: 'Auxiliary',
+        },
+      });
+
+      await ctx.datasource.azureLogAnalyticsDatasource.getLogsQueryUsage(query, 'AuxiliaryTable');
+
+      expect(postResource).toHaveBeenCalledWith('loganalytics/usage/basiclogs', {
+        table: 'AuxiliaryTable',
+        resource: '/subscriptions/sub/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/ws',
+        queryType: query.queryType,
+        from: '2026-09-01T00:00:00.000Z',
+        to: '2026-09-11T00:00:00.000Z',
+        logTier: 'Auxiliary',
+      });
+    });
+  });
+
   describe('When performing getSchema', () => {
     beforeEach(() => {
       getTempVars = () => [] as CustomVariableModel[];
