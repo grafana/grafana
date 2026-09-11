@@ -14696,6 +14696,10 @@
     "repository-status": {
       "error": "Failed to load repository"
     },
+    "repository-status-alert": {
+      "deletion-title": "Repository deletion error",
+      "error-title": "Repository error"
+    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
