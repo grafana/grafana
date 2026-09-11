@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, Stack, Text } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -99,7 +99,16 @@ const TeamSettings = ({ team }: Props) => {
           <Trans i18nKey="teams.team-settings.save">Save team details</Trans>
         </Button>
       </form>
-      <SharedPreferences resourceUri={teamResourceUri} disabled={!canWriteTeamSettings} preferenceType="team" />
+      <SharedPreferences
+        legend={
+          <Text element="h2" variant="h3">
+            {t('shared-preferences.title', 'Preferences')}
+          </Text>
+        }
+        resourceUri={teamResourceUri}
+        disabled={!canWriteTeamSettings}
+        preferenceType="team"
+      />
     </Stack>
   );
 };

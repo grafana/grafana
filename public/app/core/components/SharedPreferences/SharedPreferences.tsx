@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, type ReactNode } from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -32,8 +32,12 @@ import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged 
 import { useSharedPreferences } from './useSharedPreferences';
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
 
-export const SharedPreferences = memo((props: Props) => {
-  const { resourceUri, preferenceType } = props;
+type SharedPreferencesProps = Props & {
+  legend: ReactNode;
+};
+
+export const SharedPreferences = memo((props: SharedPreferencesProps) => {
+  const { resourceUri, preferenceType, legend } = props;
 
   const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
@@ -177,14 +181,7 @@ export const SharedPreferences = memo((props: Props) => {
           title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
         />
       )}
-      <FieldSet
-        label={
-          <span role="heading" aria-level={2}>
-            <Trans i18nKey="shared-preferences.title">Preferences</Trans>
-          </span>
-        }
-        disabled={props.disabled}
-      >
+      <FieldSet label={legend} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
           {preferenceType === 'user' && <VisualRefreshInfo />}
           <Field

@@ -2,7 +2,7 @@ import { memo, useEffect } from 'react';
 import { type ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
-import { Stack } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -65,6 +65,11 @@ export const OrgDetailsPage = memo(function OrgDetailsPage({
             {canReadOrg && <OrgProfile onSubmit={onUpdateOrganization} orgName={organization.name} />}
             {canReadPreferences && (
               <SharedPreferences
+                legend={
+                  <Text element="h2" variant="h3">
+                    {t('shared-preferences.title', 'Preferences')}
+                  </Text>
+                }
                 resourceUri={orgResourceUri}
                 disabled={!canWritePreferences}
                 preferenceType="org"

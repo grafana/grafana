@@ -2,8 +2,9 @@ import { connect, type ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { PluginExtensionPoints } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
-import { Stack } from '@grafana/ui';
+import { Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { type StoreState } from 'app/types/store';
 
@@ -70,8 +71,23 @@ export function UserProfileEditPage({
         <UserProfileEditTabs components={components}>
           <Stack direction="column" gap={2} data-testid="user-profile-edit-page">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
-            <SharedPreferences resourceUri={userResourceUri} preferenceType="user" />
+            <SharedPreferences
+              resourceUri={userResourceUri}
+              preferenceType="user"
+              legend={
+                <Text element="h2" variant="h3">
+                  <Trans i18nKey="shared-preferences.title">Preferences</Trans>
+                </Text>
+              }
+            />
             <Stack direction="column" gap={6}>
+              {!teamsAreLoading && teams.length > 0 && (
+                <div className="page-sub-heading">
+                  <Text element="h2" variant="h3">
+                    <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
+                  </Text>
+                </div>
+              )}
               <UserTeams isLoading={teamsAreLoading} teams={teams} />
               <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
               <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />

@@ -217,10 +217,11 @@ describe('UserProfileEditPage', () => {
     });
 
     describe('and teams are loading', () => {
-      it('should show teams loading placeholder', async () => {
+      it('should show teams loading placeholder without a Teams heading', async () => {
         await getTestContext({ teamsAreLoading: true });
 
         expect(screen.getByText(/loading teams\.\.\./i)).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Teams', level: 2 })).not.toBeInTheDocument();
       });
     });
 
@@ -232,6 +233,15 @@ describe('UserProfileEditPage', () => {
         expect(screen.getByRole('heading', { name: /teams/i, level: 2 })).toBeInTheDocument();
         expect(teamsTable()).toBeInTheDocument();
         expect(teamsRow()).toBeInTheDocument();
+      });
+    });
+
+    describe('and no teams are loaded', () => {
+      it('should not show a Teams heading', async () => {
+        await getTestContext({ teams: [] });
+
+        expect(screen.getByRole('heading', { name: 'Preferences', level: 2 })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Teams', level: 2 })).not.toBeInTheDocument();
       });
     });
 
