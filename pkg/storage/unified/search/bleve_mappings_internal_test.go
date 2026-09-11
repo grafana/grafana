@@ -728,6 +728,8 @@ func TestNormalizeRegex(t *testing.T) {
 		{name: "dotall field prefix", expression: "(?s)severity=.*", dotMatchesNL: true},
 		{name: "case insensitive", expression: "(?i)CRITICAL", caseInsensitive: true},
 		{name: "case insensitive dotall", expression: "(?is)critical.*", caseInsensitive: true, dotMatchesNL: true},
+		{name: "case-invariant literal before insensitive letters", expression: "123(?i:abc)", caseInsensitive: true},
+		{name: "insensitive invariant class before sensitive letter", expression: "(?i:[0-9]{3})a"},
 		{name: "escaped anchors", expression: `\^critical\$`},
 		{name: "escaped question mark", expression: `foo\?`},
 		{name: "escaped trailing dollar", expression: `foo\$`},

@@ -1087,19 +1087,6 @@ func TestRegexFilterSupportsPortableBackendSyntax(t *testing.T) {
 	}
 }
 
-func TestRegexFilterIgnoresCaseModeForCaseInvariantAtoms(t *testing.T) {
-	key, index := newRegexCaseModeIndex(t)
-
-	// The case-insensitive scope applies to the letters in the suffix, while
-	// the leading digits are unaffected by case folding. The matcher can safely
-	// represent this with one global case-insensitive mode.
-	checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorRegex), "123(?i:abc)"), []string{"lower", "upper"})
-
-	// A case-insensitive digit class is also case-invariant. The following
-	// literal remains case-sensitive, so accepting the query must not broaden it.
-	checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorRegex), "(?i:[0-9]{3})a"), []string{"digit-lower"})
-}
-
 func TestNotRegexFilterHandlesEmptyMatches(t *testing.T) {
 	key, index := newRegexSyntaxIndex(t)
 	for _, tc := range []struct {
@@ -1241,23 +1228,6 @@ func newRegexSyntaxIndex(t testing.TB) (resource.NamespacedResource, resource.Re
 		regexTestDocument(key, "d7", map[string]any{"team": "red-\nteam"}),
 		regexTestDocument(key, "d8", nil),
 		regexTestDocument(key, "d9", map[string]any{"team": ""}),
-	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
-	return key, index
-}
-
-func newRegexCaseModeIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
-	t.Helper()
-	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
-	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
-		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
-	})
-	items := []*resource.BulkIndexItem{
-		regexTestDocument(key, "lower", map[string]any{"team": "123abc"}),
-		regexTestDocument(key, "upper", map[string]any{"team": "123ABC"}),
-		regexTestDocument(key, "digit-lower", map[string]any{"team": "123a"}),
-		regexTestDocument(key, "digit-upper", map[string]any{"team": "123A"}),
-		regexTestDocument(key, "wrong-digit", map[string]any{"team": "124abc"}),
 	}
 	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
 	return key, index
