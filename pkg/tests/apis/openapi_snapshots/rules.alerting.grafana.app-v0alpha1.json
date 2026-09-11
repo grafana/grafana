@@ -307,6 +307,60 @@
         }
       }
     },
+    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/searchRules": {
+      "post": {
+        "operationId": "listAlertRuleSearchRulesV0alpha1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}": {
       "get": {
         "tags": [
@@ -1353,6 +1407,60 @@
           }
         }
       }
+    },
+    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/searchRules": {
+      "post": {
+        "operationId": "listRecordingRuleSearchRulesV0alpha1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     },
     "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}": {
       "get": {
@@ -3706,6 +3814,727 @@
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.CreateSearchRulesTotalHitsRelation": {
         "description": "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
+        "type": "string",
+        "enum": [
+          "eq",
+          "lte"
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1FacetValue": {
+        "type": "object",
+        "required": [
+          "value",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "continue": {
+            "description": "Opaque token from the previous page.",
+            "type": "string"
+          },
+          "facetLimit": {
+            "description": "Per-facet term limit. Zero uses the default; larger values are clamped.",
+            "type": "integer"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "labelSelector": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelector"
+          },
+          "limit": {
+            "description": "Page size. Zero uses the default; larger values are clamped.",
+            "type": "integer"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchSortField"
+            }
+          },
+          "where": {
+            "description": "Omitted where matches all authorised rules satisfying labelSelector.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response": {
+        "description": "SearchResults supplies its own metadata; omit listMeta.",
+        "type": "object",
+        "required": [
+          "metadata",
+          "items",
+          "apiVersion",
+          "kind"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "description": "Counts use a bounded sample and are best-effort.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1FacetValue"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultHit"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultsMetadata"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchExistsLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchFilterLeaf": {
+        "type": "object",
+        "required": [
+          "field",
+          "operator",
+          "values"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "In",
+              "NotIn",
+              "All"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelector": {
+        "description": "Selects metadata.labels, not alerting labels, and is ANDed with where.\nFilter alerting labels through the indexed \"labels\" field instead.",
+        "type": "object",
+        "properties": {
+          "matchExpressions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"
+            }
+          },
+          "matchLabels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
+        "description": "Only In and NotIn are accepted by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "key",
+          "operator"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "In",
+              "NotIn",
+              "Exists",
+              "DoesNotExist"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "gt": {
+            "type": "number"
+          },
+          "gte": {
+            "type": "number"
+          },
+          "lt": {
+            "type": "number"
+          },
+          "lte": {
+            "type": "number"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultHit": {
+        "type": "object",
+        "required": [
+          "resource"
+        ],
+        "properties": {
+          "fields": {
+            "description": "Open to match the generic endpoint's unstructured field values.",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "resource": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultResource"
+          },
+          "score": {
+            "description": "Present only when a text query was evaluated.",
+            "type": "number"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultResource": {
+        "description": "Namespace is implicit in the URL.",
+        "type": "object",
+        "required": [
+          "group",
+          "resource",
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultsMetadata": {
+        "type": "object",
+        "required": [
+          "totalHits",
+          "totalHitsRelation"
+        ],
+        "properties": {
+          "continue": {
+            "description": "Opaque next-page token; clients must not construct it.",
+            "type": "string"
+          },
+          "totalHits": {
+            "description": "Interpret with totalHitsRelation, not as an exact count unconditionally.",
+            "type": "integer"
+          },
+          "totalHitsRelation": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1TotalHitsRelation"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchSortField": {
+        "description": "Defaults to ascending; only scalar fields with the sort capability are valid.",
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          },
+          "field": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchTextLeaf": {
+        "description": "Omitted fields default to title. All whitespace-separated terms must match\nin any order; punctuation and short-term matching are backend-defined.",
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "boost": {
+            "description": "boost is a future per-leaf score multiplier. Setting it is rejected.",
+            "type": "number"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode": {
+        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+        "type": "object",
+        "properties": {
+          "and": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
+            }
+          },
+          "exists": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchExistsLeaf"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchFilterLeaf"
+          },
+          "not": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
+          },
+          "or": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
+            }
+          },
+          "range": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "text": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchTextLeaf"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1TotalHitsRelation": {
+        "description": "\"eq\" means exact; \"lte\" means totalHits is an upper bound after authorisation.",
+        "type": "string",
+        "enum": [
+          "eq",
+          "lte"
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1FacetValue": {
+        "type": "object",
+        "required": [
+          "value",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "continue": {
+            "description": "Opaque token from the previous page.",
+            "type": "string"
+          },
+          "facetLimit": {
+            "description": "Per-facet term limit. Zero uses the default; larger values are clamped.",
+            "type": "integer"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "labelSelector": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelector"
+          },
+          "limit": {
+            "description": "Page size. Zero uses the default; larger values are clamped.",
+            "type": "integer"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchSortField"
+            }
+          },
+          "where": {
+            "description": "Omitted where matches all authorised rules satisfying labelSelector.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response": {
+        "type": "object",
+        "required": [
+          "metadata",
+          "items",
+          "apiVersion",
+          "kind"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "description": "Counts use a bounded sample and are best-effort.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1FacetValue"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultHit"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchExistsLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchFilterLeaf": {
+        "type": "object",
+        "required": [
+          "field",
+          "operator",
+          "values"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "In",
+              "NotIn",
+              "All"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelector": {
+        "description": "Selects metadata.labels, not alerting labels, and is ANDed with where.\nFilter alerting labels through the indexed \"labels\" field instead.",
+        "type": "object",
+        "properties": {
+          "matchExpressions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"
+            }
+          },
+          "matchLabels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
+        "description": "Only In and NotIn are accepted by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "key",
+          "operator"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "In",
+              "NotIn",
+              "Exists",
+              "DoesNotExist"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "gt": {
+            "type": "number"
+          },
+          "gte": {
+            "type": "number"
+          },
+          "lt": {
+            "type": "number"
+          },
+          "lte": {
+            "type": "number"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultHit": {
+        "type": "object",
+        "required": [
+          "resource"
+        ],
+        "properties": {
+          "fields": {
+            "description": "Open to match the generic endpoint's unstructured field values.",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "resource": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultResource"
+          },
+          "score": {
+            "description": "Present only when a text query was evaluated.",
+            "type": "number"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultResource": {
+        "description": "Namespace is implicit in the URL.",
+        "type": "object",
+        "required": [
+          "group",
+          "resource",
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata": {
+        "type": "object",
+        "required": [
+          "totalHits",
+          "totalHitsRelation"
+        ],
+        "properties": {
+          "continue": {
+            "description": "Opaque next-page token; clients must not construct it.",
+            "type": "string"
+          },
+          "totalHits": {
+            "description": "Interpret with totalHitsRelation, not as an exact count unconditionally.",
+            "type": "integer"
+          },
+          "totalHitsRelation": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchSortField": {
+        "description": "Defaults to ascending; only scalar fields with the sort capability are valid.",
+        "type": "object",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          },
+          "field": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf": {
+        "description": "Omitted fields default to title. All whitespace-separated terms must match\nin any order; punctuation and short-term matching are backend-defined.",
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "boost": {
+            "description": "boost is a future per-leaf score multiplier. Setting it is rejected.",
+            "type": "number"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
+        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+        "type": "object",
+        "properties": {
+          "and": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
+            }
+          },
+          "exists": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchExistsLeaf"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchFilterLeaf"
+          },
+          "not": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
+          },
+          "or": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
+            }
+          },
+          "range": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "text": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation": {
+        "description": "\"eq\" means exact; \"lte\" means totalHits is an upper bound after authorisation.",
         "type": "string",
         "enum": [
           "eq",

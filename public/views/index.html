@@ -415,26 +415,19 @@
     <!-- End Google Tag Manager -->
     [[end]]
 
-    [[if .AssetSriChecksEnabled ]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
+    [[range $asset := .Assets.JSFiles]]
+      <script
         nonce="[[$.Nonce]]"
         src="[[$asset.FilePath]]"
+        type="[[if $.ESModuleAssetsEnabled]]module[[else]]text/javascript[[end]]"
+        [[- if $.AssetSriChecksEnabled]]
         integrity="[[$asset.Integrity]]"
+        [[- end]]
         crossorigin="anonymous"
-        type="text/javascript"
+        [[- if not $.ESModuleAssetsEnabled]]
         defer
+        [[- end]]
       ></script>
-      [[end]]
-    [[else]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
-        nonce="[[$.Nonce]]"
-        src="[[$asset.FilePath]]"
-        type="text/javascript"
-        defer
-      ></script>
-      [[end]]
     [[end]]
 
     <script nonce="[[.Nonce]]">
