@@ -53,12 +53,7 @@ export {
   getRowUniqueId,
   addRow,
 } from './dataframe/utils';
-export {
-  alignTimeRangeCompareData,
-  isTimeCompareFrame,
-  shouldAlignTimeCompare,
-  withComparisonSuffix,
-} from './dataframe/timeCompare';
+export { alignTimeRangeCompareData, shouldAlignTimeCompare } from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
