@@ -13,7 +13,7 @@ import {
   type SceneObjectUrlValues,
   type VizPanel,
 } from '@grafana/scenes';
-import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } from '@grafana/ui';
+import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner, Field, Slider } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
@@ -25,12 +25,13 @@ import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
 export interface ViewPanelSidePaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   fanoutMode?: string;
+  fanoutWindowCount?: number;
 }
 
 export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   public static Component = ViewPanelSidePaneRenderer;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['fanout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['fanout', 'fanoutWindows'] });
 
   public getId() {
     return 'view-panel-pane';
@@ -41,8 +42,13 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
     DashboardInteractions.viewPanelAction({ action: 'set_fanout_mode', value: value ?? '' });
   }
 
+  public onSetWindowCount(value: number) {
+    this.setState({ fanoutWindowCount: value });
+    DashboardInteractions.viewPanelAction({ action: 'set_fanout_window_count', value: value.toString() });
+  }
+
   public getUrlState() {
-    return { fanout: this.state.fanoutMode };
+    return { fanout: this.state.fanoutMode, fanoutWindows: this.state.fanoutWindowCount?.toString() };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
@@ -50,6 +56,13 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
       this.setState({ fanoutMode: values.fanout });
     } else if (Object.hasOwn(values, 'fanout')) {
       this.setState({ fanoutMode: undefined });
+    }
+
+    if (typeof values.fanoutWindows === 'string') {
+      const count = parseInt(values.fanoutWindows, 10);
+      this.setState({ fanoutWindowCount: isNaN(count) ? undefined : clampWindowCount(count) });
+    } else if (Object.hasOwn(values, 'fanoutWindows')) {
+      this.setState({ fanoutWindowCount: undefined });
     }
   }
 }
@@ -129,9 +142,16 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
     return () => dataSub.unsubscribe();
   }, [panel]);
 
+  const byTimeWindowOptions = [
+    { value: 'h', label: t('dashboard.sidebar.view-panel.fanout-by-time-1h', 'Hour') },
+    { value: 'd', label: t('dashboard.sidebar.view-panel.fanout-by-time-1d', 'Day') },
+    { value: 'w', label: t('dashboard.sidebar.view-panel.fanout-by-time-1w', 'Week') },
+    { value: 'M', label: t('dashboard.sidebar.view-panel.fanout-by-time-1M', 'Month') },
+  ];
+
   return (
     <OptionsPaneCategory
-      title={t('dashboard.sidebar.view-panel.fanout-category', 'Fan-out by series or label')}
+      title={t('dashboard.sidebar.view-panel.fanout-category', 'Fan-out')}
       id="fanout"
       isOpenDefault={true}
     >
@@ -152,15 +172,19 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
         />
       </Box>
       <Box padding={1}>
-        <Text variant="bodySmall" weight="medium">
-          {t('dashboard.sidebar.view-panel.fanout-labels', 'Labels')}
-        </Text>
+        <Text weight="medium">{t('dashboard.sidebar.view-panel.fanout-labels', 'By label')}</Text>
       </Box>
-      <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+      <Box direction="column" gap={1} display="flex" paddingLeft={2}>
         {labels && labels.length === 0 && (
-          <Text italic variant="bodySmall">
-            {t('dashboard.sidebar.view-panel.fanout-no-labels', 'Data has no labels')}
-          </Text>
+          <RadioButtonDot
+            key={'no labels'}
+            id={'no labels'}
+            name="fanout"
+            label={t('dashboard.sidebar.view-panel.fanout-no-labels', 'No labels found')}
+            checked={false}
+            onClick={() => {}}
+            disabled
+          />
         )}
         {labels?.map((label) => (
           <RadioButtonDot
@@ -173,7 +197,44 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
           />
         ))}
       </Box>
+      <Box padding={1}>
+        <Text weight="medium">{t('dashboard.sidebar.view-panel.fanout-time-window', 'By time window')}</Text>
+      </Box>
+      <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+        {byTimeWindowOptions.map((option) => (
+          <RadioButtonDot
+            key={option.value}
+            name="fanout"
+            id={getModeForTimeWindow(option.value)}
+            label={option.label}
+            checked={modeValue === getModeForTimeWindow(option.value)}
+            onClick={() => pane.onSetMode(getModeForTimeWindow(option.value))}
+          />
+        ))}
+      </Box>
+      {fanoutMode && getTimeWindowFromMode(fanoutMode) && <ViewPanelFanoutWindowCount pane={pane} />}
     </OptionsPaneCategory>
+  );
+}
+
+function ViewPanelFanoutWindowCount({ pane }: { pane: ViewPanelSidePane }) {
+  const { fanoutWindowCount } = pane.useState();
+
+  return (
+    <Box paddingTop={2} paddingX={1}>
+      <Field label={t('dashboard.sidebar.view-panel.fanout-window-count', 'Window count')} noMargin>
+        <Slider
+          min={minWindowCount}
+          max={maxWindowCount}
+          step={1}
+          value={fanoutWindowCount ?? defaultWindowCount}
+          /**
+           * Only commit when the handle is released so that dragging does not re-query for every step
+           */
+          onAfterChange={(value) => pane.onSetWindowCount(clampWindowCount(value ?? defaultWindowCount))}
+        />
+      </Field>
+    </Box>
   );
 }
 
@@ -195,15 +256,42 @@ function extractLabelsFromData(panelData: PanelData | undefined): string[] {
 }
 
 function getModeForLabel(label: string) {
-  return `$__by_label__${label}`;
+  return `${byLabelModePrefix}${label}`;
 }
 
 export function getLabelFromMode(mode: string) {
-  if (mode.startsWith('$__by_label__')) {
-    return mode.replace('$__by_label__', '');
+  if (mode.startsWith(byLabelModePrefix)) {
+    return mode.replace(byLabelModePrefix, '');
   }
 
   return 'unknown';
 }
 
+function getModeForTimeWindow(timeWindow: string) {
+  return `${byTimeModePrefix}${timeWindow}`;
+}
+
+/**
+ * Returns the time window (interval string like 1h or 1d) for by time window fan-out modes, undefined for other modes
+ */
+export function getTimeWindowFromMode(mode: string): string | undefined {
+  if (mode.startsWith(byTimeModePrefix)) {
+    return mode.replace(byTimeModePrefix, '');
+  }
+
+  return undefined;
+}
+
+function clampWindowCount(count: number) {
+  return Math.min(Math.max(count, minWindowCount), maxWindowCount);
+}
+
 export const bySeriesMode = '$__by_series__$';
+
+export const defaultWindowCount = 3;
+
+const minWindowCount = 1;
+const maxWindowCount = 12;
+
+const byLabelModePrefix = '$__by_label__';
+const byTimeModePrefix = '$__by_time_';

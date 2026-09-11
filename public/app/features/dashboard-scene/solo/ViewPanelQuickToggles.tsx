@@ -51,7 +51,7 @@ export function ViewPanelQuickToggles({ panel, plugin }: Props) {
     <OptionsPaneCategory
       id="quick-toggles"
       title={t('dashboard.sidebar.view-panel.quick-toggles', 'Quick toggles')}
-      forceOpen={true}
+      isOpenDefault={true}
     >
       {optionHits.map((hit) => hit.renderElement('asd'))}
     </OptionsPaneCategory>
