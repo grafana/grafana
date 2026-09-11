@@ -3048,13 +3048,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.16.1":
-  version: 8.16.1
-  resolution: "@grafana/scenes-react@npm:8.16.1"
+"@grafana/scenes-react@npm:8.17.0":
+  version: 8.17.0
+  resolution: "@grafana/scenes-react@npm:8.17.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.16.1"
+    "@grafana/scenes": "npm:8.17.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3064,11 +3064,11 @@ __metadata:
     "@grafana/runtime": ">=11.6"
     "@grafana/schema": ">=11.6"
     "@grafana/ui": ">=11.6"
-    react: ^18.0.0
-    react-dom: ^18.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/80804aba19911f3bcd610b88fc24f2ed72613699328f8f3b56bbb8221c96f8d7e5ec0388f4b90a9a6043641c296bcb4bd6b69d503e929b13495ef9bbffdec2bf
+  checksum: 10/dc607cc280b7697eb8d9ae0317062d465c2be99d44f295ba3ae467b8fc09548b92b810c8d21db70e98bd416dcff387478438ba19c93e5c42f1ae48a81da0f9fb
   languageName: node
   linkType: hard
 
@@ -3103,9 +3103,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.16.1":
-  version: 8.16.1
-  resolution: "@grafana/scenes@npm:8.16.1"
+"@grafana/scenes@npm:8.17.0":
+  version: 8.17.0
+  resolution: "@grafana/scenes@npm:8.17.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -3126,11 +3126,11 @@ __metadata:
     "@grafana/runtime": ">=11.6"
     "@grafana/schema": ">=11.6"
     "@grafana/ui": ">=11.6"
-    react: ^18.0.0
-    react-dom: ^18.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/87b96e5fde4e397d7184295b80956e49f753afcfc87bc1d7a08c0a65df9125be3877ef387671acec789c633c7ad14fbc90b469103b28ae5a82c2e31a184a6dd1
+  checksum: 10/5db45dec205b91b5b952cd097c8bd0cff0ea4a0b23cd47faa32b0616c4ab36c719ead5898362508e8a7eb7319ed0a412b6f7b516529c9134b42bb732b38db7f7
   languageName: node
   linkType: hard
 
@@ -20106,8 +20106,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.16.1"
-    "@grafana/scenes-react": "npm:8.16.1"
+    "@grafana/scenes": "npm:8.17.0"
+    "@grafana/scenes-react": "npm:8.17.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
