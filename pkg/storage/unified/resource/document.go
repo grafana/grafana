@@ -581,13 +581,25 @@ const (
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
 )
 
-// Range operators for Requirement.Operator, which otherwise carries a k8s
-// selection operator. That set names only gt and lt. Sending these as operator
-// strings is what makes an older search server answer with a bad request rather
-// than drop the bound.
+// Non-standard operators for Requirement.Operator, which otherwise carries a
+// k8s selection operator. Sending these as operator strings is what makes an
+// older search server answer with a bad request rather than drop the query.
+//
+// Regex operators match the complete indexed value using the RE2-compatible
+// syntax supported by unified search. Matching is case-sensitive by default;
+// one uniform (?i) mode enables case-insensitive matching and one uniform (?s)
+// mode makes dot match newlines. Regex filtering is available only on filterable
+// keyword fields that preserve original case. Missing fields match as empty
+// values. In the flattened labels field, expressions use key=value terms and a
+// missing requested label is treated as an empty value. Each query is bounded to
+// 10,000 dictionary terms inspected and 10,000 matching terms expanded.
+// Mixed modes, multiline assertions, look-around, backreferences, and named
+// captures are unsupported.
 const (
 	OperatorGreaterThanOrEqual selection.Operator = "gte"
 	OperatorLessThanOrEqual    selection.Operator = "lte"
+	OperatorRegex              selection.Operator = "regex"
+	OperatorNotRegex           selection.Operator = "notregex"
 )
 
 var standardSearchFieldsInit sync.Once

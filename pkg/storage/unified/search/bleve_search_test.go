@@ -975,6 +975,23 @@ func TestLabelFilterExactMatch(t *testing.T) {
 	})
 }
 
+func TestRegexLabelFilter(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	index := newTestDashboardsIndex(t, threshold, 3, noop)
+	indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+		"name1": {"team": "Team Alpha"},
+		"name2": {"team": "alpha"},
+		"name3": {"team": "Team Beta"},
+	})
+
+	checkSearchQuery(t, index, labelFilterQuery("regex", "team", "Team.*"), []string{"name1", "name3"})
+	checkSearchQuery(t, index, labelFilterQuery("notregex", "team", "Team.*"), []string{"name2"})
+}
+
 func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithLabels map[string]map[string]string) {
 	items := make([]*resource.BulkIndexItem, 0, len(docsWithLabels))
 	for name, labels := range docsWithLabels {
@@ -1044,6 +1061,293 @@ func TestPublicFieldNameFilter(t *testing.T) {
 	checkSearchQuery(t, index, filter("team"), []string{"d1"})
 	// An explicitly prefixed name still works (passthrough).
 	checkSearchQuery(t, index, filter(resource.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
+}
+
+func TestRegexFilterOnKeywordField(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	for _, tc := range []struct {
+		field      string
+		name       string
+		operator   string
+		expression string
+		want       []string
+	}{
+		{name: "greedy quantifier", operator: string(resource.OperatorRegex), expression: "red.*", want: []string{"d1", "d5", "d6"}},
+		{name: "exact term", operator: string(resource.OperatorRegex), expression: "red-team", want: []string{"d1"}},
+		{name: "alternation", operator: string(resource.OperatorRegex), expression: "red|red-team", want: []string{"d1"}},
+		{name: "whole term", operator: string(resource.OperatorRegex), expression: "red", want: nil},
+		{name: "character class and counted repetition", operator: string(resource.OperatorRegex), expression: "red-[a-z]{4}", want: []string{"d1"}},
+		{name: "escaped flag-like text", operator: string(resource.OperatorRegex), expression: `red-\(\?i\)`, want: []string{"d5"}},
+		{name: "quoted flag-like text", operator: string(resource.OperatorRegex), expression: `red-\Q(?i)\E`, want: []string{"d5"}},
+		{name: "escaped trailing anchor", operator: string(resource.OperatorRegex), expression: `red-\$`, want: []string{"d6"}},
+		{name: "quoted trailing dollar", operator: string(resource.OperatorRegex), expression: `red-\Q$`, want: []string{"d6"}},
+		{name: "no matching term", operator: string(resource.OperatorRegex), expression: "green.*", want: nil},
+		{name: "negation includes missing field", operator: string(resource.OperatorNotRegex), expression: "red.*", want: []string{"d2", "d3", "d4"}},
+		{name: "original-case standard name", field: resource.SEARCH_FIELD_NAME, operator: string(resource.OperatorRegex), expression: "d.*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			field := tc.field
+			if field == "" {
+				field = "team"
+			}
+			checkSearchQuery(t, index, regexFieldQuery(key, field, tc.operator, tc.expression), tc.want)
+		})
+	}
+}
+
+func TestRegexFilterSupportsPortableBackendSyntax(t *testing.T) {
+	key, index := newRegexSyntaxIndex(t)
+	for _, tc := range []struct {
+		name       string
+		expression string
+		want       []string
+	}{
+		{name: "prefixless alternation", expression: "critical|warn", want: []string{"d1", "d3"}},
+		{name: "prefixless character class and counted repetition", expression: "[a-z]{2,8}", want: []string{"d1", "d2", "d3", "d4", "d5"}},
+		{name: "prefixless leading wildcard", expression: ".*critical", want: []string{"d1"}},
+		{name: "case insensitive flag", expression: "(?i)CRITICAL", want: []string{"d1", "d6"}},
+		{name: "uniform scoped case insensitive flag", expression: "(?i:CRITICAL)", want: []string{"d1", "d6"}},
+		{name: "flags before redundant anchors", expression: "(?i)^CRITICAL$", want: []string{"d1", "d6"}},
+		{name: "dot does not match newline by default", expression: "red-.*", want: nil},
+		{name: "explicit dotall flag", expression: "(?s)red-.*", want: []string{"d7"}},
+		{name: "uniform scoped dotall flag", expression: "red-(?s:.*)", want: []string{"d7"}},
+		{name: "case insensitive and dotall flags", expression: "(?is)critical.*", want: []string{"d1", "d6"}},
+		{name: "lazy quantifier is normalized", expression: "critical.*?", want: []string{"d1"}},
+		{name: "empty regex includes empty and missing fields", expression: "", want: []string{"d8", "d9"}},
+		{name: "nonempty regex excludes missing field", expression: ".+", want: []string{"d1", "d2", "d3", "d4", "d5", "d6"}},
+		{name: "dotall any string includes empty and missing fields", expression: "(?s).*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorRegex), tc.expression), tc.want)
+		})
+	}
+}
+
+func TestNotRegexFilterHandlesEmptyMatches(t *testing.T) {
+	key, index := newRegexSyntaxIndex(t)
+	for _, tc := range []struct {
+		name       string
+		expression string
+		want       []string
+	}{
+		{name: "empty regex excludes missing field", expression: "", want: []string{"d1", "d2", "d3", "d4", "d5", "d6", "d7"}},
+		{name: "any single-line string excludes matching fields", expression: ".*", want: []string{"d7"}},
+		{name: "nonempty regex includes empty and missing fields", expression: ".+", want: []string{"d7", "d8", "d9"}},
+		{name: "prefix regex includes empty and missing fields", expression: "crit.*", want: []string{"d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorNotRegex), tc.expression), tc.want)
+		})
+	}
+}
+
+func TestRegexFilterIncludesDictionaryReadCost(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	// No term matches this prefix, so the query cost comes from expanding the
+	// dictionary rather than reading matching postings.
+	res := searchResponse(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "green.*"))
+	require.Greater(t, res.QueryCost, float64(0))
+}
+
+func TestRegexFilterRejectsUnsupportedPattern(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	for _, tc := range []struct {
+		name       string
+		field      string
+		expression string
+		message    string
+	}{
+		{name: "invalid syntax", field: "team", expression: "red("},
+		{name: "lookaround", field: "team", expression: "red(?=team)"},
+		{name: "backreference", field: "team", expression: `red\1`},
+		{name: "multiline flag", field: "team", expression: "(?m)^red$"},
+		{name: "mixed case behavior", field: "team", expression: "red-(?i:team)"},
+		{name: "mixed dot behavior", field: "team", expression: "red-.(?s:.)"},
+		{name: "word boundary", field: "team", expression: `\bred`},
+		{name: "lowercased title has no cased variant", field: resource.SEARCH_FIELD_TITLE, expression: "T.*", message: "does not preserve original case"},
+		{name: "text-only description", field: resource.SEARCH_FIELD_DESCRIPTION, expression: "D.*"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errorResult := requireBadRequestSearch(t, index, regexFieldQuery(key, tc.field, string(resource.OperatorRegex), tc.expression))
+			require.NotEmpty(t, errorResult.Message)
+			if tc.message != "" {
+				require.Contains(t, errorResult.Message, tc.message)
+			}
+		})
+	}
+}
+
+func TestRegexFilterRejectsExpansionBeyondLimit(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	indexRegexKeywordValues(t, index, key, 10001)
+	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "red-.*"))
+	require.Contains(t, errorResult.Message, "10000-term expansion limit")
+}
+
+func TestRegexFilterRejectsPrefixlessDictionaryScanBeyondLimit(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	indexRegexKeywordValues(t, index, key, 10001)
+	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "x|y"))
+	require.Contains(t, errorResult.Message, "10000-term dictionary scan limit")
+}
+
+func TestRegexFilterOnAlertRuleKeywordFields(t *testing.T) {
+	key, index := newAlertRegexFieldIndex(t)
+	// Alerting flattens each label into a keyword term such as
+	// "severity=critical". The team-only rule intentionally has no severity
+	// term, so Prometheus-style regexes that match the empty value must include
+	// it while still excluding existing severity terms when their values do not
+	// match. The upper rule uses "Severity" to verify that label keys remain
+	// case-sensitive unless the expression requests uniform (?i) matching.
+	for _, tc := range []struct {
+		name   string
+		field  string
+		regex  string
+		want   []string
+		negate bool
+	}{
+		{name: "flattened label alternation", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(critical|warning)", want: []string{"critical", "warning"}},
+		{name: "flattened label suffix", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*critical", want: []string{"critical", "suffix"}},
+		{name: "flattened label case insensitive", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "(?i)severity=CRITICAL", want: []string{"critical", "upper"}},
+		{name: "flattened label regex includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "flattened label dotall includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "(?s)severity=.*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "case insensitive flattened label regex includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "(?i)severity=.*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "empty-matching value regex includes missing severity but not nonmatching values", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"team-only", "upper"}},
+		{name: "case-insensitive empty-matching value regex recognizes the label key", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "(?i)severity=a*", want: []string{"team-only"}},
+		{name: "negated empty-matching value regex excludes missing severity", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"critical", "warning", "suffix"}, negate: true},
+		{name: "negated case-insensitive empty-matching value regex recognizes the label key", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "(?i)severity=a*", want: []string{"critical", "warning", "upper", "suffix"}, negate: true},
+		{name: "datasource UIDs", field: "datasourceUIDs", regex: "prom.*", want: []string{"critical", "upper"}},
+		{name: "receiver", field: "receiver", regex: "Pager.*", want: []string{"critical", "upper"}},
+		{name: "flattened label negated regex excludes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", negate: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			operator := string(resource.OperatorRegex)
+			if tc.negate {
+				operator = string(resource.OperatorNotRegex)
+			}
+			checkSearchQueryUnordered(t, index, regexFieldQuery(key, tc.field, operator, tc.regex), tc.want)
+		})
+	}
+}
+
+func newRegexKeywordFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+	t.Helper()
+	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	items := []*resource.BulkIndexItem{
+		regexTestDocument(key, "d1", map[string]any{"team": "red-team"}),
+		regexTestDocument(key, "d2", map[string]any{"team": "blue-team"}),
+		regexTestDocument(key, "d3", map[string]any{"team": "Red-team"}),
+		regexTestDocument(key, "d4", nil),
+		regexTestDocument(key, "d5", map[string]any{"team": "red-(?i)"}),
+		regexTestDocument(key, "d6", map[string]any{"team": "red-$"}),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	return key, index
+}
+
+func newRegexSyntaxIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+	t.Helper()
+	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	items := []*resource.BulkIndexItem{
+		regexTestDocument(key, "d1", map[string]any{"team": "critical"}),
+		regexTestDocument(key, "d2", map[string]any{"team": "warning"}),
+		regexTestDocument(key, "d3", map[string]any{"team": "warn"}),
+		regexTestDocument(key, "d4", map[string]any{"team": "ab"}),
+		regexTestDocument(key, "d5", map[string]any{"team": "abcdefgh"}),
+		regexTestDocument(key, "d6", map[string]any{"team": "CRITICAL"}),
+		regexTestDocument(key, "d7", map[string]any{"team": "red-\nteam"}),
+		regexTestDocument(key, "d8", nil),
+		regexTestDocument(key, "d9", map[string]any{"team": ""}),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	return key, index
+}
+
+func regexTestDocument(key resource.NamespacedResource, name string, fields map[string]any) *resource.BulkIndexItem {
+	return &resource.BulkIndexItem{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:     1,
+			Name:   name,
+			Title:  name,
+			Fields: fields,
+			Key:    &resourcepb.ResourceKey{Name: name, Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+		},
+	}
+}
+
+func regexFieldQuery(key resource.NamespacedResource, field, operator, expression string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: []*resourcepb.Requirement{{Key: field, Operator: operator, Values: []string{expression}}},
+		},
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
+func indexRegexKeywordValues(t testing.TB, index resource.ResourceIndex, key resource.NamespacedResource, count int) {
+	t.Helper()
+	items := make([]*resource.BulkIndexItem, count)
+	for i := range items {
+		name := fmt.Sprintf("generated-%05d", i)
+		items[i] = regexTestDocument(key, name, map[string]any{"team": fmt.Sprintf("red-%05d", i)})
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+}
+
+func requireBadRequestSearch(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	t.Helper()
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.Equal(t, int32(400), res.Error.Code)
+	return res.Error
+}
+
+func requireBadRequestSearchError(t *testing.T, index resource.ResourceIndex, access authlib.AccessClient, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	t.Helper()
+	res, err := index.Search(context.Background(), access, query, nil, nil)
+	require.Error(t, err)
+	require.Nil(t, res)
+	errorResult := resource.AsErrorResult(err)
+	require.NotNil(t, errorResult)
+	require.Equal(t, int32(400), errorResult.Code)
+	return errorResult
+}
+
+func newAlertRegexFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+	t.Helper()
+	key := resource.NamespacedResource{Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "rules"}
+	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "labels", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "datasourceUIDs", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "receiver", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	})
+	items := []*resource.BulkIndexItem{
+		alertRegexRule(key, "critical", []string{"severity=critical"}, []string{"prometheus"}, "PagerDuty"),
+		alertRegexRule(key, "warning", []string{"severity=warning"}, []string{"loki"}, "email"),
+		alertRegexRule(key, "upper", []string{"Severity=critical"}, []string{"prometheus"}, "PagerDuty"),
+		alertRegexRule(key, "suffix", []string{"severity=very-critical"}, []string{"loki"}, "email"),
+		alertRegexRule(key, "team-only", []string{"team=platform"}, []string{"loki"}, "email"),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	return key, index
+}
+
+func alertRegexRule(key resource.NamespacedResource, name string, labels, datasourceUIDs []string, receiver string) *resource.BulkIndexItem {
+	return regexTestDocument(key, name, map[string]any{
+		"labels":         labels,
+		"datasourceUIDs": datasourceUIDs,
+		"receiver":       receiver,
+	})
 }
 
 // TestPublicFieldNameTextQuery checks a free-text query resolves a public
@@ -1526,6 +1830,19 @@ func newDoc(name, folder string) *resource.BulkIndexItem {
 	}
 }
 
+func newPostRankRegexExpansionIndex(t *testing.T) resource.ResourceIndex {
+	t.Helper()
+	index := newTestDashboardsIndexPostRank(t, 2)
+	docs := make([]*resource.BulkIndexItem, 10001)
+	for i := range docs {
+		doc := newDoc(fmt.Sprintf("doc-%05d", i), "allowed")
+		doc.Doc.Labels = map[string]string{"team": fmt.Sprintf("team-%05d", i)}
+		docs[i] = doc
+	}
+	indexDocs(t, index, docs)
+	return index
+}
+
 func newDocWithTags(name, folder string, tags []string) *resource.BulkIndexItem {
 	d := newDoc(name, folder)
 	d.Doc.Tags = tags
@@ -1609,6 +1926,13 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 
 //nolint:gocyclo // The subtests share post-rank fixtures and helpers.
 func TestSearchPostRankAuthz(t *testing.T) {
+	t.Run("regex expansion errors are returned as bad requests", func(t *testing.T) {
+		index := newPostRankRegexExpansionIndex(t)
+
+		errorResult := requireBadRequestSearchError(t, index, &countingAccessClient{allowAll: true}, labelFilterQuery("regex", "team", "team-.*"))
+		require.Contains(t, errorResult.Message, "10000-term expansion limit")
+	})
+
 	t.Run("stops checking once the page is full", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// More than one BatchCheck batch (500) worth of docs, all authorized.

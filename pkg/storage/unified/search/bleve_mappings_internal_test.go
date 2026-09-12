@@ -2,6 +2,7 @@ package search
 
 import (
 	"maps"
+	"regexp/syntax"
 	"slices"
 	"testing"
 	"time"
@@ -659,6 +660,124 @@ func TestRequirementQuery_TextFilterDispatch(t *testing.T) {
 	mq, ok = mustNot.Disjuncts[0].(*query.MatchQuery)
 	require.True(t, ok, "notin on a text+filter field should stay on the analyzed field")
 	assert.Equal(t, note, mq.Field())
+}
+
+func TestRequirementQuery_RegexFieldDispatch(t *testing.T) {
+	b := regexRequirementTestIndex(t)
+	tag := resource.SEARCH_FIELD_PREFIX + "tag"
+	for _, tc := range []struct {
+		name   string
+		regex  string
+		prefix string
+	}{
+		{name: "literal prefix", regex: "X.*", prefix: "X"},
+		{name: "redundant outer anchors", regex: "^X.*$", prefix: "X"},
+		{name: "prefixless alternation", regex: "X|Y"},
+		{name: "lazy quantifier", regex: "X.*?", prefix: "X"},
+		{name: "case insensitive expression", regex: "(?i)X.*"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: tag, Operator: string(resource.OperatorRegex), Values: []string{tc.regex}})
+			require.Nil(t, errRes)
+			regex, ok := q.(*boundedRegexQuery)
+			require.True(t, ok)
+			assert.Equal(t, tag, regex.field)
+			assert.Equal(t, tc.prefix, regex.literalPrefix)
+		})
+	}
+
+	for _, tc := range []struct {
+		name   string
+		field  string
+		values []string
+	}{
+		{name: "lowercased keyword field", field: resource.SEARCH_FIELD_PREFIX + "note", values: []string{"N.*"}},
+		{name: "text-only field", field: resource.SEARCH_FIELD_PREFIX + "summary", values: []string{"S.*"}},
+		{name: "lowercased title", field: resource.SEARCH_FIELD_TITLE, values: []string{"T.*"}},
+		{name: "missing value", field: tag},
+		{name: "multiple values", field: tag, values: []string{"X.*", "Y.*"}},
+		{name: "line flags", field: tag, values: []string{"(?m)^X$"}},
+		{name: "mixed case behavior", field: tag, values: []string{"X(?i:Y)"}},
+		{name: "mixed dot behavior", field: tag, values: []string{"X.(?s:.)"}},
+		{name: "word boundary", field: tag, values: []string{`\bX`}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertBadRequest(t, b, tc.field, string(resource.OperatorRegex), tc.values...)
+		})
+	}
+}
+
+func TestNormalizeRegex(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		expression      string
+		caseInsensitive bool
+		dotMatchesNL    bool
+		matchesEmpty    bool
+		wantErr         bool
+	}{
+		{name: "literal", expression: "crit.*"},
+		{name: "alternation", expression: "critical|warn"},
+		{name: "character class", expression: "[a-z]{2,8}"},
+		{name: "outer anchors", expression: "^critical$"},
+		{name: "lazy star", expression: "crit.*?"},
+		{name: "lazy plus", expression: "crit.+?"},
+		{name: "lazy question", expression: "crit.??"},
+		{name: "lazy repeat", expression: "a{2,4}?"},
+		{name: "dotall", expression: "(?s).*", dotMatchesNL: true, matchesEmpty: true},
+		{name: "dotall field prefix", expression: "(?s)severity=.*", dotMatchesNL: true},
+		{name: "case insensitive", expression: "(?i)CRITICAL", caseInsensitive: true},
+		{name: "case insensitive dotall", expression: "(?is)critical.*", caseInsensitive: true, dotMatchesNL: true},
+		{name: "case-invariant literal before insensitive letters", expression: "123(?i:abc)", caseInsensitive: true},
+		{name: "insensitive invariant class before sensitive letter", expression: "(?i:[0-9]{3})a"},
+		{name: "escaped anchors", expression: `\^critical\$`},
+		{name: "escaped question mark", expression: `foo\?`},
+		{name: "escaped trailing dollar", expression: `foo\$`},
+		{name: "escaped backslash before anchor", expression: `foo\\$`},
+		{name: "quoted flag-like text", expression: `\Q(?i)\E`},
+		{name: "quoted trailing dollar", expression: `\Qfoo$\E`},
+		{name: "quote-to-end trailing dollar", expression: `\Qfoo$`},
+		{name: "empty", expression: "", matchesEmpty: true},
+		{name: "nonempty", expression: ".+"},
+		{name: "non-capturing group", expression: "(?:foo)"},
+		{name: "uniform case-insensitive group", expression: "(?i:foo)", caseInsensitive: true},
+		{name: "uniform dotall group", expression: "(?s:.)", dotMatchesNL: true},
+		{name: "quoted flag-like text with dollar", expression: `\Q(?i)$\E`},
+		{name: "mixed case behavior", expression: "foo(?i:bar)", wantErr: true},
+		{name: "mixed dot behavior", expression: ".(?s:.)", wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			matcher, err := normalizeRegex(tc.expression)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			compiled, err := compileRegexMatcher(matcher)
+			require.NoError(t, err)
+			assertRegexModesCleared(t, matcher.expression)
+			assert.Equal(t, tc.caseInsensitive, matcher.caseInsensitive)
+			assert.Equal(t, tc.dotMatchesNL, matcher.dotMatchesNL)
+			assert.Equal(t, tc.matchesEmpty, compiled.MatchString(""))
+		})
+	}
+}
+
+func assertRegexModesCleared(t *testing.T, expression *syntax.Regexp) {
+	t.Helper()
+	assert.Zero(t, expression.Flags&(syntax.FoldCase|syntax.NonGreedy))
+	for _, child := range expression.Sub {
+		assertRegexModesCleared(t, child)
+	}
+}
+
+func regexRequirementTestIndex(t *testing.T) *bleveIndex {
+	t.Helper()
+	return customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "tag", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+	)
 }
 
 func TestRequirementQuery_ExactPathFromCapabilities(t *testing.T) {
