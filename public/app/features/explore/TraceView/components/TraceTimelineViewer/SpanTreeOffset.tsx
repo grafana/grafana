@@ -29,6 +29,9 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     label: 'SpanTreeOffset',
     color: autoColor(theme, '#000'),
     position: 'relative',
+    display: 'inline-flex',
+    alignSelf: 'stretch',
+    alignItems: 'stretch',
   }),
   SpanTreeOffsetParent: css({
     label: 'SpanTreeOffsetParent',
@@ -38,7 +41,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   }),
   indentGuide: css({
     label: 'indentGuide',
-    /* The size of the indentGuide is based off of the iconWrapper */
+    /* 1px guide on the left, then 1rem for the chevron/dash */
     paddingRight: '1rem',
     height: '100%',
     display: 'inline-flex',
@@ -64,10 +67,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     label: 'iconWrapper',
     position: 'absolute',
     right: 0,
-    height: '100%',
-    paddingTop: '1px',
+    top: 0,
+    bottom: 0,
     width: '1rem',
-    textAlign: 'center',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    lineHeight: 0,
   }),
 }));
 
