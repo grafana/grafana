@@ -102,6 +102,10 @@ lineage: schemas: [{
 
 			// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 			preload?: bool
+
+			// When set to false, the dashboard controls (variables, time picker, links) scroll
+			// away with the dashboard instead of staying pinned below the header.
+			stickyControls?: bool
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		///////////////////////////////////////

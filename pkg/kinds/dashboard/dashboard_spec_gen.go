@@ -77,6 +77,9 @@ type Spec struct {
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	Preload *bool `json:"preload,omitempty"`
+	// When set to false, the dashboard controls (variables, time picker, links) scroll
+	// away with the dashboard instead of staying pinned below the header.
+	StickyControls *bool `json:"stickyControls,omitempty"`
 }
 
 // NewSpec creates a new Spec object.

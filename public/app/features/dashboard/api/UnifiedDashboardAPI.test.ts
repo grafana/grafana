@@ -127,6 +127,7 @@ describe('UnifiedDashboardAPI', () => {
           tags: [],
           links: [],
           preload: false,
+          stickyControls: true,
           timeSettings: {
             from: 'now-1h',
             to: 'now',

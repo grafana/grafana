@@ -3356,6 +3356,7 @@ function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV
     editable: true,
     links: [],
     preload: false,
+    stickyControls: true,
     tags: [],
     timeSettings: {
       timezone: 'browser',
@@ -3450,6 +3451,7 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
     editable: true,
     links: [],
     preload: false,
+    stickyControls: true,
     tags: [],
     timeSettings: {
       timezone: 'browser',

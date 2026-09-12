@@ -92,6 +92,7 @@ func convertDashboardSpec_V2beta1_to_V2alpha1(ctx context.Context, in *dashv2bet
 	out.LiveNow = in.LiveNow
 	out.Preload = in.Preload
 	out.Revision = in.Revision
+	out.StickyControls = in.StickyControls
 	out.Tags = in.Tags
 	out.Title = in.Title
 

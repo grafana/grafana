@@ -231,6 +231,23 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.links![0]).not.toHaveProperty('origin');
       expect(saveModel).toMatchSnapshot();
     });
+
+    it('Should round-trip an explicit stickyControls: false', () => {
+      const scene = transformSaveModelToScene({
+        dashboard: { ...dashboardWithCustomSettings, stickyControls: false } as DashboardDataDTO,
+        meta: {},
+      });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.stickyControls).toBe(false);
+    });
+
+    it('Should keep stickyControls out of the save model when the dashboard never set it', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).not.toHaveProperty('stickyControls');
+    });
   });
 
   describe('Given a simple scene with variables', () => {

@@ -933,6 +933,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           title: 'Dashboard with annotation options',
           editable: true,
           preload: false,
+          stickyControls: true,
           liveNow: false,
           cursorSync: 'Off',
           links: [],

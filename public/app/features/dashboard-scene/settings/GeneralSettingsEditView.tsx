@@ -170,6 +170,10 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ preload });
   };
 
+  public onStickyControlsChange = (stickyControls: boolean) => {
+    this._dashboard.setState({ stickyControls });
+  };
+
   public onDeleteDashboard = () => {};
 
   public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
@@ -207,7 +211,7 @@ export class GeneralSettingsEditView
 function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<GeneralSettingsEditView>) {
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const { title, description, tags, meta, editable } = dashboard.useState();
+  const { title, description, tags, meta, editable, stickyControls } = dashboard.useState();
   const { showMoveModal, moveModalProps } = model.useState();
   const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
   const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
@@ -345,6 +349,21 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             )}
           >
             <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
+          </Field>
+
+          <Field
+            noMargin
+            label={t('dashboard-settings.general.sticky-controls-label', 'Pin dashboard controls')}
+            description={t(
+              'dashboard-settings.general.sticky-controls-description',
+              'Keep variables, time picker, and links visible at the top of the page while scrolling. When disabled they scroll away with the dashboard.'
+            )}
+          >
+            <Switch
+              id="sticky-controls-toggle"
+              value={stickyControls !== false}
+              onChange={(e) => model.onStickyControlsChange(e.currentTarget.checked)}
+            />
           </Field>
         </Box>
 

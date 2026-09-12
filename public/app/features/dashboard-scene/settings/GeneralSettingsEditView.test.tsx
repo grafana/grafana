@@ -114,6 +114,12 @@ describe('GeneralSettingsEditView', () => {
 
       expect(settings.getDashboardControls()?.state.hideTimeControls).toBe(true);
     });
+
+    it('A change to sticky controls updates the dashboard state', () => {
+      settings.onStickyControlsChange(false);
+
+      expect(dashboard.state.stickyControls).toBe(false);
+    });
   });
 
   describe('Folder field visibility', () => {
