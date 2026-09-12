@@ -95,7 +95,7 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
    *
    * Return `false` to hide the option. Anything else (including `undefined`) offers it.
    */
-  showIfOverride?: (context: StandardEditorContext<unknown>) => boolean;
+  showIfOverride?: (context: StandardEditorContext<TContextOptions>) => boolean | undefined;
 }
 
 export interface FieldConfigPropertyItem<
@@ -121,7 +121,7 @@ export interface FieldConfigPropertyItem<
    * override editor context (panel options, data). Returning `false` only removes it from the
    * picker - a rule that already sets the property still renders and keeps its value.
    */
-  showIfOverride?: (context: StandardEditorContext<unknown>) => boolean;
+  showIfOverride?: (context: StandardEditorContext<TContextOptions>) => boolean | undefined;
 
   /** Convert the override value to a well typed value */
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
