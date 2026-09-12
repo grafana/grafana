@@ -83,9 +83,8 @@ var schemaSource string
 
 func getValidator() *cuevalidator.Validator {
 	getSchemaOnce.Do(func() {
-		// The validator uses periodic context recreation to prevent memory leaks.
-		// The context is reused for up to 100 validations, then recreated to allow
-		// garbage collection of cached values while maintaining good performance.
+		// The validator creates a fresh CUE context per validation to prevent
+		// memory leaks from CUE's internal caches.
 		validator = cuevalidator.NewValidatorFromSource(
 			schemaSource,
 			cue.ParsePath("lineage.schemas[0].schema.spec"),
