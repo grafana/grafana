@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana 관리 경고 규칙에 의해 생성된 모든 경고 이벤트의 기록을 확인하세요. 경고 비활성화 또는 알림 비활성화 시간이 설정되어 있는지 여부에 관계없이 모든 경고 이벤트가 표시됩니다.",
         "notifications": "Grafana 관리 경고 규칙에서 전송된 모든 알림의 기록을 확인하세요."
@@ -7713,6 +7716,9 @@
         "title": "저장되지 않은 변경 사항"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "찾고 있는 대시보드가 아니신가요? <2>다른 추천 대시보드</2>를 확인하거나 <6>처음부터 새로 만들기</6>를 선택하세요.",
       "title": "현재 {{title}} 보는 중"
@@ -7966,6 +7972,7 @@
       "title-label": "제목"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "변경 사항 저장",
       "save-button-disabled-tooltip": "저장하기 전에 유효성 검사 오류를 수정하세요.",
       "save-button-disabled-tooltip-yaml": "문서에 유효성 검사 오류가 있습니다. 인라인 오류 세부 정보를 보려면 JSON으로 전환하세요.",
@@ -16502,6 +16509,7 @@
       "tooltip-bold": "굵게",
       "tooltip-bullet-list": "글머리 기호 목록",
       "tooltip-checklist": "체크리스트",
+      "tooltip-diagram": "",
       "tooltip-heading": "제목",
       "tooltip-insert-variable": "변수 삽입",
       "tooltip-italic": "이탤릭체",
@@ -16515,8 +16523,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16737,6 +16755,10 @@
       "bar-stacked": "막대 차트 - 누적",
       "bar-stacked-percent": "막대 차트 - 백분율 누적형",
       "line": "선 차트"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "시간대 추가",

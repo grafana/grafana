@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "檢視由 Grafana 管理的警示規則所產生的所有警示事件歷史記錄。無論是否設定了靜音或靜音時間，系統都會顯示所有警示事件。",
         "notifications": "檢視 Grafana 管理的警示規則所傳送的所有通知歷史記錄。"
@@ -7713,6 +7716,9 @@
         "title": "未儲存變更"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "不是您要找的內容？請檢視<2>其他建議的儀表板</2>或<6>從頭開始建立儀表板</6>。",
       "title": "您正在檢視 {{title}}"
@@ -7966,6 +7972,7 @@
       "title-label": "標題"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "儲存變更",
       "save-button-disabled-tooltip": "在儲存之前，請先修正驗證錯誤",
       "save-button-disabled-tooltip-yaml": "文件存在驗證錯誤。切換至 JSON 以查看內嵌錯誤詳細資訊。",
@@ -16502,6 +16509,7 @@
       "tooltip-bold": "粗體",
       "tooltip-bullet-list": "項目列表",
       "tooltip-checklist": "檢查清單",
+      "tooltip-diagram": "",
       "tooltip-heading": "標題",
       "tooltip-insert-variable": "插入變數",
       "tooltip-italic": "斜體",
@@ -16515,8 +16523,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16737,6 +16755,10 @@
       "bar-stacked": "長條圖 - 堆疊",
       "bar-stacked-percent": "長條圖 - 按百分比堆疊",
       "line": "折線圖"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "新增時區",

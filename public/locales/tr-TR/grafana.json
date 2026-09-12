@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana tarafından yönetilen uyarı kurallarınıza ait tüm uyarı olaylarının geçmişini görüntüleyin. Sesi kapatma veya sessize alma zamanlaması ayarlanmış olup olmadığından bağımsız olarak tüm olaylar listelenir.",
         "notifications": "Grafana tarafından yönetilen uyarı kurallarınızdan gönderilen tüm bildirimlerin geçmişini görüntüleyin."
@@ -7760,6 +7763,9 @@
         "title": "Kaydedilmemiş değişiklikler"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Aradığınız şey bu değil mi? <2>Önerilen diğer panoları</2> görüntüleyin veya <6>sıfırdan bir pano oluşturun</6>.",
       "title": "Şu anda {{title}} görüntüleniyor"
@@ -8014,6 +8020,7 @@
       "title-label": "Başlık"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Değişiklikleri kaydet",
       "save-button-disabled-tooltip": "Kaydetmeden önce doğrulama hatalarını düzeltin",
       "save-button-disabled-tooltip-yaml": "Belgede doğrulama hataları var. Satır içi hata ayrıntılarını görmek için JSON'a geçin.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Kalın",
       "tooltip-bullet-list": "Madde imli liste",
       "tooltip-checklist": "Kontrol listesi",
+      "tooltip-diagram": "",
       "tooltip-heading": "Başlık",
       "tooltip-insert-variable": "Değişken ekle",
       "tooltip-italic": "İtalik",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Çubuk grafik - yığılmış",
       "bar-stacked-percent": "Çubuk grafik - yüzdeye göre yığılmış",
       "line": "Çizgi grafik"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zaman dilimi ekle",
