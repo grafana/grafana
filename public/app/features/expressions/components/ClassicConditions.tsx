@@ -2,60 +2,45 @@ import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
 
-import { type ClassicCondition, type ExpressionQuery } from '../types';
-import { defaultCondition } from '../utils/expressionTypes';
+import { type ClassicCondition, type ClassicExpressionQuery, defaultClassicCondition } from '../schemas/classic';
 
 import { Condition } from './Condition';
 
 interface Props {
-  query: ExpressionQuery;
+  query: ClassicExpressionQuery;
   refIds: Array<SelectableValue<string>>;
-  onChange: (query: ExpressionQuery) => void;
+  onChange: (query: ClassicExpressionQuery) => void;
 }
 
 export const ClassicConditions = ({ onChange, query, refIds }: Props) => {
   const onConditionChange = (condition: ClassicCondition, index: number) => {
-    if (query.conditions) {
-      onChange({
-        ...query,
-        conditions: [...query.conditions.slice(0, index), condition, ...query.conditions.slice(index + 1)],
-      });
-    }
+    onChange({
+      ...query,
+      conditions: [...query.conditions.slice(0, index), condition, ...query.conditions.slice(index + 1)],
+    });
   };
 
   const onAddCondition = () => {
-    if (query.conditions) {
-      const lastParams = query.conditions.at(-1)?.query?.params ?? [];
-      const newCondition: ClassicCondition = { ...defaultCondition, query: { params: lastParams } };
+    const lastParams = query.conditions.at(-1)?.query.params ?? [];
+    const newCondition: ClassicCondition = { ...defaultClassicCondition, query: { params: lastParams } };
 
-      onChange({
-        ...query,
-        conditions: query.conditions.length > 0 ? [...query.conditions, newCondition] : [newCondition],
-      });
-    }
+    onChange({ ...query, conditions: [...query.conditions, newCondition] });
   };
 
   const onRemoveCondition = (index: number) => {
-    if (query.conditions) {
-      const condition = query.conditions[index];
-      const conditions = query.conditions
-        .filter((c) => c !== condition)
-        .map((c, index) => {
-          if (index === 0) {
-            return {
-              ...c,
-              operator: {
-                type: 'when',
-              },
-            };
-          }
-          return c;
-        });
-      onChange({
-        ...query,
-        conditions,
+    const conditions = query.conditions
+      .filter((_, i) => i !== index)
+      .map((condition, i) => {
+        if (i === 0) {
+          // The first condition has no operator - the row is labelled "WHEN" - and the backend
+          // ignores whatever is there. Drop it rather than leaving a stale and/or behind.
+          const { operator, ...withoutOperator } = condition;
+          return withoutOperator;
+        }
+        return condition;
       });
-    }
+
+    onChange({ ...query, conditions });
   };
 
   return (
@@ -63,7 +48,7 @@ export const ClassicConditions = ({ onChange, query, refIds }: Props) => {
       <InlineFieldRow>
         <InlineField label={t('expressions.classic-conditions.label-conditions', 'Conditions')} labelWidth={14}>
           <div>
-            {query.conditions?.map((condition, index) => {
+            {query.conditions.map((condition, index) => {
               if (!condition) {
                 return;
               }

@@ -33,10 +33,6 @@ jest.mock('app/features/expressions/ExpressionDatasource', () => ({
   },
 }));
 
-jest.mock('app/features/expressions/utils/expressionTypes', () => ({
-  getDefaults: jest.fn((query) => query),
-}));
-
 const mockUseAlertRulesForPanel = jest.fn();
 jest.mock('./hooks/useAlertRulesForPanel', () => ({
   useAlertRulesForPanel: (...args: unknown[]) => mockUseAlertRulesForPanel(...args),

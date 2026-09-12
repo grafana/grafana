@@ -1,6 +1,6 @@
 import { type AlertState } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
-import { type ExpressionQuery } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 
 import { type AlertRule, type Transformation } from './QueryEditor/types';
 import { getEditorType } from './QueryEditor/utils';

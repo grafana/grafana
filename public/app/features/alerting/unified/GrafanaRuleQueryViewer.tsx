@@ -12,8 +12,13 @@ import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
+import type { ClassicExpressionQuery } from '../../expressions/schemas/classic';
+import type { ExpressionQuery } from '../../expressions/schemas/expressionQuery';
+import type { MathExpressionQuery } from '../../expressions/schemas/math';
+import type { ReduceExpressionQuery } from '../../expressions/schemas/reduce';
+import type { ResampleExpressionQuery } from '../../expressions/schemas/resample';
+import type { ThresholdExpressionQuery } from '../../expressions/schemas/threshold';
 import {
-  type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
   downsamplingTypes,
@@ -227,6 +232,11 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
   const styles = useStyles2(getQueryBoxStyles);
 
   function renderPreview() {
+    // Grab this before the switch. Every type is handled below, so by the default branch there is
+    // no type left for `model` to be - but that branch still runs if a rule has a type we do not
+    // know about.
+    const unsupportedType: string = model.type;
+
     switch (model.type) {
       case ExpressionQueryType.math:
         return <MathExpressionViewer model={model} />;
@@ -248,7 +258,7 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition, isLoading
 
       default:
         return (
-          <Trans i18nKey="alerting.expression-preview.expression-not-supported" values={{ type: model.type }}>
+          <Trans i18nKey="alerting.expression-preview.expression-not-supported" values={{ type: unsupportedType }}>
             Expression not supported: {'{{type}}'}
           </Trans>
         );
@@ -356,7 +366,7 @@ const getQueryBoxStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
+function ClassicConditionViewer({ model }: { model: ClassicExpressionQuery }) {
   const styles = useStyles2(getClassicConditionViewerStyles);
 
   const reducerFunctions = keyBy(alertDef.reducerTypes, (rt) => rt.value);
@@ -365,7 +375,7 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
 
   return (
     <div className={styles.container}>
-      {model.conditions?.map(({ query, operator, reducer, evaluator }, index) => {
+      {model.conditions.map(({ query, operator, reducer, evaluator }, index) => {
         const isRange = isRangeEvaluator(evaluator);
         const params = evaluator.params;
         let thresholdDisplay = '';
@@ -403,7 +413,7 @@ const getClassicConditionViewerStyles = (theme: GrafanaTheme2) => ({
   ...getCommonQueryStyles(theme),
 });
 
-function ReduceConditionViewer({ model }: { model: ExpressionQuery }) {
+function ReduceConditionViewer({ model }: { model: ReduceExpressionQuery }) {
   const styles = useStyles2(getReduceConditionViewerStyles);
 
   const { reducer, expression, settings } = model;
@@ -446,7 +456,7 @@ const getReduceConditionViewerStyles = (theme: GrafanaTheme2) => ({
   ...getCommonQueryStyles(theme),
 });
 
-function ResampleExpressionViewer({ model }: { model: ExpressionQuery }) {
+function ResampleExpressionViewer({ model }: { model: ResampleExpressionQuery }) {
   const styles = useStyles2(getResampleExpressionViewerStyles);
 
   const { expression, window, downsampler, upsampler } = model;
@@ -488,13 +498,13 @@ const getResampleExpressionViewerStyles = (theme: GrafanaTheme2) => ({
   ...getCommonQueryStyles(theme),
 });
 
-function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
+function ThresholdExpressionViewer({ model }: { model: ThresholdExpressionQuery }) {
   const styles = useStyles2(getExpressionViewerStyles);
 
   const { expression, conditions } = model;
 
-  const evaluator = conditions && conditions[0]?.evaluator;
-  const thresholdFunction = thresholdFunctions.find((tf) => tf.value === evaluator?.type);
+  const evaluator = conditions[0].evaluator;
+  const thresholdFunction = thresholdFunctions.find((tf) => tf.value === evaluator.type);
 
   const isRange = evaluator ? isRangeEvaluator(evaluator) : false;
 
@@ -562,7 +572,7 @@ const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-function MathExpressionViewer({ model }: { model: ExpressionQuery }) {
+function MathExpressionViewer({ model }: { model: MathExpressionQuery }) {
   const styles = useStyles2(getExpressionViewerStyles);
 
   const { expression } = model;

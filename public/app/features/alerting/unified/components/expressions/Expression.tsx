@@ -19,12 +19,8 @@ import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
-import {
-  type ExpressionQuery,
-  ExpressionQueryType,
-  expressionTypes,
-  getExpressionLabel,
-} from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionQueryType, expressionTypes, getExpressionLabel } from 'app/features/expressions/types';
 import { type AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
@@ -102,6 +98,11 @@ export const Expression: FC<ExpressionProps> = ({
         .filter((q) => query.refId !== q.refId)
         .map((q) => ({ value: q.refId, label: q.refId }));
 
+      // Grab this before the switch. Every type is handled below, so by the default branch there
+      // is no type left for `query` to be - but that branch still runs if a rule has a type we do
+      // not know about.
+      const unsupportedType: string = query.type;
+
       switch (query.type) {
         case ExpressionQueryType.math:
           return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
@@ -150,7 +151,7 @@ export const Expression: FC<ExpressionProps> = ({
 
         default:
           return (
-            <Trans i18nKey="alerting.expression.not-supported" values={{ expression: query.type }}>
+            <Trans i18nKey="alerting.expression.not-supported" values={{ expression: unsupportedType }}>
               Expression not supported: {'{{expression}}'}
             </Trans>
           );

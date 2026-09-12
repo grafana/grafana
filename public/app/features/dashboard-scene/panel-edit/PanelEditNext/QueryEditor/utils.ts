@@ -11,7 +11,8 @@ import { t } from '@grafana/i18n';
 import { type CustomTransformerDefinition, SafeSerializableSceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { getExpressionLabel, type ExpressionQuery } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { getExpressionLabel } from 'app/features/expressions/types';
 
 import { getAlertStateColor, getQueryEditorTypeConfig, QueryEditorType } from '../constants';
 

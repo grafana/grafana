@@ -4,19 +4,16 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { usePendingExpression } from './usePendingExpression';
 
-// Mock the expression datasource and defaults
+// Mock the expression datasource. newQuery decides the type now, so the mock has to honour the
+// type it is handed rather than returning a fixed one.
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({
   dataSource: {
-    newQuery: jest.fn(() => ({
+    newQuery: jest.fn((query?: { type?: string }) => ({
       refId: '--',
       datasource: { type: '__expr__', uid: '__expr__' },
-      type: ExpressionQueryType.math,
+      type: query?.type ?? 'math',
     })),
   },
-}));
-
-jest.mock('app/features/expressions/utils/expressionTypes', () => ({
-  getDefaults: jest.fn((query) => query),
 }));
 
 interface MockOptions {

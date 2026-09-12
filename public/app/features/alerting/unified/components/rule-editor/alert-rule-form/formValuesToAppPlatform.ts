@@ -14,7 +14,12 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { type RuleFormValues } from '../../../types/rule-form';
-import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
+import {
+  cleanAnnotations,
+  cleanLabels,
+  encodeExpressionModel,
+  fixBothInstantAndRangeQuery,
+} from '../../../utils/rule-form';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
@@ -156,7 +161,7 @@ export function toExpression(
   query: RuleFormValues['queries'][number],
   condition: RuleFormValues['condition']
 ): AlertRuleExpression {
-  const normalizedQuery = fixBothInstantAndRangeQuery(query);
+  const normalizedQuery = encodeExpressionModel(fixBothInstantAndRangeQuery(query));
   const isSource = normalizedQuery.refId === condition;
   const hasRelativeTimeRange = normalizedQuery.relativeTimeRange !== undefined;
   const isExpression = isExpressionQuery(normalizedQuery.model);

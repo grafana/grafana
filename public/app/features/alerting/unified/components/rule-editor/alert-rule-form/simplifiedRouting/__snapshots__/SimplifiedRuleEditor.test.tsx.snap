@@ -69,25 +69,6 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -111,19 +92,6 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {
@@ -243,25 +211,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -285,19 +234,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {
@@ -414,25 +350,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -456,19 +373,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {
@@ -588,25 +492,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -630,19 +515,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {
@@ -759,25 +631,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -801,19 +654,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {
