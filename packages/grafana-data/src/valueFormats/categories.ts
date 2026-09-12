@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 
 import { type ValueFormatCategory } from '../types/valueFormats';
 
-import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
+import { toHex, sci, toHex0x, toOrdinal, toPercent, toPercentUnit } from './arithmeticFormatters';
 import {
   locale,
   scaledUnits,
@@ -105,6 +105,11 @@ export const getCategories = (): ValueFormatCategory[] => [
         name: t('grafana-data.valueFormats.categories.misc.formats.name-locale', 'Locale format'),
         id: 'locale',
         fn: locale,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.misc.formats.name-ordinal', 'Ordinal (1st, 2nd, 3rd)'),
+        id: 'ordinal',
+        fn: toOrdinal,
       },
       {
         name: t('grafana-data.valueFormats.categories.misc.formats.name-pixels', 'Pixels'),
