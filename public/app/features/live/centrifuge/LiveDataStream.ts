@@ -254,20 +254,72 @@ export class LiveDataStream<T = unknown> {
         ? this.frameBuffer.getMatchingFieldIndexes(fieldFilterPredicate)
         : undefined;
 
-      const serialized = this.frameBuffer.serialize(
-        fieldFilterPredicate,
-        buffer,
-        shouldSendLastPacketOnly && !error && messages.length ? { maxLength: this.frameBuffer.packetInfo.length } : error || !messages.length ? { maxLength: 0 } : undefined
-      );
-      const transformed = mathTransform?.frame(serialized) ?? serialized;
+      if (!shouldSendLastPacketOnly) {
+        return {
+          key: subKey,
+          state: error ? LoadingState.Error : LoadingState.Streaming,
+          data: [
+            {
+              type: StreamingResponseDataType.FullFrame,
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer);
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
+            },
+          ],
+          error,
+        };
+      }
+
+      if (error) {
+        // send empty frame with error
+        return {
+          key: subKey,
+          state: LoadingState.Error,
+          data: [
+            {
+              type: StreamingResponseDataType.FullFrame,
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 });
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
+            },
+          ],
+          error,
+        };
+      }
+
+      if (!messages.length) {
+        console.warn(`expected to find at least one non error message ${messages.map(({ type }) => type)}`);
+        // send empty frame
+        return {
+          key: subKey,
+          state: LoadingState.Streaming,
+          data: [
+            {
+              type: StreamingResponseDataType.FullFrame,
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 });
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
+            },
+          ],
+          error,
+        };
+      }
 
       return {
         key: subKey,
-        state: error ? LoadingState.Error : LoadingState.Streaming,
+        state: LoadingState.Streaming,
         data: [
           {
             type: StreamingResponseDataType.FullFrame,
-            frame: transformed,
+            frame: (() => {
+              const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, {
+                maxLength: this.frameBuffer.packetInfo.length,
+              });
+              return mathTransform?.frame(serialized) ?? serialized;
+            })(),
           },
         ],
         error,
