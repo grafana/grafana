@@ -75,6 +75,19 @@ const emptyConfig = {
   settings: { ...testConfig.settings, enabled: false, clientId: '', clientSecret: '' },
 };
 
+const azureADConfig: SSOProvider = {
+  ...testConfig,
+  provider: 'azuread',
+  settings: {
+    ...testConfig.settings,
+    name: 'Microsoft',
+    clientAuthentication: 'none',
+    authUrl: 'https://example.com/auth',
+    tokenUrl: 'https://example.com/token',
+    workloadIdentityTokenFile: '',
+  },
+};
+
 function setup(jsx: JSX.Element) {
   return {
     user: userEvent.setup(),
@@ -228,6 +241,29 @@ describe('ProviderConfigForm', () => {
         provider: 'github',
         enabled: false,
       });
+    });
+  });
+
+  it('saves workload identity settings without an explicit token file path', async () => {
+    const { user } = setup(<ProviderConfigForm config={azureADConfig} provider={azureADConfig.provider} />);
+
+    await user.click(screen.getByRole('combobox', { name: /Client authentication/i }));
+    await user.click(screen.getByText('Workload identity'));
+    await user.click(screen.getByText('Extra security measures'));
+    await user.click(screen.getByRole('button', { name: /^Save$/i }));
+
+    await waitFor(() => {
+      expect(putMock).toHaveBeenCalledWith(
+        '/api/v1/sso-settings/azuread',
+        expect.objectContaining({
+          provider: 'azuread',
+          settings: expect.objectContaining({
+            clientAuthentication: 'workload_identity',
+            workloadIdentityTokenFile: '',
+          }),
+        }),
+        { showErrorAlert: false }
+      );
     });
   });
 

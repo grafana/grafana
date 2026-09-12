@@ -411,24 +411,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: t(
         'auth-config.fields.workload-identity-token-file-description',
-        'The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to "workload_identity". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.'
+        'The file path to the token file used to authenticate to the OAuth2 provider. Leave blank to use the path from the AZURE_FEDERATED_TOKEN_FILE environment variable. If the environment variable is unset or empty, Grafana uses /var/run/secrets/azure/tokens/azure-identity-token.'
       ),
-      validation: {
-        validate: (value, formValues) => {
-          let clientAuth = formValues.clientAuthentication;
-          if (isSelectableValue<string>(clientAuth)) {
-            clientAuth = clientAuth.value;
-          }
-          if (clientAuth === 'workload_identity') {
-            return !!value;
-          }
-          return true;
-        },
-        message: t(
-          'auth-config.fields.workload-identity-token-file-required',
-          'This field must be set when client authentication is set to "Workload identity".'
-        ),
-      },
     },
     allowedOrganizations: {
       label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),

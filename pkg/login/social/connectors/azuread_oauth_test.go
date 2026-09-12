@@ -1137,6 +1137,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 func TestSocialAzureAD_Validate(t *testing.T) {
 	testCases := []struct {
 		name      string
+		setup     func(t *testing.T)
 		settings  ssoModels.SSOSettings
 		requester identity.Requester
 		wantErr   error
@@ -1171,6 +1172,34 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+		},
+		{
+			name: "workload identity is valid with environment token file path",
+			setup: func(t *testing.T) {
+				t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "/var/run/secrets/azure/wi/token/azure-identity-token")
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication": "workload_identity",
+					"client_id":             "client-id",
+					"auth_url":              "https://example.com/auth",
+					"token_url":             "https://example.com/token",
+				},
+			},
+		},
+		{
+			name: "workload identity is valid with legacy default token file path",
+			setup: func(t *testing.T) {
+				t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "")
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication": "workload_identity",
+					"client_id":             "client-id",
+					"auth_url":              "https://example.com/auth",
+					"token_url":             "https://example.com/token",
+				},
+			},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -1303,6 +1332,10 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.setup != nil {
+				tc.setup(t)
+			}
+
 			s := mustNewAzureADProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
@@ -1316,6 +1349,23 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestResolveWorkloadIdentityTokenFileUsesLegacyDefault(t *testing.T) {
+	t.Run("uses configured path", func(*testing.T) {
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "/some/other/path")
+		require.Equal(t, "/configured/path", resolveWorkloadIdentityTokenFile("/configured/path"))
+	})
+
+	t.Run("uses env var", func(*testing.T) {
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "/some/other/path")
+		require.Equal(t, "/some/other/path", resolveWorkloadIdentityTokenFile(""))
+	})
+
+	t.Run("uses legacy default", func(*testing.T) {
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "")
+		require.Equal(t, "/var/run/secrets/azure/tokens/azure-identity-token", resolveWorkloadIdentityTokenFile(""))
+	})
 }
 
 func TestSocialAzureAD_Reload(t *testing.T) {
@@ -1461,13 +1511,13 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		TokenUrl:                    "https://login.microsoftonline.com/token",
 	}
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("uses environment token file when no path is configured", func(t *testing.T) {
 		workloadFile := path.Join(t.TempDir(), "workload.json")
 		err := os.WriteFile(workloadFile, []byte("mock-client-assertion"), 0600)
 		require.NoError(t, err)
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", workloadFile)
 
 		s := mustNewAzureADProvider(t, info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
-		s.info.WorkloadIdentityTokenFile = workloadFile
 
 		// Mock the token endpoint
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1523,7 +1573,13 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 	})
 
 	t.Run("error when workload token file does not exist", func(t *testing.T) {
+		environmentWorkloadFile := path.Join(t.TempDir(), "workload.json")
+		err := os.WriteFile(environmentWorkloadFile, []byte("mock-client-assertion"), 0600)
+		require.NoError(t, err)
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", environmentWorkloadFile)
+
 		s := mustNewAzureADProvider(t, info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+		// Override the env var's path to make sure that the custom config takes precedence to the env var.
 		s.info.WorkloadIdentityTokenFile = "/non/existent/file"
 
 		token := &oauth2.Token{
@@ -1533,7 +1589,7 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		}
 
 		ts := s.TokenSource(context.Background(), token)
-		_, err := ts.Token()
+		_, err = ts.Token()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to read workload identity token file")
 	})

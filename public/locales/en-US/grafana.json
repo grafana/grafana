@@ -4207,9 +4207,8 @@
       "validate-hosted-domain-label": "Validate hosted domain",
       "validate-id-token-description": "If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.",
       "validate-id-token-label": "Validate ID token",
-      "workload-identity-token-file-description": "The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to \"workload_identity\". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.",
-      "workload-identity-token-file-label": "{{ workloadIdentityLabel }} token file",
-      "workload-identity-token-file-required": "This field must be set when client authentication is set to \"Workload identity\"."
+      "workload-identity-token-file-description": "The file path to the token file used to authenticate to the OAuth2 provider. Leave blank to use the path from the AZURE_FEDERATED_TOKEN_FILE environment variable. If the file path is left blank and the environment variable is unset or empty, Grafana uses /var/run/secrets/azure/tokens/azure-identity-token.",
+      "workload-identity-token-file-label": "{{ workloadIdentityLabel }} token file"
     },
     "get-page-nav": {
       "subTitle": {

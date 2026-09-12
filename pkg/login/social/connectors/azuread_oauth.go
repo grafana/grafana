@@ -18,6 +18,8 @@ import (
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,12 +31,13 @@ import (
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2"
 )
 
 const (
-	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
-	domainHintKey       = "domain_hint"
+	forceUseGraphAPIKey                  = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	domainHintKey                        = "domain_hint"
+	azureFederatedTokenFileEnv           = "AZURE_FEDERATED_TOKEN_FILE"
+	legacyDefaultAzureFederatedTokenFile = "/var/run/secrets/azure/tokens/azure-identity-token"
 )
 
 var (
@@ -289,7 +292,8 @@ func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
 	}
 
 	// refresh the expired token using the refresh token
-	federatedToken, err := os.ReadFile(s.workloadIdentityTokenFile)
+	workloadIdentityTokenFile := resolveWorkloadIdentityTokenFile(s.workloadIdentityTokenFile)
+	federatedToken, err := os.ReadFile(workloadIdentityTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
 	}
@@ -563,9 +567,6 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		return nil
 
 	case social.WorkloadIdentity:
-		if info.WorkloadIdentityTokenFile == "" {
-			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
-		}
 		return nil
 
 	case social.ClientSecretPost, "":
@@ -580,6 +581,18 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 	default:
 		return ssosettings.ErrInvalidOAuthConfig("Invalid client authentication method.")
 	}
+}
+
+func resolveWorkloadIdentityTokenFile(configuredPath string) string {
+	if configuredPath != "" {
+		return configuredPath
+	}
+
+	if path := os.Getenv(azureFederatedTokenFileEnv); path != "" {
+		return path
+	}
+
+	return legacyDefaultAzureFederatedTokenFile
 }
 
 func (claims *azureClaims) extractEmail() string {
