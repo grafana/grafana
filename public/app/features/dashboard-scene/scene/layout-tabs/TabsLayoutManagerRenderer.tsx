@@ -199,7 +199,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
         </DragDropContext>
       </TabsBar>
 
-      {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
+      {currentTab && <TabItemLayoutRenderer key={currentTab.state.key} tab={currentTab} isEditing={isEditing} />}
     </div>
   );
 }
