@@ -1,9 +1,9 @@
 import { HttpResponse } from 'msw';
 import { act, render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { EventBusSrv, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { reportInteraction, setAppEvents, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -24,6 +24,7 @@ import { AppChromeService } from '../AppChromeService';
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
+import { CustomizableNavFeedbackEvent } from './navFeedback';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
@@ -672,6 +673,55 @@ describe('MegaMenu', () => {
           'grafana_nav_customise_saved',
           expect.objectContaining({ hiddenCount: 0, pinnedCount: 1 })
         );
+      });
+    });
+
+    describe('feedback', () => {
+      let appEvents: EventBusSrv;
+      beforeEach(() => {
+        // getAppEvents() is not initialised in the test runtime; give the publish (and this test's
+        // subscription) a real bus to share.
+        appEvents = new EventBusSrv();
+        setAppEvents(appEvents);
+      });
+
+      it('publishes the applied customisation and tracks the click', async () => {
+        const events: CustomizableNavFeedbackEvent[] = [];
+        const subscription = appEvents.subscribe(CustomizableNavFeedbackEvent, (event) => events.push(event));
+
+        const { user } = renderMegaMenu({
+          hiddenItemIds: ['explore'],
+          bookmarkUrls: ['/playlists'],
+          sectionOrder: ['dashboards'],
+        });
+
+        // The button only shows while customising, and it reports the applied (not draft) state.
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Give feedback' }));
+
+        expect(events).toHaveLength(1);
+        // The type is a wire contract with the setupguide-app survey — pin it so a rename can't
+        // silently break the trigger.
+        expect(events[0].type).toBe('customizable-nav-feedback');
+        expect(events[0].payload).toEqual({
+          hiddenItems: ['explore'],
+          pinnedItems: ['/playlists'],
+          sectionOrder: ['dashboards'],
+        });
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_nav_customise_feedback', expect.anything());
+
+        subscription.unsubscribe();
+      });
+
+      it('offers the feedback button only while customising', async () => {
+        const { user } = renderMegaMenu();
+
+        // At rest the footer shows the Customise entry point but no feedback button.
+        await screen.findByRole('button', { name: 'Customise navigation' });
+        expect(screen.queryByRole('button', { name: 'Give feedback' })).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Customise navigation' }));
+        expect(screen.getByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
       });
     });
   });
