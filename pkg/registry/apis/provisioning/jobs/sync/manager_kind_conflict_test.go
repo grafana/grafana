@@ -320,7 +320,7 @@ func TestSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
 					repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").Run(func(mock.Arguments) {
 						close(validWritten)
 					}).Return("valid", gvk, 0, nil).Once()
-					repoResources.On("CheckResourceManagerKind", mock.Anything, "second.json", "new-ref").Return("second", gvk, 0, tt.checkErr).Once()
+					repoResources.On("CheckResourceManagerKind", mock.Anything, "second.json", "new-ref").Return("second", gvk, 123, tt.checkErr).Once()
 					metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 					tracer := tracing.NewNoopTracerService()
 					var err error
@@ -349,6 +349,10 @@ func TestSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
 					require.NoError(t, results["valid.json"].Warning())
 					require.Equal(t, repository.FileActionCreated, results["valid.json"].Action())
 					result := results["second.json"]
+					require.Equal(t, "second", result.Name())
+					require.Equal(t, gvk.Group, result.Group())
+					require.Equal(t, gvk.Kind, result.Kind())
+					require.Equal(t, 123, result.Bytes())
 					switch {
 					case tt.checkErr == nil:
 						require.NoError(t, result.Error())

@@ -15,9 +15,9 @@ func recordQuotaBlockedCreate(ctx context.Context, path, ref string, repositoryR
 	// A different manager can make this file unsyncable regardless of quota.
 	// Inspect it without writing so warning classification does not depend on file order.
 	name, gvk, size, err := repositoryResources.CheckResourceManagerKind(ctx, path, ref)
+	result.WithName(name).WithGVK(gvk).WithBytes(size)
 	if err != nil {
-		result.WithName(name).WithGVK(gvk).WithBytes(size).
-			WithError(fmt.Errorf("checking resource manager for file %s: %w", path, err))
+		result.WithError(fmt.Errorf("checking resource manager for file %s: %w", path, err))
 	} else {
 		result.WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", path))).AsSkipped()
 	}
