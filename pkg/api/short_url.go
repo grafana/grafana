@@ -236,7 +236,11 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 	}
 
 	c.Logger.Info("Successfully created short URL", "path", cmd.Path, "uid", out.GetName())
-	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURLDTO(*out, sk8s.cfg.AppURL))
+	var orgID *int64
+	if sk8s.cfg.StackID == "" {
+		orgID = &c.OrgID
+	}
+	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURLDTO(*out, sk8s.cfg.AppURL, orgID))
 }
 
 //-----------------------------------------------------------------------------------------
