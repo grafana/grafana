@@ -19256,11 +19256,11 @@ __metadata:
   linkType: hard
 
 "file-selector@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "file-selector@npm:2.1.0"
+  version: 2.1.2
+  resolution: "file-selector@npm:2.1.2"
   dependencies:
     tslib: "npm:^2.7.0"
-  checksum: 10/050c24a27b8582a9c5d010a3ea77b22ccbe3969733a044bcb210ba2f85454fb7a6d8b6f91de468517fe59998e94d5c9533447ad063b9e74a67161946474164d4
+  checksum: 10/2a6be0e1904df85f8705a5171fd3b93c1b1ff2ad0143556adb78ac4de899bfc0ba1a20083b4febd4f7000759ec9119a31af76a057e29dd9215907da69ac95e50
   languageName: node
   linkType: hard
 
