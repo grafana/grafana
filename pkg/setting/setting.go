@@ -159,6 +159,9 @@ type Cfg struct {
 	Domain            string
 	CDNRootURL        *url.URL
 	ReadTimeout       time.Duration
+	ReadHeaderTimeout time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
 	EnableGzip        bool
 	EnforceDomain     bool
 	MinTLSVersion     string
@@ -2402,6 +2405,9 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
+	cfg.ReadHeaderTimeout = server.Key("read_header_timeout").MustDuration(0)
+	cfg.WriteTimeout = server.Key("write_timeout").MustDuration(0)
+	cfg.IdleTimeout = server.Key("idle_timeout").MustDuration(0)
 
 	headersSection := cfg.Raw.Section("server.custom_response_headers")
 	keys := headersSection.Keys()
