@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -69,11 +72,28 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 		return "", nil
 	}
 
+	// Span the decrypt call so a hung or slow secrets service shows up as a bounded
+	// span under repository.build rather than an uninstrumented gap. Started before
+	// the timeout so it covers the full bound and the gRPC client's shared-context
+	// retries. The tracer is taken from the active span already in ctx to avoid
+	// threading one through ProvideDecrypter.
+	ctx, span := trace.SpanFromContext(ctx).TracerProvider().
+		Tracer("github.com/grafana/grafana/apps/provisioning/pkg/repository").
+		Start(ctx, "provisioning.repository.decrypt",
+			trace.WithAttributes(
+				attribute.String("namespace", s.namespace),
+				attribute.String("secret.name", sv.Name),
+				attribute.String("secret.type", string(st)),
+			),
+		)
+	defer span.End()
+
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start).Seconds()
 		if err != nil {
 			s.metrics.recordError(st)
+			span.RecordError(err)
 		} else {
 			s.metrics.recordSuccess(st, elapsed)
 		}
