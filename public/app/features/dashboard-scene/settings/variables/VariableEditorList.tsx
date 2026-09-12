@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { type ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';

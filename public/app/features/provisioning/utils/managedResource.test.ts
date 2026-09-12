@@ -10,6 +10,7 @@ import {
   getManagerIdentity,
   getManagerKind,
   getSourcePath,
+  isAppGeneratedResource,
   isItemManagedByRepository,
   isManaged,
   isManagedByRepository,
@@ -109,6 +110,19 @@ describe('managedResource helpers', () => {
 
     it('returns false when not managed', () => {
       expect(isManagedResourceReadOnly(resource())).toBe(false);
+    });
+  });
+
+  describe('isAppGeneratedResource', () => {
+    it('returns true for SLO-app generated names', () => {
+      expect(isAppGeneratedResource('grafana_slo_app-ih91jevcngaq3n2njghbw')).toBe(true);
+      expect(isAppGeneratedResource('grafana_slo_app-')).toBe(true);
+    });
+
+    it('returns false for normal names and undefined', () => {
+      expect(isAppGeneratedResource('my-dashboard')).toBe(false);
+      expect(isAppGeneratedResource('grafana-slo-app-x')).toBe(false); // hyphens, not the underscore prefix
+      expect(isAppGeneratedResource(undefined)).toBe(false);
     });
   });
 

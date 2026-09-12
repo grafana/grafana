@@ -18,7 +18,6 @@ import (
 // must not deny the kind's list — a successful multi-resource export is the regression guard.
 func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -27,20 +26,20 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 
 			const count = 3
 			wantTitles := map[string]bool{}
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
-				_, err := client.Resource.Create(ctx, rk.newResource(t, name, title), metav1.CreateOptions{})
+				_, err := client.Resource.Create(t.Context(), rk.newResource(t, name, title), metav1.CreateOptions{})
 				require.NoError(t, err, "should create %s", name)
 				wantTitles[title] = true
-				t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+				cleanupCtx := context.WithoutCancel(t.Context())
+				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
 			repo := rk.name + "-export-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "instance", // export is only supported for instance sync
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
 
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
@@ -67,7 +66,6 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 // exercising the generalized selective-export controller for a non-dashboard kind.
 func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -75,19 +73,19 @@ func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 			client := rk.client(t, helper)
 
 			const count = 3
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
-				_, err := client.Resource.Create(ctx, rk.newResource(t, name, title), metav1.CreateOptions{})
+				_, err := client.Resource.Create(t.Context(), rk.newResource(t, name, title), metav1.CreateOptions{})
 				require.NoError(t, err, "should create %s", name)
-				t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+				cleanupCtx := context.WithoutCancel(t.Context())
+				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
 			repo := rk.name + "-selective-export-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "instance",
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
 
 			// Export only instances 0 and 2; instance 1 must be left out.

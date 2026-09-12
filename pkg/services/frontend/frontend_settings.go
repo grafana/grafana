@@ -36,8 +36,9 @@ type FSFrontendSettings struct {
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl,omitempty"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl,omitempty"`
 
-	AnalyticsConsoleReporting bool                           `json:"analyticsConsoleReporting,omitempty"`
-	GrafanaJavascriptAgent    setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
+	AnalyticsConsoleReporting     bool                           `json:"analyticsConsoleReporting,omitempty"`
+	PluginImportTelemetryPackages []string                       `json:"pluginImportTelemetryPackages,omitempty"`
+	GrafanaJavascriptAgent        setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
 
 	ApplicationInsightsConnectionString  string `json:"applicationInsightsConnectionString,omitempty"`
 	ApplicationInsightsEndpointUrl       string `json:"applicationInsightsEndpointUrl,omitempty"`

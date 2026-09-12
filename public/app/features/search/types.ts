@@ -36,6 +36,7 @@ export interface DashboardViewItem {
   kind: DashboardViewItemKind;
   uid: string;
   title: string;
+  description?: string;
   url?: string;
   tags?: string[];
 
@@ -55,6 +56,8 @@ export interface DashboardViewItem {
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
+  /** Identity of the managing system (`grafana.app/managerId`), e.g. the repository name. */
+  managerId?: string;
 
   ownerReference?: {
     kind: string;

@@ -16,8 +16,8 @@ interface StackProps {
 }
 
 function Stack({ items, selectedItem, onActiveItemChange }: StackProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   useStackedItemScroll({ containerRef, contentRef, items, selectedItem, onActiveItemChange });
   return (
     <div ref={containerRef} data-testid="scroll-container">

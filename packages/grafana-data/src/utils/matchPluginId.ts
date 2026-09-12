@@ -1,6 +1,6 @@
 import { type PluginMeta } from '../types/plugin';
 
-export function matchPluginId(idToMatch: string, pluginMeta: PluginMeta) {
+export function matchPluginId(idToMatch: string, pluginMeta: Pick<PluginMeta, 'id' | 'aliasIDs'>) {
   if (pluginMeta.id === idToMatch) {
     return true;
   }

@@ -7,6 +7,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -71,8 +72,12 @@ var (
 	dashboardGroup    = dashboards.DashboardResourceInfo.GroupResource().Group
 	dashboardResource = dashboards.DashboardResourceInfo.GroupResource().Resource
 
+	notebookGroup    = dashv2beta1.NotebookResourceInfo.GroupResource().Group
+	notebookResource = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
+
 	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
 	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
+	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
 var resourceTranslations = map[string]resourceTranslation{
@@ -101,6 +106,14 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newScopedMapping(RelationSetView, dashboardGroup, dashboardResource, ""),
 			"dashboards:edit":  newScopedMapping(RelationSetEdit, dashboardGroup, dashboardResource, ""),
 			"dashboards:admin": newScopedMapping(RelationSetAdmin, dashboardGroup, dashboardResource, ""),
+			// Notebooks (folder-inherited), scoped to the notebook group/resource
+			"notebooks:read":   newScopedMapping(RelationGet, notebookGroup, notebookResource, ""),
+			"notebooks:write":  newScopedMapping(RelationUpdate, notebookGroup, notebookResource, ""),
+			"notebooks:create": newScopedMapping(RelationCreate, notebookGroup, notebookResource, ""),
+			"notebooks:delete": newScopedMapping(RelationDelete, notebookGroup, notebookResource, ""),
+			"notebooks:view":   newScopedMapping(RelationSetView, notebookGroup, notebookResource, ""),
+			"notebooks:edit":   newScopedMapping(RelationSetEdit, notebookGroup, notebookResource, ""),
+			"notebooks:admin":  newScopedMapping(RelationSetAdmin, notebookGroup, notebookResource, ""),
 		},
 	},
 	KindDashboards: {
@@ -121,6 +134,21 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
 		},
 	},
+	KindNotebooks: {
+		typ:      TypeResource,
+		group:    notebookGroup,
+		resource: notebookResource,
+		mapping: map[string]actionMapping{
+			"notebooks:read":   newMapping(RelationGet, ""),
+			"notebooks:write":  newMapping(RelationUpdate, ""),
+			"notebooks:create": newMapping(RelationCreate, ""),
+			"notebooks:delete": newMapping(RelationDelete, ""),
+			// Action sets
+			"notebooks:view":  newMapping(RelationSetView, ""),
+			"notebooks:edit":  newMapping(RelationSetEdit, ""),
+			"notebooks:admin": newMapping(RelationSetAdmin, ""),
+		},
+	},
 	KindTeams: {
 		typ:      TypeTeam,
 		group:    iamGroup,      // "iam.grafana.app"
@@ -132,6 +160,25 @@ var resourceTranslations = map[string]resourceTranslation{
 			"teams:delete":            newMapping(RelationDelete, ""),
 			"teams.permissions:read":  newMapping(RelationGetPermissions, ""),
 			"teams.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
+	KindUsers: {
+		typ:      TypeUser,
+		group:    iamGroup,      // "iam.grafana.app"
+		resource: usersResource, // "users"
+		mapping: map[string]actionMapping{
+			"users:read":              newMapping(RelationGet, ""),
+			"users:write":             newMapping(RelationUpdate, ""),
+			"users:create":            newUnscopedMapping(RelationCreate),
+			"users:delete":            newMapping(RelationDelete, ""),
+			"users.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"users.permissions:write": newMapping(RelationSetPermissions, ""),
+			// The org.users:* family gates the same iam.grafana.app/users verbs as the
+			// global users:* family (see userManagementMappings in tuple_helpers.go).
+			// org.users:add is intentionally omitted, matching the write-side mapping.
+			"org.users:read":   newMapping(RelationGet, ""),
+			"org.users:write":  newMapping(RelationUpdate, ""),
+			"org.users:remove": newMapping(RelationDelete, ""),
 		},
 	},
 }

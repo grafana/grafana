@@ -53,7 +53,7 @@ See note in the [introduction](#shared-dashboards-api) for an explanation.
 POST /api/dashboards/uid/xCpsVuc4z/public-dashboards/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
     "uid": "cd56d9fd-f3d4-486d-afba-a21760e2acbe",
@@ -138,7 +138,7 @@ See note in the [introduction](#shared-dashboard-api) for an explanation.
 PATCH /api/dashboards/uid/xCpsVuc4z/public-dashboards/cd56d9fd-f3d4-486d-afba-a21760e2acbe HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
     "timeSelectionEnabled": false,
@@ -219,7 +219,7 @@ See note in the [introduction](#shared-dashboard-api) for an explanation.
 GET /api/dashboards/uid/xCpsVuc4z/public-dashboards/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -270,7 +270,7 @@ See note in the [introduction](#shared-dashboard-api) for an explanation.
 DELETE /api/dashboards/uid/xCpsVuc4z/public-dashboards/cd56d9fd-f3d4-486d-afba-a21760e2acbe HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 Status Codes:
@@ -297,7 +297,7 @@ See note in the [introduction](#shared-dashboard-api) for an explanation.
 GET /api/dashboards/public-dashboards?perpage=2&page=3 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

@@ -4,18 +4,21 @@ import { AlertLabels, StateText } from '@grafana/alerting/unstable';
 import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
-import { AccessControlAction } from 'app/types/accessControl';
 import { GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
-import { useCanCreateSilences } from '../../hooks/useAbilities';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGlobalSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from '../../hooks/abilities/types';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
-import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin, usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
+import { StartInvestigationButton } from './StartInvestigationButton';
+import { useManualAssistantInvestigationEnabled } from './startInvestigationFromAlert';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
 type StateTextHealth = 'ok' | 'nodata' | 'error';
@@ -46,6 +49,10 @@ interface InstanceDetailsDrawerTitleProps {
   instanceLabels: Labels;
   commonLabels?: Labels;
   alertState?: GrafanaAlertState | null;
+  /** ISO start of the current firing episode, for Assistant investigation context. */
+  alertStartsAt?: string;
+  /** ISO end of the latest closed firing episode, for resolved-alert investigations. */
+  alertEndsAt?: string;
   rule?: GrafanaRuleDefinition;
   onOpenSilence?: () => void;
   titleText?: string;
@@ -60,6 +67,8 @@ export function InstanceDetailsDrawerTitle({
   instanceLabels,
   commonLabels,
   alertState,
+  alertStartsAt,
+  alertEndsAt,
   rule,
   onOpenSilence,
   titleText,
@@ -70,7 +79,12 @@ export function InstanceDetailsDrawerTitle({
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
-  const canCreateSilence = useCanCreateSilences();
+  const { installed: assistantInstalled } = usePluginBridge(SupportedPlugin.Assistant);
+  const manualInvestigationEnabled = useManualAssistantInvestigationEnabled();
+  const showStartInvestigation = !hideActions && manualInvestigationEnabled && Boolean(assistantInstalled);
+  const canCreateSilence = isGranted(
+    useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: rule?.namespace_uid })
+  );
 
   const silenceLink = useMemo(() => {
     if (!rule) {
@@ -86,8 +100,6 @@ export function InstanceDetailsDrawerTitle({
   const canAccessIncident = settings
     ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'))
     : false;
-  const hasFolderSilencePermission = folder?.accessControl?.[AccessControlAction.AlertingSilenceCreate] ?? false;
-  const canSilence = canCreateSilence || hasFolderSilencePermission;
 
   return (
     <Stack direction="column" gap={2}>
@@ -122,12 +134,12 @@ export function InstanceDetailsDrawerTitle({
             <Stack direction="row" gap={1} alignItems="center">
               {silenceLink && (
                 <>
-                  {canSilence && onOpenSilence && (
+                  {canCreateSilence && onOpenSilence && (
                     <Button icon="bell-slash" variant="secondary" size="sm" onClick={onOpenSilence}>
                       <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
                     </Button>
                   )}
-                  {canSilence && !onOpenSilence && (
+                  {canCreateSilence && !onOpenSilence && (
                     <LinkButton
                       href={silenceLink}
                       icon="bell-slash"
@@ -139,7 +151,7 @@ export function InstanceDetailsDrawerTitle({
                       <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
                     </LinkButton>
                   )}
-                  {!canSilence && (
+                  {!canCreateSilence && (
                     <Tooltip
                       content={t(
                         'alerting.triage.instance-details-drawer.silence-no-permission',
@@ -185,6 +197,20 @@ export function InstanceDetailsDrawerTitle({
             </Stack>
           )}
         </Stack>
+        {showStartInvestigation && (
+          <Box marginTop={0.5}>
+            <Stack direction="row" justifyContent="flex-end">
+              <StartInvestigationButton
+                instanceLabels={instanceLabels}
+                commonLabels={commonLabels}
+                rule={rule}
+                alertState={alertState}
+                alertStartsAt={alertStartsAt}
+                alertEndsAt={alertEndsAt}
+              />
+            </Stack>
+          </Box>
+        )}
       </Stack>
       <Box>
         {Object.keys(instanceLabels).length > 0 ? (

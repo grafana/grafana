@@ -6,6 +6,7 @@ import {
   createDataFrame,
   type DataFrame,
   DataFrameType,
+  type DataSourceApi,
   dateTime,
   type Field,
   FieldType,
@@ -16,8 +17,9 @@ import {
   type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
-import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
+import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';
@@ -53,8 +55,12 @@ jest.mock('@grafana/assistant', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   usePluginLinks: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -142,19 +148,15 @@ describe('LogLineDetails', () => {
       links: [],
       isLoading: false,
     });
-    jest.mocked(getDataSourceSrv).mockImplementation(
-      () =>
-        ({
-          get: (uid: string) => {
-            if (uid === 'loki-ds') {
-              return Promise.resolve(lokiDS);
-            } else if (uid === 'tempo-ds') {
-              return Promise.resolve(tempoDS);
-            }
-            return Promise.resolve(null);
-          },
-        }) as unknown as DataSourceSrv
-    );
+    jest.mocked(getDataSourceInstance).mockImplementation((ref) => {
+      const uid = typeof ref === 'string' ? ref : ref?.uid;
+      if (uid === 'loki-ds') {
+        return Promise.resolve(lokiDS as unknown as DataSourceApi);
+      } else if (uid === 'tempo-ds') {
+        return Promise.resolve(tempoDS as unknown as DataSourceApi);
+      }
+      return Promise.resolve(null as unknown as DataSourceApi);
+    });
   });
 
   test('Copy log as JSON from header copies structured JSON from the log', async () => {
@@ -639,9 +641,7 @@ describe('LogLineDetails', () => {
       });
 
       test('should fallback to a single group of Fields if not supported', async () => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.reject(null),
-        }));
+        jest.mocked(getDataSourceInstance).mockImplementation(() => Promise.reject(null));
 
         await setup(
           undefined,
@@ -767,6 +767,103 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/value1/)).toBeInTheDocument();
         expect(screen.getByText(/key2/)).toBeInTheDocument();
         expect(screen.getByText(/value2/)).toBeInTheDocument();
+      });
+
+      test('Shows a prettify switch for JSON log lines when the log line section is open', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByRole('switch', { name: 'Prettify' })).toBeInTheDocument();
+      });
+
+      test('Does not show a prettify switch for non-JSON log lines', async () => {
+        await setup(undefined, { entry: 'plain log line', labels: { key1: 'label1' } });
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+      });
+
+      test('Toggling the prettify switch calls setPrettifyDetailsJSON', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+        const setPrettifyDetailsJSON = jest.fn();
+
+        await setup({ logs: [log] }, undefined, undefined, {
+          showDetails: [log],
+          currentLog: log,
+          prettifyDetailsJSON: true,
+          setPrettifyDetailsJSON,
+        });
+
+        await userEvent.click(screen.getByText('Log line'));
+        await userEvent.click(screen.getByRole('switch', { name: 'Prettify' }));
+
+        expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(false);
+      });
+
+      test('Renders a compact JSON log line when prettifyDetailsJSON is false', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: false }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByText(jsonEntry)).toBeInTheDocument();
+      });
+
+      test('Renders a prettified JSON log line when prettifyDetailsJSON is true', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: true }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByText(jsonEntry)).not.toBeInTheDocument();
+        expect(screen.getByText(/"key"/)).toBeInTheDocument();
+        expect(screen.getByText(/"value"/)).toBeInTheDocument();
       });
 
       test('Exposes buttons to reorder displayed fields', async () => {

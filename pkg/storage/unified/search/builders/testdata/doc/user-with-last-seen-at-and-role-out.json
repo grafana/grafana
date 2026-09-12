@@ -11,7 +11,6 @@
   "title_ngram": "with-last-seen-at-and-role",
   "title_phrase": "with-last-seen-at-and-role",
   "fields": {
-    "createdAt": 0,
     "disabled": false,
     "email": "user.three@test.com",
     "lastSeenAt": 1698321600,

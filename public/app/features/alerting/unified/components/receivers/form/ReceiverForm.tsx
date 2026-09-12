@@ -3,6 +3,7 @@ import * as React from 'react';
 import { type FieldErrors, FormProvider, type SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
@@ -19,7 +20,7 @@ import {
   type CommonSettingsComponentType,
   type ReceiverFormValues,
 } from '../../../types/receiver-form';
-import { makeAMLink, stringifyErrorLike } from '../../../utils/misc';
+import { isClientFetchError, makeAMLink, stringifyErrorLike } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
@@ -109,7 +110,7 @@ export function ReceiverForm<R extends ChannelValues>({
         const message = getErrorMessage(e);
         notifyApp.error('Failed to save the contact point', message);
 
-        if (isFetchError(e) && e.status >= 400 && e.status < 500) {
+        if (isClientFetchError(e)) {
           logWarning('Failed to save the contact point', {
             status: String(e.status),
             message,
@@ -166,6 +167,7 @@ export function ReceiverForm<R extends ChannelValues>({
           <Input
             readOnly={!isEditable}
             id="name"
+            data-testid={selectors.pages.Alerting.ContactPointForm.nameInput}
             {...register('name', {
               required: 'Name is required',
               validate: async (value) => {
@@ -233,7 +235,7 @@ export function ReceiverForm<R extends ChannelValues>({
                 </Button>
               )}
               {!isSubmitting && (
-                <Button type="submit">
+                <Button type="submit" data-testid={selectors.pages.Alerting.ContactPointForm.saveButton}>
                   <Trans i18nKey="alerting.receiver-form.save-contact-point">Save contact point</Trans>
                 </Button>
               )}

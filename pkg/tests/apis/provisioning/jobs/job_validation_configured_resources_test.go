@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -32,7 +31,6 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 			"playlist.grafana.app/Playlist:disabled",
 		}
 	})
-	ctx := context.Background()
 
 	// The job admission validator only requires a non-empty repository name; it does not check
 	// repository existence (that happens later, in the jobs connector / worker). Creating Job
@@ -141,12 +139,12 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 				},
 			}
 
-			_, err := helper.Jobs.Resource.Create(ctx, jobObj, metav1.CreateOptions{})
+			_, err := helper.Jobs.Resource.Create(t.Context(), jobObj, metav1.CreateOptions{})
 			if tt.wantAccepted {
 				require.NoError(t, err, "job referencing a configured kind should pass admission")
 				// Best-effort cleanup: the job controller reconciles the new job concurrently, so a
 				// delete can race with a status update. Admission acceptance is the assertion here.
-				_ = helper.Jobs.Resource.Delete(ctx, name, metav1.DeleteOptions{})
+				_ = helper.Jobs.Resource.Delete(t.Context(), name, metav1.DeleteOptions{})
 				return
 			}
 

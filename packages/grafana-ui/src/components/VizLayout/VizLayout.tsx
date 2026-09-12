@@ -88,7 +88,14 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
       if (legend.props.width != null) {
         legendStyle.width = legend.props.width;
-        size = { width: width - legend.props.width, height };
+
+        // `maxWidth` can clamp the legend below the requested width, so subtracting the raw
+        // prop would size the viz for a wider legend than is actually rendered and leave a
+        // dead gap in the panel. Prefer the measured width; the prop is only the first-render
+        // fallback, before the legend has been measured in its new position.
+        if (!legendMeasure.width) {
+          size = { width: width - legend.props.width, height };
+        }
       }
       break;
   }
@@ -107,7 +114,10 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     <div style={containerStyle} data-testid={selectors.components.VizLayout.container}>
       <div className={styles.viz}>{size && children(size.width, size.height)}</div>
       <div style={legendStyle} ref={legendRef} data-testid={selectors.components.VizLayout.legend}>
-        <ScrollContainer>{legend}</ScrollContainer>
+        {/* a right-placed legend spans the full panel height, but the scroll container
+            sizes to its content by default, so percentage heights inside the legend
+            (e.g. a vertical color scale) would not resolve without an explicit height */}
+        <ScrollContainer height={placement === 'right' ? '100%' : undefined}>{legend}</ScrollContainer>
       </div>
     </div>
   );

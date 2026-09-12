@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -16,10 +17,12 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -28,29 +31,44 @@ import (
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
 
+// webhookCore is the subset of the provisioning APIBuilder the webhook
+// connector depends on, so lower-level code doesn't import the builder package.
+type webhookCore interface {
+	GetGroupVersion() schema.GroupVersion
+	GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error)
+	GetJobQueue() jobs.Queue
+	GetStatusPatcher() *appcontroller.RepositoryStatusPatcher
+	GetIncrementalPolicy() repository.IncrementalSyncPolicy
+}
+
 // This only works for github right now
 type webhookConnector struct {
 	webhooksEnabled bool
-	core            *provisioningapis.APIBuilder
+	core            webhookCore
 	renderer        pullrequest.ScreenshotRenderer
 	registry        prometheus.Registerer
 	metrics         webhookMetrics
+	// replayCache is the process-wide webhook replay cache, shared across every
+	// provider repository the connector dispatches for.
+	replayCache *replayCache
+	rateLimiter RateLimiter
 }
 
 func NewWebhookConnector(
 	webhooksEnabled bool,
-	// TODO: use interface for this
-	core *provisioningapis.APIBuilder,
+	core webhookCore,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
+	rateLimiter RateLimiter,
 ) *webhookConnector {
-	metrics := registerWebhookMetrics(registry)
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
 		registry:        registry,
-		metrics:         metrics,
+		metrics:         registerWebhookMetrics(registry),
+		replayCache:     newReplayCache(defaultReplayCacheTTL),
+		rateLimiter:     rateLimiter,
 	}
 }
 
@@ -107,11 +125,12 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
+	namespace := request.NamespaceValue(ctx)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
 		defer span.End()
 
-		namespace := request.NamespaceValue(ctx)
 		span.SetAttributes(
 			attribute.String("repository", name),
 			attribute.String("namespace", namespace),
@@ -159,14 +178,15 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		// Limit the webhook request body size
 		r.Body = http.MaxBytesReader(w, r.Body, webhookMaxBodySize)
 
-		rsp, err := hooks.Webhook(ctx, r)
+		result, err := s.webhook(ctx, r, hooks)
 		if err != nil {
 			span.RecordError(err)
+			logger.Error("failed to process webhook request", "error", err)
 			responder.Error(err)
 			return
 		}
 
-		if rsp == nil {
+		if result == nil || result.response == nil {
 			err := fmt.Errorf("expecting a response")
 			span.RecordError(err)
 			responder.Error(err)
@@ -183,11 +203,13 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			s.metrics.recordEventProcessed(actionTaken)
 		}()
 
+		rsp := result.response
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
 			actionTaken = string(rsp.Job.Action)
 			span.SetAttributes(attribute.String("job.action", actionTaken))
 
+			ctx := jobs.WithWebhookAttribution(ctx, result.attribution)
 			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				span.RecordError(err)
@@ -202,7 +224,136 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}), nil
+	})
+
+	var h http.Handler = handler
+	if s.rateLimiter != nil {
+		h = s.rateLimiter.Wrap(namespace, h)
+	}
+
+	return h, nil
+}
+
+type webhookResult struct {
+	response    *provisioning.WebhookResponse
+	attribution jobs.WebhookAttribution
+}
+
+// webhook turns an inbound delivery into a sync/pull-request job response. The
+// repository supplies the normalized event via ProcessRequest; this dispatches
+// it against the configured repository and branch.
+func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo repository.WebhookRepository) (*webhookResult, error) {
+	if repo.Config().Status.Webhook == nil {
+		return nil, fmt.Errorf("unexpected webhook request")
+	}
+
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", repo.Slug(), "ref", repo.Config().Branch()))
+
+	// Authenticate the request before parsing anything.
+	verified, err := repo.VerifyRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Silently drop a delivery whose replay key we have already processed within
+	// the cache TTL — returning a generic 200 avoids confirming to a replay
+	// attacker that the captured payload was a real previously-processed delivery.
+	if s.replayCache.seenOrAdd(verified.ReplayKey) {
+		logging.FromContext(ctx).Debug("dropping replayed webhook delivery")
+		return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}}, nil
+	}
+
+	event, err := repo.ProcessRequest(ctx, verified)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = event.ToCtxLogger(ctx)
+	logging.FromContext(ctx).Debug("webhook event received")
+
+	switch event.Type {
+	case repository.WebhookEventPush:
+		if event.RepoSlug != repo.Slug() {
+			logging.FromContext(ctx).Warn("webhook push event repository mismatch", "expected", repo.Slug(), "got", event.RepoSlug)
+			return nil, repository.ErrRepositoryMismatch
+		}
+		if !repo.Config().Spec.Sync.Enabled {
+			return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusOK}}, nil
+		}
+		// Skip silently if the event is not for the configured branch, as the
+		// webhook cannot be configured to only publish events for one branch.
+		if event.Branch != repo.Config().Branch() {
+			return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusOK}}, nil
+		}
+		return &webhookResult{response: s.pushSyncResponse(event), attribution: webhookAttribution(event, repo)}, nil
+	case repository.WebhookEventPullRequest:
+		if event.RepoSlug != repo.Slug() {
+			logging.FromContext(ctx).Warn("webhook pull request event repository mismatch", "expected", repo.Slug(), "got", event.RepoSlug)
+			return nil, repository.ErrRepositoryMismatch
+		}
+		if event.Branch != repo.Config().Branch() {
+			return &webhookResult{response: &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: fmt.Sprintf("ignoring pull request event as %s is not the configured branch", event.Branch),
+			}}, nil
+		}
+		if !watchedPullRequestAction(event.Action) {
+			return &webhookResult{response: &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: fmt.Sprintf("ignore pull request event: %s", event.Action),
+			}}, nil
+		}
+		return &webhookResult{response: pullRequestResponse(event), attribution: webhookAttribution(event, repo)}, nil
+	case repository.WebhookEventPing:
+		return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"}}, nil
+	default:
+		return &webhookResult{response: &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: event.Message}}, nil
+	}
+}
+
+func (s *webhookConnector) pushSyncResponse(event repository.WebhookEvent) *provisioning.WebhookResponse {
+	return &provisioning.WebhookResponse{
+		Code: http.StatusAccepted,
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull: &provisioning.SyncJobOptions{
+				Incremental: s.core.GetIncrementalPolicy().CanUseIncrementalSync(event.DeletedPaths, event.TotalChanges),
+			},
+		},
+	}
+}
+
+func pullRequestResponse(event repository.WebhookEvent) *provisioning.WebhookResponse {
+	return &provisioning.WebhookResponse{
+		Code:    http.StatusAccepted,
+		Message: fmt.Sprintf("pull request: %s", event.Action),
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				URL:  event.PRURL,
+				PR:   event.PRNumber,
+				Ref:  event.SourceRef,
+				Hash: event.Hash,
+			},
+		},
+	}
+}
+
+func watchedPullRequestAction(action repository.PullRequestAction) bool {
+	switch action {
+	case repository.PullRequestActionOpened, repository.PullRequestActionReopened, repository.PullRequestActionUpdated:
+		return true
+	default:
+		return false
+	}
+}
+
+func webhookAttribution(event repository.WebhookEvent, repo repository.WebhookRepository) jobs.WebhookAttribution {
+	return jobs.WebhookAttribution{
+		Sender:   event.Sender,
+		SenderID: event.SenderID,
+		Origin:   repo.Config().Spec.Type.String(),
+	}
 }
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.

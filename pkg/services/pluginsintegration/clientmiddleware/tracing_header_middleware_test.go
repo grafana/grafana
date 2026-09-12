@@ -162,6 +162,31 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `grafana-assistant-app`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Caller-Id`))
 		})
 
+		t.Run("tracing headers are set for query chunked data", func(t *testing.T) {
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+			}, nopChunkedWriter{})
+			require.NoError(t, err)
+
+			require.Len(t, cdt.QueryChunkedDataReq.GetHTTPHeaders(), 7)
+			require.Equal(t, `lN53lOcVk`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, `aIyC_OcVz`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Datasource-Uid`))
+			require.Equal(t, `1`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+			require.Equal(t, `2`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Panel-Id`))
+			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+			require.Equal(t, `grafana-assistant-app`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Grafana-Caller-Id`))
+		})
+
 		t.Run("tracing headers are set for health check", func(t *testing.T) {
 			cdt := handlertest.NewHandlerMiddlewareTest(t,
 				WithReqContext(req, &user.SignedInUser{

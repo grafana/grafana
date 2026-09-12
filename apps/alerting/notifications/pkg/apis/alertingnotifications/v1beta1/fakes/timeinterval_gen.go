@@ -72,7 +72,7 @@ func (t IntervalGenerator) generateMonth() string {
 
 func (t IntervalGenerator) GenerateMany(count int) []v1beta1.TimeIntervalInterval {
 	result := make([]v1beta1.TimeIntervalInterval, 0, count)
-	for i := 0; i < count; i++ {
+	for range count {
 		result = append(result, t.Generate())
 	}
 	return result
@@ -96,7 +96,7 @@ func (t IntervalGenerator) Generate() v1beta1.TimeIntervalInterval {
 func generateMany[T comparable](repeatTimes int, unique bool, f func() T) []T {
 	qty := repeatTimes + 1
 	result := make([]T, 0, qty)
-	for i := 0; i < qty; i++ {
+	for range qty {
 		r := f()
 		if unique && slices.Contains(result, r) {
 			continue

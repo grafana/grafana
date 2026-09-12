@@ -18,7 +18,7 @@ import { getDisplayName } from '../utils';
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
 
-interface Props {
+export interface FilterPopupProps {
   name: string;
   rows: TableRow[];
   filterValue?: Array<SelectableValue<unknown>>;
@@ -47,7 +47,7 @@ export const FilterPopup = memo(
     setOperator,
     buttonElement,
     parentIndex,
-  }: Props) => {
+  }: FilterPopupProps) => {
     const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
     const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
     const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
@@ -210,7 +210,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
   }),
   label: css({

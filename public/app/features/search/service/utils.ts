@@ -128,21 +128,26 @@ export function extractManagerKind(managedBy?: ManagedBy | ManagerKind): Manager
   return typeof managedBy === 'string' ? managedBy : (managedBy?.kind as ManagerKind);
 }
 
+export function extractManagerId(managedBy?: ManagedBy | ManagerKind): string | undefined {
+  return typeof managedBy === 'object' ? managedBy?.id : undefined;
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
-  const managedByStr = extractManagerKind(item.managedBy);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
     uid: item.uid,
     title: item.name,
+    description: item.description,
     url: item.url,
     tags: item.tags ?? [],
-    managedBy: managedByStr,
+    managedBy: extractManagerKind(item.managedBy),
+    managerId: extractManagerId(item.managedBy),
   };
 
   // Set enterprise sort value property

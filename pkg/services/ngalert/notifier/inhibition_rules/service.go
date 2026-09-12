@@ -209,7 +209,7 @@ func (svc *Service) getInhibitionRuleByUID(ctx context.Context, rev *legacy_stor
 }
 
 func (svc *Service) getImportedInhibitRules(rev *legacy_storage.ConfigRevision) map[v1.ResourceUID]v1.InhibitionRule {
-	if !svc.includeImported() || !svc.multiplePoliciesEnabled() {
+	if !svc.includeImported() {
 		return nil
 	}
 
@@ -250,11 +250,6 @@ func (svc *Service) isFeatureEnabled(flag string) bool {
 	return svc.featureToggles.IsEnabledGlobally(flag)
 }
 
-func (svc *Service) multiplePoliciesEnabled() bool {
-	return svc.isFeatureEnabled(featuremgmt.FlagAlertingMultiplePolicies)
-}
-
 func (svc *Service) includeImported() bool {
-	return svc.isFeatureEnabled(featuremgmt.FlagAlertingMultiplePolicies) &&
-		svc.isFeatureEnabled(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	return svc.isFeatureEnabled(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 }

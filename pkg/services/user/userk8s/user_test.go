@@ -2398,6 +2398,44 @@ func TestUserK8sService_GetProfile(t *testing.T) {
 			},
 		},
 		{
+			name:           "resolves by UID via a namespaced GET when UID is set",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserProfileQuery{UserID: 42, UID: "some-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				// UID lookups must use a named GET, never a label-selector list.
+				assert.Contains(t, r.URL.Path, "users/some-uid")
+				assert.NotContains(t, r.URL.RawQuery, "labelSelector")
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com"))
+			},
+			expectProfile: &user.UserProfileDTO{
+				ID:             42,
+				UID:            "some-uid",
+				OrgID:          1,
+				Login:          "jdoe",
+				Email:          "jdoe@example.com",
+				Name:           "John Doe",
+				IsGrafanaAdmin: true,
+			},
+		},
+		{
+			name:           "returns ErrUserNotFound when UID GET 404s",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserProfileQuery{UserID: 42, UID: "missing-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonNotFound,
+					Code:     http.StatusNotFound,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserNotFound,
+		},
+		{
 			name:           "returns ErrUserNotFound when no user matches",
 			requesterOrgID: 1,
 			cmd:            &user.GetUserProfileQuery{UserID: 99},

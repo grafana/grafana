@@ -9,6 +9,7 @@ import (
 	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,14 +19,18 @@ import (
 // fakeClientGenerator implements resource.ClientGenerator, returning a
 // preconfigured error to simulate transient init failures.
 type fakeClientGenerator struct {
-	calls int
-	err   error
+	calls  int
+	err    error
+	client resource.Client
 }
 
 func (f *fakeClientGenerator) ClientFor(_ resource.Kind) (resource.Client, error) {
 	f.calls++
 	if f.err != nil {
 		return nil, f.err
+	}
+	if f.client != nil {
+		return f.client, nil
 	}
 	// Return nil client; NewRuleSequenceClient wraps it. The resulting
 	// RuleSequenceClient cannot serve real requests, but that is fine for
@@ -42,9 +47,22 @@ func (f *fakeClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error
 	return nil, errors.New("not implemented")
 }
 
+// recordingClient records the namespace the store lists in. Only List is
+// implemented; the embedded nil interface panics on any other call, so widening
+// the store's use of the client surfaces here instead of passing silently.
+type recordingClient struct {
+	resource.Client
+	namespaces []string
+}
+
+func (r *recordingClient) List(_ context.Context, namespace string, _ resource.ListOptions) (resource.ListObject, error) {
+	r.namespaces = append(r.namespaces, namespace)
+	return &alertingv0alpha1.RuleSequenceList{}, nil
+}
+
 func TestK8sRuleSequenceStore_getClient_retries_on_failure(t *testing.T) {
 	gen := &fakeClientGenerator{err: errors.New("apiserver not ready")}
-	store := NewK8sRuleSequenceStore(gen, log.NewNopLogger())
+	store := NewK8sRuleSequenceStore(gen, "", log.NewNopLogger())
 
 	// First call should fail and propagate the error.
 	_, err := store.GetRuleSequencesForScheduling(context.Background())
@@ -69,6 +87,36 @@ func TestK8sRuleSequenceStore_getClient_retries_on_failure(t *testing.T) {
 	require.NoError(t, err)
 	assert.Same(t, client, client2, "expected same cached client")
 	assert.Equal(t, 3, gen.calls, "expected cached client, no new generator call")
+}
+
+func TestRuleSequenceNamespace(t *testing.T) {
+	t.Run("cloud scopes the list to the stack namespace", func(t *testing.T) {
+		assert.Equal(t, "stacks-12345", RuleSequenceNamespace(&setting.Cfg{StackID: "12345"}))
+	})
+
+	t.Run("on-prem lists across all namespaces so every org is scheduled", func(t *testing.T) {
+		assert.Empty(t, RuleSequenceNamespace(&setting.Cfg{}))
+		assert.Empty(t, RuleSequenceNamespace(nil))
+	})
+}
+
+func TestK8sRuleSequenceStore_listsInConfiguredNamespace(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		namespace string
+	}{
+		{name: "cloud lists only its own stack", namespace: "stacks-12345"},
+		{name: "on-prem lists across all namespaces", namespace: ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := &recordingClient{}
+			store := NewK8sRuleSequenceStore(&fakeClientGenerator{client: cli}, tc.namespace, log.NewNopLogger())
+
+			_, err := store.GetRuleSequencesForScheduling(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, []string{tc.namespace}, cli.namespaces)
+		})
+	}
 }
 
 func TestConvertRuleSequence(t *testing.T) {

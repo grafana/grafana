@@ -625,11 +625,24 @@ func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo
 	}
 	teamID := existing.ID
 
+	memberDeleteReq := newDeleteTeamMembersByTeam(sql, &DeleteTeamMembersByTeamCommand{
+		OrgID:  ns.OrgID,
+		TeamID: teamID,
+	})
+
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		if cmd.ExternalGroupReconciler != nil {
 			if err := cmd.ExternalGroupReconciler.DeleteAll(ctx, st, ns.OrgID, teamID); err != nil {
 				return fmt.Errorf("failed to delete team external groups: %w", err)
 			}
+		}
+
+		memberDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamMembersByTeamQuery, memberDeleteReq)
+		if err != nil {
+			return fmt.Errorf("error executing team members delete template: %w", err)
+		}
+		if _, err := st.Exec(ctx, memberDeleteQuery, memberDeleteReq.GetArgs()...); err != nil {
+			return fmt.Errorf("failed to delete team members: %w", err)
 		}
 
 		teamDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamTemplate, teamDeleteReq)

@@ -17,6 +17,8 @@ const (
 	// Annotation key used to store the folder UID on resources
 	FolderAnnotationKey = "grafana.app/folder"
 	FolderLabelKey      = FolderAnnotationKey
+	// Annotation key mirroring the legacy PrometheusStyleRule original definition.
+	PrometheusRuleDefinitionAnnotationKey = "alerting.grafana.app/prometheus-rule-definition"
 )
 
 // NOTE: This is a copy of the constants from the alertrule package to avoid circular imports.

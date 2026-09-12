@@ -1,0 +1,161 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { type DataFrame } from '@grafana/data';
+
+import { RenderMode, type TextMode } from '../panelcfg.gen';
+
+import { MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
+
+const PAGINATION_ROW_THRESHOLD = 100;
+const PAGINATION_HEIGHT = 38;
+const SMALL_PAGINATION_WIDTH = 750;
+const ESTIMATED_ROW_HEIGHT = 24;
+// clientHeight counts the preview pane's padding as room for blocks.
+export const CONTENT_PADDING = 16;
+// Marks the element the row blocks render into, since wrappers sit between it and the box.
+export const BLOCKS_ATTR = 'data-text-blocks';
+
+export function countRows(series: DataFrame[]): number {
+  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
+}
+
+export function clampPageSize(pageSize: number): number {
+  return Math.max(1, Math.min(Math.floor(pageSize), MAX_RENDERED_ROWS));
+}
+
+export function fitPageSize(available: number, rowHeight: number): number {
+  return clampPageSize(Math.floor(available / rowHeight));
+}
+
+interface Measured {
+  rowHeight: number;
+  available: number;
+  // The box it was taken in: code mode renders no blocks and attaches none, and a
+  // measurement from another box is no better than the estimate.
+  element: HTMLElement;
+}
+
+// Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
+// the box once a page fits inside it.
+function measureContentHeight(element: HTMLElement): number {
+  const blocks = element.querySelector(`[${BLOCKS_ATTR}]`);
+  const first = blocks?.firstElementChild;
+  const last = blocks?.lastElementChild;
+
+  if (!(first instanceof HTMLElement) || !(last instanceof HTMLElement)) {
+    return 0;
+  }
+
+  return last.offsetTop + last.offsetHeight - first.offsetTop;
+}
+
+export interface PaginationOptions {
+  content: string;
+  mode: TextMode;
+  renderMode?: RenderMode;
+  pageSize?: number;
+  series: DataFrame[];
+  height: number;
+  width: number;
+  fitContent?: boolean;
+}
+
+export interface PaginationState {
+  active: boolean;
+  page: number;
+  setPage: (page: number) => void;
+  numPages: number;
+  rowCount: number;
+  rowWindow?: RowWindow;
+  /** 1-based, inclusive. */
+  rangeStart: number;
+  rangeEnd: number;
+  smallVersion: boolean;
+  /** Attach to the box the blocks render into. A callback, because the editor mounts lazily. */
+  contentRef: (element: HTMLElement | null) => void;
+}
+
+export function usePagination({
+  content,
+  mode,
+  renderMode,
+  pageSize,
+  series,
+  height,
+  width,
+  fitContent,
+}: PaginationOptions): PaginationState {
+  const [page, setPage] = useState(0);
+  const [measured, setMeasured] = useState<Measured>();
+  const [element, setElement] = useState<HTMLElement | null>(null);
+
+  const rowCount = useMemo(() => countRows(series), [series]);
+  // A fit-content panel grows to hold its content, so it has no height to page against.
+  const paged = renderMode === RenderMode.PerRow && rowCount > PAGINATION_ROW_THRESHOLD && !fitContent;
+
+  const configured = pageSize != null && pageSize > 0 ? clampPageSize(pageSize) : undefined;
+  // The panel height stands in until a render reveals the box, which in the editor is the
+  // preview pane rather than the panel.
+  const fitted = measured?.element === element ? measured : undefined;
+  const resolvedPageSize =
+    configured ??
+    (fitted
+      ? fitPageSize(fitted.available, fitted.rowHeight)
+      : fitPageSize(height - PAGINATION_HEIGHT, ESTIMATED_ROW_HEIGHT));
+
+  const numPages = paged ? Math.ceil(rowCount / resolvedPageSize) : 0;
+  const active = numPages > 1;
+  // Clamped rather than reset, so a resize keeps the reader near where they were.
+  const currentPage = Math.min(page, Math.max(0, numPages - 1));
+
+  const rowsOnPage = Math.min(resolvedPageSize, rowCount - currentPage * resolvedPageSize);
+
+  const fitToHeight = paged && configured === undefined;
+  // Not the row count: a data change reaches the box a render debounce later, so measuring
+  // on it would divide the blocks of the page before it by the rows of this one.
+  const measureKey = fitToHeight ? `${height}|${width}|${mode}|${content}` : '';
+  // The box is an input too: the editor's preview pane is not the panel's scroll box.
+  const measuredFor = useRef<{ key: string; element: HTMLElement } | null>(null);
+
+  // Passive, not layout: a child effect writes the blocks to the box first.
+  useEffect(() => {
+    const previous = measuredFor.current;
+
+    // Once per set of inputs, not per page size: re-measuring a page the last measurement
+    // resized would let the page size oscillate.
+    if (!fitToHeight || !element || (previous?.key === measureKey && previous.element === element)) {
+      return;
+    }
+
+    const available = element.clientHeight - CONTENT_PADDING;
+    const contentHeight = measureContentHeight(element);
+
+    if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
+      return;
+    }
+
+    measuredFor.current = { key: measureKey, element };
+    setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+  }, [fitToHeight, measureKey, rowsOnPage, element]);
+
+  // Stable across renders: the editor memoises its preview on this.
+  const rowWindow = useMemo(
+    () => (active ? { start: currentPage * resolvedPageSize, count: resolvedPageSize } : undefined),
+    [active, currentPage, resolvedPageSize]
+  );
+
+  const rangeStart = currentPage * resolvedPageSize + 1;
+
+  return {
+    active,
+    page: currentPage,
+    setPage,
+    numPages,
+    rowCount,
+    rowWindow,
+    rangeStart,
+    rangeEnd: rangeStart + rowsOnPage - 1,
+    smallVersion: width < SMALL_PAGINATION_WIDTH,
+    contentRef: setElement,
+  };
+}

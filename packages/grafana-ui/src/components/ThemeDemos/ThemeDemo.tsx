@@ -375,6 +375,7 @@ function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             background: color.transparent,
             borderRadius: theme.shape.radius.default,
+            color: theme.colors.getContrastText(color.transparent, 4.5),
             padding: theme.spacing(1),
           })}
         >

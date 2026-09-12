@@ -85,7 +85,7 @@ export const SnapshotListTable = () => {
           You can create a snapshot of any dashboard through the <b>Share</b> modal.{' '}
           <TextLink
             external
-            href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#share-a-snapshot"
+            href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/share-dashboards-panels/#share-a-snapshot"
           >
             Learn more
           </TextLink>

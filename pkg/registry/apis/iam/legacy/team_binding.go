@@ -402,6 +402,15 @@ type DeleteTeamMembersBulkCommand struct {
 	UIDs  []string
 }
 
+// DeleteTeamMembersByTeamCommand removes all team_member rows for a team in a
+// single SQL DELETE. Used by DeleteTeam to cascade member cleanup the way the
+// legacy team store does. OrgID scopes the DELETE so a TeamID can't reach
+// across orgs.
+type DeleteTeamMembersByTeamCommand struct {
+	OrgID  int64
+	TeamID int64
+}
+
 // CreateTeamMembersBulkCommand inserts multiple team_member rows in a single
 // multi-row INSERT. Each member must be fully populated (TeamID/TeamUID/UserID
 // already resolved, OrgID set, timestamps filled).
@@ -411,6 +420,7 @@ type CreateTeamMembersBulkCommand struct {
 
 var sqlDeleteTeamMemberQuery = mustTemplate("delete_team_member_query.sql")
 var sqlDeleteTeamMembersBulkQuery = mustTemplate("delete_team_members_bulk.sql")
+var sqlDeleteTeamMembersByTeamQuery = mustTemplate("delete_team_members_by_team.sql")
 var sqlCreateTeamMembersBulkQuery = mustTemplate("create_team_members_bulk.sql")
 
 type deleteTeamMembersBulkQuery struct {
@@ -425,6 +435,24 @@ func (r deleteTeamMembersBulkQuery) Validate() error {
 
 func newDeleteTeamMembersBulk(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMembersBulkCommand) deleteTeamMembersBulkQuery {
 	return deleteTeamMembersBulkQuery{
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		TeamMemberTable: sql.Table("team_member"),
+		Command:         cmd,
+	}
+}
+
+type deleteTeamMembersByTeamQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	Command         *DeleteTeamMembersByTeamCommand
+}
+
+func (r deleteTeamMembersByTeamQuery) Validate() error {
+	return nil
+}
+
+func newDeleteTeamMembersByTeam(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteTeamMembersByTeamCommand) deleteTeamMembersByTeamQuery {
+	return deleteTeamMembersByTeamQuery{
 		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
 		TeamMemberTable: sql.Table("team_member"),
 		Command:         cmd,

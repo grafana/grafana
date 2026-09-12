@@ -36,6 +36,8 @@ import { getAnnotations, isPausedRule, isUngroupedRuleGroup, prometheusRuleType,
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
+const collator = new Intl.Collator();
+
 interface CacheValue {
   promRules?: RuleNamespace[];
   rulerRules?: RulerRulesConfigDTO | null;
@@ -269,7 +271,7 @@ export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) 
 }
 
 export function sortRulesByName(rules: CombinedRule[]) {
-  return rules.sort((a, b) => a.name.localeCompare(b.name));
+  return rules.sort((a, b) => collator.compare(a.name, b.name));
 }
 
 function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {

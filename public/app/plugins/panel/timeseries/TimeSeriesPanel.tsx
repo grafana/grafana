@@ -10,26 +10,29 @@ import {
   shouldAlignTimeCompare,
   useDataLinksContext,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
   usePanelContext,
+  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
-import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
+import { getComparisonFieldPairs, getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -45,6 +48,7 @@ export const TimeSeriesPanel = ({
   onOptionsChange,
   replaceVariables,
   id,
+  title,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -55,6 +59,7 @@ export const TimeSeriesPanel = ({
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
   } = usePanelContext();
+  const theme = useTheme2();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -62,36 +67,43 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
-    if (frames != null) {
-      let compareDiffMs: number[] = [0];
+  const {
+    frames,
+    compareDiffMs,
+    warning: prepWarning,
+  } = useMemo(() => {
+    const { frames: graphable, warn } = prepareGraphableFields(data.series, theme, timeRange);
+    if (warn) {
+      return { frames: graphable, warning: warn };
+    }
 
-      frames.forEach((frame: DataFrame) => {
-        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
+    const compareDiffMs: number[] = [0];
+    const originalFrames = graphable;
 
-        frame.fields.forEach((field) => {
-          if (field.type !== FieldType.time) {
-            compareDiffMs.push(diffMs);
-          }
-        });
+    const frames = originalFrames.map((frame: DataFrame) => {
+      const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
-        if (diffMs !== 0) {
-          // Check if the compared frame needs time alignment
-          // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
-
-          if (needsAlignment) {
-            alignTimeRangeCompareData(frame, diffMs, config.theme2);
-          }
+      frame.fields.forEach((field) => {
+        if (field.type !== FieldType.time) {
+          compareDiffMs.push(diffMs);
         }
       });
 
-      return { frames, compareDiffMs };
-    }
+      if (diffMs !== 0) {
+        // Check if the compared frame needs time alignment
+        // Apply alignment when time ranges match (no shift applied yet)
+        const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
 
-    return { frames };
-  }, [data.series, timeRange]);
+        if (needsAlignment) {
+          return alignTimeRangeCompareData(frame, diffMs, theme);
+        }
+      }
+
+      return frame;
+    });
+
+    return { frames, compareDiffMs };
+  }, [data.series, timeRange, theme]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
@@ -116,11 +128,19 @@ export const TimeSeriesPanel = ({
     [onOptionsChange, options]
   );
 
-  if (!frames || suggestions) {
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters, {
+        checkFilterablePanelsFlag: false,
+      }),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
+
+  if (!frames?.length || suggestions) {
     return (
       <PanelDataErrorView
         panelId={id}
-        message={suggestions?.message}
+        message={suggestions?.message ?? prepWarning}
         fieldConfig={fieldConfig}
         data={data}
         needsTimeField={true}
@@ -147,6 +167,7 @@ export const TimeSeriesPanel = ({
       onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
+        const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames!);
         return (
           <>
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
@@ -181,14 +202,6 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  const groupingFilters =
-                    seriesIdx !== null &&
-                    (config.featureToggles.perPanelFiltering ||
-                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
-                    getFiltersBasedOnGrouping
-                      ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
-                      : [];
-
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
@@ -203,25 +216,14 @@ export const TimeSeriesPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
-                      filterByGroupedLabels={
-                        (config.featureToggles.perPanelFiltering ||
-                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
-                        groupingFilters.length &&
-                        onAddAdHocFilters
-                          ? {
-                              onFilterForGroupedLabels: () => {
-                                onAddAdHocFilters(groupingFilters);
-                              },
-                              onFilterOutGroupedLabels: () => {
-                                onAddAdHocFilters(
-                                  groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                );
-                              },
-                            }
-                          : undefined
-                      }
+                      filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
-                      compareDiffMs={compareDiffMs}
+                      timeCompare={{
+                        diffMs: compareDiffMs,
+                        fieldPairs: compFieldPairs,
+                        colorMode: options.timeCompare?.colorMode,
+                      }}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
                 }}

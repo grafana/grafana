@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
+import { dateTime, usePluginContext, PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
 import { config, type AppPluginConfig } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
@@ -880,6 +880,25 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(await screen.findByText('Hello Grafana!')).toBeVisible();
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
+    });
+
+    it('should render synchronously (no loading frame) when the plugin meta is provided', () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const pluginMeta = { id: pluginId, info: { version: '2.0.0' } } as PluginMeta;
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+        pluginMeta,
+      });
+
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
+
+      // No `await` — the wrapped component must be there in the very first commit,
+      // and it must use the provided meta (version 2.0.0) instead of fetching it (1.0.0)
+      expect(screen.getByText('Hello Grafana!')).toBeVisible();
+      expect(screen.getByText('Version: 2.0.0')).toBeVisible();
     });
 
     it('should not be possible to mutate the props in development mode, but it logs an error', async () => {

@@ -13,7 +13,7 @@ describe('useMenuFocus', () => {
 
   const testid = 'test';
   const getMenuElement = (
-    ref: RefObject<HTMLDivElement>,
+    ref: RefObject<HTMLDivElement | null>,
     handleKeys?: (event: KeyboardEvent) => void,
     handleFocus?: () => void,
     onClick?: () => void
@@ -177,14 +177,14 @@ describe('useMenuFocus', () => {
   });
 
   it('does not click submenu items when Enter key is pressed', async () => {
-    const ref = createRef<HTMLDivElement>();
+    const ref = createRef<HTMLDivElement | null>();
     const onClick = jest.fn();
     const { result } = renderHook(() => useMenuFocus({ localRef: ref }));
     const [handleKeys] = result.current;
 
     // Create a menu element with a submenu item (has nested menuitem)
     const getMenuElementWithSubmenu = (
-      ref: RefObject<HTMLDivElement>,
+      ref: RefObject<HTMLDivElement | null>,
       handleKeys?: (event: KeyboardEvent) => void,
       onClick?: () => void
     ) => (

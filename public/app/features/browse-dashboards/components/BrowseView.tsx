@@ -58,7 +58,7 @@ export function BrowseView({
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);

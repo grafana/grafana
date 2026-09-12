@@ -60,9 +60,6 @@ spec:
                   required:
                   - model
                   type: object
-                description: |-
-                  TODO: validate that only one can specify source=true
-                  & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
                 type: object
               for:
                 type: string
@@ -83,8 +80,6 @@ spec:
                 - KeepLast
                 type: string
               notificationSettings:
-                description: 'TODO(@moustafab): this should be imported from the notifications
-                  package'
                 oneOf:
                 - not:
                     anyOf:
@@ -103,8 +98,6 @@ spec:
                 properties:
                   activeTimeIntervals:
                     items:
-                      description: 'TODO(@moustafab): validate regex for time interval
-                        ref'
                       type: string
                     type: array
                   groupBy:
@@ -119,8 +112,6 @@ spec:
                     type: string
                   muteTimeIntervals:
                     items:
-                      description: 'TODO(@moustafab): validate regex for time interval
-                        ref'
                       type: string
                     type: array
                   receiver:
@@ -131,6 +122,7 @@ spec:
                   routingTree:
                     type: string
                   type:
+                    default: SimplifiedRouting
                     enum:
                     - SimplifiedRouting
                     - NamedRoutingTree
@@ -175,6 +167,22 @@ spec:
                 description: additionalFields is reserved for future use
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              evaluationDuration:
+                description: duration of the last evaluation in seconds
+                type: number
+              health:
+                enum:
+                - Unknown
+                - OK
+                - Paused
+                - Error
+                - NoData
+                type: string
+              lastError:
+                type: string
+              lastEvaluationTime:
+                format: date-time
+                type: string
               operatorStates:
                 additionalProperties:
                   properties:
@@ -207,6 +215,19 @@ spec:
                   operatorStates is a map of operator ID to operator state evaluations.
                   Any operator which consumes this kind SHOULD add its state evaluation information to this field.
                 type: object
+              state:
+                enum:
+                - Inactive
+                - Healthy
+                - Firing
+                - Pending
+                - Recovering
+                type: string
+              stateReason:
+                enum:
+                - Evaluated
+                - KeepLast
+                type: string
             type: object
         required:
         - spec

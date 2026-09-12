@@ -1,190 +1,283 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "yjRroGsWk"
   },
-  "editable": true,
-  "gnetId": null,
-  "graphTooltip": 0,
-  "id": null,
-  "links": [],
-  "panels": [
-    {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "gdev-influxdb1-influxql",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "hiddenSeries": false,
-      "id": 4,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": false,
-        "total": false,
-        "values": false
-      },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "alias": "Count",
-          "groupBy": [
-            {
-              "params": ["1m"],
-              "type": "time"
-            },
-            {
-              "params": ["null"],
-              "type": "fill"
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "",
+            "version": "v0",
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Logs",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "gdev-influxdb1-influxql"
+                      },
+                      "spec": {
+                        "groupBy": [],
+                        "measurement": "t_logs",
+                        "orderByTime": "ASC",
+                        "policy": "default",
+                        "resultFormat": "table",
+                        "select": [
+                          [
+                            {
+                              "params": ["message"],
+                              "type": "field"
+                            }
+                          ]
+                        ],
+                        "tags": []
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
             }
-          ],
-          "measurement": "t_logs",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": ["message"],
-                "type": "field"
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "",
+            "spec": {
+              "options": {
+                "showLabels": false,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
               },
-              {
-                "params": [],
-                "type": "count"
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
               }
-            ]
-          ],
-          "tags": []
+            }
+          }
         }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Log messages over time",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
       },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Log messages over time",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "gdev-influxdb1-influxql"
+                      },
+                      "spec": {
+                        "alias": "Count",
+                        "groupBy": [
+                          {
+                            "params": ["1m"],
+                            "type": "time"
+                          },
+                          {
+                            "params": ["null"],
+                            "type": "fill"
+                          }
+                        ],
+                        "measurement": "t_logs",
+                        "orderByTime": "ASC",
+                        "policy": "default",
+                        "resultFormat": "time_series",
+                        "select": [
+                          [
+                            {
+                              "params": ["message"],
+                              "type": "field"
+                            },
+                            {
+                              "params": [],
+                              "type": "count"
+                            }
+                          ]
+                        ],
+                        "tags": []
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": false,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
+                "dataLinks": []
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
         }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
       }
     },
-    {
-      "datasource": "gdev-influxdb1-influxql",
-      "gridPos": {
-        "h": 18,
-        "w": 24,
-        "x": 0,
-        "y": 6
-      },
-      "id": 2,
-      "options": {
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
-      },
-      "targets": [
-        {
-          "groupBy": [],
-          "measurement": "t_logs",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "table",
-          "select": [
-            [
-              {
-                "params": ["message"],
-                "type": "field"
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 6,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
               }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Logs",
-      "type": "logs"
-    }
-  ],
-  "schemaVersion": 22,
-  "tags": ["gdev", "influxdb", "datasource-test"],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-  },
-  "timezone": "",
-  "title": "Datasource tests - InfluxDB Logs",
-  "uid": "yjRroGsWk",
-  "version": 4
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 6,
+              "width": 24,
+              "height": 18,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "influxdb", "datasource-test"],
+    "timeSettings": {
+      "from": "now-1h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Datasource tests - InfluxDB Logs",
+    "variables": []
+  }
 }

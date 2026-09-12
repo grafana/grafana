@@ -18,7 +18,7 @@ import (
 
 // All returns all document builders from this package.
 // These builders have dependencies on Grafana apps (dashboard and user).
-func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
+func All(registry *resource.SearchFieldsRegistry, sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
@@ -63,27 +63,47 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 		return nil, err
 	}
 
-	users, err := GetUserBuilder()
+	users, err := GetUserBuilder(registry)
 	if err != nil {
 		return nil, err
 	}
 
-	extGroupMappings, err := GetExternalGroupMappingBuilder()
+	extGroupMappings, err := GetExternalGroupMappingBuilder(registry)
 	if err != nil {
 		return nil, err
 	}
 
-	teams, err := GetTeamSearchBuilder()
+	teams, err := GetTeamSearchBuilder(registry)
 	if err != nil {
 		return nil, err
 	}
 
-	teamBindings, err := GetTeamBindingBuilder()
+	teamBindings, err := GetTeamBindingBuilder(registry)
 	if err != nil {
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
+	alertRules, err := GetAlertRuleSearchBuilder(registry)
+	if err != nil {
+		return nil, err
+	}
+
+	recordingRules, err := GetRecordingRuleSearchBuilder(registry)
+	if err != nil {
+		return nil, err
+	}
+
+	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
+}
+
+// iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind
+// is extracted by the standard builder, which reads its search fields from the
+// shared registry, so only the resource differs per kind.
+func iamBuilder(registry *resource.SearchFieldsRegistry, ri utils.ResourceInfo) (resource.DocumentBuilderInfo, error) {
+	return resource.DocumentBuilderInfo{
+		GroupResource: ri.GroupResource(),
+		Builder:       resource.StandardDocumentBuilder(registry),
+	}, nil
 }
 
 // NewIndexableDocumentFromValue parses provided bytes value into object, and initializes IndexableDocument from it.

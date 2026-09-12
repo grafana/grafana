@@ -37,6 +37,8 @@ export enum TestDataQueryType {
   USA = 'usa',
   VariablesQuery = 'variables-query',
   ErrorWithSource = 'error_with_source',
+  ErrorsAndNotices = 'errors_and_notices',
+  Exemplars = 'exemplars',
 }
 
 export interface StreamingQuery {
@@ -87,6 +89,18 @@ export interface CSVWave {
   valuesCSV?: string;
 }
 
+export interface ExemplarLabel {
+  name?: string;
+  /**
+   * Number of characters in each generated value (defaults to 16)
+   */
+  length?: number;
+  /**
+   * Optional data link URL; supports ${__value.raw}
+   */
+  link?: string;
+}
+
 /**
  * TODO: Should this live here given it's not used in the dataquery?
  */
@@ -113,6 +127,8 @@ export interface TestDataDataQuery extends common.DataQuery {
   labels?: string;
   levelColumn?: boolean;
   lines?: number;
+  min?: number;
+  max?: number;
   nodes?: NodesQuery;
   points?: Array<Array<string | number>>;
   pulseWave?: PulseWaveQuery;
@@ -130,4 +146,6 @@ export interface TestDataDataQuery extends common.DataQuery {
   errorStatusCode?: number;
   queryDelay?: string;
   queryDelayVariability?: number;
+  exemplarCount?: number;
+  exemplarLabels?: ExemplarLabel[];
 }

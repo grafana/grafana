@@ -46,13 +46,9 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import {
-  calculateGridItemDimensions,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { calculateGridItemDimensions, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';

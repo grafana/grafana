@@ -24,7 +24,6 @@ var (
 	timeNow = func() time.Time { return time.Now() }
 
 	errDatabaseHelper       = errors.New("failed to get database")
-	errNotImplemented       = errors.New("not supported by this storage backend")
 	errNameMismatch         = errors.New("name mismatch")
 	errNamespaceMismatch    = errors.New("namespace mismatch")
 	errUnknownGroupResource = errors.New("unknown group/resource")

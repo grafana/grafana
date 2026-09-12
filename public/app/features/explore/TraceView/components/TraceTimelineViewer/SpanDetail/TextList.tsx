@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

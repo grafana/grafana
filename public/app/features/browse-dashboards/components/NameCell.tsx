@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
+import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
@@ -111,6 +112,8 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
         </Text>
 
         <FolderRepo folder={item} />
+
+        <DescriptionTooltip description={item.description} />
 
         {ownerReference && (
           <div className={styles.ownerReference}>

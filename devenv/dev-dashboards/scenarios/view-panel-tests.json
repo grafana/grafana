@@ -2,22 +2,7 @@
   "apiVersion": "dashboard.grafana.app/v2",
   "kind": "Dashboard",
   "metadata": {
-    "name": "gdev-view-panel-tests",
-    "namespace": "default",
-    "uid": "gdev-view-panel-tests",
-    "resourceVersion": "1781166393366989",
-    "generation": 4,
-    "creationTimestamp": "2026-06-11T06:23:29Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "2204931020771328"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:u000000001",
-      "grafana.app/folder": "",
-      "grafana.app/saved-from-ui": "Grafana v13.1.0-local (cd18101124)",
-      "grafana.app/updatedBy": "user:u000000001",
-      "grafana.app/updatedTimestamp": "2026-06-11T08:26:33Z"
-    }
+    "name": "gdev-view-panel-tests"
   },
   "spec": {
     "annotations": [
