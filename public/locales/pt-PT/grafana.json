@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Veja um histórico de todos os eventos de alertas gerados pelas suas regras de alertas geridas pela Grafana. Todos os eventos de alertas são apresentados, independentemente de estarem definidos silenciamentos ou períodos de suspensão.",
         "notifications": "Veja um histórico de todas as notificações enviadas pelas suas regras de alertas geridas pela Grafana."
@@ -7760,6 +7763,9 @@
         "title": "Alterações não gravadas"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Não é o que procura? Veja <2>outros painéis de controlo sugeridos</2> ou <6>crie um do zero</6>.",
       "title": "Está a visualizar {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Guardar alterações",
       "save-button-disabled-tooltip": "Corrigir erros de validação antes de guardar",
       "save-button-disabled-tooltip-yaml": "O documento contém erros de validação. Mude para JSON para ver os detalhes dos erros embutidos.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Negrito",
       "tooltip-bullet-list": "Lista de pontos",
       "tooltip-checklist": "Lista de verificação",
+      "tooltip-diagram": "",
       "tooltip-heading": "Título",
       "tooltip-insert-variable": "Introduzir variável",
       "tooltip-italic": "Itálico",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Gráfico de barras - empilhado",
       "bar-stacked-percent": "Gráfico de barras - empilhado por percentagem",
       "line": "Gráfico de linhas"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Adicionar fuso horário",

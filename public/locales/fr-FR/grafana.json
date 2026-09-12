@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Consultez l’historique de tous les événements d’alerte générés par vos règles d’alerte gérées par Grafana. Tous les événements d’alerte sont affichés, que des périodes de silence ou de mise en sourdine aient été définies ou non.",
         "notifications": "Affichez l’historique de toutes les notifications envoyées par vos règles d’alerte gérées par Grafana."
@@ -7760,6 +7763,9 @@
         "title": "Modifications non enregistrées"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Ce n’est pas ce que vous recherchez ? Consultez <2>d’autres tableaux de bord suggérés</2> ou <6>créez-en un à partir de zéro</6>.",
       "title": "Vous consultez {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Titre"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Enregistrer les modifications",
       "save-button-disabled-tooltip": "Corriger les erreurs de validation avant d’enregistrer",
       "save-button-disabled-tooltip-yaml": "Le document contient des erreurs de validation. Passez en JSON pour voir les détails des erreurs dans les lignes.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Gras",
       "tooltip-bullet-list": "Liste à puces",
       "tooltip-checklist": "Liste de contrôle",
+      "tooltip-diagram": "",
       "tooltip-heading": "Titre",
       "tooltip-insert-variable": "Insérer une variable",
       "tooltip-italic": "Italique",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Graphique en barres – empilé",
       "bar-stacked-percent": "Graphique en barres – empilé en pourcentage",
       "line": "Graphique en lignes"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Ajouter le fuseau horaire",
