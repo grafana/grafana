@@ -118,41 +118,39 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
 /**
  * Checks if a time comparison frame needs alignment based on whether its first time is before the current time range.
  * Returns true if the first time in compare is before timeRange.from, indicating it needs shifting.
+ *
+ * The decision rests only on the compare frame's own timestamps, so a comparison-only response - the
+ * current period returned no data, or no frame at all - is still shifted onto the visible range
+ * instead of being left in its historical window.
  * @param compareFrame - The frame with time comparison data
- * @param allFrames - Array of all frames to find the matching original frame
+ * @param allFrames - Unused; retained so existing callers keep working
  * @param timeRange - The current panel time range
  * @returns true if alignment is needed
  */
-export function shouldAlignTimeCompare(compareFrame: DataFrame, allFrames: DataFrame[], timeRange: TimeRange): boolean {
-  // Find the matching original frame by removing '-compare' from refId
+export function shouldAlignTimeCompare(
+  compareFrame: DataFrame,
+  allFrames: DataFrame[] | undefined,
+  timeRange: TimeRange
+): boolean {
   const compareRefId = compareFrame.refId;
   if (!compareRefId || !compareRefId.endsWith('-compare')) {
     return false;
   }
 
-  const originalRefId = compareRefId.replace('-compare', '');
-  const originalFrame = allFrames.find((frame) => frame.refId === originalRefId && !isTimeCompareFrame(frame));
-
-  if (!originalFrame) {
-    return false;
-  }
-
-  // Find time fields
   const compareTimeField = compareFrame.fields.find((field) => field.type === FieldType.time);
-  const originalTimeField = originalFrame.fields.find((field) => field.type === FieldType.time);
 
-  if (!compareTimeField?.values.length || !originalTimeField?.values.length) {
+  if (!compareTimeField?.values.length) {
     return false;
   }
 
-  // Find first non-null time value from each frame
+  // Find first non-null time value
   const compareFirstTime = compareTimeField.values.find((value) => value != null);
-  const originalFirstTime = originalTimeField.values.find((value) => value != null);
 
-  if (compareFirstTime == null || originalFirstTime == null) {
+  if (compareFirstTime == null) {
     return false;
   }
 
-  // Check if first non-null time value is before timeRange.from
+  // Check if first non-null time value is before timeRange.from. Once shifted the compare frame sits
+  // inside the range, so this also keeps an already aligned frame from being shifted twice.
   return compareFirstTime < timeRange.from.valueOf();
 }

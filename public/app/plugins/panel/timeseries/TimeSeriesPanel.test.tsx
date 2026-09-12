@@ -249,5 +249,19 @@ describe('TimeSeriesPanel', () => {
       expect(currentIcon.style.borderRadius).toBeTruthy();
       expect(compareIcon.style.backgroundSize).toBe('6px 4px');
     });
+
+    it('aligns compare series that have no current-period counterpart (#132370)', () => {
+      // The current period returned nothing, so the compare frames arrive on their own. They still
+      // have to be shifted onto the visible range - the dashed icon is the visible marker that
+      // alignment ran, and without it the panel would only offer "zoom to data".
+      renderPanel(undefined, [makePodFrame('a', { compare: true }), makePodFrame('b', { compare: true })]);
+
+      for (const label of ['a (comparison)', 'b (comparison)']) {
+        const icon = within(screen.getByTestId(selectors.components.VizLegend.seriesName(label))).getByTestId(
+          'series-icon'
+        );
+        expect(icon.style.backgroundSize).toBe('6px 4px');
+      }
+    });
   });
 });

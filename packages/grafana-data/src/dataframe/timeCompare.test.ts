@@ -387,16 +387,54 @@ describe('shouldAlignTimeCompare', () => {
     expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
-  it('should return false when original frame is not found', () => {
+  // A comparison-only response must still be shifted onto the visible range, otherwise the panel
+  // reports "data outside time range" instead of drawing the compare series (#132370).
+  it('should return true when the original frame is not found', () => {
     const compareFrame = toDataFrame({
       refId: 'A-compare',
       fields: [
         { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
-        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
       ],
     });
 
     const allFrames = [compareFrame]; // No original frame with refId 'A'
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
+  });
+
+  it('should return true when the original frame has no values', () => {
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [] },
+        { name: 'value', type: FieldType.number, values: [] },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
+  });
+
+  it('should return false when the compare frame is already inside the time range', () => {
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_B },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+    });
+
+    // No original frame, so the guard against shifting an aligned frame twice has to come from the
+    // compare frame's own timestamps.
+    const allFrames = [compareFrame];
     expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
@@ -418,7 +456,7 @@ describe('shouldAlignTimeCompare', () => {
     expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
   });
 
-  it('should return false when original frame has no time field', () => {
+  it('should return true when original frame has no time field', () => {
     const originalFrame = toDataFrame({
       refId: 'A',
       fields: [{ name: 'value', type: FieldType.number, values: ORIGINAL_VALUES }],
@@ -433,10 +471,10 @@ describe('shouldAlignTimeCompare', () => {
     });
 
     const allFrames = [originalFrame, compareFrame];
-    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
   });
 
-  it('should return false when time fields have empty values', () => {
+  it('should return false when the compare frame has empty values', () => {
     const EMPTY_VALUES: number[] = [];
 
     const originalFrame = toDataFrame({
