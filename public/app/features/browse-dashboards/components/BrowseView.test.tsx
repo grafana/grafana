@@ -10,6 +10,8 @@ import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolde
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
+
 import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
@@ -56,6 +58,31 @@ describe('browse-dashboards BrowseView', () => {
 
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
+  });
+
+  it('renders a dashboard whose UID matches its parent folder', async () => {
+    const folder: DashboardViewItem = { kind: 'folder', uid: 'same-uid', title: 'Folder same-uid' };
+    const dashboard: DashboardViewItem = {
+      kind: 'dashboard',
+      uid: 'same-uid',
+      title: 'Dashboard same-uid',
+      parentUID: 'same-uid',
+    };
+
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: fullyLoadedViewItemCollection([folder]),
+          childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
+          openFolders: { 'same-uid': true },
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+        },
+      },
+    });
+
+    expect(await screen.findByText(folder.title)).toBeInTheDocument();
+    expect(screen.getByText(dashboard.title)).toBeInTheDocument();
+    expect(screen.getAllByTestId(selectors.pages.BrowseDashboards.table.checkbox('same-uid'))).toHaveLength(2);
   });
 
   it('checks all descendants when a folder is selected', async () => {
