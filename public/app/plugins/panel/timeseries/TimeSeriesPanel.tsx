@@ -90,8 +90,8 @@ export const TimeSeriesPanel = ({
       });
 
       if (diffMs !== 0) {
-        // Check if the compared frame needs time alignment
-        // Apply alignment when time ranges match (no shift applied yet)
+        // Only shift a compare frame that still sits in its historical window, so repeated
+        // preparation of already aligned frames doesn't shift them again
         const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
 
         if (needsAlignment) {
