@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -29,12 +32,33 @@ const (
 )
 
 // tracerProvider returns an OpenTelemetry TracerProvider configured to use
-// the Jaeger exporter that will send spans to the provided url. The returned
-// TracerProvider will also use a Resource configured with all the information
+// the OTLP HTTP exporter that will send spans to the provided url (Jaeger collector).
+// The returned TracerProvider will also use a Resource configured with all the information
 // about the application.
-func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
-	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+func tracerProvider(urlStr string) (*tracesdk.TracerProvider, error) {
+	// Create the OTLP HTTP exporter for Jaeger (Jaeger supports OTLP natively)
+	var opts []otlptracehttp.Option
+
+	// Extract host:port from URL and handle secure/insecure
+	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
+		u, err := url.Parse(urlStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid tracer URL %q: %w", urlStr, err)
+		}
+		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
+		if u.Path != "" && u.Path != "/" {
+			opts = append(opts, otlptracehttp.WithURLPath(u.Path))
+		}
+		if u.Scheme == "http" {
+			opts = append(opts, otlptracehttp.WithInsecure())
+		}
+	} else {
+		// Assume host:port format, default to insecure
+		opts = append(opts, otlptracehttp.WithEndpoint(urlStr), otlptracehttp.WithInsecure())
+	}
+
+	client := otlptracehttp.NewClient(opts...)
+	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
 	}
@@ -194,9 +218,9 @@ func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	if os.Getenv("GF_LIVE_PIPELINE_TRACE") != "" {
 		// Traces for development only at the moment.
 		// Start local Jaeger and then run Grafana with GF_LIVE_PIPELINE_TRACE:
-		// docker run --rm -it --name jaeger -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 14250:14250 -p 9411:9411 jaegertracing/all-in-one:1.26
+		// docker run --rm -it --name jaeger -p 4318:4318 -p 16686:16686 jaegertracing/all-in-one:latest
 		// Then visit http://localhost:16686/ where Jaeger UI is served.
-		tp, err := tracerProvider("http://localhost:14268/api/traces")
+		tp, err := tracerProvider("http://localhost:4318")
 		if err != nil {
 			return nil, err
 		}
