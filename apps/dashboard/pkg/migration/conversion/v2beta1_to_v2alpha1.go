@@ -302,6 +302,7 @@ func convertPanelQuery_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardPanelQueryKi
 func convertTransformation_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTransformationKind, out *dashv2alpha1.DashboardTransformationKind) {
 	out.Kind = in.Kind
 	out.Spec.Id = in.Spec.Id
+	out.Spec.RefId = in.Spec.RefId
 	out.Spec.Disabled = in.Spec.Disabled
 	out.Spec.Filter = convertMatcherConfigPtr_V2beta1_to_V2alpha1(in.Spec.Filter)
 	out.Spec.Topic = (*dashv2alpha1.DashboardDataTopic)(in.Spec.Topic)

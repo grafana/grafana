@@ -328,6 +328,8 @@ func (DashboardTransformationKind) OpenAPIModelName() string {
 // use the output of one transformation as the input to another transformation, etc.
 // +k8s:openapi-gen=true
 type DashboardTransformationSpec struct {
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results

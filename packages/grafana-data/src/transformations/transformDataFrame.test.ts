@@ -364,5 +364,18 @@ describe('transformDataFrame', () => {
 
       expect(interpolate).not.toHaveBeenCalled();
     });
+
+    it('leaves the static refId untouched by interpolation', async () => {
+      delete window.__grafanaSceneContext;
+
+      const interpolate = jest.fn(() => 'interpolated');
+      const cfg = [{ id: DataTransformerID.reduce, refId: '$transformName', options: { reducers: [ReducerID.first] } }];
+
+      await expect(transformDataFrame(cfg, [getSeriesAWithSingleField()], { interpolate })).toEmitValuesWith(
+        (received) => {
+          expect(received[0][0].refId).toEqual('$transformName');
+        }
+      );
+    });
   });
 });
