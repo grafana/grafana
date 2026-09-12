@@ -231,6 +231,7 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *v1
 }
 
 // DecryptIntegrationSettings returns a function to decrypt integration settings.
+// Secret references remain encrypted-at-rest and are resolved by the secrets service only at notification use time.
 func DecryptIntegrationSettings(ctx context.Context, ss secretService) models.DecryptFn {
 	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)

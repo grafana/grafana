@@ -183,3 +183,34 @@ func TestDecryptExtraConfigs(t *testing.T) {
 		})
 	}
 }
+
+func TestDecryptIntegrationSettingsLeavesSecretReferencesUntouched(t *testing.T) {
+	t.Setenv("GRAFANA_CONTACT_POINT_SECRET", "resolved-secret")
+
+	value := base64.StdEncoding.EncodeToString([]byte("$__env{GRAFANA_CONTACT_POINT_SECRET}"))
+	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
+
+	got, err := decrypt(value)
+	require.NoError(t, err)
+	require.Equal(t, "$__env{GRAFANA_CONTACT_POINT_SECRET}", got)
+}
+
+func TestDecryptIntegrationSettingsLeavesFileReferencesUntouched(t *testing.T) {
+	path := t.TempDir() + "/contact-point-secret"
+
+	value := base64.StdEncoding.EncodeToString([]byte("$__file{" + path + "}"))
+	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
+
+	got, err := decrypt(value)
+	require.NoError(t, err)
+	require.Equal(t, "$__file{"+path+"}", got)
+}
+
+func TestDecryptIntegrationSettingsLeavesOrdinarySecretPatternsUntouched(t *testing.T) {
+	value := base64.StdEncoding.EncodeToString([]byte("password-${VAR}"))
+	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
+
+	got, err := decrypt(value)
+	require.NoError(t, err)
+	require.Equal(t, "password-${VAR}", got)
+}
