@@ -63,10 +63,10 @@ describe('ResourceTreeView', () => {
       setupQueries(files);
     });
 
-    it('renders folders folded by default, hiding their contents', () => {
+    it('renders folders folded by default, hiding their contents', async () => {
       render(<ResourceTreeView repo={repo} />);
 
-      expect(screen.getByText('dashboards')).toBeInTheDocument();
+      expect(await screen.findByText('dashboards')).toBeInTheDocument();
       expect(screen.queryByText('my-dashboard.json')).not.toBeInTheDocument();
       expect(screen.queryByText('nested')).not.toBeInTheDocument();
     });
@@ -75,7 +75,7 @@ describe('ResourceTreeView', () => {
       render(<ResourceTreeView repo={repo} />);
 
       // The fold toggle is labelled by the folder title (via aria-labelledby); state is on aria-expanded.
-      const toggle = screen.getByRole('button', { name: 'dashboards' });
+      const toggle = await screen.findByRole('button', { name: 'dashboards' });
       expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
       await userEvent.click(toggle);
@@ -133,9 +133,10 @@ describe('ResourceTreeView', () => {
       setupQueries(files, resources);
     });
 
-    it('should give the status filter an accessible name', () => {
+    it('should give the status filter an accessible name', async () => {
       render(<ResourceTreeView repo={repo} />);
 
+      expect(await screen.findByText('folder')).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: 'Filter by status' })).toBeInTheDocument();
     });
 
@@ -164,6 +165,7 @@ describe('ResourceTreeView', () => {
 
     it('should apply the status filter and search together (AND) without leaving empty folders', async () => {
       const { user } = render(<ResourceTreeView repo={repo} />);
+      expect(await screen.findByText('folder')).toBeInTheDocument();
 
       // Search for the synced dashboard, then filter to Not in sync: nothing matches both, so the
       // parent folder must not linger just because it aggregates a (now hidden) pending child.
@@ -179,6 +181,7 @@ describe('ResourceTreeView', () => {
     it('should expose the Warnings filter when the folder metadata flag is on', async () => {
       mockUseBooleanFlagValue.mockReturnValue(true);
       const { user } = render(<ResourceTreeView repo={repo} />);
+      expect(await screen.findByText('folder')).toBeInTheDocument();
 
       await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
       await user.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // index 2: Warnings

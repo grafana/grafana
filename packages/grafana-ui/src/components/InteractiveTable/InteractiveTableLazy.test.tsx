@@ -25,7 +25,7 @@ it('uses the latest rows and preserves sorting and expansion through the lazy bo
   expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: 'Sort column Country' }));
-  expect(screen.getByRole('columnheader', { name: 'Sort column Country' })).toHaveAttribute('aria-sort', 'ascending');
+  expect(screen.getByRole('columnheader', { name: 'Country' })).toHaveAttribute('aria-sort', 'ascending');
 
   await user.click(screen.getByRole('button', { name: 'Expand all rows' }));
   expect(screen.getByText('Details: Belgium')).toBeInTheDocument();

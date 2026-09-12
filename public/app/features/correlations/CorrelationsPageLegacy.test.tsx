@@ -479,6 +479,8 @@ describe('CorrelationsPage - Legacy', () => {
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
+      expect(await screen.findByRole('cell', { name: /some label/i })).toBeInTheDocument();
+
       const addNewButton = await screen.findByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       await userEvent.click(addNewButton);

@@ -49,7 +49,7 @@ function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
 }
 
 async function openDeleteConfirmation(user: ReturnType<typeof render>['user']) {
-  await user.click(screen.getByRole('button', { name: 'More actions' }));
+  await user.click(await screen.findByRole('button', { name: 'More actions' }));
   await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
 }
 
@@ -79,7 +79,7 @@ describe('NotebooksTable delete', () => {
     const { user } = renderTable([row(), row({ uid: 'nb2', title: 'Checkout errors' })]);
     // Scoped to the row rather than taken by index: the table sorts on `updated`, so the rows do not
     // necessarily appear in the order they were passed.
-    const secondRow = screen.getByRole('row', { name: /Checkout errors/ });
+    const secondRow = await screen.findByRole('row', { name: /Checkout errors/ });
     await user.click(within(secondRow).getByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
@@ -133,15 +133,15 @@ describe('NotebooksTable tags', () => {
   it('reports a clicked tag to the caller', async () => {
     const { user, onTagClick } = renderTable([row({ tags: ['latency', 'slo'] })]);
 
-    await user.click(screen.getByRole('button', { name: 'Filter by tag slo' }));
+    await user.click(await screen.findByRole('button', { name: 'Filter by tag slo' }));
 
     expect(onTagClick).toHaveBeenCalledWith('slo', expect.anything());
   });
 
   // A clickable Tag is a button, and "slo, button" would not say what pressing it does.
-  it('says what pressing a tag will do', () => {
+  it('says what pressing a tag will do', async () => {
     renderTable([row({ tags: ['latency'] })]);
 
-    expect(screen.getByRole('button', { name: 'Filter by tag latency' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Filter by tag latency' })).toBeInTheDocument();
   });
 });

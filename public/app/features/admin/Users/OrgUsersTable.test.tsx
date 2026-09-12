@@ -33,31 +33,34 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
+  it('should render component', async () => {
     expect(() => setup()).not.toThrow();
+    expect(await screen.findByText('Login')).toBeInTheDocument();
   });
 
-  it('should render users in table', () => {
+  it('should render users in table', async () => {
     const usersData = getMockUsers(5);
     setup({ users: usersData });
+
+    await screen.findByText(usersData[0].name);
 
     usersData.forEach((user) => {
       expect(screen.getByText(user.name)).toBeInTheDocument();
     });
   });
 
-  it('should render disabled flag when any of the Users are disabled', () => {
+  it('should render disabled flag when any of the Users are disabled', async () => {
     const usersData = getMockUsers(5);
     usersData[0].isDisabled = true;
     setup({ users: usersData });
 
-    expect(screen.getByText('Disabled')).toBeInTheDocument();
+    expect(await screen.findByText('Disabled')).toBeInTheDocument();
   });
-  it('should render LDAP label', () => {
+  it('should render LDAP label', async () => {
     const usersData = getMockUsers(5);
     usersData[0].authLabels = ['LDAP'];
     setup({ users: usersData });
-    expect(screen.getByText(usersData[0].authLabels[0])).toBeInTheDocument();
+    expect(await screen.findByText(usersData[0].authLabels[0])).toBeInTheDocument();
   });
 });
 
@@ -67,7 +70,7 @@ describe('Remove modal', () => {
     setup({ users: usersData });
     const user = userEvent.setup();
 
-    await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+    await user.click((await screen.findAllByRole('button', { name: /delete/i }))[0]);
 
     expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
   });
