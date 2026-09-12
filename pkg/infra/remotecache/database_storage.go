@@ -10,7 +10,10 @@ import (
 
 var getTime = time.Now
 
-const databaseCacheType = "database"
+const (
+	databaseCacheType               = "database"
+	databaseCacheClockSkewTolerance = int64(10)
+)
 
 type databaseCache struct {
 	SQLStore db.DB
@@ -68,7 +71,7 @@ func (dc *databaseCache) Get(ctx context.Context, key string) ([]byte, error) {
 
 		if cacheHit.Expires > 0 {
 			age := getTime().Unix() - cacheHit.CreatedAt
-			existedButExpired := age < 0 || age >= cacheHit.Expires
+			existedButExpired := age < -databaseCacheClockSkewTolerance || age >= cacheHit.Expires
 
 			if existedButExpired {
 				err = dc.Delete(ctx, key) // ignore this error since we will return `ErrCacheItemNotFound` anyway
