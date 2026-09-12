@@ -116,15 +116,24 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     return shouldRerunCompare(prev.compareWith, next.compareWith, queries);
   }
 
+  /**
+   * The panel never owns a fiscal year start; it always rounds against the dashboard's setting.
+   * Mirrors how the base class resolves the time zone from the ancestor time range.
+   */
+  private getFiscalYearStartMonth(): number | undefined {
+    return this.getAncestorTimeRange().state.fiscalYearStartMonth;
+  }
+
   public onTimeRangeChange(timeRange: TimeRange): void {
     const { timeShift } = this.state;
 
     if (timeShift) {
       const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
       const reverseShift = '+' + timeShiftInterpolated;
+      const fiscalYearStartMonth = this.getFiscalYearStartMonth();
 
-      const from = dateMath.parseDateMath(reverseShift, timeRange.from, false);
-      const to = dateMath.parseDateMath(reverseShift, timeRange.to, true);
+      const from = dateMath.parseDateMath(reverseShift, timeRange.from, false, fiscalYearStartMonth);
+      const to = dateMath.parseDateMath(reverseShift, timeRange.to, true, fiscalYearStartMonth);
 
       if (from && to) {
         this.getAncestorTimeRange().onTimeRangeChange({
@@ -157,9 +166,10 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
         const timezone = this.getTimeZone();
+        const fiscalYearStartMonth = this.getFiscalYearStartMonth();
         newTimeData.timeRange = {
-          from: dateMath.toDateTime(timeFromInfo.from, { timezone })!,
-          to: dateMath.toDateTime(timeFromInfo.to, { timezone })!,
+          from: dateMath.toDateTime(timeFromInfo.from, { timezone, fiscalYearStartMonth })!,
+          to: dateMath.toDateTime(timeFromInfo.to, { timezone, fiscalYearStartMonth })!,
           raw: { from: timeFromInfo.from, to: timeFromInfo.to },
         };
         infoBlocks.push(timeFromInfo.display);
@@ -180,12 +190,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
       if (rangeUtil.isRelativeTimeRange(newTimeData.timeRange.raw)) {
         const timezone = this.getTimeZone();
+        const fiscalYearStartMonth = this.getFiscalYearStartMonth();
 
         const rawFromShifted = `${newTimeData.timeRange.raw.from}${shift}`;
         const rawToShifted = `${newTimeData.timeRange.raw.to}${shift}`;
 
-        const from = dateMath.toDateTime(rawFromShifted, { timezone });
-        const to = dateMath.toDateTime(rawToShifted, { timezone, roundUp: true });
+        const from = dateMath.toDateTime(rawFromShifted, { timezone, fiscalYearStartMonth });
+        const to = dateMath.toDateTime(rawToShifted, { timezone, fiscalYearStartMonth, roundUp: true });
 
         if (!from || !to) {
           newTimeData.timeInfo = 'invalid timeshift';
@@ -198,8 +209,9 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
           raw: { from: rawFromShifted, to: rawToShifted },
         };
       } else {
-        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false);
-        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true);
+        const fiscalYearStartMonth = this.getFiscalYearStartMonth();
+        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false, fiscalYearStartMonth);
+        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true, fiscalYearStartMonth);
 
         if (!from || !to) {
           newTimeData.timeInfo = 'invalid timeshift';
