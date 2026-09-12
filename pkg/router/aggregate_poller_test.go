@@ -68,7 +68,6 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 		URL:  srv.URL,
 	}, srv.Client())
 	require.NoError(t, err)
-	target.pollInterval = 10 * time.Millisecond
 	target.cooldown = newCooldown(10*time.Millisecond, 200*time.Millisecond, time.Second)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -78,7 +77,7 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 	cancel()
 
-	// Without backoff, a 10ms poll interval over 150ms would be ~15
+	// Without backoff, the 10ms steady interval over 150ms would be ~15
 	// attempts; with a 200ms floor after the first failure, it must be
 	// at most 2 (the initial attempt plus, at most, one more right at
 	// the boundary).
@@ -94,8 +93,42 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	}
 }
 
+// TestAggregateTarget_BackoffLadderDrivesRetries pins down the fix for the
+// double-pacing bug: retries after a failure must be scheduled by the
+// cooldown's backoff ladder, not by a separate steady-interval ticker. The
+// steady interval here (1s) is far longer than the test window, so every
+// attempt after the first can only have come from the backoff schedule --
+// under the old ticker-plus-Ready-gate loop this would have produced exactly
+// one attempt.
+func TestAggregateTarget_BackoffLadderDrivesRetries(t *testing.T) {
+	var attempts atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer srv.Close()
+
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name: "baas_apiserver",
+		URL:  srv.URL,
+	}, srv.Client())
+	require.NoError(t, err)
+	target.cooldown = newCooldown(time.Second, 10*time.Millisecond, 40*time.Millisecond)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	dirty := make(chan struct{}, 1)
+	go target.run(ctx, dirty)
+	defer cancel()
+
+	// 10ms -> 20ms -> 40ms (capped) leaves room for well over 3 attempts in
+	// 300ms, while the 1s steady interval alone would allow only the first.
+	require.Eventually(t, func() bool {
+		return attempts.Load() >= 3
+	}, 300*time.Millisecond, 5*time.Millisecond, "backoff ladder must drive retries faster than the steady interval")
+}
+
 // TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange exercises poll()
-// directly (bypassing the ticker-driven run loop) so the "no signal when
+// directly (bypassing the timer-driven run loop) so the "no signal when
 // unchanged" case doesn't depend on real-time scheduling: sameKeySet's
 // diffing is the reason dirty exists rather than firing on every successful
 // poll, so it needs to be pinned down explicitly.
@@ -127,11 +160,9 @@ func TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 		t.Fatal("expected dirty to be signaled on the first poll (empty -> non-empty key set)")
 	}
 
-	// Force the cooldown open again immediately so the second poll actually
-	// runs rather than being skipped, without waiting on real time.
-	target.cooldown.next = time.Time{}
-
 	// Second poll: same upstream response, same key set -- must not signal.
+	// No need to reopen the cooldown first: poll() no longer gates itself on
+	// it (run()'s timer is the only gate), it just records the outcome.
 	target.poll(ctx, dirty)
 	require.Len(t, target.Backends(), 1)
 	select {

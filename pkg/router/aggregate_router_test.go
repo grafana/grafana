@@ -62,7 +62,9 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 		GroupPatterns: []string{"*.grafana.app"},
 	}, upstream.Client())
 	require.NoError(t, err)
-	target.pollInterval = 10 * time.Millisecond
+	// The cooldown is the poll loop's only pacing source, so shortening it is
+	// what makes this test fast.
+	target.cooldown = newCooldown(10*time.Millisecond, 10*time.Millisecond, 100*time.Millisecond)
 
 	loader := &staticAggregateLoader{target: target}
 	r := NewGrafanaRouter(loader)

@@ -21,9 +21,15 @@ func newCooldown(steady, min, max time.Duration) *cooldown {
 	return &cooldown{steady: steady, min: min, max: max}
 }
 
-// Ready reports whether a poll attempt may run now.
-func (c *cooldown) Ready(now time.Time) bool {
-	return !now.Before(c.next)
+// Until reports how long until the next poll attempt is allowed; zero or
+// negative means "allowed now". This is aggregateTarget.run's single pacing
+// input: it resets its timer to this after every attempt. There is
+// deliberately no boolean Ready() predicate any more -- an earlier version of
+// run() ran a fixed-interval ticker *and* gated each tick on Ready, which
+// raced the two timing sources against each other and masked the backoff
+// ladder entirely (see run()).
+func (c *cooldown) Until(now time.Time) time.Duration {
+	return c.next.Sub(now)
 }
 
 // OnSuccess resets the poller to its steady-state interval.
