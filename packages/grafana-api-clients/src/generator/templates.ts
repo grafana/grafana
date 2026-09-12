@@ -64,6 +64,7 @@ export function getRTKClientEntries({
 }: Pick<TemplateInput, 'groupName' | 'reducerPath' | 'version'>) {
   return {
     importEntry: `import { generatedAPI as ${reducerPath} } from './${groupName}/${version}';`,
+    baseImportEntry: `import { api as ${reducerPath} } from './${groupName}/${version}/baseAPI';`,
     reducerEntry: `[${reducerPath}.reducerPath]: ${reducerPath}.reducer,`,
     middlewareEntry: `${reducerPath}.middleware,`,
   };

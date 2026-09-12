@@ -19,6 +19,9 @@ export interface ClientGenerationState {
   hasRTKImport: boolean;
   hasRTKReducer: boolean;
   hasRTKMiddleware: boolean;
+  hasRegistrationImport: boolean;
+  hasRegistrationReducer: boolean;
+  hasRegistrationMiddleware: boolean;
   hasPackageExport: boolean;
   existingClientFiles: string[];
   missingParts: string[];
@@ -64,6 +67,9 @@ export function getClientGenerationState(
   let hasRTKImport = false;
   let hasRTKReducer = false;
   let hasRTKMiddleware = false;
+  let hasRegistrationImport = false;
+  let hasRegistrationReducer = false;
+  let hasRegistrationMiddleware = false;
   let hasPackageExport = false;
 
   if (isPackageClient) {
@@ -72,6 +78,10 @@ export function getClientGenerationState(
     hasRTKImport = fileContains(rtkqIndexPath, entries.importEntry);
     hasRTKReducer = fileContains(rtkqIndexPath, entries.reducerEntry);
     hasRTKMiddleware = fileContains(rtkqIndexPath, entries.middlewareEntry);
+    const registrationPath = path.join(basePath, variant.clientBase, 'registration.ts');
+    hasRegistrationImport = fileContains(registrationPath, entries.baseImportEntry);
+    hasRegistrationReducer = fileContains(registrationPath, entries.reducerEntry);
+    hasRegistrationMiddleware = fileContains(registrationPath, entries.middlewareEntry);
     hasPackageExport = hasPackageJsonExport(basePath, input.groupName, input.version);
   }
 
@@ -94,6 +104,15 @@ export function getClientGenerationState(
   if (isPackageClient && !hasRTKMiddleware) {
     missingParts.push(`${variant.clientBase}/index.ts middleware`);
   }
+  if (isPackageClient && !hasRegistrationImport) {
+    missingParts.push(`${variant.clientBase}/registration.ts import`);
+  }
+  if (isPackageClient && !hasRegistrationReducer) {
+    missingParts.push(`${variant.clientBase}/registration.ts reducer`);
+  }
+  if (isPackageClient && !hasRegistrationMiddleware) {
+    missingParts.push(`${variant.clientBase}/registration.ts middleware`);
+  }
   if (isPackageClient && !hasPackageExport) {
     missingParts.push(`${PACKAGE_ROOT}/package.json export`);
   }
@@ -106,6 +125,9 @@ export function getClientGenerationState(
     hasRTKImport,
     hasRTKReducer,
     hasRTKMiddleware,
+    hasRegistrationImport,
+    hasRegistrationReducer,
+    hasRegistrationMiddleware,
     hasPackageExport,
     existingClientFiles,
     missingParts,

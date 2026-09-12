@@ -67,6 +67,16 @@ const store = configureStore({
 });
 ```
 
+### Base-only registration
+
+Grafana core imports `allMiddleware` and `allReducers` from `@grafana/api-clients/rtkq/registration`.
+This entry installs the same API reducers and middleware without importing feature endpoint definitions.
+Feature code imports its client from `@grafana/api-clients/rtkq/<group>/<version>` before it uses an endpoint.
+That import injects and enhances the endpoints on the existing API instance.
+
+The existing `@grafana/api-clients/rtkq` entry retains its endpoint initialization behavior.
+The API client generator updates both registration entries.
+
 # Development (within `grafana/grafana`)
 
 ## Generating RTK Query API Clients

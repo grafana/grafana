@@ -2,10 +2,10 @@ import path from 'path';
 
 import { getClientGenerationState } from './clientState.ts';
 import { formatFiles, getFilesToFormat, runGenerateApis } from './commands.ts';
-import { injectBeforeMarkerIfMissing, writeNewFileIfMissing } from './files.ts';
+import { injectBeforeMarkerIfMissing, registerRTKClient, writeNewFileIfMissing } from './files.ts';
 import { updatePackageJsonExports } from './packageExports.ts';
 import { confirmUpdateExistingClient, runPrompts } from './prompts.ts';
-import { renderBaseAPI, renderConfigEntry, renderIndexTs, getRTKClientEntries } from './templates.ts';
+import { renderBaseAPI, renderConfigEntry, renderIndexTs } from './templates.ts';
 import { MARKERS, variantFor } from './variants.ts';
 
 async function main() {
@@ -37,6 +37,9 @@ async function main() {
     clientState.hasRTKImport ||
     clientState.hasRTKReducer ||
     clientState.hasRTKMiddleware ||
+    clientState.hasRegistrationImport ||
+    clientState.hasRegistrationReducer ||
+    clientState.hasRegistrationMiddleware ||
     clientState.hasPackageExport;
 
   if (hasExistingClientState) {
@@ -60,15 +63,8 @@ async function main() {
 
   // OSS-only: wire up Redux imports, reducers, middleware, and package.json exports
   if (!answers.isEnterprise) {
-    const rtkqIndex = path.join(basePath, variant.clientBase, 'index.ts');
-    const { reducerPath, groupName, version } = answers;
-    const entries = getRTKClientEntries({ groupName, reducerPath, version });
-
-    injectBeforeMarkerIfMissing(rtkqIndex, MARKERS.IMPORT, entries.importEntry);
-    injectBeforeMarkerIfMissing(rtkqIndex, MARKERS.REDUCER, entries.reducerEntry);
-    injectBeforeMarkerIfMissing(rtkqIndex, MARKERS.MIDDLEWARE, entries.middlewareEntry);
-
-    updatePackageJsonExports(basePath, groupName, version);
+    registerRTKClient(basePath, variant, answers);
+    updatePackageJsonExports(basePath, answers.groupName, answers.version);
   }
 
   // Format all touched files, then run the RTK codegen

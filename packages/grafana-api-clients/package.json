@@ -31,6 +31,12 @@
       "import": "./dist/esm/clients/rtkq/index.mjs",
       "require": "./dist/cjs/clients/rtkq/index.cjs"
     },
+    "./rtkq/registration": {
+      "@grafana-app/source": "./src/clients/rtkq/registration.ts",
+      "types": "./dist/types/clients/rtkq/registration.d.ts",
+      "import": "./dist/esm/clients/rtkq/registration.mjs",
+      "require": "./dist/cjs/clients/rtkq/registration.cjs"
+    },
     "./internal/rtkq/legacy": {
       "@grafana-app/source": "./src/clients/rtkq/legacy/index.ts"
     },

@@ -11,7 +11,12 @@ export function getFilesToFormat(variant: Variant, groupName: string, version: s
     `${variant.clientBase}/${subpath}/index.ts`,
     variant.codegenScript,
     ...(variant.clientBase.startsWith(PACKAGE_ROOT)
-      ? [`${PACKAGE_ROOT}/src/index.ts`, `${variant.clientBase}/index.ts`, `${PACKAGE_ROOT}/package.json`]
+      ? [
+          `${PACKAGE_ROOT}/src/index.ts`,
+          `${variant.clientBase}/index.ts`,
+          `${variant.clientBase}/registration.ts`,
+          `${PACKAGE_ROOT}/package.json`,
+        ]
       : []),
   ];
 }

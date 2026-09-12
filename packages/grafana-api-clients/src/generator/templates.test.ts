@@ -77,6 +77,7 @@ describe('getRTKClientEntries', () => {
 
     expect(result).toEqual({
       importEntry: "import { generatedAPI as dashboardAPI } from './dashboard/v0alpha1';",
+      baseImportEntry: "import { api as dashboardAPI } from './dashboard/v0alpha1/baseAPI';",
       reducerEntry: '[dashboardAPI.reducerPath]: dashboardAPI.reducer,',
       middlewareEntry: 'dashboardAPI.middleware,',
     });
