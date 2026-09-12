@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
-import Calendar, { type CalendarType } from 'react-calendar';
+import { type CalendarType } from 'react-calendar';
 
 import { type GrafanaTheme2, dateTimeParse, type DateTime, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
+import { Calendar } from '../Calendar';
 import { getWeekStart, type WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 

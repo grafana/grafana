@@ -68,6 +68,7 @@ describe('TimeRangeForm', () => {
     const openCalendarButton = screen.getAllByRole('button', { name: 'Open calendar' });
 
     await user.click(openCalendarButton[0]);
+    expect(await screen.findByRole('button', { name: 'June 17, 2021' })).toBeInTheDocument();
     expect(screen.getByLabelText(TimePicker.calendar.label)).toBeInTheDocument();
   });
 
@@ -163,6 +164,7 @@ describe('TimeRangeForm', () => {
     const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
 
     await user.click(openCalendarButton[0]);
+    expect(await screen.findByRole('button', { name: 'June 17, 2021' })).toBeInTheDocument();
     expect(getByRole('button', { name: 'Close calendar' })).toBeInTheDocument();
 
     await user.click(getByRole('button', { name: 'Close calendar' }));
@@ -182,6 +184,7 @@ describe('TimeRangeForm', () => {
     const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
 
     await user.click(openCalendarButton[0]);
+    await screen.findByRole('button', { name: 'June 17, 2021' });
     const from = getCalendarDayByLabelText('June 17, 2021');
     const to = getCalendarDayByLabelText('June 19, 2021');
 
@@ -194,6 +197,7 @@ describe('TimeRangeForm', () => {
     const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
 
     await user.click(openCalendarButton[0]);
+    await screen.findByRole('button', { name: 'June 17, 2021' });
 
     expect(getCalendarDayByLabelText('June 16, 2021')).toHaveAttribute('aria-pressed', 'false');
     for (const day of [17, 18, 19]) {
@@ -207,6 +211,7 @@ describe('TimeRangeForm', () => {
     const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
 
     await user.click(openCalendarButton[1]);
+    await screen.findByRole('button', { name: 'June 17, 2021' });
     const from = getCalendarDayByLabelText('June 17, 2021');
     const to = getCalendarDayByLabelText('June 19, 2021');
 
@@ -219,6 +224,7 @@ describe('TimeRangeForm', () => {
     const openCalendarButton = getAllByRole('button', { name: 'Open calendar' });
 
     await user.click(openCalendarButton[0]);
+    await screen.findByRole('button', { name: 'June 15, 2021' });
 
     const targetDay = getCalendarDayByLabelText('June 15, 2021');
     await user.click(targetDay);

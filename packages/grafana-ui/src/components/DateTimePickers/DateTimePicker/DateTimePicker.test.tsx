@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
@@ -92,7 +92,7 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
 
       // Check the active day is the 5th
-      expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
+      expect(await screen.findByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
       // open the time of day overlay
       await userEvent.click(screen.getByRole('combobox'));
@@ -124,7 +124,7 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
 
       // Select a different day in the calendar
-      await userEvent.click(screen.getByRole('button', { name: 'May 15, 2021' }));
+      await userEvent.click(await screen.findByRole('button', { name: 'May 15, 2021' }));
 
       const timeInput = screen.getByRole('combobox');
       expect(timeInput).not.toHaveDisplayValue('00:00:00');
@@ -149,7 +149,9 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
 
       // Check the active day matches the input
-      expect(screen.getByRole('button', { name: `May ${day}, 2021` })).toHaveClass('react-calendar__tile--active');
+      expect(await screen.findByRole('button', { name: `May ${day}, 2021` })).toHaveClass(
+        'react-calendar__tile--active'
+      );
     }
   );
 
@@ -165,7 +167,7 @@ describe('Date time picker', () => {
 
       // Select a new day
       const day = 8;
-      await userEvent.click(screen.getByRole('button', { name: `May ${day}, 2021` }));
+      await userEvent.click(await screen.findByRole('button', { name: `May ${day}, 2021` }));
       await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
       const onChangeInputArg = onChangeInput.mock.calls[0][0];
@@ -214,6 +216,7 @@ describe('Date time picker', () => {
 
       // open the calendar + time picker
       await userEvent.click(screen.getByLabelText('Time picker'));
+      expect(await screen.findByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
       // open the time of day overlay
       await userEvent.click(screen.getByRole('combobox'));
@@ -228,6 +231,27 @@ describe('Date time picker', () => {
     }
   );
 
+  it('applies the selected day, closes the calendar, and restores focus to the trigger', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    renderDatetimePicker({
+      date: dateTime('2021-05-05T12:34:56Z'),
+      timeZone: 'utc',
+      onChange,
+    });
+
+    expect(screen.getByTestId(Components.DateTimePicker.input)).toHaveDisplayValue('2021-05-05 12:34:56');
+    const trigger = screen.getByRole('button', { name: 'Time picker' });
+    await user.click(trigger);
+    await user.click(await screen.findByRole('button', { name: 'May 15, 2021' }));
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].toISOString()).toBe('2021-05-15T12:34:56.000Z');
+    expect(screen.queryByRole('button', { name: 'May 15, 2021' })).not.toBeInTheDocument();
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
   it('should be able to use a custom timeZone', async () => {
     renderDatetimePicker({
       timeZone: 'America/New_York',
@@ -239,7 +263,7 @@ describe('Date time picker', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
     // Check that calendar date is set correctly
-    expect(screen.getByRole('button', { name: `June 30, 2024` })).toHaveClass('react-calendar__tile--active');
+    expect(await screen.findByRole('button', { name: `June 30, 2024` })).toHaveClass('react-calendar__tile--active');
     // Check that time is set correctly
     expect(screen.getByRole('combobox')).toHaveValue('22:00:00');
   });

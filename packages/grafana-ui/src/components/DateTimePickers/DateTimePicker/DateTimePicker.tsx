@@ -5,7 +5,7 @@ import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
-import Calendar from 'react-calendar';
+
 import { useMedia } from 'react-use';
 
 import {
@@ -30,6 +30,7 @@ import { Input } from '../../Input/Input';
 import { Stack } from '../../Layout/Stack/Stack';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { getPortalContainer, Portal } from '../../Portal/Portal';
+import { Calendar } from '../Calendar';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';

@@ -27,6 +27,7 @@ describe('DatePickerWithInput', () => {
   it('does not render calendar', () => {
     render(<DatePickerWithInput onChange={jest.fn()} />);
 
+    expect(screen.getByPlaceholderText('Date')).toBeInTheDocument();
     expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
   });
 
@@ -36,6 +37,7 @@ describe('DatePickerWithInput', () => {
       await user.click(screen.getByPlaceholderText('Date'));
 
       expect(screen.getByPlaceholderText('Date')).toBeInTheDocument();
+      expect(await screen.findByText('14')).toBeInTheDocument();
     });
 
     it('renders calendar', async () => {
@@ -43,19 +45,25 @@ describe('DatePickerWithInput', () => {
 
       await user.click(screen.getByPlaceholderText('Date'));
 
-      expect(screen.getByTestId('date-picker')).toBeInTheDocument();
+      expect(await screen.findByText('14')).toBeInTheDocument();
     });
   });
 
-  it('calls onChange after date is selected', async () => {
+  it.each([false, true])('selects a date with closeOnSelect=%s', async (closeOnSelect) => {
     const onChange = jest.fn();
-    render(<DatePickerWithInput onChange={onChange} />);
+    render(<DatePickerWithInput value={new Date(2020, 11, 8)} onChange={onChange} closeOnSelect={closeOnSelect} />);
 
     // open calendar and select a date
     await user.click(screen.getByPlaceholderText('Date'));
-    await user.click(screen.getByText('14'));
+    await user.click(await screen.findByRole('button', { name: 'December 14, 2020' }));
 
     expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(new Date(2020, 11, 14));
+    if (closeOnSelect) {
+      expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByRole('button', { name: 'December 14, 2020' })).toBeInTheDocument();
+    }
   });
 
   it('closes calendar after outside wrapper is clicked', async () => {
@@ -64,7 +72,7 @@ describe('DatePickerWithInput', () => {
     // open calendar and click outside
     await user.click(screen.getByPlaceholderText('Date'));
 
-    expect(screen.getByTestId('date-picker')).toBeInTheDocument();
+    expect(await screen.findByText('14')).toBeInTheDocument();
 
     await user.click(document.body);
 
