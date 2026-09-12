@@ -413,6 +413,71 @@ describe('UnifiedDashboardAPI', () => {
 
       expect(result.metadata.continue).toBeUndefined();
     });
+
+    it('should not loop when v1 is exhausted but the incoming composite token still carries v2 work', async () => {
+      // Regression test for #131820 (bug 1). When a previous round set a v2 continue
+      // token, and the next round returns the last page of v1 items (all valid, no v1
+      // continue), the "all v1 valid" fast path used to return early and emit a
+      // composite continue of (undefined, v2Token). The next call would then re-query
+      // v1 with no continue — restarting v1 from page 1 — and re-enter the same fast
+      // path, looping forever. The fix falls through to query v2 in this case so the
+      // merge path can drain v2 to completion.
+      const v1LastPage = {
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '1' },
+        items: [
+          {
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v1beta1',
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '5',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 5,
+            },
+            spec: { title: 'v1-last', schemaVersion: 30 },
+            status: {},
+          },
+        ],
+      };
+      const v2Response = {
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '2' },
+        items: [
+          {
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '6',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 6,
+            },
+            spec: { title: 'v2', elements: {} },
+            status: {},
+          },
+        ],
+      };
+      v1Client.listDashboardHistory.mockResolvedValue(v1LastPage as ResourceList<DashboardDataDTO>);
+      v2Client.listDashboardHistory.mockResolvedValue(v2Response as ResourceList<DashboardV2Spec>);
+
+      const compositeToken = btoa(JSON.stringify({ v1: undefined, v2: 'v2-page2' }));
+      const result = await api.listDashboardHistory('dash-1', { limit: 10, continueToken: compositeToken });
+
+      // The v2 client must be queried even though v1 returned valid items, so the
+      // carried-forward v2 token can advance and the loop terminates.
+      expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: 'v2-page2' });
+      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
+
+      // v1 exhausted (no continue) and v2 exhausted (no continue) -> undefined
+      expect(result.metadata.continue).toBeUndefined();
+
+      // Both pages of history are present and merged by generation descending.
+      const generations = result.items.map((item) => item.metadata.generation);
+      expect(generations).toEqual([6, 5]);
+    });
   });
 
   describe('deleteDashboard', () => {
