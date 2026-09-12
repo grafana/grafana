@@ -24,7 +24,7 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';

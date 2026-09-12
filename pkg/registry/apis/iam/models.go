@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -55,6 +56,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore            *team.LegacyStore
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	authInfoLegacyStore        *authinfo.LegacyStore
 	ssoLegacyStore             *sso.LegacyStore
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"text/template"
 	"time"
 
@@ -268,10 +267,6 @@ type searchTeamsQuery struct {
 
 func (q searchTeamsQuery) Validate() error { return nil }
 
-func accessControlQueryFields(filter ac.SQLFilter) (bool, []any) {
-	return strings.TrimSpace(filter.Where) == "1 = 1", filter.Args
-}
-
 func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	queryResult := team.SearchTeamQueryResult{
 		Teams: make([]*team.TeamDTO, 0),
@@ -288,7 +283,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		if err != nil {
 			return err
 		}
-		accessAll, accessTeamIDs := accessControlQueryFields(acFilter)
+		accessAll, accessTeamIDs := acFilter.AllowsAllRecords(), acFilter.Args
 
 		sorts := make([]string, 0, len(query.SortOpts))
 		for i := range query.SortOpts {
@@ -455,7 +450,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		if err != nil {
 			return err
 		}
-		accessAll, accessTeamIDs := accessControlQueryFields(acFilter)
+		accessAll, accessTeamIDs := acFilter.AllowsAllRecords(), acFilter.Args
 
 		sqlQuery := getTeamsByUserQuery{
 			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
@@ -813,7 +808,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 		accessAll := true
 		var accessUserIDs []any
 		if acUserFilter != nil {
-			accessAll, accessUserIDs = accessControlQueryFields(*acUserFilter)
+			accessAll, accessUserIDs = acUserFilter.AllowsAllRecords(), acUserFilter.Args
 		}
 
 		sqlQuery := getTeamMembersQuery{

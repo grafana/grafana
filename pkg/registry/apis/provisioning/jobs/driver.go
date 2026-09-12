@@ -9,6 +9,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -17,6 +19,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -199,6 +202,12 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
 	defer cancel() // Ensure resources are released when the function returns
 
+	// Scope the git client stats to this job, so the round trips, retries, fetched
+	// objects/bytes and cache hits/misses it drives can be attributed back to the
+	// one execution at completion. Populated only when the repository makes git
+	// calls; stays zero otherwise (e.g. local repositories).
+	jobctx, gitStats := gitrepo.WithClientStats(jobctx)
+
 	// Set up lease renewal goroutine
 	leaseRenewalCtx, cancelLeaseRenewal := context.WithCancel(jobctx)
 	leaseExpired := make(chan struct{})
@@ -241,6 +250,43 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
 	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
+
+	// variance further breaks an action down (full vs incremental) and only applies
+	// to pull jobs. The sync worker is reused internally by delete/move/migrate to
+	// reconcile, tagging their shared recorder as "full" — so only trust the variance
+	// when the top-level job is actually a pull, otherwise it leaks onto other actions.
+	variance := ""
+	if d.currentJob.Spec.Action == provisioning.JobActionPull {
+		variance = recorder.Variance()
+	}
+	resourcesChanged := sumTotalChanges(d.currentJob.Status.Summary)
+	resourcesDryRun := sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary)
+	// Per-execution throughput: resources processed per second of wall-clock time.
+	// Pull-request jobs do their work as dry-runs (they never change anything), so
+	// they are measured by the dry-run count, matching RecordJob's numerator.
+	resourcesProcessed := resourcesChanged
+	if d.currentJob.Spec.Action == provisioning.JobActionPullRequest {
+		resourcesProcessed = resourcesDryRun
+	}
+	var opsPerSecond float64
+	if secs := duration.Seconds(); secs > 0 {
+		opsPerSecond = float64(resourcesProcessed) / secs
+	}
+	// Attribute the git client work to this one execution. The round-trip count
+	// also feeds a histogram (per-execution percentiles a fleet counter cannot
+	// give); the rest ride the span and log line for forensics on a single job.
+	git := gitStats.Snapshot()
+	span.SetAttributes(
+		attribute.String("variance", variance),
+		attribute.Int("resources_processed", resourcesProcessed),
+		attribute.Float64("throughput_ops_per_second", opsPerSecond),
+		attribute.Int64("git.http_requests", git.HTTPRequests),
+		attribute.Int64("git.http_retries", git.HTTPRetries),
+		attribute.Int64("git.objects_fetched", git.ObjectsFetched),
+		attribute.Int64("git.bytes_fetched", git.BytesFetched),
+		attribute.Int64("git.cache_hits", git.CacheHits),
+		attribute.Int64("git.cache_misses", git.CacheMisses),
+	)
 	// Record the job metric here, from the authoritative final status, rather than in
 	// each worker: this covers every action uniformly, uses the driver-measured
 	// duration (accurate even on timeout), and makes the `outcome` label reflect the
@@ -249,11 +295,13 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	if d.metrics != nil {
 		d.metrics.RecordJob(
 			string(d.currentJob.Spec.Action),
+			variance,
 			string(d.currentJob.Status.State),
-			sumTotalChanges(d.currentJob.Status.Summary),
-			sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
+			resourcesChanged,
+			resourcesDryRun,
 			duration.Seconds(),
 		)
+		d.metrics.RecordGitClientStats(string(d.currentJob.Spec.Action), variance, git.HTTPRequests)
 	}
 	defer func() {
 		d.currentJob = nil
@@ -270,6 +318,15 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		"errorCount", len(status.Errors),
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
+		"variance", variance,
+		"resourcesProcessed", resourcesProcessed,
+		"opsPerSecond", opsPerSecond,
+		"gitHTTPRequests", git.HTTPRequests,
+		"gitHTTPRetries", git.HTTPRetries,
+		"gitObjectsFetched", git.ObjectsFetched,
+		"gitBytesFetched", git.BytesFetched,
+		"gitCacheHits", git.CacheHits,
+		"gitCacheMisses", git.CacheMisses,
 	}
 	if err != nil {
 		logFields = append(logFields, "error", err)
@@ -505,6 +562,19 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			return nil
 		}
 
+		// Most workers talk to the repository, so a repository whose credentials
+		// are known to be broken only produces a failed job the user can't act on
+		// from the job itself. Skip it with a warning instead of burning the job
+		// success-rate SLI; the repository status stays the place the reason lives.
+		// The synthetic test action is exempt: its worker does no repository work
+		// and exists purely to exercise the queue, so it must run even when the
+		// repository is unhealthy.
+		if job.Spec.Action != provisioning.JobActionTest && repositoryAuthenticationFailed(r) {
+			logger.Info("repository authentication failed - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository authentication failed - job skipped")).Build())
+			return nil
+		}
+
 		err = worker.Process(ctx, repo, *job, recorder)
 		if err != nil {
 			span.RecordError(err)
@@ -515,6 +585,34 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// repositoryAuthenticationFailed reports whether the repository's latest health
+// check concluded its credentials are broken (revoked or expired), so any job
+// against it would fail in a way only the user can fix on the repository itself.
+//
+// The check is intentionally narrow, so a repository that is merely
+// misconfigured or briefly unavailable is not skipped:
+//   - Checked > 0: trust the status only once a health check has actually run,
+//     so a brand-new repository is not skipped before its first check.
+//   - Healthy == false with Error == HealthFailureHealth: a webhook-permission
+//     gap (HealthFailureHook) doesn't mean content reads/writes are broken.
+//   - Ready == AuthenticationFailed: keys off the structured condition reason,
+//     not health message text, so an accessible-but-blocked failure (e.g. branch
+//     protection, classified InvalidSpec) does not trigger the skip.
+//   - ObservedGeneration == Generation: ignore a stale condition from before a
+//     spec edit that may already have repaired the credentials.
+func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
+	health := r.Status.Health
+	if health.Checked == 0 || health.Healthy || health.Error != provisioning.HealthFailureHealth {
+		return false
+	}
+
+	ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+	return ready != nil &&
+		ready.Status == metav1.ConditionFalse &&
+		ready.Reason == provisioning.ReasonAuthenticationFailed &&
+		ready.ObservedGeneration == r.Generation
 }
 
 // sumTotalChanges totals the per-summary TotalChanges for the duration-histogram
@@ -556,7 +654,7 @@ func (d *jobProcessor) onProgress() ProgressFn {
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 
 		const maxRetries = 3
-		for attempt := 0; attempt < maxRetries; attempt++ {
+		for attempt := range maxRetries {
 			d.mu.Lock()
 			if d.currentJob == nil {
 				d.mu.Unlock()

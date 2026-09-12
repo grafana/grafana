@@ -3,6 +3,7 @@ import { type ReactNode, type RefObject } from 'react';
 
 import { type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Stack, ToolbarButton } from '@grafana/ui';
 
 import { TextMode } from '../../panelcfg.gen';
@@ -10,6 +11,9 @@ import { TextMode } from '../../panelcfg.gen';
 import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
 const TABLE_SNIPPET = '\n| Column | Column |\n| ------ | ------ |\n| Value  | Value  |\n';
+const DIAGRAM_BODY = 'graph TD\n  A[Start] --> B[End]\n';
+const MARKDOWN_DIAGRAM_SNIPPET = `\n\`\`\`mermaid\n${DIAGRAM_BODY}\`\`\`\n`;
+const HTML_DIAGRAM_SNIPPET = `\n<pre class="mermaid">\n${DIAGRAM_BODY}</pre>\n`;
 
 export const FORMAT_TOOLBAR_TEST_ID = 'TextNGEditor-format-toolbar';
 
@@ -71,6 +75,17 @@ function getFormatActions(mode: TextMode): FormatAction[] {
     },
   ];
 
+  const diagramAction: FormatAction[] = getFeatureFlagClient().getBooleanValue('text.newFeatures', false)
+    ? [
+        {
+          key: 'diagram',
+          tooltip: t('textng.editor.tooltip-diagram', 'Mermaid diagram'),
+          icon: 'code-branch',
+          run: (view) => insertAtCursor(view, isHtml ? HTML_DIAGRAM_SNIPPET : MARKDOWN_DIAGRAM_SNIPPET),
+        },
+      ]
+    : [];
+
   const insertVariable: FormatAction = {
     key: 'variable',
     tooltip: t('textng.editor.tooltip-insert-variable', 'Insert variable'),
@@ -79,7 +94,7 @@ function getFormatActions(mode: TextMode): FormatAction[] {
   };
 
   if (isHtml) {
-    return [...inlineActions, insertVariable];
+    return [...inlineActions, ...diagramAction, insertVariable];
   }
 
   // Markdown only
@@ -115,6 +130,7 @@ function getFormatActions(mode: TextMode): FormatAction[] {
       icon: 'table',
       run: (view) => insertAtCursor(view, TABLE_SNIPPET),
     },
+    ...diagramAction,
     insertVariable,
   ];
 }

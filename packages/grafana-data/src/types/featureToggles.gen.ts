@@ -114,6 +114,11 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
+  * Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+  * @default false
+  */
+  ['alerting.ruleStatusSync']?: boolean;
+  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -616,11 +621,6 @@ export interface FeatureToggles {
   */
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
-  * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
-  * @default true
-  */
-  improvedExternalSessionHandling?: boolean;
-  /**
   * Use session storage for handling the redirection after login
   * @default true
   */
@@ -725,11 +725,6 @@ export interface FeatureToggles {
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-  * @default true
-  */
-  improvedExternalSessionHandlingSAML?: boolean;
   /**
   * Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
   * @default false
@@ -1307,18 +1302,13 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
-  * Enables the new Flame Graph UI containing the Call Tree view
-  * @default false
-  */
-  flameGraphWithCallTree?: boolean;
-  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
+  * @default true
   */
   logsTablePanelNG?: boolean;
   /**

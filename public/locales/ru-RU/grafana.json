@@ -3405,7 +3405,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Обработчики оповещений",
+        "alert-managers": "",
         "import": "Импорт"
       }
     },
@@ -6107,7 +6107,6 @@
       "description": "Вертикальная последовательность панелей, текста и ячеек кода",
       "name": "Заметки",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Время",
       "title-edit": "",
@@ -6399,6 +6398,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Аннотации",
         "description": "Описание",
@@ -6502,17 +6514,6 @@
           "empty": "(пусто)",
           "no-title": "<нет заголовка>"
         }
-      },
-      "predefined-variables": {
-        "all": "Все",
-        "description": "",
-        "folder": "Папка",
-        "global": "Глобальные",
-        "label": "Предустановленные переменные",
-        "none": "Нет",
-        "pane-header": "Предустановленные переменные",
-        "title": "Предустановленные переменные",
-        "tooltip": "Выберите, какие глобальные переменные и переменные папки получает этот дашборд"
       },
       "redo": "Повторить",
       "row": {
@@ -7133,6 +7134,10 @@
       "recommendation": "После включения функции дашборды будут отображаться в динамическом формате. Настоятельно рекомендуем не корректировать дашборды до тех пор, пока функция не станет активной, поскольку правки, внесенные в классическом режиме, могут привести к неожиданным результатам. Вы также можете сохранить копию дашборда с помощью соответствующей опции в меню сохранения.",
       "save-warning": "Дашборд, созданный как динамический или преобразованный в него, будет открываться как классический. При сохранении дашборда настройки для динамического режима могут не сохраниться."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Пользовательские параметры",
       "json-values-tooltip": "Укажите JSON-массив, где каждый объект может иметь любое количество свойств.<br/>Подробнее — в <4>документации</4>.",
@@ -7175,6 +7180,12 @@
       "type": "Тип"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
@@ -7606,13 +7617,6 @@
       },
       "title-close": "Закрыть"
     },
-    "predefined-variables": {
-      "label-all": "Все",
-      "label-custom": "Задано пользователем",
-      "label-folder": "Папка",
-      "label-global": "Глобальные",
-      "label-none": "Нет"
-    },
     "provisioned-controls-section": {
       "label": "Подготовлено источником данных",
       "tooltip": "Добавлено плагином {{pluginName}}",
@@ -7731,6 +7735,10 @@
       "required": "Обязательно"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Изменения",
         "label-details": "Подробности",
@@ -8497,7 +8505,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Фиксированное значение"
       },
-      "label": "Скаляр",
+      "label-field": "",
       "label-limit": "Предельное значение",
       "label-value": "Значение",
       "noOptionsMessage-no-fields-found": "Поля не найдены",
@@ -9231,6 +9239,7 @@
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
+      "error-indicator": "",
       "errors": "Ошибки",
       "errors-tooltip": "Выбирает диапазоны, в которых статус соответствует ошибке.",
       "export-started": "Экспорт запущен",
@@ -9248,11 +9257,17 @@
       "share-export-json": "Экспорт в формате JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Время начала",
+      "success-indicator": "",
       "target": "Цель",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Идентификатор трассировки",
-      "url": "URL-адрес"
+      "url": "URL-адрес",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -10781,7 +10796,6 @@
       "ariaLabel-panel-loading": "Полоса загрузки панели",
       "ariaLabel-panel-status": "Статус панели",
       "errors-and-notices": "Ошибки и уведомления",
-      "inspect-errors-notices": "Проверить",
       "tooltip-cancel": "Отмена запроса",
       "tooltip-cancel-loading": "Отмена запроса",
       "tooltip-stop-streaming": "Остановка потоковой передачи",
@@ -10863,9 +10877,13 @@
       "cell-filter-out": "Отсеять значение",
       "cell-inspect": "Проверить значение",
       "cell-inspect-tooltip": "Проверить значение",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Копировать в буфер обмена",
       "csv-counts": "Строки:{{rows}}, столбцы:{{columns}}",
       "csv-placeholder": "Ввести CSV...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Добавить все отображаемые значения в фильтр",
         "blanks": "(Пустые ячейки)",
@@ -12666,6 +12684,9 @@
       "subtitle": "Правила, определяющие, будет ли создано оповещение",
       "title": "Правила оповещения"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Выбор способов уведомления точек контакта при возникновении оповещения",
       "title": "Точки контакта"
@@ -12735,6 +12756,7 @@
       "title": "Создание"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Новое правило оповещения"
     },
     "create-dashboard": {
@@ -12769,6 +12791,10 @@
     },
     "explore": {
       "title": "Explore"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Получение аналитики из мониторинга реальных пользователей",
@@ -12850,6 +12876,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12880,6 +12910,10 @@
     },
     "profiles": {
       "title": "Профили"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -13221,7 +13255,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13241,7 +13274,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13292,6 +13324,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13308,6 +13341,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_few": "",
@@ -13361,7 +13395,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Очистить параметры"
+      "clear-tooltip": "Очистить параметры",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Цветовые ряды по"
@@ -16852,8 +16888,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -17019,6 +17054,8 @@
       "name-faceted-filter": "Видимость рядов"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Доступно",
         "label-dash": "Тире",

@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Warnungsmanager",
+        "alert-managers": "",
         "import": "Import"
       }
     },
@@ -6023,7 +6023,6 @@
       "description": "Eine vertikale Abfolge von Panels, Text und Codezellen",
       "name": "Notizbuch",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Zeit",
       "title-edit": "",
@@ -6313,6 +6312,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anmerkungen",
         "description": "Beschreibung",
@@ -6416,17 +6428,6 @@
           "empty": "(leer)",
           "no-title": "<kein Titel>"
         }
-      },
-      "predefined-variables": {
-        "all": "Alles",
-        "description": "",
-        "folder": "Ordner",
-        "global": "Global",
-        "label": "Vordefinierte Variablen",
-        "none": "Keine",
-        "pane-header": "Vordefinierte Variablen",
-        "title": "Vordefinierte Variablen",
-        "tooltip": "Wählen Sie, welche globalen Variablen und Ordnervariablen dieses Dashboard erhält"
       },
       "redo": "Wiederherstellen",
       "row": {
@@ -7043,6 +7044,10 @@
       "recommendation": "Sobald die Funktion wieder aktiviert ist, werden Ihre Dashboards normal in ihrem Format von Dynamic Dashboard dargestellt. Daher empfehlen wir Ihnen dringend, keine Änderungen an diesen Dashboards vorzunehmen, bis die Funktion wieder aktiviert ist, da Änderungen, die im klassischen Modus vorgenommen werden, zu unerwarteten Ergebnissen führen können. Alternativ können Sie mithilfe der Option „Als Kopie speichern“ im Menü „Dashboard speichern“ eine Kopie des Dashboards speichern.",
       "save-warning": "Jedes Dashboard, das als Dynamic Dashboard erstellt oder dazu konvertiert wurde, wird als klassisches Dashboard geöffnet. Durch das Speichern des Dashboards könnten bereits eingerichtete Funktionen von Dynamic Dashboard verloren gehen."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Benutzerdefinierte Optionen",
       "json-values-tooltip": "Stellen Sie eine JSON-Datei bereit, die ein Array von Objekten darstellt, wobei jedes Objekt eine beliebige Anzahl an Eigenschaften haben kann.<br/>Weitere Informationen finden Sie in <4>unserer Dokumentation</4>.",
@@ -7085,6 +7090,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Fehler beim Laden des Dashboards"
     },
     "dashboard-scene": {
@@ -7514,13 +7525,6 @@
       },
       "title-close": "Schließen"
     },
-    "predefined-variables": {
-      "label-all": "Alles",
-      "label-custom": "Benutzerdefiniert",
-      "label-folder": "Ordner",
-      "label-global": "Global",
-      "label-none": "Keine"
-    },
     "provisioned-controls-section": {
       "label": "Von der Datenquelle bereitgestellt",
       "tooltip": "Vom {{pluginName}}-Plugin hinzugefügt",
@@ -7639,6 +7643,10 @@
       "required": "Erforderlich"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Änderungen",
         "label-details": "Details",
@@ -8399,7 +8407,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fester Wert"
       },
-      "label": "Skalar",
+      "label-field": "",
       "label-limit": "Limit",
       "label-value": "Wert",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden",
@@ -9125,6 +9133,7 @@
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
+      "error-indicator": "",
       "errors": "Fehler",
       "errors-tooltip": "Wählt Spannen aus, in denen der Status „Fehler“ ist.",
       "export-started": "Export gestartet",
@@ -9142,11 +9151,17 @@
       "share-export-json": "Als JSON exportieren",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Startzeitpunkt",
+      "success-indicator": "",
       "target": "Ziel",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Trace-ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -10655,7 +10670,6 @@
       "ariaLabel-panel-loading": "Panel-Ladebalken",
       "ariaLabel-panel-status": "Panel-Status",
       "errors-and-notices": "Fehler und Hinweise",
-      "inspect-errors-notices": "Inspizieren",
       "tooltip-cancel": "Abfrage abbrechen",
       "tooltip-cancel-loading": "Abfrage abbrechen",
       "tooltip-stop-streaming": "Streaming anhalten",
@@ -10737,9 +10751,13 @@
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
       "cell-inspect-tooltip": "Wert prüfen",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "In Zwischenablage kopieren",
       "csv-counts": "Zeilen:{{rows}}, Spalten:{{columns}}",
       "csv-placeholder": "CSV hier eingeben …",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Alle angezeigten Werte zum Filter hinzufügen",
         "blanks": "(Leerzeichen)",
@@ -12490,6 +12508,9 @@
       "subtitle": "Regeln, die festlegen, ob eine Warnung ausgelöst wird",
       "title": "Warnregeln"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
@@ -12559,6 +12580,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Neue Warnregel"
     },
     "create-dashboard": {
@@ -12593,6 +12615,10 @@
     },
     "explore": {
       "title": "Entdecken"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Erhalten Sie echte Einblicke in die Benutzerüberwachung",
@@ -12674,6 +12700,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12734,10 @@
     },
     "profiles": {
       "title": "Profile"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -13039,7 +13073,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13059,7 +13092,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13110,6 +13142,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13126,6 +13159,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13175,7 +13209,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Einstellungen löschen"
+      "clear-tooltip": "Einstellungen löschen",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Farbreihe nach"
@@ -16606,8 +16642,7 @@
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16773,6 +16808,8 @@
       "name-faceted-filter": "Reihensichtbarkeit"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Zugänglich",
         "label-dash": "Strich",

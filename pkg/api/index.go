@@ -1,9 +1,6 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -137,6 +134,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	// The bundlers copy public/img into whichever build directory they write, so these
+	// have to follow the build directory resolved above rather than a fixed path.
+	buildImage := func(name string) template.URL {
+		return template.URL(assets.ContentDeliveryURL + assets.PublicPath + "img/" + name) // #nosec G203 nosemgrep: go.lang.security.audit.net.unescaped-data-in-url.unescaped-data-in-url
+	}
+
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(folder.ActionFoldersCreate)))
 
@@ -179,18 +182,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
-		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
+		FavIcon:                             buildImage("fav32.png"),
+		AppleTouchIcon:                      buildImage("apple-touch-icon.png"),
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
+		LoadingLogo:                         buildImage("grafana_icon.svg"),
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -240,8 +244,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	}
 
 	return dtos.AnalyticsSettings{
-		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		Identifier: identifier,
 	}
 }
 
@@ -260,17 +263,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	}
 
 	return len(userOrgs)
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	if secret == "" {
-		return ""
-	}
-
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {

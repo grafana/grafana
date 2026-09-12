@@ -64,6 +64,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		KeepFiringFor:               ar.KeepFiringFor,
 		IsPaused:                    ar.IsPaused,
 		MissingSeriesEvalsToResolve: ar.MissingSeriesEvalsToResolve,
+		K8sStatus:                   ar.K8sStatus,
 	}
 
 	if ar.RuleGroup == "" {
