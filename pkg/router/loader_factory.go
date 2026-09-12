@@ -17,10 +17,11 @@ import (
 )
 
 // ProvideRoutesLoader wires the cloud-router RoutesLoader ahead of the dummy
-// one: when [cloud_router].appmanifest_apiserver_url is configured, that loader wins;
-// otherwise this falls back to two dummy API groups for exercising the OSS
-// router target end to end. Plugin manifests will replace the dummy backends
-// in a later iteration.
+// one: when any of [cloud_router].appmanifest_apiserver_url,
+// baas_apiserver.url, or cloud_app_platform_apiserver.url is configured, that
+// loader wins; with none of them set this falls back to two dummy API groups
+// for exercising the OSS router target end to end. Plugin manifests will
+// replace the dummy backends in a later iteration.
 func ProvideRoutesLoader(
 	pluginClient plugins.Client,
 	contextProvider appplugin.PluginContextWrapper,
