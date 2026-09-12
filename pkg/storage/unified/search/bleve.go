@@ -2428,10 +2428,7 @@ func (b *bleveIndex) Search(
 
 func searchInContext(ctx context.Context, index bleve.Index, req *bleve.SearchRequest) (*bleve.SearchResult, error) {
 	result, err := index.SearchInContext(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if err := regexErrorFromResult(result); err != nil {
+	if err := regexSearchError(result, err); err != nil {
 		return nil, err
 	}
 	return result, nil

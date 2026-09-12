@@ -585,16 +585,13 @@ const (
 // k8s selection operator. Sending these as operator strings is what makes an
 // older search server answer with a bad request rather than drop the query.
 //
-// Regex operators match the complete indexed value using the RE2-compatible
-// syntax supported by unified search. Matching is case-sensitive by default;
-// one uniform (?i) mode enables case-insensitive matching and one uniform (?s)
-// mode makes dot match newlines. Regex filtering is available only on filterable
-// keyword fields that preserve original case. Missing fields match as empty
-// values. In the flattened labels field, expressions use key=value terms and a
-// missing requested label is treated as an empty value. Each query is bounded to
-// 10,000 dictionary terms inspected and 10,000 matching terms expanded.
-// Mixed modes, multiline assertions, look-around, backreferences, and named
-// captures are unsupported.
+// Regex operators match whole values on filterable, case-preserving keyword fields.
+// The shared search/regex validator defines the supported subset: literals,
+// character classes, grouping, alternation, and greedy repetition. A leading (?i)
+// folds value case; dot matches newlines by default. Missing fields or labels
+// are evaluated as empty values. Flattened labels split literal-key=value at the
+// first "=", keeping the key case-sensitive; keys containing "=" are ambiguous.
+// Each dictionary expansion permits 10,000 inspected terms and 10,000 matches.
 const (
 	OperatorGreaterThanOrEqual selection.Operator = "gte"
 	OperatorLessThanOrEqual    selection.Operator = "lte"
