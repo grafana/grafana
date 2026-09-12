@@ -6088,6 +6088,18 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "plan-placeholder-badge": {
+      "text": "Sample data",
+      "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
+    },
+    "planning-banner": {
+      "build": "Build",
+      "dismiss": "Dismiss",
+      "nothing-saved": "Nothing saved yet",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
+      "plan-label": "Plan"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",
@@ -6520,11 +6532,13 @@
         "title": "View panel controls"
       },
       "viz-panel": {
+        "change-visualization-button": "Change visualization",
         "configure-button": "Edit visualization",
         "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
         "delete-panel-title": "Delete panel?",
         "delete-panel-yes": "Delete",
         "options": {
+          "change-visualization-tooltip": "Choose how this planned panel is drawn",
           "configure-button-tooltip": "Edit queries and visualization options",
           "description": "Description",
           "title-option": "Title",

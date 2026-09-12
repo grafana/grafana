@@ -51,6 +51,41 @@ import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
+/**
+ * Placeholder menus expose layout and visualization edits. Data actions require
+ * queries that are only added during the build.
+ */
+function buildPlanningMenuItems(panel: VizPanel, dashboard: DashboardScene): PanelMenuItem[] {
+  const items: PanelMenuItem[] = [];
+  const panelId = getPanelIdForVizPanel(panel);
+
+  if (dashboard.isPlanningActionAllowed('duplicate-panel')) {
+    items.push({
+      text: t('panel.header-menu.duplicate', `Duplicate`),
+      iconClassName: 'copy',
+      shortcut: 'p d',
+      onClick: () => {
+        dashboard.duplicatePanel(panel);
+        DashboardInteractions.panelActionClicked('duplicate', panelId, 'panel');
+      },
+    });
+  }
+
+  if (dashboard.isPlanningActionAllowed('remove-panel')) {
+    items.push({
+      text: t('panel.header-menu.remove', `Remove`),
+      iconClassName: 'trash-alt',
+      shortcut: 'p r',
+      onClick: () => {
+        onRemovePanel(dashboard, panel);
+        DashboardInteractions.panelActionClicked('delete', panelId, 'panel');
+      },
+    });
+  }
+
+  return items;
+}
+
 export function panelMenuBehavior(menu: VizPanelMenu) {
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
@@ -62,8 +97,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const moreSubMenu: PanelMenuItem[] = [];
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
-    const exploreMenuItem = await getExploreMenuItem(panel);
     const isReadOnlyRepeat = isRepeatCloneOrChildOf(panel);
+
+    // Return the planning menu before resolving data actions such as the Explore link;
+    // placeholders have no queries to inspect or explore.
+    if (dashboard.isPlanning()) {
+      menu.setState({ items: buildPlanningMenuItems(panel, dashboard) });
+      return;
+    }
+
+    const exploreMenuItem = await getExploreMenuItem(panel);
 
     // For embedded dashboards we only have explore action for now
     if (isEmbedded) {

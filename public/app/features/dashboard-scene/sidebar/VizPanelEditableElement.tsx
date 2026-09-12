@@ -30,6 +30,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { PlanVisualizationPicker } from './PlanVisualizationPicker';
 
 function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
@@ -110,6 +111,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public renderTopButton() {
+    // While planning, panel edit is refused, so the pane offers the one thing from it a plan
+    // actually needs: a different visualization.
+    if (getDashboardSceneFor(this.panel).isPlanning()) {
+      return <PlanVisualizationPicker panel={this.panel} />;
+    }
+
     return <OpenPanelEditViz panel={this.panel} />;
   }
 
@@ -143,6 +150,11 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     layout.duplicatePanel?.(this.panel);
   }
 
+  /** Whether this panel may be copied out of the dashboard it is on. */
+  public isCopyAllowed(): boolean {
+    return getDashboardSceneFor(this.panel).isPlanningActionAllowed('copy-panel');
+  }
+
   public onCopy(source: PanelActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
     const dashboard = getDashboardSceneFor(this.panel);
@@ -169,6 +181,13 @@ type PanelActionSource = 'edit_pane' | 'edit_popover';
 type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
+  // This button is a link into panel edit, which a plan preview refuses — rendering it would leave
+  // a control that visibly does nothing. What it offers (queries and visualization options) is not
+  // what a plan panel needs anyway; the plan's own fields are edited elsewhere in this pane.
+  if (!getDashboardSceneFor(panel).isPlanningActionAllowed('edit-panel')) {
+    return null;
+  }
+
   return (
     <Button
       onClick={() => {

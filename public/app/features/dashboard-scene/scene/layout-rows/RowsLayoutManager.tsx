@@ -98,7 +98,9 @@ export class RowsLayoutManager
   public readonly descriptor = RowsLayoutManager.descriptor;
 
   public addPanel(vizPanel: VizPanel) {
-    this.state.rows[0]?.getLayout().addPanel(vizPanel);
+    // Create a row when the layout is empty so the panel has a destination.
+    const row = this.state.rows[0] ?? this.addNewRow();
+    row.getLayout().addPanel(vizPanel);
   }
 
   public setIsDropTarget(isDropTarget: boolean): void {
@@ -199,6 +201,9 @@ export class RowsLayoutManager
 
   public pasteRow() {
     const scene = getDashboardSceneFor(this);
+    if (!scene.isPlanningActionAllowed('paste-section')) {
+      return;
+    }
     const row = getRowFromClipboard(scene);
     this.addNewRow(row);
   }

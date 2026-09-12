@@ -252,6 +252,18 @@ describe('TabsLayoutManager', () => {
     });
   });
 
+  describe('addPanel', () => {
+    it('makes a tab for the panel when there are none, rather than dropping it', () => {
+      const manager = buildTabsLayoutManager([]);
+      const panel = new VizPanel({ key: 'panel-1', title: 'Request rate', pluginId: 'timeseries' });
+
+      manager.addPanel(panel);
+
+      expect(manager.state.tabs).toHaveLength(1);
+      expect(manager.getVizPanels().map((p) => p.state.title)).toEqual(['Request rate']);
+    });
+  });
+
   describe('removeTab', () => {
     beforeEach(() => {
       lastUndo = undefined;

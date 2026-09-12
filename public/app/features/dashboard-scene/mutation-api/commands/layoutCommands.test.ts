@@ -206,6 +206,9 @@ function buildSceneWithLayoutParent(
     state,
     serializer,
     canEditDashboard: jest.fn(() => true),
+    // ADD_PANEL asks the scene whether a plan is being previewed, to decide whether the panel it
+    // builds is a query-less placeholder.
+    isPlanning: jest.fn(() => state.planning !== undefined),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -1210,6 +1213,30 @@ describe('Layout mutation commands', () => {
       expect(body).toBeInstanceOf(TabsLayoutManager);
       expect(body.state.tabs).toHaveLength(1);
       expect(body.state.tabs[0].state.title).toBe('Overview');
+    });
+
+    it('gives the tab a usable grid when the rows it would nest are empty', async () => {
+      const rowsBody = new RowsLayoutManager({ rows: [] });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Overview' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const innerLayout = body.state.tabs[0].getLayout();
+      expect(innerLayout).toBeInstanceOf(DefaultGridLayoutManager);
+
+      // That the grid then accepts a panel is asserted in RowsLayoutManager's own tests, against a
+      // real scene: exercising ADD_PANEL here would drag panel behaviours into a suite whose scene
+      // is a stub.
     });
 
     it('converts rows to tabs by nesting rows inside the requested tab', async () => {

@@ -199,6 +199,19 @@ export function validateNesting(parentPath: string, addingType: GroupType, targe
 }
 
 /**
+ * Whether a layout is a section container (rows or tabs) holding no sections at all.
+ *
+ * Such a layout has nothing to preserve if nested elsewhere, and nowhere to put a panel — a rows
+ * layout with no rows, or a tabs layout with no tabs, cannot accept one directly.
+ */
+export function isEmptySectionContainer(layout: DashboardLayoutManager): boolean {
+  return (
+    (layout instanceof RowsLayoutManager && layout.state.rows.length === 0) ||
+    (layout instanceof TabsLayoutManager && layout.state.tabs.length === 0)
+  );
+}
+
+/**
  * Resolve a path up to the parent level (one segment before the last).
  * Returns the parent layout manager and the last segment info.
  * Useful for operations that need to manipulate the parent (e.g., remove/insert).

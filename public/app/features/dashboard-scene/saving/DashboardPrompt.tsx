@@ -168,6 +168,11 @@ const getStyles = () => ({
  * For some dashboards and users changes should be ignored *
  */
 export function ignoreChanges(scene: DashboardScene | null) {
+  // Dismissing a plan intentionally discards its scaffold, so no save prompt is needed.
+  if (scene?.isPlanning()) {
+    return true;
+  }
+
   const original = scene?.getInitialSaveModel();
 
   if (!original) {

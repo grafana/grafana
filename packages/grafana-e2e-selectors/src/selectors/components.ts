@@ -124,6 +124,9 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    changePlanVisualizationButton: {
+      '13.3.0': 'data-testid Sidebar change plan visualization',
+    },
     goBack: {
       '12.4.0': 'data-testid Sidebar go back',
     },
@@ -1373,6 +1376,12 @@ export const versionedComponents = {
       },
       settingsButton: {
         '11.1.0': 'data-testid Dashboard settings',
+      },
+      planningBuildButton: {
+        '13.3.0': 'data-testid Build dashboard plan button',
+      },
+      planningDismissButton: {
+        '13.3.0': 'data-testid Dismiss dashboard plan button',
       },
       addRowButton: {
         '11.1.0': 'data-testid Add row button',

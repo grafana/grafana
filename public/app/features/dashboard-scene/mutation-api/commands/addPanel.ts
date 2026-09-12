@@ -50,8 +50,13 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
         },
       };
 
+      // While a plan is being previewed every panel is a placeholder, whoever adds it — the
+      // scaffold, or the user adding one by hand. Deciding that here rather than from the payload
+      // means a caller cannot accidentally fire a live query into a preview.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const vizPanel = buildVizPanel(panelSpec as unknown as Parameters<typeof buildVizPanel>[0], panelId);
+      const vizPanel = buildVizPanel(panelSpec as unknown as Parameters<typeof buildVizPanel>[0], panelId, {
+        withoutQueries: scene.isPlanning(),
+      });
       vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
 
       const resolved = resolveLayoutPath(scene.state.body, parentPath ?? '/');

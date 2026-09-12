@@ -127,6 +127,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
+import { isActionAllowedWhilePlanning, type PlanningAction } from './planningPolicy';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -763,6 +764,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // All save entry points, including keyboard shortcuts and exit-edit confirmation,
+    // share this guard to keep unbuilt plans from being saved.
+    if (!this.isPlanningActionAllowed('save-dashboard')) {
+      return;
+    }
+
     this.setState({
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
@@ -885,6 +892,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public copyPanel(vizPanel: VizPanel) {
+    // A placeholder pasted into a real dashboard is just a panel with no query. Duplicating within
+    // the plan is fine and stays allowed; carrying one out of it is not.
+    if (!this.isPlanningActionAllowed('copy-panel')) {
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       const gridItem = vizPanel.parent;
 
@@ -925,6 +938,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (!this.isPlanningActionAllowed('paste-panel')) {
+      return;
+    }
+
     if (!store.exists(LS_PANEL_COPY_KEY)) {
       return;
     }
@@ -1167,11 +1184,43 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
+    // Settings edit the dashboard, which does not exist yet while a plan is only previewed.
+    // Guards the toolbar entry point and the `d s` keybinding alike.
+    if (!this.isPlanningActionAllowed('dashboard-settings')) {
+      return;
+    }
+
     const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
     locationService.partial({ editview });
   };
 
+  /**
+   * True while an unbuilt dashboard plan is being previewed on this scene. Planning is a sub-state
+   * of edit mode: the scene is editable so the user can rearrange the plan, but the dashboard-level
+   * actions that assume a real dashboard (save, settings, sharing) are withheld until they build it.
+   */
+  public isPlanning(): boolean {
+    return this.state.planning !== undefined;
+  }
+
+  /**
+   * Whether `action` is available on this dashboard right now.
+   *
+   * Always true unless a plan is being previewed, so callers can ask this instead of checking for
+   * planning themselves. The policy lives in `planningPolicy.ts`; this is only the scene-aware
+   * front door to it.
+   */
+  public isPlanningActionAllowed(action: PlanningAction): boolean {
+    return !this.isPlanning() || isActionAllowedWhilePlanning(action);
+  }
+
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
+    // A library panel carries its own queries, so unlike a blank panel it cannot be added in a
+    // query-less form. Adding one to a plan preview is disallowed rather than made inert.
+    if (!this.isPlanningActionAllowed('add-library-panel')) {
+      return;
+    }
+
     this.setState({
       overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
@@ -1183,7 +1232,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public async onCreateNewPanel(): Promise<VizPanel> {
     const profiler = getDashboardSceneProfiler();
-    const vizPanel = await getDefaultVizPanel();
+    const vizPanel = await getDefaultVizPanel(this);
     profiler.attachProfilerToPanel(vizPanel);
 
     this.addPanel(vizPanel);

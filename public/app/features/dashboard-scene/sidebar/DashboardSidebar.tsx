@@ -417,8 +417,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public async addNewPanel(target: SceneObject | undefined) {
-    const panel = await getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
+    const panel = await getDefaultVizPanel(dashboard);
 
     if (target) {
       const layout = getLayoutForObject(target) ?? dashboard;
@@ -432,6 +432,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   public pastePanel(target: SceneObject | undefined) {
     const dashboard = getDashboardSceneFor(this);
+
+    // A copied panel arrives with its queries; pasting one into a plan preview would put a live
+    // panel among the placeholders.
+    if (!dashboard.isPlanningActionAllowed('paste-panel')) {
+      return;
+    }
 
     if (target) {
       const layout = getLayoutForObject(target) ?? dashboard;

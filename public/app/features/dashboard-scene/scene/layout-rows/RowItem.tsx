@@ -221,7 +221,15 @@ export class RowItem
     return serializeRow(this);
   }
 
+  public isCopyAllowed(): boolean {
+    return getDashboardSceneFor(this).isPlanningActionAllowed('copy-section');
+  }
+
   public onCopy() {
+    if (!this.isCopyAllowed()) {
+      return;
+    }
+
     const elements = getElements(this.getLayout(), getDashboardSceneFor(this));
 
     clearClipboard();

@@ -32,6 +32,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -39,7 +40,14 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
+  const { planning } = dashboard.useState();
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
+
+  // Apply the planning policy before choosing a toolbar so both variants and their
+  // breadcrumb actions respect the same restrictions.
+  if (planning) {
+    return <AppChromeUpdate actions={<PlanningBanner planning={planning} />} />;
+  }
 
   return hasNewToolbar ? (
     <AppChromeUpdate

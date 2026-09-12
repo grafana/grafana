@@ -171,7 +171,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
-                {hasCopiedTab && (
+                {hasCopiedTab && dashboard.isPlanningActionAllowed('paste-section') && (
                   <Button
                     icon="clipboard-alt"
                     variant="secondary"
