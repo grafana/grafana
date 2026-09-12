@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -203,11 +204,11 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 	existingReceiver := &models.Receiver{UID: receiverUID, Name: "existing", Integrations: []*models.Integration{&existingIntegration}}
 
 	receiverSvcFake := &FakeReceiverService{
-		GetReceiverFunc: func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+		GetReceiverFunc: func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, utils.ManagerProperties, error) {
 			if receiverUID != uid {
-				return nil, models.ErrReceiverNotFound.Errorf("")
+				return nil, utils.ManagerProperties{}, models.ErrReceiverNotFound.Errorf("")
 			}
-			return existingReceiver, nil
+			return existingReceiver, utils.ManagerProperties{}, nil
 		},
 	}
 	amProviderFake := &FakeAlertmanagerProvider{}

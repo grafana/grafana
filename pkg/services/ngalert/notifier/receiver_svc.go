@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -87,6 +88,9 @@ type provisoningStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
+	GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 type transactionManager interface {
@@ -144,11 +148,15 @@ func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (ma
 	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
 }
 
-// GetReceiver returns a receiver by its UID.
+func (rs *ReceiverService) loadManagerProps(ctx context.Context, orgID int64) (map[string]utils.ManagerProperties, error) {
+	return rs.provisioningStore.GetAllManagerProperties(ctx, orgID, (&models.Integration{}).ResourceType())
+}
+
+// GetReceiver returns a receiver by its UID, along with its ManagerProperties.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, utils.ManagerProperties, error) {
 	if user == nil {
-		return nil, errors.New("user is required")
+		return nil, utils.ManagerProperties{}, errors.New("user is required")
 	}
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.get", trace.WithAttributes(
 		attribute.Int64("query_org_id", user.GetOrgID()),
@@ -159,24 +167,29 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 
 	revision, err := rs.cfgStore.Get(ctx, user.GetOrgID())
 	if err != nil {
-		return nil, err
+		return nil, utils.ManagerProperties{}, err
 	}
 
 	prov, err := rs.loadProvenances(ctx, user.GetOrgID())
 	if err != nil {
-		return nil, err
+		return nil, utils.ManagerProperties{}, err
+	}
+	managerProps, err := rs.loadManagerProps(ctx, user.GetOrgID())
+	if err != nil {
+		return nil, utils.ManagerProperties{}, err
 	}
 
-	rcv, err := revision.GetReceiver(uid, prov)
+	rcv, manager, err := revision.GetReceiver(uid, prov, managerProps)
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
 			if len(imported) > 0 {
 				rcv = imported[0]
+				manager = models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
 			}
 		}
 		if rcv == nil {
-			return nil, err
+			return nil, utils.ManagerProperties{}, err
 		}
 	}
 
@@ -189,7 +202,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 		auth = rs.authz.AuthorizeRead
 	}
 	if err := auth(ctx, user, rcv); err != nil {
-		return nil, err
+		return nil, utils.ManagerProperties{}, err
 	}
 
 	if decrypt {
@@ -204,12 +217,13 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 		}
 	}
 
-	return rcv, nil
+	return rcv, manager, nil
 }
 
-// GetReceivers returns a list of receivers a user has access to.
+// GetReceivers returns a list of receivers a user has access to, along with their
+// ManagerProperties keyed by resource UID.
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
+func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, map[string]utils.ManagerProperties, error) {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.getMany", trace.WithAttributes(
 		attribute.Int64("query_org_id", q.OrgID),
 		attribute.StringSlice("query_names", q.Names),
@@ -226,17 +240,21 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	prov, err := rs.loadProvenances(ctx, q.OrgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	managerProps, err := rs.loadManagerProps(ctx, q.OrgID)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	receivers, err := revision.GetReceivers(uids, prov)
+	receivers, managerPropsByReceiver, err := revision.GetReceivers(uids, prov, managerProps)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	span.AddEvent("Loaded receivers", trace.WithAttributes(
@@ -247,6 +265,9 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if rs.includeImported {
 		imported := rs.getImportedReceivers(ctx, span, uids, revision)
 		receivers = append(receivers, imported...)
+		for _, rcv := range imported {
+			managerPropsByReceiver[rcv.GetUID()] = models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
+		}
 	}
 
 	filterFn := rs.authz.FilterReadDecrypted
@@ -255,7 +276,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	}
 	filtered, err := filterFn(ctx, user, receivers...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	span.AddEvent("Applied access control filter", trace.WithAttributes(
@@ -276,12 +297,12 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		}
 	}
 
-	return limitOffset(filtered, q.Offset, q.Limit), nil
+	return limitOffset(filtered, q.Offset, q.Limit), managerPropsByReceiver, nil
 }
 
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
-func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance models.Provenance, version string, orgID int64, user identity.Requester) error {
+func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, manager utils.ManagerProperties, version string, orgID int64, user identity.Requester) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.delete", trace.WithAttributes(
 		attribute.String("receiver_uid", uid),
 		attribute.String("receiver_version", version),
@@ -300,8 +321,12 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
+	managerProps, err := rs.loadManagerProps(ctx, orgID)
+	if err != nil {
+		return err
+	}
 
-	existing, err := revision.GetReceiver(uid, prov)
+	existing, _, err := revision.GetReceiver(uid, prov, managerProps)
 	if err != nil {
 		if !errors.Is(err, models.ErrReceiverNotFound) {
 			return err
@@ -329,6 +354,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
+	callerProvenance := models.ManagerPropertiesToProvenance(manager)
 	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
@@ -364,7 +390,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	return nil
 }
 
-func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (result *models.Receiver, err error) {
+func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, manager utils.ManagerProperties, orgID int64, user identity.Requester) (result *models.Receiver, err error) {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.create", trace.WithAttributes(
 		attribute.String("receiver", r.Name),
 		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
@@ -376,6 +402,11 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	}
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
+	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		r.Provenance = models.ManagerPropertiesToProvenance(manager)
 	}
 	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
 		return nil, err
@@ -423,7 +454,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 		rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
-		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
+		return rs.setReceiverManager(ctx, orgID, &createdReceiver, manager)
 	})
 	if err != nil {
 		return nil, err
@@ -437,7 +468,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	return result, nil
 }
 
-func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, manager utils.ManagerProperties, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.update", trace.WithAttributes(
 		attribute.String("receiver", r.Name),
 		attribute.String("uid", r.UID),
@@ -457,6 +488,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, models.ErrReceiverInvalid(err)
 	}
 
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		r.Provenance = models.ManagerPropertiesToProvenance(manager)
+	}
+
 	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
 	logger.Debug("Updating receiver")
 
@@ -469,8 +506,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
+	managerProps, err := rs.loadManagerProps(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
 
-	existing, err := revision.GetReceiver(r.GetUID(), prov)
+	existing, _, err := revision.GetReceiver(r.GetUID(), prov, managerProps)
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
@@ -576,7 +617,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 
-		return rs.setReceiverProvenance(ctx, orgID, &updatedReceiver)
+		return rs.setReceiverManager(ctx, orgID, &updatedReceiver, manager)
 	})
 	if err != nil {
 		return nil, err
@@ -698,10 +739,16 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 	return removed
 }
 
-func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
-	// Add provenance for all integrations in the receiver.
+func (rs *ReceiverService) setReceiverManager(ctx context.Context, orgID int64, receiver *models.Receiver, manager utils.ManagerProperties) error {
+	// When no rich manager is provided, derive one from the receiver's own (legacy) provenance so
+	// callers that only set Provenance directly still persist a consistent manager_kind.
+	effManager := manager
+	if effManager.Kind == utils.ManagerKindUnknown {
+		effManager = models.ProvenanceToManagerProperties(receiver.Provenance)
+	}
+	// Set manager properties for all integrations in the receiver.
 	for _, integration := range receiver.Integrations {
-		if err := rs.provisioningStore.SetProvenance(ctx, integration, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
+		if err := rs.provisioningStore.SetManagerProperties(ctx, integration, orgID, effManager); err != nil {
 			return err
 		}
 	}

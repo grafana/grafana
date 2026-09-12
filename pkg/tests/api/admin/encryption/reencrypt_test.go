@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -180,7 +181,7 @@ func addAlertingConfig(t *testing.T, env *server.TestEnv) {
 		1: {accesscontrol.ActionAlertingReceiversCreate: nil},
 	}}
 
-	_, err := env.Server.HTTPServer.AlertNG.Api.ReceiverService.CreateReceiver(context.Background(), &receiverWithSecrets, 1, u)
+	_, err := env.Server.HTTPServer.AlertNG.Api.ReceiverService.CreateReceiver(context.Background(), &receiverWithSecrets, utils.ManagerProperties{}, 1, u)
 	require.NoError(t, err)
 }
 

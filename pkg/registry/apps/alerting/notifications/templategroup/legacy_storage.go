@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/alerting/templates"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,11 +25,11 @@ var (
 )
 
 type TemplateService interface {
-	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error)
-	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
-	CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
-	UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance ngmodels.Provenance, version string) error
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, utils.ManagerProperties, error)
+	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, map[string]utils.ManagerProperties, error)
+	CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup, manager utils.ManagerProperties) (v1.TemplateGroup, error)
+	UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup, manager utils.ManagerProperties) (v1.TemplateGroup, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, manager utils.ManagerProperties, version string) error
 }
 
 type legacyStorage struct {
@@ -69,7 +70,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	res, err := s.service.GetTemplates(ctx, orgId)
+	res, managerPropsMap, err := s.service.GetTemplates(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, append([]v1.TemplateGroup{defaultTemplate}, res...), s.namespacer, opts.FieldSelector)
+	return convertToK8sResources(orgId, append([]v1.TemplateGroup{defaultTemplate}, res...), managerPropsMap, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -93,14 +94,14 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		if err != nil {
 			return nil, err
 		}
-		return convertToK8sResource(info.OrgID, dto, s.namespacer), nil
+		return convertToK8sResource(info.OrgID, dto, utils.ManagerProperties{}, s.namespacer), nil
 	}
 
-	dto, err := s.service.GetTemplate(ctx, info.OrgID, name)
+	dto, managerProps, err := s.service.GetTemplate(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, dto, s.namespacer), nil
+	return convertToK8sResource(info.OrgID, dto, managerProps, s.namespacer), nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -124,15 +125,15 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	domainModel, err := convertToDomainModel(p)
+	domainModel, managerProps, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
-	out, err := s.service.CreateTemplate(ctx, info.OrgID, domainModel)
+	out, err := s.service.CreateTemplate(ctx, info.OrgID, domainModel, managerProps)
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, s.namespacer), nil
+	return convertToK8sResource(info.OrgID, out, managerProps, s.namespacer), nil
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -148,11 +149,11 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	dto, err := s.service.GetTemplate(ctx, info.OrgID, name)
+	dto, managerProps, err := s.service.GetTemplate(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, false, err
 	}
-	old := convertToK8sResource(info.OrgID, dto, s.namespacer)
+	old := convertToK8sResource(info.OrgID, dto, managerProps, s.namespacer)
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
@@ -170,16 +171,16 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
 
-	domainModel, err := convertToDomainModel(p)
+	domainModel, managerProps, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	updated, err := s.service.UpdateTemplate(ctx, info.OrgID, domainModel)
+	updated, err := s.service.UpdateTemplate(ctx, info.OrgID, domainModel, managerProps)
 	if err != nil {
 		return nil, false, err
 	}
 
-	r := convertToK8sResource(info.OrgID, updated, s.namespacer)
+	r := convertToK8sResource(info.OrgID, updated, managerProps, s.namespacer)
 	return r, false, nil
 }
 
@@ -206,12 +207,15 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !ok {
 		return nil, false, fmt.Errorf("expected template but got %s", old.GetObjectKind().GroupVersionKind())
 	}
-	prov, err := ngmodels.ProvenanceFromString(oldTemplate.GetProvenanceStatus())
+	// Derive manager properties the same way create/update do, so a resource managed by a
+	// specific manager (e.g. Terraform) is deleted with the matching manager and not the
+	// coarser provenance-derived equivalent.
+	managerProps, _, err := extractManagerProperties(oldTemplate)
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteTemplate(ctx, info.OrgID, name, prov, version) // TODO add support for dry-run option
-	return old, false, err                                               // false - will be deleted async
+	err = s.service.DeleteTemplate(ctx, info.OrgID, name, managerProps, version) // TODO add support for dry-run option
+	return old, false, err                                                       // false - will be deleted async
 }
 
 func (s *legacyStorage) defaultTemplate() (v1.TemplateGroup, error) {

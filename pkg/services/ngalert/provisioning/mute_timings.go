@@ -6,12 +6,23 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
+
+// effectiveManager returns manager when it carries a rich kind; otherwise it derives a manager
+// from the resource's own (legacy) provenance, so callers that only set Provenance directly
+// (without knowing about ManagerProperties) still persist a consistent manager_kind.
+func effectiveManager(provenance models.Provenance, manager utils.ManagerProperties) utils.ManagerProperties {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return manager
+	}
+	return models.ProvenanceToManagerProperties(provenance)
+}
 
 type MuteTimingService struct {
 	configStore            alertmanagerConfigStore
@@ -62,22 +73,28 @@ func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
 	}
 }
 
-// GetMuteTimings returns a slice of all mute timings within the specified org.
-func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]v1.TimeInterval, error) {
+// GetMuteTimings returns a slice of all mute timings within the specified org, along with their
+// ManagerProperties keyed by resource UID.
+func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]v1.TimeInterval, map[string]utils.ManagerProperties, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err := svc.assignTimeIntervalProvenance(ctx, orgID, rev); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	grafanaIntervals := rev.Config.TimeIntervals
 	importedIntervals := svc.getImportedTimeIntervals(rev)
 
 	if len(grafanaIntervals)+len(importedIntervals) == 0 {
-		return []v1.TimeInterval{}, nil
+		return []v1.TimeInterval{}, map[string]utils.ManagerProperties{}, nil
+	}
+
+	managerProps, err := svc.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.TimeInterval{}).ResourceType())
+	if err != nil {
+		return nil, nil, err
 	}
 
 	result := make([]v1.TimeInterval, 0, len(grafanaIntervals)+len(importedIntervals))
@@ -91,49 +108,63 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return strings.Compare(a.Title, b.Title)
 	})
 
-	return result, nil
+	return result, managerProps, nil
 }
 
-// GetMuteTimingByUID returns a mute timing by UID
-func (svc *MuteTimingService) GetMuteTimingByUID(ctx context.Context, uid v1.ResourceUID, orgID int64) (v1.TimeInterval, error) {
+// GetMuteTimingByUID returns a mute timing by UID, along with its ManagerProperties.
+func (svc *MuteTimingService) GetMuteTimingByUID(ctx context.Context, uid v1.ResourceUID, orgID int64) (v1.TimeInterval, utils.ManagerProperties, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return v1.TimeInterval{}, err
+		return v1.TimeInterval{}, utils.ManagerProperties{}, err
 	}
 
 	if err := svc.assignTimeIntervalProvenance(ctx, orgID, revision); err != nil {
-		return v1.TimeInterval{}, err
+		return v1.TimeInterval{}, utils.ManagerProperties{}, err
 	}
 
-	if result, found := svc.getMuteTimingByUID(revision, uid); found {
-		return result, nil
+	result, found := svc.getMuteTimingByUID(revision, uid)
+	if !found {
+		return v1.TimeInterval{}, utils.ManagerProperties{}, ErrTimeIntervalNotFound.Errorf("")
 	}
-
-	return v1.TimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	managerProps, err := svc.provenanceStore.GetManagerProperties(ctx, &result, orgID)
+	if err != nil {
+		return v1.TimeInterval{}, utils.ManagerProperties{}, err
+	}
+	return result, managerProps, nil
 }
 
-// GetMuteTimingByName returns a mute timing by name.
-func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name string, orgID int64) (v1.TimeInterval, error) {
+// GetMuteTimingByName returns a mute timing by name, along with its ManagerProperties.
+func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name string, orgID int64) (v1.TimeInterval, utils.ManagerProperties, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return v1.TimeInterval{}, err
+		return v1.TimeInterval{}, utils.ManagerProperties{}, err
 	}
 
 	if err := svc.assignTimeIntervalProvenance(ctx, orgID, revision); err != nil {
-		return v1.TimeInterval{}, err
+		return v1.TimeInterval{}, utils.ManagerProperties{}, err
 	}
 
-	if mti, found := revision.GetTimeIntervalWithTitle(name); found {
-		return mti, nil
+	mti, found := revision.GetTimeIntervalWithTitle(name)
+	if !found {
+		return v1.TimeInterval{}, utils.ManagerProperties{}, ErrTimeIntervalNotFound.Errorf("")
 	}
-
-	return v1.TimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	managerProps, err := svc.provenanceStore.GetManagerProperties(ctx, &mti, orgID)
+	if err != nil {
+		return v1.TimeInterval{}, utils.ManagerProperties{}, err
+	}
+	return mti, managerProps, nil
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
-func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error) {
+func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64, manager utils.ManagerProperties) (v1.TimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
+	}
+
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		mt.Provenance = models.ManagerPropertiesToProvenance(manager)
 	}
 
 	if err := svc.validator(ctx, models.ProvenanceNone, mt.Provenance); err != nil {
@@ -155,7 +186,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetProvenance(ctx, &created, orgID, created.Provenance)
+		return svc.provenanceStore.SetManagerProperties(ctx, &created, orgID, effectiveManager(created.Provenance, manager))
 	})
 	if err != nil {
 		return v1.TimeInterval{}, err
@@ -165,9 +196,15 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 }
 
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
-func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error) {
+func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64, manager utils.ManagerProperties) (v1.TimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
+	}
+
+	// When a rich manager is provided, derive the effective provenance from it so the validation,
+	// persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		mt.Provenance = models.ManagerPropertiesToProvenance(manager)
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
@@ -232,7 +269,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetProvenance(ctx, &updated, orgID, updated.Provenance)
+		return svc.provenanceStore.SetManagerProperties(ctx, &updated, orgID, effectiveManager(updated.Provenance, manager))
 	})
 	if err != nil {
 		return v1.TimeInterval{}, err
@@ -242,7 +279,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, provenance models.Provenance, version string) error {
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, manager utils.ManagerProperties, version string) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -266,6 +303,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return makeErrMuteTimeIntervalOrigin(existing, "delete")
 	}
 
+	provenance := models.ManagerPropertiesToProvenance(manager)
 	if err := svc.validator(ctx, existing.Provenance, provenance); err != nil {
 		return err
 	}

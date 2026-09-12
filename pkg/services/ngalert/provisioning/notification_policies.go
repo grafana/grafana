@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -16,7 +17,7 @@ import (
 )
 
 type managedRoutesService interface {
-	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, utils.ManagerProperties, error)
 }
 
 type NotificationPolicyService struct {
@@ -167,5 +168,6 @@ func (nps *NotificationPolicyService) checkOptimisticConcurrency(current v1.Rout
 // GetManagedRoute returns managed route by name.
 func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
 	// This is a workaround for exporting managed routes to include provisioning permissions to access authorization.
-	return nps.routeService.GetManagedRoute(ctx, orgID, name, user)
+	route, _, err := nps.routeService.GetManagedRoute(ctx, orgID, name, user)
+	return route, err
 }

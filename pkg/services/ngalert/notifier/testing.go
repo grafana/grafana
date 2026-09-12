@@ -25,6 +25,7 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -702,7 +703,7 @@ type FakeReceiverService struct {
 	Calls struct {
 		GetReceiver []GetReceiverCall
 	}
-	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, utils.ManagerProperties, error)
 }
 
 type FakeEmailValidator struct {
@@ -743,7 +744,7 @@ type GetReceiverCall struct {
 	User    identity.Requester
 }
 
-func (f *FakeReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+func (f *FakeReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, utils.ManagerProperties, error) {
 	f.Calls.GetReceiver = append(f.Calls.GetReceiver, GetReceiverCall{
 		Ctx:     ctx,
 		UID:     uid,
@@ -753,5 +754,5 @@ func (f *FakeReceiverService) GetReceiver(ctx context.Context, uid string, decry
 	if f.GetReceiverFunc != nil {
 		return f.GetReceiverFunc(ctx, uid, decrypt, user)
 	}
-	return nil, models.ErrReceiverNotFound.Errorf("")
+	return nil, utils.ManagerProperties{}, models.ErrReceiverNotFound.Errorf("")
 }

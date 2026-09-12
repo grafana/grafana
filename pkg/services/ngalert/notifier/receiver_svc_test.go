@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -50,7 +51,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 
 	t.Run("service gets receiver from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
-		recv, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
+		recv, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", recv.Name)
 		require.Len(t, recv.Integrations, 1)
@@ -60,7 +61,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	t.Run("service returns error when receiver does not exist", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
+		_, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
 		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
@@ -68,7 +69,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 		t.Run("gets imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded)
 
-			recv, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
+			recv, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
 			require.NoError(t, err)
 			assert.Equal(t, models.ResourceOriginImported, recv.Origin)
 			assert.Equal(t, "receiver1", recv.Name)
@@ -79,9 +80,9 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded, withInvalidExtraConfig)
-			_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
+			_, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
 			require.ErrorIs(t, err, models.ErrReceiverNotFound)
-			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
+			_, _, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
 			require.NoError(t, err)
 		})
 	})
@@ -102,7 +103,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	t.Run("service gets receivers from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
+		Receivers, _, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, Receivers, 2)
 		require.Equal(t, "grafana-default-email", Receivers[0].Name)
@@ -112,7 +113,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	t.Run("service filters receivers by name", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), redactedUser)
+		Receivers, _, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), redactedUser)
 		require.NoError(t, err)
 		require.Len(t, Receivers, 1)
 		require.Equal(t, "slack receiver", Receivers[0].Name)
@@ -122,7 +123,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 		t.Run("returns imported receivers in the list", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded)
 
-			recvs, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
+			recvs, _, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
 			require.NoError(t, err)
 			require.Len(t, recvs, 5)
 			names := make([]string, 0, len(recvs))
@@ -135,7 +136,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded, withInvalidExtraConfig)
-			recvs, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
+			recvs, _, err := sut.GetReceivers(context.Background(), multiQ(1), redactedUser)
 			require.NoError(t, err)
 			require.Len(t, recvs, 2)
 		})
@@ -225,12 +226,12 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 						var res *models.Receiver
 						var err error
 						if method == "single" {
-							res, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(o.receiver), tc.decrypt, tc.user)
+							res, _, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(o.receiver), tc.decrypt, tc.user)
 						} else {
 							q := multiQ(1, o.receiver)
 							q.Decrypt = tc.decrypt
 							var multiRes []*models.Receiver
-							multiRes, err = sut.GetReceivers(context.Background(), q, tc.user)
+							multiRes, _, err = sut.GetReceivers(context.Background(), q, tc.user)
 							if tc.err == "" {
 								require.Len(t, multiRes, 1)
 								res = multiRes[0]
@@ -382,7 +383,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			sut.ruleNotificationsStore = store
 
 			if tc.existing != nil {
-				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID(), tc.user)
+				created, err := sut.CreateReceiver(context.Background(), tc.existing, utils.ManagerProperties{}, tc.user.GetOrgID(), tc.user)
 				require.NoError(t, err)
 
 				if tc.version == "" {
@@ -390,7 +391,7 @@ func TestReceiverService_Delete(t *testing.T) {
 				}
 			}
 
-			err := sut.DeleteReceiver(context.Background(), tc.deleteUID, tc.callerProvenance, tc.version, tc.user.GetOrgID(), tc.user)
+			err := sut.DeleteReceiver(context.Background(), tc.deleteUID, models.ProvenanceToManagerProperties(tc.callerProvenance), tc.version, tc.user.GetOrgID(), tc.user)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -400,7 +401,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			// Ensure receiver saved to store is correct.
 			name, err := legacy_storage.UidToName(tc.deleteUID)
 			require.NoError(t, err)
-			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(name), false, writer)
+			_, _, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(name), false, writer)
 			assert.ErrorIs(t, err, models.ErrReceiverNotFound)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
@@ -617,7 +618,7 @@ func TestReceiverService_Create(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService, tc.opts...)
 
-			created, err := sut.CreateReceiver(context.Background(), &tc.receiver, tc.user.GetOrgID(), tc.user)
+			created, err := sut.CreateReceiver(context.Background(), &tc.receiver, utils.ManagerProperties{}, tc.user.GetOrgID(), tc.user)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -654,7 +655,7 @@ func TestReceiverService_Create(t *testing.T) {
 			assert.Equal(t, tc.expectedCreate, *created)
 
 			// Ensure receiver saved to store is correct.
-			stored, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
+			stored, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
 			require.NoError(t, err)
 			decrypted := models.CopyReceiverWith(tc.expectedCreate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
 			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
@@ -964,7 +965,7 @@ func TestReceiverService_Update(t *testing.T) {
 			}
 
 			tc.receiver.Version = tc.version
-			updated, err := sut.UpdateReceiver(context.Background(), &tc.receiver, tc.secureFields, tc.user.GetOrgID(), tc.user)
+			updated, err := sut.UpdateReceiver(context.Background(), &tc.receiver, utils.ManagerProperties{}, tc.secureFields, tc.user.GetOrgID(), tc.user)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -1001,7 +1002,7 @@ func TestReceiverService_Update(t *testing.T) {
 			assert.Equal(t, tc.expectedUpdate, *updated)
 
 			// Ensure receiver saved to store is correct.
-			stored, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
+			stored, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
 			require.NoError(t, err)
 			decrypted := models.CopyReceiverWith(tc.expectedUpdate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
 			decrypted.Version = tc.expectedUpdate.Version // Version is calculated before decryption.
@@ -1039,7 +1040,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut := createReceiverServiceSut(t, &secretsService)
 		sut.ruleNotificationsStore = ruleStore
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.NoError(t, err)
 
 		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
@@ -1072,7 +1073,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		}
 		sut.ruleNotificationsStore = ruleStore
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.ErrorIs(t, err, models.ErrReceiverDependentResourcesProvenance)
 
 		require.Len(t, ruleStore.Calls, 1)
@@ -1095,7 +1096,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		}
 		sut.ruleNotificationsStore = ruleStore
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.ErrorIs(t, err, models.ErrReceiverDependentResourcesProvenance)
 
 		require.Len(t, ruleStore.Calls, 1)
@@ -1113,7 +1114,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 		baseReceiver.Name = ""
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.ErrorIs(t, err, models.ErrReceiverInvalidBase)
 	})
 
@@ -1123,7 +1124,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 
 		newReceiverName = "receiver1"
-		actual, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
+		actual, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, models.ResourceOriginImported, actual.Origin)
 		require.Equal(t, newReceiverName, actual.Name)
@@ -1131,12 +1132,12 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 
 		baseReceiver.Name = newReceiverName
 
-		recv, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		recv, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.NoError(t, err)
 		require.NotEqual(t, actual, recv)
 		require.Equal(t, models.ResourceOriginGrafana, recv.Origin)
 
-		actual, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
+		actual, _, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, recv.Name, actual.Name)
 	})
@@ -1326,7 +1327,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
 
 			for _, recv := range tc.existing {
-				_, err := sut.CreateReceiver(context.Background(), &recv, orgId, admin)
+				_, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, admin)
 				require.NoError(t, err)
 			}
 
@@ -1343,7 +1344,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				response, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
+				response, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
 				if isVisible(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1365,7 +1366,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			}
 			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 			for _, recv := range allReceivers() {
-				response, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
+				response, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
 				if isVisibleInProvisioning(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1446,7 +1447,7 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				response, err := sut.CreateReceiver(context.Background(), &recv, orgId, usr)
+				response, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, usr)
 				if hasAccess(recv.UID) {
 					require.NoErrorf(t, err, "should have access to receiver '%s', but doesn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1615,7 +1616,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 
 			versions := map[string]string{}
 			for _, recv := range tc.existing {
-				created, err := sut.CreateReceiver(context.Background(), &recv, orgId, admin)
+				created, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, admin)
 				require.NoError(t, err)
 				versions[recv.UID] = created.Version
 			}
@@ -1639,7 +1640,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 			for _, recv := range incoming {
 				clone := recv.Clone()
 				clone.Version = versions[recv.UID]
-				response, err := sut.UpdateReceiver(context.Background(), &clone, nil, orgId, usr)
+				response, err := sut.UpdateReceiver(context.Background(), &clone, utils.ManagerProperties{}, nil, orgId, usr)
 				if hasAccess(clone.UID) {
 					require.NoErrorf(t, err, "should have access to receiver '%s', but doesn't", clone.Name)
 					assert.NotNil(t, response)
@@ -1771,7 +1772,7 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 
 			versions := map[string]string{}
 			for _, recv := range tc.existing {
-				created, err := sut.CreateReceiver(context.Background(), &recv, orgId, admin)
+				created, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, admin)
 				require.NoError(t, err)
 				versions[recv.UID] = created.Version
 			}
@@ -1789,7 +1790,7 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				err := sut.DeleteReceiver(context.Background(), recv.UID, models.ProvenanceNone, versions[recv.UID], orgId, usr)
+				err := sut.DeleteReceiver(context.Background(), recv.UID, utils.ManagerProperties{}, versions[recv.UID], orgId, usr)
 				if hasAccess(recv.UID) {
 					require.NoErrorf(t, err, "should have access to receiver '%s', but doesn't", recv.Name)
 				} else {
@@ -1879,7 +1880,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 			sut.ruleNotificationsStore = store
 
 			for _, recv := range tc.existing {
-				_, err := sut.CreateReceiver(context.Background(), recv, tc.user.GetOrgID(), tc.user)
+				_, err := sut.CreateReceiver(context.Background(), recv, utils.ManagerProperties{}, tc.user.GetOrgID(), tc.user)
 				require.NoError(t, err)
 			}
 
@@ -1918,7 +1919,7 @@ func TestReceiverService_AccessControlMetadata(t *testing.T) {
 		},
 	}}
 
-	r, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, admin)
+	r, _, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, admin)
 	require.NoError(t, err)
 
 	t.Run("should override metadata for imported receivers", func(t *testing.T) {
