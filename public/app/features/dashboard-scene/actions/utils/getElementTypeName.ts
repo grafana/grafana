@@ -13,8 +13,7 @@ import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { isEditableDashboardElement } from '../../scene/types/EditableDashboardElement';
 import { isDashboardSceneLike } from '../../scene/types/dashboard';
 import { LinkEdit } from '../../settings/links/LinkEdit';
-import { getEditableVariableMetadata } from '../../settings/variables/editableVariablesMetadata';
-import { isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
+import { getEditableVariableMetadata, isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
 
 /**
  * Lightweight version of `getEditableElementFor(obj)?.getEditableElementInfo().typeName`.

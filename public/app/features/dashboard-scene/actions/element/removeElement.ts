@@ -15,7 +15,7 @@ export function removeElement(props: RemoveElementActionHelperProps) {
   const { removedObject, source, perform, undo } = props;
 
   const typeName = getElementTypeName(removedObject);
-  if (!typeName) {
+  if (typeName === undefined) {
     throw new Error('Removed object is not an editable element');
   }
 

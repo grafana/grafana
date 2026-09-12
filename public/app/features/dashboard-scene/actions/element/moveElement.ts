@@ -16,7 +16,7 @@ export function moveElement(props: MoveElementActionHelperProps) {
   const { movedObject, source, perform, undo, selectOnMove } = props;
 
   const typeName = getElementTypeName(movedObject);
-  if (!typeName) {
+  if (typeName === undefined) {
     throw new Error('Moved object is not an editable element');
   }
 

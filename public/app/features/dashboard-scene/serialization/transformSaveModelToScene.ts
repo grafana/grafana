@@ -68,12 +68,6 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
 
-setPanelInspectorOpener(async (panel, tab) => {
-  const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
-
-  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
-});
-
 type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
 export interface SceneCreationOptions {
@@ -569,9 +563,20 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   });
 }
 
+// Register how the panel status popover opens the inspector. Done here (rather than in
+// setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
+// setup, which would introduce a circular dependency.
+setPanelInspectorOpener(async (panel, tab) => {
+  const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
+
+  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
+});
+
 export function registerPanelInteractionsReporter(scene: DashboardScene) {
-  scene.subscribeToEvent(UserActionEvent, (event) => {
-    switch (event.payload.interaction) {
+  // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
+  scene.subscribeToEvent(UserActionEvent, (e) => {
+    const { interaction } = e.payload;
+    switch (interaction) {
       case 'panel-status-message-clicked':
         DashboardInteractions.panelStatusMessageClicked();
         break;

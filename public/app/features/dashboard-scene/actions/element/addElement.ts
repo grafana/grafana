@@ -18,7 +18,7 @@ export function addElement(props: AddElementActionHelperProps) {
   const { addedObject, source, perform, undo } = props;
 
   const typeName = getElementTypeName(addedObject);
-  if (!typeName) {
+  if (typeName === undefined) {
     throw new Error('Added object is not an editable element');
   }
 

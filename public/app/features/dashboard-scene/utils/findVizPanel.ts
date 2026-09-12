@@ -2,6 +2,9 @@ import { type SceneObject, sceneGraph, VizPanel } from '@grafana/scenes';
 
 import { getVizPanelKeyForPanelId } from './utils-panels';
 
+/**
+ * This will also try lookup based on panelId
+ */
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
@@ -12,6 +15,7 @@ export function findVizPanelByKey(scene: SceneObject, key: string | undefined): 
     return panel;
   }
 
+  // Also try to find by panel id
   const id = parseInt(key, 10);
   if (isNaN(id)) {
     return null;
@@ -20,16 +24,32 @@ export function findVizPanelByKey(scene: SceneObject, key: string | undefined): 
   return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id));
 }
 
-function findVizPanelInternal(scene: SceneObject, key: string): VizPanel | null {
-  const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
-
-  if (!panel) {
+function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
     return null;
   }
 
-  if (panel instanceof VizPanel) {
-    return panel;
+  const panel = sceneGraph.findObject(scene, (obj) => {
+    const objKey = obj.state.key!;
+
+    if (objKey === key) {
+      return true;
+    }
+
+    if (!(obj instanceof VizPanel)) {
+      return false;
+    }
+
+    return false;
+  });
+
+  if (panel) {
+    if (panel instanceof VizPanel) {
+      return panel;
+    } else {
+      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
+    }
   }
 
-  throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
+  return null;
 }

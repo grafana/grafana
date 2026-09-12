@@ -1,7 +1,6 @@
 import { type SceneVariable } from '@grafana/scenes';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { getEditableVariablesMetadata } from './editableVariablesMetadata';
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
@@ -13,7 +12,7 @@ import { QueryVariableEditor } from './editors/QueryVariableEditor/QueryVariable
 import { getQueryVariableOptions } from './editors/QueryVariableEditor/getQueryVariableOptions';
 import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
-import { type EditableVariableType } from './utils';
+import { type EditableVariableType, getEditableVariablesMetadata } from './utils';
 
 interface EditableVariableConfig {
   name: string;
@@ -26,7 +25,7 @@ interface EditableVariableConfig {
  * The full editor registry pulls in every variable editor (and their option forms).
  * Only import this module from edit-time code paths, ideally through a dynamic
  * import, so the editors stay out of the initial dashboard bundle. View-mode code
- * that only needs type names/descriptions should use `editableVariablesMetadata.ts`.
+ * that only needs type names/descriptions should use `utils.ts`.
  */
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => {
   const metadata = getEditableVariablesMetadata();

@@ -878,7 +878,7 @@ export const payloads = {
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
-  getSpec: getSpecPayloadSchema.describe('Return the entire dashboard as a v2 DashboardSpec JSON object'),
+  getSpec: getSpecPayloadSchema.describe('Return the entire dashboard as a v2 DashboardSpec JSON object.'),
   applySpec: applySpecPayloadSchema.describe(
     'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
       '(settings, variables, annotations, panels, and nested rows/tabs layout).'

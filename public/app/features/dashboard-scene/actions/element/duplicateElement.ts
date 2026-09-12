@@ -21,7 +21,7 @@ export function duplicateElement<T extends SceneObject>(props: DuplicateElementA
   const { duplicatedObject, source, cloneState, perform, undo } = props;
 
   const typeName = getElementTypeName(duplicatedObject);
-  if (!typeName) {
+  if (typeName === undefined) {
     throw new Error('Duplicated object is not an editable element');
   }
 
