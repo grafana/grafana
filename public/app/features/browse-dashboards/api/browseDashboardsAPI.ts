@@ -33,6 +33,7 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { invalidateVariablesAfterFolderDelete } from '../../variables-management/cache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
 import { getFolderURL } from '../utils/dashboards';
@@ -79,6 +80,7 @@ const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): Descendant
   librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
   alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
   recordingrules: folderCounts.recordingrules || 0,
+  variables: folderCounts.variables || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -221,6 +223,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          invalidateVariablesAfterFolderDelete();
           dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
@@ -245,6 +248,7 @@ export const browseDashboardsAPI = createApi({
             librarypanels: 0,
             alertrules: 0,
             recordingrules: 0,
+            variables: 0,
           };
 
           for (const folderCounts of results) {
@@ -254,6 +258,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.alertrules += normalizedCounts.alertrules;
             totalCounts.librarypanels += normalizedCounts.librarypanels;
             totalCounts.recordingrules += normalizedCounts.recordingrules;
+            totalCounts.variables += normalizedCounts.variables;
           }
 
           return { data: totalCounts };
@@ -354,6 +359,7 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
+        let deletedCount = 0;
         for (const folderUID of folderUIDs) {
           if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
             continue;
@@ -367,7 +373,13 @@ export const browseDashboardsAPI = createApi({
           if (!response.error) {
             // Only clear the nav starred entry for folders that were actually deleted
             api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+            deletedCount++;
           }
+        }
+
+        if (deletedCount > 0) {
+          // queryFn always resolves, so do this here rather than in onQueryStarted
+          invalidateVariablesAfterFolderDelete();
         }
 
         return { data: undefined };

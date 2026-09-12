@@ -27,7 +27,8 @@ import { type EditableVariableType, getVariableScene } from 'app/features/dashbo
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
+import { recreateVariable } from './api';
+import { invalidatePredefinedVariableCaches } from './cache';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
