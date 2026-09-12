@@ -76,9 +76,11 @@ grafana cli -h
 grafana cli -v
 ```
 
-### Override default plugin directory
+### Override the plugin directory
 
-`--pluginsDir value` overrides the path to where your local Grafana instance stores plugins. Use this option if you want to install, update, or remove a plugin somewhere other than the default directory ("/var/lib/grafana/plugins") [$GF_PLUGIN_DIR].
+`--pluginsDir value` overrides the path to where your local Grafana instance stores plugins. Use this option if you want to install, update, or remove a plugin somewhere other than the configured plugin directory [$GF_PLUGIN_DIR].
+
+When you don't set `--pluginsDir` or `GF_PLUGIN_DIR`, the CLI uses the server's `paths.plugins` configuration. You can set this value with the `GF_PATHS_PLUGINS` environment variable, a `cfg:default.paths.plugins` entry passed through `--configOverrides`, or the `[paths] plugins` setting in the configuration file passed with `--config` (or in `conf/custom.ini`). If no configuration can be resolved, the CLI falls back to the built-in default for your operating system.
 
 **Example:**
 
