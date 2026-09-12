@@ -157,7 +157,10 @@ export function AppChrome({ children }: Props) {
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
           {menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+            <MegaMenu
+              className={cx(styles.dockedMegaMenu, state.megaMenuCustomising && styles.dockedMegaMenuElevated)}
+              onClose={() => chrome.setMegaMenuOpen(false)}
+            />
           )}
           <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
             <SingleTopBar
@@ -220,6 +223,11 @@ export function AppChrome({ children }: Props) {
             ))}
         </div>
       </div>
+      {/* De-emphasise and lock the page while customising the nav. Docked mode has no menu backdrop of
+          its own, so this overlay provides it (undocked mode is already covered by the AppChromeMenu
+          backdrop). It sits above the top bar and captures clicks so the rest of the page can't be
+          interacted with mid-edit; leaving customise mode is done from the menu controls. */}
+      {menuDockedAndOpen && state.megaMenuCustomising && <div className={styles.customiseOverlay} />}
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
@@ -302,6 +310,18 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
         display: 'flex',
         flexDirection: 'column',
       },
+    }),
+    // Covers the whole page — above the top bar (navbarFixed) but below the elevated docked menu — and
+    // captures clicks so the page is locked while customising. The menu itself stays bright and usable.
+    customiseOverlay: css({
+      backgroundColor: theme.components.overlay.background,
+      inset: 0,
+      position: 'fixed',
+      zIndex: theme.zIndex.modalBackdrop,
+    }),
+    // While customising, lift the docked menu above the overlay so it stays bright and interactive.
+    dockedMegaMenuElevated: css({
+      zIndex: theme.zIndex.modal,
     }),
     scopesDashboardsContainer: css({
       position: 'fixed',
