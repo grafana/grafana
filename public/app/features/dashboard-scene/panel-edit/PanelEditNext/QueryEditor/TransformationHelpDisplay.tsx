@@ -7,12 +7,15 @@ import { getTransformationContent } from 'app/features/transformers/docs/getTran
 
 import { useQueryEditorUIContext } from './QueryEditorContext';
 
+const fallbackHelpHtml = renderMarkdown(FALLBACK_DOCS_LINK);
+
 /**
  * Displays transformation help in a drawer when toggled from the actions menu.
  */
 export function TransformationHelpDisplay() {
   const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
-  const [helpHtml, setHelpHtml] = useState<string>(renderMarkdown(FALLBACK_DOCS_LINK));
+  const transformationId = selectedTransformation?.registryItem?.id;
+  const [helpContent, setHelpContent] = useState<{ transformationId: string; html: string }>();
 
   useEffect(() => {
     if (!transformToggles.showHelp || !selectedTransformation?.registryItem) {
@@ -21,15 +24,17 @@ export function TransformationHelpDisplay() {
 
     let cancelled = false;
 
-    getTransformationContent(selectedTransformation.registryItem.id)
+    const requestedTransformationId = selectedTransformation.registryItem.id;
+
+    getTransformationContent(requestedTransformationId)
       .then(({ helperDocs }) => {
         if (!cancelled) {
-          setHelpHtml(renderMarkdown(helperDocs));
+          setHelpContent({ transformationId: requestedTransformationId, html: renderMarkdown(helperDocs) });
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setHelpHtml(renderMarkdown(FALLBACK_DOCS_LINK));
+          setHelpContent({ transformationId: requestedTransformationId, html: fallbackHelpHtml });
         }
       });
 
@@ -41,6 +46,8 @@ export function TransformationHelpDisplay() {
   if (!transformToggles.showHelp || !selectedTransformation?.registryItem) {
     return null;
   }
+
+  const helpHtml = helpContent?.transformationId === transformationId ? helpContent.html : fallbackHelpHtml;
 
   return (
     <Drawer
