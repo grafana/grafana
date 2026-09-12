@@ -189,6 +189,20 @@ func (val *StringMapValue) Value() map[string]string {
 	return val.value
 }
 
+// ValueWithBracedVars returns the raw map with braced setting expanders applied.
+// Unlike Value, it does not expand bare $NAME environment variables.
+func (val *StringMapValue) ValueWithBracedVars() (map[string]string, error) {
+	interpolated := make(map[string]string, len(val.Raw))
+	for key, raw := range val.Raw {
+		expanded, err := interpolateValueWithBracedVars(raw)
+		if err != nil {
+			return nil, err
+		}
+		interpolated[key] = expanded
+	}
+	return interpolated, nil
+}
+
 // JSONSliceValue represents a slice value in a YAML
 // config that can be overridden by environment variables
 
@@ -324,6 +338,39 @@ func interpolateValue(val string) (string, string, error) {
 		interpolated[i] = os.ExpandEnv(v)
 	}
 	return strings.Join(interpolated, "$"), val, nil
+}
+
+// interpolateValueWithBracedVars expands only braced setting expanders, such as
+// ${VAR} and $__env{VAR}. Escaped forms like $${VAR} are preserved as literal
+// ${VAR}, and bare $NAME values are left untouched.
+func interpolateValueWithBracedVars(val string) (string, error) {
+	matches := setting.GetExpanderRegex().FindAllStringIndex(val, -1)
+	if len(matches) == 0 {
+		return val, nil
+	}
+
+	var interpolated strings.Builder
+	start := 0
+	for _, match := range matches {
+		if match[0] > 0 && val[match[0]-1] == '$' {
+			// Treat the preceding "$$" as an escape for the whole braced
+			// expander, so "$$${VAR}" is preserved as "${VAR}".
+			interpolated.WriteString(val[start : match[0]-1])
+			interpolated.WriteString(val[match[0]:match[1]])
+			start = match[1]
+			continue
+		}
+
+		interpolated.WriteString(val[start:match[0]])
+		expanded, err := setting.ExpandVar(val[match[0]:match[1]])
+		if err != nil {
+			return val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
+		}
+		interpolated.WriteString(expanded)
+		start = match[1]
+	}
+	interpolated.WriteString(val[start:])
+	return interpolated.String(), nil
 }
 
 type interpolated struct {
