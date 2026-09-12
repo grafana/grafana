@@ -6419,6 +6419,11 @@
         "title-above-dashboard": "Above dashboard",
         "title-controls-menu": "Controls menu"
       },
+      "lock": {
+        "title": "Lock",
+        "tooltip-locked": "Selecting elements on the canvas does not open the sidebar",
+        "tooltip-unlocked": "Selecting elements on the canvas opens the sidebar"
+      },
       "outline": {
         "pane-header": "Content outline",
         "repeated-item": "Repeat",
@@ -7481,7 +7486,9 @@
       "title-delete-all-transformations": "Delete all transformations?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Edit visualization"
+      "edit-visualization": "Edit visualization",
+      "panels-selected_one": "{{count}} panel selected",
+      "panels-selected_other": "{{count}} panels selected"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",

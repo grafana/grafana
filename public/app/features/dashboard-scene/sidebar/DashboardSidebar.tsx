@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 
+import { store } from '@grafana/data';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
@@ -7,7 +8,7 @@ import {
   SceneObjectRemovedEvent,
   sceneGraph,
 } from '@grafana/scenes';
-import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
+import { type ElementSelectionContextItem } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
@@ -28,7 +29,14 @@ import {
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
+import {
+  type DashboardSidebarPane,
+  type DashboardSidebarLike,
+  type DashboardSidebarState,
+  type SelectObjectOptions,
+} from './types';
+
+const AUTO_OPEN_PANE_LS_KEY = 'grafana.dashboard.sidebar.auto-open-pane';
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
@@ -43,6 +51,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       undoStack: [],
       redoStack: [],
       outlinePane: state?.outlinePane ?? new DashboardOutline({}),
+      autoOpenPane: state?.autoOpenPane ?? store.getBool(AUTO_OPEN_PANE_LS_KEY, true),
     });
 
     this.addActivationHandler(this.onActivate.bind(this));
@@ -161,7 +170,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     if (action.movedObject && action.selectOnMove !== false) {
-      this.selectObject(action.movedObject, { force: true });
+      this.selectObjectFromCanvas(action.movedObject, { force: true });
     }
 
     if (action.removedObject) {
@@ -183,7 +192,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     if (action.movedObject && action.selectOnMove !== false) {
-      this.selectObject(action.movedObject, { force: true });
+      this.selectObjectFromCanvas(action.movedObject, { force: true });
     }
 
     // If action removed an object and not added a new one we need to update selection
@@ -229,7 +238,45 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     });
   }
 
-  private selectElement(element: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) {
+  public setAutoOpenPane(autoOpenPane: boolean) {
+    store.set(AUTO_OPEN_PANE_LS_KEY, autoOpenPane);
+    this.setState({ autoOpenPane });
+
+    if (!autoOpenPane) {
+      // Locking keeps the canvas selection so unlocking can bring the same pane back
+      this.closeOpenPane();
+      return;
+    }
+
+    // Unlocking with elements already selected should reveal their options right away
+    if (this.state.openPane) {
+      return;
+    }
+
+    this.editSelection();
+  }
+
+  /**
+   * Selects an element by key and opens its options pane, regardless of the auto-open preference.
+   * Goes through selectElement so repeat clones resolve to their source object.
+   */
+  public editElement(key: string) {
+    this.selectElement({ id: key }, { force: true, openPane: true });
+  }
+
+  /**
+   * Opens the options pane for the current selection without changing it, regardless of the
+   * auto-open preference. With more than one element selected this shows the group options.
+   */
+  public editSelection() {
+    if (!this.state.selectionContext.selected.length) {
+      return;
+    }
+
+    this.updateSelection(this.state.selectionContext.selected, this.state.selectedDisconnectedObject, true);
+  }
+
+  private selectElement(element: ElementSelectionContextItem, options: SelectObjectOptions) {
     let obj = sceneGraph.findByKey(this, element.id);
     if (!obj) {
       console.warn('Cannot find element by key="%s"!', element.id);
@@ -245,10 +292,18 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       }
     }
 
-    this.selectObject(obj, options);
+    // Canvas selection follows the user preference unless the caller explicitly asks for the pane
+    this.selectObject(obj, { ...options, openPane: options.openPane ?? this.state.autoOpenPane });
   }
 
-  public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+  /**
+   * Selection caused by a canvas interaction, so it follows the auto-open preference.
+   */
+  public selectObjectFromCanvas(obj: SceneObject, options: SelectObjectOptions = {}) {
+    this.selectObject(obj, { ...options, openPane: this.state.autoOpenPane });
+  }
+
+  public selectObject(obj: SceneObject, { multi, force, openPane = true }: SelectObjectOptions = {}) {
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
@@ -263,7 +318,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
-    if (this.state.openPane?.getId() !== 'element') {
+    // With auto-open disabled an element can be selected while no pane is open, and toggling it off must still work
+    if (this.state.openPane && this.state.openPane.getId() !== 'element') {
       force = true;
     }
 
@@ -273,17 +329,18 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         if (!force) {
           this.updateSelection(
             this.state.selectionContext.selected.filter((i) => i.id !== id),
-            selectedDisconnectedObject
+            selectedDisconnectedObject,
+            openPane
           );
         }
       } else {
-        this.updateSelection([...this.state.selectionContext.selected, { id }], selectedDisconnectedObject);
+        this.updateSelection([...this.state.selectionContext.selected, { id }], selectedDisconnectedObject, openPane);
       }
     } else {
       if (hasItem && !force) {
-        this.updateSelection([], selectedDisconnectedObject);
+        this.updateSelection([], selectedDisconnectedObject, openPane);
       } else {
-        this.updateSelection([{ id }], selectedDisconnectedObject);
+        this.updateSelection([{ id }], selectedDisconnectedObject, openPane);
       }
     }
   }
@@ -317,7 +374,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
   }
 
-  private updateSelection(selected: ElementSelectionContextItem[], selectedDisconnectedObject?: SceneObject) {
+  private updateSelection(
+    selected: ElementSelectionContextItem[],
+    selectedDisconnectedObject?: SceneObject,
+    openPane = true
+  ) {
     // onBlur events are not fired on unmount and some sidebar inputs have important onBlur events
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
@@ -327,7 +388,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length ? new ElementEditPane({}) : undefined,
+      openPane: this.getPaneForSelection(selected, openPane),
       isNewElement: false,
       selectedDisconnectedObject,
     };
@@ -336,6 +397,22 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       ...newState,
       previousState: selected.length ? getStateForPaneHistory(this.state, newState) : undefined,
     });
+  }
+
+  /**
+   * An already open pane follows the selection, a closed one stays closed. The lock only decides
+   * whether a canvas selection may open a closed sidebar, not whether an open one stays open.
+   */
+  private getPaneForSelection(selected: ElementSelectionContextItem[], openPane: boolean) {
+    if (!selected.length) {
+      return undefined;
+    }
+
+    if (openPane || this.state.openPane?.getId() === 'element') {
+      return new ElementEditPane({});
+    }
+
+    return this.state.openPane;
   }
 
   /**
@@ -377,7 +454,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this.state.isDocked && !force) {
       const dashboard = getDashboardSceneFor(this);
       if (this.getSelectedObject() !== dashboard) {
-        this.selectObject(dashboard);
+        this.selectObjectFromCanvas(dashboard);
       }
       return;
     }
@@ -402,18 +479,33 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.clearSelection(true);
     }
 
-    if (this.state.openPane) {
-      const openPane = this.state.openPane;
-      this.setState({ openPane: undefined });
+    this.closeOpenPane();
+  }
 
-      // UrlSyncManager subscribes to this and removes the pane url state from url
-      this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+  private closeOpenPane() {
+    const openPane = this.state.openPane;
+    if (!openPane) {
+      return;
     }
+
+    this.setState({ openPane: undefined });
+
+    // UrlSyncManager subscribes to this and removes the pane url state from url
+    this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
-    this.selectObject(obj, { force: true });
+    this.selectObject(obj, { force: true, openPane: this.shouldOpenPaneForCanvasAction() });
     this.setState({ isNewElement: true });
+  }
+
+  /**
+   * Canvas actions (add panel, new row or tab, group panels, drag) must not pop the sidebar open
+   * when auto-open is disabled. An already open pane still switches to the new object, which is
+   * what the sidebar add flow relies on.
+   */
+  private shouldOpenPaneForCanvasAction() {
+    return this.state.autoOpenPane || this.state.openPane !== undefined;
   }
 
   public async addNewPanel(target: SceneObject | undefined) {
