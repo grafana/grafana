@@ -3,7 +3,11 @@ import { render, screen } from 'test/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { setupMswServer } from '../../mockApi';
+import { addPlugin } from '../../mocks/server/configure';
 import type { RulesFilter } from '../../search/rulesSearchParser';
+import { pluginMeta } from '../../testSetup/plugins';
+import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { RulesFilterSidebar } from './RulesFilterSidebar';
 
@@ -68,6 +72,8 @@ jest.mock('../../components/rules/Filter/useRuleFilterAutocomplete', () => ({
 jest.mock('../../plugins/useAlertingHomePageExtensions', () => ({
   useAlertingHomePageExtensions: () => ({ components: [] }),
 }));
+
+setupMswServer();
 
 const mockUpdateFilters = jest.fn();
 const mockClearAll = jest.fn();
@@ -225,7 +231,7 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
     expect(contactPointSelect).toBeDisabled();
   });
 
-  it('never receives both contactPoint and policy -- conflicts are resolved at query ingestion', () => {
+  it('never receives both contactPoint and policy -- conflicts are resolved at query ingestion', async () => {
     useRulesFilterMock.mockReturnValue({
       filterState: { freeFormWords: [], dataSourceNames: [], labels: [], policy: 'team-a-policy' },
       updateFilters: mockUpdateFilters,
@@ -238,12 +244,32 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
 
     render(<RulesFilterSidebar />);
 
-    const contactPointSelect = screen.getByRole('combobox', { name: 'Contact point' });
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
     const policySelect = screen.getByRole('combobox', { name: 'Notification policy' });
 
     expect(contactPointSelect).toHaveValue('');
     expect(contactPointSelect).toBeDisabled();
     expect(policySelect).toHaveValue('team-a-policy');
     expect(policySelect).toBeEnabled();
+  });
+});
+
+describe('RulesFilterSidebar — rule source filter', () => {
+  it('offers the rule source filter while data source managed rules are still in this list', async () => {
+    render(<RulesFilterSidebar />);
+
+    expect(await screen.findByRole('radiogroup', { name: 'Rule source' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Data source managed' })).toBeInTheDocument();
+  });
+
+  it('drops it once the Prometheus Alerting plugin owns those rules, but keeps the data source filter', async () => {
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+
+    render(<RulesFilterSidebar />);
+
+    // The data source filter is not about rule ownership, so it stays.
+    expect(await screen.findByText('Data source')).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: 'Rule source' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Data source managed' })).not.toBeInTheDocument();
   });
 });

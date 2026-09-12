@@ -5,6 +5,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
+import { usePrometheusAlertingPlugin } from '../plugin-proxy/usePrometheusAlertingPlugin';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -23,6 +24,9 @@ function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
 export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
+  // Picking one of these hands the page over to the plugin, so say so before it happens rather than
+  // leaving people to work it out from the redirect.
+  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
 
   const options = useMemo(() => {
     const grafanaAM = availableAlertManagers.find((am) => am.name === GRAFANA_RULES_SOURCE_NAME);
@@ -42,7 +46,12 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
 
     if (datasourceAMs.length > 0) {
       groupedOptions.push({
-        label: t('alerting.alert-manager-picker.external-alertmanagers-group', 'External Alertmanagers'),
+        label: pluginInstalled
+          ? t(
+              'alerting.alert-manager-picker.external-alertmanagers-group-plugin',
+              'External Alertmanagers (opens in Prometheus Alerting)'
+            )
+          : t('alerting.alert-manager-picker.external-alertmanagers-group', 'External Alertmanagers'),
         options: datasourceAMs.map((ds) => ({
           label: getAlertManagerLabel(ds),
           value: ds.name,
@@ -53,7 +62,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
     }
 
     return groupedOptions;
-  }, [availableAlertManagers]);
+  }, [availableAlertManagers, pluginInstalled]);
 
   const isDisabled = disabled || options.length === 1;
   const label = isDisabled ? 'Alertmanager' : 'Choose Alertmanager';

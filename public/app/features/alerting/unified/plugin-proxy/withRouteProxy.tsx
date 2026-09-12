@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 import { useAsync, useLocation } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
@@ -77,8 +78,31 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
       return <Page {...props} />;
     }
 
-    return <Navigate replace to={target} />;
+    return <RedirectToPlugin to={target} />;
   };
+}
+
+/**
+ * Sending someone somewhere without saying so is disorienting, especially when the destination looks
+ * nothing like the page they asked for. The notification lives in the redux store, so it outlives
+ * this component and shows up on the plugin's page.
+ */
+function RedirectToPlugin({ to }: { to: string }) {
+  const notifyApp = useAppNotification();
+
+  useEffect(() => {
+    notifyApp.info(
+      t('alerting.proxied-alerting-route.redirected-title', 'Opened in the Prometheus Alerting plugin'),
+      t(
+        'alerting.proxied-alerting-route.redirected-body',
+        'Data source managed alerting is handled by the Prometheus Alerting plugin.'
+      )
+    );
+    // Only ever announce the redirect once, when we decide to make it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <Navigate replace to={to} />;
 }
 
 /**

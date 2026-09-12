@@ -6,8 +6,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { setPrometheusRules } from '../mocks/server/configure';
+import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { pluginMeta } from '../testSetup/plugins';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { GroupedView } from './GroupedView';
 import { FRONTED_GROUPED_PAGE_SIZE } from './paginationLimits';
@@ -111,5 +113,27 @@ describe('RuleList - GroupedView', () => {
     await ui.group('test-group-130').find(promNamespace);
 
     expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
+  });
+});
+
+describe('RuleList - GroupedView with the Prometheus Alerting plugin', () => {
+  beforeEach(() => {
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+  });
+
+  it('drops the data source sections and says where those rules went', async () => {
+    render(<GroupedView />);
+
+    const grafanaSection = await screen.findByRole('listitem', { name: /Grafana-managed/ });
+    expect(
+      within(grafanaSection).getByText(/data sources? (is|are) managed by the Prometheus Alerting plugin/)
+    ).toBeInTheDocument();
+    expect(within(grafanaSection).getByRole('link', { name: 'View' })).toHaveAttribute(
+      'href',
+      `/a/${SupportedPlugin.PrometheusAlerting}/rules`
+    );
+
+    expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: /Prometheus/ })).not.toBeInTheDocument();
   });
 });

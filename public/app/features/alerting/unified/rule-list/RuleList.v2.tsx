@@ -18,6 +18,7 @@ import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
+import { usePrometheusAlertingPlugin } from '../plugin-proxy/usePrometheusAlertingPlugin';
 import { getRulesDataSources } from '../utils/datasource';
 import { ALERTING_PATHS } from '../utils/navigation';
 
@@ -60,9 +61,12 @@ export function RuleListActions() {
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  // The plugin has its own form for these, so core stops offering to create them.
+  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
-  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources;
+  const canCreateCloudRules =
+    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !pluginInstalled;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
