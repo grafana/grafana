@@ -239,14 +239,7 @@ export class LiveDataStream<T = unknown> {
 
     const shouldSendLastPacketOnly = options?.buffer?.action === StreamingFrameAction.Replace;
 
-    const mathTransform = options.mathExpression
-      ? createLiveMathTransform(
-          options.mathExpression,
-          this.frameBuffer.fields
-            .map((field, index) => (field.type === 'number' ? index : -1))
-            .filter((index) => index >= 0)
-        )
-      : undefined;
+    const mathTransform = options.mathExpression ? createLiveMathTransform(options.mathExpression) : undefined;
 
     const fieldsNamesFilter = options.filter?.fields;
     const dataNeedsFiltering = fieldsNamesFilter?.length;
@@ -261,63 +254,20 @@ export class LiveDataStream<T = unknown> {
         ? this.frameBuffer.getMatchingFieldIndexes(fieldFilterPredicate)
         : undefined;
 
-      if (!shouldSendLastPacketOnly) {
-        return {
-          key: subKey,
-          state: error ? LoadingState.Error : LoadingState.Streaming,
-          data: [
-            {
-              type: StreamingResponseDataType.FullFrame,
-              frame: (() => {
-                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer);
-                return mathTransform?.frame(serialized) ?? serialized;
-              })(),
-            },
-          ],
-          error,
-        };
-      }
-
-      if (error) {
-        // send empty frame with error
-        return {
-          key: subKey,
-          state: LoadingState.Error,
-          data: [
-            {
-              type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
-            },
-          ],
-          error,
-        };
-      }
-
-      if (!messages.length) {
-        console.warn(`expected to find at least one non error message ${messages.map(({ type }) => type)}`);
-        // send empty frame
-        return {
-          key: subKey,
-          state: LoadingState.Streaming,
-          data: [
-            {
-              type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
-            },
-          ],
-          error,
-        };
-      }
+      const serialized = this.frameBuffer.serialize(
+        fieldFilterPredicate,
+        buffer,
+        shouldSendLastPacketOnly && !error && messages.length ? { maxLength: this.frameBuffer.packetInfo.length } : error || !messages.length ? { maxLength: 0 } : undefined
+      );
+      const transformed = mathTransform?.frame(serialized) ?? serialized;
 
       return {
         key: subKey,
-        state: LoadingState.Streaming,
+        state: error ? LoadingState.Error : LoadingState.Streaming,
         data: [
           {
             type: StreamingResponseDataType.FullFrame,
-            frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, {
-              maxLength: this.frameBuffer.packetInfo.length,
-            }),
+            frame: transformed,
           },
         ],
         error,
@@ -333,8 +283,13 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
-      const transformedValues = mathTransform?.values(filteredValues) ?? filteredValues;
+      const currentNumericFieldIndexes = this.frameBuffer.fields
+        .map((field, index) => (field.type === 'number' ? index : -1))
+        .filter((index) => index >= 0);
+      const transformedValues = mathTransform?.values(values, currentNumericFieldIndexes) ?? values;
+      const filteredValues = matchingFieldIndexes
+        ? transformedValues.filter((v, i) => matchingFieldIndexes?.includes(i))
+        : transformedValues;
 
       return {
         key: subKey,
@@ -342,7 +297,7 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.NewValuesSameSchema,
-            values: transformedValues,
+            values: filteredValues,
           },
         ],
       };
