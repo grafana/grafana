@@ -3,14 +3,17 @@ package sso
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
-	settingsvc "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssomodels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,39 +32,21 @@ func (f *fakeStoredLister) GetDefaults(provider string) map[string]any {
 	return f.defaults[provider]
 }
 
-type fakeWriter struct {
-	upserts    map[string]string // section|key -> value
-	namespaces map[string]bool   // namespaces resolved from the write context
-}
-
-func (f *fakeWriter) Upsert(ctx context.Context, s *settingsvc.Setting) error {
-	f.upserts[s.Section+"|"+s.Key] = s.Value
-	ns, _ := request.NamespaceFrom(ctx)
-	f.namespaces[ns] = true
-	return nil
-}
-
-func (f *fakeWriter) Delete(context.Context, string, string) error { return nil }
-
-func newFakeWriter() *fakeWriter {
-	return &fakeWriter{upserts: map[string]string{}, namespaces: map[string]bool{}}
-}
-
 func TestSSOSettingsBackfill(t *testing.T) {
 	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
 		{Provider: "github", Settings: map[string]any{"client_id": "abc", "client_secret": "topsecret"}},
 		{Provider: "ldap", Settings: map[string]any{"config": map[string]any{"servers": []any{}}}},
 	}}
-	writer := newFakeWriter()
-	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+	mt := newFakeSettings()
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
 	require.NoError(t, b.backfill(context.Background()))
 
 	// The OAuth provider is copied per-key into its section.
-	assert.Equal(t, "abc", writer.upserts["auth.github|client_id"])
-	assert.Equal(t, "topsecret", writer.upserts["auth.github|client_secret"])
+	assert.Equal(t, "abc", mt.upserts["auth.github|client_id"])
+	assert.Equal(t, "topsecret", mt.upserts["auth.github|client_secret"])
 	// LDAP is skipped: MT-Settings has no representation for its nested config yet.
-	assert.Len(t, writer.upserts, 2)
+	assert.Len(t, mt.upserts, 2)
 }
 
 // TestSSOSettingsBackfill_WritesUnderConfiguredNamespace guards the namespace
@@ -72,12 +57,12 @@ func TestSSOSettingsBackfill_WritesUnderConfiguredNamespace(t *testing.T) {
 	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
 		{Provider: "github", Settings: map[string]any{"client_id": "abc"}},
 	}}
-	writer := newFakeWriter()
-	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+	mt := newFakeSettings()
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
 	require.NoError(t, b.backfill(context.Background()))
 
-	assert.Equal(t, map[string]bool{"stacks-11": true}, writer.namespaces)
+	assert.Equal(t, map[string]bool{"stacks-11": true}, mt.namespaces)
 }
 
 // Guards startup: no settings service -> disabled provider, not a wire error.
@@ -86,13 +71,46 @@ func TestProvideSSOSettingsBackfill_DisabledWithoutSettingsService(t *testing.T)
 
 	require.NoError(t, err)
 	require.NotNil(t, b)
-	assert.Nil(t, b.writer)
+	assert.Nil(t, b.mtWriter)
 	assert.True(t, b.IsDisabled())
+}
+
+func TestSSOSettingsBackfill_IsDisabledByMode(t *testing.T) {
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagGrafanaSsoSettingsToMTSettings: {
+			State:          memprovider.Enabled,
+			DefaultVariant: "on",
+			Variants:       map[string]any{"on": true, "off": false},
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	tests := []struct {
+		mode     grafanarest.DualWriterMode
+		disabled bool
+	}{
+		{grafanarest.Mode0, false},
+		{grafanarest.Mode3, false},
+		{grafanarest.Mode4, true},
+		{grafanarest.Mode5, true},
+	}
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("mode %d", tt.mode), func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				resource.GroupResource().String(): {DualWriterMode: tt.mode},
+			}
+			b := &SSOSettingsBackfill{mtWriter: newFakeSettings(), cfg: cfg, log: log.New("test")}
+
+			assert.Equal(t, tt.disabled, b.IsDisabled())
+		})
+	}
 }
 
 func TestSSOSettingsBackfill_PropagatesReadError(t *testing.T) {
 	reader := &fakeStoredLister{err: errors.New("boom")}
-	b := &SSOSettingsBackfill{reader: reader, writer: newFakeWriter(), namespace: "stacks-11", log: log.New("test")}
+	b := &SSOSettingsBackfill{legacyReader: reader, mtWriter: newFakeSettings(), namespace: "stacks-11", log: log.New("test")}
 
 	require.Error(t, b.backfill(context.Background()))
 }
@@ -120,19 +138,70 @@ func TestSSOSettingsBackfill_Defaults(t *testing.T) {
 			},
 		},
 	}
-	writer := newFakeWriter()
-	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+	mt := newFakeSettings()
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
 	require.NoError(t, b.backfill(context.Background()))
 
 	// Explicit values are preserved
-	assert.Equal(t, "false", writer.upserts["auth.myProvider|setting_1"])
-	assert.Equal(t, "email", writer.upserts["auth.myProvider|setting_2"])
-	assert.Equal(t, "value", writer.upserts["auth.myProvider|setting_6"])
+	assert.Equal(t, "false", mt.upserts["auth.myProvider|setting_1"])
+	assert.Equal(t, "email", mt.upserts["auth.myProvider|setting_2"])
+	assert.Equal(t, "value", mt.upserts["auth.myProvider|setting_6"])
 	// Absent or empty fields are backfilled with their default value
-	assert.Equal(t, "mail", writer.upserts["auth.myProvider|setting_3"])
-	assert.Equal(t, "default", writer.upserts["auth.myProvider|setting_4"])
-	assert.Equal(t, "false", writer.upserts["auth.myProvider|setting_5"])
+	assert.Equal(t, "mail", mt.upserts["auth.myProvider|setting_3"])
+	assert.Equal(t, "default", mt.upserts["auth.myProvider|setting_4"])
+	assert.Equal(t, "false", mt.upserts["auth.myProvider|setting_5"])
+}
+
+func TestSSOSettingsBackfill_PrunesStaleRows(t *testing.T) {
+	reader := &fakeStoredLister{
+		settings: []*ssomodels.SSOSettings{
+			{Provider: "myProvider", Settings: map[string]any{"client_id": "abc"}},
+		},
+		defaults: map[string]map[string]any{
+			"myProvider": {"providerDefaultSetting_1": "default_1"},
+		},
+	}
+	mt := newFakeSettings(
+		usRow("auth.myProvider", "client_id", "stale"),
+		usRow("auth.myProvider", "removed_key", "x"),
+		usRow("auth.myProvider", "providerDefaultSetting_1", "default_1"),
+		defaultRow("auth.myProvider", "from_defaults", "y"),
+		usRow("auth.okta", "client_id", "z"),
+	)
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
+
+	require.NoError(t, b.backfill(context.Background()))
+
+	assert.Equal(t, []string{"auth.github|removed_key"}, mt.deleted)
+	assert.Equal(t, "abc", mt.upserts["auth.github|client_id"])
+	assert.Equal(t, "default_1", mt.upserts["auth.myProvider|providerDefaultSetting_1"])
+}
+
+func TestSSOSettingsBackfill_Converges(t *testing.T) {
+	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
+		{Provider: "github", Settings: map[string]any{"client_id": "abc"}},
+	}}
+	mt := newFakeSettings(usRow("auth.github", "removed_key", "x"))
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
+
+	require.NoError(t, b.backfill(context.Background()))
+	require.Equal(t, []string{"auth.github|removed_key"}, mt.deleted)
+
+	// A second pass should be a no-op
+	require.NoError(t, b.backfill(context.Background()))
+	assert.Equal(t, []string{"auth.github|removed_key"}, mt.deleted)
+}
+
+func TestSSOSettingsBackfill_PropagatesPruneError(t *testing.T) {
+	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
+		{Provider: "github", Settings: map[string]any{"client_id": "abc"}},
+	}}
+	mt := newFakeSettings()
+	mt.listErr = errors.New("boom")
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
+
+	require.Error(t, b.backfill(context.Background()))
 }
 
 func TestSSOSettingsBackfill_NoDefaultsRegistered(t *testing.T) {
@@ -141,12 +210,12 @@ func TestSSOSettingsBackfill_NoDefaultsRegistered(t *testing.T) {
 	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
 		{Provider: "myProvider", Settings: map[string]any{"setting_1": "value_1", "setting_2": "value_2"}},
 	}}
-	writer := newFakeWriter()
-	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+	mt := newFakeSettings()
+	b := &SSOSettingsBackfill{legacyReader: reader, mtReader: mt, mtWriter: mt, namespace: "stacks-11", log: log.New("test")}
 
 	require.NoError(t, b.backfill(context.Background()))
 
-	assert.Equal(t, "value_1", writer.upserts["auth.myProvider|setting_1"])
-	assert.Equal(t, "value_2", writer.upserts["auth.myProvider|setting_2"])
-	assert.Len(t, writer.upserts, 2)
+	assert.Equal(t, "value_1", mt.upserts["auth.myProvider|setting_1"])
+	assert.Equal(t, "value_2", mt.upserts["auth.myProvider|setting_2"])
+	assert.Len(t, mt.upserts, 2)
 }

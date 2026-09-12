@@ -266,21 +266,8 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 		}
 	}
 
-	// Prune stale us-layer rows last: any us row whose key is not in the desired
-	// blob. defaults/hgapi layers are not ours to touch.
-	existing, err := s.reader.List(ctx, sectionSelector(name))
-	if err != nil {
+	if _, err := pruneStaleRows(ctx, s.reader, s.writer, name, desired); err != nil {
 		return nil, false, apierrors.NewInternalError(err)
-	}
-	for _, row := range existing {
-		if row.Labels["source"] != "us" {
-			continue
-		}
-		if _, keep := desired[row.Key]; !keep {
-			if err := s.writer.Delete(ctx, section, row.Key); err != nil {
-				return nil, false, apierrors.NewInternalError(err)
-			}
-		}
 	}
 
 	updated, err := s.Get(ctx, name, &metav1.GetOptions{})
@@ -304,18 +291,8 @@ func (s *MTSettingsStore) Delete(ctx context.Context, name string, deleteValidat
 		}
 	}
 
-	rows, err := s.reader.List(ctx, sectionSelector(name))
-	if err != nil {
+	if _, err := pruneStaleRows(ctx, s.reader, s.writer, name, nil); err != nil {
 		return nil, false, apierrors.NewInternalError(err)
-	}
-	section := sectionFor(name)
-	for _, row := range rows {
-		if row.Labels["source"] != "us" {
-			continue
-		}
-		if err := s.writer.Delete(ctx, section, row.Key); err != nil {
-			return nil, false, apierrors.NewInternalError(err)
-		}
 	}
 	// NOTE: returns the pre-delete object. Removing the us override leaves any
 	// defaults/hgapi rows, so the provider does not truly vanish; the accurate
@@ -327,6 +304,32 @@ func (s *MTSettingsStore) Delete(ctx context.Context, name string, deleteValidat
 func (s *MTSettingsStore) notImplemented(verb string, name string) error {
 	return apierrors.NewGenericServerResponse(http.StatusNotImplemented, verb, resource.GroupResource(), name,
 		"MT-Settings storage for SSO settings is not implemented yet", 0, false)
+}
+
+// pruneStaleRows deletes the provider's us-layer rows whose key is absent from
+// keep, and reports how many it deleted.
+func pruneStaleRows(ctx context.Context, reader settingsvc.Service, writer settingsvc.Writer,
+	provider string, keep map[string]any) (int, error) {
+	rows, err := reader.List(ctx, sectionSelector(provider))
+	if err != nil {
+		return 0, err
+	}
+
+	section := sectionFor(provider)
+	pruned := 0
+	for _, row := range rows {
+		if row.Labels["source"] != "us" {
+			continue
+		}
+		if _, ok := keep[row.Key]; ok {
+			continue
+		}
+		if err := writer.Delete(ctx, section, row.Key); err != nil {
+			return pruned, err
+		}
+		pruned++
+	}
+	return pruned, nil
 }
 
 // sectionFor returns the settings section for a provider (e.g. saml -> auth.saml).
