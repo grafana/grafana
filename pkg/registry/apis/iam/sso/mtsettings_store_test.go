@@ -357,11 +357,97 @@ func TestMTSettingsStore(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFakeSettings(tc.rows)
-			obj, ok, err := tc.op(NewMTSettingsStore(f, f))
+			obj, ok, err := tc.op(NewMTSettingsStore(f, f, nil))
 			sso, _ := obj.(*iamv0.SSOSetting) // may be nil; each assert decides what "valid" means
 			tc.assert(t, sso, ok, err, f)
 		})
 	}
+}
+
+// fakeDefaults is a defaultsProvider double keyed by provider name.
+type fakeDefaults map[string]map[string]any
+
+func (f fakeDefaults) GetDefaults(provider string) map[string]any { return f[provider] }
+
+func TestMTSettingsStore_Defaults(t *testing.T) {
+	defaults := fakeDefaults{
+		"myProvider": {
+			"setting_1": "mail",
+			"setting_2": "mail",
+		},
+	}
+
+	t.Run("Create fills in defaults for absent and empty keys only", func(t *testing.T) {
+		f := newFakeSettings(nil)
+		_, err := NewMTSettingsStore(f, f, defaults).Create(nsCtx(),
+			ssoObj("myProvider", map[string]any{"enabled": "true", "setting_1": ""}),
+			nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		assert.Equal(t, map[string]string{
+			"enabled":   "true",
+			"setting_1": "mail",
+			"setting_2": "mail",
+		}, f.upserts)
+	})
+
+	t.Run("Update fills in defaults for absent and empty keys only", func(t *testing.T) {
+		f := newFakeSettings([]*settingsvc.Setting{usRow("auth.myProvider", "enabled", "true")})
+		_, _, err := NewMTSettingsStore(f, f, defaults).Update(nsCtx(), "myProvider",
+			rest.DefaultUpdatedObjectInfo(ssoObj("myProvider", map[string]any{"enabled": "false", "setting_2": "custom"})),
+			nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		assert.Equal(t, map[string]string{
+			"enabled":   "false",
+			"setting_1": "mail",
+			"setting_2": "custom",
+		}, f.upserts)
+	})
+
+	t.Run("Update does not prune a defaulted key that the request omits again", func(t *testing.T) {
+		f := newFakeSettings([]*settingsvc.Setting{
+			usRow("auth.myProvider", "enabled", "true"),
+			usRow("auth.myProvider", "setting_1", defaults["myProvider"]["setting_1"].(string)), // stored from a prior default-fill
+		})
+		_, _, err := NewMTSettingsStore(f, f, defaults).Update(nsCtx(), "myProvider",
+			rest.DefaultUpdatedObjectInfo(ssoObj("myProvider", map[string]any{"enabled": "false"})),
+			nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		assert.Empty(t, f.deleted)
+		assert.Equal(t, defaults["myProvider"]["setting_1"].(string), f.upserts["setting_1"])
+	})
+
+	t.Run("Create/Update are unaffected when the provider has no registered defaults", func(t *testing.T) {
+		f := newFakeSettings(nil)
+		store := NewMTSettingsStore(f, f, defaults)
+
+		_, err := store.Create(nsCtx(), ssoObj("myOtherProvider", map[string]any{"enabled": "true"}), nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, map[string]string{"enabled": "true"}, f.upserts)
+
+		_, _, err = store.Update(nsCtx(), "myOtherProvider",
+			rest.DefaultUpdatedObjectInfo(ssoObj("myOtherProvider", map[string]any{"enabled": "false"})),
+			nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, map[string]string{"enabled": "false"}, f.upserts)
+	})
+
+	t.Run("Create/Update are unaffected without a defaults provider", func(t *testing.T) {
+		f := newFakeSettings(nil)
+		store := NewMTSettingsStore(f, f, nil)
+
+		_, err := store.Create(nsCtx(), ssoObj("myProvider", map[string]any{"enabled": "true"}), nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, map[string]string{"enabled": "true"}, f.upserts)
+
+		_, _, err = store.Update(nsCtx(), "myProvider",
+			rest.DefaultUpdatedObjectInfo(ssoObj("myProvider", map[string]any{"enabled": "false"})),
+			nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, map[string]string{"enabled": "false"}, f.upserts)
+	})
 }
 
 func TestMTSettingsStore_List(t *testing.T) {
@@ -375,7 +461,7 @@ func TestMTSettingsStore_List(t *testing.T) {
 			usRow("smtp", "host", "localhost"),
 		})
 
-		obj, err := NewMTSettingsStore(f, f).List(nsCtx(), nil)
+		obj, err := NewMTSettingsStore(f, f, nil).List(nsCtx(), nil)
 		require.NoError(t, err)
 		list, ok := obj.(*iamv0.SSOSettingList)
 		require.True(t, ok)
@@ -397,7 +483,7 @@ func TestMTSettingsStore_List(t *testing.T) {
 
 	t.Run("empty list when no provider has rows", func(t *testing.T) {
 		f := newFakeSettings(nil)
-		obj, err := NewMTSettingsStore(f, f).List(nsCtx(), nil)
+		obj, err := NewMTSettingsStore(f, f, nil).List(nsCtx(), nil)
 		require.NoError(t, err)
 		list, ok := obj.(*iamv0.SSOSettingList)
 		require.True(t, ok)
@@ -405,7 +491,7 @@ func TestMTSettingsStore_List(t *testing.T) {
 	})
 
 	t.Run("without a reader, list is not implemented", func(t *testing.T) {
-		_, err := NewMTSettingsStore(nil, nil).List(nsCtx(), nil)
+		_, err := NewMTSettingsStore(nil, nil, nil).List(nsCtx(), nil)
 		require.Error(t, err)
 		status, ok := err.(apierrors.APIStatus)
 		require.True(t, ok)

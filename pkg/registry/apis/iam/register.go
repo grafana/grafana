@@ -473,7 +473,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		// reads/writes); without it (on-prem) the legacy store serves alone.
 		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
 			writer, _ := b.ssoSettingsClient.(settingsvc.Writer)
-			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer)
+			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer, b.sso)
 			dw, err := opts.DualWriteBuilder(ssoResource.GroupResource(), b.ssoLegacyStore, mtStore)
 			if err != nil {
 				return err
