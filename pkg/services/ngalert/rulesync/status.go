@@ -15,6 +15,8 @@ const (
 	ReasonNotARuler SyncReason = "not_a_ruler"
 	ReasonSave      SyncReason = "save"
 	ReasonPrune     SyncReason = "prune"
+	// ReasonPromote: promoting the synced rules to native Grafana rules failed.
+	ReasonPromote SyncReason = "promote"
 	// ReasonPanic is recorded when a per-org sync tick panics and is recovered so
 	// the background goroutine (and the process) survives.
 	ReasonPanic SyncReason = "panic"
@@ -24,6 +26,31 @@ const (
 )
 
 func (r SyncReason) Label() string { return string(r) }
+
+// ConditionReason maps a SyncReason to a k8s Condition reason (PascalCase),
+// mirroring the external Alertmanager sync's SyncReason.ConditionReason(). Used
+// when a sync outcome is folded into the rules Config resource's
+// ExternalRulerSynced condition rather than only a metric label.
+func (r SyncReason) ConditionReason() string {
+	switch r {
+	case ReasonDatasourceLookup:
+		return "DatasourceLookupFailed"
+	case ReasonRulerFetch:
+		return "RulerFetchFailed"
+	case ReasonNotARuler:
+		return "NotARuler"
+	case ReasonSave:
+		return "SaveFailed"
+	case ReasonPrune:
+		return "PruneFailed"
+	case ReasonPromote:
+		return "PromotionFailed"
+	case ReasonPanic:
+		return "Panicked"
+	default:
+		return "SyncFailed"
+	}
+}
 
 // SyncError tags an error with a SyncReason so callers can classify via
 // errors.As without parsing messages.

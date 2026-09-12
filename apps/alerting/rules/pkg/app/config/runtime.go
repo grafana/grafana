@@ -52,4 +52,10 @@ type RuntimeConfig struct {
 	// services. It backs the single namespaced POST /search custom route, which
 	// federates alert and recording rules into one result set.
 	SearchRulesHandler simple.AppCustomRouteHandler
+	// Implemented in the parent process (pkg/registry/apps/alerting/rules),
+	// where the datasource service and HTTP transport are in scope: verifies
+	// the feature flag, rejects writes while the operator ini override is set,
+	// and probes the datasource's ruler config API. Nil disables the check
+	// (returns no error).
+	ValidateExternalRulerSyncDatasource func(ctx context.Context, uid string) error
 }
