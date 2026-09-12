@@ -20,6 +20,7 @@ import {
   setLocationService,
 } from '@grafana/runtime';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { ModalRoot } from '@grafana/ui';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -45,6 +46,10 @@ interface ExtendedRenderOptions extends RenderOptions {
    * Props to pass to `createMemoryHistory`, if being used
    */
   historyOptions?: MemoryHistoryBuildOptions;
+  /**
+   * Render the app-level modal root as a sibling of the UI under test.
+   */
+  withModalRoot?: boolean;
 }
 
 /**
@@ -56,6 +61,7 @@ const getWrapper = ({
   renderWithRouter,
   historyOptions,
   grafanaContext,
+  withModalRoot,
 }: ExtendedRenderOptions & {
   grafanaContext?: Partial<GrafanaContextType>;
 }) => {
@@ -93,7 +99,10 @@ const getWrapper = ({
             <PotentialRouter>
               <LocationServiceProvider service={locationService}>
                 <PotentialCompatRouter>
-                  <ModalsContextProvider>{children}</ModalsContextProvider>
+                  <ModalsContextProvider>
+                    {children}
+                    {withModalRoot && <ModalRoot />}
+                  </ModalsContextProvider>
                 </PotentialCompatRouter>
               </LocationServiceProvider>
             </PotentialRouter>
@@ -111,11 +120,12 @@ const getWrapper = ({
  */
 const customRender = (
   ui: React.ReactElement,
-  { renderWithRouter = true, ...renderOptions }: ExtendedRenderOptions = {}
+  { renderWithRouter = true, withModalRoot = false, ...renderOptions }: ExtendedRenderOptions = {}
 ) => {
   const user = userEvent.setup();
   const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
-  const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
+  const AllTheProviders =
+    renderOptions.wrapper || getWrapper({ store, renderWithRouter, withModalRoot, ...renderOptions });
 
   setChromeHeaderHeightHook(() => 40);
 

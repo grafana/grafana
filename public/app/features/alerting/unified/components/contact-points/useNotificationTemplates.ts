@@ -161,7 +161,7 @@ interface CreateTemplateParams {
 
 export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const [createNamespacedTemplateGroup] = useCreateTemplateGroupMutation();
-  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
@@ -193,7 +193,7 @@ interface UpdateTemplateParams {
 
 export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const [replaceNamespacedTemplateGroup] = useReplaceTemplateGroupMutation();
-  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
@@ -221,7 +221,7 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
 
 export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const [deleteNamespacedTemplateGroup] = useDeleteTemplateGroupMutation();
-  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const deleteUsingConfigAPI = useAsync(async ({ uid }: { uid: string }) => {
     const action = deleteNotificationTemplateAction({ name: uid });
