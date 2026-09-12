@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
@@ -152,7 +153,7 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		ProvideInProcExchanger(),
-		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
+		authnlib.WithClientInterceptorIDTokenExtractor(newIDTokenExtractor(false)),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -177,6 +178,11 @@ type RemoteResourceClientConfig struct {
 	IsDev            bool
 	// TokenExchanger overrides the default exchange client when non-nil.
 	TokenExchanger authnlib.TokenExchanger
+	// PerRequestCredentialNamespace declares that TokenExchanger derives the credential's
+	// tenant from the request context, making Namespace only a fallback. A wildcard value
+	// then does not mean the call would leave unscoped, so such clients keep carrying user
+	// identities that have no ID token of their own.
+	PerRequestCredentialNamespace bool
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
@@ -216,43 +222,70 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 		tc = client
 	}
 
+	// Currently, only Apiextensions service is explicitly handling OBO token exchange.
+	// TODO(@konsalex): Will follow up with a centralised fn to allow OBO token exchange,
+	// by default in services' clients.
+	requireUserIDToken := cfg.Namespace == namespaceWildcard && !cfg.PerRequestCredentialNamespace
+
 	return authnlib.NewGrpcClientInterceptor(
 		tc,
 		authnlib.WithClientInterceptorTracer(tracer),
 		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
 		authnlib.WithClientInterceptorAudience(cfg.Audiences),
-		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
+		authnlib.WithClientInterceptorIDTokenExtractor(newIDTokenExtractor(requireUserIDToken)),
 	), nil
 }
 
 var authLogger = log.New("resource-client-auth-interceptor")
 
-func IDTokenExtractor(ctx context.Context) (string, error) {
-	if identity.IsServiceIdentity(ctx) {
+// namespaceWildcard is the credential namespace that grants access to every tenant.
+const namespaceWildcard = "*"
+
+// newIDTokenExtractor returns the ID token extractor for a resource store client. When
+// requireUserToken is set, a user identity that cannot present an ID token is refused
+// rather than carried under the client's own credential.
+func newIDTokenExtractor(requireUserToken bool) func(context.Context) (string, error) {
+	return func(ctx context.Context) (string, error) {
+		if identity.IsServiceIdentity(ctx) {
+			return "", nil
+		}
+
+		info, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			return "", fmt.Errorf("no claims found")
+		}
+
+		// If the identity is the service identity, we don't need to extract the ID token
+		if info.GetIdentityType() == types.TypeAccessPolicy {
+			return "", nil
+		}
+
+		if token := info.GetIDToken(); len(token) != 0 {
+			return token, nil
+		}
+
+		if requireUserToken {
+			// The identity is logged rather than returned, to keep it out of the API response.
+			authLogger.FromContext(ctx).Error(
+				"refusing to call resource store as the service on behalf of a user without an id token",
+				"subject", info.GetSubject(),
+				"uid", info.GetUID(),
+			)
+			return "", status.Error(codes.PermissionDenied, "user identity has no id token and the resource store credential is not scoped to a tenant")
+		}
+
+		// Not a warning: the callers that reach here are the in-process single-tenant client
+		// and clients whose exchanger already scoped the credential to the caller's tenant
+		// (example OBO token exchanger from Apiextensions that never carries an ID token).
+		// Anything genuinely unscoped was refused above.
+		authLogger.FromContext(ctx).Debug(
+			"no id token to forward to the resource store",
+			"subject", info.GetSubject(),
+			"uid", info.GetUID(),
+		)
+
 		return "", nil
 	}
-
-	info, ok := types.AuthInfoFrom(ctx)
-	if !ok {
-		return "", fmt.Errorf("no claims found")
-	}
-
-	// If the identity is the service identity, we don't need to extract the ID token
-	if info.GetIdentityType() == types.TypeAccessPolicy {
-		return "", nil
-	}
-
-	if token := info.GetIDToken(); len(token) != 0 {
-		return token, nil
-	}
-
-	authLogger.FromContext(ctx).Warn(
-		"calling resource store as the service without id token or marking it as the service identity",
-		"subject", info.GetSubject(),
-		"uid", info.GetUID(),
-	)
-
-	return "", nil
 }
 
 func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
