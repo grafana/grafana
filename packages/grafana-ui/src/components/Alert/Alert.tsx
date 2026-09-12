@@ -95,7 +95,14 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             <Stack alignItems="center" wrap="wrap">
               {action}
               {onRemove && buttonContent && (
-                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                <Button
+                  // A string buttonContent is already the button's accessible name, so overriding it would announce
+                  // something other than what the user sees.
+                  aria-label={typeof buttonContent === 'string' ? undefined : closeLabel}
+                  variant="secondary"
+                  onClick={onRemove}
+                  type="button"
+                >
                   {buttonContent}
                 </Button>
               )}
