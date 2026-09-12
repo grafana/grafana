@@ -301,6 +301,7 @@
    "chatid": "12345678",
    "disable_notifications": true,
    "disable_web_page_preview": true,
+   "send_message_as_caption": true,
    "message": "test-message",
    "message_thread_id": "13579",
    "parse_mode": "html",
