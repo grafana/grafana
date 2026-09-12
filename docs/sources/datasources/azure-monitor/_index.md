@@ -22,7 +22,7 @@ labels:
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Azure Monitor data source
