@@ -15,6 +15,7 @@ labels:
 menuTitle: Trace to logs
 title: Configure trace to logs correlation
 weight: 300
+review_date: 2026-09-10
 ---
 
 # Configure trace to logs correlation
@@ -50,6 +51,10 @@ Refer to [Provision trace to logs settings](#provision-trace-to-logs-settings) f
 
 These settings control how Grafana queries your log data source when you click a span in the trace view.
 This guide uses Loki, but Trace to logs also supports Elasticsearch, Splunk, OpenSearch, Falcon LogScale, Google Cloud Logging, and VictoriaMetrics Logs.
+
+{{< admonition type="note" >}}
+To change the target log data source, for example from Elasticsearch to Loki, select the new data source from the **Data source** drop-down in the following steps and update the tags and custom query to match its query language. The reverse direction, from a log line back to a trace, is configured on the log data source itself, and the mechanism differs by type: Loki uses [Derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure-loki-data-source/#derived-fields), while Elasticsearch and Splunk use [Data links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/#data-links).
+{{< /admonition >}}
 
 1. Go to **Connections** > **Data sources** and select your Tempo data source.
 1. Scroll to the **Trace to logs** section.
