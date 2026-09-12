@@ -2,9 +2,11 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -54,8 +56,23 @@ type aggregateTarget struct {
 func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client) (*aggregateTarget, error) {
 	base, err := url.Parse(cfg.URL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("router: parsing %s url %q: %w", cfg.Name, cfg.URL, err)
 	}
+	// url.Parse alone accepts empty and relative values without error (e.g.
+	// "" or "/just/a/path" parse fine with no scheme/host). Reject those here,
+	// at construction time -- otherwise the target is built, starts polling a
+	// URL it can never reach, and the misconfiguration surfaces only as a
+	// recurring background WARN instead of failing startup loudly. Same check
+	// and rationale as NewForwardBackend's.
+	if base.Scheme == "" || base.Host == "" {
+		return nil, fmt.Errorf("router: %s url must be absolute (scheme and host required): url=%q", cfg.Name, cfg.URL)
+	}
+	// Normalize away a trailing slash so every path join off this base is
+	// deterministic: a configured "https://host/" leaves Path="/", which
+	// concatenates into "//apis" -- a different path than "/apis" to most
+	// servers, silently breaking discovery for this target.
+	base.Path = strings.TrimRight(base.Path, "/")
+
 	patterns, err := compileGroupPatterns(cfg.GroupPatterns)
 	if err != nil {
 		return nil, err

@@ -171,3 +171,28 @@ func TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 	default:
 	}
 }
+
+// TestNewAggregateTarget_RejectsNonAbsoluteURL pins the construction-time URL
+// check: url.Parse accepts all of these, so without the explicit scheme/host
+// rejection a misconfigured target would be built and its breakage would show
+// up only as a recurring background WARN.
+func TestNewAggregateTarget_RejectsNonAbsoluteURL(t *testing.T) {
+	for _, badURL := range []string{"", "/just/a/path", "baas.example.invalid", "//host/path"} {
+		t.Run(badURL, func(t *testing.T) {
+			_, err := newAggregateTarget(aggregateTargetConfig{
+				Name: "baas_apiserver",
+				URL:  badURL,
+			}, http.DefaultClient)
+			require.ErrorContains(t, err, "must be absolute")
+		})
+	}
+}
+
+func TestNewAggregateTarget_NormalizesTrailingSlash(t *testing.T) {
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name: "baas_apiserver",
+		URL:  "https://baas.example.invalid/",
+	}, http.DefaultClient)
+	require.NoError(t, err)
+	require.Equal(t, "https://baas.example.invalid", target.base.String())
+}

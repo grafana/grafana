@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -18,7 +19,10 @@ import (
 // they serve, so this active discovery call is unavoidable; forward backends
 // avoid it by learning their group from their CR instead.
 func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+apisPrefix, nil)
+	// Trim a trailing slash before joining: a configured "https://host/" would
+	// otherwise produce "//apis", which most servers route differently than
+	// "/apis" -- silently breaking discovery for that target.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
 	}
@@ -60,12 +64,22 @@ func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL
 	sum := sha256.Sum256(body)
 	key := "aggregate:" + targetName + ":" + hex.EncodeToString(sum[:])[:16]
 
+	// Normalize a trailing slash out of the base path, on a copy so the caller
+	// keeps ownership of base (aggregateTarget.base is shared by every group on
+	// that target). ProxyRequest.SetURL's joiner happens to collapse "/" + "/x"
+	// today, so this is belt-and-braces rather than a live bug -- but it makes
+	// the "base path has no trailing slash" invariant local and explicit here
+	// instead of resting on a stdlib join detail, the same invariant
+	// discoverGroups relies on for the discovery URL.
+	target := *base
+	target.Path = strings.TrimRight(target.Path, "/")
+
 	return &aggregateBackend{
 		targetName: targetName,
 		group:      group,
 		key:        key,
 		proxy: &httputil.ReverseProxy{
-			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(base) },
+			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(&target) },
 			Transport:      transport,
 			ModifyResponse: rejectBackendRedirects,
 		},

@@ -31,6 +31,22 @@ func TestDiscoverGroups(t *testing.T) {
 	require.Equal(t, "dashboard.grafana.app", groups[0].Name)
 }
 
+// TestDiscoverGroups_TrailingSlashBaseURL pins the path join: a base URL
+// written with a trailing slash must still hit "/apis", not "//apis", which
+// most servers route differently.
+func TestDiscoverGroups_TrailingSlashBaseURL(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_ = json.NewEncoder(w).Encode(metav1.APIGroupList{})
+	}))
+	defer srv.Close()
+
+	_, err := discoverGroups(t.Context(), srv.Client(), srv.URL+"/")
+	require.NoError(t, err)
+	require.Equal(t, "/apis", gotPath)
+}
+
 func TestDiscoverGroups_NonOKStatus(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -99,4 +115,36 @@ func TestAggregateBackend_ProxiesToTargetHost(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Equal(t, "/apis/dashboard.grafana.app/v1", gotPath)
+}
+
+// TestAggregateBackend_TrailingSlashBaseDoesNotDoubleSlash covers the serving
+// side of the same path-join concern as
+// TestDiscoverGroups_TrailingSlashBaseURL: a base URL configured with a
+// trailing slash must not produce "//apis/..." upstream. This one passes
+// either way today (ProxyRequest.SetURL's joiner already collapses the double
+// slash) -- it's here to pin the guarantee at the serving boundary, and to
+// check that newAggregateBackend normalizes on a copy rather than mutating the
+// caller's shared URL.
+func TestAggregateBackend_TrailingSlashBaseDoesNotDoubleSlash(t *testing.T) {
+	var gotPath string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer upstream.Close()
+
+	base, err := url.Parse(upstream.URL + "/")
+	require.NoError(t, err)
+
+	backend, err := newAggregateBackend("baas_apiserver", metav1.APIGroup{Name: "dashboard.grafana.app"}, base, http.DefaultTransport)
+	require.NoError(t, err)
+	handler, err := backend.Load(t.Context())
+	require.NoError(t, err)
+
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1", nil))
+	require.Equal(t, "/apis/dashboard.grafana.app/v1", gotPath)
+
+	// newAggregateBackend must normalize on a copy, leaving the caller's URL
+	// (aggregateTarget.base, shared across every group on that target) alone.
+	require.Equal(t, "/", base.Path)
 }
