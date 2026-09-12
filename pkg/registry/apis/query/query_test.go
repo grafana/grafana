@@ -273,8 +273,8 @@ func (m mockInstanceProvider) GetMode() string {
 func (m mockInstance) ReportMetrics() {
 }
 
-func (m mockInstance) GetLogger() log.Logger {
-	return m.logger
+func (m mockInstance) GetLogLabels() []any {
+	return nil
 }
 
 func (m mockInstance) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
