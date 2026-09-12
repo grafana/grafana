@@ -144,7 +144,18 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
 	}
 	if resp != nil || len(queryRequestJSON) > 0 {
-		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
+		queryData, truncated, err := marshalQueryDataArtifactWithLimit(queryRequestJSON, resp, maxQueryDataArtifactBytes)
+		if truncated {
+			// A truncated artifact still encodes successfully (err stays nil below), so without this the
+			// only trace of the drop is the truncated/limitBytes/originalBytes fields inside
+			// querydata.json itself -- easy to miss next to an actual encode failure, which does get a
+			// querydata-error.txt. Record it the same way so either cause leaves a visible trail.
+			//
+			// "request and/or response" rather than naming one side: truncated can fire with no response
+			// at all (an oversized request on its own), so blaming "the response" unconditionally would
+			// contradict querydata.json's own responseOmitted/requestOmitted markers in that case.
+			queryDataErr = errors.Join(queryDataErr, fmt.Errorf("querydata.json was truncated: request and/or response exceeded the %d-byte size limit", maxQueryDataArtifactBytes))
+		}
 		if err != nil {
 			// A query-data artifact that cannot be fully JSON-encoded must not sink the whole bundle:
 			// record the failure and still ship HAR and the other artifacts, mirroring how the dashboard
@@ -222,11 +233,6 @@ type queryDataFrameSummary struct {
 	RefID  string `json:"refId,omitempty"`
 	Rows   int    `json:"rows"`
 	Fields int    `json:"fields"`
-}
-
-func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
-	data, _, err := marshalQueryDataArtifactWithLimit(request, resp, maxQueryDataArtifactBytes)
-	return data, err
 }
 
 // marshalQueryDataArtifactWithLimit returns the encoded querydata.json plus whether it had to drop
@@ -511,6 +517,18 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 					entry.QueryDataBytes = len(queryData)
 					queryDataBytesRemaining -= len(queryData)
 					entry.QueryDataTruncated = truncated
+					if truncated {
+						// Encoded successfully within its budget, but only after dropping content -- unlike
+						// the other two QueryDataTruncated branches above, nothing else here would otherwise
+						// explain why. Without a message, QueryDataError stays empty and the manifest reads
+						// as if this panel's query data is complete.
+						//
+						// "request and/or response" rather than naming one side: truncated can fire with no
+						// response at all (an oversized request on its own), so blaming "the response"
+						// unconditionally would contradict querydata.json's own responseOmitted/requestOmitted
+						// markers in that case.
+						queryDataErrs = append(queryDataErrs, fmt.Sprintf("querydata.json was truncated: request and/or response exceeded its %d-byte assigned budget", queryDataLimit))
+					}
 				}
 			}
 		}
