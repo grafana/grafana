@@ -16,11 +16,14 @@ Everything lives here in OSS.
   — see Lifecycle below.
 - `dummyRoutesLoader` (`dummy.go`) — the OSS default: two static dummy API groups.
 - `cloudLoader`/`ProvideCloudRoutesLoaderFactory` (`cloud_router.go`) — the concrete `RoutesLoader`
-  that reads RouteBackend/AppManifest custom resources off a remote control-plane apiserver. Only
-  activates when `[cloud_router].apiserver_url` is configured (see Settings below); otherwise
-  `ProvideRoutesLoader` (`loader_factory.go`) falls back to the dummy loader. This is the one file in
-  the package that knows deployment-specific kinds (`v1alpha2.RouteBackend`/`AppManifest`) — keep that
-  knowledge contained here, out of `router.go`/`types.go`.
+  that reads RouteBackend/AppManifest custom resources off a remote control-plane apiserver **and**
+  serves the fixed aggregate targets. Activates when **any** of
+  `[cloud_router].appmanifest_apiserver_url`, `baas_apiserver.url`, or
+  `cloud_app_platform_apiserver.url` is configured (see Settings below); with none of them set,
+  `ProvideRoutesLoader` (`loader_factory.go`) falls back to the dummy loader. This file, together with
+  the `aggregate_*.go` files, is where deployment-specific knowledge lives — the
+  `v1alpha2.RouteBackend`/`AppManifest` kinds here, and the two fixed aggregate-target names in
+  `aggregate_config.go`. Keep that knowledge contained in these files, out of `router.go`/`types.go`.
 
 ## `cloud_router`: source resources & correlation
 
@@ -162,6 +165,15 @@ with the same TLS settings share a transport and its pool. `MinVersion` is TLS 1
 `InsecureSkipVerify` — an intentional, spec-gated escape hatch for trusted internal links, with a
 targeted `nosemgrep`/`#nosec` justification. Only enable it for backends whose link is actually
 trusted.
+
+Aggregate targets do not go through `transportFor` (they have no `RouteBackend` spec and so no TLS
+settings to key on), but they follow the same intent: `newAggregateBaseTransport` clones
+`http.DefaultTransport` **once per target** and hands it to `rest.Config.Transport`, so each target
+owns its connection pool instead of sharing the process-global default's (`MaxIdleConnsPerHost` 2,
+shared with every other `DefaultTransport` user in the process). That matters because the same client
+carries both the target's discovery poll and all user traffic proxied to it. `rest.Config.Transport`
+is the base round tripper and `WrapTransport` layers on top of it (`rest.TransportFor` →
+`transport.New` → `HTTPWrappersForConfig`), so the CAP-token exchange wrapper still applies.
 
 ## Path model
 
@@ -324,25 +336,78 @@ writeup:
   same 502 as a real transport failure, so without the exclusion a few abandoned client requests trip
   the breaker for every other caller on that group.
 
+### Active discovery is a different concern from passive health
+
+The decision above is about *health* — whether a group's backend is serving well right now, and
+whether that should gate `/apis`/`/openapi/v3`. It says nothing about *discovery* — learning which
+groups exist in the first place. `forward` backends (RouteBackend CRs) get discovery for free from the
+CR; the two fixed aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`, implemented in
+`aggregate_*.go` files) have no CR, so the router polls their `/apis` endpoint on a cooldown-paced
+background loop to learn their group list. That poll result only ever changes *which groups are
+installed* — the same `r.served`-sourced discovery synthesis and the same per-group `gobreaker`
+breaker apply to an aggregate-discovered group exactly as they do to a forward one; nothing here
+reintroduces kube-aggregator's `AvailabilityController`-style active health gating that the section
+above rejects.
+
+**A failed poll changes nothing** — it leaves the previous snapshot untouched, so a down target's
+already-discovered groups stay in `/apis` and stay serving on last-known-good. This is the invariant
+the whole feature's health story rests on: discovery only ever learns *which groups exist*, and a
+target being unreachable is a health fact, handled by the per-group breaker on real request outcomes.
+
+**The cooldown is the poll loop's only pacing source.** `aggregateTarget.run` resets a single
+`time.Timer` from `cooldown.Until` after every attempt; there is deliberately no second
+fixed-interval ticker (nor is there a `Ready()` predicate left on `cooldown` to gate one with —
+`Until` is the whole API). A previous version had both, skipping any tick the cooldown wasn't
+ready for: since
+the ticker interval and the cooldown's steady interval are the same 30s, the two raced (an early tick
+was silently dropped, pushing the real cadence out by a whole interval) and the 5s/10s/20s… backoff
+ladder was masked entirely, because a retry scheduled 5s out could not run until the outer ticker
+next fired. Don't reintroduce a second timing source.
+
 ## Settings (`[cloud_router]`, `cloud_router.go`)
 
 Not documented in OSS `conf/defaults.ini` -- read directly via
 `cfg.SectionWithEnvOverrides("cloud_router")`, no `pkg/setting` struct field, since this is an
 optional, deployment-specific loader rather than a core Grafana concept. An ini section is never
-truly absent (`SectionWithEnvOverrides` always returns a valid, empty section), so `apiserver_url`'s
-presence is what actually gates activation, not the section's existence. Keys:
+truly absent (`SectionWithEnvOverrides` always returns a valid, empty section), so what actually gates
+activation is the presence of at least one upstream apiserver URL — **any** of
+`appmanifest_apiserver_url`, `baas_apiserver.url`, or `cloud_app_platform_apiserver.url` — not the
+section's existence. Keys:
 
 | Key                   | Required             | Meaning                                                                 |
 | --------------------- | --------------------- | ------------------------------------------------------------------------ |
-| `apiserver_url`       | gates activation      | Base URL of the remote apiserver serving `apps.grafana.app`. Empty -> `ProvideCloudRoutesLoaderFactory` returns `(nil, nil)` and the dummy loader is used instead. |
-| `cap_token`           | yes, once `apiserver_url` is set | Grafana Cloud Access Policy token exchanged for a signed access token. |
-| `token_exchange_url`  | yes, once `apiserver_url` is set | URL of the token exchange service used to sign `cap_token` per request. |
-| `apiserver_ca_file`   | no                    | CA bundle file used to verify the apiserver TLS cert.                    |
-| `apiserver_insecure`  | no                    | Skip TLS verification of the apiserver. Dev only.                       |
+| `appmanifest_apiserver_url`       | gates AppManifest CR loader      | Base URL of the remote apiserver serving `apps.grafana.app` RouteBackend/AppManifest CRs. Empty → CRD-backed loader is disabled, but aggregate targets may still be active. |
+| `cap_token`           | yes, if any apiserver_url is set | Grafana Cloud Access Policy token exchanged for a signed access token per request; shared across appmanifest and aggregate targets. |
+| `token_exchange_url`  | yes, if any apiserver_url is set | URL of the token exchange service used to sign `cap_token` per request; shared across appmanifest and aggregate targets. |
+| `apiserver_ca_file`   | no                    | CA bundle file used to verify `appmanifest_apiserver_url`'s TLS cert. Does **not** apply to aggregate targets. |
+| `apiserver_insecure`  | no                    | Skip TLS verification of `appmanifest_apiserver_url`. Dev only. Does **not** apply to aggregate targets. |
+| `baas_apiserver.url`  | no                    | Base URL of the BaaS apiserver. If unset, BaaS group discovery is skipped. |
+| `baas_apiserver.audience` | yes, if `baas_apiserver.url` is set | OIDC audience string to request when exchanging the CAP token for this target's access token. |
+| `baas_apiserver.group_regex` | no                | Comma-separated glob patterns (e.g., `*.grafana.app,*.internal`) to filter discovered groups. Unset means accept all groups discovered from this target. |
+| `cloud_app_platform_apiserver.url` | no          | Base URL of the Cloud App Platform apiserver. If unset, CAP group discovery is skipped. |
+| `cloud_app_platform_apiserver.audience` | yes, if `cloud_app_platform_apiserver.url` is set | OIDC audience string for this target. |
+| `cloud_app_platform_apiserver.group_regex` | no | Comma-separated glob patterns to filter CAP-discovered groups; same semantics as baas_apiserver. |
 
-`apiserver_url` set without `cap_token` or `token_exchange_url` is a hard error, not a silent
-fallback to the dummy loader -- a partially configured `cloud_router` section means the operator
-meant to enable it, so failing loudly beats silently serving dummy routes.
+Any combination of `appmanifest_apiserver_url`, `baas_apiserver.url`, and `cloud_app_platform_apiserver.url` may be set
+independently. `cap_token` and `token_exchange_url` are required only if **any** of the three is set (CRs or aggregates).
+Aggregate targets activate independently of the AppManifest loader — the router can serve aggregate-discovered groups
+without any RouteBackend CRs, and vice versa.
+
+**Every `*.url` value must be absolute** (scheme + host). `url.Parse` accepts `""` and relative
+values without error, so `newAggregateTarget` rejects them explicitly, same as `NewForwardBackend`
+does — otherwise a typo'd target polls a URL it can never reach and the only symptom is a recurring
+background `WARN`. A trailing slash is tolerated (normalized away) rather than producing `//apis`.
+
+**Legacy key: `apiserver_url` is a hard error.** It was renamed to `appmanifest_apiserver_url`.
+`ProvideCloudRoutesLoaderFactory` still reads the old name and fails loudly if it is set while the new
+one is not — without that, a deployment left on the old key looks like "nothing configured", falls
+through to the dummy loader, and the router reports itself ready while serving an empty route set.
+Setting both is fine (the new key wins, the old one is ignored).
+
+`group_regex` patterns are **globs, not regexes**: `*` is the only special character and everything
+else is passed through `regexp.QuoteMeta`, so `+`, `(`, `[` etc. match literally. `group_regex` is a
+narrowing allowlist, so a live metacharacter would widen the shortlist — the wrong failure direction.
+A side effect: glob compilation can never fail, so there is no "invalid pattern" error to handle.
 
 ## Lifecycle / ownership
 
