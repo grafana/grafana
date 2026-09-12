@@ -24,7 +24,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type RowItem } from './layout-rows/RowItem';
@@ -261,7 +260,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     sourceDropTarget: DashboardDropTarget | null,
     gridItem: SceneGridItemLike | undefined
   ): void {
-    if (!(sourceDropTarget instanceof AutoGridLayoutManager) || !gridItem || !(gridItem instanceof AutoGridItem)) {
+    if (!(sourceDropTarget instanceof AutoGridLayoutManager) || !gridItem) {
       return;
     }
 
@@ -275,7 +274,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    reorderAutoGridItems({ layout, movedItem: gridItem, fromIndex, toIndex });
+    reorderAutoGridItems({ layout, movedItem: children[fromIndex], fromIndex, toIndex });
   }
 
   /**
