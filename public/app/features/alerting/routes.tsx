@@ -7,6 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
 import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { applyRouteProxies } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
   PERMISSIONS_NOTIFICATION_POLICIES,
@@ -436,7 +437,9 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     });
   }
 
-  return routes;
+  // Hands data source managed URLs over to the grafana-prometheusalerting-app plugin when it's
+  // installed. Everything else is left exactly as it was.
+  return applyRouteProxies(routes);
 }
 
 // this function will always load the "feature disabled" component for all alerting routes

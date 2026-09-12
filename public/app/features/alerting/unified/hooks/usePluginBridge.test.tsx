@@ -1,6 +1,7 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { OrgRole, PluginIncludeType } from '@grafana/data';
+import * as runtime from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -9,9 +10,42 @@ import { addPlugin, disablePlugin, failPlugin, removePlugin } from '../mocks/ser
 import { pluginMeta } from '../testSetup/plugins';
 import { SupportedPlugin } from '../types/pluginBridges';
 
-import { canAccessPluginPage, useIrmPlugin } from './usePluginBridge';
+import { PluginBridgeTimeoutError, canAccessPluginPage, useIrmPlugin, usePluginBridge } from './usePluginBridge';
 
 const server = setupMswServer();
+
+describe('usePluginBridge', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('settles with a timeout error when plugin discovery hangs', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(runtime, 'isAppPluginInstalled').mockReturnValue(new Promise<boolean>(() => {}));
+    const onTimeout = jest.fn();
+
+    const { result } = renderHook(() =>
+      usePluginBridge(SupportedPlugin.PrometheusAlerting, {
+        timeoutMs: 5_000,
+        onTimeout,
+      })
+    );
+
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5_000);
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.installed).toBeUndefined();
+    const timeoutError = new PluginBridgeTimeoutError(SupportedPlugin.PrometheusAlerting, 5_000);
+    expect(result.current.error).toEqual(timeoutError);
+    expect(onTimeout).toHaveBeenCalledTimes(1);
+    expect(onTimeout).toHaveBeenCalledWith(timeoutError);
+  });
+});
 
 describe('useIrmPlugin', () => {
   let requestedPluginSettings: string[] = [];

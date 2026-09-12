@@ -2,6 +2,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
+import { routeProxies } from './unified/plugin-proxy/proxies';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
@@ -102,5 +103,15 @@ describe('alerting route guards', () => {
       const guard = getRouteRolesGuard(importToGmaPath);
       expect(guard()).toEqual(['Reject']);
     });
+  });
+});
+
+describe('data source managed route proxies', () => {
+  it('every proxy points at a route that actually exists', () => {
+    const routePaths = getAlertingRoutes().map((route) => route.path);
+
+    for (const { path } of routeProxies) {
+      expect(routePaths).toContain(path);
+    }
   });
 });

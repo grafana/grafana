@@ -20,6 +20,7 @@ import {
   hashRule,
   hashRulerRule,
   parse,
+  stringifyDataSourceIdentifier,
   stringifyIdentifier,
   stripPromQLComments,
 } from './rule-id';
@@ -145,6 +146,52 @@ describe('hashRulerRule', () => {
 
     expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Efolder2%24group1%1Egroup2%24CPU-firing%24abc123');
     expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
+  });
+
+  describe('stringifyDataSourceIdentifier', () => {
+    it('names the rules source with whatever id it is given, instead of the name on the identifier', () => {
+      const identifier: RuleIdentifier = {
+        ruleSourceName: 'Mimir',
+        namespace: 'namespace1',
+        groupName: 'group1',
+        ruleName: 'CPU-firing',
+        rulerRuleHash: 'abc123',
+      };
+
+      expect(stringifyDataSourceIdentifier(identifier, 'mimir-uid')).toBe(
+        'cri$mimir-uid$namespace1$group1$CPU-firing$abc123'
+      );
+      // Passing the name back in is exactly what stringifyIdentifier does
+      expect(stringifyDataSourceIdentifier(identifier, 'Mimir')).toBe(stringifyIdentifier(identifier));
+    });
+
+    it('keeps the prometheus prefix for rules with no ruler', () => {
+      const identifier: RuleIdentifier = {
+        ruleSourceName: 'Prom',
+        namespace: 'namespace1',
+        groupName: 'group1',
+        ruleName: 'CPU-firing',
+        ruleHash: 'abc123',
+      };
+
+      expect(stringifyDataSourceIdentifier(identifier, 'prom-uid')).toBe(
+        'pri$prom-uid$namespace1$group1$CPU-firing$abc123'
+      );
+    });
+
+    it('escapes the parts, so a round trip through parse survives', () => {
+      const identifier: RuleIdentifier = {
+        ruleSourceName: 'Mimir',
+        namespace: 'folder1/folder2',
+        groupName: 'group$1',
+        ruleName: 'CPU-firing',
+        rulerRuleHash: 'abc123',
+      };
+
+      const encoded = encodeURIComponent(stringifyDataSourceIdentifier(identifier, 'mimir-uid'));
+
+      expect(parse(encoded, true)).toStrictEqual({ ...identifier, ruleSourceName: 'mimir-uid' });
+    });
   });
 
   it('should correctly decode a Grafana managed rule id', () => {
