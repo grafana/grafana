@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
@@ -18,6 +18,24 @@ describe('ColorPickerPopover', () => {
 
     await userEvent.tab();
     expect(color).toHaveFocus();
+  });
+
+  it('loads the custom picker on tab selection and emits keyboard color changes', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<ColorPickerPopover color="#ff0000" onChange={onChange} />);
+
+    expect(screen.getByRole('button', { name: 'red color' })).toBeInTheDocument();
+    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Custom' }));
+    const alpha = await screen.findByRole('slider', { name: 'Alpha' });
+    alpha.focus();
+    await user.keyboard('{ArrowLeft}');
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('#ff0000f2'));
+    await user.click(screen.getByRole('tab', { name: 'Colors' }));
+    expect(screen.getByRole('button', { name: 'red color' })).toBeInTheDocument();
+    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
   });
 
   describe('rendering', () => {

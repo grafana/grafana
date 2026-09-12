@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 
 import { ColorPickerInput } from './ColorPickerInput';
 
@@ -9,6 +10,7 @@ describe('ColorPickerInput', () => {
     render(<ColorPickerInput onChange={noop} />);
     expect(screen.queryByTestId('color-popover')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('textbox'));
+    expect(await screen.findByRole('slider', { name: 'Hue' })).toBeInTheDocument();
     expect(screen.getByTestId('color-popover')).toBeInTheDocument();
   });
 
@@ -16,6 +18,7 @@ describe('ColorPickerInput', () => {
     render(<ColorPickerInput onChange={noop} />);
     expect(screen.queryByTestId('color-popover')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('textbox'));
+    expect(await screen.findByRole('slider', { name: 'Hue' })).toBeInTheDocument();
     expect(screen.getByTestId('color-popover')).toBeInTheDocument();
     await userEvent.click(document.body);
     expect(screen.queryByTestId('color-popover')).not.toBeInTheDocument();
@@ -25,9 +28,29 @@ describe('ColorPickerInput', () => {
     render(<ColorPickerInput onChange={noop} />);
     expect(screen.queryByTestId('color-popover')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('textbox'));
+    expect(await screen.findByRole('slider', { name: 'Hue' })).toBeInTheDocument();
     expect(screen.getByTestId('color-popover')).toBeInTheDocument();
     await userEvent.click(screen.getAllByRole('slider')[0]);
     expect(screen.getByTestId('color-popover')).toBeInTheDocument();
+  });
+
+  it('preserves the input ref and emits keyboard color changes from the lazy picker', async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLInputElement>();
+    const onChange = jest.fn();
+    render(<ColorPickerInput ref={ref} value="rgb(255, 0, 0)" onChange={onChange} />);
+
+    const input = screen.getByRole('textbox');
+    expect(ref.current).toBe(input);
+    expect(input).toHaveValue('rgb(255, 0, 0)');
+    await user.click(input);
+    const alpha = await screen.findByRole('slider', { name: 'Alpha' });
+    alpha.focus();
+    await user.keyboard('{ArrowLeft}');
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('rgba(255, 0, 0, 0.95)'));
+    expect(screen.getByTestId('color-popover')).toBeInTheDocument();
+    expect(ref.current).toBe(input);
   });
 
   it('should pass correct color to onChange callback', async () => {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useId, useMemo, useState } from 'react';
-import { RgbaStringColorPicker } from 'react-colorful';
+
 import { useThrottleFn } from 'react-use';
 import tinycolor from 'tinycolor2';
 
@@ -12,6 +12,7 @@ import { Field } from '../Forms/Field';
 import { Stack } from '../Layout/Stack/Stack';
 
 import ColorInput from './ColorInput';
+import { RgbaStringColorPicker } from './RgbaStringColorPicker';
 
 interface SpectrumPaletteProps {
   color: string;

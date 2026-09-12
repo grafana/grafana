@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useState, forwardRef, type FocusEvent } from 'react';
-import { RgbaStringColorPicker } from 'react-colorful';
+
 import { useThrottleFn } from 'react-use';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +10,7 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 import { type Props as InputProps } from '../Input/Input';
 
 import ColorInput from './ColorInput';
+import { RgbaStringColorPicker } from './RgbaStringColorPicker';
 import { getStyles as getPaletteStyles } from './SpectrumPalette';
 
 export interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onChange'> {
