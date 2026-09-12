@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
+import { ClipboardButton, Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
 
 import { type TransformationsEditorTransformation } from './types';
 
@@ -72,6 +72,15 @@ export const TransformationEditor = ({
             <div className={styles.debug}>
               <div className={styles.debugTitle}>
                 <Trans i18nKey="dashboard.transformation-editor.input-data">Input data</Trans>
+                <ClipboardButton
+                  icon="copy"
+                  variant="secondary"
+                  fill="text"
+                  size="sm"
+                  getText={() => JSON.stringify(input, null, 2)}
+                >
+                  <Trans i18nKey="dashboard.transformation-editor.copy-input-data">Copy</Trans>
+                </ClipboardButton>
               </div>
               <div className={styles.debugJson}>
                 <JSONFormatter json={input} />
@@ -83,6 +92,15 @@ export const TransformationEditor = ({
             <div className={styles.debug}>
               <div className={styles.debugTitle}>
                 <Trans i18nKey="dashboard.transformation-editor.output-data">Output data</Trans>
+                <ClipboardButton
+                  icon="copy"
+                  variant="secondary"
+                  fill="text"
+                  size="sm"
+                  getText={() => JSON.stringify(output, null, 2)}
+                >
+                  <Trans i18nKey="dashboard.transformation-editor.copy-output-data">Copy</Trans>
+                </ClipboardButton>
               </div>
               <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
             </div>
@@ -110,6 +128,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.primary.text,
     }),
     debugTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
