@@ -133,6 +133,132 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenNthCalledWith(3, [{ label: 'C', value: third }]);
   });
 
+  it('keeps checkboxes and selection behavior with custom option content', async () => {
+    const options: Array<ComboboxOption<string>> = [
+      { label: 'Alpha', value: 'a' },
+      { label: 'Beta', value: 'b' },
+    ];
+    const onChange = jest.fn();
+
+    const ControlledMultiCombobox = () => {
+      const [value, setValue] = React.useState<Array<ComboboxOption<string>>>([]);
+
+      return (
+        <MultiCombobox
+          options={options}
+          value={value}
+          onChange={(selectedOptions) => {
+            setValue(selectedOptions);
+            onChange(selectedOptions);
+          }}
+          renderOption={(option) => (
+            <span>
+              Custom <strong data-testid={`custom-multi-option-${option.value}`}>{option.label}</strong>
+            </span>
+          )}
+        />
+      );
+    };
+
+    render(<ControlledMultiCombobox />);
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.getByTestId('combobox-option-b-checkbox')).not.toBeChecked();
+    await user.click(await screen.findByTestId('custom-multi-option-b'));
+
+    expect(onChange).toHaveBeenCalledWith([options[1]]);
+    expect(screen.getByTestId('combobox-option-b-checkbox')).toBeChecked();
+  });
+
+  it('requests measured scrolling and selects a distant option by keyboard', async () => {
+    const options: Array<ComboboxOption<string>> = Array.from({ length: 50 }, (_, index) => ({
+      label: `Option ${index}`,
+      value: String(index),
+    }));
+    const onChange = jest.fn();
+    const scrollRequests: number[] = [];
+    const originalResizeObserver = global.ResizeObserver;
+    global.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    } as unknown as typeof ResizeObserver;
+    const rectSpy = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const height = this.hasAttribute('data-index') ? 100 : 120;
+      return {
+        width: 120,
+        height,
+        top: 0,
+        right: 120,
+        bottom: height,
+        left: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      };
+    });
+    const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo').mockImplementation(function (
+      options?: ScrollToOptions | number,
+      y?: number
+    ) {
+      const top = typeof options === 'number' ? (y ?? 0) : (options?.top ?? 0);
+      scrollRequests.push(top);
+    });
+    const view = render(
+      <MultiCombobox
+        options={options}
+        value={[]}
+        onChange={onChange}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    try {
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      const firstOption = await screen.findByRole('option', { name: 'Option 0 custom' });
+      const scrollElement = firstOption.closest<HTMLElement>('[tabindex="0"]')!;
+      Object.defineProperty(scrollElement, 'scrollHeight', { configurable: true, value: 4000 });
+      await user.keyboard('{ArrowDown}'.repeat(31));
+
+      expect(scrollRequests[scrollRequests.length - 1]).toBeGreaterThan(1800);
+
+      await user.keyboard('{Enter}');
+      expect(onChange).toHaveBeenCalledWith([options[30]]);
+    } finally {
+      view.unmount();
+      scrollToSpy.mockRestore();
+      rectSpy.mockRestore();
+      global.ResizeObserver = originalResizeObserver;
+    }
+  });
+
+  it('uses default content for the numeric select-all row', async () => {
+    const numericOptions: Array<ComboboxOption<number>> = [
+      { label: 'One', value: 1 },
+      { label: 'Two', value: 2 },
+    ];
+    const renderOption = jest.fn((option: ComboboxOption<number>) => <span>Number {option.value.toFixed(2)}</span>);
+
+    render(
+      <MultiCombobox<number>
+        options={numericOptions}
+        value={[]}
+        onChange={jest.fn()}
+        enableAllOption
+        renderOption={renderOption}
+      />
+    );
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Select all')).toBeInTheDocument();
+    expect(screen.getByText('Number 1.00')).toBeInTheDocument();
+    expect(renderOption.mock.calls.map(([option]) => option.value)).toContain(1);
+  });
+
   it('should allow for options to be deselected', async () => {
     // This test ensures that our fix for async options doesn't break sync options
     const options = [
