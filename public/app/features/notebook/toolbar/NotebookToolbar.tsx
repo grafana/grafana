@@ -10,6 +10,9 @@ import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
+import { AttachToIncidentButton } from '../incidents/AttachToIncidentButton';
+import { DeclareIncidentMenuItem } from '../incidents/DeclareIncidentMenuItem';
+import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
@@ -35,6 +38,10 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
+  // Declare is the other item in the overflow menu, and it comes and goes with IRM — so delete
+  // alone no longer decides whether there is a menu to open.
+  const { available: hasIncidents } = useNotebookIncidents();
+  const hasMoreActions = hasIncidents || canDeleteNotebooks();
 
   const onConfirmDelete = async () => {
     if (!(await remove(uid, scene.state.title))) {
@@ -65,19 +72,23 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
     </Menu>
   );
 
-  const deleteMenu = () => (
+  const moreMenu = () => (
     <Menu>
-      <Menu.Item
-        destructive
-        label={t('notebooks.delete.confirm', 'Delete')}
-        icon="trash-alt"
-        onClick={() => setIsConfirmingDelete(true)}
-      />
+      <DeclareIncidentMenuItem uid={uid} title={scene.state.title} />
+      {canDeleteNotebooks() && (
+        <Menu.Item
+          destructive
+          label={t('notebooks.delete.confirm', 'Delete')}
+          icon="trash-alt"
+          onClick={() => setIsConfirmingDelete(true)}
+        />
+      )}
     </Menu>
   );
 
   return (
     <>
+      <AttachToIncidentButton uid={uid} title={scene.state.title} />
       <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
         {t('notebooks.view.copy-link', 'Copy link')}
       </ClipboardButton>
@@ -88,8 +99,8 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
           <Icon name={isExportOpen ? 'angle-up' : 'angle-down'} size="sm" aria-hidden="true" />
         </Button>
       </Dropdown>
-      {canDeleteNotebooks() && (
-        <Dropdown overlay={deleteMenu} placement="bottom-end">
+      {hasMoreActions && (
+        <Dropdown overlay={moreMenu} placement="bottom-end">
           <IconButton
             name="ellipsis-v"
             variant="secondary"

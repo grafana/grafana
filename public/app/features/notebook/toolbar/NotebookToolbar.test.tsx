@@ -6,7 +6,9 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
+import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
@@ -23,7 +25,21 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // page and the row menu stub it for the same reason.
 jest.mock('../list/notebookSearchApi', () => ({}));
 
+// The incident actions probe for the IRM plugin, which settles asynchronously — unmocked, that
+// update lands after a synchronous assertion and outside act(). Stubbed here so each test states
+// whether IRM is there; the availability rules themselves are covered in useNotebookIncidents.test.
+jest.mock('../incidents/useNotebookIncidents', () => ({
+  ...jest.requireActual('../incidents/useNotebookIncidents'),
+  useNotebookIncidents: jest.fn(),
+}));
+
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
+const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
+
+/** Whether the stack this toolbar is rendered on has IRM, and the user may reach it. */
+function setIrmAvailable(available: boolean) {
+  mockUseNotebookIncidents.mockReturnValue({ pluginId: SupportedPlugin.Irm, available });
+}
 
 /** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */
 function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
@@ -72,6 +88,7 @@ describe('NotebookToolbar', () => {
     config.appUrl = 'https://host/';
     // Every render mounts the delete hook, including the tests that never delete anything.
     setupDelete();
+    setIrmAvailable(false);
   });
 
   afterEach(() => {
@@ -269,6 +286,7 @@ describe('NotebookToolbar', () => {
       expect(history.getLocation().pathname).toBe('/notebooks/nb1');
     });
 
+    // With no IRM either, delete is the only thing the menu would hold — so there is no menu.
     it('offers no delete at all to a user who cannot delete dashboards', () => {
       setupDelete();
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -278,6 +296,48 @@ describe('NotebookToolbar', () => {
       expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
       // Export is unaffected, so this is the delete permission being read and not a blanket denial.
       expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('incident actions', () => {
+    it('offers neither of them on a stack without IRM', () => {
+      setIrmAvailable(false);
+
+      setup();
+
+      expect(screen.queryByRole('button', { name: /Attach to incident/ })).not.toBeInTheDocument();
+      expect(screen.queryByText('Declare incident')).not.toBeInTheDocument();
+    });
+
+    it('offers attaching from the toolbar once IRM is there', () => {
+      setIrmAvailable(true);
+
+      setup();
+
+      expect(screen.getByRole('button', { name: /Attach to incident/ })).toBeInTheDocument();
+    });
+
+    it('offers declaring from the overflow menu', async () => {
+      setIrmAvailable(true);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: 'Declare incident' })).toBeInTheDocument();
+    });
+
+    // Delete used to decide on its own whether there was a menu, so without this a user who may
+    // read a notebook but not delete it would have no way to reach declare.
+    it('opens the overflow menu for declare even when the user cannot delete', async () => {
+      setIrmAvailable(true);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: 'Declare incident' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 

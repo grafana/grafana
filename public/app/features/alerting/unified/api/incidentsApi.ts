@@ -29,6 +29,17 @@ export interface ActiveIncidents {
   hasMore: boolean;
 }
 
+/**
+ * The Incident API has no attachment method: context is attached to an existing incident by posting
+ * an activity item whose body mentions a URL, which the backend parses out and attaches.
+ */
+export interface AddIncidentActivityArgs {
+  pluginId: string;
+  incidentID: string;
+  /** Free text. Any URL in here becomes attached context on the incident. Capped at 65536 by the API. */
+  body: string;
+}
+
 const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
 
 export const incidentsApi = alertingApi.injectEndpoints({
@@ -58,6 +69,17 @@ export const incidentsApi = alertingApi.injectEndpoints({
       transformResponse: (response: QueryIncidentPreviewsResponse): ActiveIncidents => ({
         incidents: response.incidentPreviews ?? [],
         hasMore: response.cursor?.hasMore ?? false,
+      }),
+    }),
+    addIncidentActivity: build.mutation<void, AddIncidentActivityArgs>({
+      query: ({ pluginId, incidentID, body }) => ({
+        url: getProxyApiUrl('/api/v1/ActivityService.AddActivity', pluginId),
+        // userNote is the only activityKind the API documents for callers; the rest are written by
+        // Incident itself as the incident progresses.
+        data: { incidentID, activityKind: 'userNote', body },
+        method: 'POST',
+        // Left on, unlike the queries above: they suppress it because an org without an incident
+        // record is a normal absence, but this is a write somebody asked for and has to report.
       }),
     }),
   }),
