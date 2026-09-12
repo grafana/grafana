@@ -486,7 +486,7 @@
     "axios": "1.20.0",
     "pacote": "21.5.1",
     "brace-expansion@npm:5.0.6": "^5.0.9",
-    "@braintree/sanitize-url@npm:^7.0.1": "7.0.1"
+    "@braintree/sanitize-url@npm:^7.0.1": "7.1.2"
   },
   "workspaces": {
     "packages": [
