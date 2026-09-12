@@ -32,23 +32,25 @@ import (
 const tracePrefix = "folder.unifiedstore."
 
 type FolderUnifiedStoreImpl struct {
-	log         log.Logger
-	k8sclient   client.K8sHandler
-	userService user.Service
-	tracer      trace.Tracer
-	maxDepth    int
+	log            log.Logger
+	k8sclient      client.K8sHandler
+	resourceClient resource.ResourceClient
+	userService    user.Service
+	tracer         trace.Tracer
+	maxDepth       int
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service, tracer trace.Tracer, cfg *setting.Cfg) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler client.K8sHandler, resourceClient resource.ResourceClient, userService user.Service, tracer trace.Tracer, cfg *setting.Cfg) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
-		k8sclient:   k8sHandler,
-		log:         log.New("folder-store"),
-		userService: userService,
-		tracer:      tracer,
-		maxDepth:    cfg.MaxNestedFolderDepth,
+		k8sclient:      k8sHandler,
+		resourceClient: resourceClient,
+		log:            log.New("folder-store"),
+		userService:    userService,
+		tracer:         tracer,
+		maxDepth:       cfg.MaxNestedFolderDepth,
 	}
 }
 
@@ -588,8 +590,18 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"CountFolderContent")
 	defer span.End()
 
-	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
-	if err != nil {
+	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
+	namespace := ss.k8sclient.GetNamespace(orgID)
+
+	read, err := ss.resourceClient.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Name:      ancestor_uid,
+		},
+	})
+	if err := resource.ErrorFromResponse(read.GetError(), err); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, dashboards.ErrFolderNotFound
 		}
@@ -597,8 +609,16 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 		return nil, err
 	}
 
-	res, err := toFolderLegacyCounts(counts)
-	return *res, err
+	stats, err := ss.resourceClient.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: namespace,
+		Kinds:     internalfolders.CountedKinds,
+		Folder:    []string{ancestor_uid},
+	})
+	if err := resource.ErrorFromResponse(stats.GetError(), err); err != nil {
+		return nil, err
+	}
+
+	return mergeDescendantCounts(stats.GetStats()), nil
 }
 
 func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
@@ -658,23 +678,18 @@ func (ss *FolderUnifiedStoreImpl) list(ctx context.Context, orgID int64, opts v1
 	return result, nil
 }
 
-func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	ds, err := folderv1.UnstructuredToDescendantCounts(u)
-	if err != nil {
-		return nil, err
-	}
-
+func mergeDescendantCounts(stats []*resourcepb.ResourceStatsResponse_Stats) folder.DescendantCounts {
 	// A resource can be reported twice, by unified storage and by the "sql-fallback"
 	// group. Resources not yet in unified storage still get an entry there with a count
 	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
-	var out = make(folder.DescendantCounts)
-	for _, v := range ds.Counts {
+	out := make(folder.DescendantCounts, len(stats))
+	for _, v := range stats {
 		current, seen := out[v.Resource]
 		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count
 		}
 	}
-	return &out, nil
+	return out
 }
 
 func computeFullPath(parents []*folder.Folder) (string, string) {

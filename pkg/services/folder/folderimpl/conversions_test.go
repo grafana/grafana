@@ -64,7 +64,7 @@ func TestFolderConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake, tracer, setting.NewCfg())
+	fs := ProvideUnifiedStore(nil, nil, fake, tracer, setting.NewCfg())
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
 	converted, err := fs.UnstructuredToLegacyFolder(ctx, input)
@@ -271,7 +271,7 @@ func TestFolderListConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake, tracer, setting.NewCfg())
+	fs := ProvideUnifiedStore(nil, nil, fake, tracer, setting.NewCfg())
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
 	converted, err := fs.UnstructuredToLegacyFolderList(ctx, input)
