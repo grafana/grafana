@@ -2306,6 +2306,22 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableProxyEndpoint",
+        "resourceVersion": "1789036052191",
+        "creationTimestamp": "2026-09-10T10:19:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-10 10:27:32.19132 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Handle datasource proxy requests through the datasource API group endpoint.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpoint",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

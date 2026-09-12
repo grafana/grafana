@@ -203,6 +203,10 @@ const (
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
 
+	// FlagDatasourcesApiServerEnableProxyEndpoint
+	// Handle datasource proxy requests through the datasource API group endpoint.
+	FlagDatasourcesApiServerEnableProxyEndpoint = "datasourcesApiServerEnableProxyEndpoint"
+
 	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
 	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"

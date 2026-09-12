@@ -567,6 +567,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "datasourcesApiServerEnableProxyEndpoint",
+			Description:     "Handle datasource proxy requests through the datasource API group endpoint.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
 			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
