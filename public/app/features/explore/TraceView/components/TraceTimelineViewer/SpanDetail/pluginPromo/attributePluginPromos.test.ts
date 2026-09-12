@@ -4,6 +4,7 @@ import { config, isAppPluginEnabled } from '@grafana/runtime';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 
 import {
+  isCloudProviderAttribute,
   isDatabaseAttribute,
   isFrontendObservabilityAttribute,
   isKnowledgeGraphAttribute,
@@ -64,11 +65,16 @@ describe('getAttributePluginPromos', () => {
     expect(promos.find((promo) => promo.pluginId === 'grafana-asserts-app')?.match('service.name')).toBe(true);
     expect(promos.find((promo) => promo.pluginId === 'grafana-asserts-app')?.match('k8s.cluster.name')).toBe(false);
     expect(promos.find((promo) => promo.pluginId === 'grafana-k8s-app')?.match('k8s.cluster.name')).toBe(true);
+    expect(promos.find((promo) => promo.pluginId === 'grafana-csp-app')?.match('cloud.provider')).toBe(true);
+    expect(promos.find((promo) => promo.pluginId === 'grafana-csp-app')?.match('aws.region')).toBe(true);
+    expect(promos.find((promo) => promo.pluginId === 'grafana-csp-app')?.match('k8s.pod.name')).toBe(false);
+    expect(promos.find((promo) => promo.pluginId === 'grafana-k8s-app')?.match('cloud.provider')).toBe(false);
 
     expect(isFrontendObservabilityAttribute('session.id')).toBe(true);
     expect(isServiceAttribute('service.name')).toBe(true);
     expect(isKubernetesAttribute('k8s.pod.name')).toBe(true);
     expect(isKnowledgeGraphAttribute('service.name')).toBe(true);
+    expect(isCloudProviderAttribute('cloud.provider')).toBe(true);
   });
 
   it('omits Database Observability promo on on-prem', () => {
@@ -193,6 +199,7 @@ describe('useAttributePluginPromoGetter', () => {
       'session.id',
       'k8s.pod.name',
       'k8s.cluster.name',
+      'cloud.provider',
     ];
     const { result } = renderHook(() => useAttributePluginPromoGetter(keys));
 
@@ -205,6 +212,21 @@ describe('useAttributePluginPromoGetter', () => {
     expect(promoted).toEqual(['service.name', 'db.system', 'session.id']);
     expect(result.current('k8s.pod.name')).toBeUndefined();
     expect(result.current('service.namespace')).toBeUndefined();
+    expect(result.current('cloud.provider')).toBeUndefined();
+  });
+
+  it('assigns Cloud Provider promo to cloud attributes when a slot remains', async () => {
+    mockUseAppPluginMetas.mockReturnValue({ loading: false, error: undefined, value: [] });
+
+    const { result } = renderHook(() =>
+      useAttributePluginPromoGetter(['service.name', 'cloud.provider', 'aws.region'])
+    );
+
+    await waitFor(() => {
+      expect(result.current('service.name')?.pluginId).toBe('grafana-asserts-app');
+    });
+    expect(result.current('cloud.provider')?.pluginId).toBe('grafana-csp-app');
+    expect(result.current('aws.region')).toBeUndefined();
   });
 
   it('assigns overlapping service keys to different inactive plugins', async () => {
@@ -284,5 +306,20 @@ describe('selectAttributeKeysForPromos', () => {
     expect(selected.get('service.name')?.pluginId).toBe('grafana-app-observability-app');
     expect(selected.get('db.system')?.pluginId).toBe('grafana-dbo11y-app');
     expect(selected.get('k8s.pod.name')?.pluginId).toBe('grafana-k8s-app');
+  });
+
+  it('prefers Kubernetes over Cloud Provider when both match and the promo cap is reached', () => {
+    const promos = getAttributePluginPromos();
+    const inactive = new Set(['grafana-dbo11y-app', 'grafana-kowalski-app', 'grafana-k8s-app', 'grafana-csp-app']);
+
+    const selected = selectAttributeKeysForPromos(
+      ['db.system', 'session.id', 'k8s.pod.name', 'cloud.provider'],
+      inactive,
+      promos
+    );
+
+    expect([...selected.keys()]).toEqual(['db.system', 'session.id', 'k8s.pod.name']);
+    expect(selected.get('k8s.pod.name')?.pluginId).toBe('grafana-k8s-app');
+    expect(selected.has('cloud.provider')).toBe(false);
   });
 });

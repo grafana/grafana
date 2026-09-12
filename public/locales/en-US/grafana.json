@@ -9183,6 +9183,10 @@
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
       },
+      "cloud-provider-promo": {
+        "body": "Cloud Provider Observability maps AWS, Azure, and GCP trace attributes to cloud services, regions, and resources — so you can go from a span to infrastructure health in one place.",
+        "title": "Investigate your cloud services"
+      },
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
