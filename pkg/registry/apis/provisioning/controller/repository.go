@@ -1388,16 +1388,29 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
 	// would be an equally doomed call against an inaccessible repository, and
 	// skipped during the hook-failure cooldown too: repoAccessible alone doesn't
-	// catch this window, since a skipped health check reads as accessible.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoAccessible && !rc.healthChecker.inHookFailureCooldown(obj) {
-		rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
-		rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
-		rotateSpan.End()
-		if rotateErr != nil {
-			logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr)
-		}
-		if len(rotateOps) > 0 {
-			hookOps = append(hookOps, rotateOps...)
+	// catch this window, since a skipped health check reads as accessible. A
+	// secret that stays overdue is counted with the cause it stayed overdue for,
+	// so alerts can page on a genuine rotation malfunction (cause=system) while
+	// routing the "can't rotate yet" cases (cause=blocked/user) to a runbook.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret {
+		switch {
+		case !repoAccessible || isInHookFailureCooldown:
+			rc.webhookMetrics.recordRotationOverdue(rotationCauseBlocked)
+		default:
+			rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
+			rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
+			rotateSpan.End()
+			if rotateErr != nil {
+				cause := reconcileCauseSystem
+				if rc.isUserCaused(rotateErr) {
+					cause = reconcileCauseUser
+				}
+				rc.webhookMetrics.recordRotationOverdue(cause)
+				logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr, "cause", cause)
+			}
+			if len(rotateOps) > 0 {
+				hookOps = append(hookOps, rotateOps...)
+			}
 		}
 	}
 
@@ -1512,15 +1525,10 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	// A never-rotated secret (legacy webhooks predating rotation tracking; new
 	// webhooks stamp LastRotated on create) is due for its first rotation.
 	if obj.Status.Webhook.LastRotated == 0 {
-		rc.webhookMetrics.recordRotationOverdue()
 		return true
 	}
 	age := time.Since(time.UnixMilli(obj.Status.Webhook.LastRotated))
-	if age >= rc.webhookSecretRotationInterval {
-		rc.webhookMetrics.recordRotationOverdue()
-		return true
-	}
-	return false
+	return age >= rc.webhookSecretRotationInterval
 }
 
 // HACK: we need a proper way of doing this check by adding Conditions
