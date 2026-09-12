@@ -53,6 +53,9 @@ type GitHubConnectionConfig struct {
 
 	// GitHub App installation ID
 	InstallationID string `json:"installationID"`
+
+	// The GitHub Enterprise Server URL. Empty uses github.com.
+	ServerURL string `json:"serverUrl,omitempty"`
 }
 
 func (GitHubConnectionConfig) OpenAPIModelName() string {
