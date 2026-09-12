@@ -45,25 +45,43 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
     return null;
   }
 
-  // Time values are always sorted for uPlot to work
+  // Time values are always sorted for uPlot to work. We skip two things on
+  // each boundary: null timestamps (a row whose `time` column is null, e.g.
+  // an outer-join miss in SQL datasources) and series with all-null values
+  // at that index. The all-null-value skip is what the file already did;
+  // the null-timestamp skip is the missing piece: when `first` is then read
+  // at the chosen index and turns out to be null, the resulting
+  // onChangeTimeRange({ from: null, to: ... }) trips PanelQueryRunner's
+  // timeRange.from.valueOf() with "Cannot read properties of undefined
+  // (reading 'valueOf')" and crashes the panel on the "Zoom to data" click.
   let i = 0,
     j = timeValues.length - 1;
 
-  while (i <= j && allValuesNullAtIndex(i)) {
+  while (i <= j && (timeValues[i] == null || allValuesNullAtIndex(i))) {
     i++;
   }
 
-  while (j >= 0 && allValuesNullAtIndex(j)) {
+  while (j >= 0 && (timeValues[j] == null || allValuesNullAtIndex(j))) {
     j--;
   }
 
-  // never found any non null values
-  if (allValuesNullAtIndex(i) || allValuesNullAtIndex(j)) {
+  // No valid timestamp found at either boundary, or the surviving indices
+  // crossed (all rows were null in time or value).
+  if (i > j || timeValues[i] == null || timeValues[j] == null) {
     return null;
   }
 
   let first = timeValues[i];
   let last = timeValues[j];
+
+  // Narrow after the i>j / timeValues[i]==null guards above. The guards make
+  // these non-null number reads safe; the original code reached the same point
+  // without a narrowing and the @typescript-eslint/consistent-type-assertions
+  // rule (assertionStyle: 'never') forbids `as number` here, so we use an
+  // explicit type guard instead.
+  if (typeof first !== 'number' || typeof last !== 'number') {
+    return null;
+  }
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= timeRange.max && last >= timeRange.min) {
