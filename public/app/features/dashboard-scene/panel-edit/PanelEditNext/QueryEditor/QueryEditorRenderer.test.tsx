@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren, type ReactElement, useEffect, useRef, useState } from 'react';
 
 import {
@@ -99,6 +99,18 @@ function renderWithOpenFeature(ui: ReactElement) {
   }
 
   return render(ui, { wrapper: Wrapper });
+}
+
+function createCoauthoringAdapter(): QueryEditorCoauthoringAdapterV1 {
+  const snapshot = { mode: 'hidden' } as const;
+  return {
+    getSnapshot: jest.fn(() => snapshot),
+    subscribe: () => () => undefined,
+    invoke: jest.fn(),
+    readInvocation: jest.fn(),
+    prepareProposal: jest.fn(),
+    dismiss: jest.fn(),
+  };
 }
 
 describe('QueryEditorRenderer', () => {
@@ -227,6 +239,131 @@ describe('QueryEditorRenderer', () => {
     view.unmount();
     portalTarget.remove();
   });
+
+  it('does not render an adapter registered for a previous query row', async () => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
+
+    const adapterA = createCoauthoringAdapter();
+    const adapterB = createCoauthoringAdapter();
+
+    function CapabilityQueryEditor({
+      query,
+      unstable_queryEditorCoauthoringV1,
+    }: {
+      query: DataQuery;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+    }) {
+      const adapter = query.refId === 'A' ? adapterA : adapterB;
+      useEffect(
+        () => unstable_queryEditorCoauthoringV1?.register(adapter),
+        [adapter, unstable_queryEditorCoauthoringV1]
+      );
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    const prometheusSettings = { ...ds1SettingsMock, uid: 'prometheus-1', type: 'prometheus' };
+    const prometheusData = {
+      datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }, prometheusSettings),
+      dsSettings: prometheusSettings,
+    };
+    const panelProps = {
+      queryDsLoading: false,
+      queries: [queryA, queryB],
+      updateQuery: jest.fn(),
+      addQuery: jest.fn(),
+      runQueries: jest.fn(),
+      startQueryPreview: jest.fn(),
+    };
+
+    const view = renderWithOpenFeature(
+      <QueryEditorPanel {...panelProps} query={queryA} queryDsData={prometheusData} />
+    );
+    await waitFor(() => expect(adapterA.getSnapshot).toHaveBeenCalled());
+    jest.mocked(adapterA.getSnapshot).mockClear();
+
+    view.rerender(<QueryEditorPanel {...panelProps} query={queryB} queryDsData={prometheusData} />);
+
+    expect(adapterA.getSnapshot).not.toHaveBeenCalled();
+    await waitFor(() => expect(adapterB.getSnapshot).toHaveBeenCalled());
+  });
+
+  it.each([
+    {
+      name: 'direct Prometheus',
+      firstSettings: { ...ds1SettingsMock, uid: 'prometheus-1', type: 'prometheus' },
+      secondSettings: { ...ds1SettingsMock, uid: 'prometheus-2', type: 'prometheus' },
+    },
+    {
+      name: 'datasource-variable-backed Prometheus',
+      firstSettings: {
+        ...ds1SettingsMock,
+        uid: '${metrics_source}',
+        name: '${metrics_source}',
+        type: 'prometheus',
+        rawRef: { type: 'prometheus', uid: 'prometheus-1' },
+      },
+      secondSettings: {
+        ...ds1SettingsMock,
+        uid: '${metrics_source}',
+        name: '${metrics_source}',
+        type: 'prometheus',
+        rawRef: { type: 'prometheus', uid: 'prometheus-2' },
+      },
+    },
+  ])(
+    'does not render an adapter registered for a previous $name datasource',
+    async ({ firstSettings, secondSettings }) => {
+      setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
+
+      const adapterA = createCoauthoringAdapter();
+      const adapterB = createCoauthoringAdapter();
+
+      function CapabilityQueryEditor({
+        datasource,
+        unstable_queryEditorCoauthoringV1,
+      }: {
+        datasource: DataSourceApi;
+        query: DataQuery;
+        unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+      }) {
+        const adapter = datasource.uid === 'prometheus-1' ? adapterA : adapterB;
+        useEffect(
+          () => unstable_queryEditorCoauthoringV1?.register(adapter),
+          [adapter, unstable_queryEditorCoauthoringV1]
+        );
+        return <div data-testid="capability-query-editor" />;
+      }
+
+      const concreteSettingsA = { ...firstSettings, uid: 'prometheus-1', name: 'Prometheus 1', rawRef: undefined };
+      const concreteSettingsB = { ...secondSettings, uid: 'prometheus-2', name: 'Prometheus 2', rawRef: undefined };
+      const firstData = {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }, concreteSettingsA),
+        dsSettings: firstSettings,
+      };
+      const secondData = {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }, concreteSettingsB),
+        dsSettings: secondSettings,
+      };
+      const panelProps = {
+        query: queryA,
+        queryDsLoading: false,
+        queries: [queryA],
+        updateQuery: jest.fn(),
+        addQuery: jest.fn(),
+        runQueries: jest.fn(),
+        startQueryPreview: jest.fn(),
+      };
+
+      const view = renderWithOpenFeature(<QueryEditorPanel {...panelProps} queryDsData={firstData} />);
+      await waitFor(() => expect(adapterA.getSnapshot).toHaveBeenCalled());
+      jest.mocked(adapterA.getSnapshot).mockClear();
+
+      view.rerender(<QueryEditorPanel {...panelProps} queryDsData={secondData} />);
+
+      expect(adapterA.getSnapshot).not.toHaveBeenCalled();
+      await waitFor(() => expect(adapterB.getSnapshot).toHaveBeenCalled());
+    }
+  );
 
   it('synchronizes only a baseline that differs from the current query', () => {
     const updateQuery = jest.fn();
