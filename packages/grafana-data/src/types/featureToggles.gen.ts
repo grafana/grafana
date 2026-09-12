@@ -721,6 +721,11 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
+  * Enables exporting new alert rule definitions as JSON and YAML, in addition to Terraform (HCL)
+  * @default false
+  */
+  alertingNewRuleExportEnableAllFormats?: boolean;
+  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
