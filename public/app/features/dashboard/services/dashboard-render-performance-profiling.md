@@ -103,7 +103,7 @@ const payload = {
   jsHeapSizeLimit: e.jsHeapSizeLimit,
   longFramesCount: e.longFramesCount,
   longFramesTotalTime: e.longFramesTotalTime,
-  timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+  timeSinceBoot: getTimeSinceBoot(),
 };
 
 reportInteraction('dashboard_render', {
