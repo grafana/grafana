@@ -45,6 +45,8 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
           variant="secondary"
           fill="text"
           onClick={onClick}
+          title={title}
+          {...rest}
         >
           {children}
         </Button>
