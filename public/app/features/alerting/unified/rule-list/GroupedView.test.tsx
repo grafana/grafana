@@ -112,4 +112,17 @@ describe('RuleList - GroupedView', () => {
 
     expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
   });
+
+  it('should show an error for a data source with an empty URL', async () => {
+    alertingFactory.dataSource.build({ name: 'Misconfigured', uid: 'misconfigured', url: '' });
+
+    const { user } = render(<GroupedView />);
+
+    const dataSourceSection = await ui.dsSection('Misconfigured').find();
+    const errorButton = within(dataSourceSection).getByRole('button', { name: 'Error' });
+    expect(errorButton).toBeInTheDocument();
+
+    await user.click(errorButton);
+    expect(await screen.findByText('The data source url cannot be empty.')).toBeInTheDocument();
+  });
 });
