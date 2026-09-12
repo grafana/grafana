@@ -96,6 +96,11 @@ export async function sortSuggestions(
   dataSummary: PanelDataSummary
 ): Promise<void> {
   const builtInMap: Record<string, boolean> = {};
+  const preferredPluginIds = new Set(
+    dataSummary.rawFrames
+      ?.map((frame) => frame.meta?.preferredVisualisationPluginId)
+      .filter((pluginId): pluginId is string => Boolean(pluginId))
+  );
   await Promise.all(
     suggestions.map(async (s) => {
       const isBuiltIn = await isBuiltInPlugin(s.pluginId);
@@ -112,6 +117,12 @@ export async function sortSuggestions(
     }
     if (isPluginBBuiltIn && !isPluginABuiltIn) {
       return 1;
+    }
+
+    const isPluginAPreferred = preferredPluginIds.has(a.pluginId);
+    const isPluginBPreferred = preferredPluginIds.has(b.pluginId);
+    if (isPluginAPreferred !== isPluginBPreferred) {
+      return isPluginAPreferred ? -1 : 1;
     }
 
     // if a preferred visualisation type matches the data, prioritize it

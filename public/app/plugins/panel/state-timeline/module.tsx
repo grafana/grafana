@@ -168,13 +168,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       // This panel needs a time field and a string or number field
       if (
         !ds.hasFieldType(FieldType.time) ||
-        (!ds.hasFieldType(FieldType.string) && !ds.hasFieldType(FieldType.number))
+        (!ds.hasFieldType(FieldType.string) &&
+          !ds.hasFieldType(FieldType.number) &&
+          !ds.hasFieldType(FieldType.enum))
       ) {
         return;
       }
 
       // If there are many series then they won't fit on y-axis so this panel is not good fit
-      if (ds.fieldCountByType(FieldType.number) >= 30) {
+      if (ds.fieldCountByType(FieldType.number) + ds.fieldCountByType(FieldType.enum) >= 30) {
         return;
       }
 

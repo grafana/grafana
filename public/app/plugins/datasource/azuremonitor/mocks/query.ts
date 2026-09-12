@@ -30,6 +30,12 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       ...overrides?.azureResourceGraph,
     },
 
+    azureHealthModels: {
+      healthModelId:
+        '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572/resourceGroups/example/providers/Microsoft.CloudHealth/healthmodels/example',
+      ...overrides?.azureHealthModels,
+    },
+
     azureTraces: {
       query: 'example traces query',
       resultFormat: ResultFormat.Trace,
@@ -59,3 +65,9 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
     },
   };
 }
+
+export const createMockHealthModelsQuery = (overrides?: Partial<AzureMonitorQuery>): AzureMonitorQuery =>
+  createMockQuery({
+    queryType: undefined,
+    ...overrides,
+  });

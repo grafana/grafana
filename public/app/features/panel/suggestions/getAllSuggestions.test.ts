@@ -499,6 +499,30 @@ scenario('Given a preferredVisualisationType', (ctx) => {
   });
 });
 
+scenario('Given a preferred state timeline plugin for enum data', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      meta: {
+        preferredVisualisationType: 'graph',
+        preferredVisualisationPluginId: 'state-timeline',
+      },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+        {
+          name: 'State',
+          type: FieldType.enum,
+          values: [0, 1, 0],
+          config: { type: { enum: { text: ['Healthy', 'Degraded'] } } },
+        },
+      ],
+    }),
+  ]);
+
+  it('should return the state timeline visualization first', () => {
+    expect(ctx.suggestions[0]).toEqual(expect.objectContaining({ pluginId: 'state-timeline' }));
+  });
+});
+
 scenario('Given a preferredVisualisationType with multiple entries', (ctx) => {
   ctx.setData([
     toDataFrame({

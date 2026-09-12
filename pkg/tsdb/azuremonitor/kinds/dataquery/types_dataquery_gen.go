@@ -637,6 +637,7 @@ const (
 	AzureQueryTypeTraceExemplar             AzureQueryType = "traceql"
 	AzureQueryTypeCustomNamespacesQuery     AzureQueryType = "Azure Custom Namespaces"
 	AzureQueryTypeCustomMetricNamesQuery    AzureQueryType = "Azure Custom Metric Names"
+	AzureQueryTypeAzureHealthModels         AzureQueryType = "Azure Health Models"
 )
 
 type SelectableValue struct {
