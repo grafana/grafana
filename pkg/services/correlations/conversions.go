@@ -109,6 +109,11 @@ func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec
 	if len(out.Target) == 0 {
 		out.Target = nil
 	}
+
+	if out.TimeRange == nil || (out.TimeRange.Field == nil && out.TimeRange.Range == nil) {
+		out.TimeRange = nil
+	}
+
 	return out, err
 }
 
@@ -136,6 +141,7 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 	if tmp.Config.Target == nil {
 		tmp.Config.Target = map[string]any{} // replace it
 	}
+
 	return &UpdateCorrelationCommand{
 		UID:         tmp.UID,
 		OrgId:       tmp.OrgID,
@@ -147,6 +153,7 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 			Field:           &tmp.Config.Field,
 			Target:          &tmp.Config.Target,
 			Transformations: tmp.Config.Transformations,
+			TimeRange:       &tmp.Config.TimeRange,
 		},
 	}, nil
 }
