@@ -1,5 +1,6 @@
 import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
+import { createElement } from 'react';
 import { type HeaderGroup, type Row } from 'react-table';
 
 import {
@@ -18,6 +19,7 @@ import {
   reduceField,
   type SelectableValue,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { ActionsCell } from './ActionsCell';
@@ -54,8 +56,14 @@ export function getColumns(
 
   if (expander) {
     columns.push({
-      // Make an expander cell
-      Header: () => null, // No header
+      // Make an expander cell. The column has no visible header, but the columnheader cell still
+      // needs an accessible name, so it renders a visually-hidden label instead of nothing.
+      Header: () =>
+        createElement(
+          'span',
+          { className: 'sr-only' },
+          t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows')
+        ),
       id: 'expander', // It needs an ID
       // @ts-expect-error
       // TODO fix type error here
