@@ -1548,6 +1548,19 @@ func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequ
 	return nil
 }
 
+func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ErrorResult {
+	if req.KeysOnly && req.Options.Key.Namespace != "" {
+		return requireUserNamespace(ctx, req.Options.Key.Namespace)
+	}
+	if _, ok := claims.AuthInfoFrom(ctx); !ok {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	return nil
+}
+
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	defer span.End()
@@ -1577,18 +1590,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}, nil
 	}
 
-	if req.KeysOnly && req.Options.Key.Namespace != "" {
-		return &resourcepb.ListResponse{
-			Error: NewBadRequestError("keys_only lists are cluster-wide, so the namespace must be empty"),
-		}, nil
-	}
-
-	if _, ok := claims.AuthInfoFrom(ctx); !ok {
-		return &resourcepb.ListResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "no user found in context",
-				Code:    http.StatusUnauthorized,
-			}}, nil
+	if errRes := requireListIdentity(ctx, req); errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
 	// Do not allow label query for trash/history
@@ -1735,11 +1738,10 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
-			// keys_only is cluster-wide and has an empty namespace in the key, so
-			// we use the actual item namespace. FilterAuthorized still checks each
-			// item using the authenticated identity from ctx.
+			// Cross-namespace keys-only lists must authorize each item in its own
+			// namespace. Namespaced lists retain the request scope.
 			namespace := key.Namespace
-			if req.KeysOnly {
+			if req.KeysOnly && namespace == "" {
 				namespace = c.namespace
 			}
 			return authz.BatchCheckItem{

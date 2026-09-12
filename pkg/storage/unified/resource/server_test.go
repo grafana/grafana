@@ -2873,6 +2873,7 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int) (*ser
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
+		Namespace:      "*",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
@@ -2919,8 +2920,7 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	}
 
-	// keys_only lists are cluster-wide, so the request carries no namespace even
-	// though the seeded items live in one.
+	// An empty namespace preserves the existing cluster-wide keys-only behavior.
 	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
 
 	t.Run("returns identity and folder with no object bodies", func(t *testing.T) {
@@ -2965,9 +2965,8 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	})
 
-	// The cluster-wide endpoint is the real caller, so the cross-namespace scan
-	// needs its own coverage: each item must report the namespace it lives in,
-	// and paging must carry the namespace through the continue token.
+	// The cross-namespace scan must report each item's namespace, and paging must
+	// carry that namespace through the continue token.
 	t.Run("lists across namespaces", func(t *testing.T) {
 		srv, ctx := newKeysOnlyTestServer(t)
 		seedIn := func(itemNS, name string) {
@@ -3067,6 +3066,68 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	})
 
+	t.Run("namespaced pagination remains pinned during mutations", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "", "bbb": "", "ccc": "folder-old", "eee": "",
+		})
+		namespacedKey := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}
+
+		initial, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, initial.Error)
+		initialRVs := map[string]int64{}
+		for _, item := range initial.Items {
+			initialRVs[item.Name] = item.ResourceVersion
+		}
+
+		first, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly: true,
+			Limit:    2,
+		})
+		require.NoError(t, err)
+		require.Nil(t, first.Error)
+		require.Len(t, first.Items, 2)
+		require.Equal(t, []string{"aaa", "bbb"}, []string{first.Items[0].Name, first.Items[1].Name})
+		require.NotEmpty(t, first.NextPageToken)
+		firstToken, err := GetContinueToken(first.NextPageToken)
+		require.NoError(t, err)
+		require.Equal(t, ns, firstToken.Namespace)
+
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             newKey("ccc"),
+			ResourceVersion: initialRVs["ccc"],
+			Value:           rawPlaylist(t, "ccc", "folder-new"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+		deleted, err := srv.Delete(ctx, &resourcepb.DeleteRequest{
+			Key: newKey("eee"), ResourceVersion: initialRVs["eee"],
+		})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error)
+		seed(t, srv, ctx, map[string]string{"ddd": ""})
+
+		second, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:       &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly:      true,
+			Limit:         2,
+			NextPageToken: first.NextPageToken,
+		})
+		require.NoError(t, err)
+		require.Nil(t, second.Error)
+		require.Len(t, second.Items, 2)
+		require.Equal(t, first.ResourceVersion, second.ResourceVersion)
+		require.Equal(t, []string{"ccc", "eee"}, []string{second.Items[0].Name, second.Items[1].Name})
+		require.Equal(t, initialRVs["ccc"], second.Items[0].ResourceVersion)
+		require.Equal(t, "folder-old", second.Items[0].Folder)
+		require.Empty(t, second.NextPageToken)
+	})
+
 	// Selector handling lives in its own test; this covers the sources.
 	t.Run("refuses sources that need the object", func(t *testing.T) {
 		for name, source := range map[string]resourcepb.ListRequest_Source{
@@ -3113,10 +3174,11 @@ type namespaceRecordingAccessClient struct {
 	mu         sync.Mutex
 	namespaces []string
 	items      map[string]string // name -> namespace seen on the check
+	denied     map[string]bool
 }
 
 func newNamespaceRecordingAccessClient() *namespaceRecordingAccessClient {
-	return &namespaceRecordingAccessClient{items: map[string]string{}}
+	return &namespaceRecordingAccessClient{items: map[string]string{}, denied: map[string]bool{}}
 }
 
 func (c *namespaceRecordingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
@@ -3133,7 +3195,7 @@ func (c *namespaceRecordingAccessClient) BatchCheck(_ context.Context, _ authlib
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
 		c.items[item.Name] = req.Namespace
-		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: true}
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: !c.denied[item.Name]}
 	}
 	c.mu.Unlock()
 	return authlib.BatchCheckResponse{Results: results}, nil
@@ -3174,10 +3236,9 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	return srv, authCtx(identityNamespace), authCtx("*")
 }
 
-// A keys-only list is cluster-wide, so the request key carries no namespace and
-// items are checked under their own. Only a wildcard identity can read across
-// namespaces: for anyone else the first foreign namespace batch fails
-// NamespaceMatches, and FilterAuthorized yields that error and stops.
+// A cross-namespace keys-only list checks items under their own namespace. Only
+// a wildcard identity can read across namespaces: for anyone else the first
+// foreign namespace batch fails NamespaceMatches and stops the list.
 func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
 	const (
 		group    = "playlist.grafana.app"
@@ -3320,8 +3381,7 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 		ns       = "default"
 	)
 
-	// Cluster-wide, so these exercise the selector refusal rather than the
-	// namespace one.
+	// Keep these cluster-wide while verifying selector rejection remains unchanged.
 	field := func(key, op string, values ...string) *resourcepb.ListOptions {
 		return &resourcepb.ListOptions{
 			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource},
@@ -3371,53 +3431,123 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 	}
 }
 
-// keys_only is cluster-wide by contract, so a namespaced request is a caller bug
-// rather than something to serve narrowly. Refusing it is what lets listAuthorized
-// assume the request key has no namespace.
-func TestServerListKeysOnly_RefusesANamespacedRequest(t *testing.T) {
+func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	const (
-		group    = "playlist.grafana.app"
-		resource = "playlists"
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
 	)
 
-	for name, tc := range map[string]struct {
-		namespace string
-		keysOnly  bool
-		wantError string
-	}{
-		"keys-only with a namespace": {
-			namespace: "default",
-			keysOnly:  true,
-			wantError: "cluster-wide",
-		},
-		"keys-only without one": {
-			keysOnly: true,
-		},
-		// The contract is on keys_only alone; normal lists stay namespaced.
-		"normal list with a namespace": {
-			namespace: "default",
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			srv, ctx := newKeysOnlyTestServer(t)
+	inner := newNamespaceRecordingAccessClient()
+	ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+	srv, ctx, seedCtx := newRecordingTestServer(t, ac, "ns-one")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "aaa")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "bbb")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "aaa")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "ccc")
 
-			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Group: group, Resource: resource, Namespace: tc.namespace,
-				}},
-				KeysOnly: tc.keysOnly,
-			})
-			require.NoError(t, err)
+	list := func(namespace string) *resourcepb.ListResponse {
+		t.Helper()
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: group, Resource: resource, Namespace: namespace,
+			}},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		return rsp
+	}
 
-			if tc.wantError == "" {
-				require.Nil(t, rsp.Error)
-				return
-			}
-			require.NotNil(t, rsp.Error)
-			assert.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
-			assert.Contains(t, rsp.Error.Message, tc.wantError)
+	rsp := list("ns-one")
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 2)
+	require.Equal(t, []string{"aaa", "bbb"}, []string{rsp.Items[0].Name, rsp.Items[1].Name})
+	for _, item := range rsp.Items {
+		require.Equal(t, "ns-one", item.Namespace)
+		require.Empty(t, item.Value)
+	}
+	batches, items := inner.seen()
+	require.Equal(t, []string{"ns-one"}, slices.Compact(batches))
+	require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-one"}, items)
+
+	wrongScope, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: group, Resource: resource, Namespace: "ns-one",
+		}},
+		KeysOnly: true,
+		NextPageToken: ContinueToken{
+			Namespace: "ns-two", Name: "aaa", ResourceVersion: rsp.ResourceVersion,
+		}.String(),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, wrongScope.Error)
+	require.Equal(t, int32(http.StatusBadRequest), wrongScope.Error.Code)
+	require.Contains(t, wrongScope.Error.Message, "namespace does not match")
+
+	legacyToken, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: group, Resource: resource, Namespace: "ns-one",
+		}},
+		KeysOnly: true,
+		NextPageToken: ContinueToken{
+			Name: "bbb", ResourceVersion: rsp.ResourceVersion,
+		}.String(),
+	})
+	require.NoError(t, err)
+	require.Nil(t, legacyToken.Error)
+	require.Len(t, legacyToken.Items, 1)
+	require.Equal(t, "bbb", legacyToken.Items[0].Name)
+
+	for _, namespace := range []string{"ns-empty", "ns-two"} {
+		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {
+			foreign := list(namespace)
+			require.NotNil(t, foreign.Error)
+			require.Equal(t, int32(http.StatusForbidden), foreign.Error.Code)
+			require.Contains(t, foreign.Error.Message, "namespace mismatch")
+			require.Empty(t, foreign.Items)
 		})
 	}
+}
+
+func TestServerListKeysOnly_NamespacedAuthorizationAcrossPages(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
+		ns       = "ns-one"
+	)
+
+	inner := newNamespaceRecordingAccessClient()
+	inner.denied["bbb"] = true
+	inner.denied["ddd"] = true
+	ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+	srv, ctx, seedCtx := newRecordingTestServer(t, ac, ns)
+	for _, name := range []string{"aaa", "bbb", "ccc", "ddd", "eee"} {
+		seedPlaylistIn(t, srv, seedCtx, group, resource, ns, name)
+	}
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "foreign")
+
+	var names []string
+	token := ""
+	for range 3 {
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: group, Resource: resource, Namespace: ns,
+			}},
+			KeysOnly:      true,
+			Limit:         2,
+			NextPageToken: token,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		for _, item := range rsp.Items {
+			names = append(names, item.Name)
+			require.Equal(t, ns, item.Namespace)
+		}
+		token = rsp.NextPageToken
+		if token == "" {
+			break
+		}
+	}
+	require.Equal(t, []string{"aaa", "ccc", "eee"}, names)
 }
 
 // The proto documents that a list is bounded by response payload size as well as
@@ -3447,7 +3577,7 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 	}
 
 	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
-		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource}},
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}},
 		KeysOnly: true,
 		Limit:    50,
 	})
