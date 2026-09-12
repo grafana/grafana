@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Visualizza la cronologia di tutti gli eventi di avviso generati dalle regole di avviso gestite da Grafana. Vengono visualizzati tutti gli eventi di avviso, indipendentemente dall'impostazione di periodi di silenzio o disattivazione dell'audio.",
         "notifications": "Visualizza la cronologia di tutte le notifiche inviate dalle regole di avviso gestite da Grafana."
@@ -7760,6 +7763,9 @@
         "title": "Modifiche non salvate"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Non è quello che stai cercando? Visualizza <2>altre dashboard suggerite</2> o <6>creane una da zero</6>.",
       "title": "Stai visualizzando {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Titolo"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Salva modifiche",
       "save-button-disabled-tooltip": "Correggi gli errori di convalida prima di salvare",
       "save-button-disabled-tooltip-yaml": "Il documento presenta errori di convalida. Passa al formato JSON per visualizzare i dettagli degli errori all'interno del testo.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Grassetto",
       "tooltip-bullet-list": "Elenco puntato",
       "tooltip-checklist": "Lista di controllo",
+      "tooltip-diagram": "",
       "tooltip-heading": "Intestazione",
       "tooltip-insert-variable": "Inserisci variabile",
       "tooltip-italic": "Corsivo",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Grafico a barre – in pila",
       "bar-stacked-percent": "Grafico a barre – in pila per percentuale",
       "line": "Grafico a linee"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Aggiungi fuso orario",

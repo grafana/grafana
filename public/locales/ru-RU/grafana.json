@@ -765,6 +765,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Просматривайте историю всех событий, созданных правилами оповещений, управляемыми Grafana. Отображаются все события, независимо от того, были ли установлены периоды временного отключения или отключения звука.",
         "notifications": "Просматривайте историю всех уведомлений, которые были отправлены в рамках правил оповещений, управляемых Grafana."
@@ -7854,6 +7857,9 @@
         "title": "Несохраненные изменения"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Не то, что вам нужно? Посмотрите <2>другие рекомендуемые дашборды</2> или <6>создайте дашборд с нуля</6>.",
       "title": "Вы просматриваете {{title}}"
@@ -8110,6 +8116,7 @@
       "title-label": "Название"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Сохранить изменения",
       "save-button-disabled-tooltip": "Исправьте ошибки проверки перед сохранением",
       "save-button-disabled-tooltip-yaml": "В документе обнаружены ошибки проверки. Перейдите в формат JSON для просмотра сведений об ошибках непосредственно в файле.",
@@ -16871,6 +16878,7 @@
       "tooltip-bold": "Жирный",
       "tooltip-bullet-list": "Маркированный список",
       "tooltip-checklist": "Чек‑лист",
+      "tooltip-diagram": "",
       "tooltip-heading": "Заголовок",
       "tooltip-insert-variable": "Вставить переменную",
       "tooltip-italic": "Курсив",
@@ -16884,8 +16892,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -17106,6 +17124,10 @@
       "bar-stacked": "Гистограмма: с накоплением",
       "bar-stacked-percent": "Гистограмма: с накоплением по процентам",
       "line": "Линейная диаграмма"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Добавить часовой пояс",
