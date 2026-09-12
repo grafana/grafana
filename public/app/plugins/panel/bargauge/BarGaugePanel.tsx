@@ -50,7 +50,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
 
     return (
       <BarGauge
-        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
+        value={clearNameForSingleSeries(count, options, fieldConfig.defaults, display)}
         width={width}
         height={height}
         orientation={orientation}
@@ -171,8 +171,13 @@ export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   return null;
 }
 
-function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
-  if (count === 1 && !field.displayName) {
+function clearNameForSingleSeries(
+  count: number,
+  options: Options,
+  field: FieldConfig,
+  display: DisplayValue
+): DisplayValue {
+  if (count === 1 && !field.displayName && !options.showNameForSingleSeries) {
     return {
       ...display,
       title: undefined,

@@ -20,6 +20,7 @@ export interface Options extends common.OptionsWithLegend, common.SingleStatBase
   minVizHeight: number;
   minVizWidth: number;
   namePlacement: common.BarGaugeNamePlacement;
+  showNameForSingleSeries: boolean;
   showUnfilled: boolean;
   sizing: common.BarGaugeSizing;
   valueMode: common.BarGaugeValueMode;
@@ -31,6 +32,7 @@ export const defaultOptions: Partial<Options> = {
   minVizHeight: 16,
   minVizWidth: 8,
   namePlacement: common.BarGaugeNamePlacement.Auto,
+  showNameForSingleSeries: false,
   showUnfilled: true,
   sizing: common.BarGaugeSizing.Auto,
   valueMode: common.BarGaugeValueMode.Color,
