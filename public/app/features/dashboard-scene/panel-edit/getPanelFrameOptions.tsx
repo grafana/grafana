@@ -5,8 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
-import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
-import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
+import {
+  LazyGenAIPanelDescriptionButton,
+  LazyGenAIPanelTitleButton,
+} from 'app/features/dashboard/components/GenAI/LazyGenAIButtons';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -82,7 +84,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
         addon: (
-          <GenAIPanelTitleButton
+          <LazyGenAIPanelTitleButton
             onGenerate={(title) => editPanelTitleAction(panel, title)}
             panel={vizPanelToPanel(panel)}
             dashboard={transformSceneToSaveModel(dashboard)}
@@ -99,7 +101,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
         addon: (
-          <GenAIPanelDescriptionButton
+          <LazyGenAIPanelDescriptionButton
             onGenerate={(description) => panel.setState({ description })}
             panel={vizPanelToPanel(panel)}
           />

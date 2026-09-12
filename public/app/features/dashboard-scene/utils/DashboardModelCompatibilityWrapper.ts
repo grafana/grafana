@@ -15,7 +15,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { findVizPanelByKey } from './utils';
+import { findVizPanelByKey } from './findVizPanel';
 import { getVizPanelKeyForPanelId } from './utils-panels';
 
 /**

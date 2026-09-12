@@ -8,7 +8,7 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 
-import { LinkEdit, linkSelectionId } from './LinkAddEditableElement';
+import { LinkEdit, linkSelectionId } from './LinkEdit';
 
 export interface DashboardLinksSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;

@@ -34,7 +34,6 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -567,7 +566,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 // Register how the panel status popover opens the inspector. Done here (rather than in
 // setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
 // setup, which would introduce a circular dependency.
-setPanelInspectorOpener((panel, tab) => {
+setPanelInspectorOpener(async (panel, tab) => {
+  const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
+
   getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
 });
 

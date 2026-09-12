@@ -103,6 +103,7 @@ describe('PrometheusQueryResultsContainer', () => {
 
     fireEvent.click(getTableToggle());
 
+    expect(await screen.findByText('test_string_1')).toBeInTheDocument();
     expect(getTable()).toBeInTheDocument();
     const rows = within(getTable()).getAllByRole('row');
     expect(rows).toHaveLength(5);
@@ -173,6 +174,8 @@ describe('PrometheusQueryResultsContainer', () => {
 
   it('should show loading state', async () => {
     renderContainer({ loading: LoadingState.Loading });
+
+    expect(await screen.findByText('test_string_1')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();

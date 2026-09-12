@@ -422,6 +422,8 @@ describe('CorrelationsPage - App Platform', () => {
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
+      expect(await screen.findByRole('cell', { name: /loki to loki/i })).toBeInTheDocument();
+
       const addNewButton = await screen.findByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       await userEvent.click(addNewButton);

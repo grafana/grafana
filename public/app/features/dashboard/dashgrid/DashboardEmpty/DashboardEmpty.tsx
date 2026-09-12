@@ -10,7 +10,6 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
-import { AddNewPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewPane';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -73,13 +72,25 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   // skipped when the assistant started the edit session — it drives the build itself,
   // so the pane would only take space away from the assistant sidebar
   useEffect(() => {
+    let cancelled = false;
+
     if (
       isEditingNewDashboard &&
       dashboard.getEditSessionSource() !== 'assistant' &&
       sidebar.state.openPane?.getId() !== 'add'
     ) {
-      sidebar.openPane(new AddNewPane({}));
+      import(
+        /* webpackChunkName: "dashboard-add-new-pane" */ 'app/features/dashboard-scene/sidebar/add-new/AddNewPane'
+      ).then(({ AddNewPane }) => {
+        if (!cancelled && sidebar.state.openPane?.getId() !== 'add') {
+          sidebar.openPane(new AddNewPane({}));
+        }
+      });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [isEditingNewDashboard, dashboard, sidebar]);
 
   const onSelectAutoGrid = () => {

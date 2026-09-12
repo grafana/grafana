@@ -84,12 +84,12 @@ describe('ServiceAccountsListPage tests', () => {
     setup({
       serviceAccounts: [getDefaultServiceAccount()],
     });
-    expect(screen.getByText(/Data source scavenger/)).toBeInTheDocument();
+    expect(await screen.findByText(/Data source scavenger/)).toBeInTheDocument();
     expect(screen.getByText(/sa-data-source-scavenger/)).toBeInTheDocument();
     expect(screen.getByText(/Editor/)).toBeInTheDocument();
   });
 
-  it('Should display enable button for disabled account', () => {
+  it('Should display enable button for disabled account', async () => {
     setup({
       serviceAccounts: [
         {
@@ -98,10 +98,10 @@ describe('ServiceAccountsListPage tests', () => {
         },
       ],
     });
-    expect(screen.getByRole('button', { name: 'Enable' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Enable' })).toBeInTheDocument();
   });
 
-  it('Should display Add token button for account without tokens', () => {
+  it('Should display Add token button for account without tokens', async () => {
     setup({
       serviceAccounts: [
         {
@@ -110,7 +110,7 @@ describe('ServiceAccountsListPage tests', () => {
         },
       ],
     });
-    expect(screen.getByRole('button', { name: 'Add token' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Add token' })).toBeInTheDocument();
     expect(screen.getByText(/No tokens/)).toBeInTheDocument();
   });
 
@@ -122,7 +122,7 @@ describe('ServiceAccountsListPage tests', () => {
     });
 
     const user = userEvent.setup();
-    await user.click(screen.getByText('Editor'));
+    await user.click(await screen.findByText('Editor'));
     await user.click(screen.getByText('Admin'));
 
     expect(updateServiceAccountMock).toHaveBeenCalledWith({
@@ -139,7 +139,7 @@ describe('ServiceAccountsListPage tests', () => {
     });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /Disable/ }));
+    await user.click(await screen.findByRole('button', { name: /Disable/ }));
     await user.click(screen.getByRole('button', { name: 'Disable service account' }));
 
     expect(updateServiceAccountMock).toHaveBeenCalledWith({
@@ -156,7 +156,7 @@ describe('ServiceAccountsListPage tests', () => {
     });
 
     const user = userEvent.setup();
-    await user.click(screen.getByLabelText(`Delete service account ${getDefaultServiceAccount().name}`));
+    await user.click(await screen.findByLabelText(`Delete service account ${getDefaultServiceAccount().name}`));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(deleteServiceAccountMock).toHaveBeenCalledWith('aaaaa');

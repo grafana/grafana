@@ -7,10 +7,6 @@ import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { annotationEditActions } from '../settings/annotations/actions';
-import { openAddLinkPane } from '../settings/links/LinkAddEditableElement';
-import { openAddVariablePane } from '../settings/variables/VariableTypeSelectionPane';
-import { openAddFilterForm } from '../sidebar/add-new/AddFilters';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
@@ -20,12 +16,20 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
   const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
 
-  const handleAddVariable = useCallback(() => {
+  // The add flows are edit-only, so their implementations (variable type pane,
+  // filter form, annotation actions, link pane) load on first use.
+  const handleAddVariable = useCallback(async () => {
+    const { openAddVariablePane } = await import(
+      /* webpackChunkName: "dashboard-add-controls" */ '../settings/variables/VariableTypeSelectionPane'
+    );
     openAddVariablePane(dashboard);
     DashboardInteractions.addVariableButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
-  const handleAddFilter = useCallback(() => {
+  const handleAddFilter = useCallback(async () => {
+    const { openAddFilterForm } = await import(
+      /* webpackChunkName: "dashboard-add-controls" */ '../sidebar/add-new/AddFilters'
+    );
     openAddFilterForm(dashboard, dashboard);
     DashboardInteractions.addFilterButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
@@ -35,12 +39,18 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
     if (!(dataLayers instanceof DashboardDataLayerSet)) {
       return;
     }
+    const { annotationEditActions } = await import(
+      /* webpackChunkName: "dashboard-add-controls" */ '../settings/annotations/actions'
+    );
     const newAnnotation = await dataLayers.createDefaultAnnotationLayer();
     annotationEditActions.addAnnotation({ source: dataLayers, addedObject: newAnnotation });
     DashboardInteractions.addAnnotationButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
-  const handleAddLink = useCallback(() => {
+  const handleAddLink = useCallback(async () => {
+    const { openAddLinkPane } = await import(
+      /* webpackChunkName: "dashboard-add-controls" */ '../settings/links/LinkAddEditableElement'
+    );
     openAddLinkPane(dashboard);
     DashboardInteractions.addLinkButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);

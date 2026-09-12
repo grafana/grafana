@@ -11,6 +11,11 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 
+jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
+  LazyGenAIDashTitleButton: () => null,
+  LazyGenAIDashDescriptionButton: () => null,
+}));
+
 describe('GeneralSettingsEditView', () => {
   describe('Dashboard state', () => {
     let dashboard: DashboardScene;
