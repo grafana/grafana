@@ -2968,18 +2968,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/react-data-grid@npm:7.0.0-beta.57":
-  version: 7.0.0-beta.57
-  resolution: "@grafana/react-data-grid@npm:7.0.0-beta.57"
-  dependencies:
-    clsx: "npm:^2.0.0"
-  peerDependencies:
-    react: ^18.0 || ^19.0
-    react-dom: ^18.0 || ^19.0
-  checksum: 10/9027fa01a959836105d5f60d5ca17f136679a69ce44d3466618c3fc6cab904ec187a08fd70ef724b5042b3528a32eb600bc8de4460204cd7f6cbcdf9e472a79f
-  languageName: node
-  linkType: hard
-
 "@grafana/rrdom@npm:^2.0.0-grafana.2":
   version: 2.0.0-grafana.2
   resolution: "@grafana/rrdom@npm:2.0.0-grafana.2"
@@ -3280,7 +3268,6 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.8.2"
     "@grafana/i18n": "npm:13.3.0-pre"
-    "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
@@ -3355,6 +3342,7 @@ __metadata:
     react-calendar: "npm:^6.0.0"
     react-colorful: "npm:^5.6.1"
     react-custom-scrollbars-2: "npm:^4.5.0"
+    react-data-grid: "npm:7.0.0-beta.61"
     react-dom: "npm:19.2.8"
     react-dropzone: "npm:^14.3.8"
     react-element-to-jsx-string: "npm:^17.0.1"
@@ -29731,6 +29719,26 @@ __metadata:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
   checksum: 10/4e5e67032a254c6fbfc2157c8c9b28b4285a41372d458a41fa6756777e224f692ae842488e51cb089b55b83625809aed0eb403026b8a8122a7dcf667637b21fd
+  languageName: node
+  linkType: hard
+
+"react-data-grid@npm:7.0.0-beta.61":
+  version: 7.0.0-beta.61
+  resolution: "react-data-grid@npm:7.0.0-beta.61"
+  peerDependencies:
+    react: ^19.2
+    react-dom: ^19.2
+  checksum: 10/0b288253cbc2c2c16768b136665eb9fa2bddb4d9ca10ff0c26021b30f2b52878326548bf371bcd341b848ee69ad10b2e9c2f27a88029c09d2fe8b28b866f4065
+  languageName: node
+  linkType: hard
+
+"react-data-grid@patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-070b0dfa29.patch::locator=grafana%40workspace%3A.":
+  version: 7.0.0-beta.61
+  resolution: "react-data-grid@patch:react-data-grid@npm%3A7.0.0-beta.61#./.yarn/patches/react-data-grid-npm-7.0.0-beta.61-070b0dfa29.patch::version=7.0.0-beta.61&hash=c7e38b&locator=grafana%40workspace%3A."
+  peerDependencies:
+    react: ^19.2
+    react-dom: ^19.2
+  checksum: 10/933bbcbabed42af7edfde864829e4552ceadf3279a24dae53292fac51300a6d5f330b1ec6205a1e7315e9a98e18f0b9ddb4bce6ff6e369e3209aaaf0c58059e7
   languageName: node
   linkType: hard
 

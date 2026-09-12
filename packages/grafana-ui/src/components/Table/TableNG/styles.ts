@@ -125,6 +125,11 @@ export const getGridStyles = memoize(
 
         border: 'none',
 
+        // The beta.61 grid roots `font-variant-numeric: tabular-nums`, which widens digits (and the
+        // auto column widths that size them). That's part of the refreshed experience, so keep it off
+        // until `table.refresh` ships to avoid changing number rendering for everyone mid-rollout.
+        ...(tableRefreshEnabled ? {} : { fontVariantNumeric: 'normal' }),
+
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
 
@@ -155,6 +160,13 @@ export const getGridStyles = memoize(
           zIndex: theme.zIndex.tooltip - 4,
           [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
           ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
+        },
+
+        // Row hover is painted on `.rdg-row`, but frozen cells carry a solid background to occlude
+        // scrolled content, so they'd otherwise miss the highlight. Give them the hover surface too
+        // (selected rows are handled below and win via higher specificity).
+        '[role="row"]:hover .rdg-cell.rdg-cell-frozen': {
+          backgroundColor: 'var(--rdg-row-hover-background-color)',
         },
 
         // have to override styles for row selection to workaround safari styles workaround
@@ -263,7 +275,10 @@ export const getGridStyles = memoize(
       }),
       cellNested: css({
         [SELECTED_CELL_SELECTOR]: { outline: 'none' },
-        '&:hover': { backgroundColor: 'transparent' },
+        // beta.61 paints row hover/selection on `.rdg-row`, not `.rdg-cell`, so a transparent
+        // container cell lets that color bleed through around the nested grid. Paint the full-width
+        // container with the opaque base row background so it stays neutral.
+        backgroundColor: 'var(--rdg-row-background-color)',
       }),
       noDataNested: css({
         height: TABLE.NESTED_NO_DATA_HEIGHT,

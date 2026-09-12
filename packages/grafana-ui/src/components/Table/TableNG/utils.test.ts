@@ -58,6 +58,7 @@ import {
   getPillCellHeightMeasurer,
   getRowHeight,
   inferPills,
+  isShiftTabToHeader,
   createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
@@ -1182,6 +1183,8 @@ describe('TableNG utils', () => {
           measureHeight: expect.any(Function),
           estimateHeight: expect.any(Function),
           avgCharWidth: expect.any(Number),
+          numericCharWidth: expect.any(Number),
+          monoCharWidth: expect.any(Number),
         })
       );
       expect(ctx.measureHeight('the quick brown fox jumps over the lazy dog', 100, field, 0, 20)).toEqual(
@@ -1323,6 +1326,8 @@ describe('TableNG utils', () => {
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
     };
@@ -1366,6 +1371,8 @@ describe('TableNG utils', () => {
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
     };
 
     it('sets up text height measurers for each text column if wrapping is on', () => {
@@ -1811,6 +1818,11 @@ describe('TableNG utils', () => {
           width: String(text).length * CHAR_W,
         })) as typeof typographyCtx.ctx.measureText);
       typographyCtx.avgCharWidth = CHAR_W;
+      // numeric/date columns use numericCharWidth and JSON uses monoCharWidth; pin them to CHAR_W too
+      // so the existing char-count math stays deterministic (tests that exercise the difference set
+      // these explicitly).
+      typographyCtx.numericCharWidth = CHAR_W;
+      typographyCtx.monoCharWidth = CHAR_W;
       return typographyCtx;
     };
 
@@ -1832,6 +1844,58 @@ describe('TableNG utils', () => {
 
       expect(width).toBe(75);
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
+    });
+
+    it('sizes numeric/date columns by numericCharWidth under table.refresh, so tabular-nums digits are not under-measured', () => {
+      const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+      const widthWith = (numericCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+        typographyCtx.numericCharWidth = numericCharWidth;
+        // availWidth 1 => no leftover, so the column is sized purely to its content.
+        return computeContentAwareColWidths([numberField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+          tableRefreshEnabled: true,
+        })[0];
+      };
+      // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
+      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
+    });
+
+    it('ignores numericCharWidth without table.refresh, sizing numeric columns by the prose average', () => {
+      const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+      const widthWith = (numericCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+        typographyCtx.numericCharWidth = numericCharWidth;
+        // tableRefreshEnabled defaults to false: tabular-nums is off, so numeric falls back to avgCharWidth.
+        return computeContentAwareColWidths([numberField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      // Widening the (unused) tabular advance must not change the width when the toggle is off.
+      expect(widthWith(2 * CHAR_W)).toBe(widthWith(CHAR_W));
+    });
+
+    it('sizes a JSON column by monoCharWidth (its monospace font), not avgCharWidth', () => {
+      const jsonField: Field = {
+        name: 'J',
+        type: FieldType.other,
+        values: [{ hello: 'world' }],
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      };
+      const widthWith = (monoCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx();
+        typographyCtx.monoCharWidth = monoCharWidth;
+        return computeContentAwareColWidths([jsonField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
     });
 
     it('keeps a configured width verbatim and grows the auto column into the leftover space', () => {
@@ -2591,6 +2655,32 @@ describe('TableNG utils', () => {
       const result = withColumns([]);
       markEdgeColumns(result);
       expect(result.columns).toEqual([]);
+    });
+  });
+
+  describe('isShiftTabToHeader', () => {
+    const shiftTab = { shiftKey: true, key: 'Tab' };
+
+    it('is true for Shift+Tab on the first cell of the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, shiftTab, 'c0')).toBe(true);
+    });
+
+    it('is false when the column is not the first column', () => {
+      expect(isShiftTabToHeader({ key: 'c1' }, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when the row is not the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 3 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when Shift is not held or the key is not Tab', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: false, key: 'Tab' }, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: true, key: 'Enter' }, 'c0')).toBe(false);
+    });
+
+    it('is false when column or row is undefined (keydown outside a data cell)', () => {
+      expect(isShiftTabToHeader(undefined, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, undefined, shiftTab, 'c0')).toBe(false);
     });
   });
 
