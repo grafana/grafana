@@ -14,14 +14,17 @@ type extra struct {
 	decrypter repository.Decrypter
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
+	// limits caps, in bytes, the git response sizes read from the repository.
+	limits        Limits
 	metrics       *repository.OperationMetrics
 	clientMetrics *ClientMetrics
 }
 
-func Extra(decrypter repository.Decrypter, allowInsecure bool, metrics *repository.OperationMetrics, clientMetrics *ClientMetrics) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool, limits Limits, metrics *repository.OperationMetrics, clientMetrics *ClientMetrics) repository.Extra {
 	return &extra{
 		decrypter:     decrypter,
 		allowInsecure: allowInsecure,
+		limits:        limits,
 		metrics:       metrics,
 		clientMetrics: clientMetrics,
 	}
@@ -58,6 +61,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
+		Limits:           e.limits,
 	}, e.metrics, e.clientMetrics)
 }
 
