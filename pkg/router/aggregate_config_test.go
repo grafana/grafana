@@ -30,9 +30,31 @@ func TestMatchesAnyPattern_EmptyMeansMatchAll(t *testing.T) {
 	require.True(t, matchesAnyPattern("anything.at.all", nil))
 }
 
-func TestCompileGroupPatterns_InvalidPattern(t *testing.T) {
-	_, err := compileGroupPatterns([]string{"[unterminated"})
-	require.Error(t, err)
+func TestCompileGroupPatterns_RegexMetacharactersAreLiteral(t *testing.T) {
+	// Regression test: only "*" is special. Escaping just "." left every other
+	// regex metacharacter live, so "*.grafana+app" compiled to
+	// ^.*\.grafana+app$ and over-matched "x.grafanaaaapp" -- the wrong
+	// direction for a narrowing allowlist.
+	patterns, err := compileGroupPatterns([]string{"*.grafana+app"})
+	require.NoError(t, err)
+
+	require.False(t, matchesAnyPattern("dashboard.grafanaaaapp", patterns), "+ must not act as a regex quantifier")
+	require.False(t, matchesAnyPattern("dashboard.grafanaapp", patterns), "+ must not act as a regex quantifier")
+	require.True(t, matchesAnyPattern("dashboard.grafana+app", patterns), "the literal pattern must still match itself")
+}
+
+// TestCompileGroupPatterns_NoPatternFailsToCompile documents the guarantee
+// that replaced the old invalid-pattern test: regexp.QuoteMeta always emits a
+// valid literal, so glob compilation is total -- input that looks like broken
+// regex syntax is just a literal group name, never a compile error.
+func TestCompileGroupPatterns_NoPatternFailsToCompile(t *testing.T) {
+	patterns, err := compileGroupPatterns([]string{"[unterminated"})
+	require.NoError(t, err)
+	require.Len(t, patterns, 1)
+
+	require.True(t, matchesAnyPattern("[unterminated", patterns))
+	require.False(t, matchesAnyPattern("unterminated", patterns))
+	require.False(t, matchesAnyPattern("u", patterns))
 }
 
 func TestParseAggregateTargets(t *testing.T) {

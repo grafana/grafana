@@ -56,8 +56,17 @@ func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetCo
 }
 
 // compileGroupPatterns turns glob-style patterns ("*.grafana.app") into
-// anchored regexps. Only "*" is special (translated to ".*"); literal dots
-// are escaped to match literal dots, not any character.
+// anchored regexps. "*" is the only special character; everything between the
+// "*" split points is escaped with regexp.QuoteMeta so it matches literally.
+// Escaping only "." (as an earlier version did) left every other regex
+// metacharacter live, which *widens* the match -- "foo+.grafana.app" would
+// compile to ^foo+\.grafana\.app$ and match "foooo.grafana.app". group_regex
+// is a narrowing allowlist, so over-matching is the wrong failure direction.
+//
+// Because QuoteMeta always yields a valid literal, the generated expression
+// can no longer fail to compile for any input; the error return is kept
+// because regexp.Compile's contract is what it is, not because there is a
+// reachable invalid-pattern case (see the tests).
 func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
 	compiled := make([]*regexp.Regexp, 0, len(patterns))
 	for _, p := range patterns {
@@ -65,9 +74,7 @@ func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
 		b.WriteString("^")
 		parts := strings.Split(p, "*")
 		for i, part := range parts {
-			// Escape literal dots to prevent them from matching any character
-			escapedPart := strings.ReplaceAll(part, ".", "\\.")
-			b.WriteString(escapedPart)
+			b.WriteString(regexp.QuoteMeta(part))
 			// Each * in the original pattern becomes .* in the regex
 			if i < len(parts)-1 {
 				b.WriteString(".*")
