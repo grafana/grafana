@@ -19,6 +19,7 @@ import {
   organizeFieldsTransformer,
 } from '@grafana/data/internal';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 import { getMockFrames } from 'app/features/loki-helpers/mocks';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -42,6 +43,7 @@ import {
   mergeLogsVolumeDataFrames,
   sortLogsResult,
   checkLogsSampled,
+  copyLogs,
   downloadLogs,
   DownloadFormat,
 } from './utils';
@@ -59,6 +61,11 @@ jest.mock('@grafana/runtime/internal', () => {
 });
 
 jest.mock('file-saver', () => jest.fn());
+
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  copyStringToClipboard: jest.fn(),
+}));
 
 jest.mock('../inspector/utils/download', () => ({
   ...jest.requireActual('../inspector/utils/download'),
@@ -717,6 +724,25 @@ describe('downloadLogs', () => {
       const text = typeof blob === 'string' ? blob : await blob.text();
 
       expect(text).toContain('test entry');
+    });
+  });
+
+  describe('copyLogs', () => {
+    beforeEach(() => {
+      jest.mocked(copyStringToClipboard).mockClear();
+    });
+
+    it('Copies logs as txt', () => {
+      copyLogs(logs);
+
+      expect(copyStringToClipboard).toHaveBeenCalledTimes(1);
+      expect(copyStringToClipboard).toHaveBeenCalledWith(expect.stringContaining('test entry'));
+    });
+
+    it('Copies selected fields', () => {
+      copyLogs(logs, [], ['label', 'otherLabel']);
+
+      expect(copyStringToClipboard).toHaveBeenCalledWith(expect.stringContaining('value other value'));
     });
   });
 
