@@ -19,9 +19,16 @@ export interface Props {
   enableRepositoryLink?: boolean;
   /** The folder's path within its repository (`grafana.app/sourcePath`); with `enableRepositoryLink`, the badge links to it. */
   sourcePath?: string;
+  /** Whether the current user could edit this folder. Only users who could otherwise edit get the read-only badge; the managed badge is shown to everyone. */
+  canEdit?: boolean;
 }
 
-export const FolderRepo = memo(function FolderRepo({ folder, enableRepositoryLink = false, sourcePath }: Props) {
+export const FolderRepo = memo(function FolderRepo({
+  folder,
+  enableRepositoryLink = false,
+  sourcePath,
+  canEdit = false,
+}: Props) {
   const showBadge = shouldShowBadge(folder);
   // The item's manager id names the repository directly, so no folder resource has to be fetched
   // per row. Items from the legacy folder APIs carry no id: `includeInstance` keeps the settings
@@ -43,7 +50,7 @@ export const FolderRepo = memo(function FolderRepo({ folder, enableRepositoryLin
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
-      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
+      {canEdit && isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <ManagedBadge
         managerKind={ManagerKind.Repo}
         name={repository?.title || repository?.name}

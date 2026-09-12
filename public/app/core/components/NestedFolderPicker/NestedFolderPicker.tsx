@@ -309,7 +309,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={getSelectedFolderResult.data} />
+      <FolderRepo folder={getSelectedFolderResult.data} canEdit={permission === 'edit'} />
     </Stack>
   ) : (
     ''
@@ -404,6 +404,7 @@ export function NestedFolderPicker({
           requestLoadMore={handleLoadMore}
           emptyFolders={emptyFolders}
           teamFolderOwnersByUid={teamFolderOwnersByUid}
+          canEdit={permission === 'edit'}
         />
       </fieldset>
     </>
