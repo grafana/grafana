@@ -1,6 +1,13 @@
 import { NEVER, of } from 'rxjs';
 
-import { createDataFrame, type DataFrame, FieldType, LoadingState, type PanelData } from '@grafana/data';
+import {
+  createDataFrame,
+  type DataFrame,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+} from '@grafana/data';
 import { createQueryRunner } from '@grafana/runtime';
 
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
@@ -115,7 +122,11 @@ describe('runInstantQueries', () => {
   it('keeps the surviving frames when the caller opts into partial results', async () => {
     setRunnerResult([numberFrame('A', [42])], LoadingState.Error);
 
-    const frames = await runInstantQueries({ A: 'up', B: 'bad' }, { uid: 'prom', type: 'prometheus' }, undefined, true);
+    const frames = await runInstantQueries(
+      { A: 'up', B: 'bad' },
+      { uid: 'prom', type: 'prometheus' },
+      { partial: true }
+    );
 
     expect(readScalar(frames, 'A')).toBe(42);
     expect(readScalar(frames, 'B')).toBeNull();
@@ -148,6 +159,31 @@ describe('runInstantQueries', () => {
       jest.useRealTimers();
     }
   });
+
+  it('rejects with an AbortError and destroys the runner when the signal aborts', async () => {
+    mockCreateQueryRunner.mockReturnValue({ run, get: () => NEVER, cancel: jest.fn(), destroy });
+    const controller = new AbortController();
+
+    const assertion = expect(
+      runInstantQueries({ A: 'up' }, { uid: 'prom', type: 'prometheus' }, { signal: controller.signal })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    controller.abort();
+
+    await assertion;
+    expect(destroy).toHaveBeenCalled();
+  });
+
+  it('rejects an already-aborted signal without observing a synchronous result', async () => {
+    const data = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() } as PanelData;
+    mockCreateQueryRunner.mockReturnValue({ run, get: () => of(data), cancel: jest.fn(), destroy });
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      runInstantQueries({ A: 'up' }, { uid: 'prom', type: 'prometheus' }, { signal: controller.signal })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(destroy).toHaveBeenCalled();
+  });
 });
 
 it('rejects with a custom timeout when the runner never reaches a terminal state', async () => {
@@ -157,7 +193,7 @@ it('rejects with a custom timeout when the runner never reaches a terminal state
     mockCreateQueryRunner.mockReturnValue({ run, get: () => NEVER, cancel: jest.fn(), destroy });
 
     const assertion = expect(
-      runInstantQueries({ A: 'up' }, { uid: 'prom', type: 'prometheus' }, 10_000)
+      runInstantQueries({ A: 'up' }, { uid: 'prom', type: 'prometheus' }, { timeoutMs: 10_000 })
     ).rejects.toThrow();
 
     jest.advanceTimersByTime(10_000);

@@ -11411,8 +11411,6 @@
         "description": "Aggregate and search logs from your applications and infrastructure.",
         "setup-hint": "connect a logs source",
         "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
         "title": "Logs",
         "volume": "Ingest volume · last 24h"
       },

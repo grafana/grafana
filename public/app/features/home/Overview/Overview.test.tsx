@@ -4,7 +4,8 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution, type SolutionId } from '../solutions/types';
+import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
+import { type Solution } from '../solutions/types';
 
 import { Overview } from './Overview';
 import { useGuides } from './useGuides';
@@ -16,14 +17,6 @@ const mockUseGuides = jest.mocked(useGuides);
 const mockCtaClicked = jest.mocked(ctaClicked);
 const EMPTY_SOLUTIONS: Solution[] = [];
 
-const datasource: DataSourceInstanceListItem = {
-  uid: 'datasource',
-  name: 'Datasource',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  isDefault: true,
-};
-
 const guide = {
   id: 'app-monitoring',
   title: 'Set up app monitoring',
@@ -33,32 +26,6 @@ const guide = {
   cta: 'Start setup',
   href: '#',
 };
-
-function solution(id: SolutionId, overrides: Partial<Solution> = {}): Solution {
-  return {
-    id,
-    title: id,
-    icon: 'chart-line',
-    signal: async () => 'inactive',
-    datasource: async () => null,
-    needsAttention: async () => false,
-    stats: async () => null,
-    refinedStats: async () => null,
-    sparkline: async () => null,
-    cta: async () => null,
-    alert: async () => null,
-    offer: async () => null,
-    ...overrides,
-  };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
-}
 
 describe('Overview', () => {
   beforeEach(() => {
@@ -101,7 +68,7 @@ describe('Overview', () => {
 
   it('defaults to Get started when no solution is live and guides are available', async () => {
     mockUseGuides.mockReturnValue([guide]);
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       offer: async () => ({
         availability: 'enable',
@@ -119,7 +86,10 @@ describe('Overview', () => {
 
   it('keeps the All solutions default when a solution is live', async () => {
     mockUseGuides.mockReturnValue([guide]);
-    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      datasource: async () => stubDatasource,
+    });
 
     render(<Overview solutions={[metrics]} />);
 
@@ -149,7 +119,7 @@ describe('Overview', () => {
   it('hides the filter until solutions settle so the default never flips in view', async () => {
     mockUseGuides.mockReturnValue([guide]);
     const probe = deferred<DataSourceInstanceListItem | null>();
-    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
+    const metrics = stubSolution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
 
     render(<Overview solutions={[metrics]} />);
 
@@ -170,7 +140,10 @@ describe('Overview', () => {
     try {
       mockUseGuides.mockReturnValue([guide]);
 
-      const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+      const metrics = stubSolution('metrics', {
+        title: 'Metrics & infrastructure',
+        datasource: async () => stubDatasource,
+      });
       render(<Overview solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
 
       await waitFor(() => expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument());
@@ -272,71 +245,149 @@ describe('Overview', () => {
     });
   });
 
-  it('does not render any card until every required classification has settled', async () => {
+  it('renders each card as soon as its own classification settles', async () => {
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
     const logsAttention = deferred<boolean>();
     const firstStats = jest.fn(async () => ({ primary: '4.2 M series' }));
-    const metricsDatasource = jest.fn(async () => datasource);
-    const logsDatasource = jest.fn(async () => datasource);
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      signal: async () => 'active',
-      datasource: metricsDatasource,
+      datasource: async () => stubDatasource,
       stats: firstStats,
     });
-    const logs = solution('logs', {
+    const logs = stubSolution('logs', {
       title: 'Logs',
-      signal: async () => 'active',
-      datasource: logsDatasource,
+      datasource: async () => stubDatasource,
       needsAttention: () => logsAttention.promise,
     });
 
-    const { container } = render(<Overview solutions={[metrics, logs]} />);
+    render(<Overview solutions={[metrics, logs]} />);
 
-    await waitFor(() => expect(metricsDatasource).toHaveBeenCalled());
-    expect(logsDatasource).toHaveBeenCalled();
-    expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+    // Metrics settles on its own: its card paints while the logs card still awaits its group.
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(await screen.findByText('4.2 M series')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
-    expect(firstStats).not.toHaveBeenCalled();
-    expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
 
     await act(async () => logsAttention.resolve(false));
 
-    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+    // The already-placed card was not remounted by its sibling settling.
     expect(firstStats).toHaveBeenCalledTimes(1);
   });
 
   it('returns to skeletons while a changed solution set is classified', async () => {
+    const tracesDatasource = deferred<DataSourceInstanceListItem | null>();
     const nextDatasource = deferred<DataSourceInstanceListItem | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
     });
-    const logs = solution('logs', {
+    const traces = stubSolution('traces', {
+      title: 'Traces',
+      datasource: () => tracesDatasource.promise,
+    });
+    const logs = stubSolution('logs', {
       title: 'Logs',
       datasource: () => nextDatasource.promise,
     });
-    const { container, rerender } = render(<Overview solutions={[metrics]} />);
+    const { rerender } = render(<Overview solutions={[metrics, traces]} />);
 
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
-    await waitFor(() => expect(container.querySelectorAll('.react-loading-skeleton')).toHaveLength(0));
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
 
     rerender(<Overview solutions={[logs]} />);
 
-    await waitFor(() => expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0));
+    // A late answer for a solution no longer in the set must not surface.
+    await act(async () => tracesDatasource.resolve(stubDatasource));
+
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
     expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: traces.title })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
 
-    await act(async () => nextDatasource.resolve(datasource));
+    await act(async () => nextDatasource.resolve(stubDatasource));
 
     expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: traces.title })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('keeps placed cards when the solution array is recreated with the same solutions', async () => {
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      datasource: async () => stubDatasource,
+    });
+    const solutions = [metrics];
+    const { rerender } = render(<Overview solutions={solutions} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+
+    rerender(<Overview solutions={[...solutions]} />);
+
+    // No flash back to a skeleton while the (memoized) facts are re-read.
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+
+    await act(async () => {});
+
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('holds offers behind skeletons until a live card settles when no view preference is stored', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    const logsDatasource = deferred<DataSourceInstanceListItem | null>();
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      offer: async () => ({
+        availability: 'enable',
+        description: 'Connect Prometheus-compatible metrics.',
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
+      }),
+    });
+    const logs = stubSolution('logs', { title: 'Logs', datasource: () => logsDatasource.promise });
+    const others = (['traces', 'kubernetes', 'synthetics'] as const).map((id) =>
+      stubSolution(id, { datasource: () => new Promise<null>(() => {}) })
+    );
+
+    render(<Overview solutions={[metrics, logs, ...others]} />);
+
+    // The offer has settled, but a live card could still arrive and flip the default to All
+    // solutions, so the grid stays on skeletons: one per solution.
+    await waitFor(() => expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(5));
+    expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+
+    await act(async () => logsDatasource.resolve(stubDatasource));
+
+    expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(3);
+  });
+
+  it('renders a settled offer immediately when a view preference is stored', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
+    const metrics = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      offer: async () => ({
+        availability: 'enable',
+        description: 'Connect Prometheus-compatible metrics.',
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
+      }),
+    });
+    const logs = stubSolution('logs', { title: 'Logs', datasource: () => new Promise<null>(() => {}) });
+
+    render(<Overview solutions={[metrics, logs]} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
   });
 
   it('classifies a live solution as enabled when its attention query fails', async () => {
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      signal: async () => 'active',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: async () => {
         throw new Error('health unavailable');
       },
@@ -350,7 +401,7 @@ describe('Overview', () => {
   });
 
   it('settles instead of holding skeletons when required facts reject', async () => {
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       datasource: async () => {
         throw new Error('datasource lookup failed');
       },
@@ -367,10 +418,9 @@ describe('Overview', () => {
 
   it('keeps optional card facts progressive after placement', async () => {
     const stats = deferred<{ primary: string } | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      signal: async () => 'active',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       stats: () => stats.promise,
     });
 
@@ -388,13 +438,17 @@ describe('Overview', () => {
   it('groups attention and enabled cards and filters without reclassifying them', async () => {
     const attentionAlert = jest.fn(async () => ({ primary: '3 hosts above 90% disk' }));
     const enabledAlert = jest.fn(async () => null);
-    const attention = solution('metrics', {
+    const attention = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: async () => true,
       alert: attentionAlert,
     });
-    const enabled = solution('logs', { title: 'Logs', datasource: async () => datasource, alert: enabledAlert });
+    const enabled = stubSolution('logs', {
+      title: 'Logs',
+      datasource: async () => stubDatasource,
+      alert: enabledAlert,
+    });
     const { user } = render(<Overview solutions={[attention, enabled]} />);
 
     expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
@@ -412,9 +466,9 @@ describe('Overview', () => {
 
   it('loads alert details after placing an attention card', async () => {
     const alert = deferred<{ primary: string } | null>();
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
-      datasource: async () => datasource,
+      datasource: async () => stubDatasource,
       needsAttention: async () => true,
       alert: () => alert.promise,
     });
@@ -431,7 +485,7 @@ describe('Overview', () => {
   });
 
   it('shows offers through the Available filter', async () => {
-    const metrics = solution('metrics', {
+    const metrics = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       offer: async () => ({
         availability: 'enable',

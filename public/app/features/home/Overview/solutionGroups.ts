@@ -11,24 +11,20 @@ export interface OverviewSolutionGroups {
 }
 
 /**
- * Resolves every grouping fact before the grid renders. Attention failures read as false, and a
- * failed fact is isolated to its solution instead of rejecting the whole Overview.
+ * Places one solution: live when a datasource proved data (its own attention fact decides the
+ * group), otherwise an offer, otherwise hidden. Rejected facts degrade only this solution:
+ * datasource and offer read as absent, attention as false. Never rejects. Its facts are memoized
+ * on the solution or TTL-cached below it, so a repeat placement within the cache window starts no
+ * request.
  */
-export async function resolveOverviewCards(solutions: Solution[]): Promise<OverviewCard[]> {
-  const cards = await Promise.all(
-    solutions.map(async (solution) => {
-      const [datasource, needsAttention, offer] = await Promise.all([
-        solution.datasource().catch(() => null),
-        solution.needsAttention().catch(() => false),
-        solution.offer().catch(() => null),
-      ]);
-      if (datasource) {
-        return { solution, kind: 'live', needsAttention };
-      }
-      return offer ? { solution, kind: 'offer', offer } : null;
-    })
-  );
-  return cards.filter((card): card is OverviewCard => card !== null);
+export async function resolveOverviewCard(solution: Solution): Promise<OverviewCard | null> {
+  const datasource = await solution.datasource().catch(() => null);
+  if (datasource) {
+    const needsAttention = await solution.needsAttention().catch(() => false);
+    return { solution, kind: 'live', needsAttention };
+  }
+  const offer = await solution.offer().catch(() => null);
+  return offer ? { solution, kind: 'offer', offer } : null;
 }
 
 export function groupOverviewCards(cards: OverviewCard[]): OverviewSolutionGroups {

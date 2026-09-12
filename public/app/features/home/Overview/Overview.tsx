@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -14,9 +13,10 @@ import { ctaClicked } from '../analytics/main';
 import { type Solution } from '../solutions/types';
 
 import { GetStarted } from './GetStarted';
-import { Solutions } from './Solutions';
-import { groupOverviewCards, resolveOverviewCards } from './solutionGroups';
+import { SolutionGridSkeleton, Solutions } from './Solutions';
+import { groupOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
+import { useOverviewPlacement } from './useOverviewPlacement';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
 
@@ -35,11 +35,13 @@ interface OverviewProps {
 }
 
 export function Overview({ solutions }: OverviewProps) {
+  const { cards, pendingCount } = useOverviewPlacement(solutions);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const guides = useGuides();
-  const { value: cards, loading: cardsLoading } = useAsync(() => resolveOverviewCards(solutions), [solutions]);
-  const groups = useMemo(() => groupOverviewCards(cards ?? []), [cards]);
+  const groups = useMemo(() => groupOverviewCards(cards), [cards]);
+  // Get started is offered while guides load and once any exist; settled-empty guides drop it.
+  const guidesOffered = !guides || guides.length > 0;
 
   const options = useMemo<Option[]>(
     () => [
@@ -48,8 +50,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.all', 'All solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
-            cards={cards ?? []}
+            cards={cards}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.all', 'No solutions were found.')}
           />
         ),
@@ -59,8 +61,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.attention', 'Needs attention'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.attention}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.attention', 'No solutions need attention.')}
           />
         ),
@@ -70,8 +72,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.enabled', 'Enabled solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.enabled}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.enabled', 'No enabled solutions with recent activity were found.')}
           />
         ),
@@ -81,14 +83,13 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.available', 'Available solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.available}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.available', 'No available solutions to show yet.')}
           />
         ),
       },
-      // Hide get started if there are no guides to show, but do show it while loading
-      ...(!guides || guides.length > 0
+      ...(guidesOffered
         ? [
             {
               value: GET_STARTED_OPTION_VALUE,
@@ -100,23 +101,20 @@ export function Overview({ solutions }: OverviewProps) {
           ]
         : []),
     ],
-    [cards, cardsLoading, groups, guides]
+    [cards, pendingCount, groups, guides, guidesOffered]
   );
-  // Empty instances onboard through guides: with no live solution, an unset preference defaults
-  // to Get started instead of All solutions. An explicit pick always wins, and once a solution
-  // goes live the unset default returns to All solutions.
-  const settledWithoutLiveSolutions = !cardsLoading && !!cards && cards.every((card) => card.kind !== 'live');
-  const showGuidesByDefault =
-    settledWithoutLiveSolutions && options.some((option) => option.value === GET_STARTED_OPTION_VALUE);
-  const [stored, setStored] = useStoredString(
-    HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY,
-    showGuidesByDefault ? GET_STARTED_OPTION_VALUE : options[0].value
-  );
-  const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
+  const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
+  const settled = pendingCount === 0;
+  const anyLive = cards.some((card) => card.kind === 'live');
+  // The unset default is knowable once a live card exists or every solution settled; until then
+  // nothing renders, since offers painted now could flip to Get started in front of the user.
+  const decided = !!storedRaw || anyLive || settled;
+  const defaultView = !anyLive && guidesOffered ? GET_STARTED_OPTION_VALUE : options[0].value;
+  const option = options.find((o) => o.value === (storedRaw || defaultView)) ?? options[0];
 
   // The unset default is computed from settled cards and guides; keep the filter hidden until
   // then so its label never flips (e.g. All solutions → Get started) in front of the user.
-  const optionsSettled = !cardsLoading && guides !== undefined;
+  const optionsSettled = settled && guides !== undefined;
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -210,7 +208,7 @@ export function Overview({ solutions }: OverviewProps) {
         )}
       </Stack>
 
-      {option.content}
+      {decided ? option.content : <SolutionGridSkeleton count={cards.length + pendingCount} />}
     </Stack>
   );
 }

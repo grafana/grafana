@@ -181,7 +181,7 @@ export function SolutionCardSkeleton() {
   const styles = useStyles2(getStyles, false);
 
   return (
-    <Card noMargin className={styles.card}>
+    <Card noMargin className={styles.card} data-testid="solution-card-skeleton">
       <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
           <Skeleton width={32} height={32} />

@@ -1,3 +1,5 @@
+import { of, throwError } from 'rxjs';
+
 import { getAPINamespace } from '@grafana/api-clients';
 import {
   createDataFrame,
@@ -10,6 +12,7 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
+import { lokiHasRecentLabels } from './solutionDataProbes';
 import {
   fetchLogsActivity,
   fetchMetricsActivity,
@@ -51,7 +54,7 @@ jest.mock('@grafana/api-clients', () => ({
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
 const mockRunInstantQueries = jest.mocked(runInstantQueries);
 const mockRunRangeQuery = jest.mocked(runRangeQuery);
-const mockProxyGet = jest.fn();
+const mockProxyFetch = jest.fn();
 const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 const mockGetAPINamespace = jest.mocked(getAPINamespace);
 
@@ -69,12 +72,12 @@ beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date('2026-07-24T12:00:00Z'));
   mockResolveBackendInstance.mockReset();
-  mockProxyGet.mockReset();
+  mockProxyFetch.mockReset();
   mockRunInstantQueries.mockReset();
   mockRunInstantQueries.mockResolvedValue([]);
   mockRunRangeQuery.mockReset();
   mockRunRangeQuery.mockResolvedValue([]);
-  jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
+  jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockProxyFetch } as unknown as BackendSrv);
   mockGetDataSourceInstanceSettings.mockReset();
   mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
   mockGetAPINamespace.mockReset();
@@ -86,7 +89,7 @@ afterEach(() => {
 });
 
 describe('fetchLogsActivity', () => {
-  it('sums index volume, counts sources, and builds the ingest series over the right windows', async () => {
+  it('sums index volume and builds the ingest series over the right windows', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'labels') {
         return { data: ['filename', 'job', 'service_name'] };
@@ -124,9 +127,6 @@ describe('fetchLogsActivity', () => {
           },
         };
       }
-      if (path === 'label/service_name/values') {
-        return { data: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] };
-      }
       throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
@@ -134,20 +134,20 @@ describe('fetchLogsActivity', () => {
     const activity = await fetchLogsActivity(loki);
 
     expect(activity.bytes).toBe(47_000_000_000);
-    expect(activity.sources).toBe(8);
     expect(activity.series?.x?.values).toEqual([1_000_000, 1_060_000]);
     expect(activity.series?.y.values).toEqual([15, 35]);
 
     const end = Date.now() * NS_IN_MS;
     const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * 1e9;
-    const silent = { showErrorAlert: false };
-    expect(getResource).toHaveBeenCalledWith('labels', { start: statsStart, end }, silent);
+    const silent = { showErrorAlert: false, abortSignal: expect.any(AbortSignal) };
+    expect(getResource).toHaveBeenCalledWith('labels', { start: end - DATA_LOOKBACK_HOURS * 3600 * 1e9, end }, silent);
     expect(getResource).toHaveBeenCalledWith(
       'index/volume',
       { query: '{service_name=~".+"}', start: statsStart, end, aggregateBy: 'labels', targetLabels: 'service_name' },
       silent
     );
-    expect(getResource).toHaveBeenCalledWith('label/service_name/values', { start: statsStart, end }, silent);
+    // The distinct-source count needed label/<label>/values over 7d (megabytes, tens of seconds on big tenants).
+    expect(getResource).not.toHaveBeenCalledWith('label/service_name/values', expect.anything(), expect.anything());
     expect(getResource).toHaveBeenCalledWith(
       'index/volume_range',
       {
@@ -173,12 +173,16 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume_range') {
         return { data: { result: [] } };
       }
-      return { data: ['a'] };
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 1, series: null });
-    expect(getResource).toHaveBeenCalledWith('label/job/values', expect.anything(), expect.anything());
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
+    expect(getResource).toHaveBeenCalledWith(
+      'index/volume',
+      expect.objectContaining({ query: '{job=~".+"}', targetLabels: 'job' }),
+      expect.anything()
+    );
   });
 
   it('reports null bytes when the volume result is empty', async () => {
@@ -189,33 +193,51 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume' || path === 'index/volume_range') {
         return { data: { result: [] } };
       }
-      return { data: ['a'] };
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 1, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
   });
 
-  it('keeps the other fields when one endpoint is unavailable', async () => {
+  it('keeps the other field when one endpoint is unavailable', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'labels') {
         return { data: ['job'] };
       }
-      if (path === 'index/volume' || path === 'index/volume_range') {
+      if (path === 'index/volume') {
         throw new Error('volume disabled');
       }
-      return { data: ['a', 'b'] };
+      if (path === 'index/volume_range') {
+        return {
+          data: {
+            result: [
+              {
+                metric: {},
+                values: [
+                  [1_000, '10'],
+                  [1_060, '20'],
+                ],
+              },
+            ],
+          },
+        };
+      }
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 2, series: null });
+    const activity = await fetchLogsActivity(loki);
+
+    expect(activity.bytes).toBeNull();
+    expect(activity.series?.y.values).toEqual([10, 20]);
   });
 
   it('reports nulls when no usable label exists', async () => {
     const getResource = jest.fn(async () => ({ data: ['__stream_shard__'] }));
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: null, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledTimes(1);
   });
 
@@ -223,7 +245,7 @@ describe('fetchLogsActivity', () => {
     const getResource = jest.fn().mockRejectedValue(new Error('labels 403'));
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: null, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledTimes(1);
   });
 
@@ -235,7 +257,7 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume_range') {
         return { data: { result: [{ metric: {}, values: [[1_000, '10']] }] } };
       }
-      return { data: [] };
+      return { data: { result: [] } };
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
@@ -243,25 +265,50 @@ describe('fetchLogsActivity', () => {
 
     expect(activity.series).toBeNull();
   });
+
+  it('fetches its own label list after the probe of the same datasource was aborted', async () => {
+    const getResource = jest.fn(async (path: string) =>
+      path === 'labels' ? { data: ['job'] } : { data: { result: [] } }
+    );
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    const controller = new AbortController();
+    controller.abort();
+    // The aborted probe never issues its request.
+    await expect(lokiHasRecentLabels(loki as DataSourceInstanceListItem, controller.signal)).resolves.toBe(false);
+
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
+    expect(getResource).toHaveBeenCalledWith(
+      'labels',
+      expect.anything(),
+      expect.objectContaining({ abortSignal: expect.objectContaining({ aborted: false }) })
+    );
+    expect(getResource).toHaveBeenCalledWith(
+      'index/volume',
+      expect.objectContaining({ targetLabels: 'job' }),
+      expect.anything()
+    );
+  });
 });
 
 describe('fetchTracesServices', () => {
   it('counts tag values through the datasource proxy over the lookback in unix seconds', async () => {
-    mockProxyGet.mockResolvedValue({ tagValues: [{ value: 'a' }, { value: 'b' }] });
+    mockProxyFetch.mockReturnValue(of({ data: { tagValues: [{ value: 'a' }, { value: 'b' }] } }));
 
     await expect(fetchTracesServices(tempo)).resolves.toBe(2);
 
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenCalledWith(
-      '/api/datasources/proxy/uid/tempo-uid/api/v2/search/tag/resource.service.name/values',
-      { start: end - DATA_LOOKBACK_HOURS * 3600, end },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenCalledWith({
+      url: '/api/datasources/proxy/uid/tempo-uid/api/v2/search/tag/resource.service.name/values',
+      params: { start: end - DATA_LOOKBACK_HOURS * 3600, end },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('propagates a proxy rejection (callers fail soft)', async () => {
-    mockProxyGet.mockRejectedValue(new Error('tempo 404'));
+    mockProxyFetch.mockReturnValue(throwError(() => new Error('tempo 404')));
 
     await expect(fetchTracesServices(tempo)).rejects.toThrow('tempo 404');
   });
@@ -269,17 +316,21 @@ describe('fetchTracesServices', () => {
 
 describe('fetchTracesActivity', () => {
   it('sums the query_range samples into a span count and throughput series', async () => {
-    mockProxyGet.mockResolvedValue({
-      series: [
-        {
-          samples: [
-            { timestampMs: '1000', value: 100 },
-            { timestampMs: '2000', value: 200 },
-            { timestampMs: '3000', value: 300 },
+    mockProxyFetch.mockReturnValue(
+      of({
+        data: {
+          series: [
+            {
+              samples: [
+                { timestampMs: '1000', value: 100 },
+                { timestampMs: '2000', value: 200 },
+                { timestampMs: '3000', value: 300 },
+              ],
+            },
           ],
         },
-      ],
-    });
+      })
+    );
 
     const activity = await fetchTracesActivity(tempo);
 
@@ -288,84 +339,93 @@ describe('fetchTracesActivity', () => {
     expect(activity.series?.y.values).toEqual([100, 200, 300]);
     expect(activity.lookbackHours).toBe(24);
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenCalledWith(
-      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
-      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenCalledWith({
+      url: '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      params: { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('reports null spans when the response has no samples', async () => {
-    mockProxyGet.mockResolvedValue({ series: [] });
+    mockProxyFetch.mockReturnValue(of({ data: { series: [] } }));
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 24 });
   });
 
   it('retries the known Tempo 2.x duration limit with a three-hour lookback', async () => {
-    mockProxyGet
-      .mockRejectedValueOnce({
-        status: 400,
-        data: { message: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s' },
-      })
-      .mockResolvedValueOnce({
-        series: [
-          {
-            samples: [
-              { timestampMs: '1000', value: 100 },
-              { timestampMs: '2000', value: 200 },
+    mockProxyFetch
+      .mockReturnValueOnce(
+        throwError(() => ({
+          status: 400,
+          data: { message: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s' },
+        }))
+      )
+      .mockReturnValueOnce(
+        of({
+          data: {
+            series: [
+              {
+                samples: [
+                  { timestampMs: '1000', value: 100 },
+                  { timestampMs: '2000', value: 200 },
+                ],
+              },
             ],
           },
-        ],
-      });
+        })
+      );
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual(
       expect.objectContaining({ spans: 300, lookbackHours: 3 })
     );
 
     const end = Math.floor(Date.now() / 1000);
-    expect(mockProxyGet).toHaveBeenNthCalledWith(
-      1,
-      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
-      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
-      undefined,
-      { showErrorAlert: false }
-    );
-    expect(mockProxyGet).toHaveBeenNthCalledWith(
-      2,
-      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
-      { q: '{} | count_over_time()', start: end - 3 * 3600, end, step: '30m' },
-      undefined,
-      { showErrorAlert: false }
-    );
+    expect(mockProxyFetch).toHaveBeenNthCalledWith(1, {
+      url: '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      params: { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
+    expect(mockProxyFetch).toHaveBeenNthCalledWith(2, {
+      url: '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      params: { q: '{} | count_over_time()', start: end - 3 * 3600, end, step: '30m' },
+      method: 'GET',
+      showErrorAlert: false,
+      abortSignal: expect.any(AbortSignal),
+    });
   });
 
   it('retries when Tempo returns the duration limit as a string response body', async () => {
-    mockProxyGet
-      .mockRejectedValueOnce({
-        status: 400,
-        data: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s',
-      })
-      .mockResolvedValueOnce({ series: [] });
+    mockProxyFetch
+      .mockReturnValueOnce(
+        throwError(() => ({
+          status: 400,
+          data: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s',
+        }))
+      )
+      .mockReturnValueOnce(of({ data: { series: [] } }));
 
     await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 3 });
-    expect(mockProxyGet).toHaveBeenCalledTimes(2);
+    expect(mockProxyFetch).toHaveBeenCalledTimes(2);
   });
 
   it('preserves a malformed Tempo error response', async () => {
     const error = { status: 400, data: {} };
-    mockProxyGet.mockRejectedValue(error);
+    mockProxyFetch.mockReturnValue(throwError(() => error));
 
     await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
-    expect(mockProxyGet).toHaveBeenCalledTimes(1);
+    expect(mockProxyFetch).toHaveBeenCalledTimes(1);
   });
 
   it('does not retry unrelated Tempo errors', async () => {
     const error = { status: 400, data: { message: 'invalid TraceQL query' } };
-    mockProxyGet.mockRejectedValue(error);
+    mockProxyFetch.mockReturnValue(throwError(() => error));
 
     await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
-    expect(mockProxyGet).toHaveBeenCalledTimes(1);
+    expect(mockProxyFetch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -376,13 +436,10 @@ describe('metrics telemetry', () => {
   const scalarFrame = (refId: string, value: number, labels?: Record<string, string>) =>
     createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values: [value], labels }] });
 
-  it('reads cardinality, name count, hosts, and the series sparkline', async () => {
+  it('reads cardinality, hosts, and the series sparkline without fetching the name list', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/cardinality/label_values') {
         return { series_count_total: 4_200_000 };
-      }
-      if (path === 'api/v1/label/__name__/values') {
-        return { data: ['up', 'node_cpu_seconds_total', 'node_uname_info'] };
       }
       throw new Error(`unexpected path ${path}`);
     });
@@ -400,22 +457,17 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
-    expect(activity.names).toBe(3);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.hosts).toBe(12);
     expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
 
-    const end = Math.floor(Date.now() / 1000);
     expect(getResource).toHaveBeenCalledWith(
       'api/v1/cardinality/label_values',
       { 'label_names[]': '__name__', count_method: 'active' },
-      { showErrorAlert: false }
+      { showErrorAlert: false, abortSignal: expect.any(AbortSignal) }
     );
-    expect(getResource).toHaveBeenCalledWith(
-      'api/v1/label/__name__/values',
-      { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
-      { showErrorAlert: false }
-    );
+    // The 7d name list runs to megabytes on large tenants; a series count makes it redundant.
+    expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
       'series',
       'sum(prometheus_tsdb_head_series)',
@@ -442,8 +494,7 @@ describe('metrics telemetry', () => {
         diskWorst: expect.stringMatching(/^topk\(1, \(1 - node_filesystem_avail_bytes\{/),
       }),
       prom,
-      30_000,
-      true
+      { timeoutMs: 30_000, partial: true }
     );
   });
 
@@ -455,7 +506,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
       prom,
-      30_000
+      { timeoutMs: 30_000 }
     );
   });
 
@@ -467,16 +518,13 @@ describe('metrics telemetry', () => {
       if (path === 'api/v1/cardinality/label_values') {
         return { series_count_total: 4_200_000 };
       }
-      if (path === 'api/v1/label/__name__/values') {
-        return { data: ['up'] };
-      }
       throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.seriesSparkline).toBeNull();
     expect(mockRunRangeQuery).not.toHaveBeenCalled();
   });
@@ -518,8 +566,7 @@ describe('metrics telemetry', () => {
         dataPointsPerMinute: '60 * sum(max by (id) (grafanacloud_instance_samples_per_second{stack_id="12345"}))',
       },
       { uid: 'grafanacloud-usage', type: 'prometheus' },
-      undefined,
-      true
+      { partial: true }
     );
     // The trend works on Cloud via usage metrics even though the product datasource is Mimir-typed.
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
@@ -528,7 +575,14 @@ describe('metrics telemetry', () => {
       DATA_LOOKBACK_HOURS,
       { uid: 'grafanacloud-usage', type: 'prometheus' }
     );
-    expect(activity.series).toBe(9_900_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 9_900_000 });
+    // A stack count makes the multi-second cardinality scan and the megabyte name list redundant.
+    expect(getResource).not.toHaveBeenCalledWith(
+      'api/v1/cardinality/label_values',
+      expect.anything(),
+      expect.anything()
+    );
+    expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
     expect(activity.dataPointsPerMinute).toBe(5_160_000);
     expect(activity.seriesSparkline?.y.values).toEqual([30, 40]);
   });
@@ -605,12 +659,9 @@ describe('metrics telemetry', () => {
 
     expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalledWith('grafanacloud-usage');
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
-    expect(mockRunInstantQueries).toHaveBeenCalledWith(
-      expect.not.objectContaining({ dpm: expect.anything() }),
-      prom,
-      undefined,
-      true
-    );
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(expect.not.objectContaining({ dpm: expect.anything() }), prom, {
+      partial: true,
+    });
     expect(activity.dataPointsPerMinute).toBeNull();
   });
 
@@ -624,8 +675,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ dpm: '60 * sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))' }),
       prom,
-      undefined,
-      true
+      { partial: true }
     );
     expect(activity.dataPointsPerMinute).toBe(250_000);
   });
@@ -642,7 +692,7 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
       'series',
       'sum(prometheus_tsdb_head_series)',
@@ -653,8 +703,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ hosts: 'count(node_uname_info)' }),
       prom,
-      undefined,
-      true
+      { partial: true }
     );
   });
 
@@ -680,7 +729,7 @@ describe('metrics telemetry', () => {
 
     const activity = await fetchMetricsActivity(prom);
 
-    expect(activity.series).toBe(4_200_000);
+    expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.dataPointsPerMinute).toBeNull();
     expect(activity.seriesSparkline).toBeNull();
     expect(activity.hosts).toBe(12);
@@ -694,14 +743,15 @@ describe('metrics telemetry', () => {
       if (path === 'api/v1/status/tsdb') {
         return { data: { headStats: { numSeries: 987 } } };
       }
-      return { data: ['up'] };
+      throw new Error(`unexpected path ${path}`);
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ series: 987, names: 1 });
+    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ count: { kind: 'series', value: 987 } });
+    expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
   });
 
-  it('keeps the name count when both active-series sources fail', async () => {
+  it('counts metric names over the stats window when both active-series sources fail', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/label/__name__/values') {
         return { data: ['up', 'process_cpu_seconds_total'] };
@@ -709,11 +759,37 @@ describe('metrics telemetry', () => {
       throw new Error('unsupported');
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    const end = Math.floor(Date.now() / 1000);
 
     const promise = fetchMetricsActivity(prom);
     await jest.advanceTimersByTimeAsync(10_000);
 
-    await expect(promise).resolves.toMatchObject({ series: null, names: 2 });
+    await expect(promise).resolves.toMatchObject({ count: { kind: 'names', value: 2 } });
+    expect(getResource).toHaveBeenCalledWith(
+      'api/v1/label/__name__/values',
+      { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
+      { showErrorAlert: false, abortSignal: expect.any(AbortSignal) }
+    );
+  });
+
+  it('starts the name fallback as soon as the series sources settle, before the sparkline does', async () => {
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/label/__name__/values') {
+        return { data: ['up'] };
+      }
+      throw new Error('unsupported');
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunRangeQuery.mockReturnValue(new Promise(() => {}));
+    let settled = false;
+
+    void fetchMetricsActivity(prom).finally(() => {
+      settled = true;
+    });
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(getResource).toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
+    expect(settled).toBe(false);
   });
 
   it('reports no disk pressure when nobody is above threshold', async () => {
@@ -750,9 +826,8 @@ describe('metrics telemetry', () => {
     mockResolveBackendInstance.mockResolvedValue(null);
 
     await expect(fetchMetricsActivity(prom)).resolves.toEqual({
-      series: null,
+      count: null,
       dataPointsPerMinute: null,
-      names: null,
       hosts: null,
       seriesSparkline: null,
     });
