@@ -290,6 +290,22 @@ func TestReadClassicResource_TypeAssertions(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not a string")
 	})
+
+	t.Run("empty file does not panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte{},
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+	})
+
+	t.Run("BOM-only file does not panic", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte{0xEF, 0xBB, 0xBF},
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+	})
 }
 
 func TestParseFileResource(t *testing.T) {
