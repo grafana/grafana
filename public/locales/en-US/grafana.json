@@ -5947,6 +5947,7 @@
     "inspect-json": {
       "dataframe-description": "Raw data without transformations and field config applied. ",
       "dataframe-label": "DataFrame JSON (from Query)",
+      "editor-label": "JSON content",
       "panel-data-description": "The raw model passed to the panel visualization",
       "panel-data-label": "Panel data",
       "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
