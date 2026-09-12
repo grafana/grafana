@@ -1,34 +1,30 @@
-import { waitFor } from '@testing-library/react';
-import { render, screen } from 'test/test-utils';
+import { HttpResponse, http } from 'msw';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
+import { type FeatureToggles } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { mockComboboxRect } from '@grafana/test-utils';
-import { getSearchTeamsErrorHandler, getSearchTeamsHandler } from '@grafana/test-utils/handlers';
-import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getSearchTeamsErrorHandler } from '@grafana/test-utils/handlers';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { OwnersFilter } from './OwnersFilter';
 
 setBackendSrv(backendSrv);
-setupMockServer();
-mockComboboxRect();
+const server = setupMockServer();
 
-describe('OwnersFilter', () => {
-  beforeEach(() => {
-    server.use(
-      getSearchTeamsHandler([
-        { id: 1, uid: 'team-a', name: 'Team A', avatarUrl: '' },
-        { id: 2, uid: 'test-team', name: 'Test Team', avatarUrl: '' },
-      ])
-    );
-  });
+const toggle: Array<keyof FeatureToggles> = ['kubernetesTeamsApi'];
 
-  it('shows the all teams option and fetched teams', async () => {
+describe.each([
+  { name: 'IAM path', toggles: { enable: toggle } },
+  { name: 'legacy path', toggles: { disable: toggle } },
+])('OwnersFilter ($name)', ({ toggles }) => {
+  testWithFeatureToggles(toggles);
+
+  it('shows fetched teams when opened', async () => {
     const { user } = render(<OwnersFilter values={[]} onChange={jest.fn()} />);
 
     await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
 
-    expect(await screen.findByText('All teams')).toBeInTheDocument();
     expect(await screen.findByText('Team A')).toBeInTheDocument();
     expect(await screen.findByText('Test Team')).toBeInTheDocument();
   });
@@ -43,44 +39,48 @@ describe('OwnersFilter', () => {
     expect(onChange).toHaveBeenCalledWith(['iam.grafana.app/Team/team-a']);
   });
 
-  it('normalizes the all teams option into all ownerReference values', async () => {
-    const onChange = jest.fn();
-    const { user } = render(<OwnersFilter values={[]} onChange={onChange} />);
+  it('searches teams with the typed query', async () => {
+    const queries: string[] = [];
 
-    await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
-    await user.click(await screen.findByText('All teams'));
+    const captureQuery = ({ request }: { request: Request }) => {
+      const query = new URL(request.url).searchParams.get('query') ?? '';
+      queries.push(query);
+    };
 
-    expect(onChange).toHaveBeenCalledWith(['iam.grafana.app/Team/team-a', 'iam.grafana.app/Team/test-team']);
-  });
-
-  it('does not show the all teams option when totalCount is more than 200 and shows a warning', async () => {
     server.use(
-      getSearchTeamsHandler(
-        [
-          { id: 1, uid: 'team-a', name: 'Team A', avatarUrl: '' },
-          { id: 2, uid: 'test-team', name: 'Test Team', avatarUrl: '' },
-        ],
-        201
-      )
+      http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', captureQuery),
+      http.get('/api/teams/search', captureQuery)
     );
 
     const { user } = render(<OwnersFilter values={[]} onChange={jest.fn()} />);
 
-    await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
+    const combobox = await screen.findByRole('combobox', { name: 'Owner filter' });
+    await user.click(combobox);
+    await user.type(combobox, 'm A');
 
-    await waitFor(() => {
-      expect(screen.queryByText('All teams')).not.toBeInTheDocument();
-    });
     expect(await screen.findByText('Team A')).toBeInTheDocument();
-    expect(screen.getByText('Test Team')).toBeInTheDocument();
+    await waitFor(() => expect(queries).toContain('m A'));
+  });
 
-    await user.hover(await screen.findByLabelText('Owner filter limit warning'));
+  it('shows labels for pre-selected teams', async () => {
+    render(<OwnersFilter values={['iam.grafana.app/Team/team-a']} onChange={jest.fn()} />);
 
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Listing only first 200 teams out of 201.');
+    expect(await screen.findByText('Team A')).toBeInTheDocument();
+  });
+
+  it('shows a fallback label for pre-selected teams that cannot be loaded', async () => {
+    render(<OwnersFilter values={['iam.grafana.app/Team/does-not-exist']} onChange={jest.fn()} />);
+
+    expect(await screen.findByText('[Unknown team]')).toBeInTheDocument();
   });
 
   it('shows an error tooltip when loading teams fails', async () => {
-    server.use(getSearchTeamsErrorHandler('Team API unavailable'));
+    server.use(
+      getSearchTeamsErrorHandler('Team API unavailable'),
+      http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', () =>
+        HttpResponse.json({ message: 'Team API unavailable' }, { status: 500 })
+      )
+    );
 
     const { user } = render(<OwnersFilter values={[]} onChange={jest.fn()} />);
 
