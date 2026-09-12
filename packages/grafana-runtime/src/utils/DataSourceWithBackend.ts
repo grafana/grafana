@@ -124,6 +124,17 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
   };
 }
 
+const liveMathReferenceIds = (expression: string): string[] => {
+  const refs = new Set<string>();
+  const pattern = /\$(?:\{([^}]+)\}|([A-Za-z_][A-Za-z0-9_]*))/g;
+
+  for (const match of expression.matchAll(pattern)) {
+    refs.add(match[1] ?? match[2]);
+  }
+
+  return [...refs];
+};
+
 interface PreparedQuery {
   query: DataQuery;
   /** Absent for expression queries, which are not backed by a data source instance. */
@@ -523,12 +534,55 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
     return of(rsp); // add warning?
   }
 
+  const liveSourceRefIds = new Set<string>();
+  for (const f of rsp.data) {
+    const addr = parseLiveChannelAddress(f.meta?.channel);
+    if (!addr) {
+      continue;
+    }
+
+    const sourceRefId = f.refId ?? '';
+    const sourceQuery = req.targets.find((q) => q.refId === sourceRefId);
+    if (sourceRefId) {
+      liveSourceRefIds.add(sourceRefId);
+    }
+  }
+
+  const liveMathResultRefIds = new Set<string>();
+  for (const target of req.targets) {
+    if (
+      target.hide ||
+      !target.refId ||
+      !target.expression ||
+      target.type !== 'math' ||
+      !isExpressionReference(target.datasource)
+    ) {
+      continue;
+    }
+
+    const refs = liveMathReferenceIds(target.expression);
+    if (refs.length === 1 && liveSourceRefIds.has(refs[0])) {
+      liveMathResultRefIds.add(target.refId);
+    }
+  }
+
   const staticdata: DataFrame[] = [];
   const streams: Array<Observable<DataQueryResponse>> = [];
   for (const f of rsp.data) {
     const addr = parseLiveChannelAddress(f.meta?.channel);
-    if (addr) {
-      const frame: DataFrame = f;
+    if (!addr) {
+      if (!liveMathResultRefIds.has(f.refId ?? '')) {
+        staticdata.push(f);
+      }
+      continue;
+    }
+
+    const frame: DataFrame = f;
+    const sourceRefId = frame.refId ?? '';
+    const sourceQuery = req.targets.find((q) => q.refId === sourceRefId);
+
+    // Preserve the normal live stream unless the source query itself is hidden.
+    if (!sourceQuery?.hide) {
       streams.push(
         live.getDataStream({
           addr,
@@ -536,8 +590,39 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
           frame: dataFrameToJSON(f),
         })
       );
-    } else {
-      staticdata.push(f);
+    }
+
+    // Live Math support is intentionally limited to expressions referencing
+    // exactly one live query. Multi-query expressions continue through the
+    // existing expression path.
+    for (const target of req.targets) {
+      if (
+        target.hide ||
+        !target.refId ||
+        !target.expression ||
+        target.type !== 'math' ||
+        !isExpressionReference(target.datasource)
+      ) {
+        continue;
+      }
+
+      const refs = liveMathReferenceIds(target.expression);
+      if (refs.length !== 1 || refs[0] !== sourceRefId) {
+        continue;
+      }
+
+      streams.push(
+        live.getDataStream({
+          addr,
+          buffer: getter(req, frame),
+          frame: dataFrameToJSON(f),
+          mathExpression: {
+            sourceRefId,
+            resultRefId: target.refId,
+            expression: target.expression,
+          },
+        })
+      );
     }
   }
   if (staticdata.length) {
