@@ -702,12 +702,54 @@ func applyResourcesInParallel(
 		return nil
 	}
 
+	quotaBlocked := make([]bool, len(resources))
+	if err := runResourceTasksInParallel(ctx, resources, progress, maxSyncWorkers, resourceTimeout, func(timeoutCtx context.Context, i int, change ResourceFileChange) {
+		// Non-folder changes never ensure a folder path, so no relocating set is needed.
+		quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+	}); err != nil {
+		return err
+	}
+
+	// Manager-kind conflicts can release reservations for the next file, so
+	// retry blocked creates serially. Collect the files that still cannot reserve
+	// quota: their read-only manager checks can safely run concurrently.
+	var stillBlocked []ResourceFileChange
+	for i, blocked := range quotaBlocked {
+		if !blocked {
+			continue
+		}
+		if err := progress.TooManyErrors(); err != nil {
+			return err
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		change := resources[i]
+		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
+			if applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil) {
+				stillBlocked = append(stillBlocked, change)
+			}
+		})
+	}
+
+	return runResourceTasksInParallel(ctx, stillBlocked, progress, maxSyncWorkers, resourceTimeout, func(timeoutCtx context.Context, _ int, change ResourceFileChange) {
+		recordQuotaBlockedCreate(timeoutCtx, change.Path, currentRef, repositoryResources, progress)
+	})
+}
+
+func runResourceTasksInParallel(
+	ctx context.Context,
+	changes []ResourceFileChange,
+	progress jobs.JobProgressRecorder,
+	maxSyncWorkers int,
+	resourceTimeout time.Duration,
+	run func(context.Context, int, ResourceFileChange),
+) error {
 	sem := make(chan struct{}, maxSyncWorkers)
 	var wg sync.WaitGroup
-	quotaBlocked := make([]bool, len(resources))
 
 loop:
-	for i, change := range resources {
+	for i, change := range changes {
 		if err := progress.TooManyErrors(); err != nil {
 			break
 		}
@@ -727,35 +769,17 @@ loop:
 			defer wg.Done()
 			defer func() { <-sem }()
 
+			// A previous worker may have failed while this task waited for a slot.
+			if ctx.Err() != nil || progress.TooManyErrors() != nil {
+				return
+			}
 			wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-				// Non-folder changes never ensure a folder path, so no relocating set is needed.
-				quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+				run(timeoutCtx, i, change)
 			})
 		}(i, change)
 	}
 
 	wg.Wait()
-
-	// Active writes may release quota reservations when the API rejects them.
-	// Retry blocked creates serially so rejections in this pass can also free
-	// capacity for the next file. These files have not reached the API yet.
-	for i, blocked := range quotaBlocked {
-		if !blocked {
-			continue
-		}
-		if err := progress.TooManyErrors(); err != nil {
-			return err
-		}
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		change := resources[i]
-		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-			if applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil) {
-				recordQuotaBlockedCreate(timeoutCtx, change.Path, currentRef, repositoryResources, progress)
-			}
-		})
-	}
 
 	if err := progress.TooManyErrors(); err != nil {
 		return err
