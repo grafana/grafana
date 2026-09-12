@@ -10690,6 +10690,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "query-field": {
+      "loading": "Loading editor"
+    },
     "query-input": {
       "loading": "Loading editor"
     },
