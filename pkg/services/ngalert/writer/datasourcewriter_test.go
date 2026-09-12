@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -38,6 +40,19 @@ func (m *mockPluginContextProvider) GetWithDataSource(ctx context.Context, plugi
 	return backend.PluginContext{}, nil
 }
 
+// mockPluginContextProviderWithSigV4 returns a PluginContext whose GrafanaConfig
+// has AWS_SIGV4_AUTH_ENABLED=true, matching what Grafana injects when the server's
+// [auth] sigv4_auth_enabled setting is true.
+type mockPluginContextProviderWithSigV4 struct{}
+
+func (m *mockPluginContextProviderWithSigV4) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+	return backend.PluginContext{
+		GrafanaConfig: config.NewGrafanaCfg(map[string]string{
+			awsds.SigV4AuthEnabledEnvVarKeyName: "true",
+		}),
+	}, nil
+}
+
 func newMockHTTPClientProvider() *mockHTTPClientProvider {
 	return &mockHTTPClientProvider{
 		client: &http.Client{},
@@ -56,7 +71,7 @@ func (m *mockHTTPClientProvider) New(options ...sdkhttpclient.Options) (*http.Cl
 type testDataSources struct {
 	dsfakes.FakeDataSourceService
 
-	prom1, prom2, prom3, prom4 *TestRemoteWriteTarget
+	prom1, prom2, prom3, prom4, amp1 *TestRemoteWriteTarget
 }
 
 func (t *testDataSources) Reset() {
@@ -64,6 +79,9 @@ func (t *testDataSources) Reset() {
 	t.prom2.Reset()
 	t.prom3.Reset()
 	t.prom4.Reset()
+	if t.amp1 != nil {
+		t.amp1.Reset()
+	}
 }
 
 func setupDataSources(t *testing.T) *testDataSources {
@@ -72,6 +90,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		prom2: NewTestRemoteWriteTarget(t),
 		prom3: NewTestRemoteWriteTarget(t),
 		prom4: NewTestRemoteWriteTarget(t),
+		amp1:  NewTestRemoteWriteTargetWithPath(t, "/api/v1/remote_write"),
 	}
 	res.DataSourceHeaders = make(map[string]http.Header)
 
@@ -86,6 +105,9 @@ func setupDataSources(t *testing.T) *testDataSources {
 	})
 	t.Cleanup(func() {
 		res.prom4.Close()
+	})
+	t.Cleanup(func() {
+		res.amp1.Close()
 	})
 
 	p1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -144,6 +166,14 @@ func setupDataSources(t *testing.T) *testDataSources {
 		"X-Double-Header": []string{"one", "two"},
 	}
 
+	// Add an Amazon Managed Prometheus datasource.
+	amp1, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		Name: "amp-1",
+		UID:  "amp-1",
+		Type: datasources.DS_AMAZON_PROMETHEUS,
+	})
+	amp1.URL = res.amp1.srv.URL
+
 	return res
 }
 
@@ -191,7 +221,18 @@ func TestDatasourceWriter(t *testing.T) {
 
 		err := writer.WriteDatasource(context.Background(), "loki-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.Error(t, err)
-		require.EqualError(t, err, "can only write to data sources of type prometheus")
+		require.EqualError(t, err, "can only write to data sources of type prometheus or amazon-managed prometheus")
+	})
+
+	t.Run("when writing an AMP datasource then the request is made to the /api/v1/remote_write endpoint", func(t *testing.T) {
+		testDS.Reset()
+
+		err := writer.WriteDatasource(context.Background(), "amp-1", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, testDS.amp1.RequestsCount)
+		assert.Equal(t, 0, testDS.prom1.RequestsCount)
+		assert.Equal(t, 0, testDS.prom2.RequestsCount)
 	})
 
 	t.Run("when writing with an empty datasource uid then the default is written", func(t *testing.T) {
@@ -314,6 +355,53 @@ func TestDatasourceWriter(t *testing.T) {
 		require.Nil(t, mockProvider.lastOptions.ProxyOptions)
 	})
 
+	t.Run("when an AMP datasource has SigV4 config, it is propagated to the HTTP client options", func(t *testing.T) {
+		testDS.Reset()
+
+		mockProvider := newMockHTTPClientProvider()
+
+		cfg := DatasourceWriterConfig{
+			Timeout:              time.Second * 5,
+			DefaultDatasourceUID: "amp-1",
+		}
+
+		// Set up an AMP datasource with SigV4 settings in its JSON config.
+		// sigV4Auth=true in JSONData causes the SDK's parseHTTPSettings to set
+		// HTTPSettings.SigV4Auth=true, which in turn causes HTTPClientOptions to
+		// populate Options.SigV4 with region/authType from JSONData.
+		ampWithSigV4, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			Name: "amp-sigv4",
+			UID:  "amp-sigv4",
+			Type: datasources.DS_AMAZON_PROMETHEUS,
+			JsonData: simplejson.MustJson([]byte(`{
+				"sigV4Auth": true,
+				"sigV4Region": "us-east-1",
+				"sigV4AuthType": "default"
+			}`)),
+		})
+		ampWithSigV4.URL = testDS.amp1.srv.URL
+
+		// Provide a GrafanaConfig with SigV4AuthEnabled=true so the writer context
+		// correctly reflects a Grafana instance that has SigV4 signing enabled.
+		// This is required for the SigV4 middleware (in the real httpclientprovider)
+		// to actually sign requests; here we verify the config reaches the provider.
+		sigV4PluginCtxProvider := &mockPluginContextProviderWithSigV4{}
+		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
+		writer := NewDatasourceWriter(cfg, testDS, mockProvider, sigV4PluginCtxProvider, clock.New(), log.New("test"), met)
+
+		// makeWriter calls the mock provider with the constructed HTTPOptions.
+		// We inspect the options that were passed to New() to verify SigV4 is present.
+		_, _ = writer.makeWriter(context.Background(), 1, "amp-sigv4")
+
+		require.Equal(t, 1, mockProvider.callCount)
+		require.NotNil(t, mockProvider.lastOptions)
+		// Options.SigV4 must be non-nil because sigV4Auth=true is set in JSONData
+		// and SigV4AuthEnabled=true is provided through the Grafana plugin context.
+		require.NotNil(t, mockProvider.lastOptions.SigV4)
+		require.Equal(t, "us-east-1", mockProvider.lastOptions.SigV4.Region)
+		require.Equal(t, "default", mockProvider.lastOptions.SigV4.AuthType)
+	})
+
 	t.Run("datasource uses correct backend type in metrics", func(t *testing.T) {
 		testCases := []struct {
 			name                string
@@ -432,6 +520,22 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 				URL:      "http://example.com/foo/bar",
 			},
 			"http://example.com/api/v1/push",
+		},
+		{
+			"amazon managed prometheus workspace URL",
+			datasources.DataSource{
+				Type: datasources.DS_AMAZON_PROMETHEUS,
+				URL:  "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-abc123",
+			},
+			"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-abc123/api/v1/remote_write",
+		},
+		{
+			"amazon managed prometheus workspace URL with trailing slash",
+			datasources.DataSource{
+				Type: datasources.DS_AMAZON_PROMETHEUS,
+				URL:  "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-abc123/",
+			},
+			"https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-abc123/api/v1/remote_write",
 		},
 	}
 
