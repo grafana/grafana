@@ -1,0 +1,19 @@
+{
+  "id": null,
+  "uid": "dash-libpanel-ref-only",
+  "title": "Dashboard referencing a library panel without __elements",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "An Existing Library Panel",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "libraryPanel": {
+        "uid": "lib-panel-uid-preexisting",
+        "name": "An Existing Library Panel"
+      }
+    }
+  ]
+}

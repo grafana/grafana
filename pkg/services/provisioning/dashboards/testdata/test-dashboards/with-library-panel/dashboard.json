@@ -1,0 +1,31 @@
+{
+  "id": null,
+  "uid": "dash-with-libpanel",
+  "title": "Dashboard with library panel",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "My Library Panel",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "libraryPanel": {
+        "uid": "lib-panel-uid-1",
+        "name": "My Library Panel"
+      }
+    }
+  ],
+  "__elements": {
+    "lib-panel-uid-1": {
+      "name": "My Library Panel",
+      "uid": "lib-panel-uid-1",
+      "kind": 1,
+      "model": {
+        "type": "timeseries",
+        "title": "My Library Panel",
+        "fieldConfig": { "defaults": {}, "overrides": [] }
+      }
+    }
+  }
+}

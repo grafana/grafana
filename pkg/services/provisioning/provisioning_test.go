@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -274,7 +275,7 @@ func setup(t *testing.T) *serviceTestStruct {
 	}
 
 	service, err := newProvisioningServiceImpl(
-		func(context.Context, string, dashboardstore.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, *serverlock.ServerLockService) (dashboards.DashboardProvisioner, error) {
+		func(context.Context, string, dashboardstore.DashboardProvisioningService, *setting.Cfg, org.Service, utils.DashboardStore, folder.Service, *serverlock.ServerLockService, librarypanels.Service) (dashboards.DashboardProvisioner, error) {
 			serviceTest.dashboardProvisionerInstantiations++
 			return serviceTest.mock, nil
 		},
