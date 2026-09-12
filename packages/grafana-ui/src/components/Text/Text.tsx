@@ -18,7 +18,7 @@ export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'clas
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
   /** Color to use for text */
-  color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info';
+  color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info' | 'accent' | 'tertiary';
   /** Use to cut the text off with ellipsis if there isn't space to show all of it. On hover shows the rest of the text */
   truncate?: boolean;
   /** If true, show the text as italic. False by default */

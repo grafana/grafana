@@ -340,6 +340,12 @@ export { TimeRangeInput } from './components/DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, type Props as CardProps, getCardStyles } from './components/Card/Card';
 export { CardContainer, type CardContainerProps } from './components/Card/CardContainer';
+export {
+  ColorCard,
+  type ColorCardVariant,
+  type ColorCardSize,
+  type Props as ColorCardProps,
+} from './components/ColorCard/ColorCard';
 export { FormattedValueDisplay } from './components/FormattedValueDisplay/FormattedValueDisplay';
 export { ButtonSelect } from './components/Dropdown/ButtonSelect';
 export { Dropdown } from './components/Dropdown/Dropdown';
