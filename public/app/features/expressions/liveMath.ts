@@ -127,18 +127,24 @@ class Parser {
   }
 }
 
-export function createLiveMathTransform(expression: LiveMathExpression, fieldIndexes: number[]) {
+export function createLiveMathTransform(expression: LiveMathExpression, fieldIndexes: number[] = []) {
   const tokens = tokenize(expression.expression);
   const evaluate = (value: unknown) => new Parser(tokens, value).parse();
-  const values = (input: unknown[][]) => input.map((column, index) => fieldIndexes.includes(index) ? column.map(evaluate) : column);
+  const values = (input: unknown[][], indexes: number[] = fieldIndexes) =>
+    input.map((column, index) => indexes.includes(index) ? column.map(evaluate) : column);
   return {
-    frame: (input: SerializedLiveFrame): SerializedLiveFrame => ({
-      ...input,
-      refId: expression.resultRefId,
-      fields: input.fields.map((field, index) =>
-        fieldIndexes.includes(index) ? { ...field, values: field.values?.map(evaluate) } : field
-      ),
-    }),
+    frame: (input: SerializedLiveFrame): SerializedLiveFrame => {
+      const indexes = input.fields
+        .map((field, index) => (field.type === 'number' ? index : -1))
+        .filter((index) => index >= 0);
+      return {
+        ...input,
+        refId: expression.resultRefId,
+        fields: input.fields.map((field, index) =>
+          indexes.includes(index) ? { ...field, values: field.values?.map(evaluate) } : field
+        ),
+      };
+    },
     values,
   };
 }
