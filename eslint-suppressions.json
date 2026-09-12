@@ -1033,11 +1033,6 @@
       "count": 5
     }
   },
-  "public/app/features/alerting/state/ThresholdMapper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/state/alertDef.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

@@ -15,7 +15,7 @@ export class ThresholdMapper {
       }
 
       const evaluator = condition.evaluator;
-      const thresholds: any[] = (panel.thresholds = []);
+      const thresholds: unknown[] = (panel.thresholds = []);
       const visible = hiddenReducerTypes.indexOf(condition.reducer?.type) === -1;
 
       switch (evaluator.type) {
