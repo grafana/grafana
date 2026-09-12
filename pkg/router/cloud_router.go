@@ -49,6 +49,15 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
+
+	// apiserver_url was renamed to appmanifest_apiserver_url. Left unchecked, a
+	// deployment still on the old key would look like "nothing configured" and
+	// silently fall through to the dummy loader -- the router would come up
+	// ready and serve an empty route set. Fail loudly instead.
+	if legacyApiserverURL := section.Key("apiserver_url").MustString(""); legacyApiserverURL != "" && appManifestApiserverURL == "" {
+		return nil, fmt.Errorf("%s: apiserver_url was renamed to appmanifest_apiserver_url -- update your config", cloudRouterSection)
+	}
+
 	aggregateTargetConfigs, err := parseAggregateTargets(section)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
@@ -78,7 +87,18 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 			return nil, fmt.Errorf("%s: %s.audience is required when %s.url is set", cloudRouterSection, targetCfg.Name, targetCfg.Name)
 		}
 		restCfg := &rest.Config{
-			Host:          targetCfg.URL,
+			Host: targetCfg.URL,
+			// A fresh clone per target, not the process-global
+			// http.DefaultTransport that client-go's transport cache would
+			// otherwise wrap: this one client carries both the discovery poll
+			// and every user request proxied to this target (newAggregateTarget
+			// hands client.Transport to aggregateBackend's ReverseProxy), so it
+			// must own its connection pool. Same intent as transportFor's
+			// per-tlsCacheKey clone on the forward path. rest.Config.Transport
+			// is the base RoundTripper and WrapTransport layers on top of it
+			// (rest.TransportFor -> transport.New -> HTTPWrappersForConfig), so
+			// the CAP-token exchange below still applies.
+			Transport:     newAggregateBaseTransport(),
 			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace),
 			Timeout:       defaultAggregateDiscoveryTimeout,
 		}
@@ -395,6 +415,21 @@ func (l *cloudLoader) transportFor(key tlsCacheKey) (*http.Transport, error) {
 
 	l.transports[key] = t
 	return t, nil
+}
+
+// aggregateMaxIdleConnsPerHost raises net/http's stingy default of 2 for the
+// aggregate targets' transports. Each transport talks to exactly one upstream,
+// which fronts every group discovered there, so 2 idle connections per host is
+// far too few to keep keepalive useful under concurrent proxied traffic.
+const aggregateMaxIdleConnsPerHost = 100
+
+// newAggregateBaseTransport returns a fresh base transport for one aggregate
+// target. Called once per target so no two targets share a connection pool,
+// and none of them shares the process-global http.DefaultTransport.
+func newAggregateBaseTransport() *http.Transport {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.MaxIdleConnsPerHost = aggregateMaxIdleConnsPerHost
+	return t
 }
 
 func (l *cloudLoader) combineByName(manifests []v1alpha2.AppManifest, backends []v1alpha2.RouteBackend) []Backend {

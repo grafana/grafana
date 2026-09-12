@@ -129,6 +129,36 @@ func TestProvideCloudRoutesLoaderFactory_RenamedKey(t *testing.T) {
 	require.NotNil(t, loader)
 }
 
+// TestProvideCloudRoutesLoaderFactory_LegacyKeyFailsLoudly covers the
+// rename's worst failure mode: a deployment still on apiserver_url would
+// otherwise look like "nothing configured" and silently degrade to the dummy
+// loader, with the router reporting itself ready while serving no real routes.
+func TestProvideCloudRoutesLoaderFactory_LegacyKeyFailsLoudly(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"apiserver_url":      "https://example.invalid",
+		"cap_token":          "tok",
+		"token_exchange_url": "https://exchange.invalid",
+	})
+
+	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.ErrorContains(t, err, "apiserver_url was renamed to appmanifest_apiserver_url")
+}
+
+// The legacy key must be ignored, not fatal, once the new key is also present
+// -- an operator mid-migration who set both is correctly configured.
+func TestProvideCloudRoutesLoaderFactory_LegacyKeyIgnoredWhenNewKeySet(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"apiserver_url":             "https://old.invalid",
+		"appmanifest_apiserver_url": "https://example.invalid",
+		"cap_token":                 "tok",
+		"token_exchange_url":        "https://exchange.invalid",
+	})
+
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, loader)
+}
+
 func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 
@@ -156,6 +186,55 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg)
 	require.ErrorContains(t, err, "baas_apiserver.audience is required")
+}
+
+// TestNewAggregateBaseTransport_IsPerCallClone pins the property that keeps
+// aggregate targets off the process-global http.DefaultTransport: each call
+// yields its own transport, so no two targets share a connection pool and
+// none of them shares the default's (MaxIdleConnsPerHost=2) pool with the
+// rest of the process.
+func TestNewAggregateBaseTransport_IsPerCallClone(t *testing.T) {
+	first := newAggregateBaseTransport()
+	second := newAggregateBaseTransport()
+
+	require.NotSame(t, http.DefaultTransport.(*http.Transport), first)
+	require.NotSame(t, first, second)
+	require.Equal(t, aggregateMaxIdleConnsPerHost, first.MaxIdleConnsPerHost)
+	// 0 means net/http's DefaultMaxIdleConnsPerHost (2) -- the global default
+	// transport must be left exactly as it was.
+	require.Zero(t, http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost, "the global default must be left untouched")
+}
+
+// TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients checks the
+// wiring side of the same concern: the transport is built inside the
+// per-target loop, so two configured targets end up with two distinct
+// clients rather than one shared one.
+func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"cap_token":                             "tok",
+		"token_exchange_url":                    "https://exchange.invalid",
+		"baas_apiserver.url":                    "https://baas.invalid",
+		"baas_apiserver.audience":               "baas",
+		"cloud_app_platform_apiserver.url":      "https://cap.invalid",
+		"cloud_app_platform_apiserver.audience": "cap",
+	})
+
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+	require.Len(t, loader.aggregateTargets, 2)
+
+	first, second := loader.aggregateTargets[0], loader.aggregateTargets[1]
+	require.NotNil(t, first.client)
+	require.NotNil(t, second.client)
+	require.NotSame(t, first.client, second.client)
+	require.NotSame(t, http.DefaultClient, first.client)
+	// rest.HTTPClientFor only builds a dedicated client when the transport
+	// isn't http.DefaultTransport (or a timeout is set), so a non-nil
+	// per-client Transport is the observable trace of the per-target clone.
+	require.NotNil(t, first.client.Transport)
+	require.NotSame(t, http.DefaultTransport, first.client.Transport)
 }
 
 func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
