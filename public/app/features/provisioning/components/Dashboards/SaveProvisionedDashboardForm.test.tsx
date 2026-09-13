@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -1593,6 +1594,42 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('button', { name: /^create$/i })).toBeDisabled();
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), '{enter}');
     expect(folderPosts).toBe(0);
+  });
+
+  it('cannot be saved while the view is held, by button, by Enter, or by a direct submit', async () => {
+    let dashboardPosts = 0;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () => {
+        dashboardPosts++;
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+    const { user, props, rerender } = setupFolderless();
+    // Without this the save throws while serialising instead of reaching the request, which would
+    // leave this test green whether or not the submit is guarded
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p', name: undefined },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    const form = await screen.findByRole('form');
+    // A folder pick starts a hold while the title field still has focus
+    rerender(<SaveProvisionedDashboardForm {...props} isHeld />);
+
+    const saveButton = screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+    expect(saveButton).toBeDisabled();
+    await user.click(saveButton);
+    await user.type(screen.getByRole('textbox', { name: /title/i }), '{enter}');
+
+    // Disabling the button closes the click and Enter paths on its own. onSubmit is the one only
+    // the isHeld check closes, so submit the form directly to reach it
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+
+    expect(dashboardPosts).toBe(0);
   });
 
   it('disables New folder while the view is held', async () => {

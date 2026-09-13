@@ -410,6 +410,11 @@ export function SaveProvisionedDashboardForm({
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, ref, copyTags }: ProvisionedDashboardFormData) => {
+    // The live lookup has moved on, so repo and path still point at the previous location. The Save
+    // button is disabled for this; guard the submit itself so no other entry into it can slip past
+    if (isHeld) {
+      return;
+    }
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {

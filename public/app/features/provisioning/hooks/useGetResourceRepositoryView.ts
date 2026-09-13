@@ -3,6 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { type RepoType } from '../Wizard/types';
 import { getManagerIdentity, isManagedByRepository } from '../utils/managedResource';
@@ -18,6 +19,25 @@ interface GetResourceRepositoryArgs {
   skipQuery?: boolean;
   includeInstance?: boolean;
   includeFolderless?: boolean;
+}
+
+/**
+ * Args for resolving the repository that owns a folder, or a resource created inside one.
+ * `folderUid` is undefined, empty or `general` at the dashboards root.
+ *
+ * Defined once because the form chooser and the form itself must resolve the same repository: if
+ * they disagree, one offers the Git path while the other reports no repository.
+ */
+export function getFolderRepositoryArgs(folderUid?: string): GetResourceRepositoryArgs {
+  const isRoot = isRootFolderUID(folderUid);
+  return {
+    folderName: isRoot ? undefined : folderUid,
+    // The root has no folder to match on, so only a repository that manages no folder by name can
+    // own what lives there. A real folderUid that matched neither is not managed by them.
+    // An instance repository needs no opt-in: it owns every location, so the resolution below
+    // returns it whether or not this flag is set
+    includeFolderless: isRoot,
+  };
 }
 
 export enum RepoViewStatus {
