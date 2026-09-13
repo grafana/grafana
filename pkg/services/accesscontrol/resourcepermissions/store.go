@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -250,10 +252,23 @@ func (s *store) SetResourcePermissions(
 	defer span.End()
 
 	var err error
-	var permissions []accesscontrol.ResourcePermission
+	type indexedCommand struct {
+		index   int
+		command SetResourcePermissionsCommand
+	}
+	orderedCommands := make([]indexedCommand, 0, len(commands))
+	for i, cmd := range commands {
+		orderedCommands = append(orderedCommands, indexedCommand{index: i, command: cmd})
+	}
+	slices.SortStableFunc(orderedCommands, func(a, b indexedCommand) int {
+		return strings.Compare(managedRoleName(a.command), managedRoleName(b.command))
+	})
+
+	permissionsByIndex := make(map[int]accesscontrol.ResourcePermission, len(commands))
 
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		for _, cmd := range commands {
+		for _, indexed := range orderedCommands {
+			cmd := indexed.command
 			var p *accesscontrol.ResourcePermission
 			if cmd.User.ID != 0 {
 				p, err = s.setUserResourcePermission(sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
@@ -266,14 +281,32 @@ func (s *store) SetResourcePermissions(
 				return err
 			}
 			if p != nil {
-				permissions = append(permissions, *p)
+				permissionsByIndex[indexed.index] = *p
 			}
 		}
 
 		return nil
 	})
 
+	permissions := make([]accesscontrol.ResourcePermission, 0, len(permissionsByIndex))
+	for i := range commands {
+		if permission, ok := permissionsByIndex[i]; ok {
+			permissions = append(permissions, permission)
+		}
+	}
+
 	return permissions, err
+}
+
+func managedRoleName(cmd SetResourcePermissionsCommand) string {
+	switch {
+	case cmd.User.ID != 0:
+		return accesscontrol.ManagedUserRoleName(cmd.User.ID)
+	case cmd.TeamID != 0:
+		return accesscontrol.ManagedTeamRoleName(cmd.TeamID)
+	default:
+		return accesscontrol.ManagedBuiltInRoleName(cmd.BuiltinRole)
+	}
 }
 
 type roleAdder func(roleID int64) error
@@ -653,6 +686,9 @@ func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole stri
 func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
 	role := accesscontrol.Role{OrgID: orgID, Name: name}
 	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(&role)
+	if err != nil {
+		return nil, err
+	}
 
 	// If managed role does not exist, create it and add it to user/team/builtin
 	if !has {
@@ -669,20 +705,65 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Insert(&role); err != nil {
+		inserted, err := s.insertManagedRole(sess, &role)
+		if err != nil {
 			return nil, err
 		}
 
-		if err := add(role.ID); err != nil {
+		has, err = s.getManagedRoleAfterInsert(sess, orgID, name, &role)
+		if err != nil {
 			return nil, err
 		}
-	}
+		if !has {
+			return nil, fmt.Errorf("managed role not found after insert")
+		}
 
-	if err != nil {
-		return nil, err
+		if inserted {
+			if err := add(role.ID); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return &role, nil
+}
+
+func (s *store) getManagedRoleAfterInsert(sess *db.Session, orgID int64, name string, role *accesscontrol.Role) (bool, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE org_id = ? AND name = ?", s.sql.Quote("role"))
+	if s.sql.GetDialect().DriverName() != migrator.SQLite {
+		query += " FOR UPDATE"
+	}
+	return sess.SQL(query, orgID, name).Get(role)
+}
+
+func (s *store) insertManagedRole(sess *db.Session, role *accesscontrol.Role) (bool, error) {
+	table := s.sql.Quote("role")
+	query := fmt.Sprintf(
+		"INSERT INTO %s (org_id, name, uid, version, created, updated) VALUES (?, ?, ?, ?, ?, ?)",
+		table,
+	)
+
+	switch s.sql.GetDialect().DriverName() {
+	case migrator.MySQL:
+		// Only suppress the expected org/name conflict. A collision on the globally unique UID
+		// takes the NULL branch and remains an error because uid is not nullable.
+		query += " ON DUPLICATE KEY UPDATE uid = IF(org_id = VALUES(org_id) AND name = VALUES(name), uid, NULL)"
+	case migrator.Postgres, migrator.SQLite:
+		query += " ON CONFLICT (org_id, name) DO NOTHING"
+	default:
+		result, err := sess.Insert(role)
+		return err == nil && result == 1, err
+	}
+
+	result, err := sess.Exec(query, role.OrgID, role.Name, role.UID, role.Version, role.Created, role.Updated)
+	if err != nil {
+		return false, err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rows == 1, nil
 }
 
 func generateNewRoleUID(sess *db.Session, orgID int64) (string, error) {
