@@ -529,6 +529,10 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
+		if err := validateEmptyLabelKeyInDelta(groupChanges); err != nil {
+			return err
+		}
+
 		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
 		if len(newOrUpdatedNotificationSettings) > 0 {
 			amConfig, err := srv.amConfigStore.GetLatestAlertmanagerConfiguration(tranCtx, groupChanges.GroupKey.OrgID)
@@ -747,6 +751,11 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
+// validateQueries validates the condition only on rules in the change delta
+// (New + Update), with shouldValidate skipping updates whose diffs only touch
+// ignored fields. Same delta-scoping pattern as validateEmptyLabelKeyInDelta
+// below: unchanged rules in the request payload are not revalidated, so a
+// legacy rule with bad data does not block a write to a sibling rule.
 func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, validator ConditionValidator, user identity.Requester) error {
 	if len(groupChanges.New) > 0 {
 		for _, rule := range groupChanges.New {
@@ -779,6 +788,61 @@ func shouldValidate(delta store.RuleDelta) bool {
 	}
 
 	// TODO: consider also checking if rule will be paused after the update
+	return false
+}
+
+// validateEmptyLabelKeyInDelta rejects empty label keys on rules that the
+// request is actually creating or updating, leaving unchanged rules in the
+// request payload alone. A legacy rule with a stored empty label key is
+// reported as a "two or more rules" case in #130220 and the whole rule group
+// becomes uneditable; scoping this check to the delta restores the ability to
+// edit a different rule in the same group without having to repair the legacy
+// rule first. The read path keeps evaluating the legacy rule as-is.
+//
+// Only the rule whose labels actually changed is checked, not every rule in
+// the update delta. shouldValidate is too coarse here: it fires on any
+// non-ignored field change (e.g. IsPaused during a folder pause/unpause),
+// which would re-introduce the whole-group-write-block for legacy rules
+// every time a folder pause flag flips. Cursor Bugbot flagged this regression
+// on 2026-08-28T12:51Z.
+func validateEmptyLabelKeyInDelta(groupChanges *store.GroupDelta) error {
+	for _, rule := range groupChanges.New {
+		if err := apivalidation.ValidateEmptyLabelKey(rule); err != nil {
+			return err
+		}
+	}
+	for _, upd := range groupChanges.Update {
+		if !labelsChanged(upd) {
+			continue
+		}
+		if err := apivalidation.ValidateEmptyLabelKey(upd.New); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// labelsChanged reports whether the Update rule's Labels field actually
+// differs from the stored version. Used by validateEmptyLabelKeyInDelta to
+// scope the empty-key check to rules whose labels the user is editing, so
+// unrelated field changes (pause, notification settings, folder, etc.)
+// don't trip the validator on legacy rules.
+//
+// AlertRule.Diff reports map edits with cmp's MapIndex path syntax, which
+// prints as "Labels[<key>]"; struct-field edits print as "Labels" or
+// "Labels.<something>". Both shapes are scope-relevant for the empty-key
+// check, since either one can introduce a fresh empty label key. The dot
+// and the bracket are both treated as legitimate delimiters following the
+// "Labels" prefix.
+func labelsChanged(upd store.RuleDelta) bool {
+	for _, diff := range upd.Diff {
+		if diff.Path == "Labels" {
+			return true
+		}
+		if strings.HasPrefix(diff.Path, "Labels.") || strings.HasPrefix(diff.Path, "Labels[") {
+			return true
+		}
+	}
 	return false
 }
 
