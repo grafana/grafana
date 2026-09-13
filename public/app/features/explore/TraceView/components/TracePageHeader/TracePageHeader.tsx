@@ -59,7 +59,6 @@ import {
   type TUpdateViewRangeTimeFunction,
   type ViewRange,
 } from '../TraceTimelineViewer/types';
-import { isErrorSpan } from '../TraceTimelineViewer/utils';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
@@ -67,14 +66,10 @@ import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
+import { TraceBanner } from './TraceBanner/TraceBanner';
+import { findTraceBanner, HttpStatusClass } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
-
-enum HttpStatusClass {
-  Success = '2',
-  ClientError = '4',
-  ServerError = '5',
-}
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -153,9 +148,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
+
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [setHeaderHeight, showSpanFilters, styles.header, extensionComponents, extensionLinks, logsLinkModel]);
+  }, [
+    setHeaderHeight,
+    showSpanFilters,
+    styles.header,
+    extensionComponents,
+    extensionLinks,
+    logsLinkModel,
+    traceBanner,
+  ]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -174,10 +179,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
   const statusValue = status?.length ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
-  const showWarningIcon = statusClass === HttpStatusClass.ClientError;
-  const showErrorIcon =
-    !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === HttpStatusClass.ServerError);
-  const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === HttpStatusClass.Success;
+  // Match the banner: severity comes from every span, not only the root / first HTTP span.
+  const showErrorIcon = traceBanner?.severity === 'error';
+  const showWarningIcon = traceBanner?.severity === 'warning';
+  const showSuccessIcon = !traceBanner && statusClass === HttpStatusClass.Success;
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
@@ -337,6 +342,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
+      {!hideHeaderDetails && traceBanner && <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />}
+
       {/* Metadata row */}
       {!hideHeaderDetails && (
         <>
@@ -352,7 +359,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             <div className={styles.metadataItem}>
-              <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              <span className={styles.metadataField}>
+                <Icon name="clock-nine" size="xs" className={styles.metadataIcon} aria-hidden />
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              </span>
               <span
                 className={cx(
                   styles.metadataValue,
@@ -367,13 +377,21 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             <div className={styles.metadataItem}>
-              <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              <span className={styles.metadataField}>
+                <Icon name="stopwatch" type="default" size="sm" className={styles.metadataIcon} aria-hidden />
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              </span>
               <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
             </div>
 
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
               <span className={styles.metadataValue}>{serviceCount}</span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.spans', 'Spans')}</span>
+              <span className={styles.metadataValue}>{trace.spans.length}</span>
             </div>
 
             {url && url.length > 0 && (
@@ -580,7 +598,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       columnGap: theme.spacing(3),
+      rowGap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
       flexWrap: 'wrap',
     }),
@@ -589,11 +609,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      lineHeight: 1,
+    }),
+
+    metadataField: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      lineHeight: 1,
+    }),
+
+    metadataIcon: css({
+      color: theme.colors.text.secondary,
+      display: 'block',
+      flexShrink: 0,
+      lineHeight: 0,
+      transform: 'translateY(-1px)',
     }),
 
     metadataLabel: css({
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
+      lineHeight: 1,
     }),
 
     metadataValue: css({
@@ -601,6 +638,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+      lineHeight: 1,
     }),
 
     traceIdButton: css({
@@ -608,12 +646,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       color: theme.colors.text.primary,
       cursor: 'pointer',
-      textDecoration: 'underline',
+      textDecoration: 'none',
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
       padding: 0,
       font: 'inherit',
+      lineHeight: theme.typography.bodySmall.lineHeight,
 
       '&:hover': {
         color: theme.colors.emphasize(theme.colors.text.primary, 0.15),
@@ -635,11 +674,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     url: css({
-      maxWidth: '700px',
+      maxWidth: '240px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      display: 'inline-block',
+      display: 'block',
+      lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.primary,
     }),
     overviewLabel: css({

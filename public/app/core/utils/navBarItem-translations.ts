@@ -288,6 +288,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-activity.subtitle', 'View alerts and active notifications');
     case 'alerts/recently-deleted':
       return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
+    case 'alert':
+      return t('nav.create-alert.subtitle', 'Create an alert rule');
     case 'datasources':
       return t('nav.datasources.subtitle', 'Add and configure data sources');
     case 'correlations':

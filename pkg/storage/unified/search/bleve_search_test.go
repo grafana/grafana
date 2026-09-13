@@ -13,6 +13,8 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -690,6 +692,40 @@ func TestFieldValueSearchResults(t *testing.T) {
 	})
 }
 
+func TestSearchResultFormatMetric(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := resource.ProvideIndexMetrics(reg)
+	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
+
+	for _, tc := range []struct {
+		requestFormat resourcepb.ResourceSearchRequest_ResultFormat
+		resultFormat  resourcepb.ResourceSearchRequest_ResultFormat
+		label         string
+	}{
+		{requestFormat: resourcepb.ResourceSearchRequest_UNSPECIFIED, resultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE, label: "resource_table"},
+		{requestFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, resultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, label: "field_values"},
+	} {
+		req := newTestQuery("")
+		req.ResultFormat = tc.requestFormat
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Equal(t, tc.resultFormat, res.ResultFormat)
+		require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues(tc.label)))
+	}
+
+	invalid := newTestQuery("")
+	invalid.Fields = []string{"does_not_exist"}
+	invalid.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	res, err := index.Search(t.Context(), nil, invalid, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
+
+	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "index_server_search_result_format_total"))
+}
+
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -1045,6 +1081,10 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
+	return newTestDashboardsIndexWithMetrics(t, threshold, size, writer, nil)
+}
+
+func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer resource.BuildFn, metrics *resource.BleveIndexMetrics) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -1057,7 +1097,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
-	}, nil)
+	}, metrics)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
@@ -1573,7 +1613,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// More than one BatchCheck batch (500) worth of docs, all authorized.
 		docs := make([]*resource.BulkIndexItem, 0, 700)
-		for i := 0; i < 700; i++ {
+		for i := range 700 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "folder-a"))
 		}
 		indexDocs(t, index, docs)
@@ -1601,7 +1641,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 200)
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "denied"))
 		}
 		indexDocs(t, index, docs)
@@ -1627,7 +1667,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Interleave allowed/denied folders; default list sort is by title asc,
 		// and titles equal the (zero-padded) names, so order is deterministic.
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -1665,7 +1705,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 80)
 		want := make([]string, 0, 6)
-		for i := 0; i < 80; i++ {
+		for i := range 80 {
 			name := fmt.Sprintf("doc-%03d", i)
 			folder := "denied"
 			title := fmt.Sprintf("Abdomen Denied %03d", i)
@@ -1750,7 +1790,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 200)
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -1773,7 +1813,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 10, MaxCandidates: 20}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -1805,7 +1845,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 25)
 		want := make([]string, 0, 25)
-		for i := 0; i < 25; i++ {
+		for i := range 25 {
 			name := fmt.Sprintf("doc-%02d", i)
 			docs = append(docs, newDoc(name, "allowed"))
 			want = append(want, name)
@@ -1822,7 +1862,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
 		want := make([]string, 0, 15)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			name := fmt.Sprintf("doc-%02d", i)
 			folder := "denied"
 			if i%2 == 0 {
@@ -1886,7 +1926,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		const n = 25
 		docs := make([]*resource.BulkIndexItem, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
 		indexDocs(t, index, docs)
@@ -1920,7 +1960,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 2000)
-		for i := 0; i < 2000; i++ {
+		for i := range 2000 {
 			folder := "denied"
 			if i == 120 {
 				folder = "allowed"
@@ -1952,7 +1992,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		const n = 60
 		docs := make([]*resource.BulkIndexItem, 0, n)
 		want := make([]string, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			name := fmt.Sprintf("doc-%02d", i)
 			docs = append(docs, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
@@ -1986,7 +2026,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		const n = 500
 		docs := make([]*resource.BulkIndexItem, 0, n)
 		want := make([]string, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			name := fmt.Sprintf("doc-%03d", i)
 			docs = append(docs, newDoc(name, "allowed"))
 			want = append(want, name)
@@ -2097,7 +2137,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			folder := "denied"
 			if i >= 20 {
 				folder = "allowed"
@@ -2131,7 +2171,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			folder := "denied"
 			if i >= 20 {
 				folder = "allowed"
@@ -2330,7 +2370,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("facets are independent of forward and backward cursors", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 10)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			tag := "even"
 			if i%2 != 0 {
 				tag = "odd"
@@ -2372,7 +2412,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			FacetSampleSize: 20,
 		})
 		docs := make([]*resource.BulkIndexItem, 0, 100)
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"sampled"}))
 		}
 		indexDocs(t, index, docs)
@@ -2402,7 +2442,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			FacetSampleSize: 100, MaxCandidates: 100,
 		})
 		docs := make([]*resource.BulkIndexItem, 0, 200)
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			folder := "denied"
 			if i < 4 { // 4 allowed of 200 -> 2% authorized fraction
 				folder = "allowed"
@@ -2433,7 +2473,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -2542,7 +2582,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("SearchBefore returns the previous page in forward order", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
 		indexDocs(t, index, docs)
@@ -2564,7 +2604,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("SearchBefore pages backwards contiguously with no dupes or skips", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
 		indexDocs(t, index, docs)
@@ -2609,7 +2649,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// Even-indexed docs authorized; titles equal names so order is stable.
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -2859,7 +2899,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		want := make([][2]string, 0, 30)
 		// Interleave titles so the merged sort alternates resources. Titles are
 		// zero-padded so the global title order is deterministic.
-		for i := 0; i < 15; i++ {
+		for i := range 15 {
 			name := fmt.Sprintf("d-%02d", i)
 			title := fmt.Sprintf("t-%02d", i*2)
 			docs = append(docs, newDash(name, title, "allowed"))
@@ -2868,7 +2908,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		indexDashboards(t, dash, docs)
 
 		fdocs := make([]*resource.BulkIndexItem, 0, 15)
-		for i := 0; i < 15; i++ {
+		for i := range 15 {
 			name := fmt.Sprintf("f-%02d", i)
 			title := fmt.Sprintf("t-%02d", i*2+1)
 			fdocs = append(fdocs, newFolder(name, title, nil))
@@ -2880,7 +2920,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// t-00 (d-00), t-01 (f-00), t-02 (d-01), ... interleave perfectly.
 		wantSorted := make([][2]string, 0, 30)
 		di, fi := 0, 0
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			if i%2 == 0 {
 				wantSorted = append(wantSorted, want[di])
 				di++
@@ -2908,7 +2948,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// Every doc shares the same title; the _id (resource/name) breaks ties.
 		// dashboards sort before folders because "dashboard.grafana.app/dashboards"
 		// < "folder.grafana.app/folders" lexicographically in the doc id.
-		for i := 0; i < n; i++ {
+		for i := range n {
 			dName := fmt.Sprintf("d-%02d", i)
 			docs = append(docs, newDash(dName, "same-title", "allowed"))
 			fName := fmt.Sprintf("f-%02d", i)
@@ -2920,10 +2960,10 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// Expected global order: all dashboards (by name) then all folders (by
 		// name), since the SortDocID tie-breaker orders by the full doc id.
 		want := make([][2]string, 0, 2*n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			want = append(want, [2]string{"dashboards", fmt.Sprintf("d-%02d", i)})
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			want = append(want, [2]string{"folders", fmt.Sprintf("f-%02d", i)})
 		}
 
@@ -2972,19 +3012,19 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// 6 dashboards (t-00,t-02,...,t-10) and 6 folders (t-01,t-03,...,t-11),
 		// interleaved by title so the merged sort alternates resources.
 		docs := make([]*resource.BulkIndexItem, 0, 6)
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			docs = append(docs, newDash(fmt.Sprintf("d-%02d", i), fmt.Sprintf("t-%02d", i*2), "allowed"))
 		}
 		indexDashboards(t, dash, docs)
 		fdocs := make([]*resource.BulkIndexItem, 0, 6)
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			fdocs = append(fdocs, newFolder(fmt.Sprintf("f-%02d", i), fmt.Sprintf("t-%02d", i*2+1), nil))
 		}
 		indexDashboards(t, folder, fdocs)
 
 		// Merged forward title order: t-00(d-00), t-01(f-00), t-02(d-01), ...
 		merged := make([][2]string, 0, 12)
-		for i := 0; i < 12; i++ {
+		for i := range 12 {
 			if i%2 == 0 {
 				merged = append(merged, [2]string{"dashboards", fmt.Sprintf("d-%02d", i/2)})
 			} else {

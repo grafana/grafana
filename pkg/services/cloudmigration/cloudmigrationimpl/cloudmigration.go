@@ -183,8 +183,7 @@ func ProvideService(
 	}
 
 	if err := prom.Register(s.metrics); err != nil {
-		var alreadyRegisterErr prometheus.AlreadyRegisteredError
-		if errors.As(err, &alreadyRegisterErr) {
+		if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 			s.log.Warn("cloud migration metrics already registered")
 		} else {
 			return s, fmt.Errorf("registering cloud migration metrics: %w", err)

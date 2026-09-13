@@ -153,6 +153,53 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	}
 }
 
+func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		previousType   resourcepb.WatchNotification_Type
+		previousFolder string
+		previousAction kv.DataAction
+	}{
+		{name: "older publisher omits metadata"},
+		{name: "created in root", previousType: resourcepb.WatchNotification_ADDED, previousAction: DataActionCreated},
+		{name: "created in folder", previousType: resourcepb.WatchNotification_ADDED, previousFolder: "old-folder", previousAction: DataActionCreated},
+		{name: "updated", previousType: resourcepb.WatchNotification_MODIFIED, previousFolder: "old-folder", previousAction: DataActionUpdated},
+		{name: "deleted", previousType: resourcepb.WatchNotification_DELETED, previousFolder: "old-folder", previousAction: DataActionDeleted},
+		{name: "unrecognized previous type still delivers current event", previousType: resourcepb.WatchNotification_Type(99), previousFolder: "old-folder"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			n := newNatsNotifier(nil, nil, log.NewNopLogger())
+			data := mustMarshalNotification(t, &resourcepb.WatchNotification{
+				Type:                    resourcepb.WatchNotification_MODIFIED,
+				Group:                   "playlist.grafana.app",
+				Resource:                "playlists",
+				Namespace:               "default",
+				Name:                    "abc",
+				ResourceVersion:         42,
+				Folder:                  "new-folder",
+				PreviousResourceVersion: 41,
+				PreviousType:            tc.previousType,
+				PreviousFolder:          tc.previousFolder,
+			})
+
+			event, ok := n.decode("some.subject", data)
+			require.True(t, ok)
+			require.Equal(t, Event{
+				Namespace:       "default",
+				Group:           "playlist.grafana.app",
+				Resource:        "playlists",
+				Name:            "abc",
+				ResourceVersion: 42,
+				Action:          DataActionUpdated,
+				Folder:          "new-folder",
+				PreviousRV:      41,
+				PreviousAction:  tc.previousAction,
+				PreviousFolder:  tc.previousFolder,
+			}, event)
+		})
+	}
+}
+
 func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())

@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
-import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
@@ -126,6 +126,7 @@ export async function listFolders(
       parentTitle,
       parentUID,
       managedBy: extractManagerKind(managedBy),
+      managerId: extractManagerId(managedBy),
       url: noUrl
         ? undefined
         : // URLs from the backend come with subUrlPrefix already included, so match that behaviour here

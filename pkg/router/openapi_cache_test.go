@@ -22,16 +22,16 @@ func (h *countingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // buildRouterWithBackend seeds a router with one real handlerEntry (fake
-// upstream handler + given rv) via publish, so snapshot carries a real RV —
-// unlike withGroups' fixed lastRV:"1", these tests need to bump RV mid-test.
-func buildRouterWithBackend(group, rv string, upstream http.Handler) *GrafanaRouter {
+// upstream handler + given key) via publish, so snapshot carries a real key —
+// unlike withGroups' fixed lastKey:"1", these tests need to bump it mid-test.
+func buildRouterWithBackend(group, key string, upstream http.Handler) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
-	s.served[group] = &handlerEntry{handler: upstream, lastRV: rv, breaker: newGroupBreaker(group)}
+	s.served[group] = &handlerEntry{handler: upstream, lastKey: key, breaker: newGroupBreaker(group)}
 	s.publish()
 	return s
 }
 
-func TestOpenAPIGroupVersionCachesUntilRVChanges(t *testing.T) {
+func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
@@ -49,7 +49,7 @@ func TestOpenAPIGroupVersionCachesUntilRVChanges(t *testing.T) {
 		t.Fatalf("after first request, upstream hits = %d, want 1", got)
 	}
 
-	// Second request, same RV: served from cache, no new upstream hit.
+	// Second request, same key: served from cache, no new upstream hit.
 	rec2 := httptest.NewRecorder()
 	h.ServeHTTP(rec2, httptest.NewRequest(http.MethodGet, path, nil))
 	if rec2.Code != http.StatusOK || rec2.Body.String() != upstream.body {
@@ -59,9 +59,9 @@ func TestOpenAPIGroupVersionCachesUntilRVChanges(t *testing.T) {
 		t.Fatalf("after second request, upstream hits = %d, want still 1 (cache hit)", got)
 	}
 
-	// Bump RV (simulates reconcile picking up a manifest change) and re-request:
+	// Bump the key (simulates reconcile picking up a route change) and re-request:
 	// cache must be treated as stale, upstream hit again.
-	s.served["dashboard.grafana.app"] = &handlerEntry{handler: upstream, lastRV: "6", breaker: newGroupBreaker("dashboard.grafana.app")}
+	s.served["dashboard.grafana.app"] = &handlerEntry{handler: upstream, lastKey: "6", breaker: newGroupBreaker("dashboard.grafana.app")}
 	s.publish()
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, httptest.NewRequest(http.MethodGet, path, nil))
@@ -69,7 +69,7 @@ func TestOpenAPIGroupVersionCachesUntilRVChanges(t *testing.T) {
 		t.Fatalf("third request: got code=%d, want 200", rec3.Code)
 	}
 	if got := upstream.hits.Load(); got != 2 {
-		t.Fatalf("after RV bump, upstream hits = %d, want 2 (cache invalidated)", got)
+		t.Fatalf("after key change, upstream hits = %d, want 2 (cache invalidated)", got)
 	}
 }
 
@@ -137,7 +137,7 @@ func TestOpenAPIGroupVersionStripsConditionalHeaders(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
 
 	req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app/v1alpha1", nil)
-	// A stale/foreign If-None-Match that does NOT match our current RV-based
+	// A stale/foreign If-None-Match that does NOT match our current key-based
 	// ETag, so the router proceeds to proxy — the case that must strip it.
 	req.Header.Set("If-None-Match", `"some-other-etag"`)
 	rec := httptest.NewRecorder()

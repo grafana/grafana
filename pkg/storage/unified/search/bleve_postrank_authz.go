@@ -120,7 +120,7 @@ func (c PostRankAuthzConfig) countWindowSize() int {
 // kicks in when early windows come back sparse.
 func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 	w := base
-	for i := 0; i < nextWindow; i++ {
+	for range nextWindow {
 		w <<= 1
 		if w >= c.MaxWindow {
 			return c.MaxWindow
