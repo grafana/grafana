@@ -7,7 +7,9 @@ import {
   type ReceiverFormValues,
 } from '../types/receiver-form';
 
+import { cloudNotifierTypes } from './cloud-alertmanager-notifier-types';
 import {
+  cloudReceiverToFormValues,
   convertJiraFieldToJson,
   convertJsonToJiraField,
   formValuesToCloudReceiver,
@@ -587,5 +589,35 @@ describe('convertJiraFieldToJson', () => {
     };
     const result = convertJiraFieldToJson(input);
     expect(result).toEqual(expectedOutput);
+  });
+});
+
+describe('cloudReceiverToFormValues', () => {
+  it('should convert every receiver type the cloud notifier list knows about', () => {
+    for (const notifier of cloudNotifierTypes) {
+      const receiver: Receiver = {
+        name: 'test',
+        [`${notifier.type}_configs`]: [{ send_resolved: true }],
+      };
+
+      const [values] = cloudReceiverToFormValues(receiver, cloudNotifierTypes);
+
+      expect(values.items).toHaveLength(1);
+      expect(values.items[0].type).toBe(notifier.type);
+    }
+  });
+
+  it('should convert an msteamsv2 receiver', () => {
+    const receiver: Receiver = {
+      name: 'test-teams',
+      msteamsv2_configs: [{ send_resolved: true, webhook_url: 'https://example.com/webhook' }],
+    };
+
+    const [values, channelMap] = cloudReceiverToFormValues(receiver, cloudNotifierTypes);
+
+    expect(values.items).toHaveLength(1);
+    expect(values.items[0].type).toBe('msteamsv2');
+    expect(values.items[0].settings.webhook_url).toBe('https://example.com/webhook');
+    expect(channelMap[values.items[0].__id].type).toBe('msteamsv2');
   });
 });
