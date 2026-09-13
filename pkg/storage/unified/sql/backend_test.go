@@ -439,13 +439,65 @@ func TestBackend_delete(t *testing.T) {
 		require.Equal(t, int64(200), v)
 	})
 
+	t.Run("WriteEvent unconditional delete passes validation and succeeds", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		validEvent := event
+		validEvent.Value = []byte("{}")
+
+		b.SQLMock.ExpectBegin()
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("delete resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+		)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.WriteEvent(ctx, validEvent)
+		require.NoError(t, err)
+		require.Equal(t, int64(200), v)
+	})
+
+	t.Run("happy path with previous rv", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		eventWithRV := event
+		eventWithRV.PreviousRV = 12345
+
+		b.SQLMock.ExpectBegin()
+		expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+			func() { b.ExecWithResult("delete resource", 0, 1) },
+			func() { b.ExecWithResult("insert resource_history", 0, 1) },
+		)
+		b.SQLMock.ExpectCommit()
+
+		v, err := b.delete(ctx, eventWithRV)
+		require.NoError(t, err)
+		require.Equal(t, int64(200), v)
+	})
+
+	t.Run("conflict when zero rows deleted", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTest(t)
+
+		b.SQLMock.ExpectBegin()
+		b.ExecWithResult("delete resource", 0, 0)
+		b.SQLMock.ExpectRollback()
+
+		v, err := b.delete(ctx, event)
+		require.Zero(t, v)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "requested RV does not match current RV")
+	})
+
 	t.Run("error deleting resource", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
 		b.SQLMock.ExpectBegin()
 		b.ExecWithErr("delete resource", errTest)
-		b.SQLMock.ExpectCommit()
+		b.SQLMock.ExpectRollback()
 
 		v, err := b.delete(ctx, event)
 		require.Zero(t, v)
@@ -460,7 +512,7 @@ func TestBackend_delete(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.ExecWithResult("delete resource", 0, 1)
 		b.ExecWithErr("insert resource_history", errTest)
-		b.SQLMock.ExpectCommit()
+		b.SQLMock.ExpectRollback()
 
 		v, err := b.delete(ctx, event)
 		require.Zero(t, v)
