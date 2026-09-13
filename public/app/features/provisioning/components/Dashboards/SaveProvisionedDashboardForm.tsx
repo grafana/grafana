@@ -1,16 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
-import { type RepositoryView, type ResourceWrapper, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositoryView,
+  type ResourceWrapper,
+  type Unstructured,
+  useCreateRepositoryFilesWithPathMutation,
+} from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
+import { nextMetaAfterFolderPick } from 'app/features/dashboard-scene/saving/shared';
+import { useParkSaveFormDraft } from 'app/features/dashboard-scene/saving/useParkSaveFormDraft';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -23,17 +32,19 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
-import { getProvisionedMeta } from '../utils/getProvisionedMeta';
-import { joinPath, slugifyForFilename, splitPath } from '../utils/path';
+import { validateProvisionedFolderName } from '../utils/folderName';
+import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
 import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
@@ -43,6 +54,8 @@ export interface Props extends SaveProvisionedDashboardProps {
   canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
+  /** The view behind these defaults is held: the picked folder's lookup is still loading or dead-ended, so they describe the previous folder and saving must wait */
+  isHeld: boolean;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -55,12 +68,34 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
+  recoverToNewBranch,
+  isHeld,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
   const [error, setError] = useState<string | undefined>(undefined);
-
+  const [newFolderName, setNewFolderName] = useState('');
+  const [folderError, setFolderError] = useState<string | undefined>(undefined);
+  const [showNewFolderForm, setShowNewFolderForm] = useState(false);
+  // Spans the whole create-folder flow, unlike the mutation's isLoading which ends before the selection sync
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const isCreatingFolderRef = useRef(false);
+  // Lets an in-flight folder creation know the user backed out, so its result isn't applied after the fact
+  const folderCreationCancelledRef = useRef(false);
+  // Snapshot of the spec actually committed by the last submit. saveCompleted must
+  // baseline against this (not getSaveModel()) so post-save change detection matches
+  // what was written — on the update path getSaveModel() would re-include values the
+  // save-option toggles omitted.
+  const savedSpecRef = useRef<Dashboard | DashboardV2Spec | undefined>(undefined);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
+  const [createFolder] = useCreateRepositoryFilesWithPathMutation();
+
   const {
     handleSubmit,
     watch,
@@ -73,17 +108,29 @@ export function SaveProvisionedDashboardForm({
   } = methods;
 
   const path = watch('path');
-  const originalPath = isNew ? undefined : defaultValues.path;
+  // Whether this commit creates the file (POST) rather than updates it (PUT). Distinct from isNew,
+  // which is about the dashboard never having been saved: the recovery branch is cut from the
+  // configured branch, so a file that only ever lived on the deleted branch has to be created there.
+  const createsFile = isNew || recoverToNewBranch?.fileExistsOnConfiguredBranch === false;
+  const originalPath = createsFile ? undefined : defaultValues.path;
   const isRename = Boolean(originalPath && path !== originalPath);
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
 
-  // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
+  // Retargeting to another branch is a committable change on its own. In the recovery flow the new
+  // branch is a form default (never dirty), so the flag itself has to enable Save.
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
   const isDirtyState =
-    Boolean(dirtyFields.comment) || Boolean(dirtyFields.path) || isDirty || Boolean(rawDashboardJSON);
+    Boolean(dirtyFields.comment) ||
+    Boolean(dirtyFields.path) ||
+    Boolean(dirtyFields.ref) ||
+    Boolean(recoverToNewBranch) ||
+    isDirty ||
+    Boolean(rawDashboardJSON);
   const [workflow, ref] = watch(['workflow', 'ref']);
+  const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
+  const description = watch('description');
 
   // Clear indefinite save-event suppression on unmount (covers cancel, error, navigation away).
   useEffect(() => {
@@ -92,13 +139,25 @@ export function SaveProvisionedDashboardForm({
     };
   }, []);
 
-  // Update the form if default values change
+  // Update the form if default values change. keepDirtyValues so a background refetch
+  // (e.g. cache invalidation after creating a folder) doesn't wipe fields the user changed.
   useEffect(() => {
-    reset(defaultValues);
-  }, [defaultValues, reset]);
+    reset(defaultValues, { keepDirtyValues: true });
+    if (!isNew) {
+      return;
+    }
+    // A customised filename survives the reset with the previous folder's prefix; the picked folder owns the directory
+    const currentPath = getValues('path');
+    const nextPath = joinPath(splitPath(defaultValues.path).directory, splitPath(currentPath).filename);
+    if (nextPath !== currentPath) {
+      setValue('path', nextPath, { shouldDirty: true });
+    }
+  }, [defaultValues, reset, isNew, getValues, setValue]);
+
+  useParkSaveFormDraft(drawer, title, description);
 
   const templateVars: CommitTemplateVars = {
-    action: isNew ? 'create' : 'update',
+    action: createsFile ? 'create' : 'update',
     resourceKind: 'dashboard',
     resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
     title: title ?? '',
@@ -112,21 +171,35 @@ export function SaveProvisionedDashboardForm({
     setComment: (value) => setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
   // This lets us stop auto-syncing once the user has intentionally customised the filename.
+  // `path` is a dep so the sync re-applies after a defaults recompute replaces the filename.
   useEffect(() => {
     if (!isNew || dirtyFields.path) {
       return;
     }
     const slugified = slugifyForFilename(title);
-    if (slugified) {
-      const currentPath = getValues('path');
-      const { directory } = splitPath(currentPath);
-      setValue('path', joinPath(directory, `${slugified}.json`));
+    if (!slugified) {
+      return;
     }
-  }, [title, isNew, dirtyFields.path, setValue, getValues]);
+    const { directory } = splitPath(path);
+    const nextPath = joinPath(directory, `${slugified}.json`);
+    if (nextPath !== path) {
+      setValue('path', nextPath);
+    }
+  }, [title, path, isNew, dirtyFields.path, setValue]);
 
   const showError = (error: unknown) => {
     setError(
@@ -159,18 +232,22 @@ export function SaveProvisionedDashboardForm({
         paramName: 'ref',
         paramValue: ref,
         repoType,
+        prTitle,
       });
       navigate(url);
     },
-    [navigate, defaultValues.repo]
+    [navigate, defaultValues.repo, prTitle]
   );
 
   const handleDismiss = useCallback(
-    (wrapper: ResourceWrapper) => {
-      const model = dashboard.getSaveModel();
+    async (wrapper: ResourceWrapper) => {
+      // Baseline against exactly what was committed. On the update path that is the
+      // change-trimmed model; getSaveModel() would re-include values the toggles
+      // omitted, so change detection would treat them as already saved until reload.
+      const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
-      dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
       dashboardWatcher.clearIgnoreSave();
     },
     [dashboard, defaultValues.folder?.uid]
@@ -189,12 +266,30 @@ export function SaveProvisionedDashboardForm({
         return;
       }
 
+      // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
+      // for a draft that was just saved, so go to the saved dashboard instead.
+      if (recoverToNewBranch && upsert?.metadata?.name) {
+        navigate(`/d/${upsert.metadata.name}`);
+        return;
+      }
+
       locationService.partial({
         viewPanel: null,
         editPanel: null,
       });
     },
-    [isNew, path, ref, repository?.branch, repository?.type, handleDismiss, handleNewDashboard, navigateToPreview]
+    [
+      isNew,
+      path,
+      ref,
+      repository?.branch,
+      repository?.type,
+      recoverToNewBranch,
+      navigate,
+      handleDismiss,
+      handleNewDashboard,
+      navigateToPreview,
+    ]
   );
 
   const onBranchSuccess = useCallback(
@@ -214,6 +309,94 @@ export function SaveProvisionedDashboardForm({
     },
     [isNew, navigateToPreview, handleNewDashboard, handleDismiss]
   );
+  // Meta is where the drawer resolves the repository from and where the defaults (path, folder) recompute from
+  const selectFolder = useCallback(
+    (uid?: string, title?: string) => {
+      setValue('folder', { uid, title });
+      dashboard.setState({ meta: nextMetaAfterFolderPick(dashboard.state.meta, uid, title) });
+    },
+    [setValue, dashboard]
+  );
+
+  const handleCreateFolder = useCallback(async () => {
+    if (isCreatingFolderRef.current || isHeld) {
+      return;
+    }
+    setFolderError(undefined);
+    const folderName = newFolderName.trim();
+    if (!repository?.name) {
+      return;
+    }
+    const validationResult = validateProvisionedFolderName(folderName);
+    if (validationResult !== true) {
+      setFolderError(validationResult);
+      return;
+    }
+    // Nest the new folder under the currently selected target folder
+    const { directory, filename } = splitPath(getValues('path'));
+    const folderPath = ensureFolderPathTrailingSlash(joinPath(directory, folderName));
+    reportInteraction('grafana_provisioning_folder_create_submitted', {
+      workflow,
+      repositoryName: repository.name,
+      repositoryType: repository.type ?? 'unknown',
+      source: 'save-dashboard',
+    });
+    isCreatingFolderRef.current = true;
+    folderCreationCancelledRef.current = false;
+    setIsCreatingFolder(true);
+    let uid: string | undefined;
+    try {
+      const data = await createFolder({
+        name: repository.name,
+        path: folderPath,
+        message: getSingleResourceCommitMessage({
+          comment: '',
+          repository,
+          action: 'create',
+          resourceKind: 'folder',
+          resourceID: '',
+          title: folderName,
+          ...getCurrentCommitUser(),
+        }),
+        body: { title: folderName, type: 'folder' },
+      }).unwrap();
+      uid = data.resource?.upsert?.metadata?.name;
+    } catch (err) {
+      isCreatingFolderRef.current = false;
+      if (!mountedRef.current) {
+        return;
+      }
+      if (!folderCreationCancelledRef.current) {
+        setFolderError(
+          getProvisionedRequestError(
+            err,
+            t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
+          )
+        );
+      }
+      setIsCreatingFolder(false);
+      return;
+    }
+    // The folder was already created on the backend; only skip applying its selection if the
+    // user backed out of the flow (or the form unmounted) while the commit was in flight
+    if (!mountedRef.current) {
+      isCreatingFolderRef.current = false;
+      return;
+    }
+    if (!folderCreationCancelledRef.current) {
+      if (uid) {
+        setValue('path', joinPath(folderPath, filename));
+        selectFolder(uid, folderName);
+      } else {
+        // Sync disabled: no folder resource to select, mark path dirty so resets keep the new location
+        setValue('path', joinPath(folderPath, filename), { shouldDirty: true });
+      }
+      setShowNewFolderForm(false);
+      setNewFolderName('');
+    }
+    isCreatingFolderRef.current = false;
+    setIsCreatingFolder(false);
+  }, [newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder, isHeld]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
@@ -244,13 +427,26 @@ export function SaveProvisionedDashboardForm({
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
-      : dashboard.getSaveResource({
-          isNew,
-          title,
-          description,
-          copyTags,
-          saveAsCopy,
-        });
+      : isNew
+        ? dashboard.getSaveResource({
+            isNew,
+            title,
+            description,
+            copyTags,
+            saveAsCopy,
+          })
+        : // Existing dashboards: commit the change-trimmed model so the "Change default
+          // variables / time range / refresh" toggles are honored. getSaveResource()
+          // serializes the full scene and would re-include the current variable values
+          // (and time/refresh) even when the toggle is left off, diverging from the diff
+          // shown in the drawer. This mirrors the non-provisioned save path.
+          dashboard.getSaveResourceFromSpec(changeInfo.changedSaveModel);
+
+    // Single source of truth: baseline against exactly the spec we committed, so
+    // post-save change detection matches what was written (handleDismiss → saveCompleted).
+    // Deriving from body.spec avoids re-running getSaveAsModel() on the new/save-as path.
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    savedSpecRef.current = body.spec as Dashboard | DashboardV2Spec;
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,
@@ -303,6 +499,7 @@ export function SaveProvisionedDashboardForm({
               >
                 <Input
                   id="dashboard-title"
+                  data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
                   {...register('title', {
                     required: t(
                       'dashboard-scene.save-provisioned-dashboard-form.title-required',
@@ -331,17 +528,7 @@ export function SaveProvisionedDashboardForm({
                   render={({ field: { ref, value, onChange, ...field } }) => {
                     return (
                       <ProvisioningAwareFolderPicker
-                        onChange={async (uid?: string, title?: string) => {
-                          onChange({ uid, title });
-                          updateURLParams('folderUid', uid);
-                          const meta = await getProvisionedMeta(uid);
-                          dashboard.setState({
-                            meta: {
-                              ...meta,
-                              folderUid: uid,
-                            },
-                          });
-                        }}
+                        onChange={selectFolder}
                         value={value.uid}
                         {...field}
                         showAllFolders
@@ -350,6 +537,71 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
+              {isFolderless && workflow === 'write' && (
+                <>
+                  {!showNewFolderForm && (
+                    <div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="plus"
+                        onClick={() => {
+                          setFolderError(undefined);
+                          setShowNewFolderForm(true);
+                        }}
+                        disabled={isHeld}
+                      >
+                        <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">New folder</Trans>
+                      </Button>
+                    </div>
+                  )}
+
+                  {showNewFolderForm && (
+                    <Stack direction="column" gap={1}>
+                      <Field
+                        noMargin
+                        label={t('dashboard-scene.save-provisioned-dashboard-form.label-folder-name', 'Folder name')}
+                      >
+                        <Input
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.currentTarget.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleCreateFolder();
+                            }
+                          }}
+                        />
+                      </Field>
+                      {folderError && <ProvisioningAlert error={folderError} />}
+                      <Stack gap={1}>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={isCreatingFolder ? 'spinner' : undefined}
+                          onClick={handleCreateFolder}
+                          disabled={!newFolderName || isCreatingFolder || isHeld}
+                        >
+                          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.create-folder">Create</Trans>
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          fill="outline"
+                          onClick={() => {
+                            folderCreationCancelledRef.current = true;
+                            setShowNewFolderForm(false);
+                            setNewFolderName('');
+                            setFolderError(undefined);
+                          }}
+                        >
+                          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel-folder">Cancel</Trans>
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  )}
+                </>
+              )}
             </>
           )}
 
@@ -364,6 +616,7 @@ export function SaveProvisionedDashboardForm({
             allowPathEdit={!isNew && !readOnly}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {saveAsCopy && (
@@ -381,7 +634,16 @@ export function SaveProvisionedDashboardForm({
             <Button
               variant="primary"
               type="submit"
-              disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
+              data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
+              disabled={
+                request.isLoading ||
+                readOnly ||
+                !isDirtyState ||
+                isSubmitting ||
+                isValidating ||
+                isCreatingFolder ||
+                isHeld
+              }
             >
               {request.isLoading || isSubmitting || isValidating
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
@@ -416,17 +678,6 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
           'Dashboard title validation failed.'
         );
   }
-}
-
-// Update the URL params without reloading the page
-function updateURLParams(param: string, value?: string) {
-  // only check undefine and null, empty string = root folder, we still want to update the URL
-  if (value === undefined || value === null) {
-    return;
-  }
-  const url = new URL(window.location.href);
-  url.searchParams.set(param, value);
-  window.history.replaceState({}, '', url);
 }
 
 /**

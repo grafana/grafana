@@ -52,9 +52,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
+export { alignTimeRangeCompareData, shouldAlignTimeCompare } from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
@@ -396,6 +395,7 @@ export {
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
+  guessBrowserTimeZone,
   getWeekdayIndex,
   getWeekdayIndexByEnglishName,
   setWeekStart,
@@ -500,6 +500,7 @@ export type {
   OAuthSettings,
   AuthSettings,
   GrafanaConfig,
+  GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
   PreinstalledPlugin,
@@ -695,6 +696,7 @@ export {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
+  type ErrorsAndNoticesInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
   type QueryEditorHelpProps,
@@ -715,6 +717,7 @@ export {
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
@@ -938,6 +941,7 @@ export {
   isTruthy,
   isObject,
 } from './types/data';
+export { type TimeCompareMeta } from './types/timeCompare';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated

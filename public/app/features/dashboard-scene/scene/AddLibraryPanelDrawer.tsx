@@ -8,10 +8,7 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
-import {
-  LibraryPanelsSearch,
-  LibraryPanelsSearchVariant,
-} from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
+import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
@@ -27,9 +24,9 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     getDashboardSceneFor(this).closeModal();
   };
 
-  public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
+  public onAddLibraryPanel = async (panelInfo: LibraryPanel) => {
     const dashboard = getDashboardSceneFor(this);
-    const newPanel = getDefaultVizPanel();
+    const newPanel = await getDefaultVizPanel();
 
     newPanel.setState({
       // Panel title takes precedence over library panel title when resolving the library panel
@@ -61,11 +58,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
 
     return (
       <Drawer title={title} onClose={model.onClose}>
-        <LibraryPanelsSearch
-          onClick={model.onAddLibraryPanel}
-          variant={LibraryPanelsSearchVariant.Tight}
-          showPanelFilter
-        />
+        <LibraryPanelsSearch onClick={model.onAddLibraryPanel} showPanelFilter />
       </Drawer>
     );
   };

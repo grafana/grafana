@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"encoding/base64"
 	"testing"
 
@@ -17,7 +16,7 @@ import (
 // connection has spec.webhook.disabled: true but the repository does not.
 func TestIntegrationProvisioning_RepositoryWebhookConnectionValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -45,7 +44,7 @@ func TestIntegrationProvisioning_RepositoryWebhookConnectionValidation(t *testin
 		},
 	}}
 
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	_, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err, "failed to create connection")
 
 	t.Run("repository without webhook disabled is rejected", func(t *testing.T) {
@@ -73,7 +72,7 @@ func TestIntegrationProvisioning_RepositoryWebhookConnectionValidation(t *testin
 			},
 		}}
 
-		_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err)
 
 		var statusErr *apierrors.StatusError
@@ -110,7 +109,7 @@ func TestIntegrationProvisioning_RepositoryWebhookConnectionValidation(t *testin
 			},
 		}}
 
-		_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{FieldValidation: "Strict"})
+		_, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "repository with webhook disabled should be accepted when connection also has webhook disabled")
 	})
 }

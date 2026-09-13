@@ -1,7 +1,7 @@
-import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';

@@ -1,8 +1,8 @@
 /**
- * Command Registry
+ * Dashboard Command Registry
  *
- * Imports all command definitions and provides lookup helpers.
- * The DashboardMutationClient iterates over ALL_COMMANDS generically.
+ * The commands that exist on a dashboard. DashboardMutationClient hands this to the dispatcher, which
+ * iterates over it generically.
  */
 
 import { addAnnotationCommand } from './addAnnotation';
@@ -10,9 +10,12 @@ import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
+import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
+import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
@@ -28,13 +31,14 @@ import type { MutationCommand } from './types';
 import { updateAnnotationCommand } from './updateAnnotation';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
+import { updateMetadataAnnotationsCommand } from './updateMetadataAnnotations';
 import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
 import { updateVariableCommand } from './updateVariable';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each command is typed internally; the array is heterogeneous
-export const ALL_COMMANDS: Array<MutationCommand<any>> = [
+export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   addVariableCommand,
   removeVariableCommand,
   updateVariableCommand,
@@ -60,35 +64,9 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   removePanelCommand,
   listPanelsCommand,
   getDashboardInfoCommand,
+  getMetadataAnnotationsCommand,
+  updateMetadataAnnotationsCommand,
   updateDashboardSettingsCommand,
+  getSpecCommand,
+  applySpecCommand,
 ];
-
-/** Lookup command by name (case-insensitive). */
-function findCommand(command: string): MutationCommand | undefined {
-  const normalized = command.toUpperCase();
-  return ALL_COMMANDS.find((cmd) => cmd.name === normalized);
-}
-
-/** Validate a payload against the Zod schema for a command. */
-export function validatePayload(
-  commandType: string,
-  payload: unknown
-): { success: true; data: unknown } | { success: false; error: string } {
-  const cmd = findCommand(commandType);
-  if (!cmd) {
-    return { success: false, error: `Unknown command type: ${commandType}` };
-  }
-
-  const schema = cmd.payloadSchema;
-
-  const result = schema.safeParse(payload);
-  if (result.success) {
-    return { success: true, data: result.data };
-  }
-
-  const errorMessages = result.error.issues.map((issue) => {
-    const path = issue.path.join('.');
-    return path ? `${path}: ${issue.message}` : issue.message;
-  });
-  return { success: false, error: `Validation failed: ${errorMessages.join(', ')}` };
-}

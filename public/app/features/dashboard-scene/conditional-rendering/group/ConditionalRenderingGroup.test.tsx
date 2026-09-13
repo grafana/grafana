@@ -151,5 +151,23 @@ describe('ConditionalRenderingGroupRenderer', () => {
       expect(await screen.findByRole('option', { name: 'myVar' })).toBeInTheDocument();
       expect(screen.queryByRole('option', { name: '__scopes' })).not.toBeInTheDocument();
     });
+
+    it('falls back to the variable name when the variable has no label', async () => {
+      const user = userEvent.setup({ applyAccept: false });
+
+      const condition = ConditionalRenderingVariable.createEmpty('instance');
+      const model = buildSceneWithCondition(
+        [new CustomVariable({ name: 'instance', label: '', query: 'a,b' })],
+        condition
+      );
+
+      render(<ConditionalRenderingGroup.Component model={model} />);
+
+      await user.click(
+        screen.getByTestId(selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection)
+      );
+
+      expect(await screen.findByRole('option', { name: 'instance' })).toBeInTheDocument();
+    });
   });
 });

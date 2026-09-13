@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,13 +31,21 @@ import (
 )
 
 const (
-	parentIDLabel             = "plugins.grafana.app/parent-id"
-	appliedChildrenAnnotation = "plugins.grafana.app/applied-children"
-	pluginStorageHookTimeout  = 30 * time.Second
+	parentIDLabel                 = "plugins.grafana.app/parent-id"
+	dependencyLabel               = "plugins.grafana.app/dependency"
+	appliedChildrenAnnotation     = "plugins.grafana.app/applied-children"
+	appliedDependenciesAnnotation = install.AppliedDependenciesAnnotation
+	dependencyParentsAnnotation   = install.DependencyParentsAnnotation
+	dependencyPluginVersion       = install.DependencyPluginVersion
+	pluginStorageHookTimeout      = 30 * time.Second
+	pluginAttributeID             = "grafana.plugin.id"
+	pluginAttributeVersion        = "grafana.plugin.version"
+	pluginAttributeNamespace      = "grafana.plugin.namespace"
+	pluginAttributeCleanupReason  = "grafana.plugin.cleanup.reason"
+	pluginCleanupReasonMissing    = "missing_applied_annotation"
 
-	// appPluginIDSuffix is the suffix used by app plugins. Only app
-	// plugins can own child plugins, so the storage hooks treat the suffix as a
-	// fast path.
+	// appPluginIDSuffix is the suffix used by app plugins. Only app plugins can
+	// own child plugins, so child reconciliation uses the suffix as a fast path.
 	appPluginIDSuffix = "-app"
 )
 
@@ -213,9 +225,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 func (h *pluginStorageHookProvider) BeginCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.CreateOptions) (genericregistry.FinishFunc, error) {
 	if !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
-		if isAppPlugin(plugin) {
-			h.stampDesiredChildren(ctx, plugin, nil)
-		}
+		h.stampDesiredRelations(ctx, plugin, nil)
 	}
 
 	return finishNoOp, nil
@@ -229,18 +239,18 @@ func (h *pluginStorageHookProvider) AfterCreate(ctx context.Context, plugin *plu
 		return nil
 	}
 	normalizePluginID(plugin)
-	if !isAppPlugin(plugin) {
-		return nil
+	if isAppPlugin(plugin) {
+		if err := h.applyChildren(ctx, plugin); err != nil {
+			return err
+		}
 	}
-	return h.applyChildren(ctx, plugin)
+	return h.applyDependencies(ctx, plugin)
 }
 
 func (h *pluginStorageHookProvider) BeginUpdate(ctx context.Context, plugin, oldPlugin *pluginsv0alpha1.Plugin, _ *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
 	if !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
-		if isAppPlugin(plugin) {
-			h.stampDesiredChildren(ctx, plugin, oldPlugin)
-		}
+		h.stampDesiredRelations(ctx, plugin, oldPlugin)
 	}
 
 	return finishNoOp, nil
@@ -254,10 +264,12 @@ func (h *pluginStorageHookProvider) AfterUpdate(ctx context.Context, plugin *plu
 		return nil
 	}
 	normalizePluginID(plugin)
-	if !isAppPlugin(plugin) {
-		return nil
+	if isAppPlugin(plugin) {
+		if err := h.applyChildren(ctx, plugin); err != nil {
+			return err
+		}
 	}
-	return h.applyChildren(ctx, plugin)
+	return h.applyDependencies(ctx, plugin)
 }
 
 func (h *pluginStorageHookProvider) AfterDelete(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.DeleteOptions) error {
@@ -267,10 +279,12 @@ func (h *pluginStorageHookProvider) AfterDelete(ctx context.Context, plugin *plu
 	if IsChildPlugin(plugin) {
 		return nil
 	}
-	if !isAppPlugin(plugin) {
-		return nil
+	if isAppPlugin(plugin) {
+		if err := h.deleteChildren(ctx, plugin.Annotations); err != nil {
+			return fmt.Errorf("delete child plugins for %q: %w", plugin.Spec.Id, err)
+		}
 	}
-	return h.deleteChildren(ctx, plugin.Annotations)
+	return h.removeAppliedDependencyParents(ctx, plugin.Spec.Id, plugin.Annotations)
 }
 
 func finishNoOp(context.Context, bool) {}
@@ -289,8 +303,7 @@ func isDeleteDryRun(options *metav1.DeleteOptions) bool {
 
 func (h *pluginStorageHookProvider) applyChildren(ctx context.Context, plugin *pluginsv0alpha1.Plugin) error {
 	if err := h.reconcileChildren(ctx, plugin); err != nil {
-		h.logger.WithContext(ctx).Error("Failed to apply child plugins", "error", err, "pluginId", plugin.Spec.Id)
-		return err
+		return fmt.Errorf("apply child plugins for %q: %w", plugin.Spec.Id, err)
 	}
 	return nil
 }
@@ -298,8 +311,7 @@ func (h *pluginStorageHookProvider) applyChildren(ctx context.Context, plugin *p
 func (h *pluginStorageHookProvider) deleteChildren(ctx context.Context, annotations map[string]string) error {
 	for _, childID := range parseAppliedChildren(annotations) {
 		if _, _, err := h.storage.Delete(ctx, childID, nil, &metav1.DeleteOptions{}); err != nil && !errorsK8s.IsNotFound(err) {
-			h.logger.WithContext(ctx).Error("Failed to delete child plugin", "error", err, "childPluginId", childID)
-			return err
+			return fmt.Errorf("delete child plugin %q: %w", childID, err)
 		}
 	}
 	return nil
@@ -315,31 +327,53 @@ func pluginFromRuntimeObject(obj runtime.Object) (*pluginsv0alpha1.Plugin, bool)
 	return plugin, ok
 }
 
-// stampDesiredChildren writes the children the parent should currently own
-// onto the parent's annotation. Called before the Create/Update reaches the
-// underlying storage so the annotation lands in the same write — the caller's
-// returned object already carries the stamped annotation.
+// stampDesiredRelations writes the child and dependency plugins the parent
+// should currently own onto the parent's annotations. Called before the
+// Create/Update reaches the underlying storage so the annotations land in the
+// same write — the caller's returned object already carries them.
 //
 // On meta lookup failure, the previous object's annotation is preserved so a
 // transient meta outage during Update doesn't cause stale cleanup to wipe
-// every child.
-func (h *pluginStorageHookProvider) stampDesiredChildren(ctx context.Context, plugin, previous *pluginsv0alpha1.Plugin) {
+// every child or dependency marker.
+func (h *pluginStorageHookProvider) stampDesiredRelations(ctx context.Context, plugin, previous *pluginsv0alpha1.Plugin) {
 	result, err := h.metaManager.GetMeta(ctx, meta.PluginRef{
 		ID:      plugin.Spec.Id,
 		Version: plugin.Spec.Version,
 	})
 	if err == nil {
-		setAnnotation(plugin, appliedChildrenAnnotation, strings.Join(result.Meta.Children, ","))
+		if isAppPlugin(plugin) {
+			setAnnotation(plugin, appliedChildrenAnnotation, strings.Join(result.Meta.Children, ","))
+		}
+		stampAppliedDependencies(plugin, previous, pluginDependencyIDs(result.Meta))
 		return
 	}
 	if !errors.Is(err, meta.ErrMetaNotFound) {
-		h.logger.WithContext(ctx).Warn("Failed to look up child plugin metadata; preserving previous applied-children annotation", "error", err, "pluginId", plugin.Spec.Id)
+		h.logger.WithContext(ctx).Warn("Failed to look up plugin relation metadata; preserving previous applied relation annotations", "error", err, "pluginId", plugin.Spec.Id)
 	}
 	if previous == nil {
 		return
 	}
-	if existing, ok := previous.Annotations[appliedChildrenAnnotation]; ok {
-		setAnnotation(plugin, appliedChildrenAnnotation, existing)
+	if isAppPlugin(plugin) {
+		if existing, ok := previous.Annotations[appliedChildrenAnnotation]; ok {
+			setAnnotation(plugin, appliedChildrenAnnotation, existing)
+		}
+	}
+	if existing, ok := previous.Annotations[appliedDependenciesAnnotation]; ok {
+		setAnnotation(plugin, appliedDependenciesAnnotation, existing)
+	}
+}
+
+func stampAppliedDependencies(plugin, previous *pluginsv0alpha1.Plugin, dependencies []string) {
+	if len(dependencies) > 0 {
+		setAnnotation(plugin, appliedDependenciesAnnotation, strings.Join(dependencies, ","))
+		return
+	}
+	if previous != nil && len(parseAppliedDependencies(previous.Annotations)) > 0 {
+		setAnnotation(plugin, appliedDependenciesAnnotation, "")
+		return
+	}
+	if plugin.Annotations != nil {
+		delete(plugin.Annotations, appliedDependenciesAnnotation)
 	}
 }
 
@@ -355,45 +389,43 @@ func (h *pluginStorageHookProvider) stampDesiredChildren(ctx context.Context, pl
 // meta lookup failed and left it unstamped), so deletions are skipped to avoid
 // wiping children during a transient outage.
 func (h *pluginStorageHookProvider) reconcileChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin) error {
-	start := time.Now()
-	defer func() {
-		h.logger.WithContext(ctx).Debug("Applied child plugins", "duration", time.Since(start))
-	}()
-
-	logger := h.logger.WithContext(ctx).With(
-		"requestNamespace", parent.Namespace,
-		"pluginId", parent.Spec.Id,
-		"version", parent.Spec.Version,
-	)
+	ctx, span := pluginStorageTracer.Start(ctx, "reconcileChildren")
+	defer span.End()
 
 	desired := parseAppliedChildren(parent.Annotations)
+	span.SetAttributes(
+		attribute.String(pluginAttributeID, parent.Spec.Id),
+		attribute.String(pluginAttributeVersion, parent.Spec.Version),
+		attribute.String(pluginAttributeNamespace, pluginNamespace(ctx, parent)),
+	)
+
 	desiredSet := make(map[string]struct{}, len(desired))
 	for _, childID := range desired {
 		desiredSet[childID] = struct{}{}
 		if err := h.upsertChildPlugin(ctx, parent, childID); err != nil {
-			logger.Error("Failed to upsert child plugin", "error", err, "childPluginId", childID)
-			return err
+			return fmt.Errorf("upsert child plugin %q: %w", childID, err)
 		}
 	}
 
 	// Without a stamped annotation the desired set is unknown, so deleting here
 	// would wipe children during a transient meta outage. Skip cleanup.
 	if _, known := parent.Annotations[appliedChildrenAnnotation]; !known {
+		span.AddEvent("cleanup_skipped", trace.WithAttributes(
+			attribute.String(pluginAttributeCleanupReason, pluginCleanupReasonMissing),
+		))
 		return nil
 	}
 
 	owned, err := h.listOwnedChildren(ctx, parent)
 	if err != nil {
-		logger.Error("Failed to list owned child plugins", "error", err)
-		return err
+		return fmt.Errorf("list owned child plugins: %w", err)
 	}
 	for _, childID := range owned {
 		if _, ok := desiredSet[childID]; ok {
 			continue
 		}
 		if _, _, err := h.storage.Delete(ctx, childID, nil, &metav1.DeleteOptions{}); err != nil && !errorsK8s.IsNotFound(err) {
-			logger.Error("Failed to delete stale child plugin", "error", err, "childPluginId", childID)
-			return err
+			return fmt.Errorf("delete stale child plugin %q: %w", childID, err)
 		}
 	}
 
@@ -471,6 +503,225 @@ func childPluginForParent(parent *pluginsv0alpha1.Plugin, namespace string, chil
 	return child
 }
 
+func (h *pluginStorageHookProvider) applyDependencies(ctx context.Context, parent *pluginsv0alpha1.Plugin) error {
+	if err := h.reconcileDependencies(ctx, parent); err != nil {
+		return fmt.Errorf("apply dependency plugins for %q: %w", parent.Spec.Id, err)
+	}
+	return nil
+}
+
+func (h *pluginStorageHookProvider) reconcileDependencies(ctx context.Context, parent *pluginsv0alpha1.Plugin) error {
+	ctx, span := pluginStorageTracer.Start(ctx, "reconcileDependencies")
+	defer span.End()
+
+	desired := parseAppliedDependencies(parent.Annotations)
+	span.SetAttributes(
+		attribute.String(pluginAttributeID, parent.Spec.Id),
+		attribute.String(pluginAttributeVersion, parent.Spec.Version),
+		attribute.String(pluginAttributeNamespace, pluginNamespace(ctx, parent)),
+	)
+
+	desiredSet := make(map[string]struct{}, len(desired))
+	for _, dependencyID := range desired {
+		if dependencyID == "" || dependencyID == parent.Spec.Id {
+			continue
+		}
+		desiredSet[dependencyID] = struct{}{}
+		if err := h.upsertDependencyPlugin(ctx, parent, dependencyID); err != nil {
+			return fmt.Errorf("upsert dependency plugin %q: %w", dependencyID, err)
+		}
+	}
+
+	if _, known := parent.Annotations[appliedDependenciesAnnotation]; !known {
+		span.AddEvent("cleanup_skipped", trace.WithAttributes(
+			attribute.String(pluginAttributeCleanupReason, pluginCleanupReasonMissing),
+		))
+		return nil
+	}
+
+	owned, err := h.listOwnedDependencies(ctx, parent)
+	if err != nil {
+		return fmt.Errorf("list owned dependency plugins: %w", err)
+	}
+	for _, dependencyID := range owned {
+		if _, ok := desiredSet[dependencyID]; ok {
+			continue
+		}
+		if err := h.removeDependencyParent(ctx, parent.Spec.Id, dependencyID); err != nil {
+			return fmt.Errorf("remove dependency parent %q from %q: %w", parent.Spec.Id, dependencyID, err)
+		}
+	}
+
+	return nil
+}
+
+func (h *pluginStorageHookProvider) upsertDependencyPlugin(ctx context.Context, parent *pluginsv0alpha1.Plugin, dependencyID string) error {
+	namespace := pluginNamespace(ctx, parent)
+	parentID := parent.Spec.Id
+	if parentID == "" || dependencyID == "" || parentID == dependencyID {
+		return nil
+	}
+
+	existing, err := h.getPlugin(ctx, dependencyID)
+	if err != nil && !errorsK8s.IsNotFound(err) {
+		return err
+	}
+
+	expected := dependencyPluginForParent(parent, namespace, dependencyID)
+	if existing == nil {
+		_, err = h.storage.Create(ctx, expected, nil, &metav1.CreateOptions{})
+		if err == nil {
+			return nil
+		}
+		if !errorsK8s.IsAlreadyExists(err) {
+			return err
+		}
+		existing, err = h.getPlugin(ctx, dependencyID)
+		if err != nil {
+			return err
+		}
+	}
+
+	updated := existing.DeepCopy()
+	addDependencyParent(updated, parentID)
+	if existing.Annotations[install.PluginInstallSourceAnnotation] == install.SourceDependencyPlugin {
+		updated.Spec.Version = expected.Spec.Version
+	}
+
+	if apiequality.Semantic.DeepEqual(existing, updated) {
+		return nil
+	}
+
+	_, _, err = h.storage.Update(ctx, dependencyID, rest.DefaultUpdatedObjectInfo(updated), nil, nil, false, &metav1.UpdateOptions{})
+	return err
+}
+
+func dependencyPluginForParent(parent *pluginsv0alpha1.Plugin, namespace string, dependencyID string) *pluginsv0alpha1.Plugin {
+	dependency := (&install.PluginInstall{
+		ID:      dependencyID,
+		Version: dependencyPluginVersion,
+		Source:  install.SourceDependencyPlugin,
+	}).ToPluginInstallV0Alpha1(namespace)
+	addDependencyParent(dependency, parent.Spec.Id)
+	return dependency
+}
+
+func (h *pluginStorageHookProvider) listOwnedDependencies(ctx context.Context, parent *pluginsv0alpha1.Plugin) ([]string, error) {
+	selector := labels.SelectorFromSet(labels.Set{dependencyLabel: "true"})
+	obj, err := h.storage.List(ctx, &metainternalversion.ListOptions{LabelSelector: selector})
+	if err != nil {
+		return nil, err
+	}
+	list, ok := obj.(*pluginsv0alpha1.PluginList)
+	if !ok {
+		return nil, fmt.Errorf("expected *pluginsv0alpha1.PluginList, got %T", obj)
+	}
+	names := make([]string, 0, len(list.Items))
+	for i := range list.Items {
+		if hasDependencyParent(&list.Items[i], parent.Spec.Id) {
+			names = append(names, list.Items[i].Name)
+		}
+	}
+	return names, nil
+}
+
+func (h *pluginStorageHookProvider) removeAppliedDependencyParents(ctx context.Context, parentID string, annotations map[string]string) error {
+	for _, dependencyID := range parseAppliedDependencies(annotations) {
+		if err := h.removeDependencyParent(ctx, parentID, dependencyID); err != nil {
+			return fmt.Errorf("remove dependency parent %q from %q: %w", parentID, dependencyID, err)
+		}
+	}
+
+	return nil
+}
+
+func (h *pluginStorageHookProvider) removeDependencyParent(ctx context.Context, parentID, dependencyID string) error {
+	if parentID == "" || dependencyID == "" || parentID == dependencyID {
+		return nil
+	}
+	existing, err := h.getPlugin(ctx, dependencyID)
+	if errorsK8s.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !hasDependencyParent(existing, parentID) {
+		return nil
+	}
+
+	updated := existing.DeepCopy()
+	dropDependencyParent(updated, parentID)
+
+	if len(parseDependencyParents(updated.Annotations)) == 0 && existing.Annotations[install.PluginInstallSourceAnnotation] == install.SourceDependencyPlugin {
+		_, _, err = h.storage.Delete(ctx, dependencyID, nil, &metav1.DeleteOptions{})
+		if errorsK8s.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	_, _, err = h.storage.Update(ctx, dependencyID, rest.DefaultUpdatedObjectInfo(updated), nil, nil, false, &metav1.UpdateOptions{})
+	return err
+}
+
+func pluginDependencyIDs(metaSpec pluginsv0alpha1.MetaSpec) []string {
+	dependencies := metaSpec.PluginJson.Dependencies.Plugins
+	ids := make([]string, 0, len(dependencies))
+	for _, dependency := range dependencies {
+		id := strings.TrimSpace(dependency.Id)
+		if id != "" && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+func addDependencyParent(plugin *pluginsv0alpha1.Plugin, parentID string) {
+	if parentID == "" {
+		return
+	}
+	if plugin.Labels == nil {
+		plugin.Labels = map[string]string{}
+	}
+	plugin.Labels[dependencyLabel] = "true"
+
+	parents := parseDependencyParents(plugin.Annotations)
+	if !slices.Contains(parents, parentID) {
+		parents = append(parents, parentID)
+	}
+	setAnnotation(plugin, dependencyParentsAnnotation, strings.Join(parents, ","))
+}
+
+func dropDependencyParent(plugin *pluginsv0alpha1.Plugin, parentID string) {
+	parents := slices.DeleteFunc(parseDependencyParents(plugin.Annotations), func(existing string) bool {
+		return existing == parentID
+	})
+	if len(parents) > 0 {
+		if plugin.Labels == nil {
+			plugin.Labels = map[string]string{}
+		}
+		plugin.Labels[dependencyLabel] = "true"
+		setAnnotation(plugin, dependencyParentsAnnotation, strings.Join(parents, ","))
+		return
+	}
+	if plugin.Labels != nil {
+		delete(plugin.Labels, dependencyLabel)
+	}
+	if plugin.Annotations != nil {
+		delete(plugin.Annotations, dependencyParentsAnnotation)
+	}
+}
+
+func hasDependencyParent(plugin *pluginsv0alpha1.Plugin, parentID string) bool {
+	for _, existing := range parseDependencyParents(plugin.Annotations) {
+		if existing == parentID {
+			return true
+		}
+	}
+	return false
+}
+
 func setAnnotation(plugin *pluginsv0alpha1.Plugin, key, value string) {
 	if plugin.Annotations == nil {
 		plugin.Annotations = map[string]string{}
@@ -479,7 +730,19 @@ func setAnnotation(plugin *pluginsv0alpha1.Plugin, key, value string) {
 }
 
 func parseAppliedChildren(annotations map[string]string) []string {
-	raw := annotations[appliedChildrenAnnotation]
+	return parseCSVAnnotation(annotations, appliedChildrenAnnotation)
+}
+
+func parseAppliedDependencies(annotations map[string]string) []string {
+	return parseCSVAnnotation(annotations, appliedDependenciesAnnotation)
+}
+
+func parseDependencyParents(annotations map[string]string) []string {
+	return parseCSVAnnotation(annotations, dependencyParentsAnnotation)
+}
+
+func parseCSVAnnotation(annotations map[string]string, key string) []string {
+	raw := annotations[key]
 	if raw == "" {
 		return nil
 	}
@@ -498,6 +761,16 @@ func parseAppliedChildren(annotations map[string]string) []string {
 // definition of "child".
 func IsChildPlugin(plugin *pluginsv0alpha1.Plugin) bool {
 	return plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != ""
+}
+
+// IsDependencyPlugin reports whether the plugin is installed as a dependency
+// of another plugin. Exported so decorating hook providers (e.g. enterprise)
+// share one definition of "dependency".
+func IsDependencyPlugin(plugin *pluginsv0alpha1.Plugin) bool {
+	if plugin.Labels[dependencyLabel] == "true" {
+		return true
+	}
+	return len(parseDependencyParents(plugin.Annotations)) > 0
 }
 
 func isAppPlugin(plugin *pluginsv0alpha1.Plugin) bool {

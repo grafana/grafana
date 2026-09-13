@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 
-import { AccessControlAction } from 'app/types/accessControl';
-
 import { type NotificationTemplate } from '../../../components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import { notificationsPermissions } from '../../../utils/access-control';
+import {
+  externalNotificationTemplatePermissions as EXTERNAL_AM_PERMISSIONS,
+  grafanaNotificationTemplatePermissions as PERMISSIONS,
+} from '../../../utils/alertmanagerPermissions';
 import { isProvisionedResource } from '../../../utils/k8s/utils';
 import { makeAbility } from '../abilityUtils';
 import { type Ability, NotSupported, NotificationTemplateAction, Provisioned } from '../types';
@@ -15,36 +16,6 @@ export type NotificationTemplateAbilityParam =
   | { action: NotificationTemplateAction.Update; context?: NotificationTemplate }
   | { action: NotificationTemplateAction.Delete; context?: NotificationTemplate }
   | { action: NotificationTemplateAction.Test; context?: NotificationTemplate };
-
-/** Permissions for the Grafana-managed alertmanager (internal k8s API). */
-const PERMISSIONS: Record<NotificationTemplateAction, AccessControlAction[]> = {
-  [NotificationTemplateAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingTemplatesRead],
-  [NotificationTemplateAction.Create]: [
-    notificationsPermissions.create.grafana,
-    AccessControlAction.AlertingTemplatesWrite,
-  ],
-  [NotificationTemplateAction.Update]: [
-    notificationsPermissions.update.grafana,
-    AccessControlAction.AlertingTemplatesWrite,
-  ],
-  [NotificationTemplateAction.Delete]: [
-    notificationsPermissions.delete.grafana,
-    AccessControlAction.AlertingTemplatesDelete,
-  ],
-  [NotificationTemplateAction.Test]: [
-    AccessControlAction.AlertingNotificationsTemplatesTest,
-    notificationsPermissions.update.grafana,
-  ],
-};
-
-/** Permissions for external alertmanagers (Mimir, Cortex, Vanilla Alertmanager, etc.). */
-const EXTERNAL_AM_PERMISSIONS: Record<NotificationTemplateAction, AccessControlAction[]> = {
-  [NotificationTemplateAction.View]: [notificationsPermissions.read.external],
-  [NotificationTemplateAction.Create]: [notificationsPermissions.create.external],
-  [NotificationTemplateAction.Update]: [notificationsPermissions.update.external],
-  [NotificationTemplateAction.Delete]: [notificationsPermissions.delete.external],
-  [NotificationTemplateAction.Test]: [notificationsPermissions.update.external],
-};
 
 /**
  * Global (unscoped) notification template ability check.
@@ -86,7 +57,3 @@ export function useNotificationTemplateAbility(payload: NotificationTemplateAbil
     }
   }, [payload, hasConfigurationAPI, isGrafanaAlertmanager]);
 }
-
-export const PERMISSIONS_TEMPLATES: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
-  (permissions) => permissions
-);

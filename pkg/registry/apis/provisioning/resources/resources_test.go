@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
@@ -70,6 +71,64 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 	return mustBuildParsedResource(name, client), client
 }
 
+func TestWriteResourceFileFromObject_RejectsPathTraversal(t *testing.T) {
+	repo := repository.NewMockReaderWriter(t)
+	// No Sync target → root folder is "", so the folder path is built straight
+	// from the (unsanitized) folder title. repo.Write must never be called; the
+	// mock fails the test if it is.
+	repo.On("Config").Return(replaceRepoConfig())
+
+	// Folder tree with a folder whose title traverses out of the repository.
+	tree := NewMockFolderTree(t)
+	tree.EXPECT().DirPath("evil", "").Return(Folder{ID: "evil", Title: "../../etc", Path: "../../etc"}, true)
+	folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
+	mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "dash-1"},
+	}}
+	meta, err := grafanautils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetFolder("evil")
+
+	_, _, err = mgr.WriteResourceFileFromObject(context.Background(), obj, WriteOptions{})
+	require.Error(t, err)
+	require.ErrorIs(t, err, safepath.ErrPathTraversalAttempt)
+}
+
+func TestWriteResourceFileFromObject_PreservesSizeOnWriteError(t *testing.T) {
+	// The body is serialized before repo.Write is called, so a write failure
+	// (e.g. an oversized resource rejected by the backend) must still report the
+	// real size — that is what lets the bytes metric's outcome=error series
+	// expose size-related failures instead of hiding them behind bytes=0.
+	repo := repository.NewMockReaderWriter(t)
+	repo.On("Config").Return(replaceRepoConfig())
+
+	// No folder set → resolves to the (empty) root folder, so no tree lookup runs.
+	folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
+	mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "dash-1"},
+	}}
+
+	var writtenBody []byte
+	repo.On("Write", mock.Anything, "dash-1.json", "", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			writtenBody = args.Get(3).([]byte)
+		}).
+		Return(fmt.Errorf("resource too large"))
+
+	_, size, err := mgr.WriteResourceFileFromObject(context.Background(), obj, WriteOptions{})
+	require.Error(t, err)
+	require.Positive(t, size, "size should be reported even when the write fails")
+	require.Equal(t, len(writtenBody), size, "reported size must match the serialized body length")
+}
+
 func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 	// replaceTestGVR (alertrules) is used as the resource under test; whether it
 	// carries the folder annotation is driven entirely by what the clients report
@@ -93,7 +152,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 		// would dereference the nil FolderManager and panic, so a clean run proves
 		// the branch was skipped.
 		mgr := NewResourcesManager(repo, nil, mockParser, clients)
-		_, _, err := mgr.WriteResourceFromFile(context.Background(), "alerts/rule.json", "")
+		_, _, _, err := mgr.WriteResourceFromFile(context.Background(), "alerts/rule.json", "")
 
 		require.NoError(t, err)
 		require.Empty(t, parsed.Meta.GetFolder(), "no folder annotation should be written for a resource that does not support folders")
@@ -123,7 +182,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 		folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, clients)
-		_, _, err := mgr.WriteResourceFromFile(context.Background(), "rule.json", "")
+		_, _, _, err := mgr.WriteResourceFromFile(context.Background(), "rule.json", "")
 
 		require.NoError(t, err)
 		require.Equal(t, RootFolder(config), parsed.Meta.GetFolder(), "the resource should be annotated with the resolved folder")
@@ -141,7 +200,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "same-uid", replaceTestGVR)
+		name, gvk, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "same-uid", replaceTestGVR)
 
 		require.NoError(t, err)
 		require.Equal(t, "same-uid", name)
@@ -158,7 +217,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "", replaceTestGVR)
+		name, gvk, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "", replaceTestGVR)
 
 		require.NoError(t, err)
 		require.Equal(t, "new-uid", name)
@@ -184,7 +243,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		deleteClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
-		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
+		name, gvk, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
 		require.NoError(t, err)
 		require.Equal(t, "new-uid", name)
@@ -200,7 +259,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 			Return((*repository.FileInfo)(nil), fmt.Errorf("file not found"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
+		_, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to read file")
@@ -226,7 +285,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 			Return(fmt.Errorf("forbidden"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
-		name, gvk, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
+		name, gvk, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
@@ -248,7 +307,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 			Return(nil, schema.GroupVersionKind{}, fmt.Errorf("unknown resource"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
-		name, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
+		name, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
@@ -272,7 +331,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		name, gvk, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "same-uid", name)
@@ -303,7 +362,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		deleteClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
-		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		name, gvk, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "new-uid", name)
@@ -319,7 +378,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 			Return((*repository.FileInfo)(nil), fmt.Errorf("ref not found"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		_, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "reading previous file")
@@ -335,7 +394,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 			Return(nil, fmt.Errorf("invalid JSON"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		_, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "parsing previous file")
@@ -354,7 +413,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		_, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to read file")
@@ -385,7 +444,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 			Return(fmt.Errorf("forbidden"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
-		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		name, gvk, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
@@ -408,7 +467,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "new-uid", name)
@@ -527,6 +586,11 @@ func TestDeleteOldResource(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "skipping delete of old resource old-uid")
 		require.Contains(t, err.Error(), "alerts/other-file.json")
+		// Must be the typed error so jobs.classifyWarning demotes it to a warning
+		// instead of failing the whole sync job.
+		var managedByOtherErr *ResourceManagedByOtherFileError
+		require.ErrorAs(t, err, &managedByOtherErr)
+		require.ErrorIs(t, err, ErrResourceManagedByOtherFile)
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 

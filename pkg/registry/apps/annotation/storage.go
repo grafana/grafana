@@ -42,7 +42,20 @@ type ListOptions struct {
 
 	// LegacyID filters by the legacy numeric ID
 	LegacyID int64
+
+	// Deleted controls whether soft-deleted annotations (tombstones) are returned.
+	Deleted DeletedFilter
 }
+
+// DeletedFilter controls whether soft-deleted annotations (tombstones) are
+// included in a list.
+type DeletedFilter int
+
+const (
+	DeletedExclude DeletedFilter = iota // live only (zero value)
+	DeletedInclude                      // live and tombstones
+	DeletedOnly                         // tombstones only
+)
 
 type AnnotationList struct {
 	Items    []annotationV0.Annotation
@@ -58,8 +71,9 @@ type TagProvider interface {
 }
 
 type TagListOptions struct {
-	Prefix string
-	Limit  int
+	Prefix   string
+	Contains string
+	Limit    int
 }
 
 type Tag struct {

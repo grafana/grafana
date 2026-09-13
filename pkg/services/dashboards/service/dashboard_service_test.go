@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -1569,29 +1570,40 @@ func TestCountInFolders(t *testing.T) {
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("can search dashboards", func(t *testing.T) {
-		ctx := context.Background()
+	t.Run("uses unspecified result format by default", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		require.NoError(t, err)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+	})
+
+	t.Run("requests field-value results and accepts a legacy response", func(t *testing.T) {
+		ctx := t.Context()
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
-			OrgId: 1,
-			Sort:  sort.SortAlphaAsc,
+			OrgId:                1,
+			Sort:                 sort.SortAlphaAsc,
+			UseFieldValueResults: true,
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// should include sort field only once
-			titleFieldCount := 0
-			for _, field := range req.Fields {
-				if field == "title" {
-					titleFieldCount++
-				}
-			}
-
-			return len(req.SortBy) == 1 &&
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+				slices.Equal(req.Fields, []string{
+					resource.SEARCH_FIELD_TITLE,
+					resource.SEARCH_FIELD_TAGS,
+					resource.SEARCH_FIELD_FOLDER,
+					resource.SEARCH_FIELD_DESCRIPTION,
+					resource.SEARCH_FIELD_LEGACY_ID,
+					resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+				}) &&
+				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&
-				!req.SortBy[0].Desc &&
-				titleFieldCount == 1
+				!req.SortBy[0].Desc
 		})).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -1973,7 +1985,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 func TestCleanUpDashboard(t *testing.T) {
 	t.Run("Should delete public dashboards and clean up after delete", func(t *testing.T) {
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
@@ -2017,7 +2029,7 @@ func TestCleanUpDashboard(t *testing.T) {
 	})
 
 	t.Run("Should not delete org-scope annotations when dashboard ID is zero", func(t *testing.T) {
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
@@ -2211,8 +2223,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup test database and utilities
-			sqlStore, _ := sqlstore.InitTestDB(t)
-			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+			sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -2248,8 +2260,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 	t.Run("Should start and stop background job correctly", func(t *testing.T) {
 		// Setup test database and utilities
-		sqlStore, _ := sqlstore.InitTestDB(t)
-		lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 
 		cfg := setting.NewCfg()
 		cfg.K8sDashboardCleanup = setting.K8sDashboardCleanupSettings{

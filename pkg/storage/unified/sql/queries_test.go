@@ -561,6 +561,30 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceStoredList: {
+				{
+					Name: "global",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+				{
+					Name: "namespace",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStoredResourcesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
 			sqlResourceBlobInsert: {
 				{
 					Name: "basic",

@@ -20,6 +20,8 @@ interface VariableOptionsUpdate {
   results: MetricFindValue[];
 }
 
+const naturalCollator = new Intl.Collator(undefined, { numeric: true });
+
 export const initialQueryVariableModelState: QueryVariableModel = {
   ...initialVariableModelState,
   type: 'query',
@@ -73,7 +75,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
         return 1;
       }
 
-      return a.text.localeCompare(b.text, undefined, { numeric: true });
+      return naturalCollator.compare(a.text, b.text);
     });
   }
 

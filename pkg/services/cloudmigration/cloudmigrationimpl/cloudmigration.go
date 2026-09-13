@@ -143,7 +143,7 @@ func ProvideService(
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency)
+	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl, cloudmigration.ResourceDependency(cfg.UnifiedAlerting.IsEnabled()))
 
 	httpClientS3, err := httpClientProvider.New()
 	if err != nil {
@@ -183,8 +183,7 @@ func ProvideService(
 	}
 
 	if err := prom.Register(s.metrics); err != nil {
-		var alreadyRegisterErr prometheus.AlreadyRegisteredError
-		if errors.As(err, &alreadyRegisterErr) {
+		if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 			s.log.Warn("cloud migration metrics already registered")
 		} else {
 			return s, fmt.Errorf("registering cloud migration metrics: %w", err)

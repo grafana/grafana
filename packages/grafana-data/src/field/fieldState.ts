@@ -1,3 +1,4 @@
+import { isTimeCompareFrame, withComparisonSuffix } from '../dataframe/timeCompare';
 import { type Labels } from '../types/data';
 import {
   type DataFrame,
@@ -92,15 +93,15 @@ function calculateFieldDisplayName(
   commonLabels?: Labels
 ): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
+  const isComparisonSeries = isTimeCompareFrame(frame);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
+    return isComparisonSeries ? withComparisonSuffix(displayName) : displayName;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
+    return isComparisonSeries ? withComparisonSuffix(field.config.displayNameFromDS) : field.config.displayNameFromDS;
   }
 
   // This is an ugly exception for time field
@@ -172,7 +173,7 @@ function calculateFieldDisplayName(
   }
 
   if (isComparisonSeries) {
-    displayName = `${displayName} (comparison)`;
+    displayName = withComparisonSuffix(displayName);
   }
   return displayName;
 }

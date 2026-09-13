@@ -3,7 +3,7 @@ import { setupServer } from 'msw/node';
 
 import { fetchMergedPreferences, initPreferences } from './initPreferences';
 
-const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1alpha1/namespaces/:ns/preferences/merged';
+const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1/namespaces/:ns/preferences/merged';
 
 // Default 500 so any test that forgets to register its own handler fails loudly
 // with a self-describing body, instead of silently returning stale defaults.
@@ -123,6 +123,12 @@ describe('initPreferences', () => {
     expect(window.grafanaBootData.user.language).toBe('en-US');
     expect(window.grafanaBootData.user.weekStart).toBe('sunday');
     expect(window.grafanaBootData.user.timezone).toBe('browser');
+  });
+
+  it('returns the fetched preferences so the caller can seed the RTK Query cache', async () => {
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { theme: 'light' } })));
+
+    await expect(initPreferences()).resolves.toEqual({ spec: { theme: 'light' } });
   });
 
   it('does not reject when the API errors', async () => {

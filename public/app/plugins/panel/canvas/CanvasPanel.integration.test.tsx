@@ -1062,8 +1062,7 @@ describe('Canvas', () => {
               expect(target.querySelector('svg [id="blade"]')).toBeVisible();
             });
 
-            // Flaking in CI after double click not working
-            it.skip('Metric value mapping sets element background color using field mapping config', async () => {
+            it('Metric value mapping sets element background color using field mapping config', async () => {
               const target = await selectElementOptionsSetup();
               expect(target).toHaveStyle(`background-color: ${colors.none};`);
               mockComboboxRect();
@@ -1080,28 +1079,11 @@ describe('Canvas', () => {
               const metricTarget = screen.getByRole('button', { name: /Double click to set field/i });
               expect(metricTarget).toBeVisible();
 
-              // Moveable skips emitting click when inputTarget is the root moveable element; hit inner span (matches real clicks on text).
-              const metricPointerTarget = within(metricTarget).getByText(/Double click to set field/i);
-              Object.defineProperty(document, 'elementFromPoint', {
-                configurable: true,
-                value: () => metricPointerTarget,
-              });
+              // Enter field-picker edit mode via context menu (avoids flaky Moveable double-click in JSDOM)
+              await user.pointer({ keys: '[MouseRight]', target: metricTarget });
+              await user.click(screen.getByRole('menuitem', { name: 'Edit' }));
 
-              // Click once to focus into the canvas element and out of the editor
-              await user.click(metricPointerTarget);
-              // And then double click to trigger the field mapping select to get added to the UI
-              await user.dblClick(metricPointerTarget);
-              // Inline editor replaces the placeholder after editModeEnabled & React update
-              await waitFor(async () => {
-                const doubleClickElement = screen.queryByText(/Double click to set field/i);
-                if (doubleClickElement === null) {
-                  await user.dblClick(metricPointerTarget);
-                }
-                expect(doubleClickElement).not.toBeInTheDocument();
-              });
-
-              // Click into the select combobox
-              const metricFieldCombo = within(metricTarget).getByPlaceholderText('Select field');
+              const metricFieldCombo = await waitFor(() => within(metricTarget).getByPlaceholderText('Select field'));
               await user.click(metricFieldCombo);
 
               // Verify the combobox is open/expanded

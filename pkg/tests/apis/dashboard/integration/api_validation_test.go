@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -2573,13 +2574,7 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 
 				// Verify all expected items are found
 				for _, expected := range expectedTitles {
-					found := false
-					for _, title := range dashTitles {
-						if title == expected {
-							found = true
-							break
-						}
-					}
+					found := slices.Contains(dashTitles, expected)
 					require.True(t, found, "%s should see dashboard '%s' but didn't", identity.Name, expected)
 				}
 			})

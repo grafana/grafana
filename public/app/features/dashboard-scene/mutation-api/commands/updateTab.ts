@@ -4,7 +4,7 @@
  * Update a tab's metadata (title) by path.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
@@ -16,7 +16,6 @@ import {
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
-import { isSectionVariablesFeatureEnabled } from './variableScope';
 
 const updateTabPayloadSchema = payloads.updateTab;
 
@@ -65,7 +64,7 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         tab.setState({ conditionalRendering: group });
       }
 
-      if (spec.variables !== undefined && isSectionVariablesFeatureEnabled()) {
+      if (spec.variables !== undefined) {
         tab.setState({ $variables: deserializeSectionVariables(spec.variables) });
       }
 

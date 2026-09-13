@@ -3,6 +3,7 @@ import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
@@ -222,6 +223,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           >
             <Input
               id="repository-title"
+              data-testid={selectors.pages.Provisioning.Wizard.repositoryTitleInput}
               {...register('repository.title', {
                 required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
               })}

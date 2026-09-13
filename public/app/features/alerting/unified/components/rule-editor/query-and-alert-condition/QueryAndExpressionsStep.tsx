@@ -103,7 +103,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading } = useAlertQueryRunner();
-  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
 
   const initialState = {
     queries: getValues('queries'),
@@ -153,8 +152,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     expressionQueries
   );
 
-  const simplifiedQueryStep =
-    isSwitchModeEnabled && isGrafanaAlertingType ? editorSettings?.simplifiedQueryEditor : false;
+  const simplifiedQueryStep = isGrafanaAlertingType ? editorSettings?.simplifiedQueryEditor : false;
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
@@ -429,21 +427,20 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   if (!type) {
     return null;
   }
-  const switchMode =
-    isGrafanaAlertingType && isSwitchModeEnabled
-      ? {
-          isAdvancedMode: !simplifiedQueryStep,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            if (!getValues('editorSettings.simplifiedQueryEditor')) {
-              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
-                setShowResetModal(true);
-                return;
-              }
+  const switchMode = isGrafanaAlertingType
+    ? {
+        isAdvancedMode: !simplifiedQueryStep,
+        setAdvancedMode: (isAdvanced: boolean) => {
+          if (!getValues('editorSettings.simplifiedQueryEditor')) {
+            if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
+              setShowResetModal(true);
+              return;
             }
-            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
-          },
-        }
-      : undefined;
+          }
+          setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
+        },
+      }
+    : undefined;
 
   return (
     <>

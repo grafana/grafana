@@ -2,13 +2,23 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { setDataSourceSrv } from '@grafana/runtime';
-import { type DataSourceRef } from '@grafana/schema';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 
 import { makeDatasourceSetup } from '../spec/helper/setup';
 
 import { useExplorePageTitle } from './useExplorePageTitle';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+}));
+
+const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
+
+afterEach(() => {
+  getDataSourceInstanceMock.mockReset();
+});
 
 describe('useExplorePageTitle', () => {
   it('changes the document title of the explore page to include the datasource in use', async () => {
@@ -17,29 +27,17 @@ describe('useExplorePageTitle', () => {
       makeDatasourceSetup({ name: 'elastic', uid: 'elastic-uid' }),
     ];
 
-    setDataSourceSrv({
-      registerRuntimeDataSource: jest.fn(),
-      get(datasource?: string | DataSourceRef | null) {
-        let ds;
-        if (!datasource) {
-          ds = datasources[0]?.api;
-        } else {
-          ds = datasources.find((ds) =>
-            typeof datasource === 'string'
-              ? ds.api.name === datasource || ds.api.uid === datasource
-              : ds.api.uid === datasource?.uid
-          )?.api;
-        }
+    getDataSourceInstanceMock.mockImplementation(async (datasource) => {
+      const ds =
+        typeof datasource === 'string'
+          ? datasources.find((ds) => ds.api.name === datasource || ds.api.uid === datasource)?.api
+          : datasources.find((ds) => ds.api.uid === datasource?.uid)?.api;
 
-        if (ds) {
-          return Promise.resolve(ds);
-        }
+      if (ds) {
+        return ds;
+      }
 
-        return Promise.reject();
-      },
-      getInstanceSettings: jest.fn(),
-      getList: jest.fn(),
-      reload: jest.fn(),
+      throw new Error(`Datasource ${datasource} not found`);
     });
 
     const chromeMock: AppChromeService = jest.mocked(new AppChromeService());
@@ -72,29 +70,17 @@ describe('useExplorePageTitle', () => {
       makeDatasourceSetup({ name: 'elastic', uid: 'elastic-uid' }),
     ];
 
-    setDataSourceSrv({
-      registerRuntimeDataSource: jest.fn(),
-      get(datasource?: string | DataSourceRef | null) {
-        let ds;
-        if (!datasource) {
-          ds = datasources[0]?.api;
-        } else {
-          ds = datasources.find((ds) =>
-            typeof datasource === 'string'
-              ? ds.api.name === datasource || ds.api.uid === datasource
-              : ds.api.uid === datasource?.uid
-          )?.api;
-        }
+    getDataSourceInstanceMock.mockImplementation(async (datasource) => {
+      const ds =
+        typeof datasource === 'string'
+          ? datasources.find((ds) => ds.api.name === datasource || ds.api.uid === datasource)?.api
+          : datasources.find((ds) => ds.api.uid === datasource?.uid)?.api;
 
-        if (ds) {
-          return Promise.resolve(ds);
-        }
+      if (ds) {
+        return ds;
+      }
 
-        return Promise.reject();
-      },
-      getInstanceSettings: jest.fn(),
-      getList: jest.fn(),
-      reload: jest.fn(),
+      throw new Error(`Datasource ${datasource} not found`);
     });
 
     const chromeMock: AppChromeService = jest.mocked(new AppChromeService());

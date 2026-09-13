@@ -10,6 +10,10 @@ on:
       - main
       - release-*.*.*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 jobs:
   verify-i18n:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors

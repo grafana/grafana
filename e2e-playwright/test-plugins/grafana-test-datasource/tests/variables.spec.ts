@@ -1,5 +1,13 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
+
 test.describe(
   'grafana-test-datasource',
   {

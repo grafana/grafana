@@ -8,7 +8,7 @@
  */
 
 import { cloneDeep, isArray, mergeWith } from 'lodash';
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 

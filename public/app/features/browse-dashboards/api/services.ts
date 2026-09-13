@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
-import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
@@ -74,19 +74,17 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     }
 
     // Add team folders virtual item
-    if (config.featureToggles.teamFolders) {
-      const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-      folders.splice(insertIndex, 0, {
-        ...virtualFolderBase,
-        name: t('browse-dashboards.my-team-folders', 'My team folders'),
-        uid: TEAM_FOLDERS_UID,
-      });
-    }
+    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
+    folders.splice(insertIndex, 0, {
+      ...virtualFolderBase,
+      name: t('browse-dashboards.my-team-folders', 'My team folders'),
+      uid: TEAM_FOLDERS_UID,
+    });
 
     // Add starred folders virtual item after the other virtual roots so root order is
     // [Shared with me, Team folders, Starred folders, ...real folders]
     if (starredFoldersEnabled()) {
-      const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + (config.featureToggles.teamFolders ? 1 : 0);
+      const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + 1;
       folders.splice(insertIndex, 0, {
         ...virtualFolderBase,
         name: t('browse-dashboards.starred-folders', 'Starred folders'),
@@ -128,6 +126,7 @@ export async function listFolders(
       parentTitle,
       parentUID,
       managedBy: extractManagerKind(managedBy),
+      managerId: extractManagerId(managedBy),
       url: noUrl
         ? undefined
         : // URLs from the backend come with subUrlPrefix already included, so match that behaviour here

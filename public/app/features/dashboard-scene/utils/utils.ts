@@ -1,7 +1,8 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -26,7 +27,7 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -38,7 +39,9 @@ import { type DashboardGridItem } from '../scene/layout-default/DashboardGridIte
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
-import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
+
+import { getVizPanelKeyForPanelId } from './utils-panels';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -48,12 +51,11 @@ const V1_PANEL_PROPERTIES = {
   COLLAPSED: 'collapsed',
 } as const;
 
-export function getVizPanelKeyForPanelId(panelId: number) {
-  return `panel-${panelId}`;
-}
-
-export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+/**
+ * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
+ */
+export function isNewPanelQueryErrorsUIEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
 }
 
 /**
@@ -137,6 +139,14 @@ export function findEditPanel(scene: SceneObject, key: string | undefined): VizP
 export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
   model.forEachChild((child) => {
     if (!child.isActive) {
+      return;
+    }
+
+    // forceRender() publishes an empty state change, which is harmless for layout children but
+    // not for the providers attached to an object. SceneQueryRunner re-issues its queries on any
+    // state change of the closest time range, so force rendering a panel's $timeRange makes the
+    // panel query twice. None of these providers render layout, so skip them.
+    if (child === model.state.$timeRange || child === model.state.$data || child === model.state.$variables) {
       return;
     }
 
@@ -229,24 +239,6 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableMod
   return intervals[0];
 }
 
-export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
-  if (!sceneObject) {
-    return undefined;
-  }
-
-  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
-
-  if (dataProvider instanceof SceneQueryRunner) {
-    return dataProvider;
-  }
-
-  if (dataProvider instanceof SceneDataTransformer) {
-    return getQueryRunnerFor(dataProvider);
-  }
-
-  return undefined;
-}
-
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 
@@ -273,12 +265,12 @@ export function getDefaultPluginId(): string {
   return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
-export function getDefaultVizPanel(): VizPanel {
+export async function getDefaultVizPanel(): Promise<VizPanel> {
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
-  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+  const datasourceSettings = await getDataSourceInstanceSettings(null);
 
   return new VizPanel({
     title: newPanelTitle,
@@ -295,8 +287,7 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction:
-        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
@@ -392,23 +383,6 @@ export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivat
  * Useful when rendering a scene object out of context of it's parent
  */
 export const activateInActiveParents = activateSceneObjectAndParentTree;
-
-export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutManager {
-  let parent = sceneObject.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      return parent;
-    }
-    parent = parent.parent;
-  }
-
-  throw new Error('Could not find layout manager for scene object');
-}
-
-export function getGridItemKeyForPanelId(panelId: number): string {
-  return `grid-item-${panelId}`;
-}
 
 export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);
@@ -554,7 +528,7 @@ export const dashboardLog = createLogger('Dashboard');
  */
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
-  return !!changes.diffCount;
+  return !!changes.diffCount || !!changes.hasFolderChanges || !!changes.hasPredefinedVariablesChanges;
 }
 
 export function useScenesFlickeringFix() {

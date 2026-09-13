@@ -26,6 +26,8 @@ export interface ThemeRegistryItem extends RegistryItem {
   build: () => GrafanaTheme2;
 }
 
+const compareThemeNames = new Intl.Collator().compare;
+
 const extraThemes: { [key: string]: unknown } = {
   aubergine,
   debug,
@@ -74,7 +76,7 @@ export function getBuiltInThemes(allowedExtras: string[]) {
     } else if (!a.isExtra && b.isExtra) {
       return -1;
     } else {
-      return a.name.localeCompare(b.name);
+      return compareThemeNames(a.name, b.name);
     }
   });
   return sortedThemes;

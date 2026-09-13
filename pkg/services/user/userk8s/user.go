@@ -707,6 +707,7 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 			Created:       time.UnixMilli(hit.Created),
 			IsDisabled:    hit.Disabled,
 			IsProvisioned: hit.Provisioned,
+			AuthModule:    user.AuthModuleConversion(hit.ExternalAuthModules),
 		})
 	}
 
@@ -749,11 +750,25 @@ func (s *UserK8sService) GetProfile(ctx context.Context, cmd *user.GetUserProfil
 		return nil, err
 	}
 
-	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+	var found *iamv0alpha1.User
+	if cmd.UID != "" {
+		found, err = client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, user.ErrUserNotFound
+			}
+			ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+	} else {
+		found, err = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
 	}
 
 	return toUserProfileDTO(found, orgID), nil

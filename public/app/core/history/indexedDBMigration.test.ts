@@ -23,20 +23,22 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
   getBackendSrv: () => ({ fetch: mockFetch }),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: (nameOrUid: string | { uid: string }) => {
-      const datasources: Record<string, { uid: string; name: string }> = {
-        Prometheus: { uid: 'ds-prom', name: 'Prometheus' },
-        Loki: { uid: 'ds-loki', name: 'Loki' },
-      };
-      if (typeof nameOrUid === 'string') {
-        return datasources[nameOrUid];
-      }
-      return Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid);
-    },
-  }),
   get config() {
     return mockConfig;
+  },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    const datasources: Record<string, { uid: string; name: string }> = {
+      Prometheus: { uid: 'ds-prom', name: 'Prometheus' },
+      Loki: { uid: 'ds-loki', name: 'Loki' },
+    };
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(datasources[nameOrUid]);
+    }
+    return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
   },
 }));
 

@@ -2,10 +2,17 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
-import { type AdHocVariableFilter } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type AdHocVariableFilter, type DataSourceApi } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { AdHocFilter } from './AdHocFilter';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+}));
+
+const mockGetDataSourceInstance = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
 
 describe('AdHocFilter', () => {
   it('renders filters', async () => {
@@ -64,18 +71,14 @@ describe('AdHocFilter', () => {
 });
 
 function setup() {
-  setDataSourceSrv({
-    get() {
-      return {
-        getTagKeys() {
-          return [{ text: 'key3' }];
-        },
-        getTagValues() {
-          return [{ text: 'val3' }, { text: 'val4' }];
-        },
-      };
+  mockGetDataSourceInstance.mockResolvedValue({
+    getTagKeys() {
+      return [{ text: 'key3' }];
     },
-  } as unknown as DataSourceSrv);
+    getTagValues() {
+      return [{ text: 'val3' }, { text: 'val4' }];
+    },
+  } as unknown as DataSourceApi);
 
   const filters: AdHocVariableFilter[] = [
     {

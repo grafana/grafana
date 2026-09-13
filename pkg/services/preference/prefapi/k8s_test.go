@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -29,6 +29,25 @@ func newReqContext(orgID int64, identifier string) *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
 		Context:      &web.Context{Req: httpReq},
 		SignedInUser: &user.SignedInUser{OrgID: orgID, UserUID: identifier},
+		IsSignedIn:   true,
+	}
+}
+
+// newUnauthenticatedReqContext mirrors what contexthandler builds when
+// authentication fails: a bare SignedInUser with no identity type or org.
+func newUnauthenticatedReqContext() *contextmodel.ReqContext {
+	httpReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	return &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httpReq},
+		SignedInUser: &user.SignedInUser{Permissions: map[int64]map[string][]string{}},
+	}
+}
+
+func newAnonymousReqContext(orgID int64) *contextmodel.ReqContext {
+	httpReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	return &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httpReq},
+		SignedInUser: &user.SignedInUser{OrgID: orgID, IsAnonymous: true},
 	}
 }
 
@@ -38,7 +57,7 @@ func TestK8sHandler_GetPreferences(t *testing.T) {
 		spec := &preferences.PreferencesSpec{Theme: ptr.To("dark")}
 		client.EXPECT().Get(mock.Anything, prefutils.OwnerReference{Owner: prefutils.UserResourceOwner, Identifier: "u1"}).Return(spec, nil)
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.GetPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"))
 
 		require.Equal(t, http.StatusOK, resp.Status())
@@ -51,7 +70,7 @@ func TestK8sHandler_GetPreferences(t *testing.T) {
 		client := NewMockK8sClient(t)
 		client.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, apierrors.NewForbidden(schema.GroupResource{}, "x", errors.New("nope")))
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.GetPreferences(newReqContext(1, "u1"), prefutils.NamespaceOwner())
 
 		assert.Equal(t, http.StatusForbidden, resp.Status())
@@ -61,7 +80,7 @@ func TestK8sHandler_GetPreferences(t *testing.T) {
 		client := NewMockK8sClient(t)
 		client.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, errors.New("boom"))
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.GetPreferences(newReqContext(1, "u1"), prefutils.NamespaceOwner())
 
 		assert.Equal(t, http.StatusInternalServerError, resp.Status())
@@ -77,7 +96,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 				captured = spec
 			}).Return(nil)
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			Theme:    "dark",
 			Timezone: "",
@@ -105,7 +124,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 				captured = spec
 			}).Return(nil)
 
-		h := NewK8sHandler(client, ds)
+		h := NewK8sHandler(client, ds, preferences.PreferencesSpec{})
 		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			HomeDashboardID: 42,
 		})
@@ -120,7 +139,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		ds := dashboards.NewFakeDashboardService(t) // no expectations — must not be called
-		h := NewK8sHandler(client, ds)
+		h := NewK8sHandler(client, ds, preferences.PreferencesSpec{})
 		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			HomeDashboardUID: ptr.To("supplied"),
 			HomeDashboardID:  42,
@@ -133,7 +152,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		ds := dashboards.NewFakeDashboardService(t)
 		ds.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
 
-		h := NewK8sHandler(NewMockK8sClient(t), ds)
+		h := NewK8sHandler(NewMockK8sClient(t), ds, preferences.PreferencesSpec{})
 		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
 			HomeDashboardID: 42,
 		})
@@ -151,7 +170,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 				captured = spec
 			}).Return(nil)
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{
 			Theme: ptr.To("light"),
 		})
@@ -168,7 +187,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 		client := NewMockK8sClient(t)
 		client.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{
 			Theme: ptr.To("light"),
 		})
@@ -181,9 +200,95 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 		client.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything).
 			Return(apierrors.NewNotFound(schema.GroupResource{Resource: "preferences"}, "user-u1"))
 
-		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t))
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{})
 
 		assert.Equal(t, http.StatusNotFound, resp.Status())
+	})
+}
+
+func TestK8sHandler_GetPreferencesWithDefaults(t *testing.T) {
+	t.Run("maps the merged spec onto the legacy model", func(t *testing.T) {
+		client := NewMockK8sClient(t)
+		client.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{
+			Theme:            ptr.To("dark"),
+			Timezone:         ptr.To("Europe/London"),
+			WeekStart:        ptr.To("monday"),
+			Language:         ptr.To("en-GB"),
+			HomeDashboardUID: ptr.To("abc123"),
+			QueryHistory:     &preferences.PreferencesQueryHistoryPreference{HomeTab: ptr.To("starred")},
+			Navbar:           &preferences.PreferencesNavbarPreference{BookmarkUrls: []string{"/dashboards"}},
+		}, nil)
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
+		got, err := h.GetPreferencesWithDefaults(newReqContext(1, "u1"))
+		require.NoError(t, err)
+
+		assert.Equal(t, "dark", got.Theme)
+		assert.Equal(t, "Europe/London", got.Timezone)
+		require.NotNil(t, got.WeekStart)
+		assert.Equal(t, "monday", *got.WeekStart)
+		assert.Equal(t, "abc123", got.HomeDashboardUID)
+		require.NotNil(t, got.JSONData)
+		assert.Equal(t, "en-GB", got.JSONData.Language)
+		assert.Equal(t, "starred", got.JSONData.QueryHistory.HomeTab)
+		assert.Equal(t, []string{"/dashboards"}, got.JSONData.Navbar.BookmarkUrls)
+	})
+
+	t.Run("empty spec yields zero values with non-nil JSONData", func(t *testing.T) {
+		client := NewMockK8sClient(t)
+		client.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
+		got, err := h.GetPreferencesWithDefaults(newReqContext(1, "u1"))
+		require.NoError(t, err)
+
+		assert.Empty(t, got.Theme)
+		assert.Empty(t, got.Timezone)
+		assert.Nil(t, got.WeekStart)
+		assert.Empty(t, got.HomeDashboardUID)
+		// consumers dereference JSONData without checking (e.g. index.go reads
+		// prefs.JSONData.Language), so it must never be nil
+		require.NotNil(t, got.JSONData)
+		assert.Empty(t, got.JSONData.Language)
+	})
+
+	t.Run("propagates client errors", func(t *testing.T) {
+		client := NewMockK8sClient(t)
+		client.EXPECT().GetMerged(mock.Anything).Return(nil, errors.New("boom"))
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
+		_, err := h.GetPreferencesWithDefaults(newReqContext(1, "u1"))
+		require.Error(t, err)
+	})
+
+	t.Run("unauthenticated request returns configured defaults without an API call", func(t *testing.T) {
+		// no expectations on the mock — a GetMerged call would fail the test
+		client := NewMockK8sClient(t)
+		defaults := preferences.PreferencesSpec{
+			Theme:    ptr.To("system"),
+			Timezone: ptr.To("browser"),
+		}
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), defaults)
+		got, err := h.GetPreferencesWithDefaults(newUnauthenticatedReqContext())
+		require.NoError(t, err)
+
+		assert.Equal(t, "system", got.Theme)
+		assert.Equal(t, "browser", got.Timezone)
+		require.NotNil(t, got.JSONData)
+	})
+
+	t.Run("anonymous request goes through the merged API", func(t *testing.T) {
+		client := NewMockK8sClient(t)
+		client.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{
+			Theme: ptr.To("dark"),
+		}, nil)
+
+		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
+		got, err := h.GetPreferencesWithDefaults(newAnonymousReqContext(1))
+		require.NoError(t, err)
+
+		assert.Equal(t, "dark", got.Theme)
 	})
 }

@@ -11,14 +11,15 @@ import {
   type StandardEditorContext,
   type VariableSuggestionsScope,
   type FieldConfigSource,
+  type FieldConfigPropertyItem,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -33,6 +34,7 @@ interface GetStandardEditorContextProps {
   data: PanelData | undefined;
   replaceVariables: InterpolateFunction;
   options: Record<string, unknown>;
+  fieldConfig: FieldConfigSource;
   eventBus: EventBus;
   instanceState: OptionPaneRenderProps['instanceState'];
 }
@@ -41,6 +43,7 @@ export function getStandardEditorContext({
   data,
   replaceVariables,
   options,
+  fieldConfig,
   eventBus,
   instanceState,
 }: GetStandardEditorContextProps): StandardEditorContext<unknown, unknown> {
@@ -50,6 +53,7 @@ export function getStandardEditorContext({
     data: dataSeries,
     replaceVariables,
     options,
+    fieldConfig,
     eventBus,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(dataSeries, scope),
     instanceState,
@@ -57,6 +61,37 @@ export function getStandardEditorContext({
   };
 
   return context;
+}
+
+/**
+ * Whether a field config property should appear in the defaults pane.
+ *
+ * `data` is a separate argument for backward compatability, but is also contained in the context
+ *
+ * Overrides are not filtered here: `hideFromOverrides` is the knob for that side, so hiding a
+ * property from the defaults pane never hides an override rule that already configures it.
+ *
+ * @internal
+ */
+export function isFieldConfigOptionVisible(
+  fieldOption: FieldConfigPropertyItem,
+  data: PanelData | undefined,
+  context: StandardEditorContext<unknown, unknown>
+): boolean {
+  if (fieldOption.hideFromDefaults) {
+    return false;
+  }
+
+  if (!fieldOption.showIf) {
+    return true;
+  }
+
+  // A context built outside the options pane carries no field config
+  const defaults = context.fieldConfig?.defaults ?? {};
+  const currentValue = fieldOption.isCustom ? defaults.custom : defaults;
+
+  // showIf is typed `boolean | undefined` and an undefined return has always hidden the option.
+  return Boolean(fieldOption.showIf(currentValue, data?.series, data?.annotations, context));
 }
 
 export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
@@ -69,6 +104,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     data,
     replaceVariables: panel.replaceVariables,
     options: currentOptions,
+    fieldConfig: currentFieldConfig,
     eventBus: dashboard.events,
     instanceState,
   });
@@ -103,20 +139,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    * Field options
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    if (fieldOption.isCustom) {
-      if (
-        fieldOption.showIf &&
-        !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
-      ) {
-        continue;
-      }
-    } else {
-      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations)) {
-        continue;
-      }
-    }
-
-    if (fieldOption.hideFromDefaults) {
+    if (!isFieldConfigOptionVisible(fieldOption, data, context)) {
       continue;
     }
 
@@ -209,6 +232,7 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
+  reportInteractionUI: 'panel-edit' | 'view-panel';
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -233,16 +257,17 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
-      if (path === 'timeCompare') {
-        reportInteraction('panel_setting_interaction', {
-          viz_type: plugin.meta.id,
-          feature_type: 'time_comparison',
-          option_type: value ? 'toggle_enabled' : 'toggle_disabled',
-        });
-      }
-
       const newOptions = setOptionImmutably(currentOptions, path, value);
+      // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
+      // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
+      // Switching to replace here would break editors that emit partial values for their own path.
       panel.onOptionsChange(newOptions);
+      // Record interaction for analytics
+      DashboardInteractions.setVisualOption({
+        ui: props.reportInteractionUI,
+        option: path,
+        value: JSON.stringify(value),
+      });
     },
   };
 
@@ -250,6 +275,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     data,
     replaceVariables: panel.interpolate,
     options: currentOptions,
+    fieldConfig: currentFieldConfig,
     eventBus: eventBus,
     instanceState,
   });
@@ -259,12 +285,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
 
   // Field options
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
-    const hideOption =
-      fieldOption.showIf &&
-      (fieldOption.isCustom
-        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
-        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations));
-    if (fieldOption.hideFromDefaults || hideOption) {
+    if (!isFieldConfigOptionVisible(fieldOption, data, context)) {
       continue;
     }
 
@@ -297,6 +318,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
               true
             );
+
+            // Record interaction for analytics
+            DashboardInteractions.setVisualOption({
+              ui: props.reportInteractionUI,
+              option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
+              value: JSON.stringify(value),
+            });
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
@@ -325,7 +353,7 @@ export function fillOptionsPaneItems(
   supplier(builder, context);
 
   for (const pluginOption of builder.getItems()) {
-    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations)) {
+    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations, context)) {
       continue;
     }
 

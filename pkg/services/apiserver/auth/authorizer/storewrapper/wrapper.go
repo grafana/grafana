@@ -391,11 +391,16 @@ func (w *Wrapper) Update(
 		span.End()
 	}()
 
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, ErrUnauthenticated
+	}
+
 	// Create a wrapper around UpdatedObjectInfo to inject authorization
 	wrappedObjInfo := &authorizedUpdateInfo{
 		inner:      objInfo,
 		authorizer: w.authorizer,
-		userCtx:    ctx, // Keep original context for authorization
+		requester:  requester,
 		tracer:     w.tracer,
 		observer:   w.observer,
 		resource:   w.resource,
@@ -411,7 +416,7 @@ func (w *Wrapper) Update(
 type authorizedUpdateInfo struct {
 	inner      k8srest.UpdatedObjectInfo
 	authorizer ResourceStorageAuthorizer
-	userCtx    context.Context
+	requester  identity.Requester
 	tracer     trace.Tracer
 	observer   Observer
 	resource   schema.GroupResource
@@ -428,8 +433,12 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 		return nil, err
 	}
 
-	// Enforce authorization using the original user context
-	authzCtx, span := startSpan(a.userCtx, a.tracer, a.resource, "UpdateAuthz")
+	// The inner store may execute UpdatedObject after the request has returned,
+	// for example when a dual writer replicates an update in the background.
+	// Rebuild authorization on the execution context from only the auth values
+	// captured before storeCtx replaced them with a service identity.
+	authzCtx := a.authorizationContext(ctx)
+	authzCtx, span := startSpan(authzCtx, a.tracer, a.resource, "UpdateAuthz")
 	defer func() {
 		recordSpanError(span, err)
 		span.End()
@@ -445,6 +454,10 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	return updatedObj, nil
+}
+
+func (a *authorizedUpdateInfo) authorizationContext(ctx context.Context) context.Context {
+	return identity.WithRequester(ctx, a.requester)
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (result watch.Interface, err error) {

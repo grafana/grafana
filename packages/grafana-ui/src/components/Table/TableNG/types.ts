@@ -19,21 +19,23 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type ApplyFilterResult, type TextAlign } from './utils';
+import { type TextAlign } from './styles';
+import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
 type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
-type TableFilterActionCallback = (item: AdHocFilterItem) => void;
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type TableDisplayedRowIndicesCallback = (rowIndices: number[]) => void;
 type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
-type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export enum FilterOperator {
   CONTAINS = 'Contains',
@@ -70,7 +72,7 @@ export interface TableColumn extends Column<TableRow, TableSummaryRow> {
 }
 
 // Possible values for table cells based on field types
-export type TableCellValue =
+type TableCellValue =
   | string // FieldType.string, FieldType.enum
   | number // FieldType.number
   | boolean // FieldType.boolean
@@ -121,14 +123,26 @@ interface BaseTableProps {
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
+  /**
+   * Called when the filtered + sorted row order changes. Values are original
+   * frame indexes (`TableRow.__index`), not the current page slice.
+   */
+  onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
+  /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
   cellHeight?: TableCellHeight;
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /**
+   * Set by callers whose surrounding panel renders without padding, so the table can indent the
+   * first column's content back into line with the panel title.
+   */
+  noPanelPadding?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
   /** used by SparklineCell when provided */
@@ -138,14 +152,19 @@ interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  // Used solely for testing as RTL can't correctly render the table otherwise
+  /**
+   * Renders every row into the DOM instead of only the visible window. Needed when the
+   * table is captured as a static image (PDF reporting) rather than scrolled by a user.
+   */
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
-  // temporary feature toggle to manage rollout of the proto-based parser
-  protoParserEnabled?: boolean;
+  // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
+  contentAwareWidthsEnabled?: boolean;
+  // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
+  tableRefreshEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

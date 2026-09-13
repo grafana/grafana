@@ -26,6 +26,9 @@ import {
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
+import { toControlSourceRef } from '../utils/predefinedVariables';
+
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -604,6 +607,27 @@ describe('sceneVariablesSetToVariables', () => {
     `);
   });
 
+  it('should skip SnapshotVariable without throwing', () => {
+    const variable = new SnapshotVariable({
+      name: 'test',
+      label: 'test-label',
+      value: 'selected-value',
+      text: 'selected-value-text',
+      options: [{ label: 'selected-value-text', value: 'selected-value' }],
+      hide: VariableHide.dontHide,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    let result: ReturnType<typeof sceneVariablesSetToVariables> = [];
+    expect(() => {
+      result = sceneVariablesSetToVariables(set);
+    }).not.toThrow();
+    expect(result).toHaveLength(0);
+  });
+
   describe('should adapt AdHocFiltersVariable filters', () => {
     it('should remove non dashboard originated filters from schema', () => {
       const variable = new AdHocFiltersVariable({
@@ -1064,7 +1088,72 @@ describe('sceneVariablesSetToVariables', () => {
 `);
   });
 
+  describe('origin / runtime variables', () => {
+    it('excludes variables with an origin by default', () => {
+      const predefinedVariable = new CustomVariable({
+        name: 'predefined',
+        query: 'a,b,c',
+        origin: toControlSourceRef({ type: 'global' }),
+      });
+      const localVariable = new CustomVariable({
+        name: 'local',
+        query: 'a,b,c',
+      });
+
+      const set = new SceneVariableSet({
+        variables: [predefinedVariable, localVariable],
+      });
+
+      const result = sceneVariablesSetToVariables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('local');
+    });
+
+    it('includes variables with an origin when includeRuntimeVariables is true', () => {
+      const predefinedVariable = new CustomVariable({
+        name: 'predefined',
+        query: 'a,b,c',
+        origin: toControlSourceRef({ type: 'global' }),
+      });
+      const localVariable = new CustomVariable({
+        name: 'local',
+        query: 'a,b,c',
+      });
+
+      const set = new SceneVariableSet({
+        variables: [predefinedVariable, localVariable],
+      });
+
+      const result = sceneVariablesSetToVariables(set, false, undefined, true);
+
+      expect(result.map((v) => v.name)).toEqual(expect.arrayContaining(['predefined', 'local']));
+      expect(result).toHaveLength(2);
+    });
+  });
+
   describe('sceneVariablesSetToSchemaV2Variables', () => {
+    it('should exclude variables with an origin (e.g. predefined global/folder variables)', () => {
+      const predefinedVariable = new CustomVariable({
+        name: 'predefined',
+        query: 'a,b,c',
+        origin: toControlSourceRef({ type: 'global' }),
+      });
+      const localVariable = new CustomVariable({
+        name: 'local',
+        query: 'a,b,c',
+      });
+
+      const set = new SceneVariableSet({
+        variables: [predefinedVariable, localVariable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].spec.name).toBe('local');
+    });
+
     it('should handle QueryVariable', () => {
       const variable = new QueryVariable({
         name: 'test',
@@ -1533,6 +1622,27 @@ describe('sceneVariablesSetToVariables', () => {
       },
     }
     `);
+    });
+
+    it('should skip SnapshotVariable without throwing', () => {
+      const variable = new SnapshotVariable({
+        name: 'test',
+        label: 'test-label',
+        value: 'selected-value',
+        text: 'selected-value-text',
+        options: [{ label: 'selected-value-text', value: 'selected-value' }],
+        hide: VariableHide.dontHide,
+      });
+
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      let result: ReturnType<typeof sceneVariablesSetToSchemaV2Variables> = [];
+      expect(() => {
+        result = sceneVariablesSetToSchemaV2Variables(set);
+      }).not.toThrow();
+      expect(result).toHaveLength(0);
     });
 
     describe('when the dashboardUnifiedDrilldownControls feature toggle is enabled', () => {

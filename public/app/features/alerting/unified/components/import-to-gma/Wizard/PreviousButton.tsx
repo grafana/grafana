@@ -1,7 +1,8 @@
 import { Button } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
-import { getPreviousStep, isFirstStep } from './constants';
+import { getPreviousStep } from './steps';
+import { StepKey } from './types';
 
 interface PreviousButtonProps {
   /** Handler called when clicking back */
@@ -15,7 +16,7 @@ interface PreviousButtonProps {
 export const PreviousButton = ({ onBack }: PreviousButtonProps) => {
   const { activeStep, setActiveStep, setVisitedStep } = useStepperState();
   const previousStep = getPreviousStep(activeStep);
-  const isFirst = isFirstStep(activeStep);
+  const isFirst = activeStep === StepKey.Notifications;
 
   const handleClick = () => {
     if (onBack) {
