@@ -473,6 +473,12 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
+	var folderErr *nonEmptyFoldersError
+	if errors.As(err, &folderErr) {
+		// nonEmptyFoldersError is ready for users; omit internal operation prefixes.
+		err = folderErr
+	}
+
 	// Skip the patch when the recorded error is unchanged: it bumps the
 	// resourceVersion, which the informer's UpdateFunc turns straight back into a
 	// re-enqueue, so rewriting the same deleteError on every failed pass would
@@ -875,21 +881,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			return repoType, nil
 		}
 
-		// Surface the delete failure on status regardless of its cause. A stuck
-		// deletion is otherwise invisible to users (status.deleteError is not
-		// rendered anywhere) while it keeps showing the "Deleting" spinner, and a
-		// permanent failure re-logs at ERROR on every resync. Recording it on
-		// health -- with a reason classified the same way health-check failures are
-		// -- gives users the reason instead. The per-finalizer error metric is
-		// recorded inside finalizer.process independently of this return, so metric
-		// visibility on deletion errors is preserved either way.
-		// TODO: Write to a dedicated delete status once one is surfaced to users.
 		logger.Warn("unable to delete repository", "error", err)
 		deleteHealthStatus := provisioning.HealthStatus{
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
-			Message: []string{fmt.Sprintf("unable to delete repository: %s", err)},
+			Message: []string{"Repository deletion error"},
 		}
 		patchOps := rc.healthPatchIfChanged(obj, deleteHealthStatus)
 		// handleDelete builds the repository to run its finalizers, so the failure
