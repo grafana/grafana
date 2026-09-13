@@ -1354,17 +1354,17 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 func TestResolveWorkloadIdentityTokenFileUsesLegacyDefault(t *testing.T) {
 	t.Run("uses configured path", func(*testing.T) {
 		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "/some/other/path")
-		require.Equal(t, "/configured/path", resolveWorkloadIdentityTokenFile("/configured/path"))
+		require.Equal(t, "/configured/path", ResolveAzureADWorkloadIdentityTokenFile("/configured/path"))
 	})
 
 	t.Run("uses env var", func(*testing.T) {
 		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "/some/other/path")
-		require.Equal(t, "/some/other/path", resolveWorkloadIdentityTokenFile(""))
+		require.Equal(t, "/some/other/path", ResolveAzureADWorkloadIdentityTokenFile(""))
 	})
 
 	t.Run("uses legacy default", func(*testing.T) {
 		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "")
-		require.Equal(t, "/var/run/secrets/azure/tokens/azure-identity-token", resolveWorkloadIdentityTokenFile(""))
+		require.Equal(t, "/var/run/secrets/azure/tokens/azure-identity-token", ResolveAzureADWorkloadIdentityTokenFile(""))
 	})
 }
 

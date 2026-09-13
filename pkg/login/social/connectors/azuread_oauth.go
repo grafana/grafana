@@ -292,7 +292,7 @@ func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
 	}
 
 	// refresh the expired token using the refresh token
-	workloadIdentityTokenFile := resolveWorkloadIdentityTokenFile(s.workloadIdentityTokenFile)
+	workloadIdentityTokenFile := ResolveAzureADWorkloadIdentityTokenFile(s.workloadIdentityTokenFile)
 	federatedToken, err := os.ReadFile(workloadIdentityTokenFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
@@ -583,7 +583,8 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 	}
 }
 
-func resolveWorkloadIdentityTokenFile(configuredPath string) string {
+// ResolveAzureADWorkloadIdentityTokenFile resolves the token file path from explicit configuration, the Azure environment, or the legacy default.
+func ResolveAzureADWorkloadIdentityTokenFile(configuredPath string) string {
 	if configuredPath != "" {
 		return configuredPath
 	}

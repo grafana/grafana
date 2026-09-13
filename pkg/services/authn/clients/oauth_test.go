@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -33,6 +35,7 @@ import (
 func TestOAuth_Authenticate(t *testing.T) {
 	type testCase struct {
 		desc                  string
+		setup                 func(t *testing.T)
 		req                   *authn.Request
 		oauthCfg              *social.OAuthInfo
 		allowInsecureTakeover bool
@@ -149,6 +152,53 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthUserInfo,
+		},
+		{
+			desc: "should use workload identity token file from environment during initial exchange",
+			setup: func(t *testing.T) {
+				tokenFile := filepath.Join(t.TempDir(), "workload-identity-token")
+				require.NoError(t, os.WriteFile(tokenFile, []byte("workload-identity-token"), 0600))
+				t.Setenv("AZURE_FEDERATED_TOKEN_FILE", tokenFile)
+			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
+			},
+			oauthCfg: &social.OAuthInfo{
+				// Intentionally leave WorkloadIdentityTokenFile empty to make sure it is read from
+				// the env var
+				Enabled:              true,
+				ClientAuthentication: social.WorkloadIdentity,
+			},
+			addStateCookie:   true,
+			stateCookieValue: "some-state",
+			isEmailAllowed:   true,
+			userInfo: &social.BasicUserInfo{
+				Id:     "123",
+				Name:   "name",
+				Email:  "some@example.com",
+				Role:   "Admin",
+				Groups: []string{"grp1", "grp2"},
+			},
+			expectedIdentity: &authn.Identity{
+				Email:           "some@example.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				ExternalGroups:  []string{"grp1", "grp2"},
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeams:       true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					LookUpParams:    login.UserLookupParams{},
+				},
+			},
 		},
 		{
 			desc: "should return identity for valid request",
@@ -326,6 +376,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup(t)
+			}
+
 			// Keep ConfigProvider at its false default. runtimeCfg models the
 			// database-backed override written through /api/admin/settings.
 			cfg := setting.NewCfg()
@@ -363,6 +417,8 @@ func TestOAuth_Authenticate(t *testing.T) {
 			assert.ErrorIs(t, err, tt.expectedErr)
 
 			if tt.expectedIdentity != nil {
+				require.NoError(t, err)
+				require.NotNil(t, identity)
 				assert.Equal(t, tt.expectedIdentity.Login, identity.Login)
 				assert.Equal(t, tt.expectedIdentity.Name, identity.Name)
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
