@@ -115,8 +115,24 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     valueContainerMulti: css({
       label: 'grafana-select-value-container-multi',
+      // Keep wrapped tag rows stacked from the top instead of centering them, so the
+      // container's height matches its content without adding leading/trailing gaps.
+      alignItems: 'flex-start',
       flexWrap: 'wrap',
       display: 'flex',
+      gap: theme.spacing(0.5),
+      // Keep the same breathing room above and below the tags whether they fit on one
+      // line or wrap: the 32px control min-height supplies it for a single line, but a
+      // taller wrapped control would otherwise leave tags flush against the border.
+      padding: `${theme.spacing(0.5)} 0`,
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+      // Never push the select (or the enclosing panel) wider: clip stray overflow and
+      // cap the height of stacked/wrapped tags so they scroll internally instead.
+      overflowX: 'hidden',
+      maxHeight: theme.spacing(15),
+      overflowY: 'auto',
     }),
     valueContainerMultiNoWrap: css({
       display: 'grid',
@@ -139,7 +155,11 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: theme.spacing(0.25, 0, 0.25, 1),
       color: theme.colors.text.primary,
       fontSize: theme.typography.size.sm,
+      // Keep an oversized single tag from blowing out the row: cap its width and
+      // ellipsize the label instead.
+      maxWidth: '200px',
       overflow: 'hidden',
+      textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
 
       '&:hover': {

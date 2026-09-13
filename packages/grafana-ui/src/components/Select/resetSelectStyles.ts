@@ -69,10 +69,39 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
           zIndex: theme.zIndex.dropdown,
         };
       },
-      container: () => ({
-        width: width ? theme.spacing(width) : '100%',
-        display: width === 'auto' ? 'inline-flex' : 'flex',
-      }),
+      container: (base, state) => {
+        // The visual query builder (Loki, Prometheus, etc.) lays out its label filter
+        // selects as direct flex children of a row owned by @grafana/plugin-ui (not
+        // editable in this repo). Those rows squeeze their children, truncating the
+        // key/operator text and starving the value column of space. Size the three
+        // columns explicitly: the key/operator selects keep their content width and never
+        // shrink, the (multi-)value select absorbs the leftover row space and wraps tags.
+        // `selectProps` is typed as react-select's own `Props`, which omits the
+        // `data-testid` we forward through `SelectCommonProps`. The `in` check narrows
+        // it to a `Record<"data-testid", unknown>` without a type assertion (which the
+        // repo's eslint config forbids).
+        const testid =
+          state?.selectProps && 'data-testid' in state.selectProps ? state.selectProps['data-testid'] : undefined;
+        const isQueryBuilderSelect = /^(?:data-testid )?Select (label|match operator|value)$/.test(
+          String(testid ?? '')
+        );
+        return {
+          ...base,
+          width: width ? theme.spacing(width) : '100%',
+          display: width === 'auto' ? 'inline-flex' : 'flex',
+          // Cap auto/`100%` widths at the available row so oversized contents (e.g. many
+          // multi-value tags) wrap inside the layout instead of widening it.
+          minWidth: 0,
+          maxWidth: '100%',
+          // Lock the select to its content height and top-align it in its row. Without this,
+          // packed rows (e.g. query builder label filters) default to `align-items: stretch`,
+          // stretching the other select columns vertically as the value column grows.
+          alignSelf: 'flex-start',
+          height: 'fit-content',
+          ...(isQueryBuilderSelect &&
+            (state.isMulti ? { flex: '1 1 0%', minWidth: '200px' } : { flex: '0 0 auto', minWidth: 'max-content' })),
+        };
+      },
       option: (provided, state) => ({
         ...provided,
         opacity: state.isDisabled ? 0.5 : 1,

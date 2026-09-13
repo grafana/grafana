@@ -23,15 +23,25 @@ export const ValueContainer = <Option, IsMulti extends boolean, Group extends Gr
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (ref.current && selectProps.autoWidth && !selectProps.maxVisibleValues) {
-      // Reset in order to measure the new width
-      ref.current.style.minWidth = '0px';
-
-      const width = ref.current.offsetWidth;
-
-      ref.current.style.minWidth = `${width}px`;
+    if (!ref.current || !selectProps.autoWidth || selectProps.maxVisibleValues) {
+      return;
     }
-  }, [selectProps.value, selectProps.autoWidth, selectProps.maxVisibleValues]);
+
+    // Multi-value selects must size to fit their content and let chips wrap within the available
+    // width. Pinning a measured width here would grow the control without bounds as values are
+    // added, pushing the select (and any enclosing panel) wider.
+    if (isMulti) {
+      ref.current.style.minWidth = '0px';
+      return;
+    }
+
+    // Reset in order to measure the new width
+    ref.current.style.minWidth = '0px';
+
+    const width = ref.current.offsetWidth;
+
+    ref.current.style.minWidth = `${width}px`;
+  }, [selectProps.value, selectProps.autoWidth, selectProps.maxVisibleValues, isMulti]);
 
   const renderContainer = (containerChildren?: ReactNode) => {
     const noWrap = selectProps?.noMultiValueWrap && !selectProps?.menuIsOpen;
