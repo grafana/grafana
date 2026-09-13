@@ -12,8 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -109,7 +111,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
-			cleaner := ProvideCleanupService(fakeSQL, cfg)
+			cleaner := ProvideCleanupService(fakeSQL, cfg, kvstore.NewFakeKVStore(), featuremgmt.WithFeatures())
 			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cleanupSettings)
 			require.NoError(t, err)
 
@@ -276,4 +278,81 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 func settingsFn(maxAge time.Duration, maxCount int64) annotations.CleanupSettings {
 	p := setting.AnnotationCleanupSettings{MaxAge: maxAge, MaxCount: maxCount}
 	return annotations.CleanupSettings{Alerting: p, API: p, Dashboard: p}
+}
+
+func TestApplyDefaultRetention(t *testing.T) {
+	newCleaner := func(features featuremgmt.FeatureToggles, anyExist bool, kv kvstore.KVStore) *CleanupServiceImpl {
+		if kv == nil {
+			kv = kvstore.NewFakeKVStore()
+		}
+		return &CleanupServiceImpl{
+			store:    &fakeAnyExistStore{anyExist: anyExist},
+			kv:       kvstore.WithNamespace(kv, 0, defaultRetentionKVNamespace),
+			features: features,
+			log:      log.New("test"),
+		}
+	}
+
+	t.Run("toggle disabled leaves settings untouched", func(t *testing.T) {
+		cs := newCleaner(featuremgmt.WithFeatures(), false, nil)
+		settings := settingsFn(0, 0)
+		cs.applyDefaultRetention(context.Background(), &settings)
+		require.Zero(t, settings.Alerting.MaxAge)
+		require.Zero(t, settings.API.MaxAge)
+		require.Zero(t, settings.Dashboard.MaxAge)
+	})
+
+	t.Run("fresh instance gets the default for unset max_age", func(t *testing.T) {
+		cs := newCleaner(featuremgmt.WithFeatures(featuremgmt.FlagAnnotationDefaultRetention), false, nil)
+		settings := settingsFn(0, 0)
+		cs.applyDefaultRetention(context.Background(), &settings)
+		require.Equal(t, defaultRetentionMaxAge, settings.Alerting.MaxAge)
+		require.Equal(t, defaultRetentionMaxAge, settings.API.MaxAge)
+		require.Equal(t, defaultRetentionMaxAge, settings.Dashboard.MaxAge)
+	})
+
+	t.Run("not-fresh instance keeps unlimited retention", func(t *testing.T) {
+		cs := newCleaner(featuremgmt.WithFeatures(featuremgmt.FlagAnnotationDefaultRetention), true, nil)
+		settings := settingsFn(0, 0)
+		cs.applyDefaultRetention(context.Background(), &settings)
+		require.Zero(t, settings.Alerting.MaxAge)
+		require.Zero(t, settings.API.MaxAge)
+		require.Zero(t, settings.Dashboard.MaxAge)
+	})
+
+	t.Run("explicit max_age always wins on a fresh instance", func(t *testing.T) {
+		cs := newCleaner(featuremgmt.WithFeatures(featuremgmt.FlagAnnotationDefaultRetention), false, nil)
+		explicit := setting.AnnotationCleanupSettings{MaxAge: time.Hour, MaxAgeSet: true}
+		settings := annotations.CleanupSettings{Alerting: explicit, API: explicit, Dashboard: explicit}
+		cs.applyDefaultRetention(context.Background(), &settings)
+		require.Equal(t, time.Hour, settings.Alerting.MaxAge)
+		require.Equal(t, time.Hour, settings.API.MaxAge)
+		require.Equal(t, time.Hour, settings.Dashboard.MaxAge)
+	})
+
+	t.Run("freshness is resolved once and persisted across instances via kvstore", func(t *testing.T) {
+		kv := kvstore.NewFakeKVStore()
+
+		cs1 := newCleaner(featuremgmt.WithFeatures(featuremgmt.FlagAnnotationDefaultRetention), false, kv)
+		settings1 := settingsFn(0, 0)
+		cs1.applyDefaultRetention(context.Background(), &settings1)
+		require.Equal(t, defaultRetentionMaxAge, settings1.Alerting.MaxAge)
+
+		// A second instance backed by the same kvstore, even though the
+		// underlying store now claims annotations exist, must still read
+		// "fresh" from the persisted marker rather than re-deriving it.
+		cs2 := newCleaner(featuremgmt.WithFeatures(featuremgmt.FlagAnnotationDefaultRetention), true, kv)
+		settings2 := settingsFn(0, 0)
+		cs2.applyDefaultRetention(context.Background(), &settings2)
+		require.Equal(t, defaultRetentionMaxAge, settings2.Alerting.MaxAge)
+	})
+}
+
+type fakeAnyExistStore struct {
+	Store
+	anyExist bool
+}
+
+func (f *fakeAnyExistStore) AnyAnnotationsExist(ctx context.Context) (bool, error) {
+	return f.anyExist, nil
 }
