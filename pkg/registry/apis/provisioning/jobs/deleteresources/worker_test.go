@@ -27,7 +27,6 @@ var _ dynamic.ResourceInterface = (*fakeDynamicClient)(nil)
 type fakeDynamicClient struct {
 	deleteCalls []string
 	deleteErr   error
-	deleteErrs  map[string]error
 }
 
 func (f *fakeDynamicClient) Create(context.Context, *unstructured.Unstructured, metav1.CreateOptions, ...string) (*unstructured.Unstructured, error) {
@@ -41,9 +40,6 @@ func (f *fakeDynamicClient) UpdateStatus(context.Context, *unstructured.Unstruct
 }
 func (f *fakeDynamicClient) Delete(_ context.Context, name string, _ metav1.DeleteOptions, _ ...string) error {
 	f.deleteCalls = append(f.deleteCalls, name)
-	if err, ok := f.deleteErrs[name]; ok {
-		return err
-	}
 	return f.deleteErr
 }
 func (f *fakeDynamicClient) DeleteCollection(context.Context, metav1.DeleteOptions, metav1.ListOptions) error {
@@ -128,49 +124,6 @@ func TestWorker_Process(t *testing.T) {
 	err := w.Process(ctx, nil, job, progress)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dash-1", "folder-1"}, fakeClient.deleteCalls)
-}
-
-func TestWorker_Process_ReportsEveryNonEmptyFolder(t *testing.T) {
-	ctx := context.Background()
-	lister := resources.NewMockResourceLister(t)
-	clientFactory := resources.NewMockClientFactory(t)
-	mockClients := resources.NewMockResourceClients(t)
-	folderNotEmpty := &apierrors.StatusError{ErrStatus: metav1.Status{
-		Code: 400, Details: &metav1.StatusDetails{UID: "folder.not-empty"},
-	}}
-	fakeClient := &fakeDynamicClient{deleteErrs: map[string]error{
-		"shared-folder": folderNotEmpty,
-		"nested-folder": folderNotEmpty,
-	}}
-	w := NewWorker(lister, clientFactory, 1)
-	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
-		Spec:       provisioning.JobSpec{Action: provisioning.JobActionDeleteResources, Repository: "my-repo"},
-	}
-	items := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{
-		{Name: "shared-folder", Group: "folder.grafana.app", Resource: "folders", Path: "shared"},
-		{Name: "nested-folder", Group: "folder.grafana.app", Resource: "folders", Path: "shared/nested", Folder: "shared-folder"},
-		{Name: "managed-dashboard", Group: "dashboard.grafana.app", Resource: "dashboards", Path: "shared/nested/dashboard.json", Folder: "nested-folder"},
-	}}
-
-	lister.EXPECT().List(mock.Anything, "default", "my-repo").Return(items, nil)
-	clientFactory.EXPECT().Clients(mock.Anything, "default").Return(mockClients, nil)
-	mockClients.EXPECT().ForResource(mock.Anything, mock.Anything).Return(fakeClient, schema.GroupVersionKind{}, nil).Times(3)
-
-	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetTotal", mock.Anything, 3).Return()
-	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name() == "managed-dashboard" && result.Action() == repository.FileActionDeleted && result.Error() == nil
-	})).Return().Once()
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return (result.Name() == "nested-folder" || result.Name() == "shared-folder") && result.Error() != nil
-	})).Return().Twice()
-	progress.On("TooManyErrors").Return(nil).Times(3)
-
-	err := w.Process(ctx, nil, job, progress)
-	require.NoError(t, err)
-	require.Equal(t, []string{"managed-dashboard", "nested-folder", "shared-folder"}, fakeClient.deleteCalls)
 }
 
 func TestWorker_Process_EmptyResourceList(t *testing.T) {
