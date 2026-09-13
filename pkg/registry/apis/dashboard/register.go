@@ -548,6 +548,9 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 }
 
 func (b *DashboardsAPIBuilder) validateLibraryPanelFolder(ctx context.Context, obj runtime.Object) error {
+	if auth, ok := authlib.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(auth) {
+		return nil
+	}
 	_, folderUID, err := libraryPanelAuthorizationTarget(obj)
 	if err != nil {
 		return err
@@ -1258,10 +1261,19 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		libraryGr := libraryPanels.GroupResource()
-		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
+		libraryStorage, err := opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
 		if err != nil {
 			return err
 		}
+		// The Kubernetes API bypasses the legacy HTTP route's write guard. Wrap the
+		// mode-selected store so authorization remains enforced in every migration mode.
+		storage[libraryPanels.StoragePath()] = newLibraryPanelAccessStorage(
+			libraryStorage,
+			b.authorizeLibraryPanel,
+			b.authorizeLibraryPanelUpdate,
+			b.validateLibraryPanelDelete,
+			b.validateLibraryPanelFolder,
+		)
 	}
 
 	// Snapshots - only v0alpha1
