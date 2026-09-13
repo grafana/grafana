@@ -98,6 +98,60 @@ describe('Range Utils', () => {
       expect(deserialized.raw.to).not.toBe(deserialized.to);
       expect(deserialized.raw.to).toBe(timeRange.to);
     });
+
+    // Regression tests for #131634: `from` and `to` of a relative time range
+    // must share a single reference timestamp, otherwise durations drift by a
+    // few milliseconds per wall-clock read.
+    describe('shared "now" reference (#131634)', () => {
+      it('preserves the duration of now-Nh to now while the clock advances', () => {
+        let now = Date.parse('2024-07-05T12:00:00.000Z');
+        const clock = jest.spyOn(Date, 'now').mockImplementation(() => {
+          const value = now;
+          now += 1;
+          return value;
+        });
+
+        try {
+          const range = convertRawToRange({ from: 'now-6h', to: 'now' }, 'utc');
+          expect(range.to.valueOf() - range.from.valueOf()).toBe(6 * 60 * 60 * 1000);
+        } finally {
+          clock.mockRestore();
+        }
+      });
+
+      it('resolves both now/N endpoints against the same captured now across a clock-tick boundary', () => {
+        // Without the fix, each `dateTimeParse` call reads `Date.now()` once,
+        // so `now-1h` to `now-1m` would be evaluated against two different
+        // wall-clock reads. With the fix, both endpoints share a single
+        // captured reference even when the wall clock advances between them.
+        // Each new read of `Date.now()` would land on a different second, so
+        // an "always returns a fresh now" implementation would produce two
+        // different `to` values for the two `dateTimeParse` calls.
+        let tick = 0;
+        const clock = jest.spyOn(Date, 'now').mockImplementation(() => {
+          const value = Date.parse('2024-07-05T12:00:00.000Z') + tick * 1000;
+          tick += 1;
+          return value;
+        });
+
+        try {
+          const range = convertRawToRange({ from: 'now-1h', to: 'now-1m' }, 'utc');
+          // Both endpoints derive from the first captured `now`. The
+          // expected difference is 59 minutes (3540000 ms); a 1-second shift
+          // between endpoints would mean the fix is not active.
+          expect(range.to.valueOf() - range.from.valueOf()).toBe(59 * 60 * 1000);
+        } finally {
+          clock.mockRestore();
+        }
+      });
+
+      it('accepts an explicit now override and uses it for both endpoints', () => {
+        const fixedNow = dateTime('2024-07-05T12:00:00.000Z');
+        const range = convertRawToRange({ from: 'now-1h', to: 'now' }, 'utc', undefined, undefined, fixedNow);
+        expect(range.to.valueOf()).toBe(fixedNow.valueOf());
+        expect(range.to.valueOf() - range.from.valueOf()).toBe(60 * 60 * 1000);
+      });
+    });
   });
 
   describe('relative time', () => {
