@@ -702,89 +702,62 @@ func applyResourcesInParallel(
 		return nil
 	}
 
-	quotaBlocked := make([]bool, len(resources))
-	if err := runResourceTasksInParallel(ctx, resources, progress, maxSyncWorkers, resourceTimeout, func(timeoutCtx context.Context, i int, change ResourceFileChange) {
-		// Non-folder changes never ensure a folder path, so no relocating set is needed.
-		quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
-	}); err != nil {
-		return err
+	sem := make(chan struct{}, maxSyncWorkers)
+	var wg sync.WaitGroup
+	startTask := func(run func(context.Context)) bool {
+		if progress.TooManyErrors() != nil || ctx.Err() != nil {
+			return false
+		}
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			return false
+		}
+		wg.Go(func() {
+			defer func() { <-sem }()
+			// A previous worker may have failed while this task waited for a slot.
+			if progress.TooManyErrors() == nil && ctx.Err() == nil {
+				wrapWithTimeout(ctx, resourceTimeout, run)
+			}
+		})
+		return true
 	}
 
-	// Manager-kind conflicts can release reservations for the next file, so
-	// retry blocked creates serially. Collect the files that still cannot reserve
-	// quota: their read-only manager checks can safely run concurrently.
-	var stillBlocked []ResourceFileChange
+	quotaBlocked := make([]bool, len(resources))
+	for i, change := range resources {
+		if !startTask(func(timeoutCtx context.Context) {
+			quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+		}) {
+			break
+		}
+	}
+	wg.Wait()
+
+	// Retry quota-blocked creates in order after active writes settle: a
+	// manager-kind rejection can free capacity for the next file. Once quota
+	// stays full, use the workers for the remaining read-only manager checks.
 	for i, blocked := range quotaBlocked {
 		if !blocked {
 			continue
 		}
-		if err := progress.TooManyErrors(); err != nil {
-			return err
-		}
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if progress.TooManyErrors() != nil || ctx.Err() != nil {
+			break
 		}
 		change := resources[i]
 		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-			if applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil) {
-				stillBlocked = append(stillBlocked, change)
-			}
+			blocked = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
 		})
-	}
-
-	return runResourceTasksInParallel(ctx, stillBlocked, progress, maxSyncWorkers, resourceTimeout, func(timeoutCtx context.Context, _ int, change ResourceFileChange) {
-		recordQuotaBlockedCreate(timeoutCtx, change.Path, currentRef, repositoryResources, progress)
-	})
-}
-
-func runResourceTasksInParallel(
-	ctx context.Context,
-	changes []ResourceFileChange,
-	progress jobs.JobProgressRecorder,
-	maxSyncWorkers int,
-	resourceTimeout time.Duration,
-	run func(context.Context, int, ResourceFileChange),
-) error {
-	sem := make(chan struct{}, maxSyncWorkers)
-	var wg sync.WaitGroup
-
-loop:
-	for i, change := range changes {
-		if err := progress.TooManyErrors(); err != nil {
+		if blocked && !startTask(func(timeoutCtx context.Context) {
+			recordQuotaBlockedCreate(timeoutCtx, change.Path, currentRef, repositoryResources, progress)
+		}) {
 			break
 		}
-		if ctx.Err() != nil {
-			break
-		}
-
-		// Acquire semaphore slot (blocks if max workers reached)
-		select {
-		case sem <- struct{}{}:
-		case <-ctx.Done():
-			break loop
-		}
-
-		wg.Add(1)
-		go func(i int, change ResourceFileChange) {
-			defer wg.Done()
-			defer func() { <-sem }()
-
-			// A previous worker may have failed while this task waited for a slot.
-			if ctx.Err() != nil || progress.TooManyErrors() != nil {
-				return
-			}
-			wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-				run(timeoutCtx, i, change)
-			})
-		}(i, change)
 	}
-
 	wg.Wait()
 
 	if err := progress.TooManyErrors(); err != nil {
 		return err
 	}
-
 	return ctx.Err()
 }
 

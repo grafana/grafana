@@ -69,7 +69,6 @@ func TestSync_ManagerKindConflictQuota(t *testing.T) {
 					quotaTracker := quotas.NewInMemoryQuotaTracker(tt.usage, 10)
 					repoResources := resources.NewMockRepositoryResources(t)
 					progress := jobs.NewMockJobProgressRecorder(t)
-					progress.On("SetTotal", mock.Anything, 2).Return()
 					progress.On("TooManyErrors").Return(nil)
 					var resultsMu sync.Mutex
 					results := make(map[string]jobs.JobResourceResult)
@@ -93,14 +92,13 @@ func TestSync_ManagerKindConflictQuota(t *testing.T) {
 						repoResources.On("CheckResourceManagerKind", mock.Anything, "valid.json", "new-ref").
 							Return("valid", gvk, 0, nil).Once()
 					}
-					tracer := tracing.NewNoopTracerService()
-					metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
-					var err error
+					syncQuota := quotaTracker
 					if syncType == "full" {
 						firstStarted := make(chan struct{})
 						quotaBlocked := make(chan struct{})
 						var blockedOnce sync.Once
 						observedQuota := quotas.NewMockQuotaTracker(t)
+						syncQuota = observedQuota
 						observedQuota.On("TryAcquire").Return(func() bool {
 							acquired := quotaTracker.TryAcquire()
 							if !acquired {
@@ -126,26 +124,13 @@ func TestSync_ManagerKindConflictQuota(t *testing.T) {
 								t.Error("first write did not start")
 							}
 						}).Return(false)
-						repo := repository.NewMockRepository(t)
-						repo.On("Config").Return(&provisioning.Repository{})
-						compare := NewMockCompareFn(t)
-						compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).
-							Return([]ResourceFileChange{
-								{Path: "first.json", Action: tt.action},
-								{Path: "valid.json", Action: repository.FileActionCreated},
-							}, nil, nil, nil)
-						err = FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, observedQuota, false, 0)
 					} else {
 						progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
-						repo := repository.NewMockVersioned(t)
-						repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
-							{Path: "first.json", Action: tt.action, Ref: "new-ref"},
-							{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
-						}, nil)
-						progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
-						progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
-						err = IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracer, metrics, quotaTracker, false)
 					}
+					err := runManagerKindSync(t, ctx, syncType, []repository.VersionedFileChange{
+						{Path: "first.json", Action: tt.action, Ref: "new-ref"},
+						{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+					}, repoResources, progress, syncQuota)
 					require.NoError(t, err)
 					require.Len(t, results, 2)
 					firstResult, validResult := results["first.json"], results["valid.json"]
@@ -296,7 +281,6 @@ func TestSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
 					defer cancel()
 					tracker := quotas.NewInMemoryQuotaTracker(9, 10)
 					progress := jobs.NewMockJobProgressRecorder(t)
-					progress.On("SetTotal", mock.Anything, 2).Return()
 					progress.On("TooManyErrors").Return(nil)
 					validWritten := make(chan struct{})
 					progress.On("HasDirPathFailedCreation", "valid.json").Return(false)
@@ -321,28 +305,10 @@ func TestSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
 						close(validWritten)
 					}).Return("valid", gvk, 0, nil).Once()
 					repoResources.On("CheckResourceManagerKind", mock.Anything, "second.json", "new-ref").Return("second", gvk, 123, tt.checkErr).Once()
-					metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
-					tracer := tracing.NewNoopTracerService()
-					var err error
-					if syncType == "full" {
-						repo := repository.NewMockRepository(t)
-						repo.On("Config").Return(&provisioning.Repository{})
-						compare := NewMockCompareFn(t)
-						compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).Return([]ResourceFileChange{
-							{Path: "valid.json", Action: repository.FileActionCreated},
-							{Path: "second.json", Action: repository.FileActionCreated},
-						}, nil, nil, nil)
-						err = FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, false, 0)
-					} else {
-						repo := repository.NewMockVersioned(t)
-						repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
-							{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
-							{Path: "second.json", Action: repository.FileActionCreated, Ref: "new-ref"},
-						}, nil)
-						progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
-						progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
-						err = IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracer, metrics, tracker, false)
-					}
+					err := runManagerKindSync(t, ctx, syncType, []repository.VersionedFileChange{
+						{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+						{Path: "second.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+					}, repoResources, progress, tracker)
 					require.NoError(t, err)
 					require.Len(t, results, 2)
 					require.NoError(t, results["valid.json"].Error())
@@ -372,4 +338,27 @@ func TestSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
 			}
 		})
 	}
+}
+
+func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, changes []repository.VersionedFileChange, repoResources resources.RepositoryResources, progress *jobs.MockJobProgressRecorder, tracker quotas.QuotaTracker) error {
+	t.Helper()
+	progress.On("SetTotal", mock.Anything, len(changes)).Return()
+	tracer := tracing.NewNoopTracerService()
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	if syncType == "full" {
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{})
+		fullChanges := make([]ResourceFileChange, len(changes))
+		for i, change := range changes {
+			fullChanges[i] = ResourceFileChange{Path: change.Path, Action: change.Action}
+		}
+		compare := NewMockCompareFn(t)
+		compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).Return(fullChanges, nil, nil, nil)
+		return FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, false, 0)
+	}
+	repo := repository.NewMockVersioned(t)
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+	return IncrementalSync(ctx, repo, "old-ref", "new-ref", repoResources, progress, tracer, metrics, tracker, false)
 }
