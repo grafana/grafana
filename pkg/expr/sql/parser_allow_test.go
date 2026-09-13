@@ -266,9 +266,14 @@ func TestAllowQuery(t *testing.T) {
 			err:  &ErrorWithCategory{},
 		},
 		{
-			name: "blocked: @user_variable",
+			name: "allowed: @user_variable",
 			q:    `SELECT @myvar FROM a`,
-			err:  &ErrorWithCategory{},
+			err:  nil,
+		},
+		{
+			name: "allowed: backtick-quoted @timestamp column name",
+			q:    "SELECT `@timestamp` FROM A",
+			err:  nil,
 		},
 	}
 	for _, tc := range testCases {
