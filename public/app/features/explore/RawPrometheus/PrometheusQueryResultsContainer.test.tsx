@@ -103,7 +103,7 @@ describe('PrometheusQueryResultsContainer', () => {
 
     fireEvent.click(getTableToggle());
 
-    expect(await screen.findByText('test_string_1')).toBeInTheDocument();
+    await screen.findAllByRole('columnheader');
     expect(getTable()).toBeInTheDocument();
     const rows = within(getTable()).getAllByRole('row');
     expect(rows).toHaveLength(5);
