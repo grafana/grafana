@@ -1932,3 +1932,11 @@ func allowFolderTreeSeed(repoResources *resources.MockRepositoryResources, targe
 	repoResources.On("List", mock.Anything).Return(target, nil).Maybe()
 	repoResources.On("SetTree", mock.Anything).Return().Maybe()
 }
+
+func TestIncrementalSync_ManagerKindConflictQuota(t *testing.T) {
+	testManagerKindConflictQuota(t, "incremental")
+}
+
+func TestIncrementalSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
+	testManagerKindConflictAfterQuotaFilled(t, "incremental")
+}
