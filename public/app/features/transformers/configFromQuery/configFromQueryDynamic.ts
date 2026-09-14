@@ -55,6 +55,10 @@ function evaluateDynamicFieldMappings(
       if (!field) {
         return;
       }
+      const value = field.values[i];
+      if (value === null || value === undefined) {
+        return;
+      }
 
       result[v].push({
         handlerArgs: m.handlerArguments,
@@ -74,6 +78,10 @@ export function extractConfigFromQueryDynamic(
   configFrame: DataFrame,
   mappings: FieldToConfigMapping[]
 ): DataFrame[] {
+  if (!options.applyTo?.options) {
+    return data;
+  }
+
   if (data.length === 1) {
     // there is only 1 frame: the config one
     // This cannot be supported, since the config frame cannot be self referential
@@ -106,10 +114,8 @@ export function extractConfigFromQueryDynamic(
       const newConfig: Record<string, unknown> = {};
       const context = {};
       config[fieldName].forEach((h) => {
-        const res = h.processor(h.value, field.config, context, h.handlerArgs || {});
-        if (res) {
-          newConfig[h.targetProperty] = res;
-        }
+        const res = h.processor(h.value, newConfig, context, h.handlerArgs || {});
+        newConfig[h.targetProperty] = res;
       });
 
       finalizeFieldToConfig(newConfig, context);
