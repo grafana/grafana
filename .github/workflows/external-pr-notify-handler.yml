@@ -22,10 +22,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # community-triage logic version this repo is pinned to (main as of community-triage#51).
+  # community-triage logic version this repo is pinned to.
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 34c814b0463c9341fcbc97072024f788ecfdc3e5 # trufflehog:ignore
+  TRIAGE_REF: 223e8b1d8f7923f34919d09c32aed0644f3ed9ae # trufflehog:ignore
 
 jobs:
   triage:
@@ -260,7 +260,7 @@ jobs:
             printf '%s\n' "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
-      # Adds ~90s to this job and to the team's Slack notification.
+      # Adds ~4 min to this job and to the team's Slack notification.
       - name: Fetch existing reviews for cross-checking
         id: existing-reviews
         if: steps.pr-context.outcome == 'success'
